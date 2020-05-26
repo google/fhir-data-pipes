@@ -15,8 +15,8 @@ public class App
 
     public static void main( String[] args ) throws InterruptedException, URISyntaxException
     {
-        if (args.length != 1) {
-            System.out.println("You should pass exactly one URI argument!");
+        if (args.length != 2) {
+            System.out.println("You should pass exactly two arguments: url and jsessionid");
             return;
         }
         /* We can load ApplicationContext from the openmrs dependency like this but that
@@ -28,7 +28,7 @@ public class App
             new ClassPathXmlApplicationContext("classpath:/applicationContext-service.xml");
 
         System.out.println( "Started listening on the feed " + args[0]);
-        FeedConsumer feedConsumer = new FeedConsumer(args[0]);
+        FeedConsumer feedConsumer = new FeedConsumer(args[0], args[1]);
         while (true) {
             log.info("Listen then wait for 1 second!");
             feedConsumer.listen();
