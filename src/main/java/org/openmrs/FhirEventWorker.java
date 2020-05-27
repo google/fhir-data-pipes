@@ -2,35 +2,35 @@ package org.openmrs;
 
 import ca.uhn.fhir.context.FhirContext;
 import ca.uhn.fhir.parser.IParser;
-import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
 import com.google.gson.JsonParser;
-import com.google.gson.reflect.TypeToken;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.lang.reflect.Type;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
-import org.hl7.fhir.r4.model.Encounter;
+import org.hl7.fhir.r4.model.BaseResource;
 import org.ict4h.atomfeed.client.domain.Event;
 import org.ict4h.atomfeed.client.service.EventWorker;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class FhirEventWorker/*<T>*/ implements EventWorker {
+public class FhirEventWorker<T extends BaseResource> implements EventWorker {
   private static final Logger log = LoggerFactory.getLogger(FhirEventWorker.class);
   private String feedBaseUrl;
   private String jSessionId;
   private String resourceName;
+  private Class<T> resourceClass;
   private FhirContext fhirContext = FhirContext.forR4();
 
-  FhirEventWorker(String feedBaseUrl, String jSessionId, String resourceName) {
+  FhirEventWorker(String feedBaseUrl, String jSessionId, String resourceName,
+      Class<T> resourceClass) {
     this.feedBaseUrl = feedBaseUrl;
     this.jSessionId = jSessionId;
     this.resourceName = resourceName;
+    this.resourceClass = resourceClass;
   }
 
   private String fetchFhirResource(String urlStr) {
@@ -63,15 +63,9 @@ public class FhirEventWorker/*<T>*/ implements EventWorker {
     }
   }
 
-  private Encounter/*T */parserFhirJson(String fhirJson) {
-    Gson gson = new Gson();
-    /*
-    Type genericType = new TypeToken<T>() {}.getType();
-    return gson.fromJson(fhirJson, genericType);
-    //return gson.fromJson(fhirJson, Encounter.class);
-     */
+  private T parserFhirJson(String fhirJson) {
     IParser parser = fhirContext.newJsonParser();
-    return parser.parseResource(Encounter.class, fhirJson);
+    return parser.parseResource(resourceClass, fhirJson);
   }
 
   @Override
@@ -92,7 +86,7 @@ public class FhirEventWorker/*<T>*/ implements EventWorker {
       log.info("FHIR resource URL is: " + fhirUrl);
       String fhirJson = fetchFhirResource(feedBaseUrl + fhirUrl);
       log.info("Fetched FHIR resource: " + fhirJson);
-      /*T*/Encounter resource = parserFhirJson(fhirJson);
+      T resource = parserFhirJson(fhirJson);
       log.info("Parsed FHIR resource is: " + resource);
     } catch (JsonParseException e) {
       log.error(
