@@ -4,7 +4,6 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.List;
-import org.ict4h.atomfeed.client.service.FeedClient;
 import org.openmrs.module.atomfeed.client.AtomFeedClient;
 import org.openmrs.module.atomfeed.client.AtomFeedClientFactory;
 
@@ -21,7 +20,7 @@ public class FeedConsumer {
      */
     for (String c : categories) {
       AtomFeedClient feedClient = AtomFeedClientFactory
-          .createClient(new FhirEventWorker(feedBaseUrl, jSessionId));
+          .createClient(new FhirEventWorker(feedBaseUrl, jSessionId, c));
       // TODO check if this can be set by configuring above factory call & finalize the feed number.
       URI feedUri = new URI(feedBaseUrl + "/ws/atomfeed/" + c + "/1");
       feedClient.setUri(feedUri);
