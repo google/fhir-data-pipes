@@ -22,14 +22,14 @@ public class FeedConsumer {
     // TODO categories.put("patient", Patient.class);
     // TODO: Check why the FHIR resource ID in this case does not map to Encounter!
     // categories.put("visit", Encounter.class);
-    categories.put("encounter", Encounter.class);
-    categories.put("observation", Observation.class);
+    categories.put("Encounter", Encounter.class);
+    //categories.put("Observation", Observation.class);
     // TODO add other FHIR resources that are implemented in OpenMRS.
     for (Map.Entry<String, Class> entry : categories.entrySet()) {
       AtomFeedClient feedClient = AtomFeedClientFactory.createClient(
-          new FhirEventWorker(feedBaseUrl, jSessionId, "encounter", entry.getValue()));
+          new FhirEventWorker(feedBaseUrl, jSessionId, entry.getKey(), entry.getValue()));
       // TODO check if this can be set by configuring above factory call & finalize the feed number.
-      URI feedUri = new URI(feedBaseUrl + "/ws/atomfeed/" + entry.getKey() + "/1");
+      URI feedUri = new URI(feedBaseUrl + "/ws/atomfeed/" + entry.getKey().toLowerCase() + "/1");
       feedClient.setUri(feedUri);
       feedClients.add(feedClient);
     }
