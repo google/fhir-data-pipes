@@ -115,11 +115,17 @@ public class FhirEventWorker<T extends BaseResource> implements EventWorker {
       log.info("FHIR resource URL is: " + fhirUrl);
       String fhirJson = fetchFhirResource(feedBaseUrl + fhirUrl);
       log.info("Fetched FHIR resource: " + fhirJson);
+      // TODO fix the validation issues at the OpenMRS level and remove this HACK!
+      String modifiedJson = fhirJson.replace("\"status\":\"unknown\"",
+          "\"status\":\"unknown\",\"class\":{\"code\":\"EMER\"}");
+      log.info("Modified FHIR resource: " + modifiedJson);
       // Creating this resource is not really needed for the current purpose as we can simply
       // send the JSON payload to GCP FHIR store. This is kept for demonstration purposes.
-      T resource = parserFhirJson(fhirJson);
-      log.info("Parsed FHIR resource is: " + resource);
-      uploadToCloud(resource.getId(), fhirJson);
+      T resource = parserFhirJson(modifiedJson);
+      String resourceId = resource.getIdElement().getIdPart();
+      log.info(String.format("Parsed FHIR resource ID is %s and IdBase is %s", resourceId,
+          resource.getIdBase()));
+      uploadToCloud(resourceId, modifiedJson);
     } catch (JsonParseException e) {
       log.error(
           String.format("Error parsing event %s with error %s", event.toString(), e.toString()));
@@ -162,12 +168,9 @@ public class FhirEventWorker<T extends BaseResource> implements EventWorker {
     CloudHealthcare client = createClient();
     HttpClient httpClient = HttpClients.createDefault();
     String uri = String.format(
-        "%sv1/%s/fhir/%s/%s", client.getRootUrl(), fhirStoreName, resourceType,
-        /*resourceId*/"6b6044af-00c2-4bb2-8faa-e242d42b8fdf");
+        "%sv1/%s/fhir/%s/%s", client.getRootUrl(), fhirStoreName, resourceType, resourceId);
     log.info(String.format("URL is: %s", uri));
-    // TODO do not pass access_token url parameter, instead use Authorization header.
     URIBuilder uriBuilder = new URIBuilder(uri);
-        //.setParameter("access_token", getAccessToken());
     log.info(String.format("Full URL is: %s", uriBuilder.build()));
     //StringEntity requestEntity = new StringEntity(
     //    "{\"resourceType\": \"" + resourceType + "\", \"language\": \"en\"}");
@@ -175,21 +178,22 @@ public class FhirEventWorker<T extends BaseResource> implements EventWorker {
 
     HttpUriRequest request = RequestBuilder
         //.post()
-        //.put()
-        .get()
+        .put()
+        //.get()
         //.patch()
         .setUri(uriBuilder.build())
-        //.setEntity(requestEntity)
+        .setEntity(requestEntity)
         .addHeader("Content-Type", "application/fhir+json")
         .addHeader("Accept-Charset", "utf-8")
-        .addHeader("Accept", "application/fhir+json; charset=utf-8")
+        .addHeader("Accept", "application/fhir+json")
         .addHeader("Authorization", "Bearer " + getAccessToken())
         .build();
 
     // Execute the request and process the results.
     HttpResponse response = httpClient.execute(request);
     HttpEntity responseEntity = response.getEntity();
-    if (response.getStatusLine().getStatusCode() != HttpStatus.SC_CREATED) {
+    if (response.getStatusLine().getStatusCode() != HttpStatus.SC_CREATED
+        && response.getStatusLine().getStatusCode() != HttpStatus.SC_OK) {
       log.error(String.format(
           "Exception creating FHIR resource: %s", response.getStatusLine().toString()));
       ByteArrayOutputStream byteStream = new ByteArrayOutputStream();
@@ -245,7 +249,6 @@ public class FhirEventWorker<T extends BaseResource> implements EventWorker {
         GoogleCredential.getApplicationDefault(HTTP_TRANSPORT, JSON_FACTORY)
             .createScoped(Collections.singleton(CloudHealthcareScopes.CLOUD_PLATFORM));
     credential.refreshToken();
-    log.info("Access token is: " + credential.getAccessToken());
     return credential.getAccessToken();
   }
 
