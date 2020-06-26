@@ -19,11 +19,9 @@ public class FeedConsumer {
   FeedConsumer(String feedBaseUrl, String jSessionId) throws URISyntaxException {
     // TODO what we really need is a list of pairs!
     Map<String, Class> categories = new LinkedHashMap<>();
-    // TODO categories.put("patient", Patient.class);
-    // TODO: Check why the FHIR resource ID in this case does not map to Encounter!
-    // categories.put("visit", Encounter.class);
+    categories.put("Patient", Patient.class);
     categories.put("Encounter", Encounter.class);
-    //categories.put("Observation", Observation.class);
+    categories.put("Observation", Observation.class);
     // TODO add other FHIR resources that are implemented in OpenMRS.
     for (Map.Entry<String, Class> entry : categories.entrySet()) {
       AtomFeedClient feedClient = AtomFeedClientFactory.createClient(

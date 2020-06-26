@@ -115,17 +115,13 @@ public class FhirEventWorker<T extends BaseResource> implements EventWorker {
       log.info("FHIR resource URL is: " + fhirUrl);
       String fhirJson = fetchFhirResource(feedBaseUrl + fhirUrl);
       log.info("Fetched FHIR resource: " + fhirJson);
-      // TODO fix the validation issues at the OpenMRS level and remove this HACK!
-      String modifiedJson = fhirJson.replace("\"status\":\"unknown\"",
-          "\"status\":\"unknown\",\"class\":{\"code\":\"EMER\"}");
-      log.info("Modified FHIR resource: " + modifiedJson);
       // Creating this resource is not really needed for the current purpose as we can simply
       // send the JSON payload to GCP FHIR store. This is kept for demonstration purposes.
-      T resource = parserFhirJson(modifiedJson);
+      T resource = parserFhirJson(fhirJson);
       String resourceId = resource.getIdElement().getIdPart();
       log.info(String.format("Parsed FHIR resource ID is %s and IdBase is %s", resourceId,
           resource.getIdBase()));
-      uploadToCloud(resourceId, modifiedJson);
+      uploadToCloud(resourceId, fhirJson);
     } catch (JsonParseException e) {
       log.error(
           String.format("Error parsing event %s with error %s", event.toString(), e.toString()));
@@ -141,9 +137,9 @@ public class FhirEventWorker<T extends BaseResource> implements EventWorker {
   // https://github.com/GoogleCloudPlatform/java-docs-samples/healthcare/tree/master/healthcare/v1
   private void uploadToCloud(String resourceId, String jsonResource) {
     try {
+      // TODO: Change these hardcoded values to configurable parameters.
       String fhirStoreName = String.format(
-          FHIR_NAME, "bashir-variant", "us-central1", "test-dataset", "openmrs-incremental");
-      //Create createFhir = new Create();
+          FHIR_NAME, "bashir-variant", "us-central1", "openmrs_fhir_test", "openmrs_relay");
       fhirResourceCreate(fhirStoreName, this.resourceType, resourceId, jsonResource);
       /*
       CloudHealthcare.Builder builder = new CloudHealthcare.Builder(HTTP_TRANSPORT, JSON_FACTORY, null);
