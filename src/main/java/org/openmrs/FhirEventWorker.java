@@ -3,7 +3,6 @@ package org.openmrs;
 import ca.uhn.fhir.context.FhirContext;
 import ca.uhn.fhir.parser.IParser;
 import com.google.api.client.googleapis.auth.oauth2.GoogleCredential;
-//import com.google.api.client.googleapis.javanet.GoogleNetHttpTransport;
 import com.google.api.client.http.HttpRequest;
 import com.google.api.client.http.HttpRequestInitializer;
 import com.google.api.client.http.javanet.NetHttpTransport;
@@ -40,7 +39,7 @@ public class FhirEventWorker<T extends BaseResource> implements EventWorker {
   private static final String FHIR_NAME = "projects/%s/locations/%s/datasets/%s/fhirStores/%s";
   private static final GsonFactory JSON_FACTORY = new GsonFactory();
   private static final NetHttpTransport HTTP_TRANSPORT = new NetHttpTransport();
-  // GoogleNetHttpTransport.newTrustedTransport()
+  // TODO: GoogleNetHttpTransport.newTrustedTransport()
 
   private String feedBaseUrl;
   private String jSessionId;
@@ -195,21 +194,8 @@ public class FhirEventWorker<T extends BaseResource> implements EventWorker {
     log.info("Update FHIR resource response: " + executeRequest(request));
   }
 
-  private static CloudHealthcare createClient() throws IOException {
-    // Use Application Default Credentials (ADC) to authenticate the requests
-    // For more information see https://cloud.google.com/docs/authentication/production
-    /*
-    GoogleCredentials credentials =
-        GoogleCredentials.getApplicationDefault()//;
-            .createScoped(Collections.singleton(CloudHealthcareScopes.CLOUD_PLATFORM));
-    HttpRequestInitializer requestInitializer = new HttpCredentialsAdapter(credentials);
-     */
-
-    // Create a HttpRequestInitializer, which will provide a baseline configuration to all requests.
-    // TODO resolve deprecation by using above GoogleCredentials pattern!
-    final GoogleCredential credential =
-        GoogleCredential.getApplicationDefault(HTTP_TRANSPORT, JSON_FACTORY)
-            .createScoped(Collections.singleton(CloudHealthcareScopes.CLOUD_PLATFORM));
+  private CloudHealthcare createClient() throws IOException {
+    final GoogleCredential credential = getGoogleCredential();
     HttpRequestInitializer requestInitializer = new HttpRequestInitializer() {
       @Override
       public void initialize(HttpRequest httpRequest) throws IOException {
@@ -225,21 +211,27 @@ public class FhirEventWorker<T extends BaseResource> implements EventWorker {
         .build();
   }
 
-  private static String getAccessToken() throws IOException {
-    // TODO refactor credential creation
+  private String getAccessToken() throws IOException {
+    GoogleCredential credential = getGoogleCredential();
+    credential.refreshToken();
+    return credential.getAccessToken();
+  }
+
+  private GoogleCredential getGoogleCredential() throws IOException {
     /*
     // TODO figure out why scope creation fails in this case.
+    // Use Application Default Credentials (ADC) to authenticate the requests
+    // For more information see https://cloud.google.com/docs/authentication/production
     final GoogleCredentials credentials =
         GoogleCredentials.getApplicationDefault()//;
             .createScoped(Collections.singleton(CloudHealthcareScopes.CLOUD_PLATFORM));
     credentials.refreshAccessToken();
     return credentials.getAccessToken().getTokenValue();
      */
-    final GoogleCredential credential =
+    GoogleCredential credential =
         GoogleCredential.getApplicationDefault(HTTP_TRANSPORT, JSON_FACTORY)
             .createScoped(Collections.singleton(CloudHealthcareScopes.CLOUD_PLATFORM));
-    credential.refreshToken();
-    return credential.getAccessToken();
+    return credential;
   }
 
 }
