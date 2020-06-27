@@ -15,14 +15,9 @@ import com.google.api.services.healthcare.v1.CloudHealthcareScopes;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
 import com.google.gson.JsonParser;
-import java.io.BufferedReader;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.io.InputStreamReader;
-import java.net.HttpURLConnection;
-import java.net.MalformedURLException;
 import java.net.URISyntaxException;
-import java.net.URL;
 import java.util.Collections;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
@@ -61,33 +56,43 @@ public class FhirEventWorker<T extends BaseResource> implements EventWorker {
     this.resourceClass = resourceClass;
   }
 
+  private String executeRequest(HttpUriRequest request) {
+    try {
+      // Execute the request and process the results.
+      HttpClient httpClient = HttpClients.createDefault();
+      HttpResponse response = httpClient.execute(request);
+      HttpEntity responseEntity = response.getEntity();
+      ByteArrayOutputStream byteStream = new ByteArrayOutputStream();
+      responseEntity.writeTo(byteStream);
+      if (response.getStatusLine().getStatusCode() != HttpStatus.SC_CREATED
+          && response.getStatusLine().getStatusCode() != HttpStatus.SC_OK) {
+        log.error(String.format(
+            "Exception for resource %s: %s", request.getURI().toString(),
+            response.getStatusLine().toString()));
+        log.error(byteStream.toString());
+        throw new RuntimeException();
+      }
+      return byteStream.toString();
+    } catch (IOException e) {
+      log.error("Error in opening url: " + request.getURI().toString() + " exception: " + e);
+      return "";
+    }
+  }
+
   private String fetchFhirResource(String urlStr) {
     try {
-      URL url = new URL(urlStr);
-      // TODO switch to Apache HTTP client.
-      HttpURLConnection con = (HttpURLConnection) url.openConnection();
-      con.setRequestMethod("GET");
-      con.addRequestProperty("Content-Type", "application/json");
-      con.setRequestProperty("Cookie", "JSESSIONID=" + this.jSessionId);
-      int status = con.getResponseCode();
-      if (status != 200) {
-        log.error("Error " + status + " reading from url " + urlStr);
-        return "";
-      }
-      BufferedReader inputBuffer = new BufferedReader(
-          new InputStreamReader(con.getInputStream()));
-      String inputLine;
-      StringBuffer content = new StringBuffer();
-      while ((inputLine = inputBuffer.readLine()) != null) {
-        content.append(inputLine);
-      }
-      inputBuffer.close();
-      return content.toString();
-    } catch (MalformedURLException e) {
+      URIBuilder uriBuilder = new URIBuilder(urlStr);
+      HttpUriRequest request = RequestBuilder
+          .get()
+          .setUri(uriBuilder.build())
+          .addHeader("Content-Type", "application/fhir+json")
+          .addHeader("Accept-Charset", "utf-8")
+          .addHeader("Accept", "application/fhir+json")
+          .addHeader("Cookie", "JSESSIONID=" + this.jSessionId)
+          .build();
+      return executeRequest(request);
+    } catch (URISyntaxException e) {
       log.error("Malformed FHIR url: " + urlStr + " exception: " + e);
-      return "";
-    } catch (IOException e) {
-      log.error("Error in opening url: " + urlStr + " exception: " + e);
       return "";
     }
   }
@@ -140,7 +145,7 @@ public class FhirEventWorker<T extends BaseResource> implements EventWorker {
       // TODO: Change these hardcoded values to configurable parameters.
       String fhirStoreName = String.format(
           FHIR_NAME, "bashir-variant", "us-central1", "openmrs_fhir_test", "openmrs_relay");
-      fhirResourceCreate(fhirStoreName, this.resourceType, resourceId, jsonResource);
+      updateFhirResource(fhirStoreName, this.resourceType, resourceId, jsonResource);
       /*
       CloudHealthcare.Builder builder = new CloudHealthcare.Builder(HTTP_TRANSPORT, JSON_FACTORY, null);
       CloudHealthcare cloudHealthcare = builder.build();
@@ -156,27 +161,21 @@ public class FhirEventWorker<T extends BaseResource> implements EventWorker {
     }
   }
 
-  private static void fhirResourceCreate(String fhirStoreName, String resourceType,
+  private void updateFhirResource(String fhirStoreName, String resourceType,
       String resourceId, String jsonResource)
       throws IOException, URISyntaxException {
 
     // Initialize the client, which will be used to interact with the service.
     CloudHealthcare client = createClient();
-    HttpClient httpClient = HttpClients.createDefault();
     String uri = String.format(
         "%sv1/%s/fhir/%s/%s", client.getRootUrl(), fhirStoreName, resourceType, resourceId);
     log.info(String.format("URL is: %s", uri));
     URIBuilder uriBuilder = new URIBuilder(uri);
     log.info(String.format("Full URL is: %s", uriBuilder.build()));
-    //StringEntity requestEntity = new StringEntity(
-    //    "{\"resourceType\": \"" + resourceType + "\", \"language\": \"en\"}");
     StringEntity requestEntity = new StringEntity(jsonResource);
 
     HttpUriRequest request = RequestBuilder
-        //.post()
         .put()
-        //.get()
-        //.patch()
         .setUri(uriBuilder.build())
         .setEntity(requestEntity)
         .addHeader("Content-Type", "application/fhir+json")
@@ -184,21 +183,7 @@ public class FhirEventWorker<T extends BaseResource> implements EventWorker {
         .addHeader("Accept", "application/fhir+json")
         .addHeader("Authorization", "Bearer " + getAccessToken())
         .build();
-
-    // Execute the request and process the results.
-    HttpResponse response = httpClient.execute(request);
-    HttpEntity responseEntity = response.getEntity();
-    if (response.getStatusLine().getStatusCode() != HttpStatus.SC_CREATED
-        && response.getStatusLine().getStatusCode() != HttpStatus.SC_OK) {
-      log.error(String.format(
-          "Exception creating FHIR resource: %s", response.getStatusLine().toString()));
-      ByteArrayOutputStream byteStream = new ByteArrayOutputStream();
-      responseEntity.writeTo(byteStream);
-      log.error(byteStream.toString());
-      throw new RuntimeException();
-    }
-    System.out.print("FHIR resource created: ");
-    responseEntity.writeTo(System.out);
+    log.info("Update FHIR resource response: " + executeRequest(request));
   }
 
   private static CloudHealthcare createClient() throws IOException {
