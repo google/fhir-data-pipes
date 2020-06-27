@@ -154,12 +154,6 @@ public class FhirEventWorker<T extends BaseResource> implements EventWorker {
       String fhirStoreName = String.format(
           FHIR_NAME, this.gcpProjectId, this.gcpLocation, this.gcpDatasetName, this.fhirStoreName);
       updateFhirResource(fhirStoreName, this.resourceType, resourceId, jsonResource);
-      /*
-      CloudHealthcare.Builder builder = new CloudHealthcare.Builder(HTTP_TRANSPORT, JSON_FACTORY, null);
-      CloudHealthcare cloudHealthcare = builder.build();
-      cloudHealthcare.projects().locations().datasets().fhirStores().create();
-       */
-      //CloudHealthcare cloudHealthcare = new CloudHealthcare();
     } catch (IOException e) {
       log.error(
           String.format("IOException while using Google APIS: %s", e.toString()));
@@ -207,7 +201,7 @@ public class FhirEventWorker<T extends BaseResource> implements EventWorker {
 
     // Build the client for interacting with the service.
     return new CloudHealthcare.Builder(HTTP_TRANSPORT, JSON_FACTORY, requestInitializer)
-        .setApplicationName("your-application-name")
+        .setApplicationName("openmrs-fhir-warehouse")
         .build();
   }
 
