@@ -47,13 +47,22 @@ public class FhirEventWorker<T extends BaseResource> implements EventWorker {
   private String resourceType;
   private Class<T> resourceClass;
   private FhirContext fhirContext = FhirContext.forR4();
+  private String gcpProjectId;
+  private String gcpLocation;
+  private String gcpDatasetName;
+  private String fhirStoreName;
 
   FhirEventWorker(String feedBaseUrl, String jSessionId, String resourceType,
-      Class<T> resourceClass) {
+      Class<T> resourceClass, String gcpProjectId, String gcpLocation,  String gcpDatasetName,
+      String fhirStoreName) {
     this.feedBaseUrl = feedBaseUrl;
     this.jSessionId = jSessionId;
     this.resourceType = resourceType;
     this.resourceClass = resourceClass;
+    this.gcpProjectId = gcpProjectId;
+    this.gcpLocation = gcpLocation;
+    this.gcpDatasetName = gcpDatasetName;
+    this.fhirStoreName = fhirStoreName;
   }
 
   private String executeRequest(HttpUriRequest request) {
@@ -144,7 +153,7 @@ public class FhirEventWorker<T extends BaseResource> implements EventWorker {
     try {
       // TODO: Change these hardcoded values to configurable parameters.
       String fhirStoreName = String.format(
-          FHIR_NAME, "bashir-variant", "us-central1", "openmrs_fhir_test", "openmrs_relay");
+          FHIR_NAME, this.gcpProjectId, this.gcpLocation, this.gcpDatasetName, this.fhirStoreName);
       updateFhirResource(fhirStoreName, this.resourceType, resourceId, jsonResource);
       /*
       CloudHealthcare.Builder builder = new CloudHealthcare.Builder(HTTP_TRANSPORT, JSON_FACTORY, null);

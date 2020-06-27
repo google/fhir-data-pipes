@@ -15,15 +15,19 @@ public class FhirStreaming
 
     public static void main( String[] args ) throws InterruptedException, URISyntaxException
     {
-        if (args.length != 2) {
-            System.out.println("You should pass exactly two arguments:");
+        if (args.length != 6) {
+            System.out.println("You should pass exactly six arguments:");
             System.out.println("1) url: the base url of the OpenMRS server (ending in 'openmrs').");
             System.out.println(
                 "2) JSESSIONID: the value of this cookie after logging into the OpenMRS server.");
+            System.out.println("3) gcp_project_id of the FHIR store.");
+            System.out.println("4) gcp_location of the FHIR store: e.g., 'us-central1'.");
+            System.out.println("5) dataset name of the FHIR store.");
+            System.out.println("6) FHIR store name.");
             System.out.println("Note it is expected that a MySQL DB with name `atomfeed_client` \n"
                 + "exists (configurable in `hibernate.default.properties`) with tables \n"
                 + "'failed_events' and 'markers' to track feed progress. \n"
-                + "Use scripts/create_db.sql to create these. \n");
+                + "Use utils/create_db.sql to create these. \n");
             return;
         }
         /* We can load ApplicationContext from the openmrs dependency like this but that
@@ -35,7 +39,8 @@ public class FhirStreaming
             new ClassPathXmlApplicationContext("classpath:/applicationContext-service.xml");
 
         System.out.println("Started listening on the feed " + args[0]);
-        FeedConsumer feedConsumer = new FeedConsumer(args[0], args[1]);
+        FeedConsumer feedConsumer = new FeedConsumer(args[0], args[1], args[2], args[3], args[4],
+            args[5]);
         while (true) {
             feedConsumer.listen();
             Thread.sleep(3000);

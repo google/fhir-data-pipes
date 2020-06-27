@@ -16,7 +16,8 @@ import org.openmrs.module.atomfeed.client.AtomFeedClientFactory;
 public class FeedConsumer {
   private List<AtomFeedClient> feedClients = new ArrayList<>();
 
-  FeedConsumer(String feedBaseUrl, String jSessionId) throws URISyntaxException {
+  FeedConsumer(String feedBaseUrl, String jSessionId, String gcpProjectId, String gcpLocation,
+      String gcpDatasetName, String fhirStoreName) throws URISyntaxException {
     // TODO what we really need is a list of pairs!
     Map<String, Class> categories = new LinkedHashMap<>();
     categories.put("Patient", Patient.class);
@@ -25,7 +26,8 @@ public class FeedConsumer {
     // TODO add other FHIR resources that are implemented in OpenMRS.
     for (Map.Entry<String, Class> entry : categories.entrySet()) {
       AtomFeedClient feedClient = AtomFeedClientFactory.createClient(
-          new FhirEventWorker(feedBaseUrl, jSessionId, entry.getKey(), entry.getValue()));
+          new FhirEventWorker(feedBaseUrl, jSessionId, entry.getKey(), entry.getValue(),
+              gcpProjectId, gcpLocation, gcpDatasetName, fhirStoreName));
       // TODO check if this can be set by configuring above factory call & finalize the feed number.
       URI feedUri = new URI(feedBaseUrl + "/ws/atomfeed/" + entry.getKey().toLowerCase() + "/1");
       feedClient.setUri(feedUri);
