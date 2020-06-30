@@ -24,9 +24,7 @@
   <artifactId>fhir-warehouse</artifactId>
   <version>1.0-SNAPSHOT</version>
 
-  <name>fhir-warehouse</name>
-  <!-- FIXME change it to the project's website -->
-  <url>http://www.example.com</url>
+  <name>openmrs-fhir-warehouse</name>
 
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -82,13 +80,7 @@
       <artifactId>atomfeed-api-2.0</artifactId>
       <version>1.0.13-SNAPSHOT</version>
     </dependency>
-    <!--
-    <dependency>
-      <groupId>org.openmrs.module</groupId>
-      <artifactId>atomfeed-omod</artifactId>
-      <version>1.0.13-SNAPSHOT</version>
-    </dependency>
-    -->
+
     <!-- This is for com.mysql.jdbc.Driver which is the driver_class property
     set in hibernate.default.properties of openmrs-api. -->
     <dependency>
@@ -110,11 +102,6 @@
       <version>${hapifhirVersion}</version>
     </dependency>
 
-    <!-- dependency>
-      <groupId>com.google.api-client</groupId>
-      <artifactId>google-api-client</artifactId>
-      <version>1.30.9</version>
-    </dependency -->
     <dependency>
       <groupId>com.google.api-client</groupId>
       <artifactId>google-api-client-gson</artifactId>
