@@ -12,10 +12,10 @@ to the target data warehouse.
 continuously listens to changes in OpenMRS to translate new changes into FHIR
 resources and upload them to the target data warehouse.
 
-## Batch mode 
+# Batch mode 
 TODO
 
-## Streaming mode
+# Streaming mode
 This is currently implemented as a stand alone app that sits between OpenMRS and
 the data warehouse. It currently depends on the [Atom Feed module of OpenMRS](
 https://wiki.openmrs.org/display/docs/Atom+Feed+Module). Note that this may
@@ -34,7 +34,7 @@ The steps for using this tool are:
 - Create the sink FHIR store and BigQuery dataset.
 - Compile and run the streaming app.
 
-### Add Atom Feed module to OpenMRS
+## Add Atom Feed module to OpenMRS
 Assuming that you are using the Reference App of OpenMRS (for example, installed
 at `http://localhost:9016`), after login, go to
 "System Administration" > "Manage Modules" > "Search from Addons" and search
@@ -44,7 +44,7 @@ For any changes in the OpenMRS database, this module creates entries with
 payloads related to that change, including URLs for FHIR resources if the
 change has corresponding FHIR resources.
 
-### Add FHIR2 module to OpenMRS and update Atom Feed config
+## Add FHIR2 module to OpenMRS and update Atom Feed config
 The [FHIR module in OpenMRS](
 https://wiki.openmrs.org/display/projects/OpenMRS+FHIR+Module) is being
 reimplemented in the `fhir2` module. You need to compile this module from
@@ -71,7 +71,7 @@ OR
 
 `http://localhost:9016/openmrs/ws/atomfeed/observation/1`
 
-### Set up the Atom Feed client side database
+## Set up the Atom Feed client side database
 Assuming that you have MySQL running on the default port 3306, simply run:
 
 `mysql --user=USER --password=PASSWORD < utils/create_db.sql`
@@ -83,7 +83,7 @@ utils/create_db.sql) but then you need to change the database name in
 [`src/main/resources/hibernate.default.properties`](
 src/main/resources/hibernate.default.properties) accordingly.
 
-### Create the sink FHIR store and BigQuery dataset
+## Create the sink FHIR store and BigQuery dataset
 First you need to create a GCP project. Then create a Google
 Cloud Healthcare dataset and a BigQuery dataset with the same name in that
 project (for an overview of projects, datasets and data stores check [this](
@@ -101,7 +101,7 @@ as well:
 
 You can run the script with no arguments to see a sample usage.
 
-### Compile and run the streaming app
+## Compile and run the streaming app
 From the root of your git repo, run:
 
 `mvn compile exec:java -Dexec.mainClass=org.openmrs.FhirStreaming -Dexec.args="http://localhost:9016/openmrs JSESSIONID"`
