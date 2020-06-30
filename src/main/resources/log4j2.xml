@@ -11,6 +11,8 @@
 
 -->
 
+<!-- This is copied from openmrs-core repository and modified for our needs. -->
+
 <Configuration xmlns="http://logging.apache.org/log4j/2.0/config">
   <Appenders>
     <Console name="CONSOLE" target="SYSTEM_OUT">

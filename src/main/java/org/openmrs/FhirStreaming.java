@@ -30,11 +30,8 @@ public class FhirStreaming
                 + "Use utils/create_db.sql to create these. \n");
             return;
         }
-        /* We can load ApplicationContext from the openmrs dependency like this but that
-        fails with other exceptions (e.g., related to JdbcEnvironment when creating sessionFactory)
-        and in general there should be an easier/more lightweight way of just using the
-        AtomFeedClient which is all we need!
-         */
+        // We can load ApplicationContext from the openmrs dependency like this but there should be
+        // an easier/more lightweight way of just using the AtomFeedClient which is all we need!
         ClassPathXmlApplicationContext ctx =
             new ClassPathXmlApplicationContext("classpath:/applicationContext-service.xml");
 
