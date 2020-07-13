@@ -21,7 +21,7 @@ again.
 All submissions by non-project members, require review. We
 use GitHub pull requests for this purpose. Consult
 [GitHub Help](https://help.github.com/articles/about-pull-requests/) for more
-information on using pull requests.
+information on using pull requests. We use GitHub for issue tracking.
 
 ## Community Guidelines
 
