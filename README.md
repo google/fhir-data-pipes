@@ -5,15 +5,12 @@ be removed.
 # What is this?
 This repository includes tools for transforming [OpenMRS](openmrs.org) data
 into a FHIR based warehouse. There are two aspects to this transformation:
-- **Bulk upload** (a.k.a. _batch mode_): This is used for reading the whole
-content of OpenMRS MySQL database, transform it into FHIR resources, and upload
-to the target data warehouse.
 - **Streaming mode**: In this mode, there is an intermediate binary that
 continuously listens to changes in OpenMRS to translate new changes into FHIR
 resources and upload them to the target data warehouse.
-
-# Batch mode 
-TODO
+- **Bulk upload** (a.k.a. _batch mode_): This is used for reading the whole
+content of OpenMRS MySQL database, transform it into FHIR resources, and upload
+to the target data warehouse.
 
 # Streaming mode
 This is currently implemented as a stand alone app that sits between OpenMRS and
@@ -99,19 +96,54 @@ as well:
 - `DATASET` is the name of the dataset you created.
 - `FHIR-STORE-NAME` is what it says.
 
-You can run the script with no arguments to see a sample usage.
+You can run the script with no arguments to see a sample usage. After you create
+the FHIR store, its full URL would be:
 
+`https://healthcare.googleapis.com/v1/projects/PROJECT/locations/LOCATION/datasets/DATASET/fhirStores/FHIR-STORE-NAME`
+                    
 ## Compile and run the streaming app
 From the root of your git repo, run:
 
-`mvn compile exec:java -Dexec.mainClass=org.openmrs.FhirStreaming -Dexec.args="http://localhost:9016/openmrs JSESSIONID"`
+`mvn clean install`
 
-`JSESSIONID` is the value of a browser cookie with the same name that is
+and then:
+
+```
+mvn exec:java -pl streaming \
+  -Dexec.mainClass=org.openmrs.analytics.FhirStreaming \`
+  -Dexec.args="http://localhost:9016/openmrs JSESSIONID GCP_FHIR_STORE"`
+```
+
+- `JSESSIONID` is the value of a browser cookie with the same name that is
 created by OpenMRS. After logging into your OpenMRS instance (e.g.,
 `http://localhost:9016/openmrs` in this case), grab the value of `JSESSIONID`
 cookie to pass to `FhirStreaming` binary. It is a hexadecimal string like:
 `512F6DC48352022DBB8916CCB999B8A5`.
 
+- `GCP_FHIR_STORE` is the relative path of the FHIR store you set up in the
+previous step, i.e., something like:
+`projects/PROJECT/locations/LOCATION/datasets/DATASET/fhirStores/FHIR-STORE-NAME`
+where all-caps segments are based on what you set up above.
+
 To test your changes, create a new patient (or observation) in OpenMRS and check
 that a corresponding Patient (or Observation) FHIR resource is created in the
 GCP FHIR store and corresponding rows added to the BigQuery tables.
+
+# Batch mode 
+The steps above for setting up a FHIR Store and a linked BigQuery dataset needs
+to be followed. Once it is done, and after `mvn install`, the pipeline can be
+run using a command like:
+
+```
+java -cp batch/target/fhir-batch-etl-bundled-0.1.0-SNAPSHOT.jar \
+  org.openmrs.analytics.FhirEtl --serverUrl=http://localhost:9018 \
+  --jsessionId=2950DA4C142EC44145978C02EDA0F311 \
+  --searchList=Patient,Encounter,Observation --batchSize=20 \
+ --targetParallelism=20 --gcpFhirStore=GCP_FHIR_STORE`
+```
+The `searchList` argument accepts a comma separated list of FHIR search URLs.
+For example, one can use `Patient?given=Susan` to extract only Patient resources
+that meet the `given=Susan` criteria.
+ 
+**TODO**: Add details on how this works and caveats!
+

@@ -22,6 +22,8 @@ if [[ $# -ne 4 ]]; then
   exit 1
 fi
 
+# TODO create GCP Healthcare data-set too instead of assuming it exists.
+
 # Creating FHIR store
 curl --request POST -H "Authorization: Bearer $(gcloud auth print-access-token)" \
   -H "Content-Type: application/fhir+json; charset=utf-8" \
