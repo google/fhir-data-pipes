@@ -12,14 +12,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package org.openmrs;
+package org.openmrs.analytics;
 
 import static org.junit.Assert.assertTrue;
 
 import org.junit.Test;
 
 /**
- * TODO: Add tests for the FhirEventWorker class; this requires refactoring FhirEventWorker and do
+ * TODO: Add tests for the FhirEventWorker class; this requires refactoring FhirEventWorker and
  * proper dependency injection for all external service calls that it does.
  */
 public class FhirEventWorkerTest

@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package org.openmrs;
+package org.openmrs.analytics;
 
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -29,8 +29,8 @@ import org.openmrs.module.atomfeed.client.AtomFeedClientFactory;
 public class FeedConsumer {
   private List<AtomFeedClient> feedClients = new ArrayList<>();
 
-  FeedConsumer(String feedBaseUrl, String jSessionId, String gcpProjectId, String gcpLocation,
-      String gcpDatasetName, String fhirStoreName) throws URISyntaxException {
+  FeedConsumer(String feedBaseUrl, String jSessionId, String gcpFhirStore)
+      throws URISyntaxException {
     // TODO what we really need is a list of pairs!
     Map<String, Class> categories = new LinkedHashMap<>();
     categories.put("Patient", Patient.class);
@@ -40,7 +40,7 @@ public class FeedConsumer {
     for (Map.Entry<String, Class> entry : categories.entrySet()) {
       AtomFeedClient feedClient = AtomFeedClientFactory.createClient(
           new FhirEventWorker(feedBaseUrl, jSessionId, entry.getKey(), entry.getValue(),
-              gcpProjectId, gcpLocation, gcpDatasetName, fhirStoreName));
+              gcpFhirStore));
       // TODO check if this can be set by configuring above factory call & finalize the feed number.
       URI feedUri = new URI(feedBaseUrl + "/ws/atomfeed/" + entry.getKey().toLowerCase() + "/1");
       feedClient.setUri(feedUri);

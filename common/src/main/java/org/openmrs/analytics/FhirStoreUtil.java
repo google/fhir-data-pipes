@@ -12,10 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package org.openmrs;
+package org.openmrs.analytics;
 
-import ca.uhn.fhir.context.FhirContext;
-import ca.uhn.fhir.parser.IParser;
 import com.google.api.client.googleapis.auth.oauth2.GoogleCredential;
 import com.google.api.client.http.HttpRequest;
 import com.google.api.client.http.HttpRequestInitializer;
@@ -25,13 +23,13 @@ import com.google.api.services.healthcare.v1.CloudHealthcare;
 import com.google.api.services.healthcare.v1.CloudHealthcareScopes;
 //import com.google.auth.http.HttpCredentialsAdapter;
 //import com.google.auth.oauth2.GoogleCredentials;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonParseException;
-import com.google.gson.JsonParser;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.net.URISyntaxException;
+import java.nio.charset.StandardCharsets;
 import java.util.Collections;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
@@ -41,44 +39,29 @@ import org.apache.http.client.methods.RequestBuilder;
 import org.apache.http.client.utils.URIBuilder;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.HttpClients;
-import org.hl7.fhir.r4.model.BaseResource;
-import org.ict4h.atomfeed.client.domain.Event;
-import org.ict4h.atomfeed.client.service.EventWorker;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class FhirEventWorker<T extends BaseResource> implements EventWorker {
-  private static final Logger log = LoggerFactory.getLogger(FhirEventWorker.class);
+public class FhirStoreUtil {
+  private static final Logger log = LoggerFactory.getLogger(FhirStoreUtil.class);
 
-  private static final String FHIR_NAME = "projects/%s/locations/%s/datasets/%s/fhirStores/%s";
+  private static final Pattern FHIR_PATTERN = Pattern.compile(
+      "projects/[\\w-]+/locations/[\\w-]+/datasets/[\\w-]+/fhirStores/[\\w-]+");
   private static final GsonFactory JSON_FACTORY = new GsonFactory();
   private static final NetHttpTransport HTTP_TRANSPORT = new NetHttpTransport();
-  // TODO: GoogleNetHttpTransport.newTrustedTransport()
 
-  private String feedBaseUrl;
-  private String jSessionId;
-  private String resourceType;
-  private Class<T> resourceClass;
-  private FhirContext fhirContext = FhirContext.forR4();
-  private String gcpProjectId;
-  private String gcpLocation;
-  private String gcpDatasetName;
-  private String fhirStoreName;
+  private String gcpFhirStore;
 
-  FhirEventWorker(String feedBaseUrl, String jSessionId, String resourceType,
-      Class<T> resourceClass, String gcpProjectId, String gcpLocation,  String gcpDatasetName,
-      String fhirStoreName) {
-    this.feedBaseUrl = feedBaseUrl;
-    this.jSessionId = jSessionId;
-    this.resourceType = resourceType;
-    this.resourceClass = resourceClass;
-    this.gcpProjectId = gcpProjectId;
-    this.gcpLocation = gcpLocation;
-    this.gcpDatasetName = gcpDatasetName;
-    this.fhirStoreName = fhirStoreName;
+  FhirStoreUtil(String gcpFhirStore) throws IllegalArgumentException {
+    Matcher fhirMatcher = FHIR_PATTERN.matcher(gcpFhirStore);
+    if (!fhirMatcher.matches()) {
+      throw new IllegalArgumentException(String.format(
+          "The gcpFhirStore %s does not match %s pattern!", gcpFhirStore, FHIR_PATTERN));
+    }
+    this.gcpFhirStore = gcpFhirStore;
   }
 
-  private String executeRequest(HttpUriRequest request) {
+  public String executeRequest(HttpUriRequest request) {
     try {
       // Execute the request and process the results.
       HttpClient httpClient = HttpClients.createDefault();
@@ -101,94 +84,29 @@ public class FhirEventWorker<T extends BaseResource> implements EventWorker {
     }
   }
 
-  private String fetchFhirResource(String urlStr) {
-    try {
-      URIBuilder uriBuilder = new URIBuilder(urlStr);
-      HttpUriRequest request = RequestBuilder
-          .get()
-          .setUri(uriBuilder.build())
-          .addHeader("Content-Type", "application/fhir+json")
-          .addHeader("Accept-Charset", "utf-8")
-          .addHeader("Accept", "application/fhir+json")
-          .addHeader("Cookie", "JSESSIONID=" + this.jSessionId)
-          .build();
-      return executeRequest(request);
-    } catch (URISyntaxException e) {
-      log.error("Malformed FHIR url: " + urlStr + " exception: " + e);
-      return "";
-    }
-  }
-
-  private T parserFhirJson(String fhirJson) {
-    IParser parser = fhirContext.newJsonParser();
-    return parser.parseResource(resourceClass, fhirJson);
-  }
-
-  @Override
-  public void process(Event event) {
-    log.info("In process for event: " + event);
-    String content = event.getContent();
-    if (content == null || "".equals(content)) {
-      log.warn("No content in event: " + event);
-      return;
-    }
-    try {
-      JsonObject jsonObj = JsonParser.parseString(content).getAsJsonObject();
-      String fhirUrl = jsonObj.get("fhir").getAsString();
-      if (fhirUrl == null || "".equals(fhirUrl)) {
-        log.info("Skipping non-FHIR event " + event);
-        return;
-      }
-      log.info("FHIR resource URL is: " + fhirUrl);
-      String fhirJson = fetchFhirResource(feedBaseUrl + fhirUrl);
-      log.info("Fetched FHIR resource: " + fhirJson);
-      // Creating this resource is not really needed for the current purpose as we can simply
-      // send the JSON payload to GCP FHIR store. This is kept for demonstration purposes.
-      T resource = parserFhirJson(fhirJson);
-      String resourceId = resource.getIdElement().getIdPart();
-      log.info(String.format("Parsed FHIR resource ID is %s and IdBase is %s", resourceId,
-          resource.getIdBase()));
-      uploadToCloud(resourceId, fhirJson);
-    } catch (JsonParseException e) {
-      log.error(
-          String.format("Error parsing event %s with error %s", event.toString(), e.toString()));
-    }
-  }
-
-  @Override
-  public void cleanUp(Event event) {
-    log.info("In clean-up!");
-  }
-
   // This follows the examples at:
   // https://github.com/GoogleCloudPlatform/java-docs-samples/healthcare/tree/master/healthcare/v1
-  private void uploadToCloud(String resourceId, String jsonResource) {
+  public void uploadResourceToCloud(String resourceType, String resourceId, String jsonResource) {
     try {
-      // TODO: Change these hardcoded values to configurable parameters.
-      String fhirStoreName = String.format(
-          FHIR_NAME, this.gcpProjectId, this.gcpLocation, this.gcpDatasetName, this.fhirStoreName);
-      updateFhirResource(fhirStoreName, this.resourceType, resourceId, jsonResource);
+      updateFhirResource(gcpFhirStore, resourceType, resourceId, jsonResource);
     } catch (IOException e) {
       log.error(
-          String.format("IOException while using Google APIS: %s", e.toString()));
+          String.format("IOException while using Google APIs: %s", e.toString()));
     } catch (URISyntaxException e) {
       log.error(
-          String.format("URI syntax exception while using Google APIS: %s", e.toString()));
+          String.format("URI syntax exception while using Google APIs: %s", e.toString()));
     }
   }
 
   private void updateFhirResource(String fhirStoreName, String resourceType,
-      String resourceId, String jsonResource)
-      throws IOException, URISyntaxException {
-
+      String resourceId, String jsonResource) throws IOException, URISyntaxException {
     // Initialize the client, which will be used to interact with the service.
     CloudHealthcare client = createClient();
     String uri = String.format(
         "%sv1/%s/fhir/%s/%s", client.getRootUrl(), fhirStoreName, resourceType, resourceId);
-    log.info(String.format("URL is: %s", uri));
     URIBuilder uriBuilder = new URIBuilder(uri);
     log.info(String.format("Full URL is: %s", uriBuilder.build()));
-    StringEntity requestEntity = new StringEntity(jsonResource);
+    StringEntity requestEntity = new StringEntity(jsonResource, StandardCharsets.UTF_8);
 
     HttpUriRequest request = RequestBuilder
         .put()
@@ -199,7 +117,8 @@ public class FhirEventWorker<T extends BaseResource> implements EventWorker {
         .addHeader("Accept", "application/fhir+json")
         .addHeader("Authorization", "Bearer " + getAccessToken())
         .build();
-    log.info("Update FHIR resource response: " + executeRequest(request));
+    String response = executeRequest(request);
+    log.debug("Update FHIR resource response: " + response);
   }
 
   private CloudHealthcare createClient() throws IOException {
