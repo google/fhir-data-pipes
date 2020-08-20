@@ -56,30 +56,7 @@ public class FhirEventWorker<T extends BaseResource> implements EventWorker {
     this.fhirStoreUtil = new FhirStoreUtil(gcpFhirStore);
   }
 
-  private String executeRequest(HttpUriRequest request) {
-    try {
-      // Execute the request and process the results.
-      HttpClient httpClient = HttpClients.createDefault();
-      HttpResponse response = httpClient.execute(request);
-      HttpEntity responseEntity = response.getEntity();
-      ByteArrayOutputStream byteStream = new ByteArrayOutputStream();
-      responseEntity.writeTo(byteStream);
-      if (response.getStatusLine().getStatusCode() != HttpStatus.SC_CREATED
-          && response.getStatusLine().getStatusCode() != HttpStatus.SC_OK) {
-        log.error(String.format(
-            "Exception for resource %s: %s", request.getURI().toString(),
-            response.getStatusLine().toString()));
-        log.error(byteStream.toString());
-        throw new RuntimeException();
-      }
-      return byteStream.toString();
-    } catch (IOException e) {
-      log.error("Error in opening url: " + request.getURI().toString() + " exception: " + e);
-      return "";
-    }
-  }
-
-  private String fetchFhirResource(String urlStr) {
+ private String fetchFhirResource(String urlStr) {
     try {
       URIBuilder uriBuilder = new URIBuilder(urlStr);
       HttpUriRequest request = RequestBuilder
@@ -88,9 +65,10 @@ public class FhirEventWorker<T extends BaseResource> implements EventWorker {
           .addHeader("Content-Type", "application/fhir+json")
           .addHeader("Accept-Charset", "utf-8")
           .addHeader("Accept", "application/fhir+json")
+          // TODO(bashir2): Switch to BasicAuth instead of relying on cookies.
           .addHeader("Cookie", "JSESSIONID=" + this.jSessionId)
           .build();
-      return executeRequest(request);
+      return fhirStoreUtil.executeRequest(request);
     } catch (URISyntaxException e) {
       log.error("Malformed FHIR url: " + urlStr + " exception: " + e);
       return "";

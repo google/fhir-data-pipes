@@ -64,6 +64,7 @@ public class FhirEtl {
     int getBatchSize();
     void setBatchSize(int value);
 
+    // TODO(bashir2): Switch to BasicAuth instead of relying on cookies.
     @Description("JSESSIONID cookie value to circumvent OpenMRS server authentication.")
     @Required
     String getJsessionId();
