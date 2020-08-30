@@ -1,0 +1,30 @@
+version: '3.1'
+
+services:
+  openmrs-streaming:
+    container_name: openmrs-streaming
+    hostname: openmrs-streaming
+    build: ./streaming
+    environment:
+      - SOURCE_URL="http://18.158.139.243:8091/openmrs"
+      - SOURCE_FEED_ENDPOINT="/ws/atomfeed"
+      - SOURCE_FHIR_ENDPOINT="/ws/fhir2/R4"
+      - SOURCE_PW="Admin123"
+      - SOURCE_USERNAME="admin"
+      - SINK_URL="http://hapi-server:8080/hapi-fhir-jpaserver/fhir"
+    stdin_open: true
+    tty: true
+    entrypoint: /bin/bash
+  atomfeed-db:
+    container_name: atomfeed-db
+    hostname: atomfeed-db
+    image: mysql:5.7
+    environment:
+      - MYSQL_ROOT_PASSWORD=root
+      - MYSQL_USER=fhir
+      - MYSQL_PASSWORD=fhiranalytics
+      - MYSQL_DATABASE=atomfeed_client
+    ports:
+      - "3306:3306"
+    volumes:
+      - ./utils/create_db.sql:/docker-entrypoint-initdb.d/dump.sql

@@ -14,106 +14,103 @@
 
 package org.openmrs.analytics;
 
-import ca.uhn.fhir.context.FhirContext;
-import ca.uhn.fhir.parser.IParser;
+import ca.uhn.fhir.rest.client.api.IClientInterceptor;
+import ca.uhn.fhir.rest.client.api.IGenericClient;
+import ca.uhn.fhir.rest.client.interceptor.BasicAuthInterceptor;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
 import com.google.gson.JsonParser;
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.net.URISyntaxException;
-import org.apache.http.HttpEntity;
-import org.apache.http.HttpResponse;
-import org.apache.http.HttpStatus;
-import org.apache.http.client.HttpClient;
-import org.apache.http.client.methods.HttpUriRequest;
-import org.apache.http.client.methods.RequestBuilder;
-import org.apache.http.client.utils.URIBuilder;
-import org.apache.http.impl.client.HttpClients;
+
 import org.hl7.fhir.r4.model.BaseResource;
+import org.hl7.fhir.r4.model.Resource;
 import org.ict4h.atomfeed.client.domain.Event;
 import org.ict4h.atomfeed.client.service.EventWorker;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class FhirEventWorker<T extends BaseResource> implements EventWorker {
-  private static final Logger log = LoggerFactory.getLogger(FhirEventWorker.class);
 
-  private String feedBaseUrl;
-  private String jSessionId;
-  private String resourceType;
-  private Class<T> resourceClass;
-  private FhirContext fhirContext = FhirContext.forR4();
-  private FhirStoreUtil fhirStoreUtil;
+	private static final Logger log = LoggerFactory.getLogger(FhirEventWorker.class);
 
-  FhirEventWorker(String feedBaseUrl, String jSessionId, String resourceType,
-      Class<T> resourceClass, String gcpFhirStore) {
-    this.feedBaseUrl = feedBaseUrl;
-    this.jSessionId = jSessionId;
-    this.resourceType = resourceType;
-    this.resourceClass = resourceClass;
-    // TODO inject dependency.
-    this.fhirStoreUtil = new FhirStoreUtil(gcpFhirStore);
-  }
+	private String sourceUrl;
 
- private String fetchFhirResource(String urlStr) {
-    try {
-      URIBuilder uriBuilder = new URIBuilder(urlStr);
-      HttpUriRequest request = RequestBuilder
-          .get()
-          .setUri(uriBuilder.build())
-          .addHeader("Content-Type", "application/fhir+json")
-          .addHeader("Accept-Charset", "utf-8")
-          .addHeader("Accept", "application/fhir+json")
-          // TODO(bashir2): Switch to BasicAuth instead of relying on cookies.
-          .addHeader("Cookie", "JSESSIONID=" + this.jSessionId)
-          .build();
-      return fhirStoreUtil.executeRequest(request);
-    } catch (URISyntaxException e) {
-      log.error("Malformed FHIR url: " + urlStr + " exception: " + e);
-      return "";
-    }
-  }
+	private String resourceType;
 
-  private T parserFhirJson(String fhirJson) {
-    IParser parser = fhirContext.newJsonParser();
-    return parser.parseResource(resourceClass, fhirJson);
-  }
+	private Class<T> resourceClass;
 
-  @Override
-  public void process(Event event) {
-    log.info("In process for event: " + event);
-    String content = event.getContent();
-    if (content == null || "".equals(content)) {
-      log.warn("No content in event: " + event);
-      return;
-    }
-    try {
-      JsonObject jsonObj = JsonParser.parseString(content).getAsJsonObject();
-      String fhirUrl = jsonObj.get("fhir").getAsString();
-      if (fhirUrl == null || "".equals(fhirUrl)) {
-        log.info("Skipping non-FHIR event " + event);
+	private FhirStoreUtil fhirStoreUtil;
+
+	private String sourceUser;
+
+	private String sourcePw;
+
+	FhirEventWorker(String sourceUrl, Class<T> resourceClass, String sourceUser, String sourcePW, String targetUrl) {
+		this.sourceUrl = sourceUrl;
+		this.resourceClass = resourceClass;
+		this.sourceUser = sourceUser;
+		this.sourcePw = sourcePW;
+
+		if(targetUrl.contains("projects"))
+			this.fhirStoreUtil = new GcpStoreUtil(targetUrl, sourceUrl, sourceUser, sourcePW);
+		else
+			this.fhirStoreUtil = new HapiStoreUtil(targetUrl, sourceUrl, sourceUser, sourcePW);
+	}
+
+	private T fetchFhirResource(String resourceUrl) {
+      try {
+        // Create client
+        IGenericClient client = fhirStoreUtil.getSourceClient();
+
+        // Parse resourceUrl
+        String[] sepUrl = resourceUrl.split("/");
+        String resourceId = sepUrl[sepUrl.length-1];
+        String resourceType = sepUrl[sepUrl.length-2];
+
+        T resource = (T) client.read()
+                .resource(resourceType)
+                .withId(resourceId)
+                .execute();
+
+        return resource;
+      } catch (Exception e) {
+        System.out.println("Failed fetching FHIR resource at " + resourceUrl + ": " + e);
+        return null;
+      }
+	}
+
+	@Override
+	public void process(Event event) {
+      String content = event.getContent();
+      if (content == null || "".equals(content)) {
+        log.warn("No content in event: " + event);
         return;
       }
-      log.info("FHIR resource URL is: " + fhirUrl);
-      String fhirJson = fetchFhirResource(feedBaseUrl + fhirUrl);
-      log.info("Fetched FHIR resource: " + fhirJson);
-      // Creating this resource is not really needed for the current purpose as we can simply
-      // send the JSON payload to GCP FHIR store. This is kept for demonstration purposes.
-      T resource = parserFhirJson(fhirJson);
-      String resourceId = resource.getIdElement().getIdPart();
-      log.info(String.format("Parsed FHIR resource ID is %s and IdBase is %s", resourceId,
-          resource.getIdBase()));
-      fhirStoreUtil.uploadResourceToCloud(this.resourceType, resourceId, fhirJson);
-    } catch (JsonParseException e) {
-      log.error(
-          String.format("Error parsing event %s with error %s", event.toString(), e.toString()));
-    }
-  }
+      try {
+        JsonObject jsonObj = JsonParser.parseString(content).getAsJsonObject();
+        String fhirUrl = jsonObj.get("fhir").getAsString();
+        if (fhirUrl == null || "".equals(fhirUrl)) {
+          log.info("Skipping non-FHIR event " + event);
+          return;
+        }
 
-  @Override
-  public void cleanUp(Event event) {
-    log.info("In clean-up!");
-  }
+        if(!fhirUrl.contains("fhir2")) fhirUrl = fhirUrl.replace("/fhir", "/fhir2/R4");
+
+        System.out.println("FHIR resource URL is: " + fhirUrl);
+        T resource = fetchFhirResource(fhirUrl);
+        String resourceId = resource.getIdElement().getResourceType() + "/" + resource.getIdElement().getIdPart();
+
+        System.out.println(String.format("Parsed FHIR resource ID is %s", resourceId));
+
+        fhirStoreUtil.uploadResourceToCloud(resourceId, (Resource) resource);
+      } catch (JsonParseException e) {
+        log.error(
+                String.format("Error parsing event %s with error %s", event.toString(), e.toString()));
+      }
+	}
+
+	@Override
+	public void cleanUp(Event event) {
+		log.info("In clean-up!");
+	}
 
 }
