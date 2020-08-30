@@ -26,12 +26,16 @@ import org.hl7.fhir.r4.model.Observation;
 import org.hl7.fhir.r4.model.Patient;
 import org.openmrs.module.atomfeed.client.AtomFeedClient;
 import org.openmrs.module.atomfeed.client.AtomFeedClientFactory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class FeedConsumer {
 	
+	private static final Logger log = LoggerFactory.getLogger(FeedConsumer.class);
+	
 	private List<AtomFeedClient> feedClients = new ArrayList<>();
 	
-	FeedConsumer(String feedBaseUrl, String jSessionId, String gcpFhirStore) throws URISyntaxException {
+	FeedConsumer(String feedUrl, FhirStoreUtil fhirStoreUtil, OpenmrsUtil openmrsUtil) throws URISyntaxException {
 		// TODO what we really need is a list of pairs!
 		Map<String, Class> categories = new LinkedHashMap<>();
 		categories.put("Patient", Patient.class);
@@ -39,10 +43,13 @@ public class FeedConsumer {
 		categories.put("Observation", Observation.class);
 		// TODO add other FHIR resources that are implemented in OpenMRS.
 		for (Map.Entry<String, Class> entry : categories.entrySet()) {
-			AtomFeedClient feedClient = AtomFeedClientFactory.createClient(
-			    new FhirEventWorker(feedBaseUrl, jSessionId, entry.getKey(), entry.getValue(), gcpFhirStore));
+			FhirEventWorker eventWorker = new FhirEventWorker(fhirStoreUtil, openmrsUtil);
+			
+			AtomFeedClient feedClient = AtomFeedClientFactory.createClient(eventWorker);
+			
 			// TODO check if this can be set by configuring above factory call & finalize the feed number.
-			URI feedUri = new URI(feedBaseUrl + "/ws/atomfeed/" + entry.getKey().toLowerCase() + "/1");
+			URI feedUri = new URI(feedUrl + "/" + entry.getKey().toLowerCase() + "/1");
+			
 			feedClient.setUri(feedUri);
 			feedClients.add(feedClient);
 		}
@@ -50,7 +57,12 @@ public class FeedConsumer {
 	
 	public void listen() {
 		for (AtomFeedClient client : feedClients) {
-			client.process();
+			try {
+				client.process();
+			}
+			catch (Exception e) {
+				log.info("Failed to process client" + client.getUri() + " | " + e.getMessage());
+			}
 		}
 	}
 	

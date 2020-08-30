@@ -17,70 +17,66 @@
 
 
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
-  <modelVersion>4.0.0</modelVersion>
-  <parent>
-    <groupId>org.openmrs.analytics</groupId>
-    <artifactId>fhir</artifactId>
-    <version>0.1.0-SNAPSHOT</version>
-  </parent>
+		 xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+	<parent>
+		<groupId>org.openmrs.analytics</groupId>
+		<artifactId>fhir</artifactId>
+		<version>0.1.0-SNAPSHOT</version>
+	</parent>
 
-  <artifactId>fhir-streaming-etl</artifactId>
+	<artifactId>fhir-streaming-etl</artifactId>
 
-  <dependencies>
-    <dependency>
-      <groupId>${project.parent.groupId}</groupId>
-      <artifactId>fhir-common</artifactId>
-      <version>${project.parent.version}</version>
-    </dependency>
+	<dependencies>
+		<dependency>
+			<groupId>${project.parent.groupId}</groupId>
+			<artifactId>fhir-common</artifactId>
+			<version>${project.parent.version}</version>
+		</dependency>
 
-    <!-- OpenMRS libraries -->
-    <!-- prefer to avoid these as they bring a lot more deps!
-    for example just to use AtomFeedClientFactory it needs Spring ApplicationContext
-    to be set up properly, which we don't right now! -->
-    <dependency>
-      <groupId>org.openmrs.api</groupId>
-      <artifactId>openmrs-api</artifactId>
-      <version>2.4.0-SNAPSHOT</version>
-      <exclusions>
-        <!--exclusion>
-          <groupId>org.apache.logging.log4j</groupId>
-          <artifactId>log4j-slf4j-impl</artifactId>
-        </exclusion-->
-      </exclusions>
-    </dependency>
-    <dependency>
-      <groupId>org.openmrs.module</groupId>
-      <artifactId>atomfeed-api</artifactId>
-      <version>1.0.13-SNAPSHOT</version>
-    </dependency>
-    <dependency>
-      <groupId>org.openmrs.module</groupId>
-      <artifactId>atomfeed-api-2.0</artifactId>
-      <version>1.0.13-SNAPSHOT</version>
-    </dependency>
+		<!-- OpenMRS libraries -->
+		<!-- prefer to avoid these as they bring a lot more deps!
+		for example just to use AtomFeedClientFactory it needs Spring ApplicationContext
+		to be set up properly, which we don't right now! -->
+		<dependency>
+			<groupId>org.openmrs.module</groupId>
+			<artifactId>atomfeed-api</artifactId>
+			<version>1.0.13-SNAPSHOT</version>
+		</dependency>
+		<dependency>
+			<groupId>org.openmrs.module</groupId>
+			<artifactId>atomfeed-api-2.0</artifactId>
+			<version>1.0.13-SNAPSHOT</version>
+		</dependency>
 
-    <!-- This is for com.mysql.jdbc.Driver which is the driver_class property
-    set in hibernate.default.properties of openmrs-api. -->
-    <dependency>
-      <groupId>mysql</groupId>
-      <artifactId>mysql-connector-java</artifactId>
-      <version>5.1.45</version>
-      <scope>runtime</scope>
-    </dependency>
+		<!-- This is for com.mysql.jdbc.Driver which is the driver_class property
+		set in hibernate.default.properties of openmrs-api. -->
+		<dependency>
+			<groupId>mysql</groupId>
+			<artifactId>mysql-connector-java</artifactId>
+			<version>8.0.21</version>
+			<scope>runtime</scope>
+		</dependency>
 
-    <dependency>
-      <groupId>com.google.code.gson</groupId>
-      <artifactId>gson</artifactId>
-      <version>2.8.6</version>
-    </dependency>
+		<dependency>
+			<groupId>com.google.code.gson</groupId>
+			<artifactId>gson</artifactId>
+			<version>2.8.6</version>
+		</dependency>
 
-    <dependency>
-      <groupId>ca.uhn.hapi.fhir</groupId>
-      <artifactId>hapi-fhir-structures-r4</artifactId>
-      <version>${hapifhirVersion}</version>
-    </dependency>
+		<dependency>
+			<groupId>ca.uhn.hapi.fhir</groupId>
+			<artifactId>hapi-fhir-structures-r4</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>ca.uhn.hapi.fhir</groupId>
+			<artifactId>hapi-fhir-base</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>ca.uhn.hapi.fhir</groupId>
+			<artifactId>hapi-fhir-client</artifactId>
+		</dependency>
 
-  </dependencies>
 
+	</dependencies>
 </project>

@@ -92,7 +92,7 @@
       "category": "provider",
       "linkTemplates": {
         "rest": "/ws/rest/v1/provider/{uuid}?v=full",
-        "fhir": "/ws/fhir2/R4/Provider/{uuid}"
+        "fhir": "/ws/fhir2/R4/Practitioner/{uuid}"
       }
     },
     {
@@ -131,7 +131,7 @@
       "category": "drug",
       "linkTemplates": {
         "rest": "/ws/rest/v1/drug/{uuid}?v=full",
-        "fhir": "/ws/fhir2/R4/Drug/{uuid}"
+        "fhir": "/ws/fhir2/R4/Medication/{uuid}"
       }
     },
     {
@@ -180,7 +180,7 @@
       "category": "test_order",
       "linkTemplates": {
         "rest": "/ws/rest/v1/test_order/{uuid}?v=full",
-        "fhir": "/ws/fhir2/R4/ProcedureRequest/{uuid}"
+        "fhir": "/ws/fhir2/R4/ServiceRequest/{uuid}"
       }
     },
     {

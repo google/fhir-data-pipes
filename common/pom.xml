@@ -17,49 +17,64 @@
 
 
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
-  <modelVersion>4.0.0</modelVersion>
-  <parent>
-    <groupId>org.openmrs.analytics</groupId>
-    <artifactId>fhir</artifactId>
-    <version>0.1.0-SNAPSHOT</version>
-  </parent>
+		 xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+	<parent>
+		<groupId>org.openmrs.analytics</groupId>
+		<artifactId>fhir</artifactId>
+		<version>0.1.0-SNAPSHOT</version>
+	</parent>
 
-  <artifactId>fhir-common</artifactId>
+	<artifactId>fhir-common</artifactId>
 
-  <dependencies>
-    <dependency>
-      <groupId>org.apache.logging.log4j</groupId>
-      <artifactId>log4j-slf4j-impl</artifactId>
-      <version>${log4j2.version}</version>
-      <scope>runtime</scope>
-    </dependency>
+	<dependencies>
+		<dependency>
+			<groupId>org.apache.logging.log4j</groupId>
+			<artifactId>log4j-slf4j-impl</artifactId>
+			<version>${log4j2.version}</version>
+			<scope>runtime</scope>
+		</dependency>
 
-    <dependency>
-      <groupId>junit</groupId>
-      <artifactId>junit</artifactId>
-      <version>${junit.version}</version>
-      <scope>test</scope>
-    </dependency>
+		<dependency>
+			<groupId>junit</groupId>
+			<artifactId>junit</artifactId>
+			<version>${junit.version}</version>
+			<scope>test</scope>
+		</dependency>
 
-    <dependency>
-      <groupId>com.google.api-client</groupId>
-      <artifactId>google-api-client-gson</artifactId>
-      <version>1.30.9</version>
-    </dependency>
+		<dependency>
+			<groupId>com.google.api-client</groupId>
+			<artifactId>google-api-client-gson</artifactId>
+			<version>1.30.9</version>
+		</dependency>
 
-    <!-- dependency>
-      <groupId>com.google.auth</groupId>
-      <artifactId>google-auth-library-oauth2-http</artifactId>
-      <version>0.19.0</version>
-    </dependency -->
+		<!-- dependency>
+		  <groupId>com.google.auth</groupId>
+		  <artifactId>google-auth-library-oauth2-http</artifactId>
+		  <version>0.19.0</version>
+		</dependency -->
 
-    <dependency>
-      <groupId>com.google.apis</groupId>
-      <artifactId>google-api-services-healthcare</artifactId>
-      <version>v1-rev20200515-1.30.9</version>
-    </dependency>
+		<dependency>
+			<groupId>com.google.apis</groupId>
+			<artifactId>google-api-services-healthcare</artifactId>
+			<version>v1-rev20200515-1.30.9</version>
+		</dependency>
 
-  </dependencies>
+		<dependency>
+			<groupId>ca.uhn.hapi.fhir</groupId>
+			<artifactId>hapi-fhir-structures-r4</artifactId>
+		</dependency>
+
+		<dependency>
+			<groupId>org.mockito</groupId>
+			<artifactId>mockito-core</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.mockito</groupId>
+			<artifactId>mockito-core</artifactId>
+			<scope>test</scope>
+		</dependency>
+
+	</dependencies>
 
 </project>
