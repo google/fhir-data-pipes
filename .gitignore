@@ -80,3 +80,7 @@ nb-configuration.xml
 ##############################
 .DS_Store
 
+##############################
+## Other
+##############################
+hibernate.default.properties

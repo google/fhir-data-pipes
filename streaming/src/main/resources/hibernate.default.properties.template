@@ -3,10 +3,10 @@
 # Default (overridable) with runtime properties file
 
 # Connection Properties -->
-hibernate.connection.username=fhir
-hibernate.connection.password=fhiranalytics
+hibernate.connection.username=
+hibernate.connection.password=
 hibernate.connection.driver_class=com.mysql.jdbc.Driver
-hibernate.connection.url=jdbc:mysql://atomfeed-db:3306/atomfeed_client?autoReconnect=true
+hibernate.connection.url=jdbc:mysql://openmrs-hapi-db.chijnl5rwr2c.eu-central-1.rds.amazonaws.com:3306/atomfeed_client?autoReconnect=true&useSsl=false
 
 # Hibernate specific connection/debug properties
 hibernate.show_sql=false
