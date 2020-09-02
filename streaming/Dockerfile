@@ -7,6 +7,7 @@ RUN git checkout hapi-client
 FROM maven:3.6.3-openjdk-8 as build
 WORKDIR /app
 COPY --from=clone /app/openmrs-fhir-analytics /app
+COPY ./src/main/resources/hibernate.default.properties /app/streaming/main/resources/
 RUN mvn clean install
 ENTRYPOINT mvn exec:java -pl streaming -Dexec.mainClass=org.openmrs.analytics.FhirStreaming
 
