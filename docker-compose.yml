@@ -28,3 +28,15 @@ services:
       - "3306:3306"
     volumes:
       - ./utils/create_db.sql:/docker-entrypoint-initdb.d/dump.sql
+  openmrs-bulk:
+    container_name: openmrs-bulk
+    hostname: openmrs-bulk
+    build: ./batch
+    environment:
+      - SOURCE_URL="http://18.158.139.243:8091/openmrs"
+      - SOURCE_PW="Admin123"
+      - SOURCE_USERNAME="admin"
+      - SINK_URL="http://hapi-server:8080/hapi-fhir-jpaserver/fhir"
+    stdin_open: true
+    tty: true
+    entrypoint: /bin/bash
