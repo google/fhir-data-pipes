@@ -1,7 +1,8 @@
 package org.openmrs.analytics;
 
-import com.google.auto.value.AutoValue;
 import java.io.Serializable;
+
+import com.google.auto.value.AutoValue;
 import org.apache.beam.sdk.coders.DefaultCoder;
 import org.apache.beam.sdk.coders.SerializableCoder;
 

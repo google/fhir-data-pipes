@@ -14,7 +14,6 @@
 
 package org.openmrs.analytics;
 
-import ca.uhn.fhir.context.FhirContext;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -66,7 +65,7 @@ public class FhirEtl {
     @Description("Comma separated list of resource and search parameters to fetch; in its simplest "
         + "form this is a list of resources, e.g., `Patient,Encounter,Observation` but more "
         + "complex search paths are possible too, e.g., `Patient?name=Susan`.")
-    @Default.String("Patient,Practitioner,AllergyIntolerance,Medication,MedicationRequest,Observation,Encounter,Observation")
+    @Default.String("Patient,Practitioner,AllergyIntolerance,Encounter")
     String getSearchList();
     void setSearchList(String value);
 

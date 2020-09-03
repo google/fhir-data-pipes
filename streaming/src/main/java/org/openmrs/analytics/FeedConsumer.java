@@ -43,16 +43,16 @@ public class FeedConsumer {
     Map<String, Class> categories = new LinkedHashMap<>();
 
     // TODO add other FHIR resources that are implemented in OpenMRS.
-    categories.put("allergy", AllergyIntolerance.class);
-    categories.put("encounter", Encounter.class);
-    categories.put("location", Location.class);
-    categories.put("drug", Medication.class);
-    categories.put("drug_order", MedicationRequest.class);
-    categories.put("observation", Observation.class);
+//    categories.put("allergy", AllergyIntolerance.class);
+//    categories.put("encounter", Encounter.class);
+//    categories.put("location", Location.class);
+//    categories.put("drug", Medication.class);
+//    categories.put("drug_order", MedicationRequest.class);
+//    categories.put("observation", Observation.class);
     categories.put("patient", Patient.class);
-    categories.put("person", Person.class);
-    categories.put("provider", Practitioner.class);
-    categories.put("test_order", ServiceRequest.class);
+//    categories.put("person", Person.class);
+//    categories.put("provider", Practitioner.class);
+//    categories.put("test_order", ServiceRequest.class);
 
     for (Map.Entry<String, Class> entry : categories.entrySet()) {
       AtomFeedClient feedClient = AtomFeedClientFactory.createClient(new FhirEventWorker(fhirUrl, entry.getValue(), sourceUser, sourcePW, targetFhirStore));

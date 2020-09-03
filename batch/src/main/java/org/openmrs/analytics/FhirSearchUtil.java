@@ -1,23 +1,15 @@
 package org.openmrs.analytics;
 
-import ca.uhn.fhir.context.FhirContext;
-import ca.uhn.fhir.parser.IParser;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
 
 import ca.uhn.fhir.rest.api.SummaryEnum;
-import ca.uhn.fhir.rest.client.api.IClientInterceptor;
 import ca.uhn.fhir.rest.client.api.IGenericClient;
-import ca.uhn.fhir.rest.client.interceptor.BasicAuthInterceptor;
 import org.apache.http.NameValuePair;
-import org.apache.http.client.methods.HttpUriRequest;
-import org.apache.http.client.methods.RequestBuilder;
-import org.apache.http.client.utils.URIBuilder;
 import org.apache.http.client.utils.URLEncodedUtils;
 import org.hl7.fhir.r4.model.Bundle;
 import org.hl7.fhir.r4.model.Bundle.BundleEntryComponent;
-import org.hl7.fhir.r4.model.Bundle.BundleLinkComponent;
 import org.hl7.fhir.r4.model.Resource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -93,11 +85,6 @@ public class FhirSearchUtil {
             String.format("No _getpages parameter found in search link %s", searchLink));
       }
       return pagesParam.toString();
-      // new URI(searchUri.getScheme(),
-//          searchUri.getAuthority(),
-//          searchUri.getPath(),
-//          pagesParam.toString(), // Only keep the _getpages parameter.
-//          searchUri.getFragment()).toString();
     } catch (URISyntaxException e) {
       throw new IllegalArgumentException(
           String.format("Malformed link information with error %s in bundle %s", e.getMessage(),
