@@ -59,6 +59,7 @@ public class FhirStreaming
 
         if(sourceUrl == null  || sourceUn == null || sourcePw == null || targetFhirStoreUrl == null) {
             System.out.println("The following environmental variables need to be set: SOURCE_URL, SOURCE_PW, SOURCE_USERNAME, and SINK_URL");
+            return;
         }
 
         String feedEndpoint = System.getenv("SOURCE_FEED_ENDPOINT") == null ? "/ws/atomfeed" : System.getenv("SOURCE_FEED_ENDPOINT");

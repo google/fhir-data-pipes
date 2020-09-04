@@ -15,9 +15,11 @@ services:
     volumes:
       - ./:/app/openmrs-fhir-analytics
       - m2repo:/root/.m2/repository
-    # stdin_open: true
-    # tty: true
-    # entrypoint: /bin/bash
+    stdin_open: true
+    tty: true
+    entrypoint: /bin/bash
+    #entrypoint: ["mvn", "exec:java", "-pl", "streaming", "-Dexec.mainClass=org.openmrs.analytics.FhirStreaming"]
+
   atomfeed-db:
     container_name: atomfeed-db
     hostname: atomfeed-db
