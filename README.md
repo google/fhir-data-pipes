@@ -148,6 +148,33 @@ java -cp batch/target/fhir-batch-etl-bundled-0.1.0-SNAPSHOT.jar \
 The `searchList` argument accepts a comma separated list of FHIR search URLs.
 For example, one can use `Patient?given=Susan` to extract only Patient resources
 that meet the `given=Susan` criteria.
+
+# Using Docker compose
+Alternatively you can spin up the entire pipeline using docker containers by running
+
+#### 1. Fire up OpenMRS (containing FHIR2 module and demo data ~ 300,000 obs)
+
+```
+ docker-compose -f openmrs-compose.yaml up # change ports appropriately (optional)
+```
+ You should be able to access OpenMRS via  http://localhost:8099/openmrs/ using refApp credentials i.e username is admin and password Admin123
+ 
+#### 2. Fire up Batch Pipeline
+Parameters (e.g port/url ) have been configured to be compatible with http://localhost:8099/openmrs/ 
+Remember to change parameters appropriately to point to GCP and OpenMRS of choice using the provided docker-compose.yaml 
+ 
+```
+ $ mvn clean install
+ $ docker-compose up -d  or docker-compose up 
+
+``` 
+#### 3. Fire up Streaming Pipeline
+
+TODO - @pmanko is working on
+
+ ```
+  # TODO
+ ``` 
  
 **TODO**: Add details on how this works and caveats!
 
