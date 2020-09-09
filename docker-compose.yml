@@ -11,7 +11,7 @@ services:
       - SOURCE_FHIR_ENDPOINT=/ws/fhir2/R4
       - SOURCE_PW=Admin123
       - SOURCE_USERNAME=admin
-      - SINK_URL=http://http://18.158.139.243:8092/hapi-fhir-jpaserver/fhir
+      - SINK_URL=http://18.158.139.243:8092/hapi-fhir-jpaserver/fhir
     volumes:
       - ./:/app/openmrs-fhir-analytics
       - m2repo:/root/.m2/repository

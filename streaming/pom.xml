@@ -26,6 +26,9 @@
   </parent>
 
   <artifactId>fhir-streaming-etl</artifactId>
+  <properties>
+    <springVersion>4.1.4.RELEASE</springVersion>
+  </properties>
 
   <dependencies>
     <dependency>
@@ -50,14 +53,76 @@
       </exclusions>
     </dependency>
     <dependency>
+				<groupId>org.springframework</groupId>
+				<artifactId>spring-core</artifactId>
+				<version>${springVersion}</version>
+				<exclusions>
+					<exclusion>
+						<groupId>commons-logging</groupId>
+						<artifactId>commons-logging</artifactId>
+					</exclusion>
+				</exclusions>
+			</dependency>
+			<dependency>
+				<groupId>org.springframework</groupId>
+				<artifactId>spring-beans</artifactId>
+				<version>${springVersion}</version>
+			</dependency>
+			<dependency>
+				<groupId>org.springframework</groupId>
+				<artifactId>spring-context</artifactId>
+				<version>${springVersion}</version>
+			</dependency>
+			<dependency>
+				<groupId>org.springframework</groupId>
+				<artifactId>spring-aop</artifactId>
+				<version>${springVersion}</version>
+			</dependency>
+			<dependency>
+				<groupId>org.springframework</groupId>
+				<artifactId>spring-orm</artifactId>
+				<version>${springVersion}</version>
+			</dependency>
+			<dependency>
+				<groupId>org.springframework</groupId>
+				<artifactId>spring-tx</artifactId>
+				<version>${springVersion}</version>
+			</dependency>
+			<dependency>
+				<groupId>org.springframework</groupId>
+				<artifactId>spring-jdbc</artifactId>
+				<version>${springVersion}</version>
+			</dependency>
+			<dependency>
+				<groupId>org.springframework</groupId>
+				<artifactId>spring-web</artifactId>
+				<version>${springVersion}</version>
+			</dependency>
+			<dependency>
+				<groupId>org.springframework</groupId>
+				<artifactId>spring-webmvc</artifactId>
+				<version>${springVersion}</version>
+			</dependency>
+			<dependency>
+				<groupId>org.springframework</groupId>
+				<artifactId>spring-oxm</artifactId>
+				<version>${springVersion}</version>
+			</dependency>
+			<dependency>
+				<groupId>org.springframework</groupId>
+				<artifactId>spring-context-support</artifactId>
+				<version>${springVersion}</version>
+			</dependency>
+
+    <dependency>
       <groupId>org.openmrs.module</groupId>
       <artifactId>atomfeed-api</artifactId>
-      <version>1.0.13-SNAPSHOT</version>
+      <version>1.0.13-PM-SNAPSHOT</version>
     </dependency>
     <dependency>
       <groupId>org.openmrs.module</groupId>
       <artifactId>atomfeed-api-2.0</artifactId>
-      <version>1.0.13-SNAPSHOT</version>
+      <version>1.0.13-PM-SNAPSHOT</version>
     </dependency>
 
     <!-- This is for com.mysql.jdbc.Driver which is the driver_class property
