@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 version: '2.1'
 services:
   batch-cloud:
@@ -18,3 +19,42 @@ services:
      - TARGET_PARALLELISM=20
 
 # TODO add streaming - I think @pmanko is working on
+=======
+# Copyright 2020 Google LLC
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+version: '2.1'
+services:
+  streaming-binlog: # To run independently: docker-compose up --build streaming-binlog
+    build:
+      context: streaming-binlog
+    image: openmrs-fhir-analytics/streaming-pipeline:${DEBEZIUM_VERSION}
+    container_name: streaming-pipeline
+    network_mode: host
+    healthcheck:
+      test: "exit 0"
+   
+    volumes:
+      - ./dbz:/tmp
+    environment:
+      - JAVA_MAIN_CLASS=org.openmrs.analytics.Runner
+      - JAVA_OPTIONS=-Ddatabase.hostname=localhost -Ddatabase.port=3306 -Ddatabase.user=root -Ddatabase.password=debezium
+                     -Ddatabase.dbname=mysql -Ddatabase.schema=openmrs -Ddatabase.serverId=77 -Ddatabase.offsetStorage=/tmp/offset.dat
+                     -Ddatabase.databaseHistory=/tmp/dbhistory.dat -Dopenmrs.username=admin -Dopenmrs.password=Admin123
+                     -Dopenmrs.serverUrl=http://localhost:8099 -Dopenmrs.fhirBaseEndpoint=/openmrs/ws/fhir2/R4
+                     -Dcloud.gcpFhirStore=projects/PROJECT/locations/LOCATION/datasets/DATASET/fhirStores/FHIRSTORENAME
+
+# TODO add batch mode: WIP in PR #13
+# TODO add atom-based streaming mode: WIP by @pmanko
+>>>>>>> Implement a Debezium based streaming pipeline. #3
