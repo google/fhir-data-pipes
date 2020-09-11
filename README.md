@@ -3,7 +3,8 @@
 **NOTE**: This is a work in progress and the current version is only for
 demonstration purposes. Once these tools reach Alpha status, this note should
 be removed. This is a collaboration between Google and OpenMRS community and
-this repository might be moved to OpenMRS org in the future.
+this repository might be moved to [OpenMRS org](https://github.com/openmrs)
+in the future.
 
 # What is this?
 This repository includes tools for transforming [OpenMRS](openmrs.org) data
