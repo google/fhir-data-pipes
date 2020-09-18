@@ -247,10 +247,18 @@ Remember to appropriately change other parameters such as JSESSION_ID (extracted
 
 ```
  $ mvn clean install
- $ docker-compose up -d  or docker-compose up 
+ $ docker-compose up --build batch
 
 ``` 
-#### 4. Fire up Streaming Pipeline
+
+#### 5. Fire up Streaming Pipeline (Debezium)
+
+```
+ $ mvn clean install
+ $ docker-compose up --build streaming-binlog
+```
+
+#### 6. Fire up Streaming Pipeline (Atomfeed)
 
 TODO
  

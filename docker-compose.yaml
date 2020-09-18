@@ -1,25 +1,4 @@
-<<<<<<< HEAD
-version: '2.1'
-services:
-  batch-cloud:
-    #restart: "always"
-    network_mode: host
-    image: openmrs-fhir-analytics/batch-job:latest
-    container_name: batch-cloud
-    build:
-      context: batch
-    healthcheck:
-      test: "exit 0"
-    environment:
-     - GCP_FHIR_STORE=projects/PROJECT/locations/LOCATION/datasets/DATASET/fhirStores/FHIRSTORENAME
-     - JSESSION_ID=2CA8302303E689723100D50545BFB669 # TODO replace with basic auth implementation by @pmanko
-     - SERVER_URL=http://localhost:8099/openmrs
-     - SEARCH_LIST=Patient,Encounter,Observation
-     - BATCH_SIZE=20
-     - TARGET_PARALLELISM=20
 
-# TODO add streaming - I think @pmanko is working on
-=======
 # Copyright 2020 Google LLC
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -36,6 +15,23 @@ services:
 
 version: '2.1'
 services:
+  batch:
+    build:
+      context: batch
+    image: openmrs-fhir-analytics/batch-job:latest
+    #restart: "always"
+    network_mode: host
+    container_name: batch-cloud
+    healthcheck:
+      test: "exit 0"
+    environment:
+     - GCP_FHIR_STORE=projects/PROJECT/locations/LOCATION/datasets/DATASET/fhirStores/FHIRSTORENAME
+     - JSESSION_ID=3B09C6775C95D45A35AB3F1303E3BA15 # TODO replace with basic auth implementation by @pmanko
+     - SERVER_URL=http://localhost:8099/openmrs
+     - SEARCH_LIST=Patient,Encounter,Observation
+     - BATCH_SIZE=20
+     - TARGET_PARALLELISM=20
+
   streaming-binlog: # To run independently: docker-compose up --build streaming-binlog
     build:
       context: streaming-binlog
@@ -54,6 +50,5 @@ services:
                      -Dopenmrs.serverUrl=http://localhost:8099 -Dopenmrs.fhirBaseEndpoint=/openmrs/ws/fhir2/R4
                      -Dcloud.gcpFhirStore=projects/PROJECT/locations/LOCATION/datasets/DATASET/fhirStores/FHIRSTORENAME
 
-# TODO add batch mode: WIP in PR #13
-# TODO add atom-based streaming mode: WIP by @pmanko
->>>>>>> Implement a Debezium based streaming pipeline. #3
+
+  # TODO add attomfeed streaming - I think @pmanko is working on

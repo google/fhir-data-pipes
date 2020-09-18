@@ -14,39 +14,31 @@
 
 package org.openmrs.analytics;
 
-
-
 // Pipeline Connector configurator e.g dbz
 public class PipelineConfig {
-
-    private static final String APP_NAME = "DBZ";
-    public static final String FHIR_HANDLER_ROUTE = "direct:get-fhir";
-    public static final String EVENTS_HANDLER_ROUTE = "direct:get-events";
-
-    public static String getDebeziumConfig() {
-        return "debezium-mysql:{{database.hostname}}?"
-                + "databaseHostname={{database.hostname}}"
-                + "&databaseServerId={{database.serverId}}"
-                + "&databasePort={{database.port}}"
-                + "&databaseUser={{database.user}}"
-                + "&databasePassword={{database.password}}"
-                //+ "&name={{database.dbname}}"
-                + "&databaseServerName={{database.dbname}}"
-                + "&databaseWhitelist={{database.schema}}"
-                + "&offsetStorage=org.apache.kafka.connect.storage.FileOffsetBackingStore"
-                + "&offsetStorageFileName={{database.offsetStorage}}"
-                + "&databaseHistoryFileFilename={{database.databaseHistory}}"
-                //+ "&tableWhitelist={{database.schema}}.encounter,{{database.schema}}.obs"
-                ;
-    }
-
-    public static String getFhirConfig() {
-        return "{{openmrs.serverUrl}}{{openmrs.fhirBaseEndpoint}}${header.fhirResourceUri}" +
-                "?httpMethod=GET" +
-                "&authMethod=Basic" +
-                "&authUsername={{openmrs.username}}" +
-                "&authPassword={{openmrs.password}}" +
-                "&authenticationPreemptive=true"+
-                "&_summary=data";
-    }
+	
+	private static final String APP_NAME = "DBZ";
+	
+	public static final String FHIR_HANDLER_ROUTE = "direct:get-fhir";
+	
+	public static final String EVENTS_HANDLER_ROUTE = "direct:get-events";
+	
+	public static String getDebeziumConfig() {
+		return "debezium-mysql:{{database.hostname}}?" + "databaseHostname={{database.hostname}}"
+		        + "&databaseServerId={{database.serverId}}" + "&databasePort={{database.port}}"
+		        + "&databaseUser={{database.user}}" + "&databasePassword={{database.password}}"
+				//+ "&name={{database.dbname}}"
+		        + "&databaseServerName={{database.dbname}}" + "&databaseWhitelist={{database.schema}}"
+		        + "&offsetStorage=org.apache.kafka.connect.storage.FileOffsetBackingStore"
+		        + "&offsetStorageFileName={{database.offsetStorage}}"
+		        + "&databaseHistoryFileFilename={{database.databaseHistory}}"
+		//+ "&tableWhitelist={{database.schema}}.encounter,{{database.schema}}.obs"
+		;
+	}
+	
+	public static String getFhirConfig() {
+		return "{{openmrs.serverUrl}}{{openmrs.fhirBaseEndpoint}}${header.fhirResourceUri}" + "?httpMethod=GET"
+		        + "&authMethod=Basic" + "&authUsername={{openmrs.username}}" + "&authPassword={{openmrs.password}}"
+		        + "&authenticationPreemptive=true" + "&_summary=data";
+	}
 }

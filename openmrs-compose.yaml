@@ -1,5 +1,4 @@
-<<<<<<< HEAD
-=======
+
 # Copyright 2020 Google LLC
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -14,7 +13,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
->>>>>>> Implement a Debezium based streaming pipeline. #3
 version: '2.1'
 services:
   mysql:
@@ -34,13 +32,8 @@ services:
       - MYSQL_ROOT_HOST=%    # Allow docker containers to connect to mysql
     volumes:
       - ./utils/mysql.cnf:/etc/mysql/conf.d/custom.cnf  # mysql config preconfigured to allow binlog/debezium
-<<<<<<< HEAD
       #- ./data:/var/lib/mysql
       #- ./utils/dbdump:/docker-entrypoint-initdb.d # will execute any sql dumped here
-=======
-      - ./data:/var/lib/mysql
-      - ./utils/dbdump:/docker-entrypoint-initdb.d # will execute any sql dumped here
->>>>>>> Implement a Debezium based streaming pipeline. #3
 
   openmrs:
     restart: "always"
@@ -51,20 +44,14 @@ services:
     ports:
       - "8099:8080"
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8099/openmrs/"]
-      timeout: 20s
+      test: "exit 0"
     environment:
       DB_DATABASE: 'openmrs'
       DB_HOST: openmrs-fhir-mysql
       DB_USERNAME: 'mysqluser'
       DB_PASSWORD: 'mysqlpw'
-<<<<<<< HEAD
       DB_CREATE_TABLES: 'true'
       DB_AUTO_UPDATE: 'true'
       MODULE_WEB_ADMIN: 'true'
-=======
-      #DB_CREATE_TABLES: 'true'
-      #DB_AUTO_UPDATE: 'true'
-      #MODULE_WEB_ADMIN: 'true'
->>>>>>> Implement a Debezium based streaming pipeline. #3
       _JAVA_OPTIONS: -Xmx1g -Xms1g # change this depending on the server config
+
