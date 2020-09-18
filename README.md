@@ -19,7 +19,7 @@ to the target data warehouse.
 # Streaming mode (Atom Feed)
 This is currently implemented as a stand alone app that sits between OpenMRS and
 the data warehouse. It currently depends on the [Atom Feed module of OpenMRS](
-https://wiki.openmrs.org/display/docs/Atom+Feed+Module). Note that, to use the  [Debezium](
+https://wiki.openmrs.org/display/docs/Atom+Feed+Module). To use the  [Debezium](
 https://debezium.io/documentation/reference/1.2/connectors/mysql.html) 
 based streaming mode go to [Streaming mode (Debezium)](#streaming-mode-using-debezium) section.
 
@@ -135,8 +135,8 @@ GCP FHIR store and corresponding rows added to the BigQuery tables.
 
 # Streaming mode using Debezium
 The goal of the debezium-based streaming mode is to provide real-time downstream consumption of incremental updates, 
-regardless of whether (or not) a CRUD operation was performed using OpenMRS API, e.g.,  data cleaning, module operations,
- and data migration. It captures incremental updates from the MySQL database binlog then streams both FHIR and non-FHIR 
+even for operations that were performed outside OpenMRS API, e.g.,  data cleaning, module operations,
+ and data syncing/migration. It captures incremental updates from the MySQL database binlog then streams both FHIR and non-FHIR 
  data for downstream consumption. 
 It is not based on Hibernate Interceptor or Event Module; therefore, all events are captured from day 0 and can be used 
 independently without the need for a batch pipeline. 

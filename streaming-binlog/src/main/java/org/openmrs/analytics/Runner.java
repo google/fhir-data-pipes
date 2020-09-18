@@ -16,19 +16,17 @@ package org.openmrs.analytics;
 
 import org.apache.camel.main.Main;
 
-/**
- * A streaming engine that captures incremental updates an OpenMRS mysql db server and translates the
- * changes in OpenMRS to FHIR resources that are exported to GCP FHIR store.
- */
+ // A streaming engine that captures incremental updates an OpenMRS mysql db server and translates the
+ // changes in OpenMRS to FHIR resources that are exported to GCP FHIR store.
 public class Runner {
     private static final Main MAIN = new Main();
-    /**
-     * Main method that starts the streaming pipeline.
-     *
-     * @param args Arguments passed to the app.
-     */
+    // Main method that starts the streaming pipeline.
     public static void main( String[] args ) throws Exception {
         MAIN.addRouteBuilder(DebeziumListener.class);
+        // and enable graceful hangup support when container/process is shutdown
+        MAIN.enableHangupSupport();
+        // echo to console how to terminate
+        System.out.println("\n\nThe pipeline in now running. You can press ctrl + c to stop.\n\n");
         MAIN.run();
 
     }

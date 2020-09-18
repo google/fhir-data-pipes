@@ -20,8 +20,8 @@
   xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
   <artifactId>fhir-binlog-streaming-etl</artifactId>
-  <name>OpenMRS ELT Streaming Pipeline</name>
-  <version>1.0.0-SNAPSHOT</version>
+  <name>fhir-binlog-streaming-etl</name>
+  <version>0.1.0-SNAPSHOT</version>
 
   <parent>
     <groupId>org.openmrs.analytics</groupId>
@@ -111,6 +111,10 @@
     </dependency>
     <dependency>
       <groupId>org.apache.camel</groupId>
+      <artifactId>camel-test</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.camel</groupId>
       <artifactId>camel-debezium-mysql</artifactId>
     </dependency>
     <dependency>
@@ -131,7 +135,6 @@
       <version>4.2.0</version>
       <scope>compile</scope>
     </dependency>
-
   </dependencies>
 
   <build>

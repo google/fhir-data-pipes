@@ -44,7 +44,6 @@ services:
     network_mode: host
     healthcheck:
       test: "exit 0"
-   
     volumes:
       - ./dbz:/tmp
     environment:

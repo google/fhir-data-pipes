@@ -22,22 +22,24 @@ import org.apache.camel.component.debezium.DebeziumConstants;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-/**
- * A Debezium events to FHIR URI mapper
- * can be configured to use the utils/fhir2_atom_feed_config.json mapper
- */
+
+ // A Debezium events to FHIR URI mapper
 public class FhirUriGenerator implements Processor {
 
-    private static final Logger LOG = LoggerFactory.getLogger(DebeziumListener.class);
+    private static final Logger log = LoggerFactory.getLogger(DebeziumListener.class);
     private static final String EXPECTED_BODY_FORMAT = "{\"fhirResourceUri\":%s}";
 
     public void process(Exchange exchange) throws Exception {
         final Map payload = exchange.getMessage().getBody(Map.class);
-        final String headerIdentifier = exchange.getMessage().getHeader(DebeziumConstants.HEADER_IDENTIFIER, String.class);
-        final String table = headerIdentifier.substring(headerIdentifier.lastIndexOf('.') + 1).trim();
-
-        LOG.info("Processing Table --> " +table );
-        // TODO make this configurable using utils/fhir2_atom_feed_config.json
+        final Map sourceMetadata = exchange.getMessage().getHeader(DebeziumConstants.HEADER_SOURCE_METADATA, Map.class);
+        // for malformed event, return null
+        if (sourceMetadata==null || payload==null) {
+            exchange.getIn().setHeader("fhirResourceUri", null);
+            return;
+        }
+        final String table = sourceMetadata.get("table").toString();
+        log.info("Processing Table --> " +table );
+        // TODO make this configurable e.g using utils/fhir2_atom_feed_config.json
         switch (table) {
             case "obs":
                 exchange.getIn().setHeader("fhirResourceUri", "/Observation/"+payload.get("uuid").toString());
@@ -89,7 +91,8 @@ public class FhirUriGenerator implements Processor {
                 break;
             default:
                 // TODO Implement ALL FHIR classes
-                LOG.trace("Unknown Data..."  +table);
+                exchange.getIn().setHeader("fhirResourceUri",null);
+                log.trace("Unknown Data..."  +table);
         }
     }
 }
