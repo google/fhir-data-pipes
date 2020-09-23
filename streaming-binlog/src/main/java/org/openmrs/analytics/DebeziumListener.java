@@ -20,13 +20,9 @@ import static org.openmrs.analytics.PipelineConfig.FHIR_HANDLER_ROUTE;
 import static org.openmrs.analytics.PipelineConfig.getDebeziumConfig;
 import static org.openmrs.analytics.PipelineConfig.getFhirConfig;
 
-import java.util.Map;
-
 import io.debezium.data.Envelope;
-import org.apache.camel.Exchange;
 import org.apache.camel.LoggingLevel;
 import org.apache.camel.Predicate;
-import org.apache.camel.Processor;
 import org.apache.camel.builder.RouteBuilder;
 import org.apache.camel.component.debezium.DebeziumConstants;
 import org.apache.camel.model.dataformat.JsonLibrary;
@@ -37,9 +33,6 @@ import org.slf4j.LoggerFactory;
 public class DebeziumListener extends RouteBuilder {
 	
 	private static final Logger log = LoggerFactory.getLogger(DebeziumListener.class);
-	
-	// FhirStore
-	private static final FhirStoreUtil FHIR_STORE_UTIL = new FhirStoreUtil(System.getProperty("cloud.gcpFhirStore"));
 	
 	@Override
 	public void configure() throws Exception {
@@ -81,19 +74,7 @@ public class DebeziumListener extends RouteBuilder {
 		        .log(LoggingLevel.INFO, "FHIR GET Operation Completed ---> ${header.fhirResourceUri}")
 		        .filter(body().isNotNull())// Filter non-Fhir uri
 		        .unmarshal().json(JsonLibrary.Jackson).log(LoggingLevel.TRACE, "unmarshalled FHIR ${body}")
-		        // Send to cloud TODO implement sink to local & TODO put this in its own class
-		        .process(new Processor() {
-			        
-			        @Override
-			        public void process(Exchange exchange) throws Exception {
-				        final Map kv = exchange.getMessage().getBody(Map.class);
-				        String resourceType = kv.get("resourceType").toString();
-				        String id = kv.get("id").toString();
-				        String fhirJson = exchange.getMessage().getBody(String.class);
-				        log.info("Sinking FHIR to Cloud ----> " + kv.get("resourceType") + "/" + kv.get("id"));
-				        FHIR_STORE_UTIL.uploadResourceToCloud(resourceType, id, fhirJson);
-			        }
-		        }).endChoice();
+		        .process(new PipelineSink()).endChoice();
 		
 	}
 }

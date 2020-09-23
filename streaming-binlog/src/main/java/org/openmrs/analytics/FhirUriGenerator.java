@@ -25,7 +25,7 @@ import org.slf4j.LoggerFactory;
 // A Debezium events to FHIR URI mapper
 public class FhirUriGenerator implements Processor {
 	
-	private static final Logger log = LoggerFactory.getLogger(DebeziumListener.class);
+	private static final Logger log = LoggerFactory.getLogger(FhirUriGenerator.class);
 	
 	private static final String EXPECTED_BODY_FORMAT = "{\"fhirResourceUri\":%s}";
 	
