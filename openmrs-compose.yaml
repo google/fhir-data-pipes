@@ -17,8 +17,8 @@ services:
       - MYSQL_ROOT_HOST=%    # Allow docker containers to connect to mysql
     volumes:
       - ./utils/mysql.cnf:/etc/mysql/conf.d/custom.cnf  # mysql config preconfigured to allow binlog/debezium
-      - ./data:/var/lib/mysql
-      - ./utils/dbdump:/docker-entrypoint-initdb.d # will execute any sql dumped here
+      #- ./data:/var/lib/mysql
+      #- ./utils/dbdump:/docker-entrypoint-initdb.d # will execute any sql dumped here
 
   openmrs:
     restart: "always"
@@ -36,7 +36,7 @@ services:
       DB_HOST: openmrs-fhir-mysql
       DB_USERNAME: 'mysqluser'
       DB_PASSWORD: 'mysqlpw'
-      #DB_CREATE_TABLES: 'true'
-      #DB_AUTO_UPDATE: 'true'
-      #MODULE_WEB_ADMIN: 'true'
+      DB_CREATE_TABLES: 'true'
+      DB_AUTO_UPDATE: 'true'
+      MODULE_WEB_ADMIN: 'true'
       _JAVA_OPTIONS: -Xmx1g -Xms1g # change this depending on the server config
