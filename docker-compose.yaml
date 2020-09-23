@@ -1,0 +1,20 @@
+version: '2.1'
+services:
+  batch-cloud:
+    #restart: "always"
+    network_mode: host
+    image: openmrs-fhir-analytics/batch-job:latest
+    container_name: batch-cloud
+    build:
+      context: batch
+    healthcheck:
+      test: "exit 0"
+    environment:
+     - GCP_FHIR_STORE=projects/PROJECT/locations/LOCATION/datasets/DATASET/fhirStores/FHIRSTORENAME
+     - JSESSION_ID=2CA8302303E689723100D50545BFB669 # TODO replace with basic auth implementation by @pmanko
+     - SERVER_URL=http://localhost:8099/openmrs
+     - SEARCH_LIST=Patient,Encounter,Observation
+     - BATCH_SIZE=20
+     - TARGET_PARALLELISM=20
+
+# TODO add streaming - I think @pmanko is working on
