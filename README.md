@@ -16,12 +16,12 @@ resources and upload them to the target data warehouse.
 content of OpenMRS MySQL database, transform it into FHIR resources, and upload
 to the target data warehouse.
 
-# Streaming mode
+# Streaming mode (Atom Feed)
 This is currently implemented as a stand alone app that sits between OpenMRS and
 the data warehouse. It currently depends on the [Atom Feed module of OpenMRS](
-https://wiki.openmrs.org/display/docs/Atom+Feed+Module). Note that this may
-change in near future by using [MySQL binlog and Debezium](
-https://debezium.io/documentation/reference/1.2/connectors/mysql.html).
+https://wiki.openmrs.org/display/docs/Atom+Feed+Module). To use the  [Debezium](
+https://debezium.io/documentation/reference/1.2/connectors/mysql.html) 
+based streaming mode go to [Streaming mode (Debezium)](#streaming-mode-using-debezium) section.
 
 The source of data is OpenMRS and the only sink currently implemented is
 [GCP FHIR store](https://cloud.google.com/healthcare/docs/concepts/fhir) and
@@ -75,12 +75,12 @@ OR
 ## Set up the Atom Feed client side database
 Assuming that you have MySQL running on the default port 3306, simply run:
 
-`mysql --user=USER --password=PASSWORD < utils/create_db.sql`
+`mysql --user=USER --password=PASSWORD < utils/dbdump/create_db.sql`
 
 This will create a database called `atomfeed_client` with required tables (the
 `USER` should have permission to create databases). If you want to change the
-default database name `atomfeed_client`, you can edit [`utils/create_db.sql`](
-utils/create_db.sql) but then you need to change the database name in
+default database name `atomfeed_client`, you can edit [`utils/dbdump/create_db.sql`](
+utils/dbdump/create_db.sql) but then you need to change the database name in
 [`src/main/resources/hibernate.default.properties`](
 src/main/resources/hibernate.default.properties) accordingly.
 
@@ -133,6 +133,77 @@ To test your changes, create a new patient (or observation) in OpenMRS and check
 that a corresponding Patient (or Observation) FHIR resource is created in the
 GCP FHIR store and corresponding rows added to the BigQuery tables.
 
+# Streaming mode using Debezium
+The goal of the debezium-based streaming mode is to provide real-time downstream consumption of incremental updates, 
+even for operations that were performed outside OpenMRS API, e.g.,  data cleaning, module operations,
+ and data syncing/migration. It captures incremental updates from the MySQL database binlog then streams both FHIR and non-FHIR 
+ data for downstream consumption. 
+It is not based on Hibernate Interceptor or Event Module; therefore, all events are captured from day 0 and can be used 
+independently without the need for a batch pipeline. 
+  It guarantees tolerance to failure such that when the application is restarted or crashed, the pipeline will resume 
+  from the last processed offset.
+   
+### Getting Started
+
+ - Fire up OpenMRS Stack (containing FHIR2 module and demo data ~ 300,000 obs)
+
+```
+ docker-compose -f openmrs-compose.yaml up # change ports appropriately (optional)
+```
+ You should be able to  access OpenMRS via  http://localhost:8099/openmrs/ using refApp credentials i.e username is admin and password Admin123
+ 
+ 
+  - Run the streaming pipeline using default config (pointed to openmrs-compose.yaml )
+ 
+ ```
+  $ mvn clean install
+  $ mvn compile exec:java -pl streaming-binlog
+  
+ ```
+
+ - Or customize the configuration (including gcpFhirStore, OpenMRS basicAuth)
+ 
+ ```
+  $ mvn compile exec:java -pl streaming-binlog -Ddatabase.hostname=localhost -Ddatabase.port=3306 -Ddatabase.user=root -Ddatabase.password=debezium -Ddatabase.dbname=mysql -Ddatabase.schema=openmrs -Ddatabase.serverId=77 -Ddatabase.offsetStorage=offset.dat -Ddatabase.databaseHistory=dbhistory.dat -Dopenmrs.username=admin -Dopenmrs.password=Admin123 -Dopenmrs.serverUrl=http://localhost:8099 -Dopenmrs.fhirBaseEndpoint=/openmrs/ws/fhir2/R4 -Dcloud.gcpFhirStore=projects/PROJECT/locations/LOCATION/datasets/DATASET/fhirStores/FHIRSTORENAME
+ ```
+
+ 
+
+### Debezium prerequisite
+ The provided openmrs-compose.yaml (MySQL) has been configured to support debezium, however, 
+ to connect to an existing MySQl instance, you'll need to configure your DB to 
+ support row-based replication. There are a few configuration options required to ensure your database can 
+participate in emitting binlog. 
+
+- The source MySQL instance must have the following server configs set
+ to generate binary logs in a format it can be consumed:
+    - server_id = <value>
+    - log_bin = <value>
+    - binlog_format = row
+    - binlog_row_image = full
+- Depending on server defaults and table size, it may also be necessary to 
+increase the binlog retention period.
+
+An example of mysql.conf has bee provided with the above configurations
+
+```
+# ----------------------------------------------
+# Enable the binlog for replication & CDC
+# ----------------------------------------------
+
+# Enable binary replication log and set the prefix, expiration, and log format.
+# The prefix is arbitrary, expiration can be short for integration tests but would
+# be longer on a production system. Row-level info is required for ingest to work.
+# Server ID is required, but this will vary on production systems
+server-id         = 223344
+log_bin           = mysql-bin
+expire_logs_days  = 1
+binlog_format     = row
+
+```
+
+For more information, please visit https://debezium.io
+
 # Batch mode 
 The steps above for setting up a FHIR Store and a linked BigQuery dataset needs
 to be followed. Once it is done, and after `mvn install`, the pipeline can be
@@ -176,10 +247,18 @@ Remember to appropriately change other parameters such as JSESSION_ID (extracted
 
 ```
  $ mvn clean install
- $ docker-compose up -d  or docker-compose up 
+ $ docker-compose up --build batch
 
 ``` 
-#### 4. Fire up Streaming Pipeline
+
+#### 5. Fire up Streaming Pipeline (Debezium)
+
+```
+ $ mvn clean install
+ $ docker-compose up --build streaming-binlog
+```
+
+#### 6. Fire up Streaming Pipeline (Atomfeed)
 
 TODO
  

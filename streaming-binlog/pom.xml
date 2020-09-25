@@ -1,0 +1,235 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+ Copyright 2020 Google LLC
+
+ Licensed under the Apache License, Version 2.0 (the "License");
+ you may not use this file except in compliance with the License.
+ You may obtain a copy of the License at
+
+      http://www.apache.org/licenses/LICENSE-2.0
+
+ Unless required by applicable law or agreed to in writing, software
+ distributed under the License is distributed on an "AS IS" BASIS,
+ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ See the License for the specific language governing permissions and
+ limitations under the License.
+-->
+
+
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+  <artifactId>fhir-binlog-streaming-etl</artifactId>
+  <name>fhir-binlog-streaming-etl</name>
+  <version>0.1.0-SNAPSHOT</version>
+
+  <parent>
+    <groupId>org.openmrs.analytics</groupId>
+    <artifactId>fhir</artifactId>
+    <version>0.1.0-SNAPSHOT</version>
+  </parent>
+
+
+  <properties>
+    <!--Default settings used during development for IDE debugging capabilities-->
+    <database.hostname>localhost</database.hostname>
+    <database.port>3306</database.port>
+    <database.user>root</database.user>
+    <database.password>debezium</database.password>
+    <database.dbname>mysql</database.dbname>
+    <database.schema>openmrs</database.schema>
+    <database.serverId>77</database.serverId>
+    <database.offsetStorage>data/dbhistory.dat</database.offsetStorage>
+    <database.databaseHistory>data/offset.dat</database.databaseHistory>
+    <!--<table.whitelist>openmrs.obs,openmrs.encounter</table.whitelist>-->
+
+    <openmrs.username>admin</openmrs.username>
+    <openmrs.password>Admin123</openmrs.password>
+    <openmrs.serverUrl>http://localhost:8099</openmrs.serverUrl>
+    <openmrs.fhirBaseEndpoint>/openmrs/ws/fhir2/R4</openmrs.fhirBaseEndpoint>
+    <cloud.gcpFhirStore>projects/PROJECT/locations/LOCATION/datasets/DATASET/fhirStores/FHIRSTORENAME</cloud.gcpFhirStore>
+
+    <mysql.init.timeout>30000</mysql.init.timeout>
+
+    <version.camel>3.2.0</version.camel>
+    <version.debezium>1.0.0.Final</version.debezium>
+    <version.debezium.tag>1.0</version.debezium.tag>
+    <version.mysql.driver>8.0.15</version.mysql.driver>
+    <version.quarkus>1.2.0.Final</version.quarkus>
+    <version.jackson>2.9.1</version.jackson>
+    <version.kafka>2.4.0</version.kafka>
+    <version.plugin.docker>0.31.0</version.plugin.docker>
+    <version.plugin.shade>3.2.1</version.plugin.shade>
+  </properties>
+
+  <dependencyManagement>
+    <dependencies>
+      <dependency>
+        <groupId>org.apache.camel</groupId>
+        <artifactId>camel-bom</artifactId>
+        <version>${version.camel}</version>
+        <type>pom</type>
+        <scope>import</scope>
+      </dependency>
+
+      <!-- Use required Debezium version -->
+      <dependency>
+        <groupId>io.debezium</groupId>
+        <artifactId>debezium-connector-mysql</artifactId>
+        <version>${version.debezium}</version>
+      </dependency>
+      <dependency>
+        <groupId>io.debezium</groupId>
+        <artifactId>debezium-embedded</artifactId>
+        <version>${version.debezium}</version>
+      </dependency>
+      <dependency>
+        <groupId>mysql</groupId>
+        <artifactId>mysql-connector-java</artifactId>
+        <version>${version.mysql.driver}</version>
+      </dependency>
+    </dependencies>
+  </dependencyManagement>
+
+  <dependencies>
+    <dependency>
+      <groupId>${project.parent.groupId}</groupId>
+      <artifactId>fhir-common</artifactId>
+      <version>${project.parent.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.camel</groupId>
+      <artifactId>camel-main</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.camel</groupId>
+      <artifactId>camel-core</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.camel</groupId>
+      <artifactId>camel-jackson</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.camel</groupId>
+      <artifactId>camel-test</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.camel</groupId>
+      <artifactId>camel-debezium-mysql</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.camel</groupId>
+      <artifactId>camel-http</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>mysql</groupId>
+      <artifactId>mysql-connector-java</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.camel</groupId>
+      <artifactId>camel-jackson</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>ca.uhn.hapi.fhir</groupId>
+      <artifactId>hapi-fhir-base</artifactId>
+      <version>4.2.0</version>
+      <scope>compile</scope>
+    </dependency>
+  </dependencies>
+
+  <build>
+    <pluginManagement>
+      <plugins>
+        <plugin>
+          <groupId>org.codehaus.mojo</groupId>
+          <artifactId>exec-maven-plugin</artifactId>
+          <version>1.6.0</version>
+        </plugin>
+      </plugins>
+    </pluginManagement>
+    <plugins>
+
+      <!-- Allows the example to be run via IDE or 'mvn compile exec:java -pl streaming-binlog/' -->
+      <plugin>
+        <groupId>org.codehaus.mojo</groupId>
+        <artifactId>exec-maven-plugin</artifactId>
+        <configuration>
+          <mainClass>org.openmrs.analytics.Runner</mainClass>
+          <includePluginDependencies>false</includePluginDependencies>
+          <systemProperties>
+            <systemProperty>
+              <key>database.hostname</key>
+              <value>${database.hostname}</value>
+            </systemProperty>
+            <systemProperty>
+              <key>database.port</key>
+              <value>${database.port}</value>
+            </systemProperty>
+            <systemProperty>
+              <key>database.user</key>
+              <value>${database.user}</value>
+            </systemProperty>
+            <systemProperty>
+              <key>database.password</key>
+              <value>${database.password}</value>
+            </systemProperty>
+            <systemProperty>
+              <key>database.dbname</key>
+              <value>${database.dbname}</value>
+            </systemProperty>
+            <systemProperty>
+              <key>database.schema</key>
+              <value>${database.schema}</value>
+            </systemProperty>
+            <systemProperty>
+              <key>database.serverId</key>
+              <value>${database.serverId}</value>
+            </systemProperty>
+            <systemProperty>
+              <key>database.offsetStorage</key>
+              <value>${database.offsetStorage}</value>
+            </systemProperty>
+            <systemProperty>
+              <key>database.databaseHistory</key>
+              <value>${database.databaseHistory}</value>
+            </systemProperty>
+            <systemProperty>
+              <key>openmrs.username</key>
+              <value>${openmrs.username}</value>
+            </systemProperty>
+            <systemProperty>
+              <key>openmrs.password</key>
+              <value>${openmrs.password}</value>
+            </systemProperty>
+            <systemProperty>
+              <key>openmrs.serverUrl</key>
+              <value>${openmrs.serverUrl}</value>
+            </systemProperty>
+            <systemProperty>
+              <key>openmrs.fhirBaseEndpoint</key>
+              <value>${openmrs.fhirBaseEndpoint}</value>
+            </systemProperty>
+            <systemProperty>
+              <key>cloud.gcpFhirStore</key>
+              <value>${cloud.gcpFhirStore}</value>
+            </systemProperty>
+          </systemProperties>
+        </configuration>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-dependency-plugin</artifactId>
+        <executions>
+          <execution>
+            <id>copy-dependencies</id>
+            <phase>package</phase>
+            <goals>
+              <goal>copy-dependencies</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
+    </plugins>
+  </build>
+</project>

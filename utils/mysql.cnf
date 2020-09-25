@@ -60,5 +60,3 @@ server-id         = 223344
 log_bin           = mysql-bin
 expire_logs_days  = 1
 binlog_format     = row
-
-max_allowed_packet=5G
