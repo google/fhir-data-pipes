@@ -511,13 +511,6 @@
 		</dependency>
 
 		<dependency>
-			<groupId>org.mockito</groupId>
-			<artifactId>mockito-core</artifactId>
-			<version>${mockito.version}</version>
-			<scope>test</scope>
-		</dependency>
-
-		<dependency>
 			<groupId>${project.parent.groupId}</groupId>
 			<artifactId>fhir-common</artifactId>
 			<version>${project.parent.version}</version>

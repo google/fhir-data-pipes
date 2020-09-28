@@ -25,7 +25,7 @@ import org.slf4j.LoggerFactory;
 
 public class OpenmrsUtil {
 	
-	protected static final Logger log = LoggerFactory.getLogger(OpenmrsUtil.class);
+	private static final Logger log = LoggerFactory.getLogger(OpenmrsUtil.class);
 	
 	private final String fhirUrl;
 	

@@ -32,7 +32,7 @@ public class FhirStreaming {
 	// TODO: set as arg or env variable? using constant for simplicity
 	private static final String FEED_ENDPOINT = "/ws/atomfeed";
 	
-	private static final String FHIR_ENDPOINT = "/ws/atomfeed";
+	private static final String FHIR_ENDPOINT = "/ws/fhir2/R4";
 	
 	private static String sourceUrl;
 	

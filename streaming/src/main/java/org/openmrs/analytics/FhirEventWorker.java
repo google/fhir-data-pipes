@@ -52,9 +52,6 @@ public class FhirEventWorker<T extends BaseResource> implements EventWorker {
 				return;
 			}
 			
-			if (!fhirUrl.contains("fhir2"))
-				fhirUrl = fhirUrl.replace("/fhir", "/fhir2/R4");
-			
 			log.info("FHIR resource URL is: " + fhirUrl);
 			T resource = (T) openmrsUtil.fetchFhirResource(fhirUrl);
 			String resourceId = resource.getIdElement().getResourceType() + "/" + resource.getIdElement().getIdPart();

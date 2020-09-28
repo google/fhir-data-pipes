@@ -107,6 +107,11 @@ public class FhirStoreUtil {
 		}
 	}
 	
+	// TODO: merge the two versions of this method
+	public void uploadResourceToCloud(String resourceType, String resourceId, String fhirJson) {
+		uploadResourceToCloud(resourceId, (Resource) fhirContext.newJsonParser().parseResource(fhirJson));
+	}
+	
 	private void updateFhirResource(String fhirStoreName, String resourceId, Resource resource)
 	        throws IOException, URISyntaxException {
 		// Initialize the client, which will be used to interact with the service.
@@ -165,4 +170,5 @@ public class FhirStoreUtil {
 		        .createScoped(Collections.singleton(CloudHealthcareScopes.CLOUD_PLATFORM));
 		return credential;
 	}
+	
 }
