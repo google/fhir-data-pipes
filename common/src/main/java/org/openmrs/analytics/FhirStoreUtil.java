@@ -95,9 +95,9 @@ public class FhirStoreUtil {
 	
 	// This follows the examples at:
 	// https://github.com/GoogleCloudPlatform/java-docs-samples/healthcare/tree/master/healthcare/v1
-	public void uploadResourceToCloud(String resourceId, Resource resource) {
+	public void uploadResourceToCloud(String resourceType, String resourceId, Resource resource) {
 		try {
-			updateFhirResource(gcpFhirStore, resourceId, resource);
+			updateFhirResource(gcpFhirStore, resourceId, resourceType, resource);
 		}
 		catch (IOException e) {
 			log.error(String.format("IOException while using Google APIs: %s", e.toString()));
@@ -109,15 +109,14 @@ public class FhirStoreUtil {
 	
 	// TODO: merge the two versions of this method
 	public void uploadResourceToCloud(String resourceType, String resourceId, String fhirJson) {
-		uploadResourceToCloud(resourceId, (Resource) fhirContext.newJsonParser().parseResource(fhirJson));
+		uploadResourceToCloud(resourceType, resourceId, (Resource) fhirContext.newJsonParser().parseResource(fhirJson));
 	}
 	
-	private void updateFhirResource(String fhirStoreName, String resourceId, Resource resource)
+	private void updateFhirResource(String fhirStoreName, String resourceId, String resourceType, Resource resource)
 	        throws IOException, URISyntaxException {
 		// Initialize the client, which will be used to interact with the service.
 		CloudHealthcare client = createClient();
-		String uri = String.format("%sv1/%s/fhir/%s/%s", client.getRootUrl(), fhirStoreName, resource.getResourceType(),
-		    resourceId);
+		String uri = String.format("%sv1/%s/fhir/%s/%s", client.getRootUrl(), fhirStoreName, resourceType, resourceId);
 		URIBuilder uriBuilder = new URIBuilder(uri);
 		log.info(String.format("Full URL is: %s", uriBuilder.build()));
 		

@@ -54,11 +54,12 @@ public class FhirEventWorker<T extends BaseResource> implements EventWorker {
 			
 			log.info("FHIR resource URL is: " + fhirUrl);
 			T resource = (T) openmrsUtil.fetchFhirResource(fhirUrl);
-			String resourceId = resource.getIdElement().getResourceType() + "/" + resource.getIdElement().getIdPart();
+			String resourceId = resource.getIdElement().getIdPart();
+			String resourceType = resource.getIdElement().getResourceType();
 			
-			log.info(String.format("Parsed FHIR resource ID is %s", resourceId));
+			log.info(String.format("Parsed FHIR resource ID is %s/%s", resourceId, resourceType));
 			
-			fhirStoreUtil.uploadResourceToCloud(resourceId, (Resource) resource);
+			fhirStoreUtil.uploadResourceToCloud(resourceType, resourceId, (Resource) resource);
 		}
 		catch (JsonParseException e) {
 			log.error(String.format("Error parsing event %s with error %s", event.toString(), e.toString()));

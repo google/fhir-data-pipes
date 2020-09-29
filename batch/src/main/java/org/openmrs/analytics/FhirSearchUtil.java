@@ -91,7 +91,8 @@ public class FhirSearchUtil {
 	public void uploadBundleToCloud(Bundle bundle) {
 		for (BundleEntryComponent entry : bundle.getEntry()) {
 			Resource resource = entry.getResource();
-			fhirStoreUtil.uploadResourceToCloud(resource.getIdElement().getIdPart(), resource);
+			fhirStoreUtil.uploadResourceToCloud(resource.getIdElement().getResourceType(),
+			    resource.getIdElement().getIdPart(), resource);
 		}
 	}
 	
