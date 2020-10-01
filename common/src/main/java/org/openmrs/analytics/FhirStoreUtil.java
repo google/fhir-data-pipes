@@ -95,6 +95,7 @@ public class FhirStoreUtil {
 	
 	// This follows the examples at:
 	// https://github.com/GoogleCloudPlatform/java-docs-samples/healthcare/tree/master/healthcare/v1
+	// TODO: remove redundant resource information if passing a HAPI resource
 	public void uploadResourceToCloud(String resourceType, String resourceId, Resource resource) {
 		try {
 			updateFhirResource(gcpFhirStore, resourceId, resourceType, resource);
@@ -107,7 +108,7 @@ public class FhirStoreUtil {
 		}
 	}
 	
-	// TODO: merge the two versions of this method
+	// TODO: merge the two versions of this method to remove redundant resource info
 	public void uploadResourceToCloud(String resourceType, String resourceId, String fhirJson) {
 		uploadResourceToCloud(resourceType, resourceId, (Resource) fhirContext.newJsonParser().parseResource(fhirJson));
 	}

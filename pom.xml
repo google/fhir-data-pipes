@@ -97,12 +97,7 @@
 				<version>${mockito.version}</version>
         <scope>test</scope>
 			</dependency>
-      
-      <dependency>
-        <groupId>org.openmrs.api</groupId>
-        <artifactId>openmrs-api</artifactId>
-        <version>${openmrsPlatformVersion}</version>
-      </dependency>
+
 		</dependencies>
 	</dependencyManagement>
 
