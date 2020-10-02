@@ -73,7 +73,11 @@ OR
 `http://localhost:9016/openmrs/ws/atomfeed/observation/1`
 
 ## Set up the Atom Feed client side database
-Assuming that you have MySQL running on the default port 3306, simply run:
+The Atomfeed client requires a database to store failed event and marker information, and we'll
+use MySQL for this purpose. If you don't have an available MySQL service, you can start one up using docker:
+`docker run -e "MYSQL_ROOT_PASSWORD=root" -p 127.0.0.1:3306:3306 --name=atomfeed-db -d mysql/mysql-server:latest`
+
+Now you should have MySQL running on the default port 3306, and can run:
 
 `mysql --user=USER --password=PASSWORD < utils/dbdump/create_db.sql`
 
@@ -85,20 +89,33 @@ utils/dbdump/create_db.sql) but then you need to change the database name in
 src/main/resources/hibernate.default.properties) accordingly.
 
 ## Create the sink FHIR store and BigQuery dataset
-First you need to create a GCP project. Then create a Google
-Cloud Healthcare dataset and a BigQuery dataset with the same name in that
-project (for an overview of projects, datasets and data stores check [this](
-https://cloud.google.com/healthcare/docs/concepts/projects-datasets-data-stores)
-document). Once that is done, use the script
-[`utils/create_fhir_store.sh`](utils/create_fhir_store.sh) to create
+To set up GCP project that you can use as a sink FHIR store:
+
+- Create a new project in [GCP](https://console.cloud.google.com). For an overview of projects, datasets and data stores check [this document](https://cloud.google.com/healthcare/docs/concepts/projects-datasets-data-stores).
+- Enable Google Cloud Healthcare API in the project and create a Google Cloud Healthcare dataset
+- Create a FHIR data store in the dataset with the R4 FHIR version
+- Enable the BigQuery API in the project and dataset with the same name in the project
+- Download, install, and initialize the `gcloud` cli: https://cloud.google.com/sdk/docs/quickstart
+- Make sure you can authenticate with the project using the CLI: https://developers.google.com/identity/sign-in/web/sign-in
+  * `gcloud init`
+  * `gcloud auth application-default login`
+  * Create a service account for the project, generate a key, and save it securely locally
+  * Add the `bigquery.dataEditor` and `bigquery.jobUser` roles to the project in the `IAM & Admin`/`Roles` settings or using the cli:
+    - `gcloud projects add-iam-policy-binding openmrs-260803 --role roles/bigquery.admin --member serviceAccount:openmrs-fhir-analytics@openmrs-260803.iam.gserviceaccount.com`
+    - `gcloud projects add-iam-policy-binding openmrs-260803 --role roles/healthcare.datasetAdmin --member serviceAccount:openmrs-fhir-analytics@openmrs-260803.iam.gserviceaccount.com`
+  * Activate the service account for your project using `gcloud auth activate-service-account <your-service-account> --key-file=<your-key-file> --project=<your project>`
+  * Set the `GOOGLE_APPLICATION_CREDENTIALS` environment variable: https://cloud.google.com/docs/authentication/getting-started#setting_the_environment_variable
+ 
+7. Use the script [`utils/create_fhir_store.sh`](utils/create_fhir_store.sh) to create
 a FHIR store in this dataset which stream the changes to the BigQuery dataset
 as well:
+  `./utils/create_fhir_store.sh PROJECT LOCATION DATASET FHIR-STORE-NAME`
+  - `PROJECT` is your GCP project.
+  - `LOCATION` is GCP location where your dataset resides, e.g., `us-central1`.
+  - `DATASET` is the name of the dataset you created.
+  - `FHIR-STORE-NAME` is what it says.
 
-`./utils/create_fhir_store.sh PROJECT LOCATION DATASET FHIR-STORE-NAME`
-- `PROJECT` is your GCP project.
-- `LOCATION` is GCP location where your dataset resides, e.g., `us-central1`.
-- `DATASET` is the name of the dataset you created.
-- `FHIR-STORE-NAME` is what it says.
+  *Note: If you get `PERMISSION_DENIED` errors, make sure to `IAM & ADMIN`/`IAM`/`Members` and add the `bigquery.dataEditor` and `bigquery.jobUser` roles to the `Cloud Healthcare Service Agent` service account that shows up.*
 
 You can run the script with no arguments to see a sample usage. After you create
 the FHIR store, its full URL would be:
@@ -115,15 +132,11 @@ and then:
 ```
 mvn exec:java -pl streaming \
   -Dexec.mainClass=org.openmrs.analytics.FhirStreaming \`
-  -Dexec.args="http://localhost:9016/openmrs JSESSIONID GCP_FHIR_STORE"`
+  -Dexec.args="OPENMRS_URL OPENMRS_USER/OPENMRS_PASSWORD GCP_FHIR_STORE"`
 ```
 
-- `JSESSIONID` is the value of a browser cookie with the same name that is
-created by OpenMRS. After logging into your OpenMRS instance (e.g.,
-`http://localhost:9016/openmrs` in this case), grab the value of `JSESSIONID`
-cookie to pass to `FhirStreaming` binary. It is a hexadecimal string like:
-`512F6DC48352022DBB8916CCB999B8A5`.
-
+- `OPENMRS_URL` is the path to your source OpenMRS instance (e.g., `http://localhost:9016/openmrs` in this case)
+-  `OPENMRS_USER/OPENMRS_PASSWORD` is the username/password combination for accessing the OpenMRS APIs using BasicAuth.
 - `GCP_FHIR_STORE` is the relative path of the FHIR store you set up in the
 previous step, i.e., something like:
 `projects/PROJECT/locations/LOCATION/datasets/DATASET/fhirStores/FHIR-STORE-NAME`

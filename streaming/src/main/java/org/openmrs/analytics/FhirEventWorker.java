@@ -14,17 +14,11 @@
 
 package org.openmrs.analytics;
 
-import java.net.URISyntaxException;
-
-import ca.uhn.fhir.context.FhirContext;
-import ca.uhn.fhir.parser.IParser;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
 import com.google.gson.JsonParser;
-import org.apache.http.client.methods.HttpUriRequest;
-import org.apache.http.client.methods.RequestBuilder;
-import org.apache.http.client.utils.URIBuilder;
 import org.hl7.fhir.r4.model.BaseResource;
+import org.hl7.fhir.r4.model.Resource;
 import org.ict4h.atomfeed.client.domain.Event;
 import org.ict4h.atomfeed.client.service.EventWorker;
 import org.slf4j.Logger;
@@ -34,52 +28,17 @@ public class FhirEventWorker<T extends BaseResource> implements EventWorker {
 	
 	private static final Logger log = LoggerFactory.getLogger(FhirEventWorker.class);
 	
-	private String feedBaseUrl;
+	private final FhirStoreUtil fhirStoreUtil;
 	
-	private String jSessionId;
+	private final OpenmrsUtil openmrsUtil;
 	
-	private String resourceType;
-	
-	private Class<T> resourceClass;
-	
-	private FhirContext fhirContext = FhirContext.forR4();
-	
-	private FhirStoreUtil fhirStoreUtil;
-	
-	FhirEventWorker(String feedBaseUrl, String jSessionId, String resourceType, Class<T> resourceClass,
-	    String gcpFhirStore) {
-		this.feedBaseUrl = feedBaseUrl;
-		this.jSessionId = jSessionId;
-		this.resourceType = resourceType;
-		this.resourceClass = resourceClass;
-		// TODO inject dependency.
-		this.fhirStoreUtil = new FhirStoreUtil(gcpFhirStore);
-	}
-	
-	private String fetchFhirResource(String urlStr) {
-		try {
-			URIBuilder uriBuilder = new URIBuilder(urlStr);
-			HttpUriRequest request = RequestBuilder.get().setUri(uriBuilder.build())
-			        .addHeader("Content-Type", "application/fhir+json").addHeader("Accept-Charset", "utf-8")
-			        .addHeader("Accept", "application/fhir+json")
-			        // TODO(bashir2): Switch to BasicAuth instead of relying on cookies.
-			        .addHeader("Cookie", "JSESSIONID=" + this.jSessionId).build();
-			return fhirStoreUtil.executeRequest(request);
-		}
-		catch (URISyntaxException e) {
-			log.error("Malformed FHIR url: " + urlStr + " exception: " + e);
-			return "";
-		}
-	}
-	
-	private T parserFhirJson(String fhirJson) {
-		IParser parser = fhirContext.newJsonParser();
-		return parser.parseResource(resourceClass, fhirJson);
+	public FhirEventWorker(FhirStoreUtil fhirStoreUtil, OpenmrsUtil openmrsUtil) {
+		this.fhirStoreUtil = fhirStoreUtil;
+		this.openmrsUtil = openmrsUtil;
 	}
 	
 	@Override
 	public void process(Event event) {
-		log.info("In process for event: " + event);
 		String content = event.getContent();
 		if (content == null || "".equals(content)) {
 			log.warn("No content in event: " + event);
@@ -92,15 +51,16 @@ public class FhirEventWorker<T extends BaseResource> implements EventWorker {
 				log.info("Skipping non-FHIR event " + event);
 				return;
 			}
+			
 			log.info("FHIR resource URL is: " + fhirUrl);
-			String fhirJson = fetchFhirResource(feedBaseUrl + fhirUrl);
-			log.info("Fetched FHIR resource: " + fhirJson);
-			// Creating this resource is not really needed for the current purpose as we can simply
-			// send the JSON payload to GCP FHIR store. This is kept for demonstration purposes.
-			T resource = parserFhirJson(fhirJson);
+			T resource = (T) openmrsUtil.fetchFhirResource(fhirUrl);
 			String resourceId = resource.getIdElement().getIdPart();
-			log.info(String.format("Parsed FHIR resource ID is %s and IdBase is %s", resourceId, resource.getIdBase()));
-			fhirStoreUtil.uploadResourceToCloud(this.resourceType, resourceId, fhirJson);
+			String resourceType = resource.getIdElement().getResourceType();
+			
+			log.info(String.format("Parsed FHIR resource ID is %s/%s", resourceId, resourceType));
+
+			// TODO: remove redundant resource information
+			fhirStoreUtil.uploadResourceToCloud(resourceType, resourceId, (Resource) resource);
 		}
 		catch (JsonParseException e) {
 			log.error(String.format("Error parsing event %s with error %s", event.toString(), e.toString()));

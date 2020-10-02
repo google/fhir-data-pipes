@@ -14,8 +14,6 @@
 
 package org.openmrs.analytics;
 
-// import com.google.auth.http.HttpCredentialsAdapter;
-// import com.google.auth.oauth2.GoogleCredentials;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.net.URISyntaxException;
@@ -24,6 +22,7 @@ import java.util.Collections;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import ca.uhn.fhir.context.FhirContext;
 import com.google.api.client.googleapis.auth.oauth2.GoogleCredential;
 import com.google.api.client.http.HttpRequest;
 import com.google.api.client.http.HttpRequestInitializer;
@@ -40,12 +39,17 @@ import org.apache.http.client.methods.RequestBuilder;
 import org.apache.http.client.utils.URIBuilder;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.HttpClients;
+import org.hl7.fhir.r4.model.Resource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class FhirStoreUtil {
 	
 	private static final Logger log = LoggerFactory.getLogger(FhirStoreUtil.class);
+	
+	private FhirContext fhirContext;
+	
+	private String gcpFhirStore;
 	
 	private static final Pattern FHIR_PATTERN = Pattern
 	        .compile("projects/[\\w-]+/locations/[\\w-]+/datasets/[\\w-]+/fhirStores/[\\w-]+");
@@ -54,14 +58,15 @@ public class FhirStoreUtil {
 	
 	private static final NetHttpTransport HTTP_TRANSPORT = new NetHttpTransport();
 	
-	private String gcpFhirStore;
-	
-	FhirStoreUtil(String gcpFhirStore) throws IllegalArgumentException {
+	FhirStoreUtil(String gcpFhirStore, FhirContext fhirContext) throws IllegalArgumentException {
+		this.fhirContext = fhirContext;
+		
 		Matcher fhirMatcher = FHIR_PATTERN.matcher(gcpFhirStore);
 		if (!fhirMatcher.matches()) {
 			throw new IllegalArgumentException(
 			        String.format("The gcpFhirStore %s does not match %s pattern!", gcpFhirStore, FHIR_PATTERN));
 		}
+		
 		this.gcpFhirStore = gcpFhirStore;
 	}
 	
@@ -90,9 +95,10 @@ public class FhirStoreUtil {
 	
 	// This follows the examples at:
 	// https://github.com/GoogleCloudPlatform/java-docs-samples/healthcare/tree/master/healthcare/v1
-	public void uploadResourceToCloud(String resourceType, String resourceId, String jsonResource) {
+	// TODO: remove redundant resource information if passing a HAPI resource
+	public void uploadResourceToCloud(String resourceType, String resourceId, Resource resource) {
 		try {
-			updateFhirResource(gcpFhirStore, resourceType, resourceId, jsonResource);
+			updateFhirResource(gcpFhirStore, resourceId, resourceType, resource);
 		}
 		catch (IOException e) {
 			log.error(String.format("IOException while using Google APIs: %s", e.toString()));
@@ -102,14 +108,21 @@ public class FhirStoreUtil {
 		}
 	}
 	
-	private void updateFhirResource(String fhirStoreName, String resourceType, String resourceId, String jsonResource)
+	// TODO: merge the two versions of this method to remove redundant resource info
+	public void uploadResourceToCloud(String resourceType, String resourceId, String fhirJson) {
+		uploadResourceToCloud(resourceType, resourceId, (Resource) fhirContext.newJsonParser().parseResource(fhirJson));
+	}
+	
+	private void updateFhirResource(String fhirStoreName, String resourceId, String resourceType, Resource resource)
 	        throws IOException, URISyntaxException {
 		// Initialize the client, which will be used to interact with the service.
 		CloudHealthcare client = createClient();
 		String uri = String.format("%sv1/%s/fhir/%s/%s", client.getRootUrl(), fhirStoreName, resourceType, resourceId);
 		URIBuilder uriBuilder = new URIBuilder(uri);
 		log.info(String.format("Full URL is: %s", uriBuilder.build()));
-		StringEntity requestEntity = new StringEntity(jsonResource, StandardCharsets.UTF_8);
+		
+		StringEntity requestEntity = new StringEntity(fhirContext.newJsonParser().encodeResourceToString(resource),
+		        StandardCharsets.UTF_8);
 		
 		HttpUriRequest request = RequestBuilder.put().setUri(uriBuilder.build()).setEntity(requestEntity)
 		        .addHeader("Content-Type", "application/fhir+json").addHeader("Accept-Charset", "utf-8")
