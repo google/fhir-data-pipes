@@ -58,7 +58,7 @@ public class FhirEventWorker<T extends BaseResource> implements EventWorker {
 			String resourceType = resource.getIdElement().getResourceType();
 			
 			log.info(String.format("Parsed FHIR resource ID is %s/%s", resourceId, resourceType));
-
+			
 			// TODO: remove redundant resource information
 			fhirStoreUtil.uploadResourceToCloud(resourceType, resourceId, (Resource) resource);
 		}
