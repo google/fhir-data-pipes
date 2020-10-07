@@ -1,0 +1,97 @@
+{
+  "resourceType": "Bundle",
+  "id": "937f1ff1-d26f-43df-a57f-88eabf42b02a",
+  "meta": {
+    "lastUpdated": "2020-09-30T10:23:35.190-04:00",
+    "tag": [
+      {
+        "system": "http://hl7.org/fhir/v3/ObservationValue",
+        "code": "SUBSETTED",
+        "display": "Resource encoded in summary mode"
+      }
+    ]
+  },
+  "type": "searchset",
+  "total": 1,
+  "link": [
+    {
+      "relation": "self",
+      "url": "http://localhost:9020/openmrs/ws/fhir2/R3/Patient?_count=15&_getpagesoffset=0&_summary=data&given=Bashir"
+    },
+    {
+      "relation": "next",
+      "url": "http://localhost:9020/openmrs/ws/fhir2/R3?_getpages=861af9b4-d847-4831-b945-ab1f6f08f03e&_getpagesoffset=15&_count=15&_bundletype=searchset"
+    }
+  ],
+  "entry": [
+    {
+      "fullUrl": "http://localhost:9020/openmrs/ws/fhir2/R3/Patient/471be3bc-08c7-4d78-a4ab-1b3d044dae67",
+      "resource": {
+        "resourceType": "Patient",
+        "id": "471be3bc-08c7-4d78-a4ab-1b3d044dae67",
+        "meta": {
+          "tag": [
+            {
+              "system": "http://hl7.org/fhir/v3/ObservationValue",
+              "code": "SUBSETTED",
+              "display": "Resource encoded in summary mode"
+            }
+          ]
+        },
+        "identifier": [
+          {
+            "id": "8a463d39-0594-4471-85a0-97ebf25a46ba",
+            "extension": [
+              {
+                "url": "http://fhir.openmrs.org/ext/patient/identifier#location",
+                "valueReference": {
+                  "reference": "Location/58c57d25-8d39-41ab-8422-108a0c277d98",
+                  "display": "Outpatient Clinic"
+                }
+              }
+            ],
+            "use": "official",
+            "type": {
+              "text": "OpenMRS ID"
+            },
+            "value": "10000X"
+          }
+        ],
+        "active": true,
+        "name": [
+          {
+            "id": "a614032b-b271-4dd6-99bc-edcd1c16292e",
+            "family": "Sadjad",
+            "given": [
+              "Bashir"
+            ]
+          }
+        ],
+        "gender": "male",
+        "birthDate": "1979-01-21",
+        "deceasedBoolean": false,
+        "address": [
+          {
+            "id": "3e501410-28c3-4701-84ff-fbe8b260f416",
+            "extension": [
+              {
+                "url": "http://fhir.openmrs.org/ext/address",
+                "extension": [
+                  {
+                    "url": "http://fhir.openmrs.org/ext/address#address1",
+                    "valueString": "12 Univ St."
+                  }
+                ]
+              }
+            ],
+            "use": "home",
+            "city": "Waterloo",
+            "state": "ON",
+            "postalCode": "N2L3G1",
+            "country": "Canada"
+          }
+        ]
+      }
+    }
+  ]
+}

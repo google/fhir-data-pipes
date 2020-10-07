@@ -35,7 +35,10 @@
     <junit.version>4.13-beta-3</junit.version>
     <slf4j.version>1.7.30</slf4j.version>
     <log4j2.version>2.13.3</log4j2.version>
-    <hapifhirVersion>4.2.0</hapifhirVersion>
+    <!-- NOTE: FHIR DSTU3 is used because Bunsen support for R4 is not ready. -->
+    <!-- hapifhirVersion>4.2.0</hapifhirVersion -->
+    <hapifhirVersion>3.8.0</hapifhirVersion>
+    <bunsenVersion>0.5.7</bunsenVersion>
     <hamcrest.version>2.2</hamcrest.version>
 		<openmrsPlatformVersion>2.4.0-SNAPSHOT</openmrsPlatformVersion>
 		<mockito.version>3.5.10</mockito.version>
@@ -81,7 +84,7 @@
 
 			<dependency>
 				<groupId>ca.uhn.hapi.fhir</groupId>
-				<artifactId>hapi-fhir-structures-r4</artifactId>
+				<artifactId>hapi-fhir-structures-dstu3</artifactId>
 				<version>${hapifhirVersion}</version>
 			</dependency>
 
@@ -109,6 +112,7 @@
       <version>${slf4j.version}</version>
     </dependency>
 
+    <!-- Test deps -->
     <dependency>
       <groupId>junit</groupId>
       <artifactId>junit</artifactId>
@@ -128,6 +132,11 @@
       <artifactId>hamcrest-library</artifactId>
       <version>${hamcrest.version}</version>
       <scope>test</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>org.mockito</groupId>
+      <artifactId>mockito-core</artifactId>
     </dependency>
   </dependencies>
 

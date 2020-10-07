@@ -74,7 +74,7 @@ public class FhirStreaming {
 		log.info("Started listening on the feed " + feedUrl);
 		
 		// TODO: Autowire
-		FhirContext fhirContext = FhirContext.forR4();
+		FhirContext fhirContext = FhirContext.forDstu3();
 		OpenmrsUtil openmrsUtil = new OpenmrsUtil(fhirUrl, sourceUser, sourcePassword, fhirContext);
 		FhirStoreUtil fhirStoreUtil = new FhirStoreUtil(gcpFhirStore, fhirContext);
 		FeedConsumer feedConsumer = new FeedConsumer(feedUrl, fhirStoreUtil, openmrsUtil);

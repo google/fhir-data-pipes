@@ -97,12 +97,12 @@ To set up GCP project that you can use as a sink FHIR store:
 - Enable the BigQuery API in the project and dataset with the same name in the project
 - Download, install, and initialize the `gcloud` cli: https://cloud.google.com/sdk/docs/quickstart
 - Make sure you can authenticate with the project using the CLI: https://developers.google.com/identity/sign-in/web/sign-in
-  * `gcloud init`
-  * `gcloud auth application-default login`
+  * `$ gcloud init`
+  * `$ gcloud auth application-default login`
   * Create a service account for the project, generate a key, and save it securely locally
   * Add the `bigquery.dataEditor` and `bigquery.jobUser` roles to the project in the `IAM & Admin`/`Roles` settings or using the cli:
-    - `gcloud projects add-iam-policy-binding openmrs-260803 --role roles/bigquery.admin --member serviceAccount:openmrs-fhir-analytics@openmrs-260803.iam.gserviceaccount.com`
-    - `gcloud projects add-iam-policy-binding openmrs-260803 --role roles/healthcare.datasetAdmin --member serviceAccount:openmrs-fhir-analytics@openmrs-260803.iam.gserviceaccount.com`
+    - `$ gcloud projects add-iam-policy-binding openmrs-260803 --role roles/bigquery.admin --member serviceAccount:openmrs-fhir-analytics@openmrs-260803.iam.gserviceaccount.com`
+    - `$ gcloud projects add-iam-policy-binding openmrs-260803 --role roles/healthcare.datasetAdmin --member serviceAccount:openmrs-fhir-analytics@openmrs-260803.iam.gserviceaccount.com`
   * Activate the service account for your project using `gcloud auth activate-service-account <your-service-account> --key-file=<your-key-file> --project=<your project>`
   * Set the `GOOGLE_APPLICATION_CREDENTIALS` environment variable: https://cloud.google.com/docs/authentication/getting-started#setting_the_environment_variable
  
@@ -125,14 +125,14 @@ the FHIR store, its full URL would be:
 ## Compile and run the streaming app
 From the root of your git repo, run:
 
-`mvn clean install`
+`$ mvn clean install`
 
 and then:
 
 ```
-mvn exec:java -pl streaming \
-  -Dexec.mainClass=org.openmrs.analytics.FhirStreaming \`
-  -Dexec.args="OPENMRS_URL OPENMRS_USER/OPENMRS_PASSWORD GCP_FHIR_STORE"`
+$ mvn exec:java -pl streaming \
+    -Dexec.mainClass=org.openmrs.analytics.FhirStreaming \`
+    -Dexec.args="OPENMRS_URL OPENMRS_USER/OPENMRS_PASSWORD GCP_FHIR_STORE"`
 ```
 
 - `OPENMRS_URL` is the path to your source OpenMRS instance (e.g., `http://localhost:9016/openmrs` in this case)
@@ -161,7 +161,7 @@ independently without the need for a batch pipeline.
  - Fire up OpenMRS Stack (containing FHIR2 module and demo data ~ 300,000 obs)
 
 ```
- docker-compose -f openmrs-compose.yaml up # change ports appropriately (optional)
+$ docker-compose -f openmrs-compose.yaml up # change ports appropriately (optional)
 ```
  You should be able to  access OpenMRS via  http://localhost:8099/openmrs/ using refApp credentials i.e username is admin and password Admin123
  
@@ -169,18 +169,23 @@ independently without the need for a batch pipeline.
   - Run the streaming pipeline using default config (pointed to openmrs-compose.yaml )
  
  ```
-  $ mvn clean install
-  $ mvn compile exec:java -pl streaming-binlog
-  
+$ mvn clean install
+$ mvn compile exec:java -pl streaming-binlog
  ```
 
  - Or customize the configuration (including gcpFhirStore, OpenMRS basicAuth)
  
  ```
-  $ mvn compile exec:java -pl streaming-binlog -Ddatabase.hostname=localhost -Ddatabase.port=3306 -Ddatabase.user=root -Ddatabase.password=debezium -Ddatabase.dbname=mysql -Ddatabase.schema=openmrs -Ddatabase.serverId=77 -Ddatabase.offsetStorage=offset.dat -Ddatabase.databaseHistory=dbhistory.dat -Dopenmrs.username=admin -Dopenmrs.password=Admin123 -Dopenmrs.serverUrl=http://localhost:8099 -Dopenmrs.fhirBaseEndpoint=/openmrs/ws/fhir2/R4 -Dcloud.gcpFhirStore=projects/PROJECT/locations/LOCATION/datasets/DATASET/fhirStores/FHIRSTORENAME
+$ mvn compile exec:java -pl streaming-binlog -Ddatabase.hostname=localhost \
+    -Ddatabase.port=3306 -Ddatabase.user=root -Ddatabase.password=debezium \
+    -Ddatabase.dbname=mysql -Ddatabase.schema=openmrs -Ddatabase.serverId=77 \
+    -Ddatabase.offsetStorage=offset.dat -Ddatabase.databaseHistory=dbhistory.dat \
+    -Dopenmrs.username=admin -Dopenmrs.password=Admin123 \
+    -Dopenmrs.serverUrl=http://localhost:8099 \
+    -Dopenmrs.fhirBaseEndpoint=/openmrs/ws/fhir2/R4 \
+    -Dcloud.gcpFhirStore=projects/PROJECT/locations/LOCATION/datasets/DATASET/fhirStores/FHIRSTORENAME
  ```
 
- 
 
 ### Debezium prerequisite
  The provided openmrs-compose.yaml (MySQL) has been configured to support debezium, however, 
@@ -223,23 +228,30 @@ to be followed. Once it is done, and after `mvn install`, the pipeline can be
 run using a command like:
 
 ```
-java -cp batch/target/fhir-batch-etl-bundled-0.1.0-SNAPSHOT.jar \
-  org.openmrs.analytics.FhirEtl --serverUrl=http://localhost:9018 \
-  --jsessionId=2950DA4C142EC44145978C02EDA0F311 \
-  --searchList=Patient,Encounter,Observation --batchSize=20 \
- --targetParallelism=20 --gcpFhirStore=GCP_FHIR_STORE`
+$ java -cp batch/target/fhir-batch-etl-bundled-0.1.0-SNAPSHOT.jar \
+    org.openmrs.analytics.FhirEtl --serverUrl=http://localhost:9018 \
+    --searchList=Patient,Encounter,Observation --batchSize=20 \
+   --targetParallelism=20 --gcpFhirStore=GCP_FHIR_STORE`
 ```
 The `searchList` argument accepts a comma separated list of FHIR search URLs.
 For example, one can use `Patient?given=Susan` to extract only Patient resources
-that meet the `given=Susan` criteria.
+that meet the `given=Susan` criteria. You can also dump the output into Parquet
+files using the `--outputParquetBase` flag.
 
+If you prefer not to use a bundled jar (e.g., during development in an IDE) you
+can use the Maven exec plugin:
+```
+$ mvn exec:java -pl batch -Dexec.mainClass=org.openmrs.analytics.FhirEtl \
+    "-Dexec.args=--serverUrl=http://localhost:9020  --searchList=Observation \
+    --batchSize=20 --targetParallelism=20 --outputParquetBase=tmp/TEST/" 
+```
 # Using Docker compose
 Alternatively you can spin up the entire pipeline using docker containers by running
 
 #### 1. Fire up OpenMRS (containing FHIR2 module)
 
 ```
- docker-compose -f openmrs-compose.yaml up # change ports appropriately (optional)
+$ docker-compose -f openmrs-compose.yaml up # change ports appropriately (optional)
 ```
  You should be able to access OpenMRS via  http://localhost:8099/openmrs/ using refApp credentials i.e username is admin and password Admin123
  Please remember to install OpenMRS demo data module!
@@ -247,7 +259,7 @@ Alternatively you can spin up the entire pipeline using docker containers by run
  #### 2. Extract JSESSION_ID by authenticate against your OpenMRS instance using
 
 ```
- curl -u <username>:<password> http://<server name>/openmrs/ws/rest/v1/session 
+$ curl -u <username>:<password> http://<server name>/openmrs/ws/rest/v1/session 
 ```
 
 #### 3. Configure ./docker-compose.yaml
@@ -259,16 +271,15 @@ Remember to appropriately change other parameters such as JSESSION_ID (extracted
 #### 4. Fire up Batch Pipeline
 
 ```
- $ mvn clean install
- $ docker-compose up --build batch
-
+$ mvn clean install
+$ docker-compose up --build batch
 ``` 
 
 #### 5. Fire up Streaming Pipeline (Debezium)
 
 ```
- $ mvn clean install
- $ docker-compose up --build streaming-binlog
+$ mvn clean install
+$ docker-compose up --build streaming-binlog
 ```
 
 #### 6. Fire up Streaming Pipeline (Atomfeed)

@@ -11,6 +11,7 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
+
 package org.openmrs.analytics;
 
 import ca.uhn.fhir.context.FhirContext;
@@ -36,5 +37,10 @@ public class FhirStoreUtilTest {
 	public void testConstructor() {
 		FhirStoreUtil fhirStoreUtil = new FhirStoreUtil(
 		        "projects/my_project-123/locations/us-central1/datasets/openmrs_fhir_test/fhirStores/test", fhirContext);
+	}
+	
+	@Test
+	public void testConstructorWithDefaultStore() {
+		FhirStoreUtil fhirStoreUtil = new FhirStoreUtil("projects/P/locations/L/datasets/D/fhirStores/F", fhirContext);
 	}
 }
