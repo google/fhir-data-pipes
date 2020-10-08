@@ -103,7 +103,8 @@ public class FhirEtl {
 		        + "`projects/[\\w-]+/locations/[\\w-]+/datasets/[\\w-]+/fhirStores/[\\w-]+`, e.g., "
 		        + "`projects/my-project/locations/us-central1/datasets/openmrs_fhir_test/fhirStores/test`")
 		// TODO set the default value of this to empty string once FhirSearchUtil is refactored and GCP
-		// specific parts are taken out.
+		// specific parts are taken out. Then add the support for having both FHIR store and Parquet
+		// output enabled at the same time.
 		@Default.String("projects/P/locations/L/datasets/D/fhirStores/F")
 		String getGcpFhirStore();
 		
