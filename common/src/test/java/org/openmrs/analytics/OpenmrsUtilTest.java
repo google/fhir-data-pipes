@@ -13,16 +13,17 @@
 // limitations under the License.
 package org.openmrs.analytics;
 
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
-import static org.junit.Assert.*;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.when;
 
 import ca.uhn.fhir.context.FhirContext;
+import ca.uhn.fhir.rest.client.api.IClientInterceptor;
 import ca.uhn.fhir.rest.client.api.IGenericClient;
 import ca.uhn.fhir.rest.client.impl.RestfulClientFactory;
-import org.hl7.fhir.r4.model.Patient;
+import org.hl7.fhir.dstu3.model.Patient;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -55,7 +56,7 @@ public class OpenmrsUtilTest {
 		doNothing().when(clientFactory).setSocketTimeout(any(Integer.class));
 		when(fhirContext.getRestfulClientFactory()).thenReturn(clientFactory);
 		when(fhirContext.getRestfulClientFactory().newGenericClient(SOURCE_FHIR_URL)).thenReturn(client);
-		doNothing().when(client).registerInterceptor(any());
+		doNothing().when(client).registerInterceptor(any(IClientInterceptor.class));
 	}
 	
 	@Test

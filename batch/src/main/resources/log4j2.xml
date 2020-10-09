@@ -21,6 +21,7 @@
 		</Console>
 	</Appenders>
 	<Loggers>
+		<Logger name="org.openmrs.analytics" level="DEBUG" />
 		<Root level="INFO">
 			<AppenderRef ref="CONSOLE" />
 		</Root>

@@ -14,7 +14,6 @@
 
 package org.openmrs.analytics;
 
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
@@ -22,7 +21,10 @@ import java.util.Collections;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+// import com.google.auth.http.HttpCredentialsAdapter;
+// import com.google.auth.oauth2.GoogleCredentials;
 import ca.uhn.fhir.context.FhirContext;
+import ca.uhn.fhir.parser.IParser;
 import com.google.api.client.googleapis.auth.oauth2.GoogleCredential;
 import com.google.api.client.http.HttpRequest;
 import com.google.api.client.http.HttpRequestInitializer;
@@ -30,16 +32,13 @@ import com.google.api.client.http.javanet.NetHttpTransport;
 import com.google.api.client.json.gson.GsonFactory;
 import com.google.api.services.healthcare.v1.CloudHealthcare;
 import com.google.api.services.healthcare.v1.CloudHealthcareScopes;
-import org.apache.http.HttpEntity;
-import org.apache.http.HttpResponse;
-import org.apache.http.HttpStatus;
-import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpUriRequest;
 import org.apache.http.client.methods.RequestBuilder;
 import org.apache.http.client.utils.URIBuilder;
 import org.apache.http.entity.StringEntity;
-import org.apache.http.impl.client.HttpClients;
-import org.hl7.fhir.r4.model.Resource;
+import org.hl7.fhir.dstu3.model.Bundle;
+import org.hl7.fhir.dstu3.model.Bundle.BundleEntryComponent;
+import org.hl7.fhir.dstu3.model.Resource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -58,7 +57,10 @@ public class FhirStoreUtil {
 	
 	private static final NetHttpTransport HTTP_TRANSPORT = new NetHttpTransport();
 	
+	private HttpUtil httpUtil;
+	
 	FhirStoreUtil(String gcpFhirStore, FhirContext fhirContext) throws IllegalArgumentException {
+		// TODO separate the GCP specific functionality out of this class.
 		this.fhirContext = fhirContext;
 		
 		Matcher fhirMatcher = FHIR_PATTERN.matcher(gcpFhirStore);
@@ -68,29 +70,7 @@ public class FhirStoreUtil {
 		}
 		
 		this.gcpFhirStore = gcpFhirStore;
-	}
-	
-	public String executeRequest(HttpUriRequest request) {
-		try {
-			// Execute the request and process the results.
-			HttpClient httpClient = HttpClients.createDefault();
-			HttpResponse response = httpClient.execute(request);
-			HttpEntity responseEntity = response.getEntity();
-			ByteArrayOutputStream byteStream = new ByteArrayOutputStream();
-			responseEntity.writeTo(byteStream);
-			if (response.getStatusLine().getStatusCode() != HttpStatus.SC_CREATED
-			        && response.getStatusLine().getStatusCode() != HttpStatus.SC_OK) {
-				log.error(String.format("Exception for resource %s: %s", request.getURI().toString(),
-				    response.getStatusLine().toString()));
-				log.error(byteStream.toString());
-				throw new RuntimeException();
-			}
-			return byteStream.toString();
-		}
-		catch (IOException e) {
-			log.error("Error in opening url: " + request.getURI().toString() + " exception: " + e);
-			return "";
-		}
+		this.httpUtil = new HttpUtil();
 	}
 	
 	// This follows the examples at:
@@ -128,7 +108,7 @@ public class FhirStoreUtil {
 		        .addHeader("Content-Type", "application/fhir+json").addHeader("Accept-Charset", "utf-8")
 		        .addHeader("Accept", "application/fhir+json").addHeader("Authorization", "Bearer " + getAccessToken())
 		        .build();
-		String response = executeRequest(request);
+		String response = httpUtil.executeRequest(request);
 		log.debug("Update FHIR resource response: " + response);
 	}
 	
@@ -169,6 +149,15 @@ public class FhirStoreUtil {
 		GoogleCredential credential = GoogleCredential.getApplicationDefault(HTTP_TRANSPORT, JSON_FACTORY)
 		        .createScoped(Collections.singleton(CloudHealthcareScopes.CLOUD_PLATFORM));
 		return credential;
+	}
+	
+	public void uploadBundleToCloud(Bundle bundle, FhirContext fhirContext) {
+		IParser parser = fhirContext.newJsonParser();
+		for (BundleEntryComponent entry : bundle.getEntry()) {
+			Resource resource = entry.getResource();
+			uploadResourceToCloud(resource.getResourceType().name(), resource.getIdElement().getIdPart(),
+			    parser.encodeResourceToString(resource));
+		}
 	}
 	
 }

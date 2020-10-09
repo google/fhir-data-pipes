@@ -23,13 +23,11 @@ import org.apache.beam.sdk.coders.SerializableCoder;
 @AutoValue
 abstract class SearchSegmentDescriptor implements Serializable {
 	
-	static SearchSegmentDescriptor create(String pageId, int pageOffset, int count) {
-		return new AutoValue_SearchSegmentDescriptor(pageId, pageOffset, count);
+	static SearchSegmentDescriptor create(String searchUrl, int count) {
+		return new AutoValue_SearchSegmentDescriptor(searchUrl, count);
 	}
 	
-	abstract String pageId();
-	
-	abstract int pageOffset();
+	abstract String searchUrl();
 	
 	abstract int count();
 }

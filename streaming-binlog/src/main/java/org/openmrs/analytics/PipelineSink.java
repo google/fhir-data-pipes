@@ -30,7 +30,7 @@ public class PipelineSink implements Processor {
 	
 	// TODO: Autowire
 	// FhirContext
-	private static final FhirContext fhirContext = FhirContext.forR4();
+	private static final FhirContext fhirContext = FhirContext.forDstu3();
 	
 	// FhirStore
 	private static final FhirStoreUtil FHIR_STORE_UTIL = new FhirStoreUtil(System.getProperty("cloud.gcpFhirStore"),

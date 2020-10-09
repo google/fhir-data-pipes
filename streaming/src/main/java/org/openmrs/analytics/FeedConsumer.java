@@ -21,9 +21,9 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.hl7.fhir.r4.model.Encounter;
-import org.hl7.fhir.r4.model.Observation;
-import org.hl7.fhir.r4.model.Patient;
+import org.hl7.fhir.dstu3.model.Encounter;
+import org.hl7.fhir.dstu3.model.Observation;
+import org.hl7.fhir.dstu3.model.Patient;
 import org.openmrs.module.atomfeed.client.AtomFeedClient;
 import org.openmrs.module.atomfeed.client.AtomFeedClientFactory;
 import org.slf4j.Logger;

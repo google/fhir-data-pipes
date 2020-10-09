@@ -18,8 +18,8 @@ import ca.uhn.fhir.context.FhirContext;
 import ca.uhn.fhir.rest.client.api.IClientInterceptor;
 import ca.uhn.fhir.rest.client.api.IGenericClient;
 import ca.uhn.fhir.rest.client.interceptor.BasicAuthInterceptor;
+import org.hl7.fhir.dstu3.model.Resource;
 import org.hl7.fhir.instance.model.api.IBaseResource;
-import org.hl7.fhir.r4.model.Resource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -71,6 +71,10 @@ public class OpenmrsUtil {
 		client.registerInterceptor(authInterceptor);
 		
 		return client;
+	}
+	
+	public String getSourceFhirUrl() {
+		return fhirUrl;
 	}
 	
 }

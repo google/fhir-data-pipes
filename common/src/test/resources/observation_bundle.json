@@ -1,0 +1,299 @@
+{
+  "resourceType": "Bundle",
+  "id": "bf3bcfcc-2b34-45e3-8a60-ef04ef7060ef",
+  "meta": {
+    "lastUpdated": "2020-09-30T14:04:02.282-04:00",
+    "tag": [
+      {
+        "system": "http://hl7.org/fhir/v3/ObservationValue",
+        "code": "SUBSETTED",
+        "display": "Resource encoded in summary mode"
+      }
+    ]
+  },
+  "type": "searchset",
+  "total": 6,
+  "link": [
+    {
+      "relation": "self",
+      "url": "http://localhost:9020/openmrs/ws/fhir2/R3/Observation?_count=10&_getpagesoffset=0&_summary=data"
+    }
+  ],
+  "entry": [
+    {
+      "fullUrl": "http://localhost:9020/openmrs/ws/fhir2/R3/Observation/0adb6cfb-0ae3-42df-9d39-fc68ec4334cd",
+      "resource": {
+        "resourceType": "Observation",
+        "id": "0adb6cfb-0ae3-42df-9d39-fc68ec4334cd",
+        "meta": {
+          "tag": [
+            {
+              "system": "http://hl7.org/fhir/v3/ObservationValue",
+              "code": "SUBSETTED",
+              "display": "Resource encoded in summary mode"
+            }
+          ]
+        },
+        "status": "final",
+        "code": {
+          "coding": [
+            {
+              "code": "162169AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+              "display": "Text of encounter note"
+            }
+          ]
+        },
+        "subject": {
+          "reference": "Patient/471be3bc-08c7-4d78-a4ab-1b3d044dae67",
+          "display": "Bashir Sadjad (OpenMRS ID: 10000X)"
+        },
+        "context": {
+          "reference": "Encounter/2df7151b-fdde-4d1b-8dfa-aeaae4bb0430"
+        },
+        "effectiveDateTime": "2020-09-22T13:54:41-04:00",
+        "issued": "2020-09-22T13:54:41.000-04:00",
+        "valueString": "Adding a test diagnosis"
+      }
+    },
+    {
+      "fullUrl": "http://localhost:9020/openmrs/ws/fhir2/R3/Observation/5f55db69-5ffb-41b9-b9e0-2b15fa6b35cc",
+      "resource": {
+        "resourceType": "Observation",
+        "id": "5f55db69-5ffb-41b9-b9e0-2b15fa6b35cc",
+        "meta": {
+          "tag": [
+            {
+              "system": "http://hl7.org/fhir/v3/ObservationValue",
+              "code": "SUBSETTED",
+              "display": "Resource encoded in summary mode"
+            }
+          ]
+        },
+        "status": "final",
+        "category": [
+          {
+            "coding": [
+              {
+                "system": "http://hl7.org/fhir/ValueSet/observation-category",
+                "code": "exam",
+                "display": "Exam"
+              }
+            ]
+          }
+        ],
+        "code": {
+          "coding": [
+            {
+              "code": "5090AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+              "display": "Height (cm)"
+            }
+          ]
+        },
+        "subject": {
+          "reference": "Patient/471be3bc-08c7-4d78-a4ab-1b3d044dae67",
+          "display": "Bashir Sadjad (OpenMRS ID: 10000X)"
+        },
+        "context": {
+          "reference": "Encounter/6a97532a-4280-4464-a4c9-48df8b08c001"
+        },
+        "effectiveDateTime": "2020-09-22T13:53:41-04:00",
+        "issued": "2020-09-22T13:53:41.000-04:00",
+        "valueQuantity": {
+          "value": 170.0
+        }
+      }
+    },
+    {
+      "fullUrl": "http://localhost:9020/openmrs/ws/fhir2/R3/Observation/8eb2c8b1-1851-4012-9ab5-ce6c14d34852",
+      "resource": {
+        "resourceType": "Observation",
+        "id": "8eb2c8b1-1851-4012-9ab5-ce6c14d34852",
+        "meta": {
+          "tag": [
+            {
+              "system": "http://hl7.org/fhir/v3/ObservationValue",
+              "code": "SUBSETTED",
+              "display": "Resource encoded in summary mode"
+            }
+          ]
+        },
+        "status": "final",
+        "category": [
+          {
+            "coding": [
+              {
+                "system": "http://hl7.org/fhir/ValueSet/observation-category",
+                "code": "exam",
+                "display": "Exam"
+              }
+            ]
+          }
+        ],
+        "code": {
+          "coding": [
+            {
+              "code": "5087AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+              "display": "Pulse"
+            }
+          ]
+        },
+        "subject": {
+          "reference": "Patient/471be3bc-08c7-4d78-a4ab-1b3d044dae67",
+          "display": "Bashir Sadjad (OpenMRS ID: 10000X)"
+        },
+        "context": {
+          "reference": "Encounter/6a97532a-4280-4464-a4c9-48df8b08c001"
+        },
+        "effectiveDateTime": "2020-09-22T13:53:41-04:00",
+        "issued": "2020-09-22T13:53:42.000-04:00",
+        "valueQuantity": {
+          "value": 77.0
+        }
+      }
+    },
+    {
+      "fullUrl": "http://localhost:9020/openmrs/ws/fhir2/R3/Observation/93c63ebf-c5ac-4268-ada9-f4b06d30eb1e",
+      "resource": {
+        "resourceType": "Observation",
+        "id": "93c63ebf-c5ac-4268-ada9-f4b06d30eb1e",
+        "meta": {
+          "tag": [
+            {
+              "system": "http://hl7.org/fhir/v3/ObservationValue",
+              "code": "SUBSETTED",
+              "display": "Resource encoded in summary mode"
+            }
+          ]
+        },
+        "status": "final",
+        "category": [
+          {
+            "coding": [
+              {
+                "system": "http://hl7.org/fhir/ValueSet/observation-category",
+                "code": "exam",
+                "display": "Exam"
+              }
+            ]
+          }
+        ],
+        "code": {
+          "coding": [
+            {
+              "code": "5088AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+              "display": "Temperature (C)"
+            }
+          ]
+        },
+        "subject": {
+          "reference": "Patient/471be3bc-08c7-4d78-a4ab-1b3d044dae67",
+          "display": "Bashir Sadjad (OpenMRS ID: 10000X)"
+        },
+        "context": {
+          "reference": "Encounter/6a97532a-4280-4464-a4c9-48df8b08c001"
+        },
+        "effectiveDateTime": "2020-09-22T13:53:41-04:00",
+        "issued": "2020-09-22T13:53:41.000-04:00",
+        "valueQuantity": {
+          "value": 36.0
+        }
+      }
+    },
+    {
+      "fullUrl": "http://localhost:9020/openmrs/ws/fhir2/R3/Observation/96cd199b-a314-4944-b188-c19fcd3ad5a2",
+      "resource": {
+        "resourceType": "Observation",
+        "id": "96cd199b-a314-4944-b188-c19fcd3ad5a2",
+        "meta": {
+          "tag": [
+            {
+              "system": "http://hl7.org/fhir/v3/ObservationValue",
+              "code": "SUBSETTED",
+              "display": "Resource encoded in summary mode"
+            }
+          ]
+        },
+        "status": "final",
+        "category": [
+          {
+            "coding": [
+              {
+                "system": "http://hl7.org/fhir/ValueSet/observation-category",
+                "code": "exam",
+                "display": "Exam"
+              }
+            ]
+          }
+        ],
+        "code": {
+          "coding": [
+            {
+              "code": "5242AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+              "display": "Respiratory rate"
+            }
+          ]
+        },
+        "subject": {
+          "reference": "Patient/471be3bc-08c7-4d78-a4ab-1b3d044dae67",
+          "display": "Bashir Sadjad (OpenMRS ID: 10000X)"
+        },
+        "context": {
+          "reference": "Encounter/6a97532a-4280-4464-a4c9-48df8b08c001"
+        },
+        "effectiveDateTime": "2020-09-22T13:53:41-04:00",
+        "issued": "2020-09-22T13:53:42.000-04:00",
+        "valueQuantity": {
+          "value": 20.0
+        }
+      }
+    },
+    {
+      "fullUrl": "http://localhost:9020/openmrs/ws/fhir2/R3/Observation/e61698a4-b4a3-4cb0-85d5-6e92c8f68513",
+      "resource": {
+        "resourceType": "Observation",
+        "id": "e61698a4-b4a3-4cb0-85d5-6e92c8f68513",
+        "meta": {
+          "tag": [
+            {
+              "system": "http://hl7.org/fhir/v3/ObservationValue",
+              "code": "SUBSETTED",
+              "display": "Resource encoded in summary mode"
+            }
+          ]
+        },
+        "status": "final",
+        "category": [
+          {
+            "coding": [
+              {
+                "system": "http://hl7.org/fhir/ValueSet/observation-category",
+                "code": "exam",
+                "display": "Exam"
+              }
+            ]
+          }
+        ],
+        "code": {
+          "coding": [
+            {
+              "code": "5089AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+              "display": "Weight (kg)"
+            }
+          ]
+        },
+        "subject": {
+          "reference": "Patient/471be3bc-08c7-4d78-a4ab-1b3d044dae67",
+          "display": "Bashir Sadjad (OpenMRS ID: 10000X)"
+        },
+        "context": {
+          "reference": "Encounter/6a97532a-4280-4464-a4c9-48df8b08c001"
+        },
+        "effectiveDateTime": "2020-09-22T13:53:41-04:00",
+        "issued": "2020-09-22T13:53:41.000-04:00",
+        "valueQuantity": {
+          "value": 65.0
+        }
+      }
+    }
+  ]
+}
