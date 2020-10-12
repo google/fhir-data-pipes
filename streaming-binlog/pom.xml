@@ -46,8 +46,9 @@
     <openmrs.username>admin</openmrs.username>
     <openmrs.password>Admin123</openmrs.password>
     <openmrs.serverUrl>http://localhost:8099</openmrs.serverUrl>
-    <openmrs.fhirBaseEndpoint>/openmrs/ws/fhir2/R4</openmrs.fhirBaseEndpoint>
+    <openmrs.fhirBaseEndpoint>/openmrs</openmrs.fhirBaseEndpoint>
     <cloud.gcpFhirStore>projects/PROJECT/locations/LOCATION/datasets/DATASET/fhirStores/FHIRSTORENAME</cloud.gcpFhirStore>
+    <fhir.atomFeedConfigPath>utils/fhir2_atom_feed_config.json</fhir.atomFeedConfigPath>
 
     <mysql.init.timeout>30000</mysql.init.timeout>
 
@@ -136,6 +137,23 @@
       <version>4.2.0</version>
       <scope>compile</scope>
     </dependency>
+    <!-- OpenMRS -->
+    <dependency>
+      <groupId>org.openmrs.api</groupId>
+      <artifactId>openmrs-api</artifactId>
+      <version>${openmrsPlatformVersion}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.openmrs.module</groupId>
+      <artifactId>atomfeed-api</artifactId>
+      <version>1.0.13-SNAPSHOT</version>
+    </dependency>
+    <dependency>
+      <groupId>com.google.code.gson</groupId>
+      <artifactId>gson</artifactId>
+      <version>2.8.6</version>
+    </dependency>
+
   </dependencies>
 
   <build>
@@ -213,6 +231,10 @@
             <systemProperty>
               <key>cloud.gcpFhirStore</key>
               <value>${cloud.gcpFhirStore}</value>
+            </systemProperty>
+            <systemProperty>
+              <key>fhir.atomFeedConfigPath</key>
+              <value>${fhir.atomFeedConfigPath}</value>
             </systemProperty>
           </systemProperties>
         </configuration>

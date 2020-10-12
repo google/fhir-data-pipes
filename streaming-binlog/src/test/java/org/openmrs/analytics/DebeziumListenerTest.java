@@ -75,10 +75,11 @@ public class DebeziumListenerTest extends CamelTestSupport {
 		// mock properties
 		Properties p = System.getProperties();
 		p.put("openmrs.serverUrl", "http://mockfire:8099");
-		p.put("openmrs.fhirBaseEndpoint", "/openmrs/ws/fhir2/R4");
+		p.put("openmrs.fhirBaseEndpoint", "/openmrs");
 		p.put("openmrs.username", "dummy");
 		p.put("openmrs.password", "dummy");
 		p.put("cloud.gcpFhirStore", "projects/PROJECT/locations/LOCATION/datasets/DATASET/fhirStores/FHIRSTORENAME");
+		p.put("fhir.atomFeedConfigPath", "../utils/fhir2_atom_feed_config.json");
 		System.setProperties(p);
 		
 		return new DebeziumListener();

@@ -14,6 +14,16 @@
 
 package org.openmrs.analytics;
 
+import java.io.IOException;
+import java.io.Reader;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+
+import com.google.gson.Gson;
+import org.openmrs.module.atomfeed.api.model.GeneralConfiguration;
+
 // Pipeline Connector configurator e.g dbz
 public class PipelineConfig {
 	
@@ -40,5 +50,14 @@ public class PipelineConfig {
 		return "{{openmrs.serverUrl}}{{openmrs.fhirBaseEndpoint}}${header.fhirResourceUri}" + "?httpMethod=GET"
 		        + "&authMethod=Basic" + "&authUsername={{openmrs.username}}" + "&authPassword={{openmrs.password}}"
 		        + "&authenticationPreemptive=true" + "&_summary=data";
+	}
+	
+	public static GeneralConfiguration getEventsToFhirConfig(String fileName) throws IOException {
+		Gson gson = new Gson();
+		Path pathToFile = Paths.get(fileName);
+		try (Reader reader = Files.newBufferedReader(pathToFile.toAbsolutePath(), StandardCharsets.UTF_8)) {
+			GeneralConfiguration generalConfig = gson.fromJson(reader, GeneralConfiguration.class);
+			return generalConfig;
+		}
 	}
 }
