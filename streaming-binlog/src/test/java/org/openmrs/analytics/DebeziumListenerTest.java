@@ -79,7 +79,7 @@ public class DebeziumListenerTest extends CamelTestSupport {
 		p.put("openmrs.username", "dummy");
 		p.put("openmrs.password", "dummy");
 		p.put("cloud.gcpFhirStore", "projects/PROJECT/locations/LOCATION/datasets/DATASET/fhirStores/FHIRSTORENAME");
-		p.put("fhir.atomFeedConfigPath", "../utils/fhir2_atom_feed_config.json");
+		p.put("fhir.debeziumEventConfigPath", "../utils/dbz_event_to_fhir_config.json");
 		System.setProperties(p);
 		
 		return new DebeziumListener();

@@ -184,7 +184,7 @@ $ mvn compile exec:java -pl streaming-binlog -Ddatabase.hostname=localhost \
     -Dopenmrs.serverUrl=http://localhost:8099 \
     -Dopenmrs.fhirBaseEndpoint=/openmrs \
     -Dcloud.gcpFhirStore=projects/PROJECT/locations/LOCATION/datasets/DATASET/fhirStores/FHIRSTORENAME
-    -Dfhir.atomFeedConfigPath=./utils/fhir2_atom_feed_config.json
+    -Dfhir.debeziumEventConfigPath=./utils/dbz_event_to_fhir_config.json
  ```
 
 

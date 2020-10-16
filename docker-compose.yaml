@@ -42,7 +42,7 @@ services:
       test: "exit 0"
     volumes:
       - ./dbz:/tmp
-      - ./utils/fhir2_atom_feed_config.json:/deployments/fhir2_atom_feed_config.json
+      - ./utils/dbz_event_to_fhir_config.json:/deployments/dbz_event_to_fhir_config.json
     environment:
       - JAVA_MAIN_CLASS=org.openmrs.analytics.Runner
       - JAVA_OPTIONS=-Ddatabase.hostname=localhost -Ddatabase.port=3306 -Ddatabase.user=root -Ddatabase.password=debezium
@@ -50,7 +50,7 @@ services:
                      -Ddatabase.databaseHistory=/tmp/dbhistory.dat -Dopenmrs.username=admin -Dopenmrs.password=Admin123
                      -Dopenmrs.serverUrl=http://localhost:8099 -Dopenmrs.fhirBaseEndpoint=/openmrs
                      -Dcloud.gcpFhirStore=projects/PROJECT/locations/LOCATION/datasets/DATASET/fhirStores/FHIRSTORENAME
-                     -Dfhir.atomFeedConfigPath=fhir2_atom_feed_config.json
+                     -Dfhir.debeziumEventConfigPath=dbz_event_to_fhir_config.json
 
 
   # TODO add attomfeed streaming - I think @pmanko is working on

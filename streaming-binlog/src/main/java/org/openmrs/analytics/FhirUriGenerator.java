@@ -39,7 +39,8 @@ public class FhirUriGenerator implements Processor {
 	
 	public FhirUriGenerator() throws Exception {
 		//System.getProperty("cloud.gcpFhirStore")
-		GeneralConfiguration generalConfiguration = getEventsToFhirConfig(System.getProperty("fhir.atomFeedConfigPath"));
+		GeneralConfiguration generalConfiguration = getEventsToFhirConfig(
+		    System.getProperty("fhir.debeziumEventConfigPath"));
 		this.feedConfigurationService.saveConfig(generalConfiguration);
 	}
 	

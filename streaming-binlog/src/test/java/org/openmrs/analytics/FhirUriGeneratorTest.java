@@ -54,9 +54,9 @@ public class FhirUriGeneratorTest extends CamelTestSupport {
 			@Override
 			public void configure() throws Exception {
 				
-				// set atomFeedConfigPath
+				// set debeziumEventConfigPath
 				Properties p = System.getProperties();
-				p.put("fhir.atomFeedConfigPath", "../utils/fhir2_atom_feed_config.json");
+				p.put("fhir.debeziumEventConfigPath", "../utils/dbz_event_to_fhir_config.json");
 				System.setProperties(p);
 				
 				// Inject FhirUriGenerator;

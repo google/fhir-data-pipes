@@ -48,7 +48,7 @@
     <openmrs.serverUrl>http://localhost:8099</openmrs.serverUrl>
     <openmrs.fhirBaseEndpoint>/openmrs</openmrs.fhirBaseEndpoint>
     <cloud.gcpFhirStore>projects/PROJECT/locations/LOCATION/datasets/DATASET/fhirStores/FHIRSTORENAME</cloud.gcpFhirStore>
-    <fhir.atomFeedConfigPath>utils/fhir2_atom_feed_config.json</fhir.atomFeedConfigPath>
+    <fhir.debeziumEventConfigPath>utils/dbz_event_to_fhir_config.json</fhir.debeziumEventConfigPath>
 
     <mysql.init.timeout>30000</mysql.init.timeout>
 
@@ -138,6 +138,13 @@
       <scope>compile</scope>
     </dependency>
     <!-- OpenMRS -->
+    <!-- TODO remove both org.openmrs.api and org.openmrs.module
+        prefer to avoid these as they bring a lot more deps!
+		Failure to include yields compilation error:
+         cannot access org.openmrs.api.OpenmrsService [ERROR] class file for org.openmrs.api.OpenmrsService not found
+         As such these 2 libraries will be removed and https://github.com/GoogleCloudPlatform/openmrs-fhir-analytics/issues/36
+         should fix!
+    -->
     <dependency>
       <groupId>org.openmrs.api</groupId>
       <artifactId>openmrs-api</artifactId>
@@ -233,8 +240,8 @@
               <value>${cloud.gcpFhirStore}</value>
             </systemProperty>
             <systemProperty>
-              <key>fhir.atomFeedConfigPath</key>
-              <value>${fhir.atomFeedConfigPath}</value>
+              <key>fhir.debeziumEventConfigPath</key>
+              <value>${fhir.debeziumEventConfigPath}</value>
             </systemProperty>
           </systemProperties>
         </configuration>

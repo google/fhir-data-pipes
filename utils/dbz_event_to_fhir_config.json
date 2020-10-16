@@ -187,7 +187,7 @@
       "openMrsClass": "org.openmrs.Obs",
       "enabled": "true",
       "title": "Observation",
-      "category": "observation",
+      "category": "obs",
       "linkTemplates": {
         "rest": "/ws/rest/v1/obs/{uuid}?v=full",
         "fhir": "/ws/fhir2/R4/Observation/{uuid}"
