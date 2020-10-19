@@ -14,11 +14,17 @@
 
 package org.openmrs.analytics;
 
+import static org.openmrs.analytics.PipelineConfig.getEventsToFhirConfig;
+
 import java.util.Map;
 
 import org.apache.camel.Exchange;
 import org.apache.camel.Processor;
 import org.apache.camel.component.debezium.DebeziumConstants;
+import org.openmrs.module.atomfeed.api.model.FeedConfiguration;
+import org.openmrs.module.atomfeed.api.model.GeneralConfiguration;
+import org.openmrs.module.atomfeed.api.service.FeedConfigurationService;
+import org.openmrs.module.atomfeed.api.service.impl.FeedConfigurationServiceImpl;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -28,6 +34,15 @@ public class FhirUriGenerator implements Processor {
 	private static final Logger log = LoggerFactory.getLogger(FhirUriGenerator.class);
 	
 	private static final String EXPECTED_BODY_FORMAT = "{\"fhirResourceUri\":%s}";
+	
+	private final FeedConfigurationService feedConfigurationService = new FeedConfigurationServiceImpl();
+	
+	public FhirUriGenerator() throws Exception {
+		//System.getProperty("cloud.gcpFhirStore")
+		GeneralConfiguration generalConfiguration = getEventsToFhirConfig(
+		    System.getProperty("fhir.debeziumEventConfigPath"));
+		this.feedConfigurationService.saveConfig(generalConfiguration);
+	}
 	
 	public void process(Exchange exchange) throws Exception {
 		final Map payload = exchange.getMessage().getBody(Map.class);
@@ -39,60 +54,14 @@ public class FhirUriGenerator implements Processor {
 		}
 		final String table = sourceMetadata.get("table").toString();
 		log.info("Processing Table --> " + table);
-		// TODO make this configurable e.g using utils/fhir2_atom_feed_config.json
-		switch (table) {
-			case "obs":
-				exchange.getIn().setHeader("fhirResourceUri", "/Observation/" + payload.get("uuid").toString());
-				break;
-			case "encounter":
-				exchange.getIn().setHeader("fhirResourceUri", "/Encounter/" + payload.get("uuid").toString());
-				break;
-			case "location":
-				exchange.getIn().setHeader("fhirResourceUri", "/Location/" + payload.get("uuid").toString());
-				break;
-			case "cohort":
-				exchange.getIn().setHeader("fhirResourceUri", "/Group/" + payload.get("uuid").toString());
-				break;
-			case "person":
-				exchange.getIn().setHeader("fhirResourceUri", "/Person/" + payload.get("uuid").toString());
-				break;
-			case "provider":
-				exchange.getIn().setHeader("fhirResourceUri", "/Provider/" + payload.get("uuid").toString());
-				break;
-			case "relationship":
-				exchange.getIn().setHeader("fhirResourceUri", "/Relationship/" + payload.get("uuid").toString());
-				break;
-			case "patient":
-				exchange.getIn().setHeader("fhirResourceUri", "/Patient/" + payload.get("uuid").toString());
-				break;
-			case "drug":
-				exchange.getIn().setHeader("fhirResourceUri", "/Drug/" + payload.get("uuid").toString());
-				break;
-			case "allergy":
-				exchange.getIn().setHeader("fhirResourceUri", "/AllergyIntolerance/" + payload.get("uuid").toString());
-				break;
-			case "order":
-				exchange.getIn().setHeader("fhirResourceUri", "/Order/" + payload.get("uuid").toString());
-				break;
-			case "drug_order":
-				exchange.getIn().setHeader("fhirResourceUri", "/MedicationRequest/" + payload.get("uuid").toString());
-				break;
-			case "test_order":
-				exchange.getIn().setHeader("fhirResourceUri", "/ProcedureRequest/" + payload.get("uuid").toString());
-				break;
-			case "visit":
-				exchange.getIn().setHeader("fhirResourceUri", "/Encounter/" + payload.get("uuid").toString());
-				break;
-			case "program":
-				exchange.getIn().setHeader("fhirResourceUri", "/Program/" + payload.get("uuid").toString());
-				break;
-			case "patient_program":
-				exchange.getIn().setHeader("fhirResourceUri", "/Programenrollment/" + payload.get("uuid").toString());
-				break;
-			default:
-				// TODO Implement ALL FHIR classes
-				exchange.getIn().setHeader("fhirResourceUri", null);
-				log.trace("Unknown Data..." + table);
+		final FeedConfiguration config = this.feedConfigurationService.getFeedConfigurationByCategory(table);
+		if (config != null && config.getLinkTemplates().containsKey("fhir")) {
+			final String fhirUrl = config.getLinkTemplates().get("fhir");
+			final String uuid = payload.get("uuid").toString();
+			exchange.getIn().setHeader("fhirResourceUri", fhirUrl.replace("{uuid}", uuid));
+		} else {
+			exchange.getIn().setHeader("fhirResourceUri", null);
+			log.trace("Unmapped Data..." + table);
 		}
 	}
 }

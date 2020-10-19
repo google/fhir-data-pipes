@@ -20,6 +20,7 @@ import static org.openmrs.analytics.PipelineConfig.EVENTS_HANDLER_ROUTE;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Properties;
 
 import io.debezium.data.Envelope;
 import org.apache.camel.EndpointInject;
@@ -52,6 +53,11 @@ public class FhirUriGeneratorTest extends CamelTestSupport {
 			
 			@Override
 			public void configure() throws Exception {
+				
+				// set debeziumEventConfigPath
+				Properties p = System.getProperties();
+				p.put("fhir.debeziumEventConfigPath", "../utils/dbz_event_to_fhir_config.json");
+				System.setProperties(p);
 				
 				// Inject FhirUriGenerator;
 				from(EVENTS_HANDLER_ROUTE).process(new FhirUriGenerator()) // inject target processor here
@@ -90,7 +96,7 @@ public class FhirUriGeneratorTest extends CamelTestSupport {
 		resultEndpoint.expectedMessageCount(1);
 		
 		// should create FHIR URI header i.e fhirResourceUri
-		resultEndpoint.expectedHeaderReceived("fhirResourceUri", "/Person/uuid");
+		resultEndpoint.expectedHeaderReceived("fhirResourceUri", "/ws/fhir2/R4/Person/uuid");
 		
 		// send events
 		eventsProducer.sendBodyAndHeaders(expectedBody, expectedHeader);
