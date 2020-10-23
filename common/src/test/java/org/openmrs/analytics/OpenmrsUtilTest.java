@@ -60,7 +60,7 @@ public class OpenmrsUtilTest {
 	}
 	
 	@Test
-	public void shouldFetchFhirResource() {
+	public void shouldFetchFhirResource() throws Exception {
 		Patient testResource = new Patient();
 		String resourceType = testResource.getResourceType().name();
 		
@@ -80,4 +80,5 @@ public class OpenmrsUtilTest {
 		
 		assertThat(result, equalTo(client));
 	}
+	
 }

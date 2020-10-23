@@ -19,7 +19,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import ca.uhn.fhir.context.ConfigurationException;
 import ca.uhn.fhir.context.FhirContext;
+import ca.uhn.fhir.parser.DataFormatException;
 import ca.uhn.fhir.rest.api.SummaryEnum;
 import org.apache.avro.Conversions.DecimalConversion;
 import org.apache.avro.Schema;
@@ -102,8 +104,10 @@ public class FhirEtl {
 		@Description("The target fhir store OR GCP FHIR store with the format: "
 		        + "`projects/[\\w-]+/locations/[\\w-]+/datasets/[\\w-]+/fhirStores/[\\w-]+`, e.g., "
 		        + "`projects/my-project/locations/us-central1/datasets/openmrs_fhir_test/fhirStores/test`")
-		// TODO set the default value of this to empty string once FhirSearchUtil is refactored and GCP
-		// specific parts are taken out. Then add the support for having both FHIR store and Parquet
+		// TODO set the default value of this to empty string once FhirSearchUtil is
+		// refactored and GCP
+		// specific parts are taken out. Then add the support for having both FHIR store
+		// and Parquet
 		// output enabled at the same time.
 		@Default.String("projects/P/locations/L/datasets/D/fhirStores/F")
 		String getGcpFhirStore();
@@ -199,7 +203,8 @@ public class FhirEtl {
 		}
 		
 		@ProcessElement
-		public void ProcessElement(@Element SearchSegmentDescriptor segment, OutputReceiver<GenericRecord> out) {
+		public void ProcessElement(@Element SearchSegmentDescriptor segment, OutputReceiver<GenericRecord> out)
+		        throws ConfigurationException, DataFormatException, Exception {
 			Bundle pageBundle = fhirSearchUtil.searchByUrl(segment.searchUrl(), segment.count(), SummaryEnum.DATA);
 			if (parquetFile.isEmpty()) {
 				fhirStoreUtil.uploadBundleToCloud(pageBundle, fhirContext);
