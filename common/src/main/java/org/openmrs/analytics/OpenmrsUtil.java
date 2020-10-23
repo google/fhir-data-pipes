@@ -53,12 +53,13 @@ public class OpenmrsUtil {
 			String resourceId = sepUrl[sepUrl.length - 1];
 			String resourceType = sepUrl[sepUrl.length - 2];
 			
+			// TODO add summary mode for data only.
 			IBaseResource resource = client.read().resource(resourceType).withId(resourceId).execute();
 			
 			return (Resource) resource;
 		}
 		catch (Exception e) {
-			log.info("Failed fetching FHIR resource at " + resourceUrl + ": " + e);
+			log.error("Failed fetching FHIR resource at " + resourceUrl + ": " + e);
 			return null;
 		}
 	}

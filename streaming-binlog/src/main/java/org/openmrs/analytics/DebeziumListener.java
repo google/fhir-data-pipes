@@ -14,18 +14,13 @@
 
 package org.openmrs.analytics;
 
-import static org.openmrs.analytics.PipelineConfig.EVENTS_HANDLER_ROUTE;
-import static org.openmrs.analytics.PipelineConfig.FHIR_HANDLER_ROUTE;
-// pipeline config
-import static org.openmrs.analytics.PipelineConfig.getDebeziumConfig;
-import static org.openmrs.analytics.PipelineConfig.getFhirConfig;
+import java.io.IOException;
 
-import io.debezium.data.Envelope;
+import ca.uhn.fhir.context.FhirContext;
+import ca.uhn.fhir.parser.IParser;
+import com.google.common.annotations.VisibleForTesting;
 import org.apache.camel.LoggingLevel;
-import org.apache.camel.Predicate;
 import org.apache.camel.builder.RouteBuilder;
-import org.apache.camel.component.debezium.DebeziumConstants;
-import org.apache.camel.model.dataformat.JsonLibrary;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -34,47 +29,40 @@ public class DebeziumListener extends RouteBuilder {
 	
 	private static final Logger log = LoggerFactory.getLogger(DebeziumListener.class);
 	
+	@VisibleForTesting
+	final static String DEBEZIUM_ROUTE_ID = DebeziumListener.class.getName() + ".MysqlDatabaseCDC";
+	
 	@Override
-	public void configure() throws Exception {
+	public void configure() throws IOException {
 		log.info("Debezium Listener Started... ");
 		
-		//Event types definition: CRUD
-		final Predicate isCreateEvent = header(DebeziumConstants.HEADER_OPERATION)
-		        .in(constant(Envelope.Operation.CREATE.code()));
-		
-		final Predicate isUpdateEvent = header(DebeziumConstants.HEADER_OPERATION)
-		        .in(constant(Envelope.Operation.UPDATE.code()));
-		
-		final Predicate isDeleteEvent = header(DebeziumConstants.HEADER_OPERATION)
-		        .in(constant(Envelope.Operation.DELETE.code()));
-		
 		// Main Change Data Capture (DBZ) entrypoint
-		from(getDebeziumConfig()).routeId(DebeziumListener.class.getName() + ".MysqlDatabaseCDC")
-		        .log(LoggingLevel.INFO, "Incoming Events: ${body} with headers ${headers}").to(EVENTS_HANDLER_ROUTE);
-		
-		// Change Data Capture route handler
-		from(EVENTS_HANDLER_ROUTE).log(LoggingLevel.INFO, "Incoming Events: ${body} with headers ${headers}")
-		        .filter(body().isNotNull()).choice().when(isCreateEvent)
-		        .log(LoggingLevel.TRACE, "CreateEvent Emitted ---> ${body}").process(new FhirUriGenerator())
-		        .to(FHIR_HANDLER_ROUTE).endChoice().when(isUpdateEvent)
-		        .log(LoggingLevel.TRACE, "UpdateEvent Emitted ---> ${body}").process(new FhirUriGenerator())
-		        .to(FHIR_HANDLER_ROUTE).endChoice().when(isDeleteEvent)
-		        .log(LoggingLevel.TRACE, "DeleteEvent Emitted Not Supported ---> ${body}").endChoice().otherwise()
-		        .log(LoggingLevel.WARN, "Event Not Supported: ${headers[" + DebeziumConstants.HEADER_IDENTIFIER + "]}")
-		        .endParent();
-		
-		// FHIR event worker
-		// Current append mode is suppported i.e any Create or Update will be upserted to the warehouse
-		// append mode should also work for deletion given that openmrs does not delete data instead voids
-		// TODO handle for manual Deletion
-		from(FHIR_HANDLER_ROUTE).routeId(DebeziumListener.class.getName() + ".FhirHandlerRoute").filter(body().isNotNull())
-		        .choice().when(header("fhirResourceUri").isNull())
-		        .log(LoggingLevel.WARN, "FHIR URL Not Mapped --->  ${headers[" + DebeziumConstants.HEADER_IDENTIFIER + "]}")
-		        .otherwise().toD(getFhirConfig()).id("fhirOpenMRS") // this id is used during mocking
-		        .log(LoggingLevel.INFO, "FHIR GET Operation Completed ---> ${header.fhirResourceUri}")
-		        .filter(body().isNotNull())// Filter non-Fhir uri
-		        .unmarshal().json(JsonLibrary.Jackson).log(LoggingLevel.TRACE, "unmarshalled FHIR ${body}")
-		        .process(new PipelineSink()).endChoice();
-		
+		from(getDebeziumConfig()).routeId(DEBEZIUM_ROUTE_ID)
+		        .log(LoggingLevel.TRACE, "Incoming Events: ${body} with headers ${headers}").process(createFhirConverter());
 	}
+	
+	@VisibleForTesting
+	FhirConverter createFhirConverter() throws IOException {
+		FhirContext fhirContext = FhirContext.forDstu3();
+		String fhirBaseUrl = System.getProperty("openmrs.serverUrl") + System.getProperty("openmrs.fhirBaseEndpoint");
+		OpenmrsUtil openmrsUtil = new OpenmrsUtil(fhirBaseUrl, System.getProperty("openmrs.username"),
+		        System.getProperty("openmrs.password"), fhirContext);
+		FhirStoreUtil fhirStoreUtil = new FhirStoreUtil(System.getProperty("cloud.gcpFhirStore"), fhirContext);
+		IParser parser = fhirContext.newJsonParser();
+		return new FhirConverter(openmrsUtil, fhirStoreUtil, parser);
+	}
+	
+	private String getDebeziumConfig() {
+		return "debezium-mysql:{{database.hostname}}?" + "databaseHostname={{database.hostname}}"
+		        + "&databaseServerId={{database.serverId}}" + "&databasePort={{database.port}}"
+		        + "&databaseUser={{database.user}}" + "&databasePassword={{database.password}}"
+				//+ "&name={{database.dbname}}"
+		        + "&databaseServerName={{database.dbname}}" + "&databaseWhitelist={{database.schema}}"
+		        + "&offsetStorage=org.apache.kafka.connect.storage.FileOffsetBackingStore"
+		        + "&offsetStorageFileName={{database.offsetStorage}}"
+		        + "&databaseHistoryFileFilename={{database.databaseHistory}}"
+		//+ "&tableWhitelist={{database.schema}}.encounter,{{database.schema}}.obs"
+		;
+	}
+	
 }

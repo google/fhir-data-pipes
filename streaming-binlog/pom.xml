@@ -134,8 +134,6 @@
     <dependency>
       <groupId>ca.uhn.hapi.fhir</groupId>
       <artifactId>hapi-fhir-base</artifactId>
-      <version>4.2.0</version>
-      <scope>compile</scope>
     </dependency>
     <!-- OpenMRS -->
     <!-- TODO remove both org.openmrs.api and org.openmrs.module

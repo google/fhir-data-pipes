@@ -223,6 +223,16 @@ binlog_format     = row
 
 For more information, please visit https://debezium.io
 
+### Dev. tip
+When working on a feature in the Debezium based pipeline, you can replay old
+binlog updates by setting the system properties `database.offsetStorage` and
+`database.databaseHistory` to an old version of the history. In other words,
+you can start from history/offset pair A, add some events in OpenMRS (e.g.,
+add an Observation) to create some updates in the binlog. Now if you keep a
+copy of original version of A (before the changes) you can reuse it in future
+runs to replay the new events with no more interactions with OpenMRS.
+
+
 # Batch mode 
 The steps above for setting up a FHIR Store and a linked BigQuery dataset needs
 to be followed. Once it is done, and after `mvn install`, the pipeline can be
