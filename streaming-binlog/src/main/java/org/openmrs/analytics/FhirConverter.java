@@ -69,7 +69,7 @@ public class FhirConverter implements Processor {
 		this.feedConfigurationService.saveConfig(generalConfiguration);
 	}
 	
-	public void process(Exchange exchange) {
+	public void process(Exchange exchange) throws Exception{
 		Message message = exchange.getMessage();
 		final Map payload = message.getBody(Map.class);
 		final Map sourceMetadata = message.getHeader(DebeziumConstants.HEADER_SOURCE_METADATA, Map.class);

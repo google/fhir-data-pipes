@@ -199,7 +199,7 @@ public class FhirEtl {
 		}
 		
 		@ProcessElement
-		public void ProcessElement(@Element SearchSegmentDescriptor segment, OutputReceiver<GenericRecord> out) {
+		public void ProcessElement(@Element SearchSegmentDescriptor segment, OutputReceiver<GenericRecord> out) throws Exception{
 			Bundle pageBundle = fhirSearchUtil.searchByUrl(segment.searchUrl(), segment.count(), SummaryEnum.DATA);
 			if (parquetFile.isEmpty()) {
 				fhirStoreUtil.uploadBundleToCloud(pageBundle, fhirContext);

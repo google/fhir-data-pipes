@@ -76,7 +76,7 @@ public class FhirStoreUtil {
 	// This follows the examples at:
 	// https://github.com/GoogleCloudPlatform/java-docs-samples/healthcare/tree/master/healthcare/v1
 	// TODO: remove redundant resource information if passing a HAPI resource
-	public void uploadResourceToCloud(String resourceType, String resourceId, Resource resource) {
+	public void uploadResourceToCloud(String resourceType, String resourceId, Resource resource) throws Exception {
 		try {
 			updateFhirResource(gcpFhirStore, resourceId, resourceType, resource);
 		}
@@ -89,27 +89,36 @@ public class FhirStoreUtil {
 	}
 	
 	// TODO: merge the two versions of this method to remove redundant resource info
-	public void uploadResourceToCloud(String resourceType, String resourceId, String fhirJson) {
-		uploadResourceToCloud(resourceType, resourceId, (Resource) fhirContext.newJsonParser().parseResource(fhirJson));
+	public void uploadResourceToCloud(String resourceType, String resourceId, String fhirJson) throws Exception {
+		if (httpUtil.checkServerConnection("http://google.com")) {
+			uploadResourceToCloud(resourceType, resourceId,
+					(Resource) fhirContext.newJsonParser().parseResource(fhirJson));
+		} else {
+			log.error("please Check your internet Connectivity");
+		}
 	}
 	
 	private void updateFhirResource(String fhirStoreName, String resourceId, String resourceType, Resource resource)
-	        throws IOException, URISyntaxException {
+			throws IOException, URISyntaxException ,Exception{
 		// Initialize the client, which will be used to interact with the service.
 		CloudHealthcare client = createClient();
 		String uri = String.format("%sv1/%s/fhir/%s/%s", client.getRootUrl(), fhirStoreName, resourceType, resourceId);
 		URIBuilder uriBuilder = new URIBuilder(uri);
 		log.info(String.format("Full URL is: %s", uriBuilder.build()));
-		
+
 		StringEntity requestEntity = new StringEntity(fhirContext.newJsonParser().encodeResourceToString(resource),
-		        StandardCharsets.UTF_8);
-		
+				StandardCharsets.UTF_8);
+
 		HttpUriRequest request = RequestBuilder.put().setUri(uriBuilder.build()).setEntity(requestEntity)
-		        .addHeader("Content-Type", "application/fhir+json").addHeader("Accept-Charset", "utf-8")
-		        .addHeader("Accept", "application/fhir+json").addHeader("Authorization", "Bearer " + getAccessToken())
-		        .build();
-		String response = httpUtil.executeRequest(request);
-		log.debug("Update FHIR resource response: " + response);
+				.addHeader("Content-Type", "application/fhir+json").addHeader("Accept-Charset", "utf-8")
+				.addHeader("Accept", "application/fhir+json").addHeader("Authorization", "Bearer " + getAccessToken())
+				.build();
+		if (httpUtil.checkServerConnection(uriBuilder.build().toString())) {
+			String response = httpUtil.executeRequest(request);
+			log.debug("Update FHIR resource response: " + response);
+		} else {
+			log.error("Fhir Store Server Is down");
+		}
 	}
 	
 	private CloudHealthcare createClient() throws IOException {
@@ -151,12 +160,16 @@ public class FhirStoreUtil {
 		return credential;
 	}
 	
-	public void uploadBundleToCloud(Bundle bundle, FhirContext fhirContext) {
-		IParser parser = fhirContext.newJsonParser();
-		for (BundleEntryComponent entry : bundle.getEntry()) {
-			Resource resource = entry.getResource();
-			uploadResourceToCloud(resource.getResourceType().name(), resource.getIdElement().getIdPart(),
-			    parser.encodeResourceToString(resource));
+	public void uploadBundleToCloud(Bundle bundle, FhirContext fhirContext) throws Exception {
+		if (httpUtil.checkServerConnection("http://google.com")) {
+			IParser parser = fhirContext.newJsonParser();
+			for (BundleEntryComponent entry : bundle.getEntry()) {
+				Resource resource = entry.getResource();
+				uploadResourceToCloud(resource.getResourceType().name(), resource.getIdElement().getIdPart(),
+						parser.encodeResourceToString(resource));
+			}
+		} else {
+			log.error("please Check your internet Connectivity");
 		}
 	}
 	
