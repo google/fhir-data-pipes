@@ -15,7 +15,6 @@
 package org.openmrs.analytics;
 
 // pipeline config;
-// pipeline config;
 import static org.openmrs.analytics.PipelineConfig.EVENTS_HANDLER_ROUTE;
 import static org.openmrs.analytics.PipelineConfig.FHIR_HANDLER_ROUTE;
 

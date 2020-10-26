@@ -57,7 +57,7 @@ public class HttpUtil {
 		}
 	}
 	
-	public HttpURLConnection CheckConnection(String Serverurl) throws Exception {
+	public HttpURLConnection getServerConnection(String Serverurl) throws Exception {
 		
 		URL obj = new URL(Serverurl);
 		HttpURLConnection con = (HttpURLConnection) obj.openConnection();
@@ -69,7 +69,7 @@ public class HttpUtil {
 	public boolean checkServerConnection(String url) throws Exception {
 		Integer connectionStatus = null;
 		try {
-			connectionStatus = CheckConnection(url).getResponseCode();
+			connectionStatus = getServerConnection(url).getResponseCode();
 		}
 		catch (Exception e) {
 			connectionStatus = 0;
