@@ -46,7 +46,7 @@
     <openmrs.username>admin</openmrs.username>
     <openmrs.password>Admin123</openmrs.password>
     <openmrs.serverUrl>http://localhost:8099</openmrs.serverUrl>
-    <openmrs.fhirBaseEndpoint>/openmrs</openmrs.fhirBaseEndpoint>
+    <openmrs.fhirBaseEndpoint>/openmrs/ws/fhir2/R3</openmrs.fhirBaseEndpoint>
     <cloud.gcpFhirStore>projects/PROJECT/locations/LOCATION/datasets/DATASET/fhirStores/FHIRSTORENAME</cloud.gcpFhirStore>
     <fhir.debeziumEventConfigPath>utils/dbz_event_to_fhir_config.json</fhir.debeziumEventConfigPath>
 
@@ -134,24 +134,6 @@
     <dependency>
       <groupId>ca.uhn.hapi.fhir</groupId>
       <artifactId>hapi-fhir-base</artifactId>
-    </dependency>
-    <!-- OpenMRS -->
-    <!-- TODO remove both org.openmrs.api and org.openmrs.module
-        prefer to avoid these as they bring a lot more deps!
-		Failure to include yields compilation error:
-         cannot access org.openmrs.api.OpenmrsService [ERROR] class file for org.openmrs.api.OpenmrsService not found
-         As such these 2 libraries will be removed and https://github.com/GoogleCloudPlatform/openmrs-fhir-analytics/issues/36
-         should fix!
-    -->
-    <dependency>
-      <groupId>org.openmrs.api</groupId>
-      <artifactId>openmrs-api</artifactId>
-      <version>${openmrsPlatformVersion}</version>
-    </dependency>
-    <dependency>
-      <groupId>org.openmrs.module</groupId>
-      <artifactId>atomfeed-api</artifactId>
-      <version>1.0.13-SNAPSHOT</version>
     </dependency>
     <dependency>
       <groupId>com.google.code.gson</groupId>
