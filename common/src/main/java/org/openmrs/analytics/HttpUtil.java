@@ -79,9 +79,9 @@ public class HttpUtil {
 			ByteArrayOutputStream byteStream = new ByteArrayOutputStream();
 			responseEntity.writeTo(byteStream);
 			if (response.getStatusLine().getStatusCode() != HttpStatus.SC_CREATED
-					&& response.getStatusLine().getStatusCode() != HttpStatus.SC_OK) {
+			        && response.getStatusLine().getStatusCode() != HttpStatus.SC_OK) {
 				log.error(String.format("Exception for resource %s: %s", request.getURI().toString(),
-						response.getStatusLine().toString()));
+				    response.getStatusLine().toString()));
 				log.error(byteStream.toString());
 				throw new RuntimeException();
 			}
