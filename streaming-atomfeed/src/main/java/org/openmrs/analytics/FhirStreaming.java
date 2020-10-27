@@ -79,9 +79,9 @@ public class FhirStreaming {
 		
 		FhirStoreUtil fhirStoreUtil;
 		if (GcpStoreUtil.matchesGcpPattern(sinkUrl))
-			fhirStoreUtil = new GcpStoreUtil(sinkUrl, fhirContext);
+			fhirStoreUtil = new GcpStoreUtil(sinkUrl, fhirContext.getRestfulClientFactory());
 		else
-			fhirStoreUtil = new FhirStoreUtil(sinkUrl, fhirContext);
+			fhirStoreUtil = new FhirStoreUtil(sinkUrl, fhirContext.getRestfulClientFactory());
 		
 		FeedConsumer feedConsumer = new FeedConsumer(feedUrl, fhirStoreUtil, openmrsUtil);
 		

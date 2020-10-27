@@ -119,12 +119,13 @@ public class FhirEtl {
 		        createOpenmrsUtil(options.getServerUrl() + options.getServerFhirEndpoint(), options.getUsername(),
 		            options.getPassword(), fhirContext));
 	}
-
+	
 	static FhirStoreUtil createFhirStoreUtil(String fhirStoreUrl, FhirContext fhirContext) {
-		if (GcpStoreUtil.matchesGcpPattern(fhirStoreUrl))
-			return new GcpStoreUtil(fhirStoreUrl, fhirContext);
-		else
-			return new FhirStoreUtil(fhirStoreUrl, fhirContext);
+		if (GcpStoreUtil.matchesGcpPattern(fhirStoreUrl)) {
+			return new GcpStoreUtil(fhirStoreUrl, fhirContext.getRestfulClientFactory());
+		} else {
+			return new FhirStoreUtil(fhirStoreUrl, fhirContext.getRestfulClientFactory());
+		}
 	}
 	
 	static OpenmrsUtil createOpenmrsUtil(String sourceUrl, String sourceUser, String sourcePw, FhirContext fhirContext) {
@@ -135,7 +136,7 @@ public class FhirEtl {
 	        throws CannotProvideCoderException {
 		FhirSearchUtil fhirSearchUtil = createFhirSearchUtil(options, fhirContext);
 		// TODO remove fhirContext from fhirStoreUtil.
-		FhirStoreUtil fhirStoreUtil = new FhirStoreUtil(options.getFhirStoreUrl(), fhirContext);
+		FhirStoreUtil fhirStoreUtil = new FhirStoreUtil(options.getFhirStoreUrl(), fhirContext.getRestfulClientFactory());
 		ParquetUtil parquetUtil = new ParquetUtil(fhirContext);
 		Map<String, List<SearchSegmentDescriptor>> segmentMap = new HashMap<>();
 		for (String search : options.getSearchList().split(",")) {
@@ -197,7 +198,7 @@ public class FhirEtl {
 		@Setup
 		public void Setup() {
 			fhirContext = FhirContext.forDstu3();
-			fhirStoreUtil = new FhirStoreUtil(fhirStoreUrl, fhirContext);
+			fhirStoreUtil = new FhirStoreUtil(fhirStoreUrl, fhirContext.getRestfulClientFactory());
 			openmrsUtil = createOpenmrsUtil(sourceUrl, sourceUser, sourcePw, fhirContext);
 			fhirSearchUtil = new FhirSearchUtil(fhirStoreUtil, openmrsUtil);
 			parquetUtil = new ParquetUtil(fhirContext);

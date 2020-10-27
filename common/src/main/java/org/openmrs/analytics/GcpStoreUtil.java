@@ -19,10 +19,9 @@ import java.net.URISyntaxException;
 import java.util.Collections;
 import java.util.regex.Pattern;
 
-import ca.uhn.fhir.context.FhirContext;
 import ca.uhn.fhir.rest.api.MethodOutcome;
 import ca.uhn.fhir.rest.client.api.IClientInterceptor;
-import ca.uhn.fhir.rest.client.api.IGenericClient;
+import ca.uhn.fhir.rest.client.api.IRestfulClientFactory;
 import ca.uhn.fhir.rest.client.interceptor.BearerTokenAuthInterceptor;
 import com.google.api.client.googleapis.auth.oauth2.GoogleCredential;
 import com.google.api.client.http.HttpRequest;
@@ -51,8 +50,8 @@ public class GcpStoreUtil extends FhirStoreUtil {
 		return FHIR_PATTERN.matcher(gcpFhirStore).matches();
 	}
 	
-	GcpStoreUtil(String gcpFhirStore, IGenericClient client) throws IllegalArgumentException {
-		super(gcpFhirStore, client);
+	GcpStoreUtil(String gcpFhirStore, IRestfulClientFactory clientFactory) throws IllegalArgumentException {
+		super(gcpFhirStore, clientFactory);
 		
 		if (!matchesGcpPattern(gcpFhirStore)) {
 			throw new IllegalArgumentException(
@@ -75,8 +74,7 @@ public class GcpStoreUtil extends FhirStoreUtil {
 		try {
 			// Initialize the client, which will be used to interact with the service.
 			CloudHealthcare client = createClient();
-			String uri = String.format("%sv1/%s/fhir/%s/%s", client.getRootUrl(), fhirStoreName, resource.getResourceType(),
-			    resource.getIdElement().getIdPart());
+			String uri = String.format("%sv1/%s/fhir", client.getRootUrl(), fhirStoreName);
 			URIBuilder uriBuilder = new URIBuilder(uri);
 			log.info(String.format("Full URL is: %s", uriBuilder.build()));
 			

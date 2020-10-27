@@ -24,7 +24,6 @@ import java.net.URL;
 import java.nio.charset.StandardCharsets;
 
 import ca.uhn.fhir.context.FhirContext;
-import ca.uhn.fhir.model.api.IResource;
 import ca.uhn.fhir.parser.IParser;
 import ca.uhn.fhir.rest.api.MethodOutcome;
 import ca.uhn.fhir.rest.api.SummaryEnum;
@@ -33,7 +32,6 @@ import ca.uhn.fhir.rest.gclient.IQuery;
 import ca.uhn.fhir.rest.gclient.IUntypedQuery;
 import com.google.common.io.Resources;
 import org.hl7.fhir.dstu3.model.Bundle;
-import org.hl7.fhir.dstu3.model.Resource;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -71,7 +69,7 @@ public class FhirSearchUtilTest {
 	private FhirContext fhirContext;
 	
 	private FhirSearchUtil fhirSearchUtil;
-
+	
 	private MethodOutcome outcome;
 	
 	@Before
@@ -100,17 +98,17 @@ public class FhirSearchUtilTest {
 		String baseUrl = fhirSearchUtil.findBaseSearchUrl(bundle);
 		assertThat(baseUrl, equalTo(BASE_URL + "?" + PAGE_URL_PARAM));
 	}
-
+	
 	@Test
 	public void testSearchForResource() {
 		Bundle actualBundle = fhirSearchUtil.searchByUrl(SEARCH_URL, 10, SummaryEnum.DATA);
 		assertThat(actualBundle.equalsDeep(bundle), equalTo(true));
 	}
-
+	
 	@Test
 	public void testUploadBundleToCloud() {
 		MethodOutcome result = fhirSearchUtil.uploadBundleToCloud(bundle);
-
+		
 		assertThat(result, not(nullValue()));
 		assertThat(result.getCreated(), equalTo(true));
 	}

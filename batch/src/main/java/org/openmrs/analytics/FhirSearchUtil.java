@@ -63,7 +63,7 @@ public class FhirSearchUtil {
 		if (searchLink == null) {
 			throw new IllegalArgumentException(String.format("No proper link information in bundle %s", searchBundle));
 		}
-
+		
 		try {
 			URI searchUri = new URI(searchLink);
 			NameValuePair pagesParam = null;
