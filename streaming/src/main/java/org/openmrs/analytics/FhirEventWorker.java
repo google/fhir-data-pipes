@@ -64,9 +64,6 @@ public class FhirEventWorker<T extends BaseResource> implements EventWorker {
 		}
 		catch (JsonParseException e) {
 			log.error(String.format("Error parsing event %s with error %s", event.toString(), e.toString()));
-		} catch (Exception e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
 		}
 	}
 	

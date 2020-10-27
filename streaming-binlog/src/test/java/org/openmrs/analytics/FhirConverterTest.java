@@ -78,7 +78,7 @@ public class FhirConverterTest extends CamelTestSupport {
 	}
 	
 	@Test
-	public void shouldFetchFhirResourceAndStore() throws Exception{
+	public void shouldFetchFhirResourceAndStore() throws Exception {
 		Map<String, String> messageBody = DebeziumTestUtil.genExpectedBody();
 		Map<String, Object> messageHeaders = DebeziumTestUtil.genExpectedHeaders(Operation.UPDATE, "encounter");
 		resource = new Encounter();
