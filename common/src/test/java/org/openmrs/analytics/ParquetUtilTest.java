@@ -49,13 +49,13 @@ public class ParquetUtilTest {
 	public void setup() throws IOException {
 		patientBundle = Resources.toString(Resources.getResource("patient_bundle.json"), StandardCharsets.UTF_8);
 		observationBundle = Resources.toString(Resources.getResource("observation_bundle.json"), StandardCharsets.UTF_8);
-		parquetUtil = new ParquetUtil();
 		this.fhirContext = FhirContext.forDstu3();
+		parquetUtil = new ParquetUtil(fhirContext);
 	}
 	
 	@Test
 	public void getResourceSchema_Patient() {
-		Schema schema = parquetUtil.getResourceSchema("Patient", fhirContext);
+		Schema schema = parquetUtil.getResourceSchema("Patient");
 		assertThat(schema.getField("id").toString(), notNullValue());
 		assertThat(schema.getField("identifier").toString(), notNullValue());
 		assertThat(schema.getField("name").toString(), notNullValue());
@@ -63,7 +63,7 @@ public class ParquetUtilTest {
 	
 	@Test
 	public void getResourceSchema_Observation() {
-		Schema schema = parquetUtil.getResourceSchema("Observation", fhirContext);
+		Schema schema = parquetUtil.getResourceSchema("Observation");
 		assertThat(schema.getField("id").toString(), notNullValue());
 		assertThat(schema.getField("identifier").toString(), notNullValue());
 		assertThat(schema.getField("basedOn").toString(), notNullValue());
@@ -73,7 +73,7 @@ public class ParquetUtilTest {
 	
 	@Test
 	public void getResourceSchema_Encounter() {
-		Schema schema = parquetUtil.getResourceSchema("Encounter", fhirContext);
+		Schema schema = parquetUtil.getResourceSchema("Encounter");
 		assertThat(schema.getField("id").toString(), notNullValue());
 		assertThat(schema.getField("identifier").toString(), notNullValue());
 		assertThat(schema.getField("status").toString(), notNullValue());
@@ -84,7 +84,7 @@ public class ParquetUtilTest {
 	public void generateRecords_BundleOfPatients() {
 		IParser parser = fhirContext.newJsonParser();
 		Bundle bundle = parser.parseResource(Bundle.class, patientBundle);
-		List<GenericRecord> recordList = parquetUtil.generateRecords(bundle, fhirContext);
+		List<GenericRecord> recordList = parquetUtil.generateRecords(bundle);
 		assertThat(recordList.size(), equalTo(1));
 		assertThat(recordList.get(0).get("address"), notNullValue());
 		Collection<Object> addressList = (Collection<Object>) recordList.get(0).get("address");
@@ -97,7 +97,18 @@ public class ParquetUtilTest {
 	public void generateRecords_BundleOfObservations() {
 		IParser parser = fhirContext.newJsonParser();
 		Bundle bundle = parser.parseResource(Bundle.class, observationBundle);
-		List<GenericRecord> recordList = parquetUtil.generateRecords(bundle, fhirContext);
+		List<GenericRecord> recordList = parquetUtil.generateRecords(bundle);
 		assertThat(recordList.size(), equalTo(6));
+	}
+	
+	@Test
+	public void generateRecordForPatient() {
+		IParser parser = fhirContext.newJsonParser();
+		Bundle bundle = parser.parseResource(Bundle.class, patientBundle);
+		GenericRecord record = parquetUtil.convertToAvro(bundle.getEntry().get(0).getResource());
+		Collection<Object> addressList = (Collection<Object>) record.get("address");
+		assertThat(addressList.size(), equalTo(1));
+		Record address = (Record) addressList.iterator().next();
+		assertThat((String) address.get("city"), equalTo("Waterloo"));
 	}
 }

@@ -14,13 +14,23 @@
 
 package org.openmrs.analytics;
 
+import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import ca.uhn.fhir.context.FhirContext;
 import com.cerner.bunsen.avro.AvroConverter;
+import com.google.common.base.Preconditions;
+import org.apache.avro.Conversions.DecimalConversion;
 import org.apache.avro.Schema;
+import org.apache.avro.generic.GenericData;
 import org.apache.avro.generic.GenericRecord;
+import org.apache.avro.specific.SpecificData;
+import org.apache.hadoop.fs.Path;
+import org.apache.parquet.avro.AvroParquetWriter;
+import org.apache.parquet.hadoop.ParquetWriter;
 import org.hl7.fhir.dstu3.model.Bundle;
 import org.hl7.fhir.dstu3.model.Bundle.BundleEntryComponent;
 import org.hl7.fhir.dstu3.model.Resource;
@@ -31,27 +41,96 @@ public class ParquetUtil {
 	
 	private static final Logger log = LoggerFactory.getLogger(ParquetUtil.class);
 	
-	public Schema getResourceSchema(String resourceType, FhirContext fhirContext) {
-		AvroConverter converter = AvroConverter.forResource(fhirContext, resourceType);
+	private final FhirContext fhirContext;
+	
+	private final Map<String, AvroConverter> converterMap;
+	
+	private final Map<String, ParquetWriter<GenericRecord>> writerMap;
+	
+	/**
+	 * This is to fix the logical type conversions for BigDecimal. This should be called once before any
+	 * FHIR resource conversion to Avro.
+	 */
+	public static void initializeAvroConverters() {
+		// For more context on the next two conversions, see this thread: https://bit.ly/3iE4rwS
+		// Add BigDecimal conversion to the singleton instance to fix "Unknown datum type" Avro exception.
+		GenericData.get().addLogicalTypeConversion(new DecimalConversion());
+		// This is for a similar error in the ParquetWriter.write which uses SpecificData.get() as its model.
+		SpecificData.get().addLogicalTypeConversion(new DecimalConversion());
+	}
+	
+	public String getParquetPath() {
+		return System.getProperty("file.parquetPath");
+	}
+	
+	ParquetUtil(FhirContext fhirContext) {
+		this.fhirContext = fhirContext;
+		this.converterMap = new HashMap<>();
+		this.writerMap = new HashMap<>();
+	}
+	
+	synchronized private AvroConverter getConverter(String resourceType) {
+		if (!converterMap.containsKey(resourceType)) {
+			AvroConverter converter = AvroConverter.forResource(fhirContext, resourceType);
+			converterMap.put(resourceType, converter);
+		}
+		return converterMap.get(resourceType);
+	}
+	
+	/**
+	 * This is to fetch a writer for a given `resourceType`; internally it only once create a writer for
+	 * a `resourceType` and on subsequent calls, return the same object. The base path comes from
+	 * `file.parquetPath` system property. NOTE: This should be removed once we move the streaming
+	 * pipeline to Beam; the I/O should be left to Beam similar to the batch mode.
+	 */
+	synchronized public ParquetWriter<GenericRecord> getWriter(String resourceType) throws IOException {
+		Preconditions.checkNotNull(getParquetPath());
+		if (!writerMap.containsKey(resourceType)) {
+			AvroParquetWriter.Builder<GenericRecord> builder = AvroParquetWriter
+			        .builder(new Path(getParquetPath() + resourceType));
+			ParquetWriter<GenericRecord> writer = builder.withSchema(getResourceSchema(resourceType)).build();
+			writerMap.put(resourceType, writer);
+		}
+		return writerMap.get(resourceType);
+	}
+	
+	synchronized public void closeAllWriters() {
+		for (Map.Entry<String, ParquetWriter<GenericRecord>> entry : writerMap.entrySet()) {
+			try {
+				entry.getValue().close();
+			}
+			catch (IOException e) {
+				log.error(String.format("Cannot close writer for resource %s exception: %s", entry.getKey(), e));
+			}
+		}
+	}
+	
+	public Schema getResourceSchema(String resourceType) {
+		AvroConverter converter = getConverter(resourceType);
 		Schema schema = converter.getSchema();
 		log.debug(String.format("Schema for resource type %s is %s", resourceType, schema));
 		return schema;
 	}
 	
 	// Assumes every entry in the bundle have the same type.
-	public List<GenericRecord> generateRecords(Bundle bundle, FhirContext fhirContext) {
+	public List<GenericRecord> generateRecords(Bundle bundle) {
 		List<GenericRecord> records = new ArrayList<>();
 		if (bundle.getTotal() == 0) {
 			return records;
 		}
 		String resourceType = bundle.getEntry().get(0).getResource().getResourceType().name();
-		AvroConverter converter = AvroConverter.forResource(fhirContext, resourceType);
+		AvroConverter converter = getConverter(resourceType);
 		for (BundleEntryComponent entry : bundle.getEntry()) {
 			Resource resource = entry.getResource();
 			// TODO: Check why Bunsen returns IndexedRecord instead of GenericRecord.
 			records.add((GenericRecord) converter.resourceToAvro(resource));
 		}
 		return records;
+	}
+	
+	public GenericRecord convertToAvro(Resource resource) {
+		AvroConverter converter = getConverter(resource.getResourceType().name());
+		return (GenericRecord) converter.resourceToAvro(resource);
 	}
 	
 }

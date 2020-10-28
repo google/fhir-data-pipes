@@ -24,6 +24,8 @@ public class Runner {
 	
 	// Main method that starts the streaming pipeline.
 	public static void main(String[] args) throws Exception {
+		ParquetUtil.initializeAvroConverters();
+		
 		MAIN.addRouteBuilder(DebeziumListener.class);
 		// and enable graceful hangup support when container/process is shutdown
 		MAIN.enableHangupSupport();

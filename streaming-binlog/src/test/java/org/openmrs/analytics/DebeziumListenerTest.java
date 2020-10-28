@@ -18,6 +18,7 @@ import java.util.Map;
 import java.util.Properties;
 
 import io.debezium.data.Envelope.Operation;
+import org.apache.camel.CamelContext;
 import org.apache.camel.Exchange;
 import org.apache.camel.Produce;
 import org.apache.camel.ProducerTemplate;
@@ -62,7 +63,7 @@ public class DebeziumListenerTest extends CamelTestSupport {
 		return new DebeziumListener() {
 			
 			@Override
-			FhirConverter createFhirConverter() {
+			FhirConverter createFhirConverter(CamelContext camelContext) {
 				return fhirConverterMock;
 			}
 		};
