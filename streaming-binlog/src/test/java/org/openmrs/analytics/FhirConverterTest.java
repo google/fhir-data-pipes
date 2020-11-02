@@ -166,12 +166,8 @@ public class FhirConverterTest extends CamelTestSupport {
 		String tables[] = { "obs", "encounter", "cohort", "person", "provider", "relationship", "patient", "drug", "allergy",
 		        "order", "drug_order", "test_order", "program" };
 		
-		int i;
-		for (i = 0; i < tables.length; i++) {
-			
-			final String table = tables[i];
+		for (String table : tables) {
 			Map<String, Object> messageHeaders = DebeziumTestUtil.genExpectedHeaders(Operation.UPDATE, table);
-			
 			// send events
 			eventsProducer.sendBodyAndHeaders(messageBody, messageHeaders);
 		}
@@ -185,10 +181,8 @@ public class FhirConverterTest extends CamelTestSupport {
 		// these do not have have linkTemplates.fhir in config
 		String tables[] = { "visittype", "patient_identifier", "person_attribute" };
 		
-		int i;
-		for (i = 0; i < tables.length; i++) {
+		for (String table : tables) {
 			
-			final String table = tables[i];
 			Map<String, Object> messageHeaders = DebeziumTestUtil.genExpectedHeaders(Operation.UPDATE, table);
 			
 			// send events
@@ -198,17 +192,14 @@ public class FhirConverterTest extends CamelTestSupport {
 		Mockito.verify(openmrsUtil, Mockito.times(0)).fetchFhirResource(Mockito.anyString());
 	}
 	
-	//"visit"
 	@Test
 	public void shouldNotFetchFhirResourcesForDisabledTablesInConfig() {
 		Map<String, String> messageBody = DebeziumTestUtil.genExpectedBody();
-		// visit, locationhas been disabled in config
+		// visit, location has been disabled in config
 		String tables[] = { "visit", "location" };
 		
-		int i;
-		for (i = 0; i < tables.length; i++) {
+		for (String table : tables) {
 			
-			final String table = tables[i];
 			Map<String, Object> messageHeaders = DebeziumTestUtil.genExpectedHeaders(Operation.UPDATE, table);
 			
 			// send events

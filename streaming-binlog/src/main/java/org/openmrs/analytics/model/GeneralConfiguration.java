@@ -13,26 +13,17 @@
 // limitations under the License.
 package org.openmrs.analytics.model;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.LinkedHashMap;
+
+import lombok.Getter;
+import lombok.Setter;
 
 public class GeneralConfiguration {
 	
-	private List<EventConfiguration> eventConfigurations;
+	@Getter
+	@Setter
+	private LinkedHashMap<String, EventConfiguration> eventConfigurations;
 	
-	public GeneralConfiguration() {
-		eventConfigurations = new ArrayList<>();
-	}
+	// TODO add Debezium config to the model + json
 	
-	public GeneralConfiguration(List<EventConfiguration> eventConfigurations) {
-		this.eventConfigurations = eventConfigurations;
-	}
-	
-	public List<EventConfiguration> getEventConfigurations() {
-		return eventConfigurations;
-	}
-	
-	public void setEventConfigurations(List<EventConfiguration> eventConfigurations) {
-		this.eventConfigurations = eventConfigurations;
-	}
 }

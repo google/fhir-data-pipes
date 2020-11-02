@@ -1,228 +1,202 @@
 {
-  "eventConfigurations": [
-    {
+  "eventConfigurations": {
+    "location": {
       "enabled": "false",
       "title": "Location",
-      "table": "location",
       "linkTemplates": {
         "rest": "/ws/rest/v1/location/{uuid}?v=full",
         "fhir": "/Location/{uuid}"
       }
     },
-    {
+    "concept": {
       "enabled": "false",
       "title": "Concept",
-      "table": "concept",
       "linkTemplates": {
         "rest": "/ws/rest/v1/concept/{uuid}?v=full"
       }
     },
-    {
+    "cohort": {
       "enabled": "true",
       "title": "Cohort",
-      "table": "cohort",
       "linkTemplates": {
         "rest": "/ws/rest/v1/cohort/{uuid}?v=full",
         "fhir": "/Group/{uuid}"
       }
     },
-    {
+    "visittype": {
       "enabled": "false",
       "title": "Visit Type",
-      "table": "visittype",
       "linkTemplates": {
         "rest": "/ws/rest/v1/visittype/{uuid}?v=full"
       }
     },
-    {
+    "person_address": {
       "enabled": "false",
       "title": "PersonAddress",
-      "table": "person_address",
       "linkTemplates": {
         "rest": "/ws/rest/v1/person/{parent-uuid}/address/{uuid}?v=full"
       }
     },
-    {
+    "person_name": {
       "enabled": "false",
       "title": "PersonName",
-      "table": "person_name",
       "linkTemplates": {
         "rest": "/ws/rest/v1/person/{parent-uuid}/name/{uuid}?v=full"
       }
     },
-    {
+    "patient_identifier": {
       "enabled": "false",
       "title": "PatientIdentifier",
-      "table": "patient_identifier",
       "linkTemplates": {
         "rest": "/ws/rest/v1/patient/{parent-uuid}/identifier/{uuid}?v=full"
       }
     },
-    {
+    "person_attribute": {
       "enabled": "false",
       "title": "PersonAttribute",
-      "table": "person_attribute",
       "linkTemplates": {
         "rest": "/ws/rest/v1/person/{parent-uuid}/attribute/{uuid}?v=full"
       }
     },
-    {
+    "person": {
       "enabled": "true",
       "title": "Person",
-      "table": "person",
       "linkTemplates": {
         "rest": "/ws/rest/v1/person/{uuid}?v=full",
         "fhir": "/Person/{uuid}"
       }
     },
-    {
+    "provider": {
       "enabled": "true",
       "title": "Provider",
-      "table": "provider",
       "linkTemplates": {
         "rest": "/ws/rest/v1/provider/{uuid}?v=full",
         "fhir": "/Provider/{uuid}"
       }
     },
-    {
+    "user": {
       "enabled": "false",
       "title": "User",
-      "table": "user",
       "linkTemplates": {
         "rest": "/ws/rest/v1/user/{uuid}?v=full"
       }
     },
-    {
+    "patient": {
       "enabled": "true",
       "title": "Patient",
-      "table": "patient",
       "linkTemplates": {
         "rest": "/ws/rest/v1/patient/{uuid}?v=full",
         "fhir": "/Patient/{uuid}"
       }
     },
-    {
+    "relationship": {
       "enabled": "true",
       "title": "Relationship",
-      "table": "relationship",
       "linkTemplates": {
         "rest": "/ws/rest/v1/relationship/{uuid}?v=full",
         "fhir": "/Relationship/{uuid}"
       }
     },
-    {
+    "drug": {
       "enabled": "true",
       "title": "Drug",
-      "table": "drug",
       "linkTemplates": {
         "rest": "/ws/rest/v1/drug/{uuid}?v=full",
         "fhir": "/Drug/{uuid}"
       }
     },
-    {
+    "allergy": {
       "enabled": "true",
       "title": "Allergy",
-      "table": "allergy",
       "linkTemplates": {
         "rest": "/ws/rest/v1/allergy/{uuid}?v=full",
         "fhir": "/AllergyIntolerance/{uuid}"
       }
     },
-    {
+    "form":{
       "enabled": "true",
       "title": "Form",
-      "table": "form",
       "linkTemplates": {
         "rest": "/ws/rest/v1/form/{uuid}?v=full"
       }
     },
-    {
+    "order": {
       "enabled": "true",
       "title": "Order",
-      "table": "order",
       "linkTemplates": {
         "rest": "/ws/rest/v1/order/{uuid}?v=full",
         "fhir": "/Order/{uuid}"
       }
     },
-    {
+    "drug_order":{
       "enabled": "true",
       "title": "DrugOrder",
-      "table": "drug_order",
       "linkTemplates": {
         "rest": "/ws/rest/v1/drug_order/{uuid}?v=full",
         "fhir": "/MedicationRequest/{uuid}"
       }
     },
-    {
+    "test_order": {
       "enabled": "true",
       "title": "TestOrder",
-      "table": "test_order",
       "linkTemplates": {
         "rest": "/ws/rest/v1/test_order/{uuid}?v=full",
         "fhir": "/ProcedureRequest/{uuid}"
       }
     },
-    {
+    "obs": {
       "enabled": "true",
       "title": "Observation",
-      "table": "obs",
       "linkTemplates": {
         "rest": "/ws/rest/v1/obs/{uuid}?v=full",
         "fhir": "/Observation/{uuid}"
       }
     },
-    {
+    "encounter":{
       "enabled": "true",
       "title": "Encounter",
-      "table": "encounter",
       "linkTemplates": {
         "rest": "/ws/rest/v1/encounter/{uuid}?v=full",
         "fhir": "/Encounter/{uuid}"
       }
     },
-    {
+    "visit":{
       "enabled": "false",
       "title": "Visit",
-      "table": "visit",
       "linkTemplates": {
         "rest": "/ws/rest/v1/visit/{uuid}?v=full",
         "fhir": "/Encounter/{uuid}"
       }
     },
-    {
+    "program":{
       "enabled": "true",
       "title": "Program",
-      "table": "program",
       "linkTemplates": {
         "rest": "/ws/rest/v1/program/{uuid}?v=full",
         "fhir": "/Program/{uuid}"
       }
     },
-    {
+    "programenrollment":{
       "enabled": "true",
       "title": "Program Enrollment",
-      "table": "programenrollment",
       "linkTemplates": {
         "rest": "/ws/rest/v1/programenrollment/{uuid}?v=full",
         "fhir": "/Programenrollment/{uuid}"
       }
     },
-    {
+    "privilege":{
       "enabled": "true",
       "title": "Privilege",
-      "table": "privilege",
       "linkTemplates": {
         "rest": "/ws/rest/v1/privilege/{uuid}?v=full"
       }
     },
-    {
+    "audit_message":{
       "enabled": "true",
       "title": "AuditMessage",
-      "table": "audit_message",
       "linkTemplates": {
         "rest": "/ws/rest/sync2/messages/{uuid}"
       }
     }
-  ]
+  }
 }

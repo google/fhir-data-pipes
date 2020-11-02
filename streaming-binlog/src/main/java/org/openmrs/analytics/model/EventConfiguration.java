@@ -15,55 +15,20 @@ package org.openmrs.analytics.model;
 
 import java.util.LinkedHashMap;
 
+import lombok.Getter;
+import lombok.Setter;
+
 public class EventConfiguration {
 	
+	@Getter
+	@Setter
 	private boolean enabled;
 	
+	@Getter
+	@Setter
 	private String title;
 	
-	private String table;
-	
+	@Getter
+	@Setter
 	private LinkedHashMap<String, String> linkTemplates;
-	
-	public EventConfiguration() {
-	}
-	
-	public EventConfiguration(String title, String table, LinkedHashMap<String, String> linkTemplates) {
-		this.enabled = false;
-		this.title = title;
-		this.table = table;
-		this.linkTemplates = linkTemplates;
-	}
-	
-	public boolean isEnabled() {
-		return enabled;
-	}
-	
-	public void setEnabled(boolean enabled) {
-		this.enabled = enabled;
-	}
-	
-	public String getTitle() {
-		return title;
-	}
-	
-	public void setTitle(String title) {
-		this.title = title;
-	}
-	
-	public String getTable() {
-		return table;
-	}
-	
-	public void setTable(String table) {
-		this.table = table;
-	}
-	
-	public LinkedHashMap<String, String> getLinkTemplates() {
-		return linkTemplates;
-	}
-	
-	public void setLinkTemplates(LinkedHashMap<String, String> linkTemplates) {
-		this.linkTemplates = linkTemplates;
-	}
 }

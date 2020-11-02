@@ -20,8 +20,6 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.HashMap;
-import java.util.LinkedHashMap;
 import java.util.Map;
 
 import ca.uhn.fhir.parser.IParser;
@@ -53,8 +51,6 @@ public class FhirConverter implements Processor {
 	
 	private final GeneralConfiguration generalConfiguration;
 	
-	private HashMap<String, EventConfiguration> eventConfigMapByTable;
-	
 	private final IParser parser;
 	
 	@VisibleForTesting
@@ -63,7 +59,6 @@ public class FhirConverter implements Processor {
 		this.fhirStoreUtil = null;
 		this.parser = null;
 		this.parquetUtil = null;
-		this.eventConfigMapByTable = null;
 		this.generalConfiguration = null;
 		
 	}
@@ -75,10 +70,7 @@ public class FhirConverter implements Processor {
 		this.parser = parser;
 		this.fhirStoreUtil = fhirStoreUtil;
 		this.parquetUtil = parquetUtil;
-		// get config
 		this.generalConfiguration = getEventsToFhirConfig(System.getProperty("fhir.debeziumEventConfigPath"));
-		// map out config for faster access
-		this.eventConfigMapByTable = mapOutEventsToFhirConfig(this.generalConfiguration);
 		
 	}
 	
@@ -97,7 +89,7 @@ public class FhirConverter implements Processor {
 		}
 		final String table = sourceMetadata.get("table").toString();
 		log.debug("Processing Table --> " + table);
-		final EventConfiguration config = eventConfigMapByTable.get(table);
+		final EventConfiguration config = generalConfiguration.getEventConfigurations().get(table);
 		
 		if (config == null || !config.getLinkTemplates().containsKey("fhir")) {
 			log.trace("Skipping unmapped data ..." + table);
@@ -138,12 +130,4 @@ public class FhirConverter implements Processor {
 			return generalConfiguration;
 		}
 	}
-	
-	private HashMap<String, EventConfiguration> mapOutEventsToFhirConfig(GeneralConfiguration generalConfig) {
-		HashMap<String, EventConfiguration> map = new LinkedHashMap<>();
-		for (EventConfiguration configuration : generalConfig.getEventConfigurations())
-			map.put(configuration.getTable(), configuration);
-		return map;
-	}
-	
 }
