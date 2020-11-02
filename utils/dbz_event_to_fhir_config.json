@@ -1,255 +1,202 @@
 {
-  "feedFilterBeans": [],
-  "feedConfigurations": [
-    {
-      "openMrsClass": "org.openmrs.Location",
-      "enabled": "true",
+  "eventConfigurations": {
+    "location": {
+      "enabled": "false",
       "title": "Location",
-      "category": "location",
       "linkTemplates": {
         "rest": "/ws/rest/v1/location/{uuid}?v=full",
-        "fhir": "/ws/fhir2/R4/Location/{uuid}"
+        "fhir": "/Location/{uuid}"
       }
     },
-    {
-      "openMrsClass": "org.openmrs.Concept",
+    "concept": {
       "enabled": "false",
       "title": "Concept",
-      "category": "concept",
       "linkTemplates": {
         "rest": "/ws/rest/v1/concept/{uuid}?v=full"
       }
     },
-    {
-      "openMrsClass": "org.openmrs.Cohort",
+    "cohort": {
       "enabled": "true",
       "title": "Cohort",
-      "category": "cohort",
       "linkTemplates": {
         "rest": "/ws/rest/v1/cohort/{uuid}?v=full",
-        "fhir": "/ws/fhir2/R4/Group/{uuid}"
+        "fhir": "/Group/{uuid}"
       }
     },
-    {
-      "openMrsClass": "org.openmrs.VisitType",
+    "visittype": {
       "enabled": "false",
       "title": "Visit Type",
-      "category": "visittype",
       "linkTemplates": {
         "rest": "/ws/rest/v1/visittype/{uuid}?v=full"
       }
     },
-    {
-      "openMrsClass": "org.openmrs.PersonAddress",
-      "enabled": "true",
+    "person_address": {
+      "enabled": "false",
       "title": "PersonAddress",
-      "category": "person_address",
       "linkTemplates": {
         "rest": "/ws/rest/v1/person/{parent-uuid}/address/{uuid}?v=full"
       }
     },
-    {
-      "openMrsClass": "org.openmrs.PersonName",
-      "enabled": "true",
+    "person_name": {
+      "enabled": "false",
       "title": "PersonName",
-      "category": "person_name",
       "linkTemplates": {
         "rest": "/ws/rest/v1/person/{parent-uuid}/name/{uuid}?v=full"
       }
     },
-    {
-      "openMrsClass": "org.openmrs.PatientIdentifier",
-      "enabled": "true",
+    "patient_identifier": {
+      "enabled": "false",
       "title": "PatientIdentifier",
-      "category": "patient_identifier",
       "linkTemplates": {
         "rest": "/ws/rest/v1/patient/{parent-uuid}/identifier/{uuid}?v=full"
       }
     },
-    {
-      "openMrsClass": "org.openmrs.PersonAttribute",
-      "enabled": "true",
+    "person_attribute": {
+      "enabled": "false",
       "title": "PersonAttribute",
-      "category": "person_attribute",
       "linkTemplates": {
         "rest": "/ws/rest/v1/person/{parent-uuid}/attribute/{uuid}?v=full"
       }
     },
-    {
-      "openMrsClass": "org.openmrs.Person",
+    "person": {
       "enabled": "true",
       "title": "Person",
-      "category": "person",
       "linkTemplates": {
         "rest": "/ws/rest/v1/person/{uuid}?v=full",
-        "fhir": "/ws/fhir2/R4/Person/{uuid}"
+        "fhir": "/Person/{uuid}"
       }
     },
-    {
-      "openMrsClass": "org.openmrs.Provider",
-      "enabled": "false",
+    "provider": {
+      "enabled": "true",
       "title": "Provider",
-      "category": "provider",
       "linkTemplates": {
         "rest": "/ws/rest/v1/provider/{uuid}?v=full",
-        "fhir": "/ws/fhir2/R4/Provider/{uuid}"
+        "fhir": "/Provider/{uuid}"
       }
     },
-    {
-      "openMrsClass": "org.openmrs.User",
+    "user": {
       "enabled": "false",
       "title": "User",
-      "category": "user",
       "linkTemplates": {
         "rest": "/ws/rest/v1/user/{uuid}?v=full"
       }
     },
-    {
-      "openMrsClass": "org.openmrs.Patient",
+    "patient": {
       "enabled": "true",
       "title": "Patient",
-      "category": "patient",
       "linkTemplates": {
         "rest": "/ws/rest/v1/patient/{uuid}?v=full",
-        "fhir": "/ws/fhir2/R4/Patient/{uuid}"
+        "fhir": "/Patient/{uuid}"
       }
     },
-    {
-      "openMrsClass": "org.openmrs.Relationship",
-      "enabled": "false",
+    "relationship": {
+      "enabled": "true",
       "title": "Relationship",
-      "category": "relationship",
       "linkTemplates": {
         "rest": "/ws/rest/v1/relationship/{uuid}?v=full",
-        "fhir": "/ws/fhir2/R4/Relationship/{uuid}"
+        "fhir": "/Relationship/{uuid}"
       }
     },
-    {
-      "openMrsClass": "org.openmrs.Drug",
-      "enabled": "false",
+    "drug": {
+      "enabled": "true",
       "title": "Drug",
-      "category": "drug",
       "linkTemplates": {
         "rest": "/ws/rest/v1/drug/{uuid}?v=full",
-        "fhir": "/ws/fhir2/R4/Drug/{uuid}"
+        "fhir": "/Drug/{uuid}"
       }
     },
-    {
-      "openMrsClass": "org.openmrs.Allergy",
+    "allergy": {
       "enabled": "true",
       "title": "Allergy",
-      "category": "allergy",
       "linkTemplates": {
         "rest": "/ws/rest/v1/allergy/{uuid}?v=full",
-        "fhir": "/ws/fhir2/R4/AllergyIntolerance/{uuid}"
+        "fhir": "/AllergyIntolerance/{uuid}"
       }
     },
-    {
-      "openMrsClass": "org.openmrs.Form",
+    "form":{
       "enabled": "true",
       "title": "Form",
-      "category": "form",
       "linkTemplates": {
         "rest": "/ws/rest/v1/form/{uuid}?v=full"
       }
     },
-    {
-      "openMrsClass": "org.openmrs.Order",
-      "enabled": "false",
+    "order": {
+      "enabled": "true",
       "title": "Order",
-      "category": "order",
       "linkTemplates": {
         "rest": "/ws/rest/v1/order/{uuid}?v=full",
-        "fhir": "/ws/fhir2/R4/Order/{uuid}"
+        "fhir": "/Order/{uuid}"
       }
     },
-    {
-      "openMrsClass": "org.openmrs.DrugOrder",
+    "drug_order":{
       "enabled": "true",
       "title": "DrugOrder",
-      "category": "drug_order",
       "linkTemplates": {
         "rest": "/ws/rest/v1/drug_order/{uuid}?v=full",
-        "fhir": "/ws/fhir2/R4/MedicationRequest/{uuid}"
+        "fhir": "/MedicationRequest/{uuid}"
       }
     },
-    {
-      "openMrsClass": "org.openmrs.TestOrder",
+    "test_order": {
       "enabled": "true",
       "title": "TestOrder",
-      "category": "test_order",
       "linkTemplates": {
         "rest": "/ws/rest/v1/test_order/{uuid}?v=full",
-        "fhir": "/ws/fhir2/R4/ProcedureRequest/{uuid}"
+        "fhir": "/ProcedureRequest/{uuid}"
       }
     },
-    {
-      "openMrsClass": "org.openmrs.Obs",
+    "obs": {
       "enabled": "true",
       "title": "Observation",
-      "category": "obs",
       "linkTemplates": {
         "rest": "/ws/rest/v1/obs/{uuid}?v=full",
-        "fhir": "/ws/fhir2/R4/Observation/{uuid}"
+        "fhir": "/Observation/{uuid}"
       }
     },
-    {
-      "openMrsClass": "org.openmrs.Encounter",
+    "encounter":{
       "enabled": "true",
       "title": "Encounter",
-      "category": "encounter",
       "linkTemplates": {
         "rest": "/ws/rest/v1/encounter/{uuid}?v=full",
-        "fhir": "/ws/fhir2/R4/Encounter/{uuid}"
+        "fhir": "/Encounter/{uuid}"
       }
     },
-    {
-      "openMrsClass": "org.openmrs.Visit",
-      "enabled": "true",
+    "visit":{
+      "enabled": "false",
       "title": "Visit",
-      "category": "visit",
       "linkTemplates": {
         "rest": "/ws/rest/v1/visit/{uuid}?v=full",
-        "fhir": "/ws/fhir2/R4/Encounter/{uuid}"
+        "fhir": "/Encounter/{uuid}"
       }
     },
-    {
-      "openMrsClass": "org.openmrs.Program",
-      "enabled": "false",
+    "program":{
+      "enabled": "true",
       "title": "Program",
-      "category": "program",
       "linkTemplates": {
         "rest": "/ws/rest/v1/program/{uuid}?v=full",
-        "fhir": "/ws/fhir2/R4/Program/{uuid}"
+        "fhir": "/Program/{uuid}"
       }
     },
-    {
-      "openMrsClass": "org.openmrs.PatientProgram",
-      "enabled": "false",
+    "programenrollment":{
+      "enabled": "true",
       "title": "Program Enrollment",
-      "category": "programenrollment",
       "linkTemplates": {
         "rest": "/ws/rest/v1/programenrollment/{uuid}?v=full",
-        "fhir": "/ws/fhir2/R4/Programenrollment/{uuid}"
+        "fhir": "/Programenrollment/{uuid}"
       }
     },
-    {
-      "openMrsClass": "org.openmrs.Privilege",
+    "privilege":{
       "enabled": "true",
       "title": "Privilege",
-      "category": "privilege",
       "linkTemplates": {
         "rest": "/ws/rest/v1/privilege/{uuid}?v=full"
       }
     },
-    {
-      "openMrsClass": "org.openmrs.module.sync2.api.model.audit.AuditMessage",
+    "audit_message":{
       "enabled": "true",
       "title": "AuditMessage",
-      "category": "audit_message",
       "linkTemplates": {
         "rest": "/ws/rest/sync2/messages/{uuid}"
       }
     }
-  ]
+  }
 }

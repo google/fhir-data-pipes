@@ -46,8 +46,9 @@
     <openmrs.username>admin</openmrs.username>
     <openmrs.password>Admin123</openmrs.password>
     <openmrs.serverUrl>http://localhost:8099</openmrs.serverUrl>
-    <openmrs.fhirBaseEndpoint>/openmrs</openmrs.fhirBaseEndpoint>
+    <openmrs.fhirBaseEndpoint>/openmrs/ws/fhir2/R3</openmrs.fhirBaseEndpoint>
     <cloud.gcpFhirStore>projects/PROJECT/locations/LOCATION/datasets/DATASET/fhirStores/FHIRSTORENAME</cloud.gcpFhirStore>
+    <file.parquetPath>/tmp/</file.parquetPath>
     <fhir.debeziumEventConfigPath>utils/dbz_event_to_fhir_config.json</fhir.debeziumEventConfigPath>
 
     <mysql.init.timeout>30000</mysql.init.timeout>
@@ -135,28 +136,20 @@
       <groupId>ca.uhn.hapi.fhir</groupId>
       <artifactId>hapi-fhir-base</artifactId>
     </dependency>
-    <!-- OpenMRS -->
-    <!-- TODO remove both org.openmrs.api and org.openmrs.module
-        prefer to avoid these as they bring a lot more deps!
-		Failure to include yields compilation error:
-         cannot access org.openmrs.api.OpenmrsService [ERROR] class file for org.openmrs.api.OpenmrsService not found
-         As such these 2 libraries will be removed and https://github.com/GoogleCloudPlatform/openmrs-fhir-analytics/issues/36
-         should fix!
-    -->
-    <dependency>
-      <groupId>org.openmrs.api</groupId>
-      <artifactId>openmrs-api</artifactId>
-      <version>${openmrsPlatformVersion}</version>
-    </dependency>
-    <dependency>
-      <groupId>org.openmrs.module</groupId>
-      <artifactId>atomfeed-api</artifactId>
-      <version>1.0.13-SNAPSHOT</version>
-    </dependency>
     <dependency>
       <groupId>com.google.code.gson</groupId>
       <artifactId>gson</artifactId>
       <version>2.8.6</version>
+    </dependency>
+    <!-- remember to install Lombok IDE plugin: by first ticking the "Enable annotation processing"
+      checkbox in Settings->Compiler->Annotation Processors. Secondly, Install the plugin
+       of Lombok for idea and restart IDE for change to take effect.
+    -->
+    <dependency>
+      <groupId>org.projectlombok</groupId>
+      <artifactId>lombok</artifactId>
+      <version>1.18.16</version>
+      <scope>provided</scope>
     </dependency>
 
   </dependencies>
@@ -236,6 +229,10 @@
             <systemProperty>
               <key>cloud.gcpFhirStore</key>
               <value>${cloud.gcpFhirStore}</value>
+            </systemProperty>
+            <systemProperty>
+              <key>file.parquetPath</key>
+              <value>${file.parquetPath}</value>
             </systemProperty>
             <systemProperty>
               <key>fhir.debeziumEventConfigPath</key>

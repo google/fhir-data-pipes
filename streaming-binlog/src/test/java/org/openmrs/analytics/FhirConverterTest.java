@@ -159,4 +159,54 @@ public class FhirConverterTest extends CamelTestSupport {
 		Mockito.verify(openmrsUtil, Mockito.times(0)).fetchFhirResource(Mockito.anyString());
 	}
 	
+	@Test
+	public void shouldGenerateFhirResourcesForTablesThatHaveBeenMappedInConfig() {
+		Map<String, String> messageBody = DebeziumTestUtil.genExpectedBody();
+		
+		String tables[] = { "obs", "encounter", "cohort", "person", "provider", "relationship", "patient", "drug", "allergy",
+		        "order", "drug_order", "test_order", "program" };
+		
+		for (String table : tables) {
+			Map<String, Object> messageHeaders = DebeziumTestUtil.genExpectedHeaders(Operation.UPDATE, table);
+			// send events
+			eventsProducer.sendBodyAndHeaders(messageBody, messageHeaders);
+		}
+		
+		Mockito.verify(openmrsUtil, Mockito.times(tables.length)).fetchFhirResource(Mockito.anyString());
+	}
+	
+	@Test
+	public void shouldNotFetchFhirResourcesForTablesWithNoCorrespondingFhirLinkTemplatesInConfig() {
+		Map<String, String> messageBody = DebeziumTestUtil.genExpectedBody();
+		// these do not have have linkTemplates.fhir in config
+		String tables[] = { "visittype", "patient_identifier", "person_attribute" };
+		
+		for (String table : tables) {
+			
+			Map<String, Object> messageHeaders = DebeziumTestUtil.genExpectedHeaders(Operation.UPDATE, table);
+			
+			// send events
+			eventsProducer.sendBodyAndHeaders(messageBody, messageHeaders);
+		}
+		
+		Mockito.verify(openmrsUtil, Mockito.times(0)).fetchFhirResource(Mockito.anyString());
+	}
+	
+	@Test
+	public void shouldNotFetchFhirResourcesForDisabledTablesInConfig() {
+		Map<String, String> messageBody = DebeziumTestUtil.genExpectedBody();
+		// visit, location has been disabled in config
+		String tables[] = { "visit", "location" };
+		
+		for (String table : tables) {
+			
+			Map<String, Object> messageHeaders = DebeziumTestUtil.genExpectedHeaders(Operation.UPDATE, table);
+			
+			// send events
+			eventsProducer.sendBodyAndHeaders(messageBody, messageHeaders);
+		}
+		
+		Mockito.verify(openmrsUtil, Mockito.times(0)).fetchFhirResource(Mockito.anyString());
+	}
+	
 }

@@ -33,10 +33,8 @@ import org.apache.camel.Processor;
 import org.apache.camel.component.debezium.DebeziumConstants;
 import org.apache.parquet.hadoop.ParquetWriter;
 import org.hl7.fhir.dstu3.model.Resource;
-import org.openmrs.module.atomfeed.api.model.FeedConfiguration;
-import org.openmrs.module.atomfeed.api.model.GeneralConfiguration;
-import org.openmrs.module.atomfeed.api.service.FeedConfigurationService;
-import org.openmrs.module.atomfeed.api.service.impl.FeedConfigurationServiceImpl;
+import org.openmrs.analytics.model.EventConfiguration;
+import org.openmrs.analytics.model.GeneralConfiguration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -45,13 +43,13 @@ public class FhirConverter implements Processor {
 	
 	private static final Logger log = LoggerFactory.getLogger(FhirConverter.class);
 	
-	private final FeedConfigurationService feedConfigurationService = new FeedConfigurationServiceImpl();
-	
 	private final OpenmrsUtil openmrsUtil;
 	
 	private final FhirStoreUtil fhirStoreUtil;
 	
 	private final ParquetUtil parquetUtil;
+	
+	private final GeneralConfiguration generalConfiguration;
 	
 	private final IParser parser;
 	
@@ -61,6 +59,8 @@ public class FhirConverter implements Processor {
 		this.fhirStoreUtil = null;
 		this.parser = null;
 		this.parquetUtil = null;
+		this.generalConfiguration = null;
+		
 	}
 	
 	public FhirConverter(OpenmrsUtil openmrsUtil, IParser parser, FhirStoreUtil fhirStoreUtil, ParquetUtil parquetUtil)
@@ -70,10 +70,8 @@ public class FhirConverter implements Processor {
 		this.parser = parser;
 		this.fhirStoreUtil = fhirStoreUtil;
 		this.parquetUtil = parquetUtil;
+		this.generalConfiguration = getEventsToFhirConfig(System.getProperty("fhir.debeziumEventConfigPath"));
 		
-		GeneralConfiguration generalConfiguration = getEventsToFhirConfig(
-		    System.getProperty("fhir.debeziumEventConfigPath"));
-		this.feedConfigurationService.saveConfig(generalConfiguration);
 	}
 	
 	public void process(Exchange exchange) {
@@ -91,9 +89,14 @@ public class FhirConverter implements Processor {
 		}
 		final String table = sourceMetadata.get("table").toString();
 		log.debug("Processing Table --> " + table);
-		final FeedConfiguration config = this.feedConfigurationService.getFeedConfigurationByCategory(table);
+		final EventConfiguration config = generalConfiguration.getEventConfigurations().get(table);
+		
 		if (config == null || !config.getLinkTemplates().containsKey("fhir")) {
 			log.trace("Skipping unmapped data ..." + table);
+			return;
+		}
+		if (!config.isEnabled()) {
+			log.trace("Skipping disabled events ..." + table);
 			return;
 		}
 		final String uuid = payload.get("uuid").toString();
@@ -123,8 +126,8 @@ public class FhirConverter implements Processor {
 		Gson gson = new Gson();
 		Path pathToFile = Paths.get(fileName);
 		try (Reader reader = Files.newBufferedReader(pathToFile.toAbsolutePath(), StandardCharsets.UTF_8)) {
-			GeneralConfiguration generalConfig = gson.fromJson(reader, GeneralConfiguration.class);
-			return generalConfig;
+			GeneralConfiguration generalConfiguration = gson.fromJson(reader, GeneralConfiguration.class);
+			return generalConfiguration;
 		}
 	}
 }

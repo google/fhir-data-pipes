@@ -182,8 +182,9 @@ $ mvn compile exec:java -pl streaming-binlog -Ddatabase.hostname=localhost \
     -Ddatabase.offsetStorage=offset.dat -Ddatabase.databaseHistory=dbhistory.dat \
     -Dopenmrs.username=admin -Dopenmrs.password=Admin123 \
     -Dopenmrs.serverUrl=http://localhost:8099 \
-    -Dopenmrs.fhirBaseEndpoint=/openmrs \
-    -Dcloud.gcpFhirStore=projects/PROJECT/locations/LOCATION/datasets/DATASET/fhirStores/FHIRSTORENAME
+    -Dopenmrs.fhirBaseEndpoint=/openmrs/ws/fhir2/R3 \
+    -Dcloud.gcpFhirStore=projects/PROJECT/locations/LOCATION/datasets/DATASET/fhirStores/FHIRSTORENAME \
+    -Dfile.parquetPath=/tmp/ \
     -Dfhir.debeziumEventConfigPath=./utils/dbz_event_to_fhir_config.json
  ```
 
