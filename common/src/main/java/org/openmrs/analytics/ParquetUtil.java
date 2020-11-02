@@ -88,6 +88,7 @@ public class ParquetUtil {
 		if (!writerMap.containsKey(resourceType)) {
 			AvroParquetWriter.Builder<GenericRecord> builder = AvroParquetWriter
 			        .builder(new Path(getParquetPath() + resourceType));
+			// TODO adjust parquet file parameters for our needs or make them configurable.
 			ParquetWriter<GenericRecord> writer = builder.withSchema(getResourceSchema(resourceType)).build();
 			writerMap.put(resourceType, writer);
 		}
