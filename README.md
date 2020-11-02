@@ -48,10 +48,7 @@ change has corresponding FHIR resources.
 ## Add FHIR2 module to OpenMRS and update Atom Feed config
 The [FHIR module in OpenMRS](
 https://wiki.openmrs.org/display/projects/OpenMRS+FHIR+Module) is being
-reimplemented in the `fhir2` module. You need to compile this module from
-[source](https://github.com/openmrs/openmrs-module-fhir2) and install the
-`omod/target/fhir2-1.0.0-SNAPSHOT.omod` module in OpenMRS (or copy that file to
-the `modules` directory of your OpenMRS installation).
+reimplemented in the `fhir2` module. You need to download the [latest released version](https://addons.openmrs.org/show/org.openmrs.module.openmrs-fhir2-module)  and install the module through the admin page in OpenMRS (or copy that file to the `modules` directory of your OpenMRS installation).
 
 The URLs for FHIR resources of this module have the form `/ws/fhir2/R4/RESOURCE`
 e.g., `http://localhost:9016/openmrs/ws/fhir2/R4/Patient`. Therefor we need to
