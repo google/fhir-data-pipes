@@ -21,11 +21,8 @@ import java.util.Map;
 
 import ca.uhn.fhir.context.FhirContext;
 import ca.uhn.fhir.rest.api.SummaryEnum;
-import org.apache.avro.Conversions.DecimalConversion;
 import org.apache.avro.Schema;
-import org.apache.avro.generic.GenericData;
 import org.apache.avro.generic.GenericRecord;
-import org.apache.avro.specific.SpecificData;
 import org.apache.beam.sdk.Pipeline;
 import org.apache.beam.sdk.coders.AvroCoder;
 import org.apache.beam.sdk.coders.CannotProvideCoderException;
@@ -131,7 +128,7 @@ public class FhirEtl {
 		FhirSearchUtil fhirSearchUtil = createFhirSearchUtil(options, fhirContext);
 		// TODO remove fhirContext from fhirStoreUtil.
 		FhirStoreUtil fhirStoreUtil = new FhirStoreUtil(options.getGcpFhirStore(), fhirContext);
-		ParquetUtil parquetUtil = new ParquetUtil();
+		ParquetUtil parquetUtil = new ParquetUtil(fhirContext);
 		Map<String, List<SearchSegmentDescriptor>> segmentMap = new HashMap<>();
 		for (String search : options.getSearchList().split(",")) {
 			List<SearchSegmentDescriptor> segments = new ArrayList<>();
@@ -195,7 +192,7 @@ public class FhirEtl {
 			fhirStoreUtil = new FhirStoreUtil(fhirStoreUrl, fhirContext);
 			openmrsUtil = createOpenmrsUtil(sourceUrl, sourceUser, sourcePw, fhirContext);
 			fhirSearchUtil = new FhirSearchUtil(openmrsUtil);
-			parquetUtil = new ParquetUtil();
+			parquetUtil = new ParquetUtil(fhirContext);
 		}
 		
 		@ProcessElement
@@ -204,7 +201,7 @@ public class FhirEtl {
 			if (parquetFile.isEmpty()) {
 				fhirStoreUtil.uploadBundleToCloud(pageBundle, fhirContext);
 			} else {
-				for (GenericRecord record : parquetUtil.generateRecords(pageBundle, fhirContext)) {
+				for (GenericRecord record : parquetUtil.generateRecords(pageBundle)) {
 					out.output(record);
 				}
 			}
@@ -220,7 +217,7 @@ public class FhirEtl {
 	}
 	
 	static void runFhirFetch(FhirEtlOptions options, FhirContext fhirContext) throws CannotProvideCoderException {
-		ParquetUtil parquetUtil = new ParquetUtil();
+		ParquetUtil parquetUtil = new ParquetUtil(fhirContext);
 		Map<String, List<SearchSegmentDescriptor>> segmentMap = createSegments(options, fhirContext);
 		if (segmentMap.isEmpty()) {
 			return;
@@ -233,7 +230,7 @@ public class FhirEtl {
 				outputFile = options.getOutputParquetBase() + entry.getKey();
 			}
 			String resourceType = findSearchedResource(entry.getKey());
-			Schema schema = parquetUtil.getResourceSchema(resourceType, fhirContext);
+			Schema schema = parquetUtil.getResourceSchema(resourceType);
 			PCollection<SearchSegmentDescriptor> inputSegments = p.apply(Create.of(entry.getValue()));
 			PCollection<GenericRecord> records = inputSegments
 			        .apply(ParDo.of(new FetchSearchPageFn(options.getGcpFhirStore(),
@@ -252,11 +249,7 @@ public class FhirEtl {
 		
 		FhirEtlOptions options = PipelineOptionsFactory.fromArgs(args).withValidation().as(FhirEtlOptions.class);
 		
-		// For more context on the next two conversions, see this thread: https://bit.ly/3iE4rwS
-		// Add BigDecimal conversion to the singleton instance to fix "Unknown datum type" Avro exception.
-		GenericData.get().addLogicalTypeConversion(new DecimalConversion());
-		// This is for a similar error in the ParquetWriter.write which uses SpecificData.get() as its model.
-		SpecificData.get().addLogicalTypeConversion(new DecimalConversion());
+		ParquetUtil.initializeAvroConverters();
 		
 		runFhirFetch(options, fhirContext);
 	}

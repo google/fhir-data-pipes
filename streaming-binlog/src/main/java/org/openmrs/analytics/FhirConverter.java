@@ -26,10 +26,12 @@ import ca.uhn.fhir.parser.IParser;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.gson.Gson;
 import io.debezium.data.Envelope.Operation;
+import org.apache.avro.generic.GenericRecord;
 import org.apache.camel.Exchange;
 import org.apache.camel.Message;
 import org.apache.camel.Processor;
 import org.apache.camel.component.debezium.DebeziumConstants;
+import org.apache.parquet.hadoop.ParquetWriter;
 import org.hl7.fhir.dstu3.model.Resource;
 import org.openmrs.module.atomfeed.api.model.FeedConfiguration;
 import org.openmrs.module.atomfeed.api.model.GeneralConfiguration;
@@ -49,6 +51,8 @@ public class FhirConverter implements Processor {
 	
 	private final FhirStoreUtil fhirStoreUtil;
 	
+	private final ParquetUtil parquetUtil;
+	
 	private final IParser parser;
 	
 	@VisibleForTesting
@@ -56,13 +60,16 @@ public class FhirConverter implements Processor {
 		this.openmrsUtil = null;
 		this.fhirStoreUtil = null;
 		this.parser = null;
+		this.parquetUtil = null;
 	}
 	
-	public FhirConverter(OpenmrsUtil openmrsUtil, FhirStoreUtil fhirStoreUtil, IParser parser) throws IOException {
+	public FhirConverter(OpenmrsUtil openmrsUtil, IParser parser, FhirStoreUtil fhirStoreUtil, ParquetUtil parquetUtil)
+	        throws IOException {
 		// TODO add option for switching to Parquet-file outputs.
 		this.openmrsUtil = openmrsUtil;
-		this.fhirStoreUtil = fhirStoreUtil;
 		this.parser = parser;
+		this.fhirStoreUtil = fhirStoreUtil;
+		this.parquetUtil = parquetUtil;
 		
 		GeneralConfiguration generalConfiguration = getEventsToFhirConfig(
 		    System.getProperty("fhir.debeziumEventConfigPath"));
@@ -98,7 +105,17 @@ public class FhirConverter implements Processor {
 			return;
 		}
 		String resourceJson = parser.encodeResourceToString(resource);
-		fhirStoreUtil.uploadResourceToCloud(resource.fhirType(), resource.getId(), resourceJson);
+		if (parquetUtil.getParquetPath() != null) {
+			try {
+				final ParquetWriter<GenericRecord> parquetWriter = parquetUtil.getWriter(resource.fhirType());
+				parquetWriter.write(parquetUtil.convertToAvro(resource));
+			}
+			catch (IOException e) {
+				log.error(String.format("Cannot create ParquetWriter Exception: %s", e));
+			}
+		} else {
+			fhirStoreUtil.uploadResourceToCloud(resource.fhirType(), resource.getId(), resourceJson);
+		}
 	}
 	
 	@VisibleForTesting
