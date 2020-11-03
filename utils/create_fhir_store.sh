@@ -28,7 +28,7 @@ fi
 curl --request POST -H "Authorization: Bearer $(gcloud auth print-access-token)" \
   -H "Content-Type: application/fhir+json; charset=utf-8" \
   "https://healthcare.googleapis.com/v1/projects/${1}/locations/${2}/datasets/${3}/fhirStores?fhirStoreId=${4}" \
-  --data '{"version":"R4", "enableUpdateCreate":true,"disableReferentialIntegrity":true}' \
+  --data '{"version":"STU3", "enableUpdateCreate":true,"disableReferentialIntegrity":true}' \
   -w '\nFHIR store creation status code: %{http_code}\n'
 
 # TODO create BQ dataset instead of assuming it exists.
