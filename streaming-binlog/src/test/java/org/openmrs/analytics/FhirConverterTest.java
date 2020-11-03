@@ -18,7 +18,6 @@ import java.io.IOException;
 import java.util.Map;
 import java.util.Properties;
 
-import ca.uhn.fhir.parser.IParser;
 import io.debezium.data.Envelope.Operation;
 import org.apache.avro.generic.GenericRecord;
 import org.apache.camel.Produce;
@@ -52,19 +51,16 @@ public class FhirConverterTest extends CamelTestSupport {
 	
 	@Mock
 	private FhirStoreUtil fhirStoreUtil;
-	
-	@Mock
-	private IParser parser;
-	
+
 	@Mock
 	private Resource resource;
 	
 	@Mock
 	private ParquetUtil parquetUtil;
-	
+
 	@Mock
 	private ParquetWriter<GenericRecord> parquetWriter;
-	
+
 	private FhirConverter fhirConverter;
 	
 	@Override
@@ -78,7 +74,7 @@ public class FhirConverterTest extends CamelTestSupport {
 				Properties p = System.getProperties();
 				p.put("fhir.debeziumEventConfigPath", "../utils/dbz_event_to_fhir_config.json");
 				System.setProperties(p);
-				fhirConverter = new FhirConverter(openmrsUtil, parser, fhirStoreUtil, parquetUtil);
+				fhirConverter = new FhirConverter(openmrsUtil, fhirStoreUtil, parquetUtil);
 				
 				// Inject FhirUriGenerator;
 				from(TEST_ROUTE).process(fhirConverter); // inject target processor here
@@ -93,13 +89,12 @@ public class FhirConverterTest extends CamelTestSupport {
 		resource = new Encounter();
 		resource.setId(TEST_ID);
 		Mockito.when(openmrsUtil.fetchFhirResource(Mockito.anyString())).thenReturn(resource);
-		Mockito.when(parser.encodeResourceToString(resource)).thenReturn(TEST_RESOURCE);
 		
 		// Actual event that will trigger process().
 		eventsProducer.sendBodyAndHeaders(messageBody, messageHeaders);
 		
 		Mockito.verify(openmrsUtil).fetchFhirResource(Mockito.anyString());
-		Mockito.verify(fhirStoreUtil).uploadResourceToCloud("Encounter", TEST_ID, TEST_RESOURCE);
+		Mockito.verify(fhirStoreUtil).uploadResourceToCloud(resource);
 	}
 	
 	@Test
@@ -113,10 +108,10 @@ public class FhirConverterTest extends CamelTestSupport {
 		Mockito.when(parser.encodeResourceToString(resource)).thenReturn(TEST_RESOURCE);
 		Mockito.when(parquetUtil.getParquetPath()).thenReturn(testPath);
 		Mockito.when(parquetUtil.getWriter("Encounter")).thenReturn(parquetWriter);
-		
+
 		// Actual event that will trigger process().
 		eventsProducer.sendBodyAndHeaders(messageBody, messageHeaders);
-		
+
 		Mockito.verify(openmrsUtil).fetchFhirResource(Mockito.anyString());
 		Mockito.verify(fhirStoreUtil, Mockito.never()).uploadResourceToCloud(Mockito.anyString(), Mockito.anyString(),
 		    Mockito.<Resource> any());
@@ -126,7 +121,7 @@ public class FhirConverterTest extends CamelTestSupport {
 		Mockito.verify(parquetUtil).convertToAvro(resource);
 		Mockito.verify(parquetWriter, Mockito.times(1)).write(Mockito.<GenericRecord> any());
 	}
-	
+
 	@Test
 	public void shouldIgnoreDeleteEvent() {
 		Map<String, String> messageBody = DebeziumTestUtil.genExpectedBody();
@@ -155,57 +150,57 @@ public class FhirConverterTest extends CamelTestSupport {
 		
 		// Actual event that will tripper process().
 		eventsProducer.sendBodyAndHeaders(messageBody, messageHeaders);
-		
+
 		Mockito.verify(openmrsUtil, Mockito.times(0)).fetchFhirResource(Mockito.anyString());
 	}
-	
+
 	@Test
 	public void shouldGenerateFhirResourcesForTablesThatHaveBeenMappedInConfig() {
 		Map<String, String> messageBody = DebeziumTestUtil.genExpectedBody();
-		
+
 		String tables[] = { "obs", "encounter", "cohort", "person", "provider", "relationship", "patient", "drug", "allergy",
 		        "order", "drug_order", "test_order", "program" };
-		
+
 		for (String table : tables) {
 			Map<String, Object> messageHeaders = DebeziumTestUtil.genExpectedHeaders(Operation.UPDATE, table);
 			// send events
 			eventsProducer.sendBodyAndHeaders(messageBody, messageHeaders);
 		}
-		
+
 		Mockito.verify(openmrsUtil, Mockito.times(tables.length)).fetchFhirResource(Mockito.anyString());
 	}
-	
+
 	@Test
 	public void shouldNotFetchFhirResourcesForTablesWithNoCorrespondingFhirLinkTemplatesInConfig() {
 		Map<String, String> messageBody = DebeziumTestUtil.genExpectedBody();
 		// these do not have have linkTemplates.fhir in config
 		String tables[] = { "visittype", "patient_identifier", "person_attribute" };
-		
+
 		for (String table : tables) {
-			
+
 			Map<String, Object> messageHeaders = DebeziumTestUtil.genExpectedHeaders(Operation.UPDATE, table);
-			
+
 			// send events
 			eventsProducer.sendBodyAndHeaders(messageBody, messageHeaders);
 		}
-		
+
 		Mockito.verify(openmrsUtil, Mockito.times(0)).fetchFhirResource(Mockito.anyString());
 	}
-	
+
 	@Test
 	public void shouldNotFetchFhirResourcesForDisabledTablesInConfig() {
 		Map<String, String> messageBody = DebeziumTestUtil.genExpectedBody();
 		// visit, location has been disabled in config
 		String tables[] = { "visit", "location" };
-		
+
 		for (String table : tables) {
-			
+
 			Map<String, Object> messageHeaders = DebeziumTestUtil.genExpectedHeaders(Operation.UPDATE, table);
-			
+
 			// send events
 			eventsProducer.sendBodyAndHeaders(messageBody, messageHeaders);
 		}
-		
+
 		Mockito.verify(openmrsUtil, Mockito.times(0)).fetchFhirResource(Mockito.anyString());
 	}
 	

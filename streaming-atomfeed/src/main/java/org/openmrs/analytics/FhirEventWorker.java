@@ -57,10 +57,9 @@ public class FhirEventWorker<T extends BaseResource> implements EventWorker {
 			String resourceId = resource.getIdElement().getIdPart();
 			String resourceType = resource.getIdElement().getResourceType();
 			
-			log.info(String.format("Parsed FHIR resource ID is %s/%s", resourceId, resourceType));
+			log.info(String.format("Parsed FHIR resource ID is %s/%s", resourceType, resourceId));
 			
-			// TODO: remove redundant resource information
-			fhirStoreUtil.uploadResourceToCloud(resourceType, resourceId, (Resource) resource);
+			fhirStoreUtil.uploadResourceToCloud((Resource) resource);
 		}
 		catch (JsonParseException e) {
 			log.error(String.format("Error parsing event %s with error %s", event.toString(), e.toString()));

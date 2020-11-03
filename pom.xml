@@ -46,7 +46,7 @@
 
   <modules>
     <module>batch</module>
-    <module>streaming</module>
+    <module>streaming-atomfeed</module>
     <module>streaming-binlog</module>
     <module>common</module>
   </modules>

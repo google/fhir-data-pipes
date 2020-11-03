@@ -22,7 +22,6 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Map;
 
-import ca.uhn.fhir.parser.IParser;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.gson.Gson;
 import io.debezium.data.Envelope.Operation;
@@ -42,36 +41,32 @@ import org.slf4j.LoggerFactory;
 public class FhirConverter implements Processor {
 	
 	private static final Logger log = LoggerFactory.getLogger(FhirConverter.class);
-	
+
 	private final OpenmrsUtil openmrsUtil;
 	
 	private final FhirStoreUtil fhirStoreUtil;
-	
+
 	private final ParquetUtil parquetUtil;
-	
+
 	private final GeneralConfiguration generalConfiguration;
-	
-	private final IParser parser;
-	
+
 	@VisibleForTesting
 	FhirConverter() {
 		this.openmrsUtil = null;
 		this.fhirStoreUtil = null;
-		this.parser = null;
 		this.parquetUtil = null;
 		this.generalConfiguration = null;
-		
+
 	}
 	
-	public FhirConverter(OpenmrsUtil openmrsUtil, IParser parser, FhirStoreUtil fhirStoreUtil, ParquetUtil parquetUtil)
-	        throws IOException {
+	public FhirConverter(OpenmrsUtil openmrsUtil, FhirStoreUtil fhirStoreUtil, ParquetUtil parquetUtil) throws IOException {
 		// TODO add option for switching to Parquet-file outputs.
 		this.openmrsUtil = openmrsUtil;
-		this.parser = parser;
+		this.fhirStoreUtil = fhirStoreUtil;
 		this.fhirStoreUtil = fhirStoreUtil;
 		this.parquetUtil = parquetUtil;
 		this.generalConfiguration = getEventsToFhirConfig(System.getProperty("fhir.debeziumEventConfigPath"));
-		
+
 	}
 	
 	public void process(Exchange exchange) {
@@ -90,7 +85,7 @@ public class FhirConverter implements Processor {
 		final String table = sourceMetadata.get("table").toString();
 		log.debug("Processing Table --> " + table);
 		final EventConfiguration config = generalConfiguration.getEventConfigurations().get(table);
-		
+
 		if (config == null || !config.getLinkTemplates().containsKey("fhir")) {
 			log.trace("Skipping unmapped data ..." + table);
 			return;
@@ -111,7 +106,7 @@ public class FhirConverter implements Processor {
 			// TODO: check how this can be signalled to Camel to be retried.
 			return;
 		}
-		String resourceJson = parser.encodeResourceToString(resource);
+
 		if (parquetUtil.getParquetPath() != null) {
 			try {
 				final ParquetWriter<GenericRecord> parquetWriter = parquetUtil.getWriter(resource.fhirType());
@@ -121,7 +116,7 @@ public class FhirConverter implements Processor {
 				log.error(String.format("Cannot create ParquetWriter Exception: %s", e));
 			}
 		} else {
-			fhirStoreUtil.uploadResourceToCloud(resource.fhirType(), resource.getId(), resourceJson);
+			fhirStoreUtil.uploadResourceToCloud(resource);
 		}
 	}
 	

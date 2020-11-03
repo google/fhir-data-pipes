@@ -14,7 +14,7 @@
 package org.openmrs.analytics;
 
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.*;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.when;
@@ -24,13 +24,16 @@ import java.net.URL;
 import java.nio.charset.StandardCharsets;
 
 import ca.uhn.fhir.context.FhirContext;
+import ca.uhn.fhir.model.api.IResource;
 import ca.uhn.fhir.parser.IParser;
+import ca.uhn.fhir.rest.api.MethodOutcome;
 import ca.uhn.fhir.rest.api.SummaryEnum;
 import ca.uhn.fhir.rest.client.api.IGenericClient;
 import ca.uhn.fhir.rest.gclient.IQuery;
 import ca.uhn.fhir.rest.gclient.IUntypedQuery;
 import com.google.common.io.Resources;
 import org.hl7.fhir.dstu3.model.Bundle;
+import org.hl7.fhir.dstu3.model.Resource;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -52,6 +55,9 @@ public class FhirSearchUtilTest {
 	private OpenmrsUtil openmrsUtil;
 	
 	@Mock
+	private FhirStoreUtil fhirStoreUtil;
+	
+	@Mock
 	private IGenericClient genericClient;
 	
 	@Mock
@@ -65,6 +71,8 @@ public class FhirSearchUtilTest {
 	private FhirContext fhirContext;
 	
 	private FhirSearchUtil fhirSearchUtil;
+
+	private MethodOutcome outcome;
 	
 	@Before
 	public void setup() throws IOException {
@@ -73,7 +81,9 @@ public class FhirSearchUtilTest {
 		this.fhirContext = FhirContext.forDstu3();
 		IParser parser = fhirContext.newJsonParser();
 		bundle = parser.parseResource(Bundle.class, bundleStr);
-		fhirSearchUtil = new FhirSearchUtil(openmrsUtil);
+		fhirSearchUtil = new FhirSearchUtil(fhirStoreUtil, openmrsUtil);
+		outcome = new MethodOutcome();
+		outcome.setCreated(true);
 		when(openmrsUtil.getSourceFhirUrl()).thenReturn(BASE_URL);
 		when(openmrsUtil.getSourceClient()).thenReturn(genericClient);
 		when(genericClient.search()).thenReturn(untypedQuery);
@@ -82,6 +92,7 @@ public class FhirSearchUtilTest {
 		when(query.summaryMode(any(SummaryEnum.class))).thenReturn(query);
 		when(query.returnBundle(any())).thenReturn(query);
 		when(query.execute()).thenReturn(bundle);
+		when(fhirStoreUtil.uploadResourceToCloud(any())).thenReturn(outcome);
 	}
 	
 	@Test
@@ -89,10 +100,18 @@ public class FhirSearchUtilTest {
 		String baseUrl = fhirSearchUtil.findBaseSearchUrl(bundle);
 		assertThat(baseUrl, equalTo(BASE_URL + "?" + PAGE_URL_PARAM));
 	}
-	
+
 	@Test
 	public void testSearchForResource() {
 		Bundle actualBundle = fhirSearchUtil.searchByUrl(SEARCH_URL, 10, SummaryEnum.DATA);
 		assertThat(actualBundle.equalsDeep(bundle), equalTo(true));
+	}
+
+	@Test
+	public void testUploadBundleToCloud() {
+		MethodOutcome result = fhirSearchUtil.uploadBundleToCloud(bundle);
+
+		assertThat(result, not(nullValue()));
+		assertThat(result.getCreated(), equalTo(true));
 	}
 }
