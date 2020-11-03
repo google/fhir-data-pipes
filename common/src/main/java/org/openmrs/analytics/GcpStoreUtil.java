@@ -17,7 +17,6 @@ package org.openmrs.analytics;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.util.Collections;
-import java.util.regex.Pattern;
 
 import ca.uhn.fhir.rest.api.MethodOutcome;
 import ca.uhn.fhir.rest.client.api.IClientInterceptor;
@@ -35,32 +34,33 @@ import org.hl7.fhir.dstu3.model.Resource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/**
+ * This class extends the functionality of FhirStoreUtil for communication with Google Cloud
+ * Healthcare API services. The GCP communication requires the request to be authenticated and
+ * contain specific headers. This class takes care of these idiosyncracies and then leverages the
+ * generic communication patterns in FhirStoreUtil.
+ *
+ * @see org.openmrs.analytics.FhirStoreUtil
+ */
 public class GcpStoreUtil extends FhirStoreUtil {
 	
 	private static final Logger log = LoggerFactory.getLogger(GcpStoreUtil.class);
 	
-	private static final Pattern FHIR_PATTERN = Pattern
-	        .compile("projects/[\\w-]+/locations/[\\w-]+/datasets/[\\w-]+/fhirStores/[\\w-]+");
-	
 	private static final GsonFactory JSON_FACTORY = new GsonFactory();
 	
 	private static final NetHttpTransport HTTP_TRANSPORT = new NetHttpTransport();
-	
-	public static boolean matchesGcpPattern(String gcpFhirStore) {
-		return FHIR_PATTERN.matcher(gcpFhirStore).matches();
-	}
 	
 	GcpStoreUtil(String gcpFhirStore, IRestfulClientFactory clientFactory) throws IllegalArgumentException {
 		super(gcpFhirStore, clientFactory);
 		
 		if (!matchesGcpPattern(gcpFhirStore)) {
 			throw new IllegalArgumentException(
-			        String.format("The gcpFhirStore %s does not match %s pattern!", gcpFhirStore, FHIR_PATTERN));
+			        String.format("The gcpFhirStore %s does not match Google cloud fhir dataset pattern!", gcpFhirStore));
 		}
 	}
 	
 	@Override
-	public MethodOutcome uploadResourceToCloud(Resource resource) {
+	public MethodOutcome uploadResource(Resource resource) {
 		try {
 			updateFhirResource(sinkUrl, resource);
 		}

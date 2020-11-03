@@ -17,13 +17,11 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
 
-import ca.uhn.fhir.rest.api.MethodOutcome;
 import ca.uhn.fhir.rest.api.SummaryEnum;
 import ca.uhn.fhir.rest.client.api.IGenericClient;
 import org.apache.http.NameValuePair;
 import org.apache.http.client.utils.URLEncodedUtils;
 import org.hl7.fhir.dstu3.model.Bundle;
-import org.hl7.fhir.dstu3.model.Resource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -31,12 +29,11 @@ public class FhirSearchUtil {
 	
 	private static final Logger log = LoggerFactory.getLogger(FhirSearchUtil.class);
 	
-	private FhirStoreUtil fhirStoreUtil;
+	FhirStoreUtil fhirStoreUtil;
 	
 	private OpenmrsUtil openmrsUtil;
 	
-	FhirSearchUtil(FhirStoreUtil fhirStoreUtil, OpenmrsUtil openmrsUtil) {
-		this.fhirStoreUtil = fhirStoreUtil;
+	FhirSearchUtil(OpenmrsUtil openmrsUtil) {
 		this.openmrsUtil = openmrsUtil;
 	}
 	
@@ -82,14 +79,6 @@ public class FhirSearchUtil {
 			throw new IllegalArgumentException(
 			        String.format("Malformed link information with error %s in bundle %s", e.getMessage(), searchBundle));
 		}
-	}
-	
-	public MethodOutcome uploadBundleToCloud(Bundle bundle) {
-		for (Bundle.BundleEntryComponent entry : bundle.getEntry()) {
-			Resource resource = entry.getResource();
-			return fhirStoreUtil.uploadResourceToCloud(resource);
-		}
-		return null;
 	}
 	
 }

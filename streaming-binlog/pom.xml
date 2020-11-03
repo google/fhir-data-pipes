@@ -47,7 +47,7 @@
     <openmrs.password>Admin123</openmrs.password>
     <openmrs.serverUrl>http://localhost:8099</openmrs.serverUrl>
     <openmrs.fhirBaseEndpoint>/openmrs/ws/fhir2/R3</openmrs.fhirBaseEndpoint>
-    <cloud.gcpFhirStore>projects/PROJECT/locations/LOCATION/datasets/DATASET/fhirStores/FHIRSTORENAME</cloud.gcpFhirStore>
+    <fhir.sinkPath>projects/PROJECT/locations/LOCATION/datasets/DATASET/fhirStores/FHIRSTORENAME</fhir.sinkPath>
     <file.parquetPath>/tmp/</file.parquetPath>
     <fhir.debeziumEventConfigPath>utils/dbz_event_to_fhir_config.json</fhir.debeziumEventConfigPath>
 
@@ -227,8 +227,8 @@
               <value>${openmrs.fhirBaseEndpoint}</value>
             </systemProperty>
             <systemProperty>
-              <key>cloud.gcpFhirStore</key>
-              <value>${cloud.gcpFhirStore}</value>
+              <key>fhir.sinkPath</key>
+              <value>${fhir.sinkPath}</value>
             </systemProperty>
             <systemProperty>
               <key>file.parquetPath</key>

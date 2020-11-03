@@ -79,7 +79,7 @@ public class FhirSearchUtilTest {
 		this.fhirContext = FhirContext.forDstu3();
 		IParser parser = fhirContext.newJsonParser();
 		bundle = parser.parseResource(Bundle.class, bundleStr);
-		fhirSearchUtil = new FhirSearchUtil(fhirStoreUtil, openmrsUtil);
+		fhirSearchUtil = new FhirSearchUtil(openmrsUtil);
 		outcome = new MethodOutcome();
 		outcome.setCreated(true);
 		when(openmrsUtil.getSourceFhirUrl()).thenReturn(BASE_URL);
@@ -90,7 +90,6 @@ public class FhirSearchUtilTest {
 		when(query.summaryMode(any(SummaryEnum.class))).thenReturn(query);
 		when(query.returnBundle(any())).thenReturn(query);
 		when(query.execute()).thenReturn(bundle);
-		when(fhirStoreUtil.uploadResourceToCloud(any())).thenReturn(outcome);
 	}
 	
 	@Test
@@ -103,13 +102,5 @@ public class FhirSearchUtilTest {
 	public void testSearchForResource() {
 		Bundle actualBundle = fhirSearchUtil.searchByUrl(SEARCH_URL, 10, SummaryEnum.DATA);
 		assertThat(actualBundle.equalsDeep(bundle), equalTo(true));
-	}
-	
-	@Test
-	public void testUploadBundleToCloud() {
-		MethodOutcome result = fhirSearchUtil.uploadBundleToCloud(bundle);
-		
-		assertThat(result, not(nullValue()));
-		assertThat(result.getCreated(), equalTo(true));
 	}
 }

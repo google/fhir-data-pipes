@@ -40,7 +40,7 @@ public class FhirStreaming {
 	
 	private static String sourceUser;
 	
-	private static String sinkUrl;
+	private static String sinkPath;
 	
 	public static void main(String[] args) throws InterruptedException, URISyntaxException {
 		if (args.length == 3) {
@@ -48,7 +48,7 @@ public class FhirStreaming {
 			
 			sourceUser = args[1].split("/")[0];
 			sourcePassword = args[1].split("/")[1];
-			sinkUrl = args[2];
+			sinkPath = args[2];
 		} else {
 			log.error("You should pass the following arguements:");
 			log.error("1) source url: the base url of the OpenMRS server (ending in 'openmrs').");
@@ -77,11 +77,7 @@ public class FhirStreaming {
 		FhirContext fhirContext = FhirContext.forDstu3();
 		OpenmrsUtil openmrsUtil = new OpenmrsUtil(fhirUrl, sourceUser, sourcePassword, fhirContext);
 		
-		FhirStoreUtil fhirStoreUtil;
-		if (GcpStoreUtil.matchesGcpPattern(sinkUrl))
-			fhirStoreUtil = new GcpStoreUtil(sinkUrl, fhirContext.getRestfulClientFactory());
-		else
-			fhirStoreUtil = new FhirStoreUtil(sinkUrl, fhirContext.getRestfulClientFactory());
+		FhirStoreUtil fhirStoreUtil = FhirStoreUtil.createFhirStoreUtil(sinkPath, fhirContext.getRestfulClientFactory());
 		
 		FeedConsumer feedConsumer = new FeedConsumer(feedUrl, fhirStoreUtil, openmrsUtil);
 		

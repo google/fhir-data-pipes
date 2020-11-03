@@ -15,16 +15,18 @@
 package org.openmrs.analytics;
 
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.*;
 import static org.mockito.Mockito.*;
 
 import java.io.IOException;
+import java.util.Collection;
 
 import ca.uhn.fhir.context.FhirContext;
 import ca.uhn.fhir.rest.api.MethodOutcome;
 import ca.uhn.fhir.rest.client.api.IGenericClient;
 import ca.uhn.fhir.rest.client.api.IRestfulClientFactory;
 import ca.uhn.fhir.rest.gclient.ICreateTyped;
+import org.hamcrest.Matchers;
 import org.hl7.fhir.dstu3.model.Bundle;
 import org.hl7.fhir.dstu3.model.Patient;
 import org.junit.Before;
@@ -50,10 +52,12 @@ public class FhirStoreUtilTest {
 	
 	private Patient patient;
 	
+	private Bundle patientBundle;
+	
 	@Before
 	public void setup() throws IOException {
 		FhirContext parseContext = FhirContext.forDstu3();
-		Bundle patientBundle = parseContext.newJsonParser().parseResource(Bundle.class,
+		patientBundle = parseContext.newJsonParser().parseResource(Bundle.class,
 		    getClass().getClassLoader().getResource("patient_bundle.json").openStream());
 		MethodOutcome outcome = new MethodOutcome();
 		outcome.setCreated(true);
@@ -65,7 +69,7 @@ public class FhirStoreUtilTest {
 		when(client.create().resource(patient).encodedJson()).thenReturn(iexec);
 		doReturn(outcome).when(iexec).execute();
 		
-		fhirStoreUtil = new FhirStoreUtil(sinkUrl, clientFactory);
+		fhirStoreUtil = FhirStoreUtil.createFhirStoreUtil(sinkUrl, clientFactory);
 	}
 	
 	@Test(expected = IllegalArgumentException.class)
@@ -75,19 +79,30 @@ public class FhirStoreUtilTest {
 	
 	@Test
 	public void testConstructor() {
-		FhirStoreUtil fhirStoreUtil = new FhirStoreUtil(
-		        "projects/my_project-123/locations/us-central1/datasets/openmrs_fhir_test/fhirStores/test", clientFactory);
+		FhirStoreUtil fhirStoreUtil = FhirStoreUtil.createFhirStoreUtil(
+		    "projects/my_project-123/locations/us-central1/datasets/openmrs_fhir_test/fhirStores/test", clientFactory);
 	}
 	
 	@Test
 	public void testConstructorWithDefaultStore() {
-		FhirStoreUtil fhirStoreUtil = new FhirStoreUtil("projects/P/locations/L/datasets/D/fhirStores/F", clientFactory);
+		FhirStoreUtil fhirStoreUtil = FhirStoreUtil.createFhirStoreUtil("projects/P/locations/L/datasets/D/fhirStores/F",
+		    clientFactory);
 	}
 	
 	@Test
 	public void testUploadResourceToCloud() {
-		MethodOutcome result = fhirStoreUtil.uploadResourceToCloud(patient);
+		MethodOutcome result = fhirStoreUtil.uploadResource(patient);
 		
 		assertThat(result.getCreated(), equalTo(true));
 	}
+	
+	@Test
+	public void testUploadBundleToCloud() throws IOException {
+		Collection<MethodOutcome> result = fhirStoreUtil.uploadBundle(patientBundle);
+		
+		assertThat(result, not(nullValue()));
+		assertThat(result, not(Matchers.<MethodOutcome> empty()));
+		assertThat(result.iterator().next().getCreated(), equalTo(true));
+	}
+	
 }

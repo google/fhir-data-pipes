@@ -94,7 +94,7 @@ public class FhirConverterTest extends CamelTestSupport {
 		eventsProducer.sendBodyAndHeaders(messageBody, messageHeaders);
 		
 		Mockito.verify(openmrsUtil).fetchFhirResource(Mockito.anyString());
-		Mockito.verify(fhirStoreUtil).uploadResourceToCloud(resource);
+		Mockito.verify(fhirStoreUtil).uploadResource(resource);
 	}
 	
 	@Test
@@ -112,7 +112,7 @@ public class FhirConverterTest extends CamelTestSupport {
 		eventsProducer.sendBodyAndHeaders(messageBody, messageHeaders);
 		
 		Mockito.verify(openmrsUtil).fetchFhirResource(Mockito.anyString());
-		Mockito.verify(fhirStoreUtil, Mockito.never()).uploadResourceToCloud(Mockito.<Resource> any());
+		Mockito.verify(fhirStoreUtil, Mockito.never()).uploadResource(Mockito.<Resource> any());
 		Mockito.verify(parquetUtil).getWriter("Encounter");
 		Mockito.verify(parquetUtil).convertToAvro(resource);
 		Mockito.verify(parquetWriter, Mockito.times(1)).write(Mockito.<GenericRecord> any());

@@ -103,9 +103,9 @@ public class FhirEtl {
 		// specific parts are taken out. Then add the support for having both FHIR store and Parquet
 		// output enabled at the same time.
 		@Default.String("projects/P/locations/L/datasets/D/fhirStores/F")
-		String getFhirStoreUrl();
+		String getSinkPath();
 		
-		void setFhirStoreUrl(String value);
+		void setSinkPath(String value);
 		
 		@Description("The base name for output Parquet file; for each resource, one fileset will be created.")
 		@Default.String("")
@@ -115,17 +115,8 @@ public class FhirEtl {
 	}
 	
 	static FhirSearchUtil createFhirSearchUtil(FhirEtlOptions options, FhirContext fhirContext) {
-		return new FhirSearchUtil(createFhirStoreUtil(options.getFhirStoreUrl(), fhirContext),
-		        createOpenmrsUtil(options.getServerUrl() + options.getServerFhirEndpoint(), options.getUsername(),
-		            options.getPassword(), fhirContext));
-	}
-	
-	static FhirStoreUtil createFhirStoreUtil(String fhirStoreUrl, FhirContext fhirContext) {
-		if (GcpStoreUtil.matchesGcpPattern(fhirStoreUrl)) {
-			return new GcpStoreUtil(fhirStoreUrl, fhirContext.getRestfulClientFactory());
-		} else {
-			return new FhirStoreUtil(fhirStoreUrl, fhirContext.getRestfulClientFactory());
-		}
+		return new FhirSearchUtil(createOpenmrsUtil(options.getServerUrl() + options.getServerFhirEndpoint(),
+		    options.getUsername(), options.getPassword(), fhirContext));
 	}
 	
 	static OpenmrsUtil createOpenmrsUtil(String sourceUrl, String sourceUser, String sourcePw, FhirContext fhirContext) {
@@ -135,9 +126,6 @@ public class FhirEtl {
 	static Map<String, List<SearchSegmentDescriptor>> createSegments(FhirEtlOptions options, FhirContext fhirContext)
 	        throws CannotProvideCoderException {
 		FhirSearchUtil fhirSearchUtil = createFhirSearchUtil(options, fhirContext);
-		// TODO remove fhirContext from fhirStoreUtil.
-		FhirStoreUtil fhirStoreUtil = new FhirStoreUtil(options.getFhirStoreUrl(), fhirContext.getRestfulClientFactory());
-		ParquetUtil parquetUtil = new ParquetUtil(fhirContext);
 		Map<String, List<SearchSegmentDescriptor>> segmentMap = new HashMap<>();
 		for (String search : options.getSearchList().split(",")) {
 			List<SearchSegmentDescriptor> segments = new ArrayList<>();
@@ -173,7 +161,7 @@ public class FhirEtl {
 		
 		private String sourcePw;
 		
-		private String fhirStoreUrl;
+		private String sinkPath;
 		
 		private String parquetFile;
 		
@@ -187,8 +175,8 @@ public class FhirEtl {
 		
 		private OpenmrsUtil openmrsUtil;
 		
-		FetchSearchPageFn(String fhirStoreUrl, String sourceUrl, String parquetFile, String sourceUser, String sourcePw) {
-			this.fhirStoreUrl = fhirStoreUrl;
+		FetchSearchPageFn(String sinkPath, String sourceUrl, String parquetFile, String sourceUser, String sourcePw) {
+			this.sinkPath = sinkPath;
 			this.sourceUrl = sourceUrl;
 			this.sourceUser = sourceUser;
 			this.sourcePw = sourcePw;
@@ -198,9 +186,9 @@ public class FhirEtl {
 		@Setup
 		public void Setup() {
 			fhirContext = FhirContext.forDstu3();
-			fhirStoreUtil = new FhirStoreUtil(fhirStoreUrl, fhirContext.getRestfulClientFactory());
+			fhirStoreUtil = FhirStoreUtil.createFhirStoreUtil(sinkPath, fhirContext.getRestfulClientFactory());
 			openmrsUtil = createOpenmrsUtil(sourceUrl, sourceUser, sourcePw, fhirContext);
-			fhirSearchUtil = new FhirSearchUtil(fhirStoreUtil, openmrsUtil);
+			fhirSearchUtil = new FhirSearchUtil(openmrsUtil);
 			parquetUtil = new ParquetUtil(fhirContext);
 		}
 		
@@ -208,7 +196,7 @@ public class FhirEtl {
 		public void ProcessElement(@Element SearchSegmentDescriptor segment, OutputReceiver<GenericRecord> out) {
 			Bundle pageBundle = fhirSearchUtil.searchByUrl(segment.searchUrl(), segment.count(), SummaryEnum.DATA);
 			if (parquetFile.isEmpty()) {
-				fhirSearchUtil.uploadBundleToCloud(pageBundle);
+				fhirStoreUtil.uploadBundle(pageBundle);
 			} else {
 				for (GenericRecord record : parquetUtil.generateRecords(pageBundle)) {
 					out.output(record);
@@ -242,7 +230,7 @@ public class FhirEtl {
 			Schema schema = parquetUtil.getResourceSchema(resourceType);
 			PCollection<SearchSegmentDescriptor> inputSegments = p.apply(Create.of(entry.getValue()));
 			PCollection<GenericRecord> records = inputSegments
-			        .apply(ParDo.of(new FetchSearchPageFn(options.getFhirStoreUrl(),
+			        .apply(ParDo.of(new FetchSearchPageFn(options.getSinkPath(),
 			                options.getServerUrl() + options.getServerFhirEndpoint(), options.getOutputParquetBase(),
 			                options.getUsername(), options.getPassword())))
 			        .setCoder(AvroCoder.of(GenericRecord.class, schema));

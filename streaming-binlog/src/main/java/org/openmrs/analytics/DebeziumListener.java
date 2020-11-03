@@ -49,8 +49,8 @@ public class DebeziumListener extends RouteBuilder {
 		String fhirBaseUrl = System.getProperty("openmrs.serverUrl") + System.getProperty("openmrs.fhirBaseEndpoint");
 		OpenmrsUtil openmrsUtil = new OpenmrsUtil(fhirBaseUrl, System.getProperty("openmrs.username"),
 		        System.getProperty("openmrs.password"), fhirContext);
-		FhirStoreUtil fhirStoreUtil = new FhirStoreUtil(System.getProperty("cloud.gcpFhirStore"),
-		        fhirContext.getRestfulClientFactory());
+		FhirStoreUtil fhirStoreUtil = FhirStoreUtil.createFhirStoreUtil(System.getProperty("fhir.sinkPath"),
+		    fhirContext.getRestfulClientFactory());
 		ParquetUtil parquetUtil = new ParquetUtil(fhirContext);
 		camelContext.addService(new ParquetService(parquetUtil), true);
 		return new FhirConverter(openmrsUtil, fhirStoreUtil, parquetUtil);
