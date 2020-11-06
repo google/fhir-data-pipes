@@ -18,6 +18,7 @@ import java.io.IOException;
 
 import ca.uhn.fhir.context.FhirContext;
 import ca.uhn.fhir.parser.IParser;
+import com.beust.jcommander.JCommander;
 import com.google.common.annotations.VisibleForTesting;
 import org.apache.camel.CamelContext;
 import org.apache.camel.LoggingLevel;
@@ -47,10 +48,10 @@ public class DebeziumListener extends RouteBuilder {
 	@VisibleForTesting
 	FhirConverter createFhirConverter(CamelContext camelContext) throws IOException, Exception {
 		FhirContext fhirContext = FhirContext.forDstu3();
-		String fhirBaseUrl = System.getProperty("openmrs.serverUrl") + System.getProperty("openmrs.fhirBaseEndpoint");
-		OpenmrsUtil openmrsUtil = new OpenmrsUtil(fhirBaseUrl, System.getProperty("openmrs.username"),
-		        System.getProperty("openmrs.password"), fhirContext);
-		FhirStoreUtil fhirStoreUtil = new FhirStoreUtil(System.getProperty("cloud.gcpFhirStore"), fhirContext);
+		String fhirBaseUrl = getpassedArgs().openmrsServerUrl + getpassedArgs().openmrsfhirBaseEndpoint;
+		OpenmrsUtil openmrsUtil = new OpenmrsUtil(fhirBaseUrl, getpassedArgs().openmrUserName,
+		        getpassedArgs().openmrsPassword, fhirContext);
+		FhirStoreUtil fhirStoreUtil = new FhirStoreUtil(getpassedArgs().cloudGcpFhirStore, fhirContext);
 		IParser parser = fhirContext.newJsonParser();
 		ParquetUtil parquetUtil = new ParquetUtil(fhirContext);
 		camelContext.addService(new ParquetService(parquetUtil), true);
@@ -58,14 +59,15 @@ public class DebeziumListener extends RouteBuilder {
 	}
 	
 	private String getDebeziumConfig() {
-		return "debezium-mysql:{{database.hostname}}?" + "databaseHostname={{database.hostname}}"
-		        + "&databaseServerId={{database.serverId}}" + "&databasePort={{database.port}}"
-		        + "&databaseUser={{database.user}}" + "&databasePassword={{database.password}}"
+		return "debezium-mysql:" + getpassedArgs().databaseHostName + "?" + "databaseHostname="
+		        + getpassedArgs().databaseHostName + "&databaseServerId=" + getpassedArgs().databaseServerId
+		        + "&databasePort=" + getpassedArgs().databasePort.intValue() + "&databaseUser="
+		        + getpassedArgs().databaseUser + "&databasePassword=" + getpassedArgs().databasePassword
 				//+ "&name={{database.dbname}}"
-		        + "&databaseServerName={{database.dbname}}" + "&databaseWhitelist={{database.schema}}"
-		        + "&offsetStorage=org.apache.kafka.connect.storage.FileOffsetBackingStore"
-		        + "&offsetStorageFileName={{database.offsetStorage}}"
-		        + "&databaseHistoryFileFilename={{database.databaseHistory}}"
+		        + "&databaseServerName=" + getpassedArgs().databaseName + "&databaseWhitelist="
+		        + getpassedArgs().databaseSchema + "&offsetStorage=org.apache.kafka.connect.storage.FileOffsetBackingStore"
+		        + "&offsetStorageFileName=" + getpassedArgs().databaseOffsetStorage + "&databaseHistoryFileFilename="
+		        + getpassedArgs().databaseHistory
 		//+ "&tableWhitelist={{database.schema}}.encounter,{{database.schema}}.obs"
 		;
 	}
@@ -96,6 +98,13 @@ public class DebeziumListener extends RouteBuilder {
 			stop();
 		}
 		
+	}
+	
+	private DbeziumArgs getpassedArgs() {
+		String[] args = Runner.getArgs();
+		DbeziumArgs params = new DbeziumArgs();
+		JCommander.newBuilder().addObject(params).build().parse(args);
+		return params;
 	}
 	
 }

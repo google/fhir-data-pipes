@@ -15,7 +15,6 @@
 package org.openmrs.analytics;
 
 import java.util.Map;
-import java.util.Properties;
 
 import io.debezium.data.Envelope.Operation;
 import org.apache.camel.CamelContext;
@@ -42,15 +41,6 @@ public class DebeziumListenerTest extends CamelTestSupport {
 	
 	@Override
 	protected RoutesBuilder createRouteBuilder() throws Exception {
-		// mock properties
-		Properties p = System.getProperties();
-		p.put("openmrs.serverUrl", "http://mockfire:8099");
-		p.put("openmrs.fhirBaseEndpoint", "/openmrs");
-		p.put("openmrs.username", "dummy");
-		p.put("openmrs.password", "dummy");
-		p.put("cloud.gcpFhirStore", "projects/PROJECT/locations/LOCATION/datasets/DATASET/fhirStores/FHIRSTORENAME");
-		p.put("fhir.debeziumEventConfigPath", "../utils/dbz_event_to_fhir_config.json");
-		System.setProperties(p);
 		
 		// Using a simple mock object would be more work since we need to provide stubs for the superclasses too.
 		fhirConverterMock = new FhirConverter() {

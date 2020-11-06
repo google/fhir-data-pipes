@@ -41,7 +41,8 @@
     <bunsenVersion>0.5.7</bunsenVersion>
     <hamcrest.version>2.2</hamcrest.version>
 		<openmrsPlatformVersion>2.4.0-SNAPSHOT</openmrsPlatformVersion>
-		<mockito.version>3.5.10</mockito.version>
+    <mockito.version>3.5.10</mockito.version>
+    <version.jcommander>1.78</version.jcommander>
   </properties>
 
   <modules>
@@ -99,8 +100,13 @@
 				<artifactId>mockito-core</artifactId>
 				<version>${mockito.version}</version>
         <scope>test</scope>
-			</dependency>
-
+      </dependency>
+      
+      <dependency>
+        <groupId>com.beust</groupId>
+        <artifactId>jcommander</artifactId>
+        <version>${version.jcommander}</version>
+      </dependency>
 		</dependencies>
 	</dependencyManagement>
 

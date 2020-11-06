@@ -31,26 +31,6 @@
 
 
   <properties>
-    <!--Default settings used during development for IDE debugging capabilities-->
-    <database.hostname>localhost</database.hostname>
-    <database.port>3306</database.port>
-    <database.user>root</database.user>
-    <database.password>debezium</database.password>
-    <database.dbname>mysql</database.dbname>
-    <database.schema>openmrs</database.schema>
-    <database.serverId>77</database.serverId>
-    <database.offsetStorage>data/dbhistory.dat</database.offsetStorage>
-    <database.databaseHistory>data/offset.dat</database.databaseHistory>
-    <!--<table.whitelist>openmrs.obs,openmrs.encounter</table.whitelist>-->
-
-    <openmrs.username>admin</openmrs.username>
-    <openmrs.password>Admin123</openmrs.password>
-    <openmrs.serverUrl>http://localhost:8099</openmrs.serverUrl>
-    <openmrs.fhirBaseEndpoint>/openmrs/ws/fhir2/R3</openmrs.fhirBaseEndpoint>
-    <cloud.gcpFhirStore>projects/PROJECT/locations/LOCATION/datasets/DATASET/fhirStores/FHIRSTORENAME</cloud.gcpFhirStore>
-    <file.parquetPath>/tmp/</file.parquetPath>
-    <fhir.debeziumEventConfigPath>utils/dbz_event_to_fhir_config.json</fhir.debeziumEventConfigPath>
-
     <mysql.init.timeout>30000</mysql.init.timeout>
 
     <version.camel>3.2.0</version.camel>
@@ -151,7 +131,11 @@
       <version>1.18.16</version>
       <scope>provided</scope>
     </dependency>
-
+    
+    <dependency>
+      <groupId>com.beust</groupId>
+      <artifactId>jcommander</artifactId>
+    </dependency>
   </dependencies>
 
   <build>
@@ -173,72 +157,6 @@
         <configuration>
           <mainClass>org.openmrs.analytics.Runner</mainClass>
           <includePluginDependencies>false</includePluginDependencies>
-          <systemProperties>
-            <systemProperty>
-              <key>database.hostname</key>
-              <value>${database.hostname}</value>
-            </systemProperty>
-            <systemProperty>
-              <key>database.port</key>
-              <value>${database.port}</value>
-            </systemProperty>
-            <systemProperty>
-              <key>database.user</key>
-              <value>${database.user}</value>
-            </systemProperty>
-            <systemProperty>
-              <key>database.password</key>
-              <value>${database.password}</value>
-            </systemProperty>
-            <systemProperty>
-              <key>database.dbname</key>
-              <value>${database.dbname}</value>
-            </systemProperty>
-            <systemProperty>
-              <key>database.schema</key>
-              <value>${database.schema}</value>
-            </systemProperty>
-            <systemProperty>
-              <key>database.serverId</key>
-              <value>${database.serverId}</value>
-            </systemProperty>
-            <systemProperty>
-              <key>database.offsetStorage</key>
-              <value>${database.offsetStorage}</value>
-            </systemProperty>
-            <systemProperty>
-              <key>database.databaseHistory</key>
-              <value>${database.databaseHistory}</value>
-            </systemProperty>
-            <systemProperty>
-              <key>openmrs.username</key>
-              <value>${openmrs.username}</value>
-            </systemProperty>
-            <systemProperty>
-              <key>openmrs.password</key>
-              <value>${openmrs.password}</value>
-            </systemProperty>
-            <systemProperty>
-              <key>openmrs.serverUrl</key>
-              <value>${openmrs.serverUrl}</value>
-            </systemProperty>
-            <systemProperty>
-              <key>openmrs.fhirBaseEndpoint</key>
-              <value>${openmrs.fhirBaseEndpoint}</value>
-            </systemProperty>
-            <systemProperty>
-              <key>cloud.gcpFhirStore</key>
-              <value>${cloud.gcpFhirStore}</value>
-            </systemProperty>
-            <systemProperty>
-              <key>file.parquetPath</key>
-              <value>${file.parquetPath}</value>
-            </systemProperty>
-            <systemProperty>
-              <key>fhir.debeziumEventConfigPath</key>
-              <value>${fhir.debeziumEventConfigPath}</value>
-            </systemProperty>
-          </systemProperties>
         </configuration>
       </plugin>
       <plugin>

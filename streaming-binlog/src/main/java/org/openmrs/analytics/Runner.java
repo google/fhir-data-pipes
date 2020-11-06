@@ -22,8 +22,16 @@ public class Runner {
 	
 	private static final Main MAIN = new Main();
 	
+	private static String[] savedArgs;
+	
+	public static String[] getArgs() {
+		return savedArgs;
+	}
+	
 	// Main method that starts the streaming pipeline.
 	public static void main(String[] args) throws Exception {
+		savedArgs = args;
+		
 		ParquetUtil.initializeAvroConverters();
 		
 		MAIN.addRouteBuilder(DebeziumListener.class);

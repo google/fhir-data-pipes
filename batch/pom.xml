@@ -135,8 +135,26 @@
           </execution>
         </executions>
       </plugin>
+      <!-- Allows the example to be run via IDE or 'mvn compile exec:java -pl batch/' -->
+      <plugin>
+        <groupId>org.codehaus.mojo</groupId>
+        <artifactId>exec-maven-plugin</artifactId>
+        <configuration>
+          <mainClass>org.openmrs.analytics.FhirEtl</mainClass>
+          <includePluginDependencies>false</includePluginDependencies>
+        </configuration>
+        </plugin>
     </plugins>
 
+      <pluginManagement>
+        <plugins>
+          <plugin>
+          <groupId>org.codehaus.mojo</groupId>
+          <artifactId>exec-maven-plugin</artifactId>
+          <version>1.6.0</version>
+          </plugin>
+        </plugins>
+        </pluginManagement>
   </build>
 
   <profiles>
