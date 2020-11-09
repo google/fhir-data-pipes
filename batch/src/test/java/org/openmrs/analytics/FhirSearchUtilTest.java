@@ -14,7 +14,7 @@
 package org.openmrs.analytics;
 
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.*;
+import static org.hamcrest.Matchers.equalTo;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.when;
@@ -25,7 +25,6 @@ import java.nio.charset.StandardCharsets;
 
 import ca.uhn.fhir.context.FhirContext;
 import ca.uhn.fhir.parser.IParser;
-import ca.uhn.fhir.rest.api.MethodOutcome;
 import ca.uhn.fhir.rest.api.SummaryEnum;
 import ca.uhn.fhir.rest.client.api.IGenericClient;
 import ca.uhn.fhir.rest.gclient.IQuery;
@@ -53,9 +52,6 @@ public class FhirSearchUtilTest {
 	private OpenmrsUtil openmrsUtil;
 	
 	@Mock
-	private FhirStoreUtil fhirStoreUtil;
-	
-	@Mock
 	private IGenericClient genericClient;
 	
 	@Mock
@@ -70,8 +66,6 @@ public class FhirSearchUtilTest {
 	
 	private FhirSearchUtil fhirSearchUtil;
 	
-	private MethodOutcome outcome;
-	
 	@Before
 	public void setup() throws IOException {
 		URL url = Resources.getResource("bundle.json");
@@ -80,8 +74,6 @@ public class FhirSearchUtilTest {
 		IParser parser = fhirContext.newJsonParser();
 		bundle = parser.parseResource(Bundle.class, bundleStr);
 		fhirSearchUtil = new FhirSearchUtil(openmrsUtil);
-		outcome = new MethodOutcome();
-		outcome.setCreated(true);
 		when(openmrsUtil.getSourceFhirUrl()).thenReturn(BASE_URL);
 		when(openmrsUtil.getSourceClient()).thenReturn(genericClient);
 		when(genericClient.search()).thenReturn(untypedQuery);

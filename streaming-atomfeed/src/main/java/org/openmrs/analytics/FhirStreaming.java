@@ -42,21 +42,32 @@ public class FhirStreaming {
 	
 	private static String sinkPath;
 	
+	private static String sinkUser;
+	
+	private static String sinkPassword;
+	
 	public static void main(String[] args) throws InterruptedException, URISyntaxException {
-		if (args.length == 3) {
+		// TODO: Simplify argument passing
+		if (args.length >= 3) {
 			sourceUrl = args[0];
-			
 			sourceUser = args[1].split("/")[0];
 			sourcePassword = args[1].split("/")[1];
 			sinkPath = args[2];
+			
+			if (args.length == 5) {
+				sinkUser = args[3].split("/")[0];
+				sinkPassword = args[3].split("/")[1];
+			}
+			
 		} else {
-			log.error("You should pass the following arguements:");
+			log.error("You should pass the following arguments:");
 			log.error("1) source url: the base url of the OpenMRS server (ending in 'openmrs').");
 			log.error("2) source auth user / password.");
 			log.error("3) a GCP FHIR store in the following format:\n"
 			        + "projects/PROJECT/locations/LOCATION/datasets/DATASET/fhirStores/FHIR_STORE \n"
 			        + "where the all-caps parts should be updated based on your FHIR store, e.g., \n"
 			        + "projects/my-project/locations/us-central1/datasets/my_dataset/fhirStores/test");
+			log.error("4) sink auth user / password.");
 			log.error("Note it is expected that a MySQL DB with name `atomfeed_client` \n"
 			        + "exists (configurable in `hibernate.default.properties`) with tables \n"
 			        + "'failed_events' and 'markers' to track feed progress. \n"
@@ -77,7 +88,8 @@ public class FhirStreaming {
 		FhirContext fhirContext = FhirContext.forDstu3();
 		OpenmrsUtil openmrsUtil = new OpenmrsUtil(fhirUrl, sourceUser, sourcePassword, fhirContext);
 		
-		FhirStoreUtil fhirStoreUtil = FhirStoreUtil.createFhirStoreUtil(sinkPath, fhirContext.getRestfulClientFactory());
+		FhirStoreUtil fhirStoreUtil = FhirStoreUtil.createFhirStoreUtil(sinkPath, sinkUser, sinkPassword,
+		    fhirContext.getRestfulClientFactory());
 		
 		FeedConsumer feedConsumer = new FeedConsumer(feedUrl, fhirStoreUtil, openmrsUtil);
 		

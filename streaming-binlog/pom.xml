@@ -48,6 +48,8 @@
     <openmrs.serverUrl>http://localhost:8099</openmrs.serverUrl>
     <openmrs.fhirBaseEndpoint>/openmrs/ws/fhir2/R3</openmrs.fhirBaseEndpoint>
     <fhir.sinkPath>projects/PROJECT/locations/LOCATION/datasets/DATASET/fhirStores/FHIRSTORENAME</fhir.sinkPath>
+    <fhir.sinkUsername>hapi</fhir.sinkUsername>
+    <fhir.sinkPassword>hapi</fhir.sinkPassword>
     <file.parquetPath>/tmp/</file.parquetPath>
     <fhir.debeziumEventConfigPath>utils/dbz_event_to_fhir_config.json</fhir.debeziumEventConfigPath>
 
@@ -229,6 +231,14 @@
             <systemProperty>
               <key>fhir.sinkPath</key>
               <value>${fhir.sinkPath}</value>
+            </systemProperty>
+            <systemProperty>
+              <key>fhir.sinkPath</key>
+              <value>${fhir.sinkUsername}</value>
+            </systemProperty>
+            <systemProperty>
+              <key>fhir.sinkPath</key>
+              <value>${fhir.sinkPassword}</value>
             </systemProperty>
             <systemProperty>
               <key>file.parquetPath</key>

@@ -72,21 +72,19 @@ public class FhirStoreUtilTest {
 		fhirStoreUtil = FhirStoreUtil.createFhirStoreUtil(sinkUrl, clientFactory);
 	}
 	
-	@Test(expected = IllegalArgumentException.class)
-	public void testConstructorWithMalformedStore() {
-		FhirStoreUtil fhirStoreUtil = new GcpStoreUtil("test", clientFactory);
+	@Test
+	public void testFactoryForFhirStore() {
+		FhirStoreUtil fhirStoreUtil = FhirStoreUtil.createFhirStoreUtil("test", clientFactory);
+		
+		assertThat(fhirStoreUtil, Matchers.<FhirStoreUtil> instanceOf(FhirStoreUtil.class));
 	}
 	
 	@Test
-	public void testConstructor() {
+	public void testFactoryForGcpStore() {
 		FhirStoreUtil fhirStoreUtil = FhirStoreUtil.createFhirStoreUtil(
 		    "projects/my_project-123/locations/us-central1/datasets/openmrs_fhir_test/fhirStores/test", clientFactory);
-	}
-	
-	@Test
-	public void testConstructorWithDefaultStore() {
-		FhirStoreUtil fhirStoreUtil = FhirStoreUtil.createFhirStoreUtil("projects/P/locations/L/datasets/D/fhirStores/F",
-		    clientFactory);
+		
+		assertThat(fhirStoreUtil, Matchers.<FhirStoreUtil> instanceOf(GcpStoreUtil.class));
 	}
 	
 	@Test

@@ -83,13 +83,13 @@ public class FhirEtl {
 		
 		void setBatchSize(int value);
 		
-		@Description("BasicAuth Username")
+		@Description("Openmrs BasicAuth Username")
 		@Default.String("admin")
 		String getUsername();
 		
 		void setUsername(String value);
 		
-		@Description("BasicAuth Password")
+		@Description("Openmrs BasicAuth Password")
 		@Default.String("Admin123")
 		@Required
 		String getPassword();
@@ -106,6 +106,18 @@ public class FhirEtl {
 		String getSinkPath();
 		
 		void setSinkPath(String value);
+		
+		@Description("Sink BasicAuth Username")
+		@Default.String("hapi")
+		String getSinkUsername();
+		
+		void setSinkUsername(String value);
+		
+		@Description("Sink BasicAuth Password")
+		@Default.String("hapi")
+		String getSinkPassword();
+		
+		void setSinkPassword(String value);
 		
 		@Description("The base name for output Parquet file; for each resource, one fileset will be created.")
 		@Default.String("")
@@ -163,6 +175,10 @@ public class FhirEtl {
 		
 		private String sinkPath;
 		
+		private String sinkUsername;
+		
+		private String sinkPassword;
+		
 		private String parquetFile;
 		
 		private ParquetUtil parquetUtil;
@@ -175,8 +191,11 @@ public class FhirEtl {
 		
 		private OpenmrsUtil openmrsUtil;
 		
-		FetchSearchPageFn(String sinkPath, String sourceUrl, String parquetFile, String sourceUser, String sourcePw) {
+		FetchSearchPageFn(String sinkPath, String sinkUsername, String sinkPassword, String sourceUrl, String parquetFile,
+		    String sourceUser, String sourcePw) {
 			this.sinkPath = sinkPath;
+			this.sinkUsername = sinkUsername;
+			this.sinkPassword = sinkPassword;
 			this.sourceUrl = sourceUrl;
 			this.sourceUser = sourceUser;
 			this.sourcePw = sourcePw;
@@ -186,7 +205,8 @@ public class FhirEtl {
 		@Setup
 		public void Setup() {
 			fhirContext = FhirContext.forDstu3();
-			fhirStoreUtil = FhirStoreUtil.createFhirStoreUtil(sinkPath, fhirContext.getRestfulClientFactory());
+			fhirStoreUtil = FhirStoreUtil.createFhirStoreUtil(sinkPath, sinkUsername, sinkPassword,
+			    fhirContext.getRestfulClientFactory());
 			openmrsUtil = createOpenmrsUtil(sourceUrl, sourceUser, sourcePw, fhirContext);
 			fhirSearchUtil = new FhirSearchUtil(openmrsUtil);
 			parquetUtil = new ParquetUtil(fhirContext);
@@ -230,9 +250,9 @@ public class FhirEtl {
 			Schema schema = parquetUtil.getResourceSchema(resourceType);
 			PCollection<SearchSegmentDescriptor> inputSegments = p.apply(Create.of(entry.getValue()));
 			PCollection<GenericRecord> records = inputSegments
-			        .apply(ParDo.of(new FetchSearchPageFn(options.getSinkPath(),
-			                options.getServerUrl() + options.getServerFhirEndpoint(), options.getOutputParquetBase(),
-			                options.getUsername(), options.getPassword())))
+			        .apply(ParDo.of(new FetchSearchPageFn(options.getSinkPath(), options.getSinkUsername(),
+			                options.getSinkPassword(), options.getServerUrl() + options.getServerFhirEndpoint(),
+			                options.getOutputParquetBase(), options.getUsername(), options.getPassword())))
 			        .setCoder(AvroCoder.of(GenericRecord.class, schema));
 			ParquetIO.Sink sink = ParquetIO.sink(schema);
 			records.apply(FileIO.<GenericRecord> write().via(sink).to(outputFile));

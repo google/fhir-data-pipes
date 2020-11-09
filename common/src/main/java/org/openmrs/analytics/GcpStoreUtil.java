@@ -42,7 +42,7 @@ import org.slf4j.LoggerFactory;
  *
  * @see org.openmrs.analytics.FhirStoreUtil
  */
-public class GcpStoreUtil extends FhirStoreUtil {
+class GcpStoreUtil extends FhirStoreUtil {
 	
 	private static final Logger log = LoggerFactory.getLogger(GcpStoreUtil.class);
 	
@@ -50,13 +50,8 @@ public class GcpStoreUtil extends FhirStoreUtil {
 	
 	private static final NetHttpTransport HTTP_TRANSPORT = new NetHttpTransport();
 	
-	GcpStoreUtil(String gcpFhirStore, IRestfulClientFactory clientFactory) throws IllegalArgumentException {
-		super(gcpFhirStore, clientFactory);
-		
-		if (!matchesGcpPattern(gcpFhirStore)) {
-			throw new IllegalArgumentException(
-			        String.format("The gcpFhirStore %s does not match Google cloud fhir dataset pattern!", gcpFhirStore));
-		}
+	protected GcpStoreUtil(String sinkUrl, String sinkUsername, String sinkPassword, IRestfulClientFactory clientFactory) {
+		super(sinkUrl, sinkUsername, sinkPassword, clientFactory);
 	}
 	
 	@Override
@@ -65,7 +60,7 @@ public class GcpStoreUtil extends FhirStoreUtil {
 			updateFhirResource(sinkUrl, resource);
 		}
 		catch (Exception e) {
-			System.out.println(String.format("Exception while sending to sink: %s", e.toString()));
+			log.error(String.format("Exception while sending to sink: %s", e.toString()));
 		}
 		return null;
 	}

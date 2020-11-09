@@ -24,6 +24,7 @@ import ca.uhn.fhir.rest.client.api.IClientInterceptor;
 import ca.uhn.fhir.rest.client.api.IGenericClient;
 import ca.uhn.fhir.rest.client.api.IRestfulClientFactory;
 import ca.uhn.fhir.rest.client.interceptor.AdditionalRequestHeadersInterceptor;
+import ca.uhn.fhir.rest.client.interceptor.BasicAuthInterceptor;
 import org.hl7.fhir.dstu3.model.Bundle;
 import org.hl7.fhir.dstu3.model.Resource;
 import org.slf4j.Logger;
@@ -35,28 +36,45 @@ public class FhirStoreUtil {
 	
 	protected IRestfulClientFactory clientFactory;
 	
-	protected String sinkUrl;
+	protected final String sinkUrl;
+	
+	private final String sinkUsername;
+	
+	private final String sinkPassword;
 	
 	private static final Pattern GCP_PATTERN = Pattern
 	        .compile("projects/[\\w-]+/locations/[\\w-]+/datasets/[\\w-]+/fhirStores/[\\w-]+");
 	
-	FhirStoreUtil(String sinkUrl, IRestfulClientFactory clientFactory) throws IllegalArgumentException {
+	protected FhirStoreUtil(String sinkUrl, String sinkUsername, String sinkPassword, IRestfulClientFactory clientFactory) {
 		this.clientFactory = clientFactory;
 		this.sinkUrl = sinkUrl;
+		this.sinkUsername = sinkUsername;
+		this.sinkPassword = sinkPassword;
 	}
 	
 	public static FhirStoreUtil createFhirStoreUtil(String sinkUrl, IRestfulClientFactory clientFactory)
 	        throws IllegalArgumentException {
+		return createFhirStoreUtil(sinkUrl, "", "", clientFactory);
+	}
+	
+	public static FhirStoreUtil createFhirStoreUtil(String sinkUrl, String sinkUsername, String sinkPassword,
+	        IRestfulClientFactory clientFactory) throws IllegalArgumentException {
 		if (matchesGcpPattern(sinkUrl)) {
-			return new GcpStoreUtil(sinkUrl, clientFactory);
+			return new GcpStoreUtil(sinkUrl, sinkUsername, sinkPassword, clientFactory);
 		} else {
-			return new FhirStoreUtil(sinkUrl, clientFactory);
+			return new FhirStoreUtil(sinkUrl, sinkUsername, sinkPassword, clientFactory);
 		}
 	}
 	
 	public MethodOutcome uploadResource(Resource resource) {
+		Collection<IClientInterceptor> interceptors = Collections.<IClientInterceptor> emptyList();
+		
+		if (sinkUsername.isEmpty() && !sinkPassword.isEmpty()) {
+			interceptors = Collections.<IClientInterceptor> singleton(new BasicAuthInterceptor(sinkUsername, sinkPassword));
+		}
+		
 		try {
-			return updateFhirResource(sinkUrl, resource, Collections.<IClientInterceptor> emptyList());
+			return updateFhirResource(sinkUrl, resource, interceptors);
 		}
 		catch (Exception e) {
 			log.error(String.format("Exception while sending to sink: %s", e.toString()));
@@ -74,10 +92,10 @@ public class FhirStoreUtil {
 		return responses;
 	}
 	
-	protected MethodOutcome updateFhirResource(String sinkUrl, Resource resource,
+	protected MethodOutcome updateFhirResource(String targetUri, Resource resource,
 	        Collection<IClientInterceptor> interceptors) {
 		
-		IGenericClient client = clientFactory.newGenericClient(sinkUrl);
+		IGenericClient client = clientFactory.newGenericClient(targetUri);
 		
 		for (IClientInterceptor interceptor : interceptors) {
 			client.registerInterceptor(interceptor);
@@ -93,7 +111,7 @@ public class FhirStoreUtil {
 		// Initialize the client, which will be used to interact with the service.
 		MethodOutcome outcome = client.create().resource(resource).encodedJson().execute();
 		
-		log.debug("FHIR resource created at" + sinkUrl + "? " + outcome.getCreated());
+		log.debug("FHIR resource created at" + targetUri + "? " + outcome.getCreated());
 		
 		return outcome;
 	}

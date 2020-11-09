@@ -29,8 +29,6 @@ public class FhirSearchUtil {
 	
 	private static final Logger log = LoggerFactory.getLogger(FhirSearchUtil.class);
 	
-	FhirStoreUtil fhirStoreUtil;
-	
 	private OpenmrsUtil openmrsUtil;
 	
 	FhirSearchUtil(OpenmrsUtil openmrsUtil) {
