@@ -128,7 +128,7 @@ and then:
 
 ```
 $ mvn exec:java -pl streaming \
-    -Dexec.args=" --openmrUserName=admin --openmrsPassword=Admin123 \
+    -Dexec.args=" --openmrsUserName=admin --openmrsPassword=Admin123 \
     --openmrsServerUrl=http://localhost:8099 \
     --cloudGcpFhirStore=projects/PROJECT/locations/LOCATION/datasets/DATASET/fhirStores/FHIRSTORENAME \"`
 ```
@@ -179,7 +179,7 @@ $ mvn compile exec:java -pl streaming-binlog
     --databasePort=3306 --databaseUser=root --databasePassword=debezium \
     --databaseName=mysql --databaseSchema=openmrs --databaseServerId=77 \
     --databaseOffsetStorage=offset.dat --databaseHistory=dbhistory.dat \
-    --openmrUserName=admin --openmrsPassword=Admin123 \
+    --openmrsUserName=admin --openmrsPassword=Admin123 \
     --openmrsServerUrl=http://localhost:8099 \
     --openmrsfhirBaseEndpoint=/openmrs/ws/fhir2/R3 \
     --cloudGcpFhirStore=projects/PROJECT/locations/LOCATION/datasets/DATASET/fhirStores/FHIRSTORENAME \

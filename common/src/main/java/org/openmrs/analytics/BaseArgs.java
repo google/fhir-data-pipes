@@ -17,7 +17,7 @@ import com.beust.jcommander.Parameter;
 
 public class BaseArgs {
 	
-	@Parameter(names = { "--openmrUserName" }, description = "User name for openmrs server")
+	@Parameter(names = { "--openmrsUserName" }, description = "User name for openmrs server")
 	public String openmrUserName = "admin";
 	
 	@Parameter(names = { "--openmrsPassword" }, description = "Password for openmrs User")
