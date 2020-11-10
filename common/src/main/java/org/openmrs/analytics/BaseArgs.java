@@ -26,6 +26,6 @@ public class BaseArgs {
 	@Parameter(names = { "--openmrsServerUrl" }, description = "Openmrs Server Base Url")
 	public String openmrsServerUrl = "http://localhost:8099";
 	
-	@Parameter(names = { "--cloudGcpFhirStore" }, description = "Google cloud FHIRE store")
+	@Parameter(names = { "--cloudGcpFhirStore" }, description = "Google cloud FHIR store")
 	public String cloudGcpFhirStore = "projects/PROJECT/locations/LOCATION/datasets/DATASET/fhirStores/FHIRSTORENAME";
 }
