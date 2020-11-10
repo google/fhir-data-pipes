@@ -22,19 +22,11 @@ public class Runner {
 	
 	private static final Main MAIN = new Main();
 	
-	private static String[] savedArgs;
-	
-	public static String[] getArgs() {
-		return savedArgs;
-	}
-	
 	// Main method that starts the streaming pipeline.
 	public static void main(String[] args) throws Exception {
-		savedArgs = args;
-		
 		ParquetUtil.initializeAvroConverters();
 		
-		MAIN.addRouteBuilder(DebeziumListener.class);
+		MAIN.addRoutesBuilder(new DebeziumListener(args));
 		// and enable graceful hangup support when container/process is shutdown
 		MAIN.enableHangupSupport();
 		// echo to console how to terminate

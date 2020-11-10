@@ -41,7 +41,8 @@ public class DebeziumListenerTest extends CamelTestSupport {
 	
 	@Override
 	protected RoutesBuilder createRouteBuilder() throws Exception {
-		
+		//the test would fail if undefined parameters are paased here
+		String[] args = { "--databaseHostName=hostname", "--databaseUser=root", "--openmrUserName=user" };
 		// Using a simple mock object would be more work since we need to provide stubs for the superclasses too.
 		fhirConverterMock = new FhirConverter() {
 			
@@ -50,7 +51,7 @@ public class DebeziumListenerTest extends CamelTestSupport {
 				processCount++;
 			}
 		};
-		return new DebeziumListener() {
+		return new DebeziumListener(args) {
 			
 			@Override
 			FhirConverter createFhirConverter(CamelContext camelContext) {

@@ -42,7 +42,7 @@
     <hamcrest.version>2.2</hamcrest.version>
 		<openmrsPlatformVersion>2.4.0-SNAPSHOT</openmrsPlatformVersion>
     <mockito.version>3.5.10</mockito.version>
-    <version.jcommander>1.78</version.jcommander>
+    <jcommander.version>1.78</jcommander.version>
   </properties>
 
   <modules>
@@ -105,7 +105,7 @@
       <dependency>
         <groupId>com.beust</groupId>
         <artifactId>jcommander</artifactId>
-        <version>${version.jcommander}</version>
+        <version>${jcommander.version}</version>
       </dependency>
 		</dependencies>
 	</dependencyManagement>
@@ -292,6 +292,11 @@
             </execution>
           </executions>
         </plugin>
+         <plugin>
+          <groupId>org.codehaus.mojo</groupId>
+          <artifactId>exec-maven-plugin</artifactId>
+          <version>1.6.0</version>
+          </plugin> 
       </plugins>
     </pluginManagement>
 

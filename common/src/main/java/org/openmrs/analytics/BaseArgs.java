@@ -14,18 +14,16 @@
 package org.openmrs.analytics;
 
 import com.beust.jcommander.Parameter;
-import com.beust.jcommander.Parameters;
 
-@Parameters(separators = "=")
-public class StreamingArgs {
+public class BaseArgs {
 	
-	@Parameter(names = { "--openmrUserName" }, description = "user name for openmrs server")
+	@Parameter(names = { "--openmrUserName" }, description = "User name for openmrs server")
 	public String openmrUserName = "admin";
 	
 	@Parameter(names = { "--openmrsPassword" }, description = "Password for openmrs User")
 	public String openmrsPassword = "admin";
 	
-	@Parameter(names = { "--openmrsServerUrl" }, description = "openmrs Server Base Url")
+	@Parameter(names = { "--openmrsServerUrl" }, description = "Openmrs Server Base Url")
 	public String openmrsServerUrl = "http://localhost:8099";
 	
 	@Parameter(names = { "--cloudGcpFhirStore" }, description = "Google cloud FHIRE store")

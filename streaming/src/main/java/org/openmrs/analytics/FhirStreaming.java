@@ -18,6 +18,7 @@ import java.net.URISyntaxException;
 
 import ca.uhn.fhir.context.FhirContext;
 import com.beust.jcommander.JCommander;
+import com.beust.jcommander.Parameters;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.support.ClassPathXmlApplicationContext;
@@ -45,7 +46,7 @@ public class FhirStreaming {
 	
 	public static void main(String[] args) throws InterruptedException, URISyntaxException {
 		
-		StreamingArgs streamingArgs = new StreamingArgs();
+		StreamingArgs streamingArgs = StreamingArgs.getInstance();
 		JCommander.newBuilder().addObject(streamingArgs).build().parse(args);
 		
 		sourceUrl = streamingArgs.openmrsServerUrl;
@@ -71,6 +72,22 @@ public class FhirStreaming {
 		while (true) {
 			feedConsumer.listen();
 			Thread.sleep(3000);
+		}
+	}
+	
+	@Parameters(separators = "=")
+	public static class StreamingArgs extends BaseArgs {
+		
+		private static StreamingArgs streamingArgs;
+		
+		private StreamingArgs() {
+		};
+		
+		public static StreamingArgs getInstance() {
+			if (streamingArgs == null) {
+				streamingArgs = new StreamingArgs();
+			}
+			return streamingArgs;
 		}
 	}
 }
