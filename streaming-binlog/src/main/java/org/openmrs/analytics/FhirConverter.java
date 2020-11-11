@@ -99,6 +99,10 @@ public class FhirConverter implements Processor {
 			log.trace("Skipping disabled events ..." + table);
 			return;
 		}
+		if (payload.get("uuid") == null) {
+			log.error(String.format("No uuid column for table %s ignoring payload %s ", table, payload));
+			return;
+		}
 		final String uuid = payload.get("uuid").toString();
 		final String fhirUrl = config.getLinkTemplates().get("fhir").replace("{uuid}", uuid);
 		log.info("Fetching FHIR resource at " + fhirUrl);

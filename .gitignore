@@ -85,3 +85,7 @@ nb-configuration.xml
 /offset.dat
 /dbhistory.dat
 
+##############################
+## Python
+##############################
+/dwh/venv*

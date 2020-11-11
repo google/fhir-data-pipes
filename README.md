@@ -16,6 +16,8 @@ resources and upload them to the target data warehouse.
 content of OpenMRS MySQL database, transform it into FHIR resources, and upload
 to the target data warehouse.
 
+There is also a query module built on top of the generated data warehouse.
+
 # Streaming mode (Atom Feed)
 This is currently implemented as a stand alone app that sits between OpenMRS and
 the data warehouse. It currently depends on the [Atom Feed module of OpenMRS](
@@ -153,15 +155,15 @@ independently without the need for a batch pipeline.
   It guarantees tolerance to failure such that when the application is restarted or crashed, the pipeline will resume 
   from the last processed offset.
    
-### Getting Started
+## Getting Started
 
  - Fire up OpenMRS Stack (containing FHIR2 module and demo data ~ 300,000 obs)
 
 ```
 $ docker-compose -f openmrs-compose.yaml up # change ports appropriately (optional)
 ```
- You should be able to  access OpenMRS via  http://localhost:8099/openmrs/ using refApp credentials i.e username is admin and password Admin123
- 
+ You should be able to  access OpenMRS via  http://localhost:8099/openmrs/ using
+ RefApp credentials, i.e username is admin and password Admin123.
  
   - Run the streaming pipeline using default config (pointed to openmrs-compose.yaml )
  
@@ -186,7 +188,7 @@ $ mvn compile exec:java -pl streaming-binlog -Ddatabase.hostname=localhost \
  ```
 
 
-### Debezium prerequisite
+## Debezium prerequisite
  The provided openmrs-compose.yaml (MySQL) has been configured to support debezium, however, 
  to connect to an existing MySQl instance, you'll need to configure your DB to 
  support row-based replication. There are a few configuration options required to ensure your database can 
@@ -221,7 +223,7 @@ binlog_format     = row
 
 For more information, please visit https://debezium.io
 
-### Dev. tip
+## Dev. tip
 When working on a feature in the Debezium based pipeline, you can replay old
 binlog updates by setting the system properties `database.offsetStorage` and
 `database.databaseHistory` to an old version of the history. In other words,
@@ -262,20 +264,15 @@ Alternatively you can spin up the entire pipeline using docker containers by run
 ```
 $ docker-compose -f openmrs-compose.yaml up # change ports appropriately (optional)
 ```
- You should be able to access OpenMRS via  http://localhost:8099/openmrs/ using refApp credentials i.e username is admin and password Admin123
- Please remember to install OpenMRS demo data module!
+You should be able to access OpenMRS via  http://localhost:8099/openmrs/ using
+RefApp credentials, i.e username is admin and password Admin123
  
- #### 2. Extract JSESSION_ID by authenticate against your OpenMRS instance using
-
-```
-$ curl -u <username>:<password> http://<server name>/openmrs/ws/rest/v1/session 
-```
-
 #### 3. Configure ./docker-compose.yaml
 
-Parameters (e.g port/url ) have been configured to point to http://localhost:8099/openmrs/ 
+Parameters (e.g port/url) have been configured to point to
+`http://localhost:8099/openmrs/` .
 
-Remember to appropriately change other parameters such as JSESSION_ID (extracted in step #2 above), GCP and OpenMRS host.
+Remember to appropriately change other parameters such as GCP and OpenMRS host.
 
 #### 4. Fire up Batch Pipeline
 
@@ -297,3 +294,48 @@ TODO
  
 **TODO**: Add details on how this works and caveats!
 
+# How to query the data warehouse
+
+Here we only focus on the case where the FHIR resources are transformed into
+Parquet files in previous steps and we want to query them through Spark.
+
+Some sample queries using `pyspark` are available in the [`dwh/`](dwh) folder.
+
+## Setting up Apache Spark
+
+Details on how to set up a Spark cluster with all different cluster management
+options is beyond this doc. Here we only show how to run the sample queries in
+the local mode.
+
+The sample queries are written using the Python API of Spark (a.k.a. `pyspark`)
+so it is a good idea to first create a Python `virtualenv`:
+```
+$ virtualenv -p python3.8 venv
+$ . ./venv/bin/activate
+$ pip install pyspark
+```
+*Tip*: If you use IntelliJ, the `virtualenv` can be created by (and used in)
+the IDE.
+
+Once this is done, you can run `pyspark` to get into an interactive console.
+This is useful for developing queries step by step, but we won't use it once
+we have developed the full query plan.
+
+Let's assume that the Parquet files that you have generated in the batch mode
+are in the `tmp/parquet` folder. In particular, you have`Patient` and
+`Observation` sub-folders with some Parquet files in them. To run
+[`sample_indicator.py`](dwh/sample_indicator.py) you can do:
+```
+spark-submit sample_indicator.py --src_dir=tmp/parquet \
+  --base_patient_url=http://localhost:8099/openmrs/ws/fhir2/R3/Patient/ \
+  --num_days=60 --last_date=2020-04-30
+  --code_list {SPACE SEPARATED LIST OF CODES}
+```
+This will show the value of various DataFrames that are calculated by this
+script which include aggregate values on the observations with the given codes
+grouped by patient IDs. Sample observation codes from the test data look like 
+`5089AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA`. To see a list of options with their
+descriptions, try:
+```
+$ python sample_indicator.py --help
+```
