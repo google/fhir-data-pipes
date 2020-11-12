@@ -54,7 +54,7 @@ public class FhirStreaming {
 			sourcePassword = args[1].split("/")[1];
 			sinkPath = args[2];
 			
-			if (args.length == 5) {
+			if (args.length == 4) {
 				sinkUser = args[3].split("/")[0];
 				sinkPassword = args[3].split("/")[1];
 			}

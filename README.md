@@ -162,8 +162,8 @@ independently without the need for a batch pipeline.
 ```
 $ docker-compose -f openmrs-compose.yaml up # change ports appropriately (optional)
 ```
- You should be able to  access OpenMRS via  http://localhost:8099/openmrs/ using
- RefApp credentials, i.e username is admin and password Admin123.
+ You should be able to  access OpenMRS via  http://localhost:8099/openmrs/ using refApp credentials i.e username is admin and password Admin123
+ 
  
   - Run the streaming pipeline using default config (pointed to openmrs-compose.yaml )
  
@@ -264,17 +264,16 @@ Alternatively you can spin up the entire pipeline using docker containers by run
 ```
 $ docker-compose -f openmrs-compose.yaml up # change ports appropriately (optional)
 ```
-You should be able to access OpenMRS via  http://localhost:8099/openmrs/ using
-RefApp credentials, i.e username is admin and password Admin123
- 
-#### 3. Configure ./docker-compose.yaml
+ You should be able to access OpenMRS via  http://localhost:8099/openmrs/ using refApp credentials i.e username is admin and password Admin123
+ Please remember to install OpenMRS demo data module!
 
-Parameters (e.g port/url) have been configured to point to
-`http://localhost:8099/openmrs/` .
+#### 2. Configure ./docker-compose.yaml
 
-Remember to appropriately change other parameters such as GCP and OpenMRS host.
+Parameters (e.g port/url ) have been configured to point to http://localhost:8099/openmrs/ 
 
-#### 4. Fire up Batch Pipeline
+Remember to appropriately change other parameters such as source url, sink path, and any required authentication information.
+
+#### 3. Fire up Batch Pipeline
 
 ```
 $ mvn clean install

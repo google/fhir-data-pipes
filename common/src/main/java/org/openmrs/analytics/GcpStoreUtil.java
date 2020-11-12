@@ -50,8 +50,8 @@ class GcpStoreUtil extends FhirStoreUtil {
 	
 	private static final NetHttpTransport HTTP_TRANSPORT = new NetHttpTransport();
 	
-	protected GcpStoreUtil(String sinkUrl, String sinkUsername, String sinkPassword, IRestfulClientFactory clientFactory) {
-		super(sinkUrl, sinkUsername, sinkPassword, clientFactory);
+	protected GcpStoreUtil(String sinkUrl, IRestfulClientFactory clientFactory) {
+		super(sinkUrl, "", "", clientFactory);
 	}
 	
 	@Override

@@ -63,7 +63,6 @@ public class FhirEtl {
 		void setServerUrl(String value);
 		
 		@Description("OpenMRS server fhir endpoint")
-		@Required
 		@Default.String("/ws/fhir2/R3")
 		String getServerFhirEndpoint();
 		
@@ -91,30 +90,29 @@ public class FhirEtl {
 		
 		@Description("Openmrs BasicAuth Password")
 		@Default.String("Admin123")
-		@Required
 		String getPassword();
 		
 		void setPassword(String value);
 		
-		@Description("The target fhir store OR GCP FHIR store with the format: "
-		        + "`projects/[\\w-]+/locations/[\\w-]+/datasets/[\\w-]+/fhirStores/[\\w-]+`, e.g., "
-		        + "`projects/my-project/locations/us-central1/datasets/openmrs_fhir_test/fhirStores/test`")
 		// TODO set the default value of this to empty string once FhirSearchUtil is refactored and GCP
 		// specific parts are taken out. Then add the support for having both FHIR store and Parquet
 		// output enabled at the same time.
-		@Default.String("projects/P/locations/L/datasets/D/fhirStores/F")
+		@Description("The path to the target generic fhir store, or a GCP fhir store with the format: "
+		        + "`projects/[\\w-]+/locations/[\\w-]+/datasets/[\\w-]+/fhirStores/[\\w-]+`, e.g., "
+		        + "`projects/my-project/locations/us-central1/datasets/openmrs_fhir_test/fhirStores/test`")
+		@Required
 		String getSinkPath();
 		
 		void setSinkPath(String value);
 		
 		@Description("Sink BasicAuth Username")
-		@Default.String("hapi")
+		@Default.String("")
 		String getSinkUsername();
 		
 		void setSinkUsername(String value);
 		
 		@Description("Sink BasicAuth Password")
-		@Default.String("hapi")
+		@Default.String("")
 		String getSinkPassword();
 		
 		void setSinkPassword(String value);

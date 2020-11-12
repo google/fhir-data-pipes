@@ -60,7 +60,7 @@ public class FhirStoreUtil {
 	public static FhirStoreUtil createFhirStoreUtil(String sinkUrl, String sinkUsername, String sinkPassword,
 	        IRestfulClientFactory clientFactory) throws IllegalArgumentException {
 		if (matchesGcpPattern(sinkUrl)) {
-			return new GcpStoreUtil(sinkUrl, sinkUsername, sinkPassword, clientFactory);
+			return new GcpStoreUtil(sinkUrl, clientFactory);
 		} else {
 			return new FhirStoreUtil(sinkUrl, sinkUsername, sinkPassword, clientFactory);
 		}
@@ -68,8 +68,8 @@ public class FhirStoreUtil {
 	
 	public MethodOutcome uploadResource(Resource resource) {
 		Collection<IClientInterceptor> interceptors = Collections.<IClientInterceptor> emptyList();
-		
-		if (sinkUsername.isEmpty() && !sinkPassword.isEmpty()) {
+
+		if (sinkUsername != null && !sinkUsername.isEmpty() && sinkPassword != null && !sinkPassword.isEmpty()) {
 			interceptors = Collections.<IClientInterceptor> singleton(new BasicAuthInterceptor(sinkUsername, sinkPassword));
 		}
 		
@@ -92,10 +92,10 @@ public class FhirStoreUtil {
 		return responses;
 	}
 	
-	protected MethodOutcome updateFhirResource(String targetUri, Resource resource,
+	protected MethodOutcome updateFhirResource(String sinkUrl, Resource resource,
 	        Collection<IClientInterceptor> interceptors) {
 		
-		IGenericClient client = clientFactory.newGenericClient(targetUri);
+		IGenericClient client = clientFactory.newGenericClient(sinkUrl);
 		
 		for (IClientInterceptor interceptor : interceptors) {
 			client.registerInterceptor(interceptor);
@@ -107,11 +107,14 @@ public class FhirStoreUtil {
 		interceptor.addHeaderValue("Content-Type", "application/fhir+json");
 		
 		client.registerInterceptor(interceptor);
-		
+
+		// TODO: determine if summary mode is the right approach
+		resource.getMeta().setTag(Collections.EMPTY_LIST);
+
 		// Initialize the client, which will be used to interact with the service.
 		MethodOutcome outcome = client.create().resource(resource).encodedJson().execute();
 		
-		log.debug("FHIR resource created at" + targetUri + "? " + outcome.getCreated());
+		log.debug("FHIR resource created at" + sinkUrl + "? " + outcome.getCreated());
 		
 		return outcome;
 	}
