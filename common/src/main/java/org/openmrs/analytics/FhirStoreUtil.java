@@ -30,6 +30,8 @@ import org.hl7.fhir.dstu3.model.Resource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import static com.google.common.base.Strings.isNullOrEmpty;
+
 public class FhirStoreUtil {
 	
 	private static final Logger log = LoggerFactory.getLogger(FhirStoreUtil.class);
@@ -54,7 +56,7 @@ public class FhirStoreUtil {
 	
 	public static FhirStoreUtil createFhirStoreUtil(String sinkUrl, IRestfulClientFactory clientFactory)
 	        throws IllegalArgumentException {
-		return createFhirStoreUtil(sinkUrl, "", "", clientFactory);
+		return createFhirStoreUtil(sinkUrl, "",  "", clientFactory);
 	}
 	
 	public static FhirStoreUtil createFhirStoreUtil(String sinkUrl, String sinkUsername, String sinkPassword,
@@ -69,17 +71,11 @@ public class FhirStoreUtil {
 	public MethodOutcome uploadResource(Resource resource) {
 		Collection<IClientInterceptor> interceptors = Collections.<IClientInterceptor> emptyList();
 
-		if (sinkUsername != null && !sinkUsername.isEmpty() && sinkPassword != null && !sinkPassword.isEmpty()) {
+		if (!isNullOrEmpty(sinkUsername) && !isNullOrEmpty(sinkPassword)) {
 			interceptors = Collections.<IClientInterceptor> singleton(new BasicAuthInterceptor(sinkUsername, sinkPassword));
 		}
-		
-		try {
-			return updateFhirResource(sinkUrl, resource, interceptors);
-		}
-		catch (Exception e) {
-			log.error(String.format("Exception while sending to sink: %s", e.toString()));
-			return null;
-		}
+
+		return updateFhirResource(sinkUrl, resource, interceptors);
 	}
 	
 	public Collection<MethodOutcome> uploadBundle(Bundle bundle) {

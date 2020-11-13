@@ -22,6 +22,8 @@ ENV SINK_PATH="http://localhost:8098/fhir"
 ENV SINK_USERNAME=""
 ENV SINK_PASSWORD=""
 ENV SERVER_URL="http://localhost:8091/openmrs"
+ENV USERNAME="admin"
+ENV PASSWORD="Admin123"
 ENV SEARCH_LIST="Patient"
 ENV BATCH_SIZE=10
 ENV TARGET_PARALLELISM=10
@@ -30,6 +32,7 @@ ENV TARGET_PARALLELISM=10
 RUN echo 'Batch Job started'
 VOLUME [ "${WORK_DIR}" ]
 
-ENTRYPOINT java -cp app.jar org.openmrs.analytics.FhirEtl --serverUrl=${SERVER_URL} \
-           --searchList=${SEARCH_LIST} --batchSize=${BATCH_SIZE} --targetParallelism=${TARGET_PARALLELISM}  \
+ENTRYPOINT java -cp app.jar org.openmrs.analytics.FhirEtl \
+           --serverUrl=${SERVER_URL} --username=${USERNAME} --password=${PASSWORD} \
+           --searchList=${SEARCH_LIST} --batchSize=${BATCH_SIZE} --targetParallelism=${TARGET_PARALLELISM} \
            --sinkPath=${SINK_PATH}  --sinkUsername=${SINK_USERNAME} --sinkPassword=${SINK_PASSWORD}
