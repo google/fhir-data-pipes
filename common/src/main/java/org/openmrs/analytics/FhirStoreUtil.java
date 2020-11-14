@@ -56,7 +56,7 @@ public class FhirStoreUtil {
 	
 	public static FhirStoreUtil createFhirStoreUtil(String sinkUrl, IRestfulClientFactory clientFactory)
 	        throws IllegalArgumentException {
-		return createFhirStoreUtil(sinkUrl, "",  "", clientFactory);
+		return createFhirStoreUtil(sinkUrl, "", "", clientFactory);
 	}
 	
 	public static FhirStoreUtil createFhirStoreUtil(String sinkUrl, String sinkUsername, String sinkPassword,
