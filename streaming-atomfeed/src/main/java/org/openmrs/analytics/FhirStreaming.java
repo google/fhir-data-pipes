@@ -57,6 +57,8 @@ public class FhirStreaming {
 		sourceUser = streamingArgs.openmrUserName;
 		sourcePassword = streamingArgs.openmrsPassword;
 		sinkPath = streamingArgs.fhirSinkPath;
+		sinkUser =streamingArgs.sinkUser;
+		sinkPassword = streamingArgs.sinkPassword;
 		
 		String feedUrl = sourceUrl + FEED_ENDPOINT;
 		String fhirUrl = sourceUrl + FHIR_ENDPOINT;
