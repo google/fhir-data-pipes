@@ -26,7 +26,7 @@ public class BaseArgs {
 	@Parameter(names = { "--openmrsServerUrl" }, description = "Openmrs Server Base Url")
 	public String openmrsServerUrl = "http://localhost:8099";
 	
-	@Parameter(names = { "--fhirSinkPath" }, description = "Google cloud FHIR store")
+	@Parameter(names = { "--fhirSinkPath" }, description = "Google cloud FHIR store or target generic fhir store")
 	public String fhirSinkPath = "projects/PROJECT/locations/LOCATION/datasets/DATASET/fhirStores/FHIRSTORENAME";
 	
 	@Parameter(names = { "--sinkUser" }, description = "Sink BasicAuth Username")
@@ -35,6 +35,6 @@ public class BaseArgs {
 	@Parameter(names = { "--sinkPassword" }, description = "Sink BasicAuth Password")
 	public String sinkPassword = "hapi";
 	
-	@Parameter(names = { "--fileParquetPath" }, description = "Google cloud FHIRE store")
+	@Parameter(names = { "--fileParquetPath" }, description = "The base name for output Parquet file")
 	public String fileParquetPath = "/tmp/";
 }
