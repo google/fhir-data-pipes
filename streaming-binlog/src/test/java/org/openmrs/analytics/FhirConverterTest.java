@@ -18,7 +18,6 @@ import java.io.IOException;
 import java.util.Map;
 import java.util.Properties;
 
-import ca.uhn.fhir.parser.IParser;
 import io.debezium.data.Envelope.Operation;
 import org.apache.avro.generic.GenericRecord;
 import org.apache.camel.Produce;
@@ -54,9 +53,6 @@ public class FhirConverterTest extends CamelTestSupport {
 	private FhirStoreUtil fhirStoreUtil;
 	
 	@Mock
-	private IParser parser;
-	
-	@Mock
 	private Resource resource;
 	
 	@Mock
@@ -78,7 +74,7 @@ public class FhirConverterTest extends CamelTestSupport {
 				Properties p = System.getProperties();
 				p.put("fhir.debeziumEventConfigPath", "../utils/dbz_event_to_fhir_config.json");
 				System.setProperties(p);
-				fhirConverter = new FhirConverter(openmrsUtil, parser, fhirStoreUtil, parquetUtil);
+				fhirConverter = new FhirConverter(openmrsUtil, fhirStoreUtil, parquetUtil);
 				
 				// Inject FhirUriGenerator;
 				from(TEST_ROUTE).process(fhirConverter); // inject target processor here
@@ -93,13 +89,12 @@ public class FhirConverterTest extends CamelTestSupport {
 		resource = new Encounter();
 		resource.setId(TEST_ID);
 		Mockito.when(openmrsUtil.fetchFhirResource(Mockito.anyString())).thenReturn(resource);
-		Mockito.when(parser.encodeResourceToString(resource)).thenReturn(TEST_RESOURCE);
 		
 		// Actual event that will trigger process().
 		eventsProducer.sendBodyAndHeaders(messageBody, messageHeaders);
 		
 		Mockito.verify(openmrsUtil).fetchFhirResource(Mockito.anyString());
-		Mockito.verify(fhirStoreUtil).uploadResourceToCloud("Encounter", TEST_ID, TEST_RESOURCE);
+		Mockito.verify(fhirStoreUtil).uploadResource(resource);
 	}
 	
 	@Test
@@ -110,7 +105,6 @@ public class FhirConverterTest extends CamelTestSupport {
 		resource.setId(TEST_ID);
 		final String testPath = "some_test_path";
 		Mockito.when(openmrsUtil.fetchFhirResource(Mockito.anyString())).thenReturn(resource);
-		Mockito.when(parser.encodeResourceToString(resource)).thenReturn(TEST_RESOURCE);
 		Mockito.when(parquetUtil.getParquetPath()).thenReturn(testPath);
 		Mockito.when(parquetUtil.getWriter("Encounter")).thenReturn(parquetWriter);
 		
@@ -118,10 +112,7 @@ public class FhirConverterTest extends CamelTestSupport {
 		eventsProducer.sendBodyAndHeaders(messageBody, messageHeaders);
 		
 		Mockito.verify(openmrsUtil).fetchFhirResource(Mockito.anyString());
-		Mockito.verify(fhirStoreUtil, Mockito.never()).uploadResourceToCloud(Mockito.anyString(), Mockito.anyString(),
-		    Mockito.<Resource> any());
-		Mockito.verify(fhirStoreUtil, Mockito.never()).uploadResourceToCloud(Mockito.anyString(), Mockito.anyString(),
-		    Mockito.anyString());
+		Mockito.verify(fhirStoreUtil, Mockito.never()).uploadResource(Mockito.<Resource> any());
 		Mockito.verify(parquetUtil).getWriter("Encounter");
 		Mockito.verify(parquetUtil).convertToAvro(resource);
 		Mockito.verify(parquetWriter, Mockito.times(1)).write(Mockito.<GenericRecord> any());

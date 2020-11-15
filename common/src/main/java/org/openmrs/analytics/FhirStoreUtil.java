@@ -11,153 +11,111 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-
 package org.openmrs.analytics;
 
-import java.io.IOException;
-import java.net.URISyntaxException;
-import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
-import java.util.regex.Matcher;
+import java.util.List;
 import java.util.regex.Pattern;
 
-// import com.google.auth.http.HttpCredentialsAdapter;
-// import com.google.auth.oauth2.GoogleCredentials;
-import ca.uhn.fhir.context.FhirContext;
-import ca.uhn.fhir.parser.IParser;
-import com.google.api.client.googleapis.auth.oauth2.GoogleCredential;
-import com.google.api.client.http.HttpRequest;
-import com.google.api.client.http.HttpRequestInitializer;
-import com.google.api.client.http.javanet.NetHttpTransport;
-import com.google.api.client.json.gson.GsonFactory;
-import com.google.api.services.healthcare.v1.CloudHealthcare;
-import com.google.api.services.healthcare.v1.CloudHealthcareScopes;
-import org.apache.http.client.methods.HttpUriRequest;
-import org.apache.http.client.methods.RequestBuilder;
-import org.apache.http.client.utils.URIBuilder;
-import org.apache.http.entity.StringEntity;
+import ca.uhn.fhir.rest.api.MethodOutcome;
+import ca.uhn.fhir.rest.client.api.IClientInterceptor;
+import ca.uhn.fhir.rest.client.api.IGenericClient;
+import ca.uhn.fhir.rest.client.api.IRestfulClientFactory;
+import ca.uhn.fhir.rest.client.interceptor.AdditionalRequestHeadersInterceptor;
+import ca.uhn.fhir.rest.client.interceptor.BasicAuthInterceptor;
 import org.hl7.fhir.dstu3.model.Bundle;
-import org.hl7.fhir.dstu3.model.Bundle.BundleEntryComponent;
 import org.hl7.fhir.dstu3.model.Resource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import static com.google.common.base.Strings.isNullOrEmpty;
 
 public class FhirStoreUtil {
 	
 	private static final Logger log = LoggerFactory.getLogger(FhirStoreUtil.class);
 	
-	private FhirContext fhirContext;
+	protected IRestfulClientFactory clientFactory;
 	
-	private String gcpFhirStore;
+	protected final String sinkUrl;
 	
-	private static final Pattern FHIR_PATTERN = Pattern
+	private final String sinkUsername;
+	
+	private final String sinkPassword;
+	
+	private static final Pattern GCP_PATTERN = Pattern
 	        .compile("projects/[\\w-]+/locations/[\\w-]+/datasets/[\\w-]+/fhirStores/[\\w-]+");
 	
-	private static final GsonFactory JSON_FACTORY = new GsonFactory();
-	
-	private static final NetHttpTransport HTTP_TRANSPORT = new NetHttpTransport();
-	
-	private HttpUtil httpUtil;
-	
-	FhirStoreUtil(String gcpFhirStore, FhirContext fhirContext) throws IllegalArgumentException {
-		// TODO separate the GCP specific functionality out of this class.
-		this.fhirContext = fhirContext;
-		
-		Matcher fhirMatcher = FHIR_PATTERN.matcher(gcpFhirStore);
-		if (!fhirMatcher.matches()) {
-			throw new IllegalArgumentException(
-			        String.format("The gcpFhirStore %s does not match %s pattern!", gcpFhirStore, FHIR_PATTERN));
-		}
-		
-		this.gcpFhirStore = gcpFhirStore;
-		this.httpUtil = new HttpUtil();
+	protected FhirStoreUtil(String sinkUrl, String sinkUsername, String sinkPassword, IRestfulClientFactory clientFactory) {
+		this.clientFactory = clientFactory;
+		this.sinkUrl = sinkUrl;
+		this.sinkUsername = sinkUsername;
+		this.sinkPassword = sinkPassword;
 	}
 	
-	// This follows the examples at:
-	// https://github.com/GoogleCloudPlatform/java-docs-samples/healthcare/tree/master/healthcare/v1
-	// TODO: remove redundant resource information if passing a HAPI resource
-	public void uploadResourceToCloud(String resourceType, String resourceId, Resource resource) {
-		try {
-			updateFhirResource(gcpFhirStore, resourceId, resourceType, resource);
-		}
-		catch (IOException e) {
-			log.error(String.format("IOException while using Google APIs: %s", e.toString()));
-		}
-		catch (URISyntaxException e) {
-			log.error(String.format("URI syntax exception while using Google APIs: %s", e.toString()));
+	public static FhirStoreUtil createFhirStoreUtil(String sinkUrl, IRestfulClientFactory clientFactory)
+	        throws IllegalArgumentException {
+		return createFhirStoreUtil(sinkUrl, "", "", clientFactory);
+	}
+	
+	public static FhirStoreUtil createFhirStoreUtil(String sinkUrl, String sinkUsername, String sinkPassword,
+	        IRestfulClientFactory clientFactory) throws IllegalArgumentException {
+		if (matchesGcpPattern(sinkUrl)) {
+			return new GcpStoreUtil(sinkUrl, clientFactory);
+		} else {
+			return new FhirStoreUtil(sinkUrl, sinkUsername, sinkPassword, clientFactory);
 		}
 	}
 	
-	// TODO: merge the two versions of this method to remove redundant resource info
-	public void uploadResourceToCloud(String resourceType, String resourceId, String fhirJson) {
-		uploadResourceToCloud(resourceType, resourceId, (Resource) fhirContext.newJsonParser().parseResource(fhirJson));
+	public MethodOutcome uploadResource(Resource resource) {
+		Collection<IClientInterceptor> interceptors = Collections.<IClientInterceptor> emptyList();
+
+		if (!isNullOrEmpty(sinkUsername) && !isNullOrEmpty(sinkPassword)) {
+			interceptors = Collections.<IClientInterceptor> singleton(new BasicAuthInterceptor(sinkUsername, sinkPassword));
+		}
+
+		return updateFhirResource(sinkUrl, resource, interceptors);
 	}
 	
-	private void updateFhirResource(String fhirStoreName, String resourceId, String resourceType, Resource resource)
-	        throws IOException, URISyntaxException {
-		// Initialize the client, which will be used to interact with the service.
-		CloudHealthcare client = createClient();
-		String uri = String.format("%sv1/%s/fhir/%s/%s", client.getRootUrl(), fhirStoreName, resourceType, resourceId);
-		URIBuilder uriBuilder = new URIBuilder(uri);
-		log.info(String.format("Full URL is: %s", uriBuilder.build()));
+	public Collection<MethodOutcome> uploadBundle(Bundle bundle) {
+		List<MethodOutcome> responses = new ArrayList<MethodOutcome>(bundle.getTotal());
 		
-		StringEntity requestEntity = new StringEntity(fhirContext.newJsonParser().encodeResourceToString(resource),
-		        StandardCharsets.UTF_8);
-		
-		HttpUriRequest request = RequestBuilder.put().setUri(uriBuilder.build()).setEntity(requestEntity)
-		        .addHeader("Content-Type", "application/fhir+json").addHeader("Accept-Charset", "utf-8")
-		        .addHeader("Accept", "application/fhir+json").addHeader("Authorization", "Bearer " + getAccessToken())
-		        .build();
-		String response = httpUtil.executeRequest(request);
-		log.debug("Update FHIR resource response: " + response);
-	}
-	
-	private CloudHealthcare createClient() throws IOException {
-		final GoogleCredential credential = getGoogleCredential();
-		HttpRequestInitializer requestInitializer = new HttpRequestInitializer() {
-			
-			@Override
-			public void initialize(HttpRequest httpRequest) throws IOException {
-				credential.initialize(httpRequest);
-				httpRequest.setConnectTimeout(60000); // 1 minute connect timeout
-				httpRequest.setReadTimeout(60000); // 1 minute read timeout
-			}
-		};
-		
-		// Build the client for interacting with the service.
-		return new CloudHealthcare.Builder(HTTP_TRANSPORT, JSON_FACTORY, requestInitializer)
-		        .setApplicationName("openmrs-fhir-warehouse").build();
-	}
-	
-	private String getAccessToken() throws IOException {
-		GoogleCredential credential = getGoogleCredential();
-		credential.refreshToken();
-		return credential.getAccessToken();
-	}
-	
-	private GoogleCredential getGoogleCredential() throws IOException {
-		/*
-		// TODO figure out why scope creation fails in this case.
-		// Use Application Default Credentials (ADC) to authenticate the requests
-		// For more information see https://cloud.google.com/docs/authentication/production
-		final GoogleCredentials credentials =
-		GoogleCredentials.getApplicationDefault()//;
-		    .createScoped(Collections.singleton(CloudHealthcareScopes.CLOUD_PLATFORM));
-		credentials.refreshAccessToken();
-		return credentials.getAccessToken().getTokenValue();
-		 */
-		GoogleCredential credential = GoogleCredential.getApplicationDefault(HTTP_TRANSPORT, JSON_FACTORY)
-		        .createScoped(Collections.singleton(CloudHealthcareScopes.CLOUD_PLATFORM));
-		return credential;
-	}
-	
-	public void uploadBundleToCloud(Bundle bundle, FhirContext fhirContext) {
-		IParser parser = fhirContext.newJsonParser();
-		for (BundleEntryComponent entry : bundle.getEntry()) {
+		for (Bundle.BundleEntryComponent entry : bundle.getEntry()) {
 			Resource resource = entry.getResource();
-			uploadResourceToCloud(resource.getResourceType().name(), resource.getIdElement().getIdPart(),
-			    parser.encodeResourceToString(resource));
+			responses.add(uploadResource(resource));
 		}
+		return responses;
 	}
 	
+	protected MethodOutcome updateFhirResource(String sinkUrl, Resource resource,
+	        Collection<IClientInterceptor> interceptors) {
+		
+		IGenericClient client = clientFactory.newGenericClient(sinkUrl);
+		
+		for (IClientInterceptor interceptor : interceptors) {
+			client.registerInterceptor(interceptor);
+		}
+		
+		AdditionalRequestHeadersInterceptor interceptor = new AdditionalRequestHeadersInterceptor();
+		interceptor.addHeaderValue("Accept", "application/fhir+json");
+		interceptor.addHeaderValue("Accept-Charset", "utf-8");
+		interceptor.addHeaderValue("Content-Type", "application/fhir+json");
+		
+		client.registerInterceptor(interceptor);
+
+		// TODO: determine if summary mode is the right approach
+		resource.getMeta().setTag(Collections.EMPTY_LIST);
+
+		// Initialize the client, which will be used to interact with the service.
+		MethodOutcome outcome = client.create().resource(resource).encodedJson().execute();
+		
+		log.debug("FHIR resource created at" + sinkUrl + "? " + outcome.getCreated());
+		
+		return outcome;
+	}
+	
+	static boolean matchesGcpPattern(String gcpFhirStore) {
+		return GCP_PATTERN.matcher(gcpFhirStore).matches();
+	}
 }

@@ -17,7 +17,6 @@ package org.openmrs.analytics;
 import java.io.IOException;
 
 import ca.uhn.fhir.context.FhirContext;
-import ca.uhn.fhir.parser.IParser;
 import com.google.common.annotations.VisibleForTesting;
 import org.apache.camel.CamelContext;
 import org.apache.camel.LoggingLevel;
@@ -50,11 +49,12 @@ public class DebeziumListener extends RouteBuilder {
 		String fhirBaseUrl = System.getProperty("openmrs.serverUrl") + System.getProperty("openmrs.fhirBaseEndpoint");
 		OpenmrsUtil openmrsUtil = new OpenmrsUtil(fhirBaseUrl, System.getProperty("openmrs.username"),
 		        System.getProperty("openmrs.password"), fhirContext);
-		FhirStoreUtil fhirStoreUtil = new FhirStoreUtil(System.getProperty("cloud.gcpFhirStore"), fhirContext);
-		IParser parser = fhirContext.newJsonParser();
+		FhirStoreUtil fhirStoreUtil = FhirStoreUtil.createFhirStoreUtil(System.getProperty("fhir.sinkPath"),
+		    System.getProperty("fhir.sinkUsername"), System.getProperty("fhir.sinkPassword"),
+		    fhirContext.getRestfulClientFactory());
 		ParquetUtil parquetUtil = new ParquetUtil(fhirContext);
 		camelContext.addService(new ParquetService(parquetUtil), true);
-		return new FhirConverter(openmrsUtil, parser, fhirStoreUtil, parquetUtil);
+		return new FhirConverter(openmrsUtil, fhirStoreUtil, parquetUtil);
 	}
 	
 	private String getDebeziumConfig() {

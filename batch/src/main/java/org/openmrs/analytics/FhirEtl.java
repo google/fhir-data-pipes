@@ -63,7 +63,6 @@ public class FhirEtl {
 		void setServerUrl(String value);
 		
 		@Description("OpenMRS server fhir endpoint")
-		@Required
 		@Default.String("/ws/fhir2/R3")
 		String getServerFhirEndpoint();
 		
@@ -83,29 +82,40 @@ public class FhirEtl {
 		
 		void setBatchSize(int value);
 		
-		@Description("BasicAuth Username")
+		@Description("Openmrs BasicAuth Username")
 		@Default.String("admin")
 		String getUsername();
 		
 		void setUsername(String value);
 		
-		@Description("BasicAuth Password")
+		@Description("Openmrs BasicAuth Password")
 		@Default.String("Admin123")
-		@Required
 		String getPassword();
 		
 		void setPassword(String value);
 		
-		@Description("The target fhir store OR GCP FHIR store with the format: "
-		        + "`projects/[\\w-]+/locations/[\\w-]+/datasets/[\\w-]+/fhirStores/[\\w-]+`, e.g., "
-		        + "`projects/my-project/locations/us-central1/datasets/openmrs_fhir_test/fhirStores/test`")
 		// TODO set the default value of this to empty string once FhirSearchUtil is refactored and GCP
 		// specific parts are taken out. Then add the support for having both FHIR store and Parquet
 		// output enabled at the same time.
-		@Default.String("projects/P/locations/L/datasets/D/fhirStores/F")
-		String getGcpFhirStore();
+		@Description("The path to the target generic fhir store, or a GCP fhir store with the format: "
+		        + "`projects/[\\w-]+/locations/[\\w-]+/datasets/[\\w-]+/fhirStores/[\\w-]+`, e.g., "
+		        + "`projects/my-project/locations/us-central1/datasets/openmrs_fhir_test/fhirStores/test`")
+		@Required
+		String getSinkPath();
 		
-		void setGcpFhirStore(String value);
+		void setSinkPath(String value);
+		
+		@Description("Sink BasicAuth Username")
+		@Default.String("")
+		String getSinkUsername();
+		
+		void setSinkUsername(String value);
+		
+		@Description("Sink BasicAuth Password")
+		@Default.String("")
+		String getSinkPassword();
+		
+		void setSinkPassword(String value);
 		
 		@Description("The base name for output Parquet file; for each resource, one fileset will be created.")
 		@Default.String("")
@@ -126,9 +136,6 @@ public class FhirEtl {
 	static Map<String, List<SearchSegmentDescriptor>> createSegments(FhirEtlOptions options, FhirContext fhirContext)
 	        throws CannotProvideCoderException {
 		FhirSearchUtil fhirSearchUtil = createFhirSearchUtil(options, fhirContext);
-		// TODO remove fhirContext from fhirStoreUtil.
-		FhirStoreUtil fhirStoreUtil = new FhirStoreUtil(options.getGcpFhirStore(), fhirContext);
-		ParquetUtil parquetUtil = new ParquetUtil(fhirContext);
 		Map<String, List<SearchSegmentDescriptor>> segmentMap = new HashMap<>();
 		for (String search : options.getSearchList().split(",")) {
 			List<SearchSegmentDescriptor> segments = new ArrayList<>();
@@ -164,7 +171,11 @@ public class FhirEtl {
 		
 		private String sourcePw;
 		
-		private String fhirStoreUrl;
+		private String sinkPath;
+		
+		private String sinkUsername;
+		
+		private String sinkPassword;
 		
 		private String parquetFile;
 		
@@ -178,8 +189,11 @@ public class FhirEtl {
 		
 		private OpenmrsUtil openmrsUtil;
 		
-		FetchSearchPageFn(String fhirStoreUrl, String sourceUrl, String parquetFile, String sourceUser, String sourcePw) {
-			this.fhirStoreUrl = fhirStoreUrl;
+		FetchSearchPageFn(String sinkPath, String sinkUsername, String sinkPassword, String sourceUrl, String parquetFile,
+		    String sourceUser, String sourcePw) {
+			this.sinkPath = sinkPath;
+			this.sinkUsername = sinkUsername;
+			this.sinkPassword = sinkPassword;
 			this.sourceUrl = sourceUrl;
 			this.sourceUser = sourceUser;
 			this.sourcePw = sourcePw;
@@ -189,7 +203,8 @@ public class FhirEtl {
 		@Setup
 		public void Setup() {
 			fhirContext = FhirContext.forDstu3();
-			fhirStoreUtil = new FhirStoreUtil(fhirStoreUrl, fhirContext);
+			fhirStoreUtil = FhirStoreUtil.createFhirStoreUtil(sinkPath, sinkUsername, sinkPassword,
+			    fhirContext.getRestfulClientFactory());
 			openmrsUtil = createOpenmrsUtil(sourceUrl, sourceUser, sourcePw, fhirContext);
 			fhirSearchUtil = new FhirSearchUtil(openmrsUtil);
 			parquetUtil = new ParquetUtil(fhirContext);
@@ -199,7 +214,7 @@ public class FhirEtl {
 		public void ProcessElement(@Element SearchSegmentDescriptor segment, OutputReceiver<GenericRecord> out) {
 			Bundle pageBundle = fhirSearchUtil.searchByUrl(segment.searchUrl(), segment.count(), SummaryEnum.DATA);
 			if (parquetFile.isEmpty()) {
-				fhirStoreUtil.uploadBundleToCloud(pageBundle, fhirContext);
+				fhirStoreUtil.uploadBundle(pageBundle);
 			} else {
 				for (GenericRecord record : parquetUtil.generateRecords(pageBundle)) {
 					out.output(record);
@@ -233,9 +248,9 @@ public class FhirEtl {
 			Schema schema = parquetUtil.getResourceSchema(resourceType);
 			PCollection<SearchSegmentDescriptor> inputSegments = p.apply(Create.of(entry.getValue()));
 			PCollection<GenericRecord> records = inputSegments
-			        .apply(ParDo.of(new FetchSearchPageFn(options.getGcpFhirStore(),
-			                options.getServerUrl() + options.getServerFhirEndpoint(), options.getOutputParquetBase(),
-			                options.getUsername(), options.getPassword())))
+			        .apply(ParDo.of(new FetchSearchPageFn(options.getSinkPath(), options.getSinkUsername(),
+			                options.getSinkPassword(), options.getServerUrl() + options.getServerFhirEndpoint(),
+			                options.getOutputParquetBase(), options.getUsername(), options.getPassword())))
 			        .setCoder(AvroCoder.of(GenericRecord.class, schema));
 			ParquetIO.Sink sink = ParquetIO.sink(schema);
 			records.apply(FileIO.<GenericRecord> write().via(sink).to(outputFile));

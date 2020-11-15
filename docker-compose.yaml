@@ -19,15 +19,13 @@ services:
     build:
       context: batch
     image: openmrs-fhir-analytics/batch-job:latest
-    #restart: "always"
     network_mode: host
     container_name: batch-cloud
     healthcheck:
       test: "exit 0"
     environment:
-     - GCP_FHIR_STORE=projects/PROJECT/locations/LOCATION/datasets/DATASET/fhirStores/FHIRSTORENAME
-     - JSESSION_ID=3B09C6775C95D45A35AB3F1303E3BA15 # TODO replace with basic auth implementation by @pmanko
-     - SERVER_URL=http://localhost:8099/openmrs
+     - SINK_PATH=http://localhost:8098/fhir
+     - SOURCE_URL=https://localhost:8091/openmrs
      - SEARCH_LIST=Patient,Encounter,Observation
      - BATCH_SIZE=20
      - TARGET_PARALLELISM=20
@@ -49,9 +47,8 @@ services:
                      -Ddatabase.dbname=mysql -Ddatabase.schema=openmrs -Ddatabase.serverId=77 -Ddatabase.offsetStorage=/tmp/offset.dat
                      -Ddatabase.databaseHistory=/tmp/dbhistory.dat -Dopenmrs.username=admin -Dopenmrs.password=Admin123
                      -Dopenmrs.serverUrl=http://localhost:8099 -Dopenmrs.fhirBaseEndpoint=/openmrs/ws/fhir2/R3
-                     -Dcloud.gcpFhirStore=projects/PROJECT/locations/LOCATION/datasets/DATASET/fhirStores/FHIRSTORENAME
+                     -Dfhir.sinkPath=http://localhost:8098/fhir
                      -Dfile.parquetPath=/tmp/
                      -Dfhir.debeziumEventConfigPath=dbz_event_to_fhir_config.json
-
 
   # TODO add attomfeed streaming - I think @pmanko is working on
