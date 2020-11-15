@@ -13,8 +13,6 @@
 // limitations under the License.
 package org.openmrs.analytics;
 
-import static com.google.common.base.Strings.isNullOrEmpty;
-
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -31,6 +29,8 @@ import org.hl7.fhir.dstu3.model.Bundle;
 import org.hl7.fhir.dstu3.model.Resource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import static com.google.common.base.Strings.isNullOrEmpty;
 
 public class FhirStoreUtil {
 	
@@ -70,11 +70,11 @@ public class FhirStoreUtil {
 	
 	public MethodOutcome uploadResource(Resource resource) {
 		Collection<IClientInterceptor> interceptors = Collections.<IClientInterceptor> emptyList();
-		
+
 		if (!isNullOrEmpty(sinkUsername) && !isNullOrEmpty(sinkPassword)) {
 			interceptors = Collections.<IClientInterceptor> singleton(new BasicAuthInterceptor(sinkUsername, sinkPassword));
 		}
-		
+
 		return updateFhirResource(sinkUrl, resource, interceptors);
 	}
 	
@@ -103,10 +103,10 @@ public class FhirStoreUtil {
 		interceptor.addHeaderValue("Content-Type", "application/fhir+json");
 		
 		client.registerInterceptor(interceptor);
-		
+
 		// TODO: determine if summary mode is the right approach
 		resource.getMeta().setTag(Collections.EMPTY_LIST);
-		
+
 		// Initialize the client, which will be used to interact with the service.
 		MethodOutcome outcome = client.create().resource(resource).encodedJson().execute();
 		
