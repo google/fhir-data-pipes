@@ -26,7 +26,7 @@ public class Runner {
 	public static void main(String[] args) throws Exception {
 		ParquetUtil.initializeAvroConverters();
 		
-		MAIN.addRouteBuilder(DebeziumListener.class);
+		MAIN.addRoutesBuilder(new DebeziumListener(args));
 		// and enable graceful hangup support when container/process is shutdown
 		MAIN.enableHangupSupport();
 		// echo to console how to terminate

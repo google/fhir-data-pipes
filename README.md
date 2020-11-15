@@ -130,8 +130,10 @@ and then:
 
 ```
 $ mvn exec:java -pl streaming \
-    -Dexec.mainClass=org.openmrs.analytics.FhirStreaming \`
-    -Dexec.args="OPENMRS_URL OPENMRS_USER/OPENMRS_PASSWORD GCP_FHIR_STORE"`
+    -Dexec.args=" --openmrsUserName=admin --openmrsPassword=Admin123 \
+    --openmrsServerUrl=http://localhost:8099 \
+    --cloudGcpFhirStore=projects/PROJECT/locations/LOCATION/datasets/DATASET/fhirStores/FHIRSTORENAME \
+    --sinkUser=hapi --sinkPassword=hapi "`
 ```
 
 - `OPENMRS_URL` is the path to your source OpenMRS instance (e.g., `http://localhost:9016/openmrs` in this case)
@@ -175,16 +177,18 @@ $ mvn compile exec:java -pl streaming-binlog
  - Or customize the configuration (including gcpFhirStore, OpenMRS basicAuth)
  
  ```
-$ mvn compile exec:java -pl streaming-binlog -Ddatabase.hostname=localhost \
-    -Ddatabase.port=3306 -Ddatabase.user=root -Ddatabase.password=debezium \
-    -Ddatabase.dbname=mysql -Ddatabase.schema=openmrs -Ddatabase.serverId=77 \
-    -Ddatabase.offsetStorage=offset.dat -Ddatabase.databaseHistory=dbhistory.dat \
-    -Dopenmrs.username=admin -Dopenmrs.password=Admin123 \
-    -Dopenmrs.serverUrl=http://localhost:8099 \
-    -Dopenmrs.fhirBaseEndpoint=/openmrs/ws/fhir2/R3 \
-    -Dfhir.sinkPath=projects/PROJECT/locations/LOCATION/datasets/DATASET/fhirStores/FHIRSTORENAME \
-    -Dfile.parquetPath=/tmp/ \
-    -Dfhir.debeziumEventConfigPath=./utils/dbz_event_to_fhir_config.json
+$ mvn compile exec:java -pl streaming-binlog 
+    -Dexec.args="--databaseHostName=localhost \
+    --databasePort=3306 --databaseUser=root --databasePassword=debezium \
+    --databaseName=mysql --databaseSchema=openmrs --databaseServerId=77 \
+    --databaseOffsetStorage=offset.dat --databaseHistory=dbhistory.dat \
+    --openmrsUserName=admin --openmrsPassword=Admin123 \
+    --openmrsServerUrl=http://localhost:8099 \
+    --openmrsfhirBaseEndpoint=/openmrs/ws/fhir2/R3 \
+    --fhirSinkPath=projects/PROJECT/locations/LOCATION/datasets/DATASET/fhirStores/FHIRSTORENAME \
+    --sinkUser=hapi --sinkPassword=hapi \
+    --fileParquetPath=/tmp/ \
+    --fhirDebeziumEventConfigPath=./utils/dbz_event_to_fhir_config.json"
  ```
 
 
@@ -252,9 +256,10 @@ files using the `--outputParquetBase` flag.
 If you prefer not to use a bundled jar (e.g., during development in an IDE) you
 can use the Maven exec plugin:
 ```
-$ mvn exec:java -pl batch -Dexec.mainClass=org.openmrs.analytics.FhirEtl \
+$ mvn exec:java -pl batch \
     "-Dexec.args=--serverUrl=http://localhost:9020  --searchList=Observation \
-    --batchSize=20 --targetParallelism=20 --outputParquetBase=tmp/TEST/" 
+    --batchSize=20 --targetParallelism=20 --outputParquetBase=tmp/TEST/ \
+    --sinkUser=hapi --sinkPassword=hapi "
 ```
 # Using Docker compose
 Alternatively you can spin up the entire pipeline using docker containers by running

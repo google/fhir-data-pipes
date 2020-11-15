@@ -111,6 +111,10 @@
       <version>0.5.7</version>
     </dependency>
 
+	<dependency>
+		<groupId>com.beust</groupId>
+		<artifactId>jcommander</artifactId>
+	</dependency>
   </dependencies>
 
 </project>

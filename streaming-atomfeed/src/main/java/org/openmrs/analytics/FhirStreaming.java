@@ -17,6 +17,8 @@ package org.openmrs.analytics;
 import java.net.URISyntaxException;
 
 import ca.uhn.fhir.context.FhirContext;
+import com.beust.jcommander.JCommander;
+import com.beust.jcommander.Parameters;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.support.ClassPathXmlApplicationContext;
@@ -47,33 +49,14 @@ public class FhirStreaming {
 	private static String sinkPassword;
 	
 	public static void main(String[] args) throws InterruptedException, URISyntaxException {
-		// TODO: Simplify argument passing
-		if (args.length >= 3) {
-			sourceUrl = args[0];
-			sourceUser = args[1].split("/")[0];
-			sourcePassword = args[1].split("/")[1];
-			sinkPath = args[2];
-			
-			if (args.length == 4) {
-				sinkUser = args[3].split("/")[0];
-				sinkPassword = args[3].split("/")[1];
-			}
-			
-		} else {
-			log.error("You should pass the following arguments:");
-			log.error("1) source url: the base url of the OpenMRS server (ending in 'openmrs').");
-			log.error("2) source auth user / password.");
-			log.error("3) a GCP FHIR store in the following format:\n"
-			        + "projects/PROJECT/locations/LOCATION/datasets/DATASET/fhirStores/FHIR_STORE \n"
-			        + "where the all-caps parts should be updated based on your FHIR store, e.g., \n"
-			        + "projects/my-project/locations/us-central1/datasets/my_dataset/fhirStores/test");
-			log.error("4) sink auth user / password.");
-			log.error("Note it is expected that a MySQL DB with name `atomfeed_client` \n"
-			        + "exists (configurable in `hibernate.default.properties`) with tables \n"
-			        + "'failed_events' and 'markers' to track feed progress. \n"
-			        + "Use utils/create_db.sql to create these. \n");
-			return;
-		}
+		
+		StreamingArgs streamingArgs = StreamingArgs.getInstance();
+		JCommander.newBuilder().addObject(streamingArgs).build().parse(args);
+		
+		sourceUrl = streamingArgs.openmrsServerUrl;
+		sourceUser = streamingArgs.openmrUserName;
+		sourcePassword = streamingArgs.openmrsPassword;
+		sinkPath = streamingArgs.fhirSinkPath;
 		
 		String feedUrl = sourceUrl + FEED_ENDPOINT;
 		String fhirUrl = sourceUrl + FHIR_ENDPOINT;
@@ -96,6 +79,22 @@ public class FhirStreaming {
 		while (true) {
 			feedConsumer.listen();
 			Thread.sleep(3000);
+		}
+	}
+	
+	@Parameters(separators = "=")
+	public static class StreamingArgs extends BaseArgs {
+		
+		private static StreamingArgs streamingArgs;
+		
+		private StreamingArgs() {
+		};
+		
+		public synchronized static StreamingArgs getInstance() {
+			if (streamingArgs == null) {
+				streamingArgs = new StreamingArgs();
+			}
+			return streamingArgs;
 		}
 	}
 }
