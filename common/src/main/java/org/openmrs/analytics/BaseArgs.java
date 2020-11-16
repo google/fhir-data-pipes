@@ -21,7 +21,7 @@ public class BaseArgs {
 	public String openmrUserName = "admin";
 	
 	@Parameter(names = { "--openmrsPassword" }, description = "Password for openmrs User")
-	public String openmrsPassword = "admin";
+	public String openmrsPassword = "Admin123";
 	
 	@Parameter(names = { "--openmrsServerUrl" }, description = "Openmrs Server Base Url")
 	public String openmrsServerUrl = "http://localhost:8099";
@@ -35,6 +35,6 @@ public class BaseArgs {
 	@Parameter(names = { "--sinkPassword" }, description = "Sink BasicAuth Password")
 	public String sinkPassword = "hapi";
 	
-	@Parameter(names = { "--fileParquetPath" }, description = "The base name for output Parquet file")
+	@Parameter(names = { "--fileParquetPath" }, description = "The base path for output Parquet files")
 	public String fileParquetPath = "/tmp/";
 }
