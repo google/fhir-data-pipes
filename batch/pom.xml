@@ -135,7 +135,7 @@
           </execution>
         </executions>
       </plugin>
-          <!-- Allows the example to be run via IDE or 'mvn compile exec:java -pl batch/' -->
+      <!-- Allows the example to be run via IDE or 'mvn compile exec:java -pl batch/' -->
       <plugin>
         <groupId>org.codehaus.mojo</groupId>
         <artifactId>exec-maven-plugin</artifactId>
