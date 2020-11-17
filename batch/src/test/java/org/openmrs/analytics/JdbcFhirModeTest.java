@@ -11,28 +11,24 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-package org.openmrs.analytics.model;
+package org.openmrs.analytics;
 
-import java.util.LinkedHashMap;
+import junit.framework.TestCase;
 
-import lombok.Getter;
-import lombok.Setter;
-
-public class EventConfiguration {
+public class JdbcFhirModeTest extends TestCase {
 	
-	@Getter
-	@Setter
-	private boolean enabled;
+	public void testGetJdbcConfig() {
+	}
 	
-	@Getter
-	@Setter
-	private String title;
+	public void testCreateChunkRanges() {
+	}
 	
-	@Getter
-	@Setter
-	private String uuidTable;
+	public void testFetchUuids() {
+	}
 	
-	@Getter
-	@Setter
-	private LinkedHashMap<String, String> linkTemplates;
+	public void testCreateFhirReverseMap() {
+	}
+	
+	public void testGetTableToFhirConfig() {
+	}
 }

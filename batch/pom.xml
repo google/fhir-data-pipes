@@ -47,6 +47,9 @@
     <maven-surefire-plugin.version>2.21.0</maven-surefire-plugin.version>
     <nemo.version>0.1</nemo.version>
     <flink.artifact.name>beam-runners-flink-1.9</flink.artifact.name>
+    <mysql.driver.version>8.0.16</mysql.driver.version>
+    <c3p0.version>0.9.5.4</c3p0.version>
+
   </properties>
 
   <repositories>
@@ -264,6 +267,26 @@
       </exclusions>
     </dependency>
 
+    <!--JDBC specific dependencies-->
+    <dependency>
+      <!--JDBC connection pool will make concurrent JDBC connections more efficient-->
+      <groupId>com.mchange</groupId>
+      <artifactId>c3p0</artifactId>
+      <version>${c3p0.version}</version>
+    </dependency>
+
+    <dependency>
+      <groupId>mysql</groupId>
+      <artifactId>mysql-connector-java</artifactId>
+      <version>${mysql.driver.version}</version>
+    </dependency>
+
+    <dependency>
+      <groupId>org.apache.beam</groupId>
+      <artifactId>beam-sdks-java-io-jdbc</artifactId>
+      <version>${beam.version}</version>
+    </dependency>
+
     <!-- Adds a dependency on the Beam Google Cloud Platform IO module. -->
     <dependency>
       <groupId>org.apache.beam</groupId>
@@ -401,6 +424,13 @@
       <groupId>${project.parent.groupId}</groupId>
       <artifactId>fhir-common</artifactId>
       <version>${project.parent.version}</version>
+    </dependency>
+    <!-- TODO move common model and services from fhir-binlog-streaming-etl to fhir-common-->
+    <dependency>
+      <groupId>org.openmrs.analytics</groupId>
+      <artifactId>fhir-binlog-streaming-etl</artifactId>
+      <version>${project.parent.version}</version>
+      <scope>compile</scope>
     </dependency>
   </dependencies>
 </project>
