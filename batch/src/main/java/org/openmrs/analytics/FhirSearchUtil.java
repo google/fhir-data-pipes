@@ -25,6 +25,10 @@ import org.hl7.fhir.dstu3.model.Bundle;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/**
+* Utility class that provides methods to search for the respective fhir urls generated after corresponding 
+* events happen in the openmrs DB. 
+*/
 public class FhirSearchUtil {
 	
 	private static final Logger log = LoggerFactory.getLogger(FhirSearchUtil.class);
@@ -48,6 +52,11 @@ public class FhirSearchUtil {
 		return null;
 	}
 	
+	/**
+	 * Get the search link information. 
+	 * 
+	 * @param searchBundle the fhir bundle to search from.
+	 */
 	public String findBaseSearchUrl(Bundle searchBundle) {
 		String searchLink = null;
 		

@@ -23,6 +23,9 @@ import org.hl7.fhir.instance.model.api.IBaseResource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/**
+ * Utility class for getting fhir resources from Openmrs.
+ */
 public class OpenmrsUtil {
 	
 	private static final Logger log = LoggerFactory.getLogger(OpenmrsUtil.class);
@@ -42,7 +45,9 @@ public class OpenmrsUtil {
 		this.sourcePw = sourcePw;
 		this.fhirContext = fhirContext;
 	}
-	
+	/**
+	 * Fetches the fhir resource url from the given hapi fhir client.
+	 */
 	public Resource fetchFhirResource(String resourceUrl) {
 		try {
 			// Create client

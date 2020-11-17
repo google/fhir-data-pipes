@@ -32,6 +32,9 @@ import org.hl7.fhir.dstu3.model.Resource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/**
+ * Utility class for updating FHIR resources in a target FHIR store.
+ */
 public class FhirStoreUtil {
 	
 	private static final Logger log = LoggerFactory.getLogger(FhirStoreUtil.class);
