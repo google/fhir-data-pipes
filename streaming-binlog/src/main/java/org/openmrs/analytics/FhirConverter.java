@@ -50,22 +50,26 @@ public class FhirConverter implements Processor {
 	
 	private final GeneralConfiguration generalConfiguration;
 	
+	private final String fileName;
+	
 	@VisibleForTesting
 	FhirConverter() {
 		this.openmrsUtil = null;
 		this.fhirStoreUtil = null;
 		this.parquetUtil = null;
+		this.fileName = null;
 		this.generalConfiguration = null;
 		
 	}
 	
-	public FhirConverter(OpenmrsUtil openmrsUtil, FhirStoreUtil fhirStoreUtil, ParquetUtil parquetUtil) throws IOException {
+	public FhirConverter(OpenmrsUtil openmrsUtil, FhirStoreUtil fhirStoreUtil, ParquetUtil parquetUtil, String fileName)
+	        throws IOException {
 		// TODO add option for switching to Parquet-file outputs.
 		this.openmrsUtil = openmrsUtil;
 		this.fhirStoreUtil = fhirStoreUtil;
 		this.parquetUtil = parquetUtil;
-		this.generalConfiguration = getEventsToFhirConfig(System.getProperty("fhir.debeziumEventConfigPath"));
-		
+		this.fileName = fileName;
+		this.generalConfiguration = getEventsToFhirConfig(fileName);
 	}
 	
 	public void process(Exchange exchange) {
