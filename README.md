@@ -246,7 +246,7 @@ run using a command like:
 $ java -cp batch/target/fhir-batch-etl-bundled-0.1.0-SNAPSHOT.jar \
     org.openmrs.analytics.FhirEtl --serverUrl=http://localhost:9018 \
     --searchList=Patient,Encounter,Observation --batchSize=20 \
-   --targetParallelism=20 -sinkPath=projects/PROJECT/locations/LOCATION/datasets/DATASET/`
+   --targetParallelism=20 --sinkPath=projects/PROJECT/locations/LOCATION/datasets/DATASET/`
 ```
 The `searchList` argument accepts a comma separated list of FHIR search URLs.
 For example, one can use `Patient?given=Susan` to extract only Patient resources
