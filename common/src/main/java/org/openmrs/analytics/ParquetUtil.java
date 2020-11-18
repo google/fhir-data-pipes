@@ -31,9 +31,9 @@ import org.apache.avro.specific.SpecificData;
 import org.apache.hadoop.fs.Path;
 import org.apache.parquet.avro.AvroParquetWriter;
 import org.apache.parquet.hadoop.ParquetWriter;
-import org.hl7.fhir.dstu3.model.Bundle;
-import org.hl7.fhir.dstu3.model.Bundle.BundleEntryComponent;
-import org.hl7.fhir.dstu3.model.Resource;
+import org.hl7.fhir.r4.model.Bundle;
+import org.hl7.fhir.r4.model.Bundle.BundleEntryComponent;
+import org.hl7.fhir.r4.model.Resource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -123,18 +123,19 @@ public class ParquetUtil {
 			return records;
 		}
 		String resourceType = bundle.getEntry().get(0).getResource().getResourceType().name();
-		AvroConverter converter = getConverter(resourceType);
 		for (BundleEntryComponent entry : bundle.getEntry()) {
 			Resource resource = entry.getResource();
 			// TODO: Check why Bunsen returns IndexedRecord instead of GenericRecord.
-			records.add((GenericRecord) converter.resourceToAvro(resource));
+			records.add(convertToAvro(resource));
 		}
 		return records;
 	}
 	
 	public GenericRecord convertToAvro(Resource resource) {
-		AvroConverter converter = getConverter(resource.getResourceType().name());
-		return (GenericRecord) converter.resourceToAvro(resource);
+		org.hl7.fhir.dstu3.model.Resource r3Resource = org.hl7.fhir.convertors.VersionConvertor_30_40
+		        .convertResource(resource, true);
+		AvroConverter converter = getConverter(r3Resource.getResourceType().name());
+		return (GenericRecord) converter.resourceToAvro(r3Resource);
 	}
 	
 }

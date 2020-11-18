@@ -184,8 +184,8 @@ $ mvn compile exec:java -pl streaming-binlog \
     --databaseOffsetStorage=offset.dat --databaseHistory=dbhistory.dat \
     --openmrsUserName=admin --openmrsPassword=Admin123 \
     --openmrsServerUrl=http://localhost:8099 \
+    --openmrsfhirBaseEndpoint=/openmrs/ws/fhir2/R4 \
     --snapshotMode=initial \
-    --openmrsfhirBaseEndpoint=/openmrs/ws/fhir2/R3 \
     --fhirSinkPath=projects/PROJECT/locations/LOCATION/datasets/DATASET/fhirStores/FHIRSTORENAME \
     --sinkUser=hapi --sinkPassword=hapi \
     --fileParquetPath=/tmp/ \
@@ -344,7 +344,7 @@ are in the `tmp/parquet` folder. In particular, you have`Patient` and
 [`sample_indicator.py`](dwh/sample_indicator.py) you can do:
 ```
 spark-submit sample_indicator.py --src_dir=tmp/parquet \
-  --base_patient_url=http://localhost:8099/openmrs/ws/fhir2/R3/Patient/ \
+  --base_patient_url=http://localhost:8099/openmrs/ws/fhir2/R4/Patient/ \
   --num_days=60 --last_date=2020-04-30
   --code_list {SPACE SEPARATED LIST OF CODES}
 ```

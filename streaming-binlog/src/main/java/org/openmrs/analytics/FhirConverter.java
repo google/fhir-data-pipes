@@ -31,7 +31,7 @@ import org.apache.camel.Message;
 import org.apache.camel.Processor;
 import org.apache.camel.component.debezium.DebeziumConstants;
 import org.apache.parquet.hadoop.ParquetWriter;
-import org.hl7.fhir.dstu3.model.Resource;
+import org.hl7.fhir.r4.model.Resource;
 import org.openmrs.analytics.model.EventConfiguration;
 import org.openmrs.analytics.model.GeneralConfiguration;
 import org.slf4j.Logger;

@@ -37,7 +37,7 @@ import org.apache.beam.sdk.transforms.Create;
 import org.apache.beam.sdk.transforms.DoFn;
 import org.apache.beam.sdk.transforms.ParDo;
 import org.apache.beam.sdk.values.PCollection;
-import org.hl7.fhir.dstu3.model.Bundle;
+import org.hl7.fhir.r4.model.Bundle;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -63,7 +63,7 @@ public class FhirEtl {
 		void setServerUrl(String value);
 		
 		@Description("OpenMRS server fhir endpoint")
-		@Default.String("/ws/fhir2/R3")
+		@Default.String("/ws/fhir2/R4")
 		String getServerFhirEndpoint();
 		
 		void setServerFhirEndpoint(String value);
@@ -202,12 +202,12 @@ public class FhirEtl {
 		
 		@Setup
 		public void Setup() {
-			fhirContext = FhirContext.forDstu3();
+			fhirContext = FhirContext.forR4();
 			fhirStoreUtil = FhirStoreUtil.createFhirStoreUtil(sinkPath, sinkUsername, sinkPassword,
 			    fhirContext.getRestfulClientFactory());
 			openmrsUtil = createOpenmrsUtil(sourceUrl, sourceUser, sourcePw, fhirContext);
 			fhirSearchUtil = new FhirSearchUtil(openmrsUtil);
-			parquetUtil = new ParquetUtil(fhirContext, parquetFile);
+			parquetUtil = new ParquetUtil(FhirContext.forDstu3(), parquetFile);
 		}
 		
 		@ProcessElement
@@ -232,7 +232,7 @@ public class FhirEtl {
 	}
 	
 	static void runFhirFetch(FhirEtlOptions options, FhirContext fhirContext) throws CannotProvideCoderException {
-		ParquetUtil parquetUtil = new ParquetUtil(fhirContext, options.getOutputParquetBase());
+		ParquetUtil parquetUtil = new ParquetUtil(FhirContext.forDstu3(), options.getOutputParquetBase());
 		Map<String, List<SearchSegmentDescriptor>> segmentMap = createSegments(options, fhirContext);
 		if (segmentMap.isEmpty()) {
 			return;
@@ -260,7 +260,7 @@ public class FhirEtl {
 	
 	public static void main(String[] args) throws CannotProvideCoderException {
 		// Todo: Autowire
-		FhirContext fhirContext = FhirContext.forDstu3();
+		FhirContext fhirContext = FhirContext.forR4();
 		
 		FhirEtlOptions options = PipelineOptionsFactory.fromArgs(args).withValidation().as(FhirEtlOptions.class);
 		

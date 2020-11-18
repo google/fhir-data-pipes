@@ -8,7 +8,7 @@
       "category": "location",
       "linkTemplates": {
         "rest": "/ws/rest/v1/location/{uuid}?v=full",
-        "fhir": "/ws/fhir2/R3/Location/{uuid}"
+        "fhir": "/ws/fhir2/R4/Location/{uuid}"
       }
     },
     {
@@ -27,7 +27,7 @@
       "category": "cohort",
       "linkTemplates": {
         "rest": "/ws/rest/v1/cohort/{uuid}?v=full",
-        "fhir": "/ws/fhir2/R3/Group/{uuid}"
+        "fhir": "/ws/fhir2/R4/Group/{uuid}"
       }
     },
     {
@@ -82,7 +82,7 @@
       "category": "person",
       "linkTemplates": {
         "rest": "/ws/rest/v1/person/{uuid}?v=full",
-        "fhir": "/ws/fhir2/R3/Person/{uuid}"
+        "fhir": "/ws/fhir2/R4/Person/{uuid}"
       }
     },
     {
@@ -92,7 +92,7 @@
       "category": "provider",
       "linkTemplates": {
         "rest": "/ws/rest/v1/provider/{uuid}?v=full",
-        "fhir": "/ws/fhir2/R3/Provider/{uuid}"
+        "fhir": "/ws/fhir2/R4/Provider/{uuid}"
       }
     },
     {
@@ -111,7 +111,7 @@
       "category": "patient",
       "linkTemplates": {
         "rest": "/ws/rest/v1/patient/{uuid}?v=full",
-        "fhir": "/ws/fhir2/R3/Patient/{uuid}"
+        "fhir": "/ws/fhir2/R4/Patient/{uuid}"
       }
     },
     {
@@ -121,7 +121,7 @@
       "category": "relationship",
       "linkTemplates": {
         "rest": "/ws/rest/v1/relationship/{uuid}?v=full",
-        "fhir": "/ws/fhir2/R3/Relationship/{uuid}"
+        "fhir": "/ws/fhir2/R4/Relationship/{uuid}"
       }
     },
     {
@@ -131,7 +131,7 @@
       "category": "drug",
       "linkTemplates": {
         "rest": "/ws/rest/v1/drug/{uuid}?v=full",
-        "fhir": "/ws/fhir2/R3/Drug/{uuid}"
+        "fhir": "/ws/fhir2/R4/Drug/{uuid}"
       }
     },
     {
@@ -141,7 +141,7 @@
       "category": "allergy",
       "linkTemplates": {
         "rest": "/ws/rest/v1/allergy/{uuid}?v=full",
-        "fhir": "/ws/fhir2/R3/AllergyIntolerance/{uuid}"
+        "fhir": "/ws/fhir2/R4/AllergyIntolerance/{uuid}"
       }
     },
     {
@@ -160,7 +160,7 @@
       "category": "order",
       "linkTemplates": {
         "rest": "/ws/rest/v1/order/{uuid}?v=full",
-        "fhir": "/ws/fhir2/R3/Order/{uuid}"
+        "fhir": "/ws/fhir2/R4/Order/{uuid}"
       }
     },
     {
@@ -170,7 +170,7 @@
       "category": "drug_order",
       "linkTemplates": {
         "rest": "/ws/rest/v1/drug_order/{uuid}?v=full",
-        "fhir": "/ws/fhir2/R3/MedicationRequest/{uuid}"
+        "fhir": "/ws/fhir2/R4/MedicationRequest/{uuid}"
       }
     },
     {
@@ -180,7 +180,7 @@
       "category": "test_order",
       "linkTemplates": {
         "rest": "/ws/rest/v1/test_order/{uuid}?v=full",
-        "fhir": "/ws/fhir2/R3/ProcedureRequest/{uuid}"
+        "fhir": "/ws/fhir2/R4/ProcedureRequest/{uuid}"
       }
     },
     {
@@ -190,7 +190,7 @@
       "category": "observation",
       "linkTemplates": {
         "rest": "/ws/rest/v1/obs/{uuid}?v=full",
-        "fhir": "/ws/fhir2/R3/Observation/{uuid}"
+        "fhir": "/ws/fhir2/R4/Observation/{uuid}"
       }
     },
     {
@@ -200,7 +200,7 @@
       "category": "encounter",
       "linkTemplates": {
         "rest": "/ws/rest/v1/encounter/{uuid}?v=full",
-        "fhir": "/ws/fhir2/R3/Encounter/{uuid}"
+        "fhir": "/ws/fhir2/R4/Encounter/{uuid}"
       }
     },
     {
@@ -210,7 +210,7 @@
       "category": "visit",
       "linkTemplates": {
         "rest": "/ws/rest/v1/visit/{uuid}?v=full",
-        "fhir": "/ws/fhir2/R3/Encounter/{uuid}"
+        "fhir": "/ws/fhir2/R4/Encounter/{uuid}"
       }
     },
     {
@@ -220,7 +220,7 @@
       "category": "program",
       "linkTemplates": {
         "rest": "/ws/rest/v1/program/{uuid}?v=full",
-        "fhir": "/ws/fhir2/R3/Program/{uuid}"
+        "fhir": "/ws/fhir2/R4/Program/{uuid}"
       }
     },
     {
@@ -230,7 +230,7 @@
       "category": "programenrollment",
       "linkTemplates": {
         "rest": "/ws/rest/v1/programenrollment/{uuid}?v=full",
-        "fhir": "/ws/fhir2/R3/Programenrollment/{uuid}"
+        "fhir": "/ws/fhir2/R4/Programenrollment/{uuid}"
       }
     },
     {

@@ -16,12 +16,12 @@
   "link": [
     {
       "relation": "self",
-      "url": "http://localhost:9020/openmrs/ws/fhir2/R3/Observation?_count=10&_getpagesoffset=0&_summary=data"
+      "url": "http://localhost:9020/openmrs/ws/fhir2/R4/Observation?_count=10&_getpagesoffset=0&_summary=data"
     }
   ],
   "entry": [
     {
-      "fullUrl": "http://localhost:9020/openmrs/ws/fhir2/R3/Observation/0adb6cfb-0ae3-42df-9d39-fc68ec4334cd",
+      "fullUrl": "http://localhost:9020/openmrs/ws/fhir2/R4/Observation/0adb6cfb-0ae3-42df-9d39-fc68ec4334cd",
       "resource": {
         "resourceType": "Observation",
         "id": "0adb6cfb-0ae3-42df-9d39-fc68ec4334cd",
@@ -56,7 +56,7 @@
       }
     },
     {
-      "fullUrl": "http://localhost:9020/openmrs/ws/fhir2/R3/Observation/5f55db69-5ffb-41b9-b9e0-2b15fa6b35cc",
+      "fullUrl": "http://localhost:9020/openmrs/ws/fhir2/R4/Observation/5f55db69-5ffb-41b9-b9e0-2b15fa6b35cc",
       "resource": {
         "resourceType": "Observation",
         "id": "5f55db69-5ffb-41b9-b9e0-2b15fa6b35cc",
@@ -104,7 +104,7 @@
       }
     },
     {
-      "fullUrl": "http://localhost:9020/openmrs/ws/fhir2/R3/Observation/8eb2c8b1-1851-4012-9ab5-ce6c14d34852",
+      "fullUrl": "http://localhost:9020/openmrs/ws/fhir2/R4/Observation/8eb2c8b1-1851-4012-9ab5-ce6c14d34852",
       "resource": {
         "resourceType": "Observation",
         "id": "8eb2c8b1-1851-4012-9ab5-ce6c14d34852",
@@ -152,7 +152,7 @@
       }
     },
     {
-      "fullUrl": "http://localhost:9020/openmrs/ws/fhir2/R3/Observation/93c63ebf-c5ac-4268-ada9-f4b06d30eb1e",
+      "fullUrl": "http://localhost:9020/openmrs/ws/fhir2/R4/Observation/93c63ebf-c5ac-4268-ada9-f4b06d30eb1e",
       "resource": {
         "resourceType": "Observation",
         "id": "93c63ebf-c5ac-4268-ada9-f4b06d30eb1e",
@@ -200,7 +200,7 @@
       }
     },
     {
-      "fullUrl": "http://localhost:9020/openmrs/ws/fhir2/R3/Observation/96cd199b-a314-4944-b188-c19fcd3ad5a2",
+      "fullUrl": "http://localhost:9020/openmrs/ws/fhir2/R4/Observation/96cd199b-a314-4944-b188-c19fcd3ad5a2",
       "resource": {
         "resourceType": "Observation",
         "id": "96cd199b-a314-4944-b188-c19fcd3ad5a2",
@@ -248,7 +248,7 @@
       }
     },
     {
-      "fullUrl": "http://localhost:9020/openmrs/ws/fhir2/R3/Observation/e61698a4-b4a3-4cb0-85d5-6e92c8f68513",
+      "fullUrl": "http://localhost:9020/openmrs/ws/fhir2/R4/Observation/e61698a4-b4a3-4cb0-85d5-6e92c8f68513",
       "resource": {
         "resourceType": "Observation",
         "id": "e61698a4-b4a3-4cb0-85d5-6e92c8f68513",
