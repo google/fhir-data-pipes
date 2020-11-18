@@ -33,13 +33,10 @@ public class DebeziumListener extends RouteBuilder {
 	
 	private static final Logger log = LoggerFactory.getLogger(DebeziumListener.class);
 	
-	private String[] args;
-	
 	private DebeziumArgs params;
 	
 	public DebeziumListener(String[] args) {
-		this.args = args;
-		this.params = DebeziumArgs.getInstance();
+		this.params = new DebeziumArgs();
 		JCommander.newBuilder().addObject(params).build().parse(args);
 	}
 	
@@ -109,11 +106,9 @@ public class DebeziumListener extends RouteBuilder {
 	}
 	
 	@Parameters(separators = "=")
-	public static class DebeziumArgs extends BaseArgs {
+	static class DebeziumArgs extends BaseArgs {
 		
-		private static DebeziumArgs debeziumArgs;
-		
-		private DebeziumArgs() {
+		public DebeziumArgs() {
 		};
 		
 		@Parameter(names = { "--databaseHostName" }, description = "Host name on which the source database runs")
@@ -149,11 +144,5 @@ public class DebeziumListener extends RouteBuilder {
 		@Parameter(names = { "--fhirDebeziumEventConfigPath" }, description = "Google cloud FHIR store")
 		public String fhirDebeziumEventConfigPath = "utils/dbz_event_to_fhir_config.json";
 		
-		public synchronized static DebeziumArgs getInstance() {
-			if (debeziumArgs == null) {
-				debeziumArgs = new DebeziumArgs();
-			}
-			return debeziumArgs;
-		}
 	}
 }
