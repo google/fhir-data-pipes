@@ -24,6 +24,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.Objects;
 
 import ca.uhn.fhir.context.FhirContext;
 import com.google.gson.Gson;
@@ -56,8 +57,8 @@ public class JdbcFhirMode {
 		dataSource.setJdbcUrl(options.getJdbcUrl());
 		dataSource.setUser(options.getDbUser());
 		dataSource.setPassword(options.getDbPassword());
-		dataSource.setMaxPoolSize(10); // TODO make this configurable
-		dataSource.setInitialPoolSize(6); // TODO make this configurable
+		dataSource.setMaxPoolSize(options.getJdbcMaxPoolSize());
+		dataSource.setInitialPoolSize(10); // TODO: make this configurable if issues arises
 		return JdbcIO.DataSourceConfiguration.create(dataSource);
 	}
 	
@@ -79,7 +80,7 @@ public class JdbcFhirMode {
 			        @ProcessElement
 			        public void processElement(ProcessContext c) {
 				        int count = Integer.parseInt(c.element());
-				        int ranges = (int) (count / fetchSize);
+				        int ranges = count / fetchSize;
 				        for (int i = 0; i < ranges; i++) {
 					        int rangeFrom = i * fetchSize;
 					        int rangeTo = (i + 1) * fetchSize;
@@ -93,10 +94,13 @@ public class JdbcFhirMode {
 					        c.output(KV.of(range, rangeFrom));
 				        }
 			        }
-		        })).apply("Group By", GroupByKey.create());
+		        })).apply("Group By", GroupByKey.create()); //necessary for returning KV<String, Iterable<Integer>>
 	}
 	
-	public static PCollection<String> fetchUuids(String tableName, int fetchSize,
+	// Uuid might be missing in child table, to solve this issue we are using UuidTable field mappings in json config
+	// TODO: A better solution is to Use join clause to get parent table, See comments left here:
+	//  https://github.com/GoogleCloudPlatform/openmrs-fhir-analytics/issues/46#issuecomment-728979138
+	public static PCollection<String> generateFhirUrl(String tableName, String resourceType, int fetchSize,
 	        PCollection<KV<String, Iterable<Integer>>> ranges, JdbcIO.DataSourceConfiguration config) {
 		String tableId = tableName + "_id";
 		return ranges.apply(String.format("Read UUIDs from %s", tableName),
@@ -105,16 +109,21 @@ public class JdbcFhirMode {
 		            .withParameterSetter(new JdbcIO.PreparedStatementSetter<KV<String, Iterable<Integer>>>() {
 			            
 			            @Override
-			            
 			            public void setParameters(KV<String, Iterable<Integer>> element, PreparedStatement preparedStatement)
 			                    throws Exception {
-				            String[] range = element.getKey().split(",");
+				            String[] range = Objects.requireNonNull(element.getKey()).split(",");
 				            preparedStatement.setInt(1, Integer.parseInt(range[0]));
 				            preparedStatement.setInt(2, Integer.parseInt(range[1]));
 			            }
 		            }).withOutputParallelization(false)
 		            .withQuery(String.format("select uuid from %s where %s >= ? and %s < ?", tableName, tableId, tableId))
-		            .withRowMapper((JdbcIO.RowMapper<String>) resultSet -> resultSet.getString("uuid")));
+		            .withRowMapper(new JdbcIO.RowMapper<String>() {
+			            
+			            @Override
+			            public String mapRow(ResultSet resultSet) throws Exception {
+				            return String.format("/%s/%s", resourceType, resultSet.getString("uuid"));
+			            }
+		            }));
 	}
 	
 	LinkedHashMap<String, String> createFhirReverseMap(FhirEtl.FhirEtlOptions options) throws IOException {
@@ -146,23 +155,19 @@ public class JdbcFhirMode {
 	
 	static class FhirSink extends DoFn<String, GenericRecord> {
 		
-		private static final Logger log = LoggerFactory.getLogger(FhirEtl.class);
+		private final String sourceUrl;
 		
-		private String sourceUrl;
+		private final String sourceUser;
 		
-		private String fhirUrl;
+		private final String sourcePw;
 		
-		private String sourceUser;
+		private final String sinkPath;
 		
-		private String sourcePw;
+		private final String sinkUsername;
 		
-		private String sinkPath;
+		private final String sinkPassword;
 		
-		private String sinkUsername;
-		
-		private String sinkPassword;
-		
-		private String parquetFile;
+		private final String parquetFile;
 		
 		private ParquetUtil parquetUtil;
 		
@@ -175,7 +180,7 @@ public class JdbcFhirMode {
 		private OpenmrsUtil openmrsUtil;
 		
 		FhirSink(String sinkPath, String sinkUsername, String sinkPassword, String sourceUrl, String parquetFile,
-		    String sourceUser, String sourcePw, String fhirUrl) {
+		    String sourceUser, String sourcePw) {
 			this.sinkPath = sinkPath;
 			this.sinkUsername = sinkUsername;
 			this.sinkPassword = sinkPassword;
@@ -183,7 +188,6 @@ public class JdbcFhirMode {
 			this.sourceUser = sourceUser;
 			this.sourcePw = sourcePw;
 			this.parquetFile = parquetFile;
-			this.fhirUrl = fhirUrl;
 		}
 		
 		@Setup
@@ -197,17 +201,17 @@ public class JdbcFhirMode {
 		}
 		
 		@ProcessElement
-		public void ProcessElement(@Element String uuid, OutputReceiver<GenericRecord> out) {
-			String fhirUri = fhirUrl.replace("{uuid}", uuid);
-			log.info("Fetching FHIR resource at " + fhirUri);
-			Resource resource = openmrsUtil.fetchFhirResource(fhirUri.replace("{uuid}", uuid));
-			
+		public void ProcessElement(@Element String fhirUrl, OutputReceiver<GenericRecord> out) {
+			log.info("Fetching FHIR resource at " + fhirUrl);
+			Resource resource = openmrsUtil.fetchFhirResource(fhirUrl);
+			if (resource == null)
+				return; // TODO handle such scenario
 			if (parquetFile.isEmpty()) {
-				log.info("Saving to FHIR store: " + fhirUri);
+				log.info("Saving to FHIR store: " + fhirUrl);
 				fhirStoreUtil.uploadResource(resource);
 			} else {
-				if (resource != null)
-					out.output(parquetUtil.convertToAvro(resource));
+				out.output(parquetUtil.convertToAvro(resource));
+				
 			}
 		}
 	}

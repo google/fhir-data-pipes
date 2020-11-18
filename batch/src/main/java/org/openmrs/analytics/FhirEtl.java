@@ -76,14 +76,15 @@ public class FhirEtl {
 		
 		@Description("Comma separated list of resource and search parameters to fetch; in its simplest "
 		        + "form this is a list of resources, e.g., `Patient,Encounter,Observation` but more "
-		        + "complex search paths are possible too, e.g., `Patient?name=Susan`.")
+		        + "complex search paths are possible too, e.g., `Patient?name=Susan.`"
+		        + "Please note that complex search params doesn't work when JDBC mode is enabled.")
 		@Default.String("Patient,Encounter,Observation")
 		String getSearchList();
 		
 		void setSearchList(String value);
 		
 		@Description("The number of resources to be fetched in one API call.")
-		@Default.Integer(100)
+		@Default.Integer(50)
 		int getBatchSize();
 		
 		void setBatchSize(int value);
@@ -145,6 +146,12 @@ public class FhirEtl {
 		String getJdbcDriverClass();
 		
 		void setJdbcDriverClass(String value);
+		
+		@Description("The number of resources to be fetched in one API call.")
+		@Default.Integer(70)
+		int getJdbcMaxPoolSize();
+		
+		void setJdbcMaxPoolSize(int value);
 		
 		@Description("MySQL DB user")
 		@Default.String("root")
@@ -309,7 +316,7 @@ public class FhirEtl {
 		Pipeline p = Pipeline.create(options);
 		JdbcFhirMode jdbcUtil = new JdbcFhirMode();
 		JdbcIO.DataSourceConfiguration jdbcConfig = jdbcUtil.getJdbcConfig(options);
-		int fetchSize = options.getBatchSize();
+		int batchSize = options.getBatchSize();
 		ParquetUtil parquetUtil = new ParquetUtil(fhirContext);
 		LinkedHashMap<String, String> reversHashMap = jdbcUtil.createFhirReverseMap(options);
 		// process each table-resource mappings
@@ -317,24 +324,25 @@ public class FhirEtl {
 			String tableName = entry.getKey();
 			String resourceType = entry.getValue();
 			Schema schema = parquetUtil.getResourceSchema(resourceType);
-			String fhirUrl = String.format("/%s/{uuid}", resourceType);
-			PCollection<KV<String, Iterable<Integer>>> ranges = JdbcFhirMode.createChunkRanges(tableName, fetchSize, p,
+			// generate fetching ranges i.e 1 to 1000, 1001 to 2001, depending with batchSize
+			PCollection<KV<String, Iterable<Integer>>> ranges = JdbcFhirMode.createChunkRanges(tableName, batchSize, p,
 			    jdbcConfig);
-			PCollection<String> uuids = JdbcFhirMode.fetchUuids(tableName, fetchSize, ranges, jdbcConfig);
-			PCollection<GenericRecord> genericRecords = uuids
+			// fetch FHIR resources and generate generic records
+			PCollection<GenericRecord> genericRecords = JdbcFhirMode
+			        .generateFhirUrl(tableName, resourceType, batchSize, ranges, jdbcConfig)
 			        .apply(ParDo.of(new JdbcFhirMode.FhirSink(options.getSinkPath(), options.getSinkUsername(),
 			                options.getSinkPassword(), options.getServerUrl() + options.getServerFhirEndpoint(),
-			                options.getOutputParquetBase(), options.getUsername(), options.getPassword(), fhirUrl)))
+			                options.getOutputParquetBase(), options.getUsername(), options.getPassword())))
 			        .setCoder(AvroCoder.of(GenericRecord.class, schema));
 			
 			// sink to parquet
-			ParquetIO.Sink sink = ParquetIO.sink(schema);
-			String outputFile = "";
 			if (!options.getOutputParquetBase().isEmpty()) {
-				outputFile = options.getOutputParquetBase() + resourceType;
+				ParquetIO.Sink sink = ParquetIO.sink(schema);
+				String outputFile = options.getOutputParquetBase() + resourceType;
+				genericRecords.apply(String.format("Saving parquet files: %s", outputFile),
+				    FileIO.<GenericRecord> write().via(sink).to(outputFile));
 			}
-			log.info("Saving parquet files: " + outputFile);
-			genericRecords.apply(FileIO.<GenericRecord> write().via(sink).to(outputFile));
+			
 		}
 		
 		p.run().waitUntilFinish();
