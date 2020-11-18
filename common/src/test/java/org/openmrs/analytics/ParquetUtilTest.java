@@ -47,10 +47,11 @@ public class ParquetUtilTest {
 	
 	@Before
 	public void setup() throws IOException {
+		String parquetFilePath = "/tmp";
 		patientBundle = Resources.toString(Resources.getResource("patient_bundle.json"), StandardCharsets.UTF_8);
 		observationBundle = Resources.toString(Resources.getResource("observation_bundle.json"), StandardCharsets.UTF_8);
 		this.fhirContext = FhirContext.forDstu3();
-		parquetUtil = new ParquetUtil(fhirContext);
+		parquetUtil = new ParquetUtil(fhirContext, parquetFilePath);
 	}
 	
 	@Test

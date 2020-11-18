@@ -17,6 +17,9 @@ package org.openmrs.analytics;
 import java.io.IOException;
 
 import ca.uhn.fhir.context.FhirContext;
+import com.beust.jcommander.JCommander;
+import com.beust.jcommander.Parameter;
+import com.beust.jcommander.Parameters;
 import com.google.common.annotations.VisibleForTesting;
 import org.apache.camel.CamelContext;
 import org.apache.camel.LoggingLevel;
@@ -29,6 +32,13 @@ import org.slf4j.LoggerFactory;
 public class DebeziumListener extends RouteBuilder {
 	
 	private static final Logger log = LoggerFactory.getLogger(DebeziumListener.class);
+	
+	private DebeziumArgs params;
+	
+	public DebeziumListener(String[] args) {
+		this.params = new DebeziumArgs();
+		JCommander.newBuilder().addObject(params).build().parse(args);
+	}
 	
 	@VisibleForTesting
 	final static String DEBEZIUM_ROUTE_ID = DebeziumListener.class.getName() + ".MysqlDatabaseCDC";
@@ -46,26 +56,23 @@ public class DebeziumListener extends RouteBuilder {
 	@VisibleForTesting
 	FhirConverter createFhirConverter(CamelContext camelContext) throws IOException, Exception {
 		FhirContext fhirContext = FhirContext.forDstu3();
-		String fhirBaseUrl = System.getProperty("openmrs.serverUrl") + System.getProperty("openmrs.fhirBaseEndpoint");
-		OpenmrsUtil openmrsUtil = new OpenmrsUtil(fhirBaseUrl, System.getProperty("openmrs.username"),
-		        System.getProperty("openmrs.password"), fhirContext);
-		FhirStoreUtil fhirStoreUtil = FhirStoreUtil.createFhirStoreUtil(System.getProperty("fhir.sinkPath"),
-		    System.getProperty("fhir.sinkUsername"), System.getProperty("fhir.sinkPassword"),
-		    fhirContext.getRestfulClientFactory());
-		ParquetUtil parquetUtil = new ParquetUtil(fhirContext);
+		String fhirBaseUrl = params.openmrsServerUrl + params.openmrsfhirBaseEndpoint;
+		OpenmrsUtil openmrsUtil = new OpenmrsUtil(fhirBaseUrl, params.openmrUserName, params.openmrsPassword, fhirContext);
+		FhirStoreUtil fhirStoreUtil = FhirStoreUtil.createFhirStoreUtil(params.fhirSinkPath, params.sinkUser,
+		    params.sinkPassword, fhirContext.getRestfulClientFactory());
+		ParquetUtil parquetUtil = new ParquetUtil(fhirContext, params.fileParquetPath);
 		camelContext.addService(new ParquetService(parquetUtil), true);
-		return new FhirConverter(openmrsUtil, fhirStoreUtil, parquetUtil);
+		return new FhirConverter(openmrsUtil, fhirStoreUtil, parquetUtil, params.fhirDebeziumEventConfigPath);
 	}
 	
 	private String getDebeziumConfig() {
-		return "debezium-mysql:{{database.hostname}}?" + "databaseHostname={{database.hostname}}"
-		        + "&databaseServerId={{database.serverId}}" + "&databasePort={{database.port}}"
-		        + "&databaseUser={{database.user}}" + "&databasePassword={{database.password}}"
+		return "debezium-mysql:" + params.databaseHostName + "?" + "databaseHostname=" + params.databaseHostName
+		        + "&databaseServerId=" + params.databaseServerId + "&databasePort=" + params.databasePort.intValue()
+		        + "&databaseUser=" + params.databaseUser + "&databasePassword=" + params.databasePassword
 				//+ "&name={{database.dbname}}"
-		        + "&databaseServerName={{database.dbname}}" + "&databaseWhitelist={{database.schema}}"
-		        + "&offsetStorage=org.apache.kafka.connect.storage.FileOffsetBackingStore"
-		        + "&offsetStorageFileName={{database.offsetStorage}}"
-		        + "&databaseHistoryFileFilename={{database.databaseHistory}}"
+		        + "&databaseServerName=" + params.databaseName + "&databaseWhitelist=" + params.databaseSchema
+		        + "&offsetStorage=org.apache.kafka.connect.storage.FileOffsetBackingStore" + "&offsetStorageFileName="
+		        + params.databaseOffsetStorage + "&databaseHistoryFileFilename=" + params.databaseHistory
 		//+ "&tableWhitelist={{database.schema}}.encounter,{{database.schema}}.obs"
 		;
 	}
@@ -98,4 +105,44 @@ public class DebeziumListener extends RouteBuilder {
 		
 	}
 	
+	@Parameters(separators = "=")
+	static class DebeziumArgs extends BaseArgs {
+		
+		public DebeziumArgs() {
+		};
+		
+		@Parameter(names = { "--databaseHostName" }, description = "Host name on which the source database runs")
+		public String databaseHostName = "localhost";
+		
+		@Parameter(names = { "--databasePort" }, description = "Port of the source database")
+		public Integer databasePort = 3306;
+		
+		@Parameter(names = { "--databaseUser" }, description = "User name of the host Database")
+		public String databaseUser = "root";
+		
+		@Parameter(names = { "--databasePassword" }, description = "Passowrd for the user of the host Database")
+		public String databasePassword = "debezium";
+		
+		@Parameter(names = { "--databaseName" }, description = "Name Database")
+		public String databaseName = "mysql";
+		
+		@Parameter(names = { "--databaseSchema" }, description = "Name the Schema")
+		public String databaseSchema = "openmrs";
+		
+		@Parameter(names = { "--databaseServerId" }, description = "Server Id of the source database")
+		public Integer databaseServerId = 77;
+		
+		@Parameter(names = { "--databaseOffsetStorage" }, description = "Database OffsetStorage setting")
+		public String databaseOffsetStorage = "data/offset.dat";
+		
+		@Parameter(names = { "--databaseHistory" }, description = "replacing Offset by History")
+		public String databaseHistory = "data/dbhistory.dat";
+		
+		@Parameter(names = { "--openmrsfhirBaseEndpoint" }, description = "Fhir base endpoint")
+		public String openmrsfhirBaseEndpoint = "/openmrs/ws/fhir2/R3";
+		
+		@Parameter(names = { "--fhirDebeziumEventConfigPath" }, description = "Google cloud FHIR store")
+		public String fhirDebeziumEventConfigPath = "utils/dbz_event_to_fhir_config.json";
+		
+	}
 }

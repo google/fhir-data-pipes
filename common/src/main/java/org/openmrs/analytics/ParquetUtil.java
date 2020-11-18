@@ -47,6 +47,8 @@ public class ParquetUtil {
 	
 	private final Map<String, ParquetWriter<GenericRecord>> writerMap;
 	
+	private String parquetFilePath;
+	
 	/**
 	 * This is to fix the logical type conversions for BigDecimal. This should be called once before any
 	 * FHIR resource conversion to Avro.
@@ -60,13 +62,14 @@ public class ParquetUtil {
 	}
 	
 	public String getParquetPath() {
-		return System.getProperty("file.parquetPath");
+		return this.parquetFilePath;
 	}
 	
-	ParquetUtil(FhirContext fhirContext) {
+	ParquetUtil(FhirContext fhirContext, String parquetFilePath) {
 		this.fhirContext = fhirContext;
 		this.converterMap = new HashMap<>();
 		this.writerMap = new HashMap<>();
+		this.parquetFilePath = parquetFilePath;
 	}
 	
 	synchronized private AvroConverter getConverter(String resourceType) {

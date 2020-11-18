@@ -16,7 +16,6 @@ package org.openmrs.analytics;
 
 import java.io.IOException;
 import java.util.Map;
-import java.util.Properties;
 
 import io.debezium.data.Envelope.Operation;
 import org.apache.avro.generic.GenericRecord;
@@ -70,11 +69,8 @@ public class FhirConverterTest extends CamelTestSupport {
 			@Override
 			public void configure() throws Exception {
 				
-				// set debeziumEventConfigPath
-				Properties p = System.getProperties();
-				p.put("fhir.debeziumEventConfigPath", "../utils/dbz_event_to_fhir_config.json");
-				System.setProperties(p);
-				fhirConverter = new FhirConverter(openmrsUtil, fhirStoreUtil, parquetUtil);
+				String fhirDebeziumEventConfigPath = "../utils/dbz_event_to_fhir_config.json";
+				fhirConverter = new FhirConverter(openmrsUtil, fhirStoreUtil, parquetUtil, fhirDebeziumEventConfigPath);
 				
 				// Inject FhirUriGenerator;
 				from(TEST_ROUTE).process(fhirConverter); // inject target processor here
