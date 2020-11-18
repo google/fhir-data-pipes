@@ -33,10 +33,14 @@ public class DebeziumListener extends RouteBuilder {
 	
 	private static final Logger log = LoggerFactory.getLogger(DebeziumListener.class);
 	
-	private static String[] args;
+	private String[] args;
+	
+	private DebeziumArgs params;
 	
 	public DebeziumListener(String[] args) {
 		this.args = args;
+		this.params = DebeziumArgs.getInstance();
+		JCommander.newBuilder().addObject(params).build().parse(args);
 	}
 	
 	@VisibleForTesting
@@ -55,20 +59,16 @@ public class DebeziumListener extends RouteBuilder {
 	@VisibleForTesting
 	FhirConverter createFhirConverter(CamelContext camelContext) throws IOException, Exception {
 		FhirContext fhirContext = FhirContext.forDstu3();
-		DebeziumArgs params = DebeziumArgs.getInstance();
-		JCommander.newBuilder().addObject(params).build().parse(args);
 		String fhirBaseUrl = params.openmrsServerUrl + params.openmrsfhirBaseEndpoint;
 		OpenmrsUtil openmrsUtil = new OpenmrsUtil(fhirBaseUrl, params.openmrUserName, params.openmrsPassword, fhirContext);
 		FhirStoreUtil fhirStoreUtil = FhirStoreUtil.createFhirStoreUtil(params.fhirSinkPath, params.sinkUser,
 		    params.sinkPassword, fhirContext.getRestfulClientFactory());
-		ParquetUtil parquetUtil = new ParquetUtil(fhirContext);
+		ParquetUtil parquetUtil = new ParquetUtil(fhirContext, params.fileParquetPath);
 		camelContext.addService(new ParquetService(parquetUtil), true);
 		return new FhirConverter(openmrsUtil, fhirStoreUtil, parquetUtil, params.fhirDebeziumEventConfigPath);
 	}
 	
 	private String getDebeziumConfig() {
-		DebeziumArgs params = DebeziumArgs.getInstance();
-		JCommander.newBuilder().addObject(params).build().parse(args);
 		return "debezium-mysql:" + params.databaseHostName + "?" + "databaseHostname=" + params.databaseHostName
 		        + "&databaseServerId=" + params.databaseServerId + "&databasePort=" + params.databasePort.intValue()
 		        + "&databaseUser=" + params.databaseUser + "&databasePassword=" + params.databasePassword

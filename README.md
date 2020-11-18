@@ -129,10 +129,10 @@ From the root of your git repo, run:
 and then:
 
 ```
-$ mvn exec:java -pl streaming \
+$ mvn exec:java -pl streaming-atomfeed \
     -Dexec.args=" --openmrsUserName=admin --openmrsPassword=Admin123 \
     --openmrsServerUrl=http://localhost:8099 \
-    --cloudGcpFhirStore=projects/PROJECT/locations/LOCATION/datasets/DATASET/fhirStores/FHIRSTORENAME \
+    --fhirSinkPath=projects/PROJECT/locations/LOCATION/datasets/DATASET/fhirStores/FHIRSTORENAME \
     --sinkUser=hapi --sinkPassword=hapi "`
 ```
 
@@ -246,7 +246,7 @@ run using a command like:
 $ java -cp batch/target/fhir-batch-etl-bundled-0.1.0-SNAPSHOT.jar \
     org.openmrs.analytics.FhirEtl --serverUrl=http://localhost:9018 \
     --searchList=Patient,Encounter,Observation --batchSize=20 \
-   --targetParallelism=20 --gcpFhirStore=GCP_FHIR_STORE`
+   --targetParallelism=20 -sinkPath=projects/PROJECT/locations/LOCATION/datasets/DATASET/`
 ```
 The `searchList` argument accepts a comma separated list of FHIR search URLs.
 For example, one can use `Patient?given=Susan` to extract only Patient resources
@@ -259,7 +259,8 @@ can use the Maven exec plugin:
 $ mvn exec:java -pl batch \
     "-Dexec.args=--serverUrl=http://localhost:9020  --searchList=Observation \
     --batchSize=20 --targetParallelism=20 --outputParquetBase=tmp/TEST/ \
-    --sinkUser=hapi --sinkPassword=hapi "
+    --sinkPath=projects/PROJECT/locations/LOCATION/datasets/DATASET/ \
+    --sinkUsername=hapi --sinkPassword=hapi "
 ```
 # Using Docker compose
 Alternatively you can spin up the entire pipeline using docker containers by running
