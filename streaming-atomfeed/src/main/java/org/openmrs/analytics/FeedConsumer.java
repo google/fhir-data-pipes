@@ -37,10 +37,9 @@ public class FeedConsumer {
 		// TODO what we really need is a list of pairs!
 		Map<String, Class> categories = new LinkedHashMap<>();
 		categories.put("Patient", Patient.class);
-		categories.put("Encounter", Encounter.class);
-		categories.put("Observation", Observation.class);
-		categories.put("Location", Location.class);
-		categories.put("Allergy", AllergyIntolerance.class);
+//		categories.put("Encounter", Encounter.class);
+//		categories.put("Observation", Observation.class);
+//		categories.put("Allergy", AllergyIntolerance.class);
 		
 		// TODO add other FHIR resources that are implemented in OpenMRS.
 		for (Map.Entry<String, Class> entry : categories.entrySet()) {

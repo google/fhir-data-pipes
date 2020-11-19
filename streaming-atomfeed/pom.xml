@@ -39,19 +39,20 @@
 			<artifactId>openmrs-api</artifactId>
 			<version>${openmrsPlatformVersion}</version>
 		</dependency>
+
 		<!-- OpenMRS libraries -->
 		<!-- prefer to avoid these as they bring a lot more deps!
-		for example just to use AtomFeedClientFactory it needs Spring ApplicationContext
-		to be set up properly, which we don't right now! -->
+        for example just to use AtomFeedClientFactory it needs Spring ApplicationContext
+        to be set up properly, which we don't right now! -->
 		<dependency>
 			<groupId>org.openmrs.module</groupId>
 			<artifactId>atomfeed-api</artifactId>
-			<version>1.0.13-SNAPSHOT</version>
+			<version>${atomfeedModuleVersion}</version>
 		</dependency>
 		<dependency>
 			<groupId>org.openmrs.module</groupId>
 			<artifactId>atomfeed-api-2.0</artifactId>
-			<version>1.0.13-SNAPSHOT</version>
+			<version>${atomfeedModuleVersion}</version>
 		</dependency>
 
 		<!-- This is for com.mysql.jdbc.Driver which is the driver_class property
@@ -87,4 +88,6 @@
 			</plugin>
 		</plugins>
 	</build>
+
+
 </project>

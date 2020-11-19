@@ -104,8 +104,8 @@ public class FhirStoreUtil {
 		
 		client.registerInterceptor(interceptor);
 		
-		// TODO: determine if summary mode is the right approach
-		resource.getMeta().setTag(Collections.EMPTY_LIST);
+		// TODO: Handle tags to only remove "summary" if it exists, but keep other tags
+		resource.getMeta().setTag(null);
 		
 		// Initialize the client, which will be used to interact with the service.
 		MethodOutcome outcome = client.create().resource(resource).encodedJson().execute();

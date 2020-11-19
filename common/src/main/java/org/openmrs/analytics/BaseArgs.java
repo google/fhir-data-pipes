@@ -27,13 +27,13 @@ public class BaseArgs {
 	public String openmrsServerUrl = "http://localhost:8099";
 	
 	@Parameter(names = { "--fhirSinkPath" }, description = "Google cloud FHIR store or target generic fhir store")
-	public String fhirSinkPath = "projects/PROJECT/locations/LOCATION/datasets/DATASET/fhirStores/FHIRSTORENAME";
+	public String fhirSinkPath = "http://localhost:8098/hapi-fhir-jpaserver/fhir";
 	
 	@Parameter(names = { "--sinkUser" }, description = "Sink BasicAuth Username")
-	public String sinkUser = "hapi";
+	public String sinkUser = "";
 	
 	@Parameter(names = { "--sinkPassword" }, description = "Sink BasicAuth Password")
-	public String sinkPassword = "hapi";
+	public String sinkPassword = "";
 	
 	@Parameter(names = { "--fileParquetPath" }, description = "The base path for output Parquet files")
 	public String fileParquetPath = "/tmp/";

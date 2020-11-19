@@ -51,4 +51,38 @@ services:
                      -Dfile.parquetPath=/tmp/
                      -Dfhir.debeziumEventConfigPath=dbz_event_to_fhir_config.json
 
-  # TODO add attomfeed streaming - I think @pmanko is working on
+  streaming-atomfeed:
+    container_name: streaming-atomfeed
+    hostname: streaming-atomfeed
+    build:
+      context: ./
+      dockerfile: ./streaming-atomfeed/Dockerfile
+    healthcheck:
+      test: "exit 0"
+    environment:
+      - SOURCE_URL=http://isanteplusdemo.com/openmrs
+      - SOURCE_PW=Admin123
+      - SOURCE_USERNAME=admin
+      - SINK_URL=http://localhost:8098/hapi-fhir-jpaserver/fhir
+    entrypoint: "bash -c 'mvn exec:java -pl streaming-atomfeed -Dexec.mainClass=org.openmrs.analytics.FhirStreaming -Dexec.args=\"--openmrsServerUrl=$${SOURCE_URL} --openmrsUserName=$${SOURCE_USERNAME} --openmrsPassword=$${SOURCE_PW} --fhirSinkPath=$${SINK_URL} --sinkUser=$${SINK_USERNAME} --sinkPassword=$${SINK_PASSWORD}\"'"
+
+  streaming-atomfeed-db:
+    container_name: streaming-atomfeed-db
+    hostname: streaming-atomfeed-db
+    image: mysql:5.7
+    healthcheck:
+      test: "exit 0"
+    ports:
+    - 3366:3306
+    environment:
+      - MYSQL_ROOT_PASSWORD=root
+      - MYSQL_USER=fhir
+      - MYSQL_PASSWORD=fhiranalytics
+      - MYSQL_DATABASE=atomfeed_client
+      - MYSQL_ROOT_HOST=%
+    volumes:
+      - db:/var/lib/mysql
+      - ./utils/dbdump/create_db.sql:/docker-entrypoint-initdb.d/dump.sql
+
+volumes:
+  db:
