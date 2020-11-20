@@ -85,7 +85,7 @@ public class FhirConverter implements Processor {
 		final String table = sourceMetadata.get("table").toString();
 		log.debug("Processing Table --> " + table);
 		final FeedConfiguration config = this.feedConfigurationService.getFeedConfigurationByCategory(table);
-		if (config == null || !config.getLinkTemplates().containsKey("fhir")) {
+		if (config == null || !config.getLinkTemplates().containsKey("fhir") || !payload.containsKey("uuid")) {
 			log.trace("Skipping unmapped data ..." + table);
 			return;
 		}

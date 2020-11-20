@@ -35,6 +35,11 @@ gradle-app.setting
 
 ##############################
 ## IntelliJ
+batch/.factorypath
+common/.factorypath
+streaming-binlog/.factorypath
+streaming/.factorypath
+
 ##############################
 out/
 .idea/

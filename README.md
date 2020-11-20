@@ -14,7 +14,7 @@ continuously listens to changes in OpenMRS to translate new changes into FHIR
 resources and upload them to the target data warehouse.
 - **Bulk upload** (a.k.a. _batch mode_): This is used for reading the whole
 content of OpenMRS MySQL database, transform it into FHIR resources, and upload
-to the target data warehouse.
+to the target data warehouse.src/main/resources/hibernate.default.properties
 
 # Streaming mode (Atom Feed)
 This is currently implemented as a stand alone app that sits between OpenMRS and
@@ -85,8 +85,8 @@ This will create a database called `atomfeed_client` with required tables (the
 `USER` should have permission to create databases). If you want to change the
 default database name `atomfeed_client`, you can edit [`utils/dbdump/create_db.sql`](
 utils/dbdump/create_db.sql) but then you need to change the database name in
-[`src/main/resources/hibernate.default.properties`](
-src/main/resources/hibernate.default.properties) accordingly.
+[`streaming/src/main/resources/hibernate.default.properties`](
+streaming/src/main/resources/hibernate.default.properties) accordingly.
 
 ## Create the sink FHIR store and BigQuery dataset
 To set up GCP project that you can use as a sink FHIR store:
@@ -232,6 +232,7 @@ add an Observation) to create some updates in the binlog. Now if you keep a
 copy of original version of A (before the changes) you can reuse it in future
 runs to replay the new events with no more interactions with OpenMRS.
 
+> Debugging; `export MAVEN_OPTS="$MAVEN_OPTS -agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=1091"`
 
 # Batch mode 
 The steps above for setting up a FHIR Store and a linked BigQuery dataset needs
