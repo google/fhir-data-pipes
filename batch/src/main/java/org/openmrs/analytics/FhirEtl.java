@@ -335,13 +335,7 @@ public class FhirEtl {
 			                options.getOutputParquetBase(), options.getUsername(), options.getPassword())))
 			        .setCoder(AvroCoder.of(GenericRecord.class, schema));
 			
-			// sink to parquet
-			if (!options.getOutputParquetBase().isEmpty()) {
-				ParquetIO.Sink sink = ParquetIO.sink(schema);
-				String outputFile = options.getOutputParquetBase() + resourceType;
-				genericRecords.apply(String.format("Saving parquet files: %s", outputFile),
-				    FileIO.<GenericRecord> write().via(sink).to(outputFile));
-			}
+			JdbcFhirMode.sinkToParquet(options, schema, resourceType, genericRecords);
 			
 		}
 		

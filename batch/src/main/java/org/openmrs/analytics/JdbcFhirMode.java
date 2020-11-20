@@ -29,10 +29,13 @@ import java.util.Objects;
 import ca.uhn.fhir.context.FhirContext;
 import com.google.gson.Gson;
 import com.mchange.v2.c3p0.ComboPooledDataSource;
+import org.apache.avro.Schema;
 import org.apache.avro.generic.GenericRecord;
 import org.apache.beam.sdk.Pipeline;
 import org.apache.beam.sdk.coders.StringUtf8Coder;
+import org.apache.beam.sdk.io.FileIO;
 import org.apache.beam.sdk.io.jdbc.JdbcIO;
+import org.apache.beam.sdk.io.parquet.ParquetIO;
 import org.apache.beam.sdk.transforms.DoFn;
 import org.apache.beam.sdk.transforms.GroupByKey;
 import org.apache.beam.sdk.transforms.ParDo;
@@ -124,6 +127,17 @@ public class JdbcFhirMode {
 				            return String.format("/%s/%s", resourceType, resultSet.getString("uuid"));
 			            }
 		            }));
+	}
+	
+	public static void sinkToParquet(FhirEtl.FhirEtlOptions options, Schema schema, String resourceType,
+	        PCollection<GenericRecord> genericRecords) {
+		
+		if (!options.getOutputParquetBase().isEmpty()) {
+			ParquetIO.Sink sink = ParquetIO.sink(schema);
+			String outputFile = options.getOutputParquetBase() + resourceType;
+			genericRecords.apply(String.format("Saving parquet files: %s", outputFile),
+			    FileIO.<GenericRecord> write().via(sink).to(outputFile));
+		}
 	}
 	
 	LinkedHashMap<String, String> createFhirReverseMap(FhirEtl.FhirEtlOptions options) throws IOException {
