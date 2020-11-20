@@ -14,7 +14,7 @@ continuously listens to changes in OpenMRS to translate new changes into FHIR
 resources and upload them to the target data warehouse.
 - **Bulk upload** (a.k.a. _batch mode_): This is used for reading the whole
 content of OpenMRS MySQL database, transform it into FHIR resources, and upload
-to the target data warehouse.src/main/resources/hibernate.default.properties
+to the target data warehouse.
 
 # Streaming mode (Atom Feed)
 This is currently implemented as a stand alone app that sits between OpenMRS and
