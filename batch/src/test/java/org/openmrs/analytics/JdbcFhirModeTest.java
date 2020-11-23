@@ -13,25 +13,17 @@
 // limitations under the License.
 package org.openmrs.analytics;
 
-import javax.sql.DataSource;
-
 import java.beans.PropertyVetoException;
 import java.io.File;
 import java.io.IOException;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.Statement;
 import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.List;
 
 import ca.uhn.fhir.context.FhirContext;
 import ca.uhn.fhir.parser.IParser;
-import ca.uhn.fhir.rest.client.api.IGenericClient;
-import ca.uhn.fhir.rest.gclient.IQuery;
-import ca.uhn.fhir.rest.gclient.IUntypedQuery;
 import com.google.common.io.Resources;
 import junit.framework.TestCase;
 import org.apache.avro.Schema;
@@ -50,58 +42,26 @@ import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 import org.openmrs.analytics.model.EventConfiguration;
 
 @RunWith(MockitoJUnitRunner.class)
 public class JdbcFhirModeTest extends TestCase {
 	
-	private static final String BASE_URL = "http://localhost:9020/openmrs/ws/fhir2/R3";
-	
-	private static final String SEARCH_URL = "Encounter";
-	// "../utils/dbz_event_to_fhir_config.json"
-	
 	private String resourceStr;
 	
 	@Rule
 	public transient TestPipeline testPipeline = TestPipeline.create();
 	
-	@Mock
-	protected Statement st;
-	
-	@Mock
-	protected Connection cn;
-	
-	@Mock
-	protected PreparedStatement ps;
-	
-	@Mock
-	private OpenmrsUtil openmrsUtil;
-	
-	@Mock
-	private IGenericClient genericClient;
-	
-	@Mock
-	private IUntypedQuery untypedQuery;
-	
-	@Mock
-	private IQuery query;
-	
 	private Resource resource;
 	
 	private FhirContext fhirContext;
-	
-	private FhirSearchUtil fhirSearchUtil;
 	
 	private JdbcFhirMode jdbcFhirMode;
 	
 	private ParquetUtil parquetUtil;
 	
 	private String basePath = "/tmp/JUNIT/Parquet/TEST/";
-	
-	@Mock
-	private DataSource ds;
 	
 	@Before
 	public void setup() throws IOException {
@@ -110,20 +70,12 @@ public class JdbcFhirModeTest extends TestCase {
 		this.fhirContext = FhirContext.forDstu3();
 		IParser parser = fhirContext.newJsonParser();
 		resource = parser.parseResource(Encounter.class, resourceStr);
-		fhirSearchUtil = new FhirSearchUtil(openmrsUtil);
 		jdbcFhirMode = new JdbcFhirMode();
 		parquetUtil = new ParquetUtil(fhirContext);
-		//		when(openmrsUtil.getSourceFhirUrl()).thenReturn(BASE_URL);
-		//		when(openmrsUtil.getSourceClient()).thenReturn(genericClient);
-		//				when(genericClient.search()).thenReturn(untypedQuery);
-		//				when(untypedQuery.byUrl(SEARCH_URL)).thenReturn(query);
-		//				when(query.count(anyInt())).thenReturn(query);
-		//				when(query.summaryMode(any(SummaryEnum.class))).thenReturn(query);
-		//				when(query.returnBundle(any())).thenReturn(query);
-		//		//		//when(query.execute()).thenReturn(resource);
-		
-		FileUtils.cleanDirectory(new File(basePath));
-		
+		// clean up if folder exists
+		File file = new File(basePath);
+		if (file.exists())
+			FileUtils.cleanDirectory(file);
 	}
 	
 	@Test
@@ -135,32 +87,7 @@ public class JdbcFhirModeTest extends TestCase {
 	}
 	
 	@Test
-	// TODO
-	public void testCreateChunkRanges() throws PropertyVetoException {
-		//		FhirEtl.FhirEtlOptions options = PipelineOptionsFactory.fromArgs("").withValidation().as(FhirEtl.FhirEtlOptions.class);
-		//		JdbcIO.DataSourceConfiguration config = jdbcFhirMode.getJdbcConfig(options);
-		//		PCollection<String> rows =
-		//		testPipeline.apply(
-		//				JdbcIO.<String>read()
-		//						.withDataSourceConfiguration(config)
-		//						.withQuery(String.format("select name,id from %s where name = ?", "ss"))
-		//						);
-		//
-		//			PAssert.thatSingleton(rows.apply("Count All", Count.globally())).isEqualTo(1L);
-		//
-		//
-		//			testPipeline.run();
-	}
-	
-	@Test
-	// TODO
-	public void testGenerateFhirUrl() {
-		
-	}
-	
-	@Test
 	public void testSinkToParquet() {
-		
 		FhirEtl.FhirEtlOptions options = PipelineOptionsFactory.fromArgs("--outputParquetBase=" + basePath).withValidation()
 		        .as(FhirEtl.FhirEtlOptions.class);
 		
