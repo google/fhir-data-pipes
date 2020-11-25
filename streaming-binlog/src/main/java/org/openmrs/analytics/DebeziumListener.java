@@ -72,7 +72,8 @@ public class DebeziumListener extends RouteBuilder {
 				//+ "&name={{database.dbname}}"
 		        + "&databaseServerName=" + params.databaseName + "&databaseWhitelist=" + params.databaseSchema
 		        + "&offsetStorage=org.apache.kafka.connect.storage.FileOffsetBackingStore" + "&offsetStorageFileName="
-		        + params.databaseOffsetStorage + "&databaseHistoryFileFilename=" + params.databaseHistory
+		        + params.databaseOffsetStorage + "&databaseHistoryFileFilename=" + params.databaseHistory + "&snapshotMode="
+		        + params.snapshotMode
 		//+ "&tableWhitelist={{database.schema}}.encounter,{{database.schema}}.obs"
 		;
 	}
@@ -137,6 +138,11 @@ public class DebeziumListener extends RouteBuilder {
 		
 		@Parameter(names = { "--databaseHistory" }, description = "replacing Offset by History")
 		public String databaseHistory = "data/dbhistory.dat";
+		
+		@Parameter(names = { "--snapshotMode" }, description = "criteria for running DB snapshot, options include: "
+		        + "when_needed, schema_only, initial, never, e.t.c. To read events from day 0 of db data-entry, use 'initial'. "
+		        + "To read only new events, use 'schema_only' ")
+		public String snapshotMode = "initial";
 		
 		@Parameter(names = { "--openmrsfhirBaseEndpoint" }, description = "Fhir base endpoint")
 		public String openmrsfhirBaseEndpoint = "/openmrs/ws/fhir2/R3";

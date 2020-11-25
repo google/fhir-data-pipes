@@ -177,19 +177,31 @@ $ mvn compile exec:java -pl streaming-binlog
  - Or customize the configuration (including gcpFhirStore, OpenMRS basicAuth)
  
  ```
-$ mvn compile exec:java -pl streaming-binlog 
+$ mvn compile exec:java -pl streaming-binlog \
     -Dexec.args="--databaseHostName=localhost \
     --databasePort=3306 --databaseUser=root --databasePassword=debezium \
     --databaseName=mysql --databaseSchema=openmrs --databaseServerId=77 \
     --databaseOffsetStorage=offset.dat --databaseHistory=dbhistory.dat \
     --openmrsUserName=admin --openmrsPassword=Admin123 \
     --openmrsServerUrl=http://localhost:8099 \
+    --snapshotMode=initial \
     --openmrsfhirBaseEndpoint=/openmrs/ws/fhir2/R3 \
     --fhirSinkPath=projects/PROJECT/locations/LOCATION/datasets/DATASET/fhirStores/FHIRSTORENAME \
     --sinkUser=hapi --sinkPassword=hapi \
     --fileParquetPath=/tmp/ \
     --fhirDebeziumEventConfigPath=./utils/dbz_event_to_fhir_config.json"
  ```
+
+## Common questions
+* **Will I be able to stream historical data that were recorded
+prior to enabling the  `mysql binlog`?** Yes, by default, the pipeline takes a snapshot of the entire
+database, making it possible to stream in events from day 0 of data-entry.  
+
+* **How do I stop debezium from taking a snapshot of the entire database?**
+   You can do this by overriding the  `snapshotMode` option to `schema_only` i.e, 
+   ```--snapshotMode=schema_only``` Other options include: when_needed, schema_only, initial (default), never, e.t.c.
+   Please check the  [`debezium documentation`](https://camel.apache.org/components/latest/debezium-mysql-component.html ) 
+   for more details.
 
 
 ## Debezium prerequisite
