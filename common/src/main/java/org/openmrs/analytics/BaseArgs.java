@@ -37,4 +37,14 @@ public class BaseArgs {
 	
 	@Parameter(names = { "--fileParquetPath" }, description = "The base path for output Parquet files")
 	public String fileParquetPath = "/tmp/";
+	
+	@Parameter(names = { "--secondsToFlushParquetFiles" }, description = "The number of seconds after which all Parquet "
+	        + "writers with non-empty content are flushed to files; use 0 to disable.")
+	public int secondsToFlushParquetFiles = 3600;
+	
+	@Parameter(names = { "--rowGroupSizeForParquetFiles" }, description = "The approximate size (bytes) of "
+	        + "the row-groups in Parquet files. When this size is reached, the content is flushed to disk. "
+	        + "This won't be triggered if there are less than 100 records. Use 0 to fall back to the "
+	        + "default row-group size.")
+	public int rowGroupSizeForParquetFiles = 0;
 }
