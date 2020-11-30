@@ -207,7 +207,7 @@ public class FhirEtl {
 			    fhirContext.getRestfulClientFactory());
 			openmrsUtil = createOpenmrsUtil(sourceUrl, sourceUser, sourcePw, fhirContext);
 			fhirSearchUtil = new FhirSearchUtil(openmrsUtil);
-			parquetUtil = new ParquetUtil(FhirContext.forDstu3(), parquetFile);
+			parquetUtil = new ParquetUtil(parquetFile);
 		}
 		
 		@ProcessElement
@@ -232,7 +232,7 @@ public class FhirEtl {
 	}
 	
 	static void runFhirFetch(FhirEtlOptions options, FhirContext fhirContext) throws CannotProvideCoderException {
-		ParquetUtil parquetUtil = new ParquetUtil(FhirContext.forDstu3(), options.getOutputParquetBase());
+		ParquetUtil parquetUtil = new ParquetUtil(options.getOutputParquetBase());
 		Map<String, List<SearchSegmentDescriptor>> segmentMap = createSegments(options, fhirContext);
 		if (segmentMap.isEmpty()) {
 			return;

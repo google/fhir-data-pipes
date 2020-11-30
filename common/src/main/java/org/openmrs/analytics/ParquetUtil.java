@@ -65,8 +65,8 @@ public class ParquetUtil {
 		return this.parquetFilePath;
 	}
 	
-	ParquetUtil(FhirContext fhirContext, String parquetFilePath) {
-		this.fhirContext = fhirContext;
+	ParquetUtil(String parquetFilePath) {
+		this.fhirContext = FhirContext.forDstu3();
 		this.converterMap = new HashMap<>();
 		this.writerMap = new HashMap<>();
 		this.parquetFilePath = parquetFilePath;

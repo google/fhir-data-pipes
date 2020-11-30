@@ -60,7 +60,7 @@ public class DebeziumListener extends RouteBuilder {
 		OpenmrsUtil openmrsUtil = new OpenmrsUtil(fhirBaseUrl, params.openmrUserName, params.openmrsPassword, fhirContext);
 		FhirStoreUtil fhirStoreUtil = FhirStoreUtil.createFhirStoreUtil(params.fhirSinkPath, params.sinkUser,
 		    params.sinkPassword, fhirContext.getRestfulClientFactory());
-		ParquetUtil parquetUtil = new ParquetUtil(FhirContext.forDstu3(), params.fileParquetPath);
+		ParquetUtil parquetUtil = new ParquetUtil(params.fileParquetPath);
 		camelContext.addService(new ParquetService(parquetUtil), true);
 		return new FhirConverter(openmrsUtil, fhirStoreUtil, parquetUtil, params.fhirDebeziumEventConfigPath);
 	}

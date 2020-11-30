@@ -51,7 +51,7 @@ public class ParquetUtilTest {
 		patientBundle = Resources.toString(Resources.getResource("patient_bundle.json"), StandardCharsets.UTF_8);
 		observationBundle = Resources.toString(Resources.getResource("observation_bundle.json"), StandardCharsets.UTF_8);
 		this.fhirContext = FhirContext.forR4();
-		parquetUtil = new ParquetUtil(FhirContext.forDstu3(), parquetFilePath);
+		parquetUtil = new ParquetUtil(parquetFilePath);
 	}
 	
 	@Test
