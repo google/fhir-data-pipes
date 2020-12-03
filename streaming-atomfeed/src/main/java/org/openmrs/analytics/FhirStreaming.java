@@ -34,7 +34,7 @@ public class FhirStreaming {
 	// TODO: set as arg or env variable? using constant for simplicity
 	private static final String FEED_ENDPOINT = "/ws/atomfeed";
 	
-	private static final String FHIR_ENDPOINT = "/ws/fhir2/R3";
+	private static final String FHIR_ENDPOINT = "/ws/fhir2/R4";
 	
 	private static String sourceUrl;
 	
@@ -70,7 +70,7 @@ public class FhirStreaming {
 		log.info("Started listening on the feed " + feedUrl);
 		
 		// TODO: Autowire
-		FhirContext fhirContext = FhirContext.forDstu3();
+		FhirContext fhirContext = FhirContext.forR4();
 		OpenmrsUtil openmrsUtil = new OpenmrsUtil(fhirUrl, sourceUser, sourcePassword, fhirContext);
 		
 		FhirStoreUtil fhirStoreUtil = FhirStoreUtil.createFhirStoreUtil(sinkPath, sinkUser, sinkPassword,

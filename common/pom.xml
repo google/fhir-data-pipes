@@ -62,7 +62,7 @@
 
 		<dependency>
 			<groupId>ca.uhn.hapi.fhir</groupId>
-			<artifactId>hapi-fhir-structures-dstu3</artifactId>
+			<artifactId>hapi-fhir-structures-r4</artifactId>
 		</dependency>
 		<dependency>
 			<groupId>ca.uhn.hapi.fhir</groupId>
@@ -71,6 +71,11 @@
 		<dependency>
 			<groupId>ca.uhn.hapi.fhir</groupId>
 			<artifactId>hapi-fhir-client</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>ca.uhn.hapi.fhir</groupId>
+			<artifactId>hapi-fhir-converter</artifactId>
+			<version>${hapifhirVersion}</version>
 		</dependency>
 
 		<!-- Added because of a weird dependency issue in HAPI FHIR DSTU3 deps -->

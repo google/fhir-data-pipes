@@ -28,7 +28,7 @@ import com.google.common.io.Resources;
 import org.apache.avro.Schema;
 import org.apache.avro.generic.GenericData.Record;
 import org.apache.avro.generic.GenericRecord;
-import org.hl7.fhir.dstu3.model.Bundle;
+import org.hl7.fhir.r4.model.Bundle;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -50,8 +50,8 @@ public class ParquetUtilTest {
 		String parquetFilePath = "/tmp";
 		patientBundle = Resources.toString(Resources.getResource("patient_bundle.json"), StandardCharsets.UTF_8);
 		observationBundle = Resources.toString(Resources.getResource("observation_bundle.json"), StandardCharsets.UTF_8);
-		this.fhirContext = FhirContext.forDstu3();
-		parquetUtil = new ParquetUtil(fhirContext, parquetFilePath);
+		this.fhirContext = FhirContext.forR4();
+		parquetUtil = new ParquetUtil(parquetFilePath);
 	}
 	
 	@Test

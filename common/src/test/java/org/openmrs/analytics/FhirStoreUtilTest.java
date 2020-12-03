@@ -27,8 +27,8 @@ import ca.uhn.fhir.rest.client.api.IGenericClient;
 import ca.uhn.fhir.rest.client.api.IRestfulClientFactory;
 import ca.uhn.fhir.rest.gclient.ICreateTyped;
 import org.hamcrest.Matchers;
-import org.hl7.fhir.dstu3.model.Bundle;
-import org.hl7.fhir.dstu3.model.Patient;
+import org.hl7.fhir.r4.model.Bundle;
+import org.hl7.fhir.r4.model.Patient;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -56,7 +56,7 @@ public class FhirStoreUtilTest {
 	
 	@Before
 	public void setup() throws IOException {
-		FhirContext parseContext = FhirContext.forDstu3();
+		FhirContext parseContext = FhirContext.forR4();
 		patientBundle = parseContext.newJsonParser().parseResource(Bundle.class,
 		    getClass().getClassLoader().getResource("patient_bundle.json").openStream());
 		MethodOutcome outcome = new MethodOutcome();
