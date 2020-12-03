@@ -132,34 +132,20 @@ and then:
 mvn exec:java -pl streaming-atomfeed \
     -Dexec.args=" --openmrsUserName=admin --openmrsPassword=Admin123 \
     --openmrsServerUrl=http://localhost:8099 \
-    --fhirSinkPath=localhost:8098/fhir \
+    --fhirSinkPath=projects/PROJECT/locations/LOCATION/datasets/DATASET/fhirStores/FHIRSTORENAME \
     --sinkUser=hapi --sinkPassword=hapi "`
 ```
+
+- `OPENMRS_URL` is the path to your source OpenMRS instance (e.g., `http://localhost:9016/openmrs` in this case)
+-  `OPENMRS_USER/OPENMRS_PASSWORD` is the username/password combination for accessing the OpenMRS APIs using BasicAuth.
+- `GCP_FHIR_STORE` is the relative path of the FHIR store you set up in the
+previous step, i.e., something like:
+`projects/PROJECT/locations/LOCATION/datasets/DATASET/fhirStores/FHIR-STORE-NAME`
+where all-caps segments are based on what you set up above.
 
 To test your changes, create a new patient (or observation) in OpenMRS and check
 that a corresponding Patient (or Observation) FHIR resource is created in the
 GCP FHIR store and corresponding rows added to the BigQuery tables.
-
-**Note:**
-Due to an issue with the [atomfeed client](https://github.com/ICT4H/atomfeed) that is used in the 
-[atomfeed module](https://github.com/openmrs/openmrs-module-atomfeed), the `atomfeed-streaming` solution
-might not work for some openmrs source urls out of the box. Until these issues get resolved and the atomfeed client 
-and atomfeed openmrs module are updated, using the fixes requires the following steps:
-
-1. Clone and compile the dependencies:
-```
-git clone -b db-url-port-fix https://github.com/pmanko/atomfeed.git
-cd atomfeed
-mvn -B install -DskipTests
-
-git clone -b isanteplus-fixes https://github.com/pmanko/openmrs-module-atomfeed.git
-cd openmrs-module-atomfeed
-mvn -B install -DskipTests
-```
-
-2. Run `mvn clean install` with the `atomfeed-fix` profile:
-
-`mvn clean -B install -P atomfeed-fix -DskipTests -pl streaming-atomfeed -am`
 
 # Streaming mode using Debezium
 The goal of the debezium-based streaming mode is to provide real-time downstream consumption of incremental updates, 
@@ -322,7 +308,7 @@ $ docker-compose up --build streaming-binlog
 #### 6. Fire up Streaming Pipeline (Atomfeed)
 
 ```
- $ mvn clean -B install -P atomfeed-fix -DskipTests -pl streaming-atomfeed -am
+ $ mvn clean -B install -DskipTests -pl streaming-atomfeed -am
  $ docker-compose up -d --build streaming-atomfeed-db streaming-atomfeed
 ```
 

@@ -27,7 +27,7 @@ public class BaseArgs {
 	public String openmrsServerUrl = "http://localhost:8099";
 	
 	@Parameter(names = { "--fhirSinkPath" }, description = "Google cloud FHIR store or target generic fhir store")
-	public String fhirSinkPath = "http://localhost:8098/hapi-fhir-jpaserver/fhir";
+	public String fhirSinkPath = "projects/PROJECT/locations/LOCATION/datasets/DATASET/fhirStores/FHIRSTORENAME";
 	
 	@Parameter(names = { "--sinkUser" }, description = "Sink BasicAuth Username")
 	public String sinkUser = "";

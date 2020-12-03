@@ -25,7 +25,7 @@ services:
       test: "exit 0"
     environment:
      - SINK_PATH=http://localhost:8098/fhir
-     - SOURCE_URL=https://localhost:8091/openmrs
+     - SOURCE_URL=https://localhost:8099/openmrs
      - SEARCH_LIST=Patient,Encounter,Observation
      - BATCH_SIZE=20
      - TARGET_PARALLELISM=20
@@ -60,20 +60,16 @@ services:
     healthcheck:
       test: "exit 0"
     environment:
-      - SOURCE_URL=http://isanteplusdemo.com/openmrs
-      - SOURCE_PW=Admin123
-      - SOURCE_USERNAME=admin
-      - SINK_URL=http://localhost:8098/hapi-fhir-jpaserver/fhir
-    entrypoint: "bash -c 'mvn exec:java -pl streaming-atomfeed -Dexec.mainClass=org.openmrs.analytics.FhirStreaming -Dexec.args=\"--openmrsServerUrl=$${SOURCE_URL} --openmrsUserName=$${SOURCE_USERNAME} --openmrsPassword=$${SOURCE_PW} --fhirSinkPath=$${SINK_URL} --sinkUser=$${SINK_USERNAME} --sinkPassword=$${SINK_PASSWORD}\"'"
+      - SOURCE_URL=http://localhost8099/openmrs
+      - SINK_URL=http://localhost:8098/fhir
 
   streaming-atomfeed-db:
     container_name: streaming-atomfeed-db
     hostname: streaming-atomfeed-db
     image: mysql:5.7
+    command: "mysqld --character-set-server=utf8 --collation-server=utf8_general_ci"
     healthcheck:
       test: "exit 0"
-    ports:
-    - 3366:3306
     environment:
       - MYSQL_ROOT_PASSWORD=root
       - MYSQL_USER=fhir
@@ -81,8 +77,4 @@ services:
       - MYSQL_DATABASE=atomfeed_client
       - MYSQL_ROOT_HOST=%
     volumes:
-      - db:/var/lib/mysql
       - ./utils/dbdump/create_db.sql:/docker-entrypoint-initdb.d/dump.sql
-
-volumes:
-  db:
