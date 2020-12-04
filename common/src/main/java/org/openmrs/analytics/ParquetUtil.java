@@ -162,7 +162,7 @@ public class ParquetUtil {
 		return bestFilePath;
 	}
 	
-	synchronized private void craeteWriter(String resourceType) throws IOException {
+	synchronized private void createWriter(String resourceType) throws IOException {
 		// TODO: Find a way to convince Hadoop file operations to use `fileSystem` (needed for testing).
 		AvroParquetWriter.Builder<GenericRecord> builder = AvroParquetWriter.builder(bestOutputFile(resourceType));
 		// TODO: Adjust other parquet file parameters for our needs or make them configurable.
@@ -185,7 +185,7 @@ public class ParquetUtil {
 		Preconditions.checkNotNull(resource.fhirType());
 		String resourceType = resource.fhirType();
 		if (!writerMap.containsKey(resourceType)) {
-			craeteWriter(resourceType);
+			createWriter(resourceType);
 		}
 		final ParquetWriter<GenericRecord> parquetWriter = writerMap.get(resourceType);
 		parquetWriter.write(this.convertToAvro(resource));
@@ -195,7 +195,7 @@ public class ParquetUtil {
 		ParquetWriter<GenericRecord> writer = writerMap.get(resourceType);
 		if (writer != null && writer.getDataSize() > 0) {
 			writer.close();
-			craeteWriter(resourceType);
+			createWriter(resourceType);
 		}
 	}
 	
