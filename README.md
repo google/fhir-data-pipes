@@ -131,7 +131,7 @@ and then:
 ```
 $ mvn exec:java -pl streaming-atomfeed \
     -Dexec.args=" --openmrsUserName=admin --openmrsPassword=Admin123 \
-    --openmrsServerUrl=http://localhost:8099 \
+    --openmrsServerUrl=http://localhost:8099/openmrs \
     --fhirSinkPath=projects/PROJECT/locations/LOCATION/datasets/DATASET/fhirStores/FHIRSTORENAME \
     --sinkUser=hapi --sinkPassword=hapi "`
 ```
