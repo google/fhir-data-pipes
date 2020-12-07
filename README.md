@@ -131,7 +131,7 @@ and then:
 ```
 $ mvn exec:java -pl streaming-atomfeed \
     -Dexec.args=" --openmrsUserName=admin --openmrsPassword=Admin123 \
-    --openmrsServerUrl=http://localhost:8099 \
+    --openmrsServerUrl=http://localhost:8099/openmrs \
     --fhirSinkPath=projects/PROJECT/locations/LOCATION/datasets/DATASET/fhirStores/FHIRSTORENAME \
     --sinkUser=hapi --sinkPassword=hapi "`
 ```
@@ -183,7 +183,7 @@ $ mvn compile exec:java -pl streaming-binlog \
     --databaseName=mysql --databaseSchema=openmrs --databaseServerId=77 \
     --databaseOffsetStorage=offset.dat --databaseHistory=dbhistory.dat \
     --openmrsUserName=admin --openmrsPassword=Admin123 \
-    --openmrsServerUrl=http://localhost:8099 \
+    --openmrsServerUrl=http://localhost:8099/openmrs \
     --openmrsfhirBaseEndpoint=/openmrs/ws/fhir2/R4 \
     --snapshotMode=initial \
     --fhirSinkPath=projects/PROJECT/locations/LOCATION/datasets/DATASET/fhirStores/FHIRSTORENAME \
@@ -256,7 +256,7 @@ run using a command like:
 
 ```
 $ java -cp batch/target/fhir-batch-etl-bundled-0.1.0-SNAPSHOT.jar \
-    org.openmrs.analytics.FhirEtl --serverUrl=http://localhost:9018 \
+    org.openmrs.analytics.FhirEtl --serverUrl=http://localhost:9018/openmrs \
     --searchList=Patient,Encounter,Observation --batchSize=20 \
    --targetParallelism=20 --sinkPath=projects/PROJECT/locations/LOCATION/datasets/DATASET/`
 ```
@@ -269,7 +269,7 @@ If you prefer not to use a bundled jar (e.g., during development in an IDE) you
 can use the Maven exec plugin:
 ```
 $ mvn exec:java -pl batch \
-    "-Dexec.args=--serverUrl=http://localhost:9020  --searchList=Observation \
+    "-Dexec.args=--serverUrl=http://localhost:9020/openmrs  --searchList=Observation \
     --batchSize=20 --targetParallelism=20 --outputParquetBase=tmp/TEST/ \
     --sinkPath=projects/PROJECT/locations/LOCATION/datasets/DATASET/ \
     --sinkUsername=hapi --sinkPassword=hapi "
