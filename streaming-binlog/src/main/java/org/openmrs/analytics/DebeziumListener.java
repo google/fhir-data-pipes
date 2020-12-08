@@ -60,7 +60,8 @@ public class DebeziumListener extends RouteBuilder {
 		OpenmrsUtil openmrsUtil = new OpenmrsUtil(fhirBaseUrl, params.openmrUserName, params.openmrsPassword, fhirContext);
 		FhirStoreUtil fhirStoreUtil = FhirStoreUtil.createFhirStoreUtil(params.fhirSinkPath, params.sinkUser,
 		    params.sinkPassword, fhirContext.getRestfulClientFactory());
-		ParquetUtil parquetUtil = new ParquetUtil(params.fileParquetPath);
+		ParquetUtil parquetUtil = new ParquetUtil(params.fileParquetPath, params.secondsToFlushParquetFiles,
+		        params.rowGroupSizeForParquetFiles);
 		camelContext.addService(new ParquetService(parquetUtil), true);
 		return new FhirConverter(openmrsUtil, fhirStoreUtil, parquetUtil, params.fhirDebeziumEventConfigPath);
 	}
@@ -96,7 +97,12 @@ public class DebeziumListener extends RouteBuilder {
 		
 		@Override
 		public void stop() {
-			parquetUtil.closeAllWriters();
+			try {
+				parquetUtil.closeAllWriters();
+			}
+			catch (IOException e) {
+				log.error("Could not close Parquet file writers properly!");
+			}
 		}
 		
 		@Override

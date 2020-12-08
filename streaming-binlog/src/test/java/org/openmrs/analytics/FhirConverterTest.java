@@ -18,13 +18,11 @@ import java.io.IOException;
 import java.util.Map;
 
 import io.debezium.data.Envelope.Operation;
-import org.apache.avro.generic.GenericRecord;
 import org.apache.camel.Produce;
 import org.apache.camel.ProducerTemplate;
 import org.apache.camel.RoutesBuilder;
 import org.apache.camel.builder.RouteBuilder;
 import org.apache.camel.test.junit4.CamelTestSupport;
-import org.apache.parquet.hadoop.ParquetWriter;
 import org.hl7.fhir.r4.model.Encounter;
 import org.hl7.fhir.r4.model.Resource;
 import org.junit.Test;
@@ -56,9 +54,6 @@ public class FhirConverterTest extends CamelTestSupport {
 	
 	@Mock
 	private ParquetUtil parquetUtil;
-	
-	@Mock
-	private ParquetWriter<GenericRecord> parquetWriter;
 	
 	private FhirConverter fhirConverter;
 	
@@ -102,16 +97,13 @@ public class FhirConverterTest extends CamelTestSupport {
 		final String testPath = "some_test_path";
 		Mockito.when(openmrsUtil.fetchFhirResource(Mockito.anyString())).thenReturn(resource);
 		Mockito.when(parquetUtil.getParquetPath()).thenReturn(testPath);
-		Mockito.when(parquetUtil.getWriter("Encounter")).thenReturn(parquetWriter);
 		
 		// Actual event that will trigger process().
 		eventsProducer.sendBodyAndHeaders(messageBody, messageHeaders);
 		
 		Mockito.verify(openmrsUtil).fetchFhirResource(Mockito.anyString());
 		Mockito.verify(fhirStoreUtil, Mockito.never()).uploadResource(Mockito.<Resource> any());
-		Mockito.verify(parquetUtil).getWriter("Encounter");
-		Mockito.verify(parquetUtil).convertToAvro(resource);
-		Mockito.verify(parquetWriter, Mockito.times(1)).write(Mockito.<GenericRecord> any());
+		Mockito.verify(parquetUtil, Mockito.times(1)).write(Mockito.<Resource> any());
 	}
 	
 	@Test

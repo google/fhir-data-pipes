@@ -25,12 +25,10 @@ import java.util.Map;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.gson.Gson;
 import io.debezium.data.Envelope.Operation;
-import org.apache.avro.generic.GenericRecord;
 import org.apache.camel.Exchange;
 import org.apache.camel.Message;
 import org.apache.camel.Processor;
 import org.apache.camel.component.debezium.DebeziumConstants;
-import org.apache.parquet.hadoop.ParquetWriter;
 import org.hl7.fhir.r4.model.Resource;
 import org.openmrs.analytics.model.EventConfiguration;
 import org.openmrs.analytics.model.GeneralConfiguration;
@@ -50,26 +48,22 @@ public class FhirConverter implements Processor {
 	
 	private final GeneralConfiguration generalConfiguration;
 	
-	private final String fileName;
-	
 	@VisibleForTesting
 	FhirConverter() {
 		this.openmrsUtil = null;
 		this.fhirStoreUtil = null;
 		this.parquetUtil = null;
-		this.fileName = null;
 		this.generalConfiguration = null;
 		
 	}
 	
-	public FhirConverter(OpenmrsUtil openmrsUtil, FhirStoreUtil fhirStoreUtil, ParquetUtil parquetUtil, String fileName)
-	        throws IOException {
+	public FhirConverter(OpenmrsUtil openmrsUtil, FhirStoreUtil fhirStoreUtil, ParquetUtil parquetUtil,
+	    String configFileName) throws IOException {
 		// TODO add option for switching to Parquet-file outputs.
 		this.openmrsUtil = openmrsUtil;
 		this.fhirStoreUtil = fhirStoreUtil;
 		this.parquetUtil = parquetUtil;
-		this.fileName = fileName;
-		this.generalConfiguration = getEventsToFhirConfig(fileName);
+		this.generalConfiguration = getEventsToFhirConfig(configFileName);
 	}
 	
 	public void process(Exchange exchange) {
@@ -112,8 +106,7 @@ public class FhirConverter implements Processor {
 		
 		if (parquetUtil.getParquetPath() != null) {
 			try {
-				final ParquetWriter<GenericRecord> parquetWriter = parquetUtil.getWriter(resource.fhirType());
-				parquetWriter.write(parquetUtil.convertToAvro(resource));
+				parquetUtil.write(resource);
 			}
 			catch (IOException e) {
 				log.error(String.format("Cannot create ParquetWriter Exception: %s", e));
