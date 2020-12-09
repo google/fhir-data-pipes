@@ -37,7 +37,7 @@ services:
 
   openmrs:
     restart: "always"
-    image: openmrs/openmrs-reference-application-distro:nightly
+    image: ampathke/openmrs-reference-application-distro:analytics
     container_name: openmrs
     depends_on:
       - mysql
