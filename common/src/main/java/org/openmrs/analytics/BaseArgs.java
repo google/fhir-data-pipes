@@ -30,10 +30,10 @@ public class BaseArgs {
 	public String fhirSinkPath = "projects/PROJECT/locations/LOCATION/datasets/DATASET/fhirStores/FHIRSTORENAME";
 	
 	@Parameter(names = { "--sinkUser" }, description = "Sink BasicAuth Username")
-	public String sinkUser = "hapi";
+	public String sinkUser = "";
 	
 	@Parameter(names = { "--sinkPassword" }, description = "Sink BasicAuth Password")
-	public String sinkPassword = "hapi";
+	public String sinkPassword = "";
 	
 	@Parameter(names = { "--fileParquetPath" }, description = "The base path for output Parquet files")
 	public String fileParquetPath = "/tmp/";

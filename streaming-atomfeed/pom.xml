@@ -46,12 +46,12 @@
 		<dependency>
 			<groupId>org.openmrs.module</groupId>
 			<artifactId>atomfeed-api</artifactId>
-			<version>1.0.13-SNAPSHOT</version>
+			<version>1.0.13</version>
 		</dependency>
 		<dependency>
 			<groupId>org.openmrs.module</groupId>
 			<artifactId>atomfeed-api-2.0</artifactId>
-			<version>1.0.13-SNAPSHOT</version>
+			<version>1.0.13</version>
 		</dependency>
 
 		<!-- This is for com.mysql.jdbc.Driver which is the driver_class property

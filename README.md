@@ -124,12 +124,12 @@ the FHIR store, its full URL would be:
 ## Compile and run the streaming app
 From the root of your git repo, run:
 
-`$ mvn clean install`
+`mvn clean -B install -DskipTests -pl streaming-atomfeed -am`
 
 and then:
 
 ```
-$ mvn exec:java -pl streaming-atomfeed \
+mvn exec:java -pl streaming-atomfeed \
     -Dexec.args=" --openmrsUserName=admin --openmrsPassword=Admin123 \
     --openmrsServerUrl=http://localhost:8099/openmrs \
     --fhirSinkPath=projects/PROJECT/locations/LOCATION/datasets/DATASET/fhirStores/FHIRSTORENAME \
@@ -307,9 +307,10 @@ $ docker-compose up --build streaming-binlog
 
 #### 6. Fire up Streaming Pipeline (Atomfeed)
 
-TODO
- 
-**TODO**: Add details on how this works and caveats!
+```
+ $ mvn clean -B install -DskipTests -pl streaming-atomfeed -am
+ $ docker-compose up -d --build streaming-atomfeed-db streaming-atomfeed
+```
 
 # How to query the data warehouse
 

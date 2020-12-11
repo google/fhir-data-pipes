@@ -25,7 +25,7 @@ services:
       test: "exit 0"
     environment:
      - SINK_PATH=http://localhost:8098/fhir
-     - SOURCE_URL=https://localhost:8091/openmrs
+     - SOURCE_URL=https://localhost:8099/openmrs
      - SEARCH_LIST=Patient,Encounter,Observation
      - BATCH_SIZE=20
      - TARGET_PARALLELISM=20
@@ -51,4 +51,30 @@ services:
                      -Dfile.parquetPath=/tmp/
                      -Dfhir.debeziumEventConfigPath=dbz_event_to_fhir_config.json
 
-  # TODO add attomfeed streaming - I think @pmanko is working on
+  streaming-atomfeed:
+    container_name: streaming-atomfeed
+    hostname: streaming-atomfeed
+    build:
+      context: ./
+      dockerfile: ./streaming-atomfeed/Dockerfile
+    healthcheck:
+      test: "exit 0"
+    environment:
+      - SOURCE_URL=http://localhost8099/openmrs
+      - SINK_URL=http://localhost:8098/fhir
+
+  streaming-atomfeed-db:
+    container_name: streaming-atomfeed-db
+    hostname: streaming-atomfeed-db
+    image: mysql:5.7
+    command: "mysqld --character-set-server=utf8 --collation-server=utf8_general_ci"
+    healthcheck:
+      test: "exit 0"
+    environment:
+      - MYSQL_ROOT_PASSWORD=root
+      - MYSQL_USER=fhir
+      - MYSQL_PASSWORD=fhiranalytics
+      - MYSQL_DATABASE=atomfeed_client
+      - MYSQL_ROOT_HOST=%
+    volumes:
+      - ./utils/dbdump/create_db.sql:/docker-entrypoint-initdb.d/dump.sql
