@@ -24,7 +24,7 @@ public class BaseArgs {
 	public String openmrsPassword = "Admin123";
 	
 	@Parameter(names = { "--openmrsServerUrl" }, description = "Openmrs Server Base Url")
-	public String openmrsServerUrl = "http://localhost:8099";
+	public String openmrsServerUrl = "http://localhost:8099/openmrs";
 	
 	@Parameter(names = { "--fhirSinkPath" }, description = "Google cloud FHIR store or target generic fhir store")
 	public String fhirSinkPath = "projects/PROJECT/locations/LOCATION/datasets/DATASET/fhirStores/FHIRSTORENAME";
@@ -36,7 +36,7 @@ public class BaseArgs {
 	public String sinkPassword = "";
 	
 	@Parameter(names = { "--fileParquetPath" }, description = "The base path for output Parquet files")
-	public String fileParquetPath = "/tmp/";
+	public String fileParquetPath;
 	
 	@Parameter(names = { "--secondsToFlushParquetFiles" }, description = "The number of seconds after which all Parquet "
 	        + "writers with non-empty content are flushed to files; use 0 to disable.")
