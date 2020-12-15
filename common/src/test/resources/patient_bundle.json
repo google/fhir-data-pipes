@@ -5,7 +5,7 @@
     "lastUpdated": "2020-09-30T10:23:35.190-04:00",
     "tag": [
       {
-        "system": "http://hl7.org/fhir/v3/ObservationValue",
+        "system": "http://terminology.hl7.org/CodeSystem/v3-ObservationValue",
         "code": "SUBSETTED",
         "display": "Resource encoded in summary mode"
       }
@@ -32,7 +32,7 @@
         "meta": {
           "tag": [
             {
-              "system": "http://hl7.org/fhir/v3/ObservationValue",
+              "system": "http://terminology.hl7.org/CodeSystem/v3-ObservationValue",
               "code": "SUBSETTED",
               "display": "Resource encoded in summary mode"
             }

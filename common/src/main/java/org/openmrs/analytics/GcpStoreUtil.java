@@ -16,6 +16,7 @@ package org.openmrs.analytics;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
+import java.util.Collection;
 import java.util.Collections;
 
 import ca.uhn.fhir.rest.api.MethodOutcome;
@@ -30,6 +31,7 @@ import com.google.api.client.json.gson.GsonFactory;
 import com.google.api.services.healthcare.v1.CloudHealthcare;
 import com.google.api.services.healthcare.v1.CloudHealthcareScopes;
 import org.apache.http.client.utils.URIBuilder;
+import org.hl7.fhir.r4.model.Bundle;
 import org.hl7.fhir.r4.model.Resource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -61,6 +63,27 @@ class GcpStoreUtil extends FhirStoreUtil {
 		}
 		catch (Exception e) {
 			log.error(String.format("Exception while sending to sink: %s", e.toString()));
+		}
+		return null;
+	}
+	
+	@Override
+	public Collection<MethodOutcome> uploadBundle(Bundle bundle) {
+		try {
+			// Initialize the client, which will be used to interact with the service.
+			CloudHealthcare client = createClient();
+			String uri = String.format("%sv1/%s/fhir", client.getRootUrl(), sinkUrl);
+			URIBuilder uriBuilder = new URIBuilder(uri);
+			log.info("Full URL is: {}", uriBuilder.build());
+			
+			return super.uploadBundle(uri, bundle,
+			    Collections.singletonList(new BearerTokenAuthInterceptor(getAccessToken())));
+		}
+		catch (IOException e) {
+			log.error("IOException while using Google APIs: {}", e.toString(), e);
+		}
+		catch (URISyntaxException e) {
+			log.error("URI syntax exception while using Google APIs: {}", e.toString(), e);
 		}
 		return null;
 	}
