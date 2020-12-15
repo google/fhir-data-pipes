@@ -151,7 +151,7 @@ public class DebeziumListener extends RouteBuilder {
 		public String snapshotMode = "initial";
 		
 		@Parameter(names = { "--openmrsfhirBaseEndpoint" }, description = "Fhir base endpoint")
-		public String openmrsfhirBaseEndpoint = "/openmrs/ws/fhir2/R4";
+		public String openmrsfhirBaseEndpoint = "/ws/fhir2/R4";
 		
 		@Parameter(names = { "--fhirDebeziumEventConfigPath" }, description = "Google cloud FHIR store")
 		public String fhirDebeziumEventConfigPath = "utils/dbz_event_to_fhir_config.json";

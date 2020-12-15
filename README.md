@@ -136,9 +136,10 @@ mvn exec:java -pl streaming-atomfeed \
     --sinkUser=hapi --sinkPassword=hapi "`
 ```
 
-- `OPENMRS_URL` is the path to your source OpenMRS instance (e.g., `http://localhost:9016/openmrs` in this case)
--  `OPENMRS_USER/OPENMRS_PASSWORD` is the username/password combination for accessing the OpenMRS APIs using BasicAuth.
-- `GCP_FHIR_STORE` is the relative path of the FHIR store you set up in the
+- `openmrsServerUrl` is the path to your source OpenMRS instance (e.g., `http://localhost:9016/openmrs` in this case)
+-  `openmrsUserName` is the username for accessing the OpenMRS APIs using BasicAuth.
+-  `openmrsPassword` is the password for accessing the OpenMRS APIs using BasicAuth.
+- `fhirSinkPath` is the relative path of the FHIR store you set up in the
 previous step, i.e., something like:
 `projects/PROJECT/locations/LOCATION/datasets/DATASET/fhirStores/FHIR-STORE-NAME`
 where all-caps segments are based on what you set up above.
@@ -191,7 +192,7 @@ $ mvn compile exec:java -pl streaming-binlog \
     --fileParquetPath=/tmp/ \
     --fhirDebeziumEventConfigPath=./utils/dbz_event_to_fhir_config.json"
  ```
-
+NOTE : In order to export data to a fhir sink instead of generating Parquet files,do not pass the '--fileParquetPath' argument 
 ## Common questions
 * **Will I be able to stream historical data that were recorded
 prior to enabling the  `mysql binlog`?** Yes, by default, the pipeline takes a snapshot of the entire
@@ -274,6 +275,7 @@ $ mvn exec:java -pl batch \
     --sinkPath=projects/PROJECT/locations/LOCATION/datasets/DATASET/ \
     --sinkUsername=hapi --sinkPassword=hapi "
 ```
+NOTE : In order to export data to a fhir sink instead of generating Parquet files,do not pass the '--outputParquetBase' argument 
 # Using Docker compose
 Alternatively you can spin up the entire pipeline using docker containers by running
 
