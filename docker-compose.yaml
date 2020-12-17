@@ -40,7 +40,7 @@ services:
       test: "exit 0"
     volumes:
       - ./dbz:/tmp
-      - ./utils/dbz_event_to_fhir_config.json:/deployments/dbz_event_to_fhir_config.json
+      - ./utils/dbz_event_to_fhir_config.json:/deployments/utils/dbz_event_to_fhir_config.json
     environment:
       - JAVA_MAIN_CLASS=org.openmrs.analytics.Runner
       - JAVA_OPTIONS=-Ddatabase.hostname=localhost -Ddatabase.port=3306 -Ddatabase.user=root -Ddatabase.password=debezium
