@@ -104,16 +104,18 @@ public class FhirConverter implements Processor {
 			return;
 		}
 		
-		if (parquetUtil.getParquetPath() != null) {
+		if (!parquetUtil.getParquetPath().isEmpty()) {
 			try {
 				parquetUtil.write(resource);
 			}
 			catch (IOException e) {
 				log.error(String.format("Cannot create ParquetWriter Exception: %s", e));
 			}
-		} else {
+		}
+		if (!fhirStoreUtil.getSinkUrl().isEmpty()) {
 			fhirStoreUtil.uploadResource(resource);
 		}
+		
 	}
 	
 	@VisibleForTesting

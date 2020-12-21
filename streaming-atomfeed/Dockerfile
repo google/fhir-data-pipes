@@ -25,4 +25,4 @@ ENV SINK_USERNAME=""
 ENV SINK_PASSWORD=""
 
 ENTRYPOINT mvn exec:java -pl streaming-atomfeed -Dexec.mainClass=org.openmrs.analytics.FhirStreaming \
-    -Dexec.args="--openmrsServerUrl=$SOURCE_URL --openmrsUserName=$SOURCE_USERNAME --openmrsPassword=$SOURCE_PW --fhirSinkPath=$SINK_URL --sinkUser=$SINK_USERNAME --sinkPassword=$SINK_PASSWORD"
+    -Dexec.args="--openmrsServerUrl=$SOURCE_URL --openmrsUserName=$SOURCE_USERNAME --openmrsPassword=$SOURCE_PW --fhirSinkPath=$SINK_URL --sinkUserName=$SINK_USERNAME --sinkPassword=$SINK_PASSWORD"

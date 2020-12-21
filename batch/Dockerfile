@@ -33,6 +33,6 @@ RUN echo 'Batch Job started'
 VOLUME [ "${WORK_DIR}" ]
 
 ENTRYPOINT java -cp app.jar org.openmrs.analytics.FhirEtl \
-           --serverUrl=${SERVER_URL} --username=${USERNAME} --password=${PASSWORD} \
+           --openmrsServerUrl=${SERVER_URL} --openmrsUserName=${USERNAME} --openmrsPassword=${PASSWORD} \
            --searchList=${SEARCH_LIST} --batchSize=${BATCH_SIZE} --targetParallelism=${TARGET_PARALLELISM} \
-           --sinkPath=${SINK_PATH}  --sinkUsername=${SINK_USERNAME} --sinkPassword=${SINK_PASSWORD}
+           --fhirSinkPath=${SINK_PATH}  --sinkUserName=${SINK_USERNAME} --sinkPassword=${SINK_PASSWORD}

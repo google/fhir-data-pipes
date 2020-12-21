@@ -118,4 +118,8 @@ public class FhirStoreUtil {
 	static boolean matchesGcpPattern(String gcpFhirStore) {
 		return GCP_PATTERN.matcher(gcpFhirStore).matches();
 	}
+	
+	public String getSinkUrl() {
+		return this.sinkUrl;
+	}
 }
