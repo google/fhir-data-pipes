@@ -94,9 +94,6 @@ public class FhirEtl {
 		
 		void setOpenmrsPassword(String value);
 		
-		// TODO set the default value of this to empty string once FhirSearchUtil is refactored and GCP
-		// specific parts are taken out. Then add the support for having both FHIR store and Parquet
-		// output enabled at the same time.
 		@Description("The path to the target generic fhir store, or a GCP fhir store with the format: "
 		        + "`projects/[\\w-]+/locations/[\\w-]+/datasets/[\\w-]+/fhirStores/[\\w-]+`, e.g., "
 		        + "`projects/my-project/locations/us-central1/datasets/openmrs_fhir_test/fhirStores/test`")
