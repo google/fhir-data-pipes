@@ -1,0 +1,17 @@
+{
+  "resourceType": "Bundle",
+  "id": "d5f7c602-c18c-47db-8904-f83a92f9bbd2",
+  "type": "transaction-response",
+  "link": [ {
+    "relation": "self",
+    "url": "http://localhost:9020/openmrs/ws/fhir2/R4/"
+  } ],
+  "entry": [ {
+    "response": {
+      "status": "201 Created",
+      "location": "Patient/471be3bc-08c7-4d78-a4ab-1b3d044dae67",
+      "etag": "1",
+      "lastModified": "2020-12-15T17:52:16.957+00:00"
+    }
+  } ]
+}

@@ -19,9 +19,11 @@ import static org.hamcrest.Matchers.*;
 import static org.mockito.Mockito.*;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.Collection;
 
 import ca.uhn.fhir.context.FhirContext;
+import ca.uhn.fhir.parser.IParser;
 import ca.uhn.fhir.rest.api.MethodOutcome;
 import ca.uhn.fhir.rest.client.api.IGenericClient;
 import ca.uhn.fhir.rest.client.api.IRestfulClientFactory;
@@ -33,6 +35,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Answers;
+import org.mockito.ArgumentMatchers;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
@@ -54,11 +57,21 @@ public class FhirStoreUtilTest {
 	
 	private Bundle patientBundle;
 	
+	private Bundle patientResponseBundle;
+	
 	@Before
 	public void setup() throws IOException {
-		FhirContext parseContext = FhirContext.forR4();
-		patientBundle = parseContext.newJsonParser().parseResource(Bundle.class,
-		    getClass().getClassLoader().getResource("patient_bundle.json").openStream());
+		IParser jsonParser = FhirContext.forR4().newJsonParser();
+		
+		try (InputStream patientBundleStream = getClass().getClassLoader().getResourceAsStream("patient_bundle.json")) {
+			patientBundle = jsonParser.parseResource(Bundle.class, patientBundleStream);
+		}
+		
+		try (InputStream patientResponseBundleStream = getClass().getClassLoader()
+		        .getResourceAsStream("patient_response_bundle.json")) {
+			patientResponseBundle = jsonParser.parseResource(Bundle.class, patientResponseBundleStream);
+		}
+		
 		MethodOutcome outcome = new MethodOutcome();
 		outcome.setCreated(true);
 		String sinkUrl = "test";
@@ -67,6 +80,8 @@ public class FhirStoreUtilTest {
 		
 		when(clientFactory.newGenericClient(sinkUrl)).thenReturn(client);
 		when(client.create().resource(patient).encodedJson()).thenReturn(iexec);
+		when(client.transaction().withBundle(ArgumentMatchers.any(Bundle.class)).execute())
+		        .thenReturn(patientResponseBundle);
 		doReturn(outcome).when(iexec).execute();
 		
 		fhirStoreUtil = FhirStoreUtil.createFhirStoreUtil(sinkUrl, clientFactory);
@@ -88,18 +103,18 @@ public class FhirStoreUtilTest {
 	}
 	
 	@Test
-	public void testUploadResourceToCloud() {
+	public void testUploadResource() {
 		MethodOutcome result = fhirStoreUtil.uploadResource(patient);
 		
 		assertThat(result.getCreated(), equalTo(true));
 	}
 	
 	@Test
-	public void testUploadBundleToCloud() throws IOException {
+	public void testUploadBundle() {
 		Collection<MethodOutcome> result = fhirStoreUtil.uploadBundle(patientBundle);
 		
 		assertThat(result, not(nullValue()));
-		assertThat(result, not(Matchers.<MethodOutcome> empty()));
+		assertThat(result, not(Matchers.empty()));
 		assertThat(result.iterator().next().getCreated(), equalTo(true));
 	}
 	
