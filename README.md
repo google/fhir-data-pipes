@@ -133,7 +133,7 @@ mvn exec:java -pl streaming-atomfeed \
     -Dexec.args=" --openmrsUserName=admin --openmrsPassword=Admin123 \
     --openmrsServerUrl=http://localhost:8099/openmrs \
     --fhirSinkPath=projects/PROJECT/locations/LOCATION/datasets/DATASET/fhirStores/FHIRSTORENAME \
-    --sinkUser=hapi --sinkPassword=hapi "`
+    --sinkUserName=hapi --sinkPassword=hapi "`
 ```
 
 - `openmrsServerUrl` is the path to your source OpenMRS instance (e.g., `http://localhost:9016/openmrs` in this case)
@@ -185,14 +185,15 @@ $ mvn compile exec:java -pl streaming-binlog \
     --databaseOffsetStorage=offset.dat --databaseHistory=dbhistory.dat \
     --openmrsUserName=admin --openmrsPassword=Admin123 \
     --openmrsServerUrl=http://localhost:8099/openmrs \
-    --openmrsfhirBaseEndpoint=/openmrs/ws/fhir2/R4 \
+    --openmrsfhirBaseEndpoint=/ws/fhir2/R4 \
     --snapshotMode=initial \
     --fhirSinkPath=projects/PROJECT/locations/LOCATION/datasets/DATASET/fhirStores/FHIRSTORENAME \
-    --sinkUser=hapi --sinkPassword=hapi \
+    --sinkUserName=hapi --sinkPassword=hapi \
     --fileParquetPath=/tmp/ \
     --fhirDebeziumEventConfigPath=./utils/dbz_event_to_fhir_config.json"
  ```
-NOTE : In order to export data to a fhir sink instead of generating Parquet files,do not pass the '--fileParquetPath' argument 
+NOTE : In order to export data to a fhir sink , pass the '--fhirSinkPath' argument , 
+In order to  generate Parquet files, pass the '--fileParquetPath' argument 
 ## Common questions
 * **Will I be able to stream historical data that were recorded
 prior to enabling the  `mysql binlog`?** Yes, by default, the pipeline takes a snapshot of the entire
@@ -257,9 +258,11 @@ run using a command like:
 
 ```
 $ java -cp batch/target/fhir-batch-etl-bundled-0.1.0-SNAPSHOT.jar \
-    org.openmrs.analytics.FhirEtl --serverUrl=http://localhost:9018/openmrs \
+    org.openmrs.analytics.FhirEtl --openmrsServerUrl=http://localhost:9018/openmrs \
     --searchList=Patient,Encounter,Observation --batchSize=20 \
-   --targetParallelism=20 --sinkPath=projects/PROJECT/locations/LOCATION/datasets/DATASET/`
+   --targetParallelism=20 --fhirSinkPath=projects/PROJECT/locations/LOCATION/datasets/DATASET/ \
+   --sinkUserName=hapi --sinkPassword=hapi --fileParquetPath=tmp/TEST/ \
+   --openmrsUserName=admin --openmrsPassword=Admin123 `
 ```
 The `searchList` argument accepts a comma separated list of FHIR search URLs.
 For example, one can use `Patient?given=Susan` to extract only Patient resources
@@ -270,12 +273,14 @@ If you prefer not to use a bundled jar (e.g., during development in an IDE) you
 can use the Maven exec plugin:
 ```
 $ mvn exec:java -pl batch \
-    "-Dexec.args=--serverUrl=http://localhost:9020/openmrs  --searchList=Observation \
-    --batchSize=20 --targetParallelism=20 --outputParquetBase=tmp/TEST/ \
-    --sinkPath=projects/PROJECT/locations/LOCATION/datasets/DATASET/ \
-    --sinkUsername=hapi --sinkPassword=hapi "
+    "-Dexec.args= --openmrsServerUrl=http://localhost:9020/openmrs  --searchList=Observation \
+    --batchSize=20 --targetParallelism=20 --fileParquetPath=tmp/TEST/ \
+    --fhirSinkPath=projects/PROJECT/locations/LOCATION/datasets/DATASET/ \
+    --sinkUserName=hapi --sinkPassword=hapi \
+     --openmrsUserName=admin --openmrsPassword=Admin123 "
 ```
-NOTE : In order to export data to a fhir sink instead of generating Parquet files,do not pass the '--outputParquetBase' argument 
+NOTE : In order to export data to a fhir sink , pass the '--fhirSinkPath' , 
+In order to  generate Parquet files, pass the '--fileParquetPath' argument 
 # Using Docker compose
 Alternatively you can spin up the entire pipeline using docker containers by running
 

@@ -27,16 +27,16 @@ public class BaseArgs {
 	public String openmrsServerUrl = "http://localhost:8099/openmrs";
 	
 	@Parameter(names = { "--fhirSinkPath" }, description = "Google cloud FHIR store or target generic fhir store")
-	public String fhirSinkPath = "projects/PROJECT/locations/LOCATION/datasets/DATASET/fhirStores/FHIRSTORENAME";
+	public String fhirSinkPath = "";
 	
-	@Parameter(names = { "--sinkUser" }, description = "Sink BasicAuth Username")
-	public String sinkUser = "";
+	@Parameter(names = { "--sinkUserName" }, description = "Sink BasicAuth Username")
+	public String sinkUserName = "";
 	
 	@Parameter(names = { "--sinkPassword" }, description = "Sink BasicAuth Password")
 	public String sinkPassword = "";
 	
 	@Parameter(names = { "--fileParquetPath" }, description = "The base path for output Parquet files")
-	public String fileParquetPath;
+	public String fileParquetPath = "";
 	
 	@Parameter(names = { "--secondsToFlushParquetFiles" }, description = "The number of seconds after which all Parquet "
 	        + "writers with non-empty content are flushed to files; use 0 to disable.")

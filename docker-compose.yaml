@@ -43,13 +43,17 @@ services:
       - ./utils/dbz_event_to_fhir_config.json:/deployments/utils/dbz_event_to_fhir_config.json
     environment:
       - JAVA_MAIN_CLASS=org.openmrs.analytics.Runner
-      - JAVA_OPTIONS=-Ddatabase.hostname=localhost -Ddatabase.port=3306 -Ddatabase.user=root -Ddatabase.password=debezium
-                     -Ddatabase.dbname=mysql -Ddatabase.schema=openmrs -Ddatabase.serverId=77 -Ddatabase.offsetStorage=/tmp/offset.dat
-                     -Ddatabase.databaseHistory=/tmp/dbhistory.dat -Dopenmrs.username=admin -Dopenmrs.password=Admin123
-                     -Dopenmrs.serverUrl=http://localhost:8099 -Dopenmrs.fhirBaseEndpoint=/openmrs/ws/fhir2/R4
-                     -Dfhir.sinkPath=http://localhost:8098/fhir
-                     -Dfile.parquetPath=/tmp/
-                     -Dfhir.debeziumEventConfigPath=dbz_event_to_fhir_config.json
+      - JAVA_OPTIONS=--databaseHostName=localhost 
+                     --databasePort=3306 --databaseUser=root --databasePassword=debezium 
+                     --databaseName=mysql --databaseSchema=openmrs --databaseServerId=77 
+                     --databaseOffsetStorage=offset.dat --databaseHistory=/tmp/dbhistory.dat 
+                     --openmrsUserName=admin --openmrsPassword=Admin123 
+                     --openmrsServerUrl=http://localhost:8099/openmrs 
+                     --openmrsfhirBaseEndpoint=/ws/fhir2/R4 
+                     --snapshotMode=initial 
+                     --fhirSinkPath=http://localhost:8098/fhir
+                     --fileParquetPath=/tmp/ 
+                     --fhirDebeziumEventConfigPath=./utils/dbz_event_to_fhir_config.json
 
   streaming-atomfeed:
     container_name: streaming-atomfeed

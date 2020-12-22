@@ -58,7 +58,7 @@ public class DebeziumListener extends RouteBuilder {
 		FhirContext fhirContext = FhirContext.forR4();
 		String fhirBaseUrl = params.openmrsServerUrl + params.openmrsfhirBaseEndpoint;
 		OpenmrsUtil openmrsUtil = new OpenmrsUtil(fhirBaseUrl, params.openmrUserName, params.openmrsPassword, fhirContext);
-		FhirStoreUtil fhirStoreUtil = FhirStoreUtil.createFhirStoreUtil(params.fhirSinkPath, params.sinkUser,
+		FhirStoreUtil fhirStoreUtil = FhirStoreUtil.createFhirStoreUtil(params.fhirSinkPath, params.sinkUserName,
 		    params.sinkPassword, fhirContext.getRestfulClientFactory());
 		ParquetUtil parquetUtil = new ParquetUtil(params.fileParquetPath, params.secondsToFlushParquetFiles,
 		        params.rowGroupSizeForParquetFiles);
