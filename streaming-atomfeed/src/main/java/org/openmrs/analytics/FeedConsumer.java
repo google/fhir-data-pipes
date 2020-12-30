@@ -21,7 +21,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.hl7.fhir.dstu3.model.*;
+import org.hl7.fhir.r4.model.*;
 import org.openmrs.module.atomfeed.client.AtomFeedClient;
 import org.openmrs.module.atomfeed.client.AtomFeedClientFactory;
 import org.slf4j.Logger;
@@ -39,7 +39,6 @@ public class FeedConsumer {
 		categories.put("Patient", Patient.class);
 		categories.put("Encounter", Encounter.class);
 		categories.put("Observation", Observation.class);
-		categories.put("Location", Location.class);
 		categories.put("Allergy", AllergyIntolerance.class);
 		
 		// TODO add other FHIR resources that are implemented in OpenMRS.

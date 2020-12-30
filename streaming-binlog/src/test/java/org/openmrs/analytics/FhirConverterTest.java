@@ -16,18 +16,15 @@ package org.openmrs.analytics;
 
 import java.io.IOException;
 import java.util.Map;
-import java.util.Properties;
 
 import io.debezium.data.Envelope.Operation;
-import org.apache.avro.generic.GenericRecord;
 import org.apache.camel.Produce;
 import org.apache.camel.ProducerTemplate;
 import org.apache.camel.RoutesBuilder;
 import org.apache.camel.builder.RouteBuilder;
 import org.apache.camel.test.junit4.CamelTestSupport;
-import org.apache.parquet.hadoop.ParquetWriter;
-import org.hl7.fhir.dstu3.model.Encounter;
-import org.hl7.fhir.dstu3.model.Resource;
+import org.hl7.fhir.r4.model.Encounter;
+import org.hl7.fhir.r4.model.Resource;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
@@ -58,9 +55,6 @@ public class FhirConverterTest extends CamelTestSupport {
 	@Mock
 	private ParquetUtil parquetUtil;
 	
-	@Mock
-	private ParquetWriter<GenericRecord> parquetWriter;
-	
 	private FhirConverter fhirConverter;
 	
 	@Override
@@ -70,11 +64,8 @@ public class FhirConverterTest extends CamelTestSupport {
 			@Override
 			public void configure() throws Exception {
 				
-				// set debeziumEventConfigPath
-				Properties p = System.getProperties();
-				p.put("fhir.debeziumEventConfigPath", "../utils/dbz_event_to_fhir_config.json");
-				System.setProperties(p);
-				fhirConverter = new FhirConverter(openmrsUtil, fhirStoreUtil, parquetUtil);
+				String fhirDebeziumEventConfigPath = "../utils/dbz_event_to_fhir_config.json";
+				fhirConverter = new FhirConverter(openmrsUtil, fhirStoreUtil, parquetUtil, fhirDebeziumEventConfigPath);
 				
 				// Inject FhirUriGenerator;
 				from(TEST_ROUTE).process(fhirConverter); // inject target processor here
@@ -83,18 +74,22 @@ public class FhirConverterTest extends CamelTestSupport {
 	}
 	
 	@Test
-	public void shouldFetchFhirResourceAndStore() {
+	public void shouldFetchFhirResourceAndUploadToFhirStore() throws IOException {
 		Map<String, String> messageBody = DebeziumTestUtil.genExpectedBody();
 		Map<String, Object> messageHeaders = DebeziumTestUtil.genExpectedHeaders(Operation.UPDATE, "encounter");
 		resource = new Encounter();
 		resource.setId(TEST_ID);
 		Mockito.when(openmrsUtil.fetchFhirResource(Mockito.anyString())).thenReturn(resource);
+		Mockito.when(fhirStoreUtil.getSinkUrl()).thenReturn("sinkPath");
+		//empty parquet File Path
+		Mockito.when(parquetUtil.getParquetPath()).thenReturn("");
 		
 		// Actual event that will trigger process().
 		eventsProducer.sendBodyAndHeaders(messageBody, messageHeaders);
 		
 		Mockito.verify(openmrsUtil).fetchFhirResource(Mockito.anyString());
 		Mockito.verify(fhirStoreUtil).uploadResource(resource);
+		Mockito.verify(parquetUtil, Mockito.never()).write(Mockito.<Resource> any());
 	}
 	
 	@Test
@@ -106,16 +101,34 @@ public class FhirConverterTest extends CamelTestSupport {
 		final String testPath = "some_test_path";
 		Mockito.when(openmrsUtil.fetchFhirResource(Mockito.anyString())).thenReturn(resource);
 		Mockito.when(parquetUtil.getParquetPath()).thenReturn(testPath);
-		Mockito.when(parquetUtil.getWriter("Encounter")).thenReturn(parquetWriter);
+		//empty fhir sink path
+		Mockito.when(fhirStoreUtil.getSinkUrl()).thenReturn("");
 		
 		// Actual event that will trigger process().
 		eventsProducer.sendBodyAndHeaders(messageBody, messageHeaders);
 		
 		Mockito.verify(openmrsUtil).fetchFhirResource(Mockito.anyString());
 		Mockito.verify(fhirStoreUtil, Mockito.never()).uploadResource(Mockito.<Resource> any());
-		Mockito.verify(parquetUtil).getWriter("Encounter");
-		Mockito.verify(parquetUtil).convertToAvro(resource);
-		Mockito.verify(parquetWriter, Mockito.times(1)).write(Mockito.<GenericRecord> any());
+		Mockito.verify(parquetUtil, Mockito.times(1)).write(Mockito.<Resource> any());
+	}
+	
+	@Test
+	public void shouldFetchFhirResourceAndOutputParquetAndUploadToFhirSink() throws IOException {
+		Map<String, String> messageBody = DebeziumTestUtil.genExpectedBody();
+		Map<String, Object> messageHeaders = DebeziumTestUtil.genExpectedHeaders(Operation.UPDATE, "encounter");
+		resource = new Encounter();
+		resource.setId(TEST_ID);
+		final String testPath = "some_test_path";
+		Mockito.when(openmrsUtil.fetchFhirResource(Mockito.anyString())).thenReturn(resource);
+		Mockito.when(parquetUtil.getParquetPath()).thenReturn(testPath);
+		Mockito.when(fhirStoreUtil.getSinkUrl()).thenReturn("someFhirSink");
+		
+		// Actual event that will trigger process().
+		eventsProducer.sendBodyAndHeaders(messageBody, messageHeaders);
+		
+		Mockito.verify(openmrsUtil).fetchFhirResource(Mockito.anyString());
+		Mockito.verify(fhirStoreUtil).uploadResource(Mockito.<Resource> any());
+		Mockito.verify(parquetUtil, Mockito.times(1)).write(Mockito.<Resource> any());
 	}
 	
 	@Test

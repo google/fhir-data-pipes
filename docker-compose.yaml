@@ -25,7 +25,7 @@ services:
       test: "exit 0"
     environment:
      - SINK_PATH=http://localhost:8098/fhir
-     - SOURCE_URL=https://localhost:8091/openmrs
+     - SOURCE_URL=https://localhost:8099/openmrs
      - SEARCH_LIST=Patient,Encounter,Observation
      - BATCH_SIZE=20
      - TARGET_PARALLELISM=20
@@ -40,15 +40,45 @@ services:
       test: "exit 0"
     volumes:
       - ./dbz:/tmp
-      - ./utils/dbz_event_to_fhir_config.json:/deployments/dbz_event_to_fhir_config.json
+      - ./utils/dbz_event_to_fhir_config.json:/deployments/utils/dbz_event_to_fhir_config.json
     environment:
       - JAVA_MAIN_CLASS=org.openmrs.analytics.Runner
-      - JAVA_OPTIONS=-Ddatabase.hostname=localhost -Ddatabase.port=3306 -Ddatabase.user=root -Ddatabase.password=debezium
-                     -Ddatabase.dbname=mysql -Ddatabase.schema=openmrs -Ddatabase.serverId=77 -Ddatabase.offsetStorage=/tmp/offset.dat
-                     -Ddatabase.databaseHistory=/tmp/dbhistory.dat -Dopenmrs.username=admin -Dopenmrs.password=Admin123
-                     -Dopenmrs.serverUrl=http://localhost:8099 -Dopenmrs.fhirBaseEndpoint=/openmrs/ws/fhir2/R3
-                     -Dfhir.sinkPath=http://localhost:8098/fhir
-                     -Dfile.parquetPath=/tmp/
-                     -Dfhir.debeziumEventConfigPath=dbz_event_to_fhir_config.json
+      - JAVA_OPTIONS=--databaseHostName=localhost 
+                     --databasePort=3306 --databaseUser=root --databasePassword=debezium 
+                     --databaseName=mysql --databaseSchema=openmrs --databaseServerId=77 
+                     --databaseOffsetStorage=offset.dat --databaseHistory=/tmp/dbhistory.dat 
+                     --openmrsUserName=admin --openmrsPassword=Admin123 
+                     --openmrsServerUrl=http://localhost:8099/openmrs 
+                     --openmrsfhirBaseEndpoint=/ws/fhir2/R4 
+                     --snapshotMode=initial 
+                     --fhirSinkPath=http://localhost:8098/fhir
+                     --fileParquetPath=/tmp/ 
+                     --fhirDebeziumEventConfigPath=./utils/dbz_event_to_fhir_config.json
 
-  # TODO add attomfeed streaming - I think @pmanko is working on
+  streaming-atomfeed:
+    container_name: streaming-atomfeed
+    hostname: streaming-atomfeed
+    build:
+      context: ./
+      dockerfile: ./streaming-atomfeed/Dockerfile
+    healthcheck:
+      test: "exit 0"
+    environment:
+      - SOURCE_URL=http://localhost8099/openmrs
+      - SINK_URL=http://localhost:8098/fhir
+
+  streaming-atomfeed-db:
+    container_name: streaming-atomfeed-db
+    hostname: streaming-atomfeed-db
+    image: mysql:5.7
+    command: "mysqld --character-set-server=utf8 --collation-server=utf8_general_ci"
+    healthcheck:
+      test: "exit 0"
+    environment:
+      - MYSQL_ROOT_PASSWORD=root
+      - MYSQL_USER=fhir
+      - MYSQL_PASSWORD=fhiranalytics
+      - MYSQL_DATABASE=atomfeed_client
+      - MYSQL_ROOT_HOST=%
+    volumes:
+      - ./utils/dbdump/create_db.sql:/docker-entrypoint-initdb.d/dump.sql

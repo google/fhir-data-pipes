@@ -30,18 +30,15 @@
 
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-    <maven.compiler.source>1.7</maven.compiler.source>
-    <maven.compiler.target>1.7</maven.compiler.target>
     <junit.version>4.13-beta-3</junit.version>
     <slf4j.version>1.7.30</slf4j.version>
     <log4j2.version>2.13.3</log4j2.version>
-    <!-- NOTE: FHIR DSTU3 is used because Bunsen support for R4 is not ready. -->
-    <!-- hapifhirVersion>4.2.0</hapifhirVersion -->
-    <hapifhirVersion>3.8.0</hapifhirVersion>
+    <hapifhirVersion>4.2.0</hapifhirVersion>
     <bunsenVersion>0.5.7</bunsenVersion>
     <hamcrest.version>2.2</hamcrest.version>
-		<openmrsPlatformVersion>2.4.0-SNAPSHOT</openmrsPlatformVersion>
-		<mockito.version>3.5.10</mockito.version>
+    <openmrsPlatformVersion>2.4.0-SNAPSHOT</openmrsPlatformVersion>
+    <mockito.version>3.5.10</mockito.version>
+    <jcommander.version>1.78</jcommander.version>
   </properties>
 
   <modules>
@@ -88,6 +85,12 @@
 				<version>${hapifhirVersion}</version>
 			</dependency>
 
+      <dependency>
+        <groupId>ca.uhn.hapi.fhir</groupId>
+        <artifactId>hapi-fhir-structures-r4</artifactId>
+        <version>${hapifhirVersion}</version>
+      </dependency>
+
 			<dependency>
 				<groupId>ca.uhn.hapi.fhir</groupId>
 				<artifactId>hapi-fhir-client</artifactId>
@@ -100,7 +103,11 @@
 				<version>${mockito.version}</version>
         <scope>test</scope>
 			</dependency>
-
+      <dependency>
+        <groupId>com.beust</groupId>
+        <artifactId>jcommander</artifactId>
+        <version>${jcommander.version}</version>
+      </dependency>
 		</dependencies>
 	</dependencyManagement>
 
@@ -286,6 +293,11 @@
             </execution>
           </executions>
         </plugin>
+        <plugin>
+          <groupId>org.codehaus.mojo</groupId>
+          <artifactId>exec-maven-plugin</artifactId>
+          <version>1.6.0</version>
+        </plugin>
       </plugins>
     </pluginManagement>
 
@@ -306,6 +318,14 @@
       <plugin>
         <groupId>net.revelc.code.formatter</groupId>
         <artifactId>formatter-maven-plugin</artifactId>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-compiler-plugin</artifactId>
+        <configuration>
+          <source>8</source>
+          <target>8</target>
+        </configuration>
       </plugin>
     </plugins>
   </build>

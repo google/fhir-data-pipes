@@ -30,7 +30,7 @@ import ca.uhn.fhir.rest.client.api.IGenericClient;
 import ca.uhn.fhir.rest.gclient.IQuery;
 import ca.uhn.fhir.rest.gclient.IUntypedQuery;
 import com.google.common.io.Resources;
-import org.hl7.fhir.dstu3.model.Bundle;
+import org.hl7.fhir.r4.model.Bundle;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -42,7 +42,7 @@ public class FhirSearchUtilTest {
 	
 	private static final String PAGE_URL_PARAM = "_getpages=861af9b4-d847-4831-b945-ab1f6f08f03e";
 	
-	private static final String BASE_URL = "http://localhost:9020/openmrs/ws/fhir2/R3";
+	private static final String BASE_URL = "http://localhost:9020/openmrs/ws/fhir2/R4";
 	
 	private static final String SEARCH_URL = "Patient?given=TEST";
 	
@@ -70,7 +70,7 @@ public class FhirSearchUtilTest {
 	public void setup() throws IOException {
 		URL url = Resources.getResource("bundle.json");
 		bundleStr = Resources.toString(url, StandardCharsets.UTF_8);
-		this.fhirContext = FhirContext.forDstu3();
+		this.fhirContext = FhirContext.forR4();
 		IParser parser = fhirContext.newJsonParser();
 		bundle = parser.parseResource(Bundle.class, bundleStr);
 		fhirSearchUtil = new FhirSearchUtil(openmrsUtil);

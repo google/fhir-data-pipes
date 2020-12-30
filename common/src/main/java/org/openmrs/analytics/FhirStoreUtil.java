@@ -19,7 +19,9 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 import ca.uhn.fhir.rest.api.MethodOutcome;
 import ca.uhn.fhir.rest.client.api.IClientInterceptor;
@@ -27,8 +29,12 @@ import ca.uhn.fhir.rest.client.api.IGenericClient;
 import ca.uhn.fhir.rest.client.api.IRestfulClientFactory;
 import ca.uhn.fhir.rest.client.interceptor.AdditionalRequestHeadersInterceptor;
 import ca.uhn.fhir.rest.client.interceptor.BasicAuthInterceptor;
-import org.hl7.fhir.dstu3.model.Bundle;
-import org.hl7.fhir.dstu3.model.Resource;
+import org.apache.commons.lang3.StringUtils;
+import org.hl7.fhir.instance.model.api.IBaseOperationOutcome;
+import org.hl7.fhir.r4.model.Bundle;
+import org.hl7.fhir.r4.model.Coding;
+import org.hl7.fhir.r4.model.Meta;
+import org.hl7.fhir.r4.model.Resource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -82,18 +88,16 @@ public class FhirStoreUtil {
 	}
 	
 	public Collection<MethodOutcome> uploadBundle(Bundle bundle) {
-		List<MethodOutcome> responses = new ArrayList<MethodOutcome>(bundle.getTotal());
+		Collection<IClientInterceptor> interceptors = Collections.emptyList();
 		
-		for (Bundle.BundleEntryComponent entry : bundle.getEntry()) {
-			Resource resource = entry.getResource();
-			responses.add(uploadResource(resource));
+		if (!isNullOrEmpty(sinkUsername) && !isNullOrEmpty(sinkPassword)) {
+			interceptors = Collections.singleton(new BasicAuthInterceptor(sinkUsername, sinkPassword));
 		}
-		return responses;
+		
+		return uploadBundle(sinkUrl, bundle, interceptors);
 	}
 	
-	protected MethodOutcome updateFhirResource(String sinkUrl, Resource resource,
-	        Collection<IClientInterceptor> interceptors) {
-		
+	protected IGenericClient createGenericClient(String sinkUrl, Collection<IClientInterceptor> interceptors) {
 		IGenericClient client = clientFactory.newGenericClient(sinkUrl);
 		
 		for (IClientInterceptor interceptor : interceptors) {
@@ -103,12 +107,69 @@ public class FhirStoreUtil {
 		AdditionalRequestHeadersInterceptor interceptor = new AdditionalRequestHeadersInterceptor();
 		interceptor.addHeaderValue("Accept", "application/fhir+json");
 		interceptor.addHeaderValue("Accept-Charset", "utf-8");
-		interceptor.addHeaderValue("Content-Type", "application/fhir+json");
+		interceptor.addHeaderValue("Content-Type", "application/fhir+json; charset=UTF-8");
 		
 		client.registerInterceptor(interceptor);
 		
-		// TODO: determine if summary mode is the right approach
-		resource.getMeta().setTag(Collections.EMPTY_LIST);
+		return client;
+	}
+	
+	protected Collection<MethodOutcome> uploadBundle(String sinkUrl, Bundle bundle,
+	        Collection<IClientInterceptor> interceptors) {
+		IGenericClient client = createGenericClient(sinkUrl, interceptors);
+		
+		List<MethodOutcome> responses = new ArrayList<>(bundle.getTotal());
+		
+		Bundle transactionBundle = new Bundle();
+		
+		// use transaction so this is atomic, but we should probably consider if we need this overhead
+		transactionBundle.setType(Bundle.BundleType.TRANSACTION);
+		
+		for (Bundle.BundleEntryComponent entry : bundle.getEntry()) {
+			Resource resource = entry.getResource();
+			
+			removeSubsettedTag(resource.getMeta());
+			
+			Bundle.BundleEntryComponent component = transactionBundle.addEntry();
+			component.setResource(resource);
+			component.getRequest().setUrl(resource.fhirType()).setMethod(Bundle.HTTPVerb.POST);
+		}
+		
+		Bundle outcomes = client.transaction().withBundle(transactionBundle).execute();
+		
+		if (outcomes != null) {
+			for (Bundle.BundleEntryComponent response : outcomes.getEntry()) {
+				Bundle.BundleEntryResponseComponent responseComponent = response.getResponse();
+				MethodOutcome methodOutcome = new MethodOutcome();
+				
+				if (StringUtils.isNotBlank(responseComponent.getStatus()) && responseComponent.getStatus().length() >= 3) {
+					int status;
+					try {
+						status = Integer.parseUnsignedInt(responseComponent.getStatus().substring(0, 3));
+						methodOutcome.setCreatedUsingStatusCode(status);
+					}
+					catch (NumberFormatException e) {
+						// swallow
+					}
+				}
+				
+				Resource outcome = responseComponent.getOutcome();
+				if (outcome instanceof IBaseOperationOutcome) {
+					methodOutcome.setOperationOutcome((IBaseOperationOutcome) outcome);
+				}
+				
+				responses.add(methodOutcome);
+			}
+		}
+		
+		return responses;
+	}
+	
+	protected MethodOutcome updateFhirResource(String sinkUrl, Resource resource,
+	        Collection<IClientInterceptor> interceptors) {
+		IGenericClient client = createGenericClient(sinkUrl, interceptors);
+		
+		removeSubsettedTag(resource.getMeta());
 		
 		// Initialize the client, which will be used to interact with the service.
 		MethodOutcome outcome = client.create().resource(resource).encodedJson().execute();
@@ -118,7 +179,18 @@ public class FhirStoreUtil {
 		return outcome;
 	}
 	
+	protected void removeSubsettedTag(Meta meta) {
+		Coding tag = meta.getTag("http://terminology.hl7.org/CodeSystem/v3-ObservationValue", "SUBSETTED");
+		if (tag != null) {
+			meta.setTag(meta.getTag().stream().filter(t -> !Objects.equals(t, tag)).collect(Collectors.toList()));
+		}
+	}
+	
 	static boolean matchesGcpPattern(String gcpFhirStore) {
 		return GCP_PATTERN.matcher(gcpFhirStore).matches();
+	}
+	
+	public String getSinkUrl() {
+		return this.sinkUrl;
 	}
 }

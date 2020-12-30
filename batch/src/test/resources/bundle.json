@@ -16,11 +16,11 @@
   "link": [
     {
       "relation": "self",
-      "url": "http://localhost:9020/openmrs/ws/fhir2/R3/Patient?_count=15&_getpagesoffset=0&_summary=data&given=Bashir"
+      "url": "http://localhost:9020/openmrs/ws/fhir2/R4/Patient?_count=15&_getpagesoffset=0&_summary=data&given=Bashir"
     },
     {
       "relation": "next",
-      "url": "http://localhost:9020/openmrs/ws/fhir2/R3?_getpages=861af9b4-d847-4831-b945-ab1f6f08f03e&_getpagesoffset=15&_count=15&_bundletype=searchset"
+      "url": "http://localhost:9020/openmrs/ws/fhir2/R4?_getpages=861af9b4-d847-4831-b945-ab1f6f08f03e&_getpagesoffset=15&_count=15&_bundletype=searchset"
     }
   ],
   "entry": [

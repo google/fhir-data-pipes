@@ -15,13 +15,24 @@
 package org.openmrs.analytics;
 
 import java.io.IOException;
+import java.nio.file.FileSystem;
+import java.nio.file.FileSystems;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
+import java.util.Timer;
+import java.util.TimerTask;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+import java.util.stream.Stream;
 
 import ca.uhn.fhir.context.FhirContext;
 import com.cerner.bunsen.avro.AvroConverter;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import org.apache.avro.Conversions.DecimalConversion;
 import org.apache.avro.Schema;
@@ -31,9 +42,9 @@ import org.apache.avro.specific.SpecificData;
 import org.apache.hadoop.fs.Path;
 import org.apache.parquet.avro.AvroParquetWriter;
 import org.apache.parquet.hadoop.ParquetWriter;
-import org.hl7.fhir.dstu3.model.Bundle;
-import org.hl7.fhir.dstu3.model.Bundle.BundleEntryComponent;
-import org.hl7.fhir.dstu3.model.Resource;
+import org.hl7.fhir.r4.model.Bundle;
+import org.hl7.fhir.r4.model.Bundle.BundleEntryComponent;
+import org.hl7.fhir.r4.model.Resource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -44,11 +55,19 @@ public class ParquetUtil {
 	
 	private static final Logger log = LoggerFactory.getLogger(ParquetUtil.class);
 	
+	private static final Pattern OUTPUT_PATTERN = Pattern.compile(".*output-streaming-([\\p{Digit}]{5}+)");
+	
 	private final FhirContext fhirContext;
 	
 	private final Map<String, AvroConverter> converterMap;
 	
 	private final Map<String, ParquetWriter<GenericRecord>> writerMap;
+	
+	private final int rowGroupSize;
+	
+	private final String parquetFilePath;
+	
+	private final FileSystem fileSystem;
 	
 	/**
 	 * This is to fix the logical type conversions for BigDecimal. This should be called once before any
@@ -63,13 +82,54 @@ public class ParquetUtil {
 	}
 	
 	public String getParquetPath() {
-		return System.getProperty("file.parquetPath");
+		return this.parquetFilePath;
 	}
 	
-	ParquetUtil(FhirContext fhirContext) {
-		this.fhirContext = fhirContext;
+	/**
+	 * Note using this constructor may cause the files not be be flushed until `closeAllWriters` is
+	 * called.
+	 *
+	 * @param parquetFilePath The directory under which the Parquet files are written.
+	 */
+	public ParquetUtil(String parquetFilePath) {
+		this(parquetFilePath, 0, 0, FileSystems.getDefault());
+	}
+	
+	/**
+	 * The preferred constructor for the streaming mode.
+	 *
+	 * @param parquetFilePath The directory under which the Parquet files are written.
+	 * @param secondsToFlush The interval after which the content of Parquet writers is flushed to disk.
+	 * @param rowGroupSize The approximate size of row-groups in the Parquet files (0 means use
+	 *            default).
+	 */
+	public ParquetUtil(String parquetFilePath, int secondsToFlush, int rowGroupSize) {
+		this(parquetFilePath, secondsToFlush, rowGroupSize, FileSystems.getDefault());
+	}
+	
+	@VisibleForTesting
+	ParquetUtil(String parquetFilePath, int secondsToFlush, int rowGroupSize, FileSystem fileSystem) {
+		this.fhirContext = FhirContext.forDstu3();
 		this.converterMap = new HashMap<>();
 		this.writerMap = new HashMap<>();
+		this.parquetFilePath = parquetFilePath;
+		this.rowGroupSize = rowGroupSize;
+		this.fileSystem = fileSystem;
+		if (secondsToFlush > 0) {
+			TimerTask task = new TimerTask() {
+				
+				@Override
+				public void run() {
+					try {
+						flushAll();
+					}
+					catch (IOException e) {
+						log.error("Could not flush Parquet files: " + e);
+					}
+				}
+			};
+			new Timer().scheduleAtFixedRate(task, secondsToFlush * 1000, secondsToFlush * 1000);
+		}
 	}
 	
 	synchronized private AvroConverter getConverter(String resourceType) {
@@ -80,35 +140,80 @@ public class ParquetUtil {
 		return converterMap.get(resourceType);
 	}
 	
-	/**
-	 * This is to fetch a writer for a given `resourceType`; internally it only once create a writer for
-	 * a `resourceType` and on subsequent calls, return the same object. The base path comes from
-	 * `file.parquetPath` system property. NOTE: This should be removed once we move the streaming
-	 * pipeline to Beam; the I/O should be left to Beam similar to the batch mode.
-	 */
-	synchronized public ParquetWriter<GenericRecord> getWriter(String resourceType) throws IOException {
-		Preconditions.checkNotNull(getParquetPath());
-		if (!writerMap.containsKey(resourceType)) {
-			AvroParquetWriter.Builder<GenericRecord> builder = AvroParquetWriter
-			        .builder(new Path(getParquetPath() + resourceType));
-			// TODO adjust parquet file parameters for our needs or make them configurable.
-			ParquetWriter<GenericRecord> writer = builder.withSchema(getResourceSchema(resourceType)).build();
-			writerMap.put(resourceType, writer);
+	@VisibleForTesting
+	synchronized Path bestOutputFile(String resourceType) throws IOException {
+		java.nio.file.Path outputDir = fileSystem.getPath(getParquetPath(), resourceType);
+		Files.createDirectories(outputDir);
+		Stream<java.nio.file.Path> files = Files.list(outputDir);
+		Optional<Integer> maxIndex = files.map(f -> {
+			Matcher matcher = OUTPUT_PATTERN.matcher(f.toString());
+			if (matcher.matches()) {
+				return new Integer(matcher.group(1).replaceFirst("^0+(?!$)", ""));
+			}
+			return -1;
+		}).max(Integer::compareTo);
+		int bestIndex = maxIndex.map(integer -> integer + 1).orElse(0);
+		if (bestIndex > 99999) {
+			// TODO: Handle cases with more than 100K files in a directory, e.g., by creating an extra
+			// layer in the directory hierarchy.
+			throw new IOException(
+			        "It is not wise to create more than 100K files in a directory, please adjust your configuration params!");
 		}
-		return writerMap.get(resourceType);
+		String bestFileName = String.format("output-streaming-%05d", bestIndex);
+		Path bestFilePath = new Path(Paths.get(getParquetPath(), resourceType).toString(), bestFileName);
+		log.info("Creating new Parguet file " + bestFilePath);
+		return bestFilePath;
+	}
+	
+	synchronized private void createWriter(String resourceType) throws IOException {
+		// TODO: Find a way to convince Hadoop file operations to use `fileSystem` (needed for testing).
+		AvroParquetWriter.Builder<GenericRecord> builder = AvroParquetWriter.builder(bestOutputFile(resourceType));
+		// TODO: Adjust other parquet file parameters for our needs or make them configurable.
+		if (rowGroupSize > 0) {
+			builder.withRowGroupSize(rowGroupSize);
+		}
+		ParquetWriter<GenericRecord> writer = builder.withSchema(getResourceSchema(resourceType)).build();
+		writerMap.put(resourceType, writer);
 	}
 	
 	/**
+	 * This is to write a FHIR resource to a Parquet file. This automatically handles file creation in a
+	 * directory named after the resource type (e.g., `Patient`) with names following the
+	 * "output-streaming-ddddd" pattern where `ddddd` is a string with five digits. NOTE: This should
+	 * not be used in its current form once we move the streaming pipeline to Beam; the I/O should be
+	 * left to Beam similar to the batch mode.
+	 */
+	synchronized public void write(Resource resource) throws IOException {
+		Preconditions.checkNotNull(getParquetPath());
+		Preconditions.checkNotNull(resource.fhirType());
+		String resourceType = resource.fhirType();
+		if (!writerMap.containsKey(resourceType)) {
+			createWriter(resourceType);
+		}
+		final ParquetWriter<GenericRecord> parquetWriter = writerMap.get(resourceType);
+		parquetWriter.write(this.convertToAvro(resource));
+	}
+	
+	synchronized private void flush(String resourceType) throws IOException {
+		ParquetWriter<GenericRecord> writer = writerMap.get(resourceType);
+		if (writer != null && writer.getDataSize() > 0) {
+			writer.close();
+			createWriter(resourceType);
+		}
+	}
+	
+	synchronized private void flushAll() throws IOException {
+		for (String resourceType : writerMap.keySet()) {
+			flush(resourceType);
+		}
+	}
+
+	/**
 	 * This closes the writers for the different resource type.
 	 */
-	synchronized public void closeAllWriters() {
+	synchronized public void closeAllWriters() throws IOException {
 		for (Map.Entry<String, ParquetWriter<GenericRecord>> entry : writerMap.entrySet()) {
-			try {
-				entry.getValue().close();
-			}
-			catch (IOException e) {
-				log.error(String.format("Cannot close writer for resource %s exception: %s", entry.getKey(), e));
-			}
+			entry.getValue().close();
 		}
 	}
 	
@@ -126,18 +231,20 @@ public class ParquetUtil {
 			return records;
 		}
 		String resourceType = bundle.getEntry().get(0).getResource().getResourceType().name();
-		AvroConverter converter = getConverter(resourceType);
 		for (BundleEntryComponent entry : bundle.getEntry()) {
 			Resource resource = entry.getResource();
 			// TODO: Check why Bunsen returns IndexedRecord instead of GenericRecord.
-			records.add((GenericRecord) converter.resourceToAvro(resource));
+			records.add(convertToAvro(resource));
 		}
 		return records;
 	}
 	
-	public GenericRecord convertToAvro(Resource resource) {
-		AvroConverter converter = getConverter(resource.getResourceType().name());
-		return (GenericRecord) converter.resourceToAvro(resource);
+	@VisibleForTesting
+	GenericRecord convertToAvro(Resource resource) {
+		org.hl7.fhir.dstu3.model.Resource r3Resource = org.hl7.fhir.convertors.VersionConvertor_30_40
+		        .convertResource(resource, true);
+		AvroConverter converter = getConverter(r3Resource.getResourceType().name());
+		return (GenericRecord) converter.resourceToAvro(r3Resource);
 	}
 	
 }

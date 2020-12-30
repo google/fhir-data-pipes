@@ -19,23 +19,37 @@ import static org.hamcrest.Matchers.notNullValue;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.FileSystem;
+import java.nio.file.FileSystems;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.Collection;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
+import java.util.stream.Stream;
 
 import ca.uhn.fhir.context.FhirContext;
 import ca.uhn.fhir.parser.IParser;
 import com.google.common.io.Resources;
+import com.google.common.jimfs.Configuration;
+import com.google.common.jimfs.Jimfs;
 import org.apache.avro.Schema;
 import org.apache.avro.generic.GenericData.Record;
 import org.apache.avro.generic.GenericRecord;
-import org.hl7.fhir.dstu3.model.Bundle;
+import org.hl7.fhir.r4.model.Bundle;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.junit.MockitoJUnitRunner;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @RunWith(MockitoJUnitRunner.class)
 public class ParquetUtilTest {
+	
+	private static final Logger log = LoggerFactory.getLogger(ParquetUtil.class);
+	
+	private static final String PARQUET_ROOT = "/parquet_root";
 	
 	private String patientBundle;
 	
@@ -45,12 +59,20 @@ public class ParquetUtilTest {
 	
 	private FhirContext fhirContext;
 	
+	private FileSystem fileSystem;
+	
+	private Path rootPath;
+	
 	@Before
 	public void setup() throws IOException {
+		fileSystem = Jimfs.newFileSystem(Configuration.unix());
+		rootPath = fileSystem.getPath(PARQUET_ROOT);
+		Files.createDirectories(rootPath);
+		ParquetUtil.initializeAvroConverters();
 		patientBundle = Resources.toString(Resources.getResource("patient_bundle.json"), StandardCharsets.UTF_8);
 		observationBundle = Resources.toString(Resources.getResource("observation_bundle.json"), StandardCharsets.UTF_8);
-		this.fhirContext = FhirContext.forDstu3();
-		parquetUtil = new ParquetUtil(fhirContext);
+		this.fhirContext = FhirContext.forR4();
+		parquetUtil = new ParquetUtil(PARQUET_ROOT, 0, 0, fileSystem);
 	}
 	
 	@Test
@@ -110,5 +132,87 @@ public class ParquetUtilTest {
 		assertThat(addressList.size(), equalTo(1));
 		Record address = (Record) addressList.iterator().next();
 		assertThat((String) address.get("city"), equalTo("Waterloo"));
+	}
+	
+	@Test
+	public void bestOutputFile_NoDir() throws IOException {
+		org.apache.hadoop.fs.Path bestFile = parquetUtil.bestOutputFile("Patient");
+		assertThat(bestFile.toString(), equalTo("/parquet_root/Patient/output-streaming-00000"));
+	}
+	
+	@Test
+	public void bestOutputFile_NoFiles() throws IOException {
+		Path patientPath = rootPath.resolve("Patient");
+		Files.createDirectory(patientPath);
+		org.apache.hadoop.fs.Path bestFile = parquetUtil.bestOutputFile("Patient");
+		assertThat(bestFile.toString(), equalTo("/parquet_root/Patient/output-streaming-00000"));
+	}
+	
+	@Test
+	public void bestOutputFile_SomeFiles() throws IOException {
+		Path patientPath = rootPath.resolve("Patient");
+		Files.createDirectory(patientPath);
+		Files.createFile(patientPath.resolve("output-streaming-00000"));
+		Files.createFile(patientPath.resolve("output-streaming-00010"));
+		Files.createFile(patientPath.resolve("output-streaming-00005"));
+		org.apache.hadoop.fs.Path bestFile = parquetUtil.bestOutputFile("Patient");
+		assertThat(bestFile.toString(), equalTo("/parquet_root/Patient/output-streaming-00011"));
+	}
+	
+	private void initilizeLocalFileSystem() throws IOException {
+		// TODO: if we could convince ParquetWriter to use an input FileSystem we could use `Jimfs`.
+		fileSystem = FileSystems.getDefault();
+		rootPath = Files.createTempDirectory("PARQUET_TEST");
+		log.info("Temporary directory is " + rootPath);
+	}
+	
+	@Test
+	public void createSingleOutput() throws IOException {
+		initilizeLocalFileSystem();
+		parquetUtil = new ParquetUtil(rootPath.toString(), 0, 0, fileSystem);
+		IParser parser = fhirContext.newJsonParser();
+		Bundle bundle = parser.parseResource(Bundle.class, observationBundle);
+		for (Bundle.BundleEntryComponent entry : bundle.getEntry()) {
+			parquetUtil.write(entry.getResource());
+		}
+		parquetUtil.closeAllWriters();
+		Stream<Path> files = Files.list(rootPath.resolve("Observation"))
+		        .filter(f -> f.toString().startsWith(rootPath.toString() + "/Observation/output-"));
+		assertThat(files.count(), equalTo(1L));
+	}
+	
+	@Test
+	public void createMultipleOutputByTime() throws IOException, InterruptedException {
+		initilizeLocalFileSystem();
+		parquetUtil = new ParquetUtil(rootPath.toString(), 1, 0, fileSystem);
+		IParser parser = fhirContext.newJsonParser();
+		Bundle bundle = parser.parseResource(Bundle.class, observationBundle);
+		for (Bundle.BundleEntryComponent entry : bundle.getEntry()) {
+			parquetUtil.write(entry.getResource());
+			TimeUnit.SECONDS.sleep(2); // A better way to test this is to inject a mocked `Timer`.
+		}
+		parquetUtil.closeAllWriters();
+		Stream<Path> files = Files.list(rootPath.resolve("Observation"))
+		        .filter(f -> f.toString().startsWith(rootPath.toString() + "/Observation/output-"));
+		assertThat(files.count(), equalTo(7L));
+	}
+	
+	@Test
+	public void createSingleOutputWithRowGroupSize() throws IOException {
+		initilizeLocalFileSystem();
+		parquetUtil = new ParquetUtil(rootPath.toString(), 0, 1, fileSystem);
+		IParser parser = fhirContext.newJsonParser();
+		Bundle bundle = parser.parseResource(Bundle.class, observationBundle);
+		// There are 7 resources in the bundle so we write 15*7 (>100) resources, such that the page
+		// group size check is triggered but still it is expected to generate one file only.
+		for (int i = 0; i < 15; i++) {
+			for (Bundle.BundleEntryComponent entry : bundle.getEntry()) {
+				parquetUtil.write(entry.getResource());
+			}
+		}
+		parquetUtil.closeAllWriters();
+		Stream<Path> files = Files.list(rootPath.resolve("Observation"))
+		        .filter(f -> f.toString().startsWith(rootPath.toString() + "/Observation/output-"));
+		assertThat(files.count(), equalTo(1L));
 	}
 }
