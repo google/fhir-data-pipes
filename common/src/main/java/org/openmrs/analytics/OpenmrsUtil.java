@@ -46,7 +46,7 @@ public class OpenmrsUtil {
 		this.fhirContext = fhirContext;
 	}
 	/**
-	 * Fetches the fhir resource url from the given hapi fhir client.
+	 * Fetches the fhir resource from openmrs courtesy of the openmrs FHIR2 module.
 	 */
 	public Resource fetchFhirResource(String resourceUrl) {
 		try {
