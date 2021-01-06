@@ -214,6 +214,23 @@
           </executions>
         </plugin>
         <plugin>
+          <groupId>au.com.acegi</groupId>
+          <artifactId>xml-format-maven-plugin</artifactId>
+          <version>3.1.2</version>
+          <executions>
+            <execution>
+              <id>xml-format</id>
+              <goals>
+                <goal>xml-format</goal>
+              </goals>
+            </execution>
+          </executions>
+          <configuration>
+            <lineEnding>LF</lineEnding>
+            <indentSize>2</indentSize>
+          </configuration>
+        </plugin>
+        <plugin>
           <groupId>net.revelc.code</groupId>
           <artifactId>impsort-maven-plugin</artifactId>
           <version>1.3.2</version>
@@ -306,6 +323,10 @@
       <plugin>
         <groupId>org.commonjava.maven.plugins</groupId>
         <artifactId>directory-maven-plugin</artifactId>
+      </plugin>
+      <plugin>
+        <groupId>au.com.acegi</groupId>
+        <artifactId>xml-format-maven-plugin</artifactId>
       </plugin>
       <plugin>
         <groupId>com.mycila</groupId>
