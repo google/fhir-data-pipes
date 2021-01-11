@@ -16,9 +16,10 @@ package org.openmrs.analytics;
 
 import java.beans.PropertyVetoException;
 import java.io.IOException;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -63,6 +64,7 @@ public class FhirEtl {
 		 */
 		@Description("OpenMRS server URL")
 		@Required
+		@Default.String("http://localhost:8099/openmrs")
 		String getOpenmrsServerUrl();
 		
 		void setOpenmrsServerUrl(String value);
@@ -82,20 +84,21 @@ public class FhirEtl {
 		
 		void setSearchList(String value);
 		
+		// TODO: Find out why setting > 100 results in
+		//  Exception: ca.uhn.fhir.rest.server.exceptions.InvalidRequestException: HTTP 400 Bad Request
 		@Description("The number of resources to be fetched in one API call. "
-		        + "For the JDBC mode passing > 30 could result in HTTP 400 Bad Request depending with your web server "
-		        + "settings")
-		@Default.Integer(30)
+		        + "For the JDBC mode passing > 200 could result in HTTP 400 Bad Request")
+		@Default.Integer(200)
 		int getBatchSize();
 		
 		void setBatchSize(int value);
 		
-		@Description("The number of parallel request made per call. Set this parameter optimally depending with the"
-		        + " specification of the OpenMRS server")
-		@Default.Integer(100)
-		int getParallelRequests();
+		@Description("For the JDBC mode, this is the size of each ID chunk. Setting high values will yield faster query "
+		        + "execution.")
+		@Default.Integer(10000)
+		int getJdbcFetchSize();
 		
-		void setParallelRequests(int value);
+		void setJdbcFetchSize(int value);
 		
 		@Description("Openmrs BasicAuth Username")
 		@Default.String("admin")
@@ -152,7 +155,7 @@ public class FhirEtl {
 		
 		void setJdbcDriverClass(String value);
 		
-		@Description("The number of resources to be fetched in one API call.")
+		@Description("JDBC maximum pool size")
 		@Default.Integer(50)
 		int getJdbcMaxPoolSize();
 		
@@ -271,7 +274,7 @@ public class FhirEtl {
 		
 		@ProcessElement
 		public void ProcessElement(@Element SearchSegmentDescriptor segment, OutputReceiver<GenericRecord> out) {
-			log.info("Fetching bundle: " + segment.searchUrl());
+			log.debug("Fetching bundle: " + segment.searchUrl());
 			Bundle pageBundle = fhirSearchUtil.searchByUrl(segment.searchUrl(), segment.count(), SummaryEnum.DATA);
 			if (!parquetFile.isEmpty()) {
 				for (GenericRecord record : parquetUtil.generateRecords(pageBundle)) {
@@ -320,48 +323,45 @@ public class FhirEtl {
 		p.run().waitUntilFinish();
 	}
 	
-	static void runFhirJdbcFetch(FhirEtlOptions options, FhirContext fhirContext) throws PropertyVetoException, IOException {
+	static void runFhirJdbcFetch(FhirEtlOptions options, FhirContext fhirContext)
+	        throws PropertyVetoException, IOException, SQLException {
 		Pipeline pipeline = Pipeline.create(options);
-		JdbcFhirMode jdbcUtil = new JdbcFhirMode();
-		JdbcIO.DataSourceConfiguration jdbcConfig = jdbcUtil.getJdbcConfig(options.getJdbcDriverClass(),
-		    options.getJdbcUrl(), options.getDbUser(), options.getDbPassword(), options.getJdbcMaxPoolSize());
-		
+		JdbcFetchUtil jdbcUtil = new JdbcFetchUtil(options.getJdbcDriverClass(), options.getJdbcUrl(), options.getDbUser(),
+		        options.getDbPassword(), options.getJdbcMaxPoolSize());
+		JdbcIO.DataSourceConfiguration jdbcConfig = jdbcUtil.getJdbcConfig();
 		int batchSize = options.getBatchSize();
-		int parallelRequests = options.getParallelRequests();
+		int jdbcFetchSize = options.getJdbcFetchSize();
 		ParquetUtil parquetUtil = new ParquetUtil(options.getFileParquetPath());
-		LinkedHashMap<String, String> reversHashMap = jdbcUtil.createFhirReverseMap(options.getSearchList(),
+		Map<String, String> reverseMap = jdbcUtil.createFhirReverseMap(options.getSearchList(),
 		    options.getTableFhirMapPath());
 		// process each table-resource mappings
-		for (Map.Entry<String, String> entry : reversHashMap.entrySet()) {
+		for (Map.Entry<String, String> entry : reverseMap.entrySet()) {
 			String tableName = entry.getKey();
 			String resourceType = entry.getValue();
 			String baseBundleUrl = options.getOpenmrsServerUrl() + options.getServerFhirEndpoint() + "/" + resourceType;
 			Schema schema = parquetUtil.getResourceSchema(resourceType);
-			
-			PCollection<GenericRecord> genericRecords = pipeline
-			        // fetch maxId for each passed resource
-			        .apply(new JdbcFhirMode.FetchMaxId(tableName, jdbcConfig))
-			        // Generate ID ranges i.e 1 to 1000, 1001 to 2001 depending with parallelRequest
-			        .apply(new JdbcFhirMode.CreateIdRanges(batchSize))
-			        // for each corresponding ids fetch uuid
-			        .apply(new JdbcFhirMode.FetchUuIds(tableName, batchSize, jdbcConfig))
-			        // batch together request using parallelRequests_param and generate segment descriptors `_id?<uuid>,<uuid>..`
-			        .apply(new JdbcFhirMode.CreateSearchSegments(baseBundleUrl, parallelRequests))
-			        // fetch FHIR bundles and sink to FHIR store if enables
-			        .apply(ParDo.of(new FetchSearchPageFn(options.getFhirSinkPath(), options.getSinkUserName(),
-			                options.getSinkPassword(), options.getOpenmrsServerUrl() + options.getServerFhirEndpoint(),
-			                options.getFileParquetPath(), options.getOpenmrsUserName(), options.getOpenmrsPassword())))
-			        .setCoder(AvroCoder.of(GenericRecord.class, schema));
-			
-			// TODO: create a unified method without passing
-			// Sink to parquet if --outputParquetBase is passed
-			if (!options.getFileParquetPath().isEmpty()) {
-				String outputFile = options.getFileParquetPath() + resourceType;
-				ParquetIO.Sink sink = ParquetIO.sink(schema);
-				log.info(String.format("Saving parquet files: %s", outputFile));
-				genericRecords.apply(String.format("Saving parquet files: %s", outputFile),
-				    FileIO.<GenericRecord> write().via(sink).to(outputFile));
+			ResultSet resultSet = jdbcUtil.FetchMaxId(tableName);
+			while (resultSet.next()) {
+				int maxId = Integer.parseInt(resultSet.getString(1));
+				Map<String, Integer> IdRanges = jdbcUtil.CreateIdRanges(maxId, jdbcFetchSize);
+				PCollection<GenericRecord> genericRecords = pipeline.apply(Create.of(IdRanges))
+				        .apply(new JdbcFetchUtil.FetchUuIds(tableName, jdbcConfig))
+				        .apply(new JdbcFetchUtil.CreateSearchSegments(resourceType, baseBundleUrl, batchSize))
+				        .apply(ParDo.of(new FetchSearchPageFn(options.getFhirSinkPath(), options.getSinkUserName(),
+				                options.getSinkPassword(), options.getOpenmrsServerUrl() + options.getServerFhirEndpoint(),
+				                options.getFileParquetPath(), options.getOpenmrsUserName(), options.getOpenmrsPassword())))
+				        .setCoder(AvroCoder.of(GenericRecord.class, schema));
+				
+				// TODO: create a unified method without passing
+				// Sink to parquet if --outputParquetBase is passed
+				if (!options.getFileParquetPath().isEmpty()) {
+					String outputFile = options.getFileParquetPath() + resourceType;
+					ParquetIO.Sink sink = ParquetIO.sink(schema);
+					genericRecords.apply(String.format("Saving parquet files: %s", outputFile),
+					    FileIO.<GenericRecord> write().via(sink).to(outputFile));
+				}
 			}
+			resultSet.close();
 			
 		}
 		
@@ -369,7 +369,8 @@ public class FhirEtl {
 		System.out.println(result);
 	}
 	
-	public static void main(String[] args) throws CannotProvideCoderException, PropertyVetoException, IOException {
+	public static void main(String[] args)
+	        throws CannotProvideCoderException, PropertyVetoException, IOException, SQLException {
 		// Todo: Autowire
 		FhirContext fhirContext = FhirContext.forR4();
 		

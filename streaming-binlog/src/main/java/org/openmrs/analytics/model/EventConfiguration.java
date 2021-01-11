@@ -30,7 +30,7 @@ public class EventConfiguration {
 	
 	@Getter
 	@Setter
-	private String uuidTable;
+	private String parentTable;
 	
 	@Getter
 	@Setter
