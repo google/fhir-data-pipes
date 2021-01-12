@@ -1,0 +1,82 @@
+{
+  "Users": [],
+  "Clients": [
+    {
+      "roles": [
+        "admin"
+      ],
+      "clientID": "hapi",
+      "name": "HAPI-CLIENT",
+      "passwordAlgorithm": "sha512",
+      "passwordSalt": "41271397c2fafc9d6a74660f5e611961",
+      "passwordHash": "8f559989c523231c47eeda17d6951448428ebb9cb47fbeefc89b9c08d157ce6c89979b52c18ce95efef98e1f300a44b97a2e2c4ee10aff0b001a10e69535e33d"
+    }
+  ],
+  "Channels": [
+    {
+      "methods": [
+        "GET",
+        "POST",
+        "DELETE",
+        "PUT",
+        "OPTIONS",
+        "HEAD",
+        "TRACE",
+        "CONNECT",
+        "PATCH"
+      ],
+      "type": "http",
+      "allow": [
+        "hapi"
+      ],
+      "whitelist": [],
+      "authType": "private",
+      "matchContentTypes": [],
+      "properties": [],
+      "txViewAcl": [],
+      "txViewFullAcl": [],
+      "txRerunAcl": [],
+      "status": "enabled",
+      "rewriteUrls": false,
+      "addAutoRewriteRules": true,
+      "autoRetryEnabled": false,
+      "autoRetryPeriodMinutes": 60,
+      "routes": [
+        {
+          "type": "http",
+          "status": "enabled",
+          "forwardAuthHeader": false,
+          "name": "HAPI-ROUTE",
+          "secured": false,
+          "host": "172.17.0.1",
+          "port": 8098,
+          "path": "",
+          "pathTransform": "",
+          "primary": true,
+          "username": "hapi",
+          "password": "hapi123"
+        }
+      ],
+      "requestBody": true,
+      "responseBody": true,
+      "rewriteUrlsConfig": [],
+      "name": "HAPI-SYNC",
+      "urlPattern": "$",
+      "matchContentRegex": null,
+      "matchContentXpath": null,
+      "matchContentValue": null,
+      "matchContentJson": null,
+      "pollingSchedule": null,
+      "tcpHost": null,
+      "tcpPort": null,
+      "updatedBy": {
+        "id": "5ffd8711fa52440012ed54fe",
+        "name": "Super User"
+      },
+      "alerts": []
+    }
+  ],
+  "Mediators": [],
+  "ContactGroups": [],
+  "KeystoreModelAPI": []
+}

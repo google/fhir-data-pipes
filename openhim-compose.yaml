@@ -1,0 +1,45 @@
+version: '3'
+
+services:
+  mongo-plir:
+    restart: "always"
+    container_name: openhim-mongo-plir
+    expose: 
+      - "27017"
+    image: mongo:3.4
+    healthcheck:
+      test: "exit 0"
+    
+  core-plir:
+    restart: "always"
+    container_name: openhim-core-plir
+    image: jembi/openhim-core:latest
+    environment:
+      - mongo_url=mongodb://mongo-plir/openhim
+      - mongo_atnaUrl=mongodb://mongo-plir/openhim
+    ports:
+      - "5001:5001"
+      - "8093:8080"
+    expose :
+      - "5000"
+      - "5050"
+      - "5051"
+      - "5052"
+      - "7788"
+    healthcheck:
+      test: "exit 0"   
+    depends_on:
+      - mongo-plir
+  
+  console-plir:
+    restart: "always"
+    container_name: openhim-console-plir
+    image: jembi/openhim-console:latest
+    ports:
+        - "9000:80"  
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:80/"]
+      timeout: 20s    
+    volumes:
+      - ./utils/openhim-default.json:/usr/share/nginx/html/config/default.json
+    

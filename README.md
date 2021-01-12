@@ -364,3 +364,38 @@ descriptions, try:
 ```
 $ python sample_indicator.py --help
 ```
+# Intergrating with OpenHIM (Middle ware component)
+For the Case ,where there are several OpenMRS systems ,
+OpenHIM can be used as a middle ware component to intergrate/track/log requests from several OpenMRS instaces.
+
+#### 1. Fire up OpenHIM Instance
+After spinning up the Hapi fhir Instance , see details Above , you can spin up an OpenHIM instance.
+
+```
+$ docker-compose -f openhim-compose.yaml up # change ports appropriately (optional)
+```
+ You should be able to access OpenHIM via  http://localhost:9000 
+ Use the default credentials i.e   
+ `username : root@openhim.org` and `password : openhim-password`    
+
+ Note: You will have problems logging in if your OpenHIM server is still setup to use a self-signed certificate (the default) .
+ Visit the following link: https://localhost:8093/authenticate/root@openhim.org in Chrome.
+
+You should see a message saying “Your connection is not private”. Click “Advanced” and then click “Proceed”.
+
+Once you have done this, you should see some JSON text displayed on the screen, you can ignore this and close the page. This will ignore the fact that the certificate is self-signed.
+
+Now, you should be able to go back to the OpenHIM console login page and login. This problem will occur every now and then until you load a properly signed certificate into the OpenHIM core server. 
+
+ For the first Login .youll be requested to chenge your root password!
+
+ Then Go to 'Export/Import' tab and import the default default config file under `Utils/openhim-config.json`  for a basic configuration.
+
+ NB the default configurations has the following default configs:
+  `client : hapi`  , `client-password : Admin123`  ,
+   `Host: 172.17.0.1`  which is the  Docker Bridge Ip adress  ,`Port : 8098` which is the Port to the hapi fhir instance in the pipeline .
+
+
+   you can now start the pipeline with args 
+   `--sinkUserName=hapi --sinkPassword=Admin123`  for either Streaming or Batch modes  and your requests will be be forwarded to OpenHIM and then routed to the Hapi Fhir instance.
+   You can track all the transactions in the OpenHIM instance Under the Tab `Transaction Log`
