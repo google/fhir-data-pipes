@@ -340,10 +340,10 @@ public class FhirEtl {
 			String resourceType = entry.getValue();
 			String baseBundleUrl = options.getOpenmrsServerUrl() + options.getServerFhirEndpoint() + "/" + resourceType;
 			Schema schema = parquetUtil.getResourceSchema(resourceType);
-			ResultSet resultSet = jdbcUtil.FetchMaxId(tableName);
+			ResultSet resultSet = jdbcUtil.fetchMaxId(tableName);
 			while (resultSet.next()) {
 				int maxId = Integer.parseInt(resultSet.getString(1));
-				Map<String, Integer> IdRanges = jdbcUtil.CreateIdRanges(maxId, jdbcFetchSize);
+				Map<String, Integer> IdRanges = jdbcUtil.createIdRanges(maxId, jdbcFetchSize);
 				PCollection<GenericRecord> genericRecords = pipeline.apply(Create.of(IdRanges))
 				        .apply(new JdbcFetchUtil.FetchUuIds(tableName, jdbcConfig))
 				        .apply(new JdbcFetchUtil.CreateSearchSegments(resourceType, baseBundleUrl, batchSize))

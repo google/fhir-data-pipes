@@ -90,7 +90,7 @@ public class JdbcFetchUtilTest extends TestCase {
 	public void testCreateIdRanges() {
 		int batchSize = 100;
 		int maxId = 200;
-		Map<String, Integer> idRanges = jdbcFetchUtil.CreateIdRanges(maxId, batchSize);
+		Map<String, Integer> idRanges = jdbcFetchUtil.createIdRanges(maxId, batchSize);
 		Map<String, Integer> expectedMap = new LinkedHashMap<String, Integer>();
 		expectedMap.put("100,200", 100);
 		expectedMap.put("0,100", 0);

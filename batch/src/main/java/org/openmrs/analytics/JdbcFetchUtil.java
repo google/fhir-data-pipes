@@ -147,7 +147,7 @@ public class JdbcFetchUtil {
 		}
 	}
 	
-	public ResultSet FetchMaxId(String tableName) throws SQLException {
+	public ResultSet fetchMaxId(String tableName) throws SQLException {
 		String tableId = tableName + "_id";
 		Connection con = this.comboPooledDataSource.getConnection();
 		Statement statement = con.createStatement();
@@ -159,7 +159,7 @@ public class JdbcFetchUtil {
 		return JdbcIO.DataSourceConfiguration.create(this.comboPooledDataSource);
 	}
 	
-	public Map<String, Integer> CreateIdRanges(int count, int rangeSize) {
+	public Map<String, Integer> createIdRanges(int count, int rangeSize) {
 		int ranges = count / rangeSize;
 		Map<String, Integer> rangeMap = new HashMap<String, Integer>();
 		for (int i = 0; i < ranges; i++) {
