@@ -84,11 +84,9 @@ public class FhirEtl {
 		
 		void setSearchList(String value);
 		
-		// TODO: Find out why setting > 100 results in
-		//  Exception: ca.uhn.fhir.rest.server.exceptions.InvalidRequestException: HTTP 400 Bad Request
 		@Description("The number of resources to be fetched in one API call. "
-		        + "For the JDBC mode passing > 200 could result in HTTP 400 Bad Request")
-		@Default.Integer(200)
+		        + "For the JDBC mode passing > 170 could result in HTTP 400 Bad Request")
+		@Default.Integer(170)
 		int getBatchSize();
 		
 		void setBatchSize(int value);
@@ -329,7 +327,7 @@ public class FhirEtl {
 		JdbcFetchUtil jdbcUtil = new JdbcFetchUtil(options.getJdbcDriverClass(), options.getJdbcUrl(), options.getDbUser(),
 		        options.getDbPassword(), options.getJdbcMaxPoolSize());
 		JdbcIO.DataSourceConfiguration jdbcConfig = jdbcUtil.getJdbcConfig();
-		int batchSize = options.getBatchSize();
+		int batchSize = Math.min(options.getBatchSize(), 170); // batch size > 200 will result in HTTP 400 Bad Request
 		int jdbcFetchSize = options.getJdbcFetchSize();
 		ParquetUtil parquetUtil = new ParquetUtil(options.getFileParquetPath());
 		Map<String, String> reverseMap = jdbcUtil.createFhirReverseMap(options.getSearchList(),
