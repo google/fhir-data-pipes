@@ -16,7 +16,6 @@ package org.openmrs.analytics;
 
 import java.beans.PropertyVetoException;
 import java.io.IOException;
-import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -338,29 +337,23 @@ public class FhirEtl {
 			String resourceType = entry.getValue();
 			String baseBundleUrl = options.getOpenmrsServerUrl() + options.getServerFhirEndpoint() + "/" + resourceType;
 			Schema schema = parquetUtil.getResourceSchema(resourceType);
-			ResultSet resultSet = jdbcUtil.fetchMaxId(tableName);
-			while (resultSet.next()) {
-				int maxId = Integer.parseInt(resultSet.getString(1));
-				Map<String, Integer> IdRanges = jdbcUtil.createIdRanges(maxId, jdbcFetchSize);
-				PCollection<GenericRecord> genericRecords = pipeline.apply(Create.of(IdRanges))
-				        .apply(new JdbcFetchUtil.FetchUuIds(tableName, jdbcConfig))
-				        .apply(new JdbcFetchUtil.CreateSearchSegments(resourceType, baseBundleUrl, batchSize))
-				        .apply(ParDo.of(new FetchSearchPageFn(options.getFhirSinkPath(), options.getSinkUserName(),
-				                options.getSinkPassword(), options.getOpenmrsServerUrl() + options.getServerFhirEndpoint(),
-				                options.getFileParquetPath(), options.getOpenmrsUserName(), options.getOpenmrsPassword())))
-				        .setCoder(AvroCoder.of(GenericRecord.class, schema));
-				
-				// TODO: create a unified method without passing
-				// Sink to parquet if --outputParquetBase is passed
-				if (!options.getFileParquetPath().isEmpty()) {
-					String outputFile = options.getFileParquetPath() + resourceType;
-					ParquetIO.Sink sink = ParquetIO.sink(schema);
-					genericRecords.apply(String.format("Saving parquet files: %s", outputFile),
-					    FileIO.<GenericRecord> write().via(sink).to(outputFile));
-				}
-			}
-			resultSet.close();
+			int maxId = jdbcUtil.fetchMaxId(tableName);
+			Map<Integer, Integer> IdRanges = jdbcUtil.createIdRanges(maxId, jdbcFetchSize);
+			PCollection<GenericRecord> genericRecords = pipeline.apply(Create.of(IdRanges))
+			        .apply(new JdbcFetchUtil.FetchUuids(tableName, jdbcConfig))
+			        .apply(new JdbcFetchUtil.CreateSearchSegments(resourceType, baseBundleUrl, batchSize))
+			        .apply(ParDo.of(new FetchSearchPageFn(options.getFhirSinkPath(), options.getSinkUserName(),
+			                options.getSinkPassword(), options.getOpenmrsServerUrl() + options.getServerFhirEndpoint(),
+			                options.getFileParquetPath(), options.getOpenmrsUserName(), options.getOpenmrsPassword())))
+			        .setCoder(AvroCoder.of(GenericRecord.class, schema));
 			
+			// TODO: create a unified method without passing
+			if (!options.getFileParquetPath().isEmpty()) {
+				String outputFile = options.getFileParquetPath() + resourceType;
+				ParquetIO.Sink sink = ParquetIO.sink(schema);
+				genericRecords.apply(String.format("Saving parquet files: %s", outputFile),
+				    FileIO.<GenericRecord> write().via(sink).to(outputFile));
+			}
 		}
 		
 		PipelineResult.State result = pipeline.run().waitUntilFinish();

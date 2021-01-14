@@ -19,7 +19,11 @@ import java.io.IOException;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.sql.SQLException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 import ca.uhn.fhir.context.FhirContext;
 import ca.uhn.fhir.parser.IParser;
@@ -90,10 +94,10 @@ public class JdbcFetchUtilTest extends TestCase {
 	public void testCreateIdRanges() {
 		int batchSize = 100;
 		int maxId = 200;
-		Map<String, Integer> idRanges = jdbcFetchUtil.createIdRanges(maxId, batchSize);
-		Map<String, Integer> expectedMap = new LinkedHashMap<String, Integer>();
-		expectedMap.put("100,200", 100);
-		expectedMap.put("0,100", 0);
+		Map<Integer, Integer> idRanges = jdbcFetchUtil.createIdRanges(maxId, batchSize);
+		Map<Integer, Integer> expectedMap = new HashMap<Integer, Integer>();
+		expectedMap.put(100, 200);
+		expectedMap.put(0, 100);
 		assertEquals(idRanges, expectedMap);
 	}
 	

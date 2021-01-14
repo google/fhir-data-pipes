@@ -27,10 +27,8 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 
 import com.google.gson.Gson;
 import com.mchange.v2.c3p0.ComboPooledDataSource;
@@ -52,7 +50,7 @@ public class JdbcFetchUtil {
 	private ComboPooledDataSource comboPooledDataSource;
 	
 	JdbcFetchUtil(String jdbcDriverClass, String jdbcUrl, String dbUser, String dbPassword, int dbcMaxPoolSize)
-	        throws IOException, SQLException, PropertyVetoException {
+	        throws PropertyVetoException {
 		comboPooledDataSource = new ComboPooledDataSource();
 		comboPooledDataSource.setDriverClass(jdbcDriverClass);
 		comboPooledDataSource.setJdbcUrl(jdbcUrl);
@@ -62,34 +60,33 @@ public class JdbcFetchUtil {
 		comboPooledDataSource.setInitialPoolSize(10); // TODO: make this configurable if issues arises
 	}
 	
-	public static class FetchUuIds extends PTransform<PCollection<KV<String, Integer>>, PCollection<String>> {
+	public static class FetchUuids extends PTransform<PCollection<KV<Integer, Integer>>, PCollection<String>> {
 		
 		private final String tableName;
 		
 		private final JdbcIO.DataSourceConfiguration dataSourceConfig;
 		
-		public FetchUuIds(String tableName, JdbcIO.DataSourceConfiguration dataSourceConfig) {
+		public FetchUuids(String tableName, JdbcIO.DataSourceConfiguration dataSourceConfig) {
 			this.tableName = tableName;
 			this.dataSourceConfig = dataSourceConfig;
 		}
 		
 		@Override
-		public PCollection<String> expand(PCollection<KV<String, Integer>> idRanges) {
+		public PCollection<String> expand(PCollection<KV<Integer, Integer>> idRanges) {
 			String tableId = this.tableName + "_id";
 			return idRanges.apply(String.format("Read UUIDs from %s", this.tableName),
-			    JdbcIO.<KV<String, Integer>, String> readAll().withDataSourceConfiguration(this.dataSourceConfig)
-			            .withParameterSetter(new JdbcIO.PreparedStatementSetter<KV<String, Integer>>() {
+			    JdbcIO.<KV<Integer, Integer>, String> readAll().withDataSourceConfiguration(this.dataSourceConfig)
+			            .withParameterSetter(new JdbcIO.PreparedStatementSetter<KV<Integer, Integer>>() {
 				            
 				            @Override
-				            public void setParameters(KV<String, Integer> element, PreparedStatement preparedStatement)
+				            public void setParameters(KV<Integer, Integer> element, PreparedStatement preparedStatement)
 				                    throws Exception {
-					            String[] range = Objects.requireNonNull(element.getKey()).split(",");
-					            preparedStatement.setInt(1, Integer.parseInt(range[0]));
-					            preparedStatement.setInt(2, Integer.parseInt(range[1]));
+					            preparedStatement.setInt(1, element.getKey());
+					            preparedStatement.setInt(2, element.getValue());
 				            }
-			            }).withOutputParallelization(false)
+			            })
 			            .withQuery(
-			                String.format("select uuid from %s where %s >= ? and %s < ?", this.tableName, tableId, tableId))
+			                String.format("SELECT uuid FROM %s WHERE %s >= ? AND %s < ?", this.tableName, tableId, tableId))
 			            .withRowMapper(new JdbcIO.RowMapper<String>() {
 				            
 				            @Override
@@ -118,15 +115,15 @@ public class JdbcFetchUtil {
 		}
 		
 		@Override
-		public PCollection<SearchSegmentDescriptor> expand(PCollection<String> uuIds) {
-			return uuIds
+		public PCollection<SearchSegmentDescriptor> expand(PCollection<String> resourceUuids) {
+			return resourceUuids
 			        // create KV required by GroupIntoBatches
 			        .apply(ParDo.of(new DoFn<String, KV<String, String>>() {
 				        
 				        @ProcessElement
-				        public void processElement(ProcessContext c) {
-					        if (c.element() != null) {
-						        c.output(KV.of(resourceType, c.element()));
+				        public void processElement(@Element String element, OutputReceiver<KV<String, String>> r) {
+					        if (element != null) {
+						        r.output(KV.of(resourceType, element));
 					        }
 				        }
 			        }))
@@ -137,42 +134,46 @@ public class JdbcFetchUtil {
 				        @ProcessElement
 				        public void processElement(@Element KV<String, Iterable<String>> element,
 				                OutputReceiver<SearchSegmentDescriptor> r) {
-					        List<String> uuIds = new ArrayList<String>();
-					        element.getValue().forEach(uuIds::add);
-					        r.output(SearchSegmentDescriptor.create(
-					            String.format("%s?_id=%s", baseBundleUrl, String.join(",", uuIds)), uuIds.size()));
+					        List<String> uuids = new ArrayList<String>();
+					        element.getValue().forEach(uuids::add);
+					        r.output(SearchSegmentDescriptor
+					                .create(String.format("%s?_id=%s", baseBundleUrl, String.join(",", uuids)), uuids.size() //please note that, setting count here has no effect.
+					        ));
 					        
 				        }
 			        }));
 		}
 	}
 	
-	public ResultSet fetchMaxId(String tableName) throws SQLException {
+	public Integer fetchMaxId(String tableName) throws SQLException {
 		String tableId = tableName + "_id";
 		Connection con = this.comboPooledDataSource.getConnection();
 		Statement statement = con.createStatement();
-		ResultSet resultSet = statement.executeQuery(String.format("SELECT MAX(`%s`) from %s", tableId, tableName));
-		return resultSet;
+		ResultSet resultSet = statement
+		        .executeQuery(String.format("SELECT MAX(`%s`) as max_id FROM %s", tableId, tableName));
+		resultSet.first();
+		int maxId = resultSet.getInt("max_id");
+		resultSet.close();
+		statement.close();
+		return maxId;
 	}
 	
 	public JdbcIO.DataSourceConfiguration getJdbcConfig() {
 		return JdbcIO.DataSourceConfiguration.create(this.comboPooledDataSource);
 	}
 	
-	public Map<String, Integer> createIdRanges(int count, int rangeSize) {
+	public Map<Integer, Integer> createIdRanges(int count, int rangeSize) {
 		int ranges = count / rangeSize;
-		Map<String, Integer> rangeMap = new HashMap<String, Integer>();
+		Map<Integer, Integer> rangeMap = new HashMap<Integer, Integer>();
 		for (int i = 0; i < ranges; i++) {
 			int rangeFrom = i * rangeSize;
 			int rangeTo = (i + 1) * rangeSize;
-			String range = String.format("%s,%s", rangeFrom, rangeTo);
-			rangeMap.put(range, rangeFrom);
+			rangeMap.put(rangeFrom, rangeTo);
 		}
 		if (count > ranges * rangeSize) {
 			int rangeFrom = ranges * rangeSize;
 			int rangeTo = ranges * rangeSize + count % rangeSize;
-			String range = String.format("%s,%s", rangeFrom, rangeTo);
-			rangeMap.put(range, rangeFrom);
+			rangeMap.put(rangeFrom, rangeTo);
 		}
 		return rangeMap;
 	}
@@ -182,11 +183,11 @@ public class JdbcFetchUtil {
 		Path pathToFile = Paths.get(tableFhirMapPath);
 		try (Reader reader = Files.newBufferedReader(pathToFile.toAbsolutePath(), StandardCharsets.UTF_8)) {
 			GeneralConfiguration generalConfiguration = gson.fromJson(reader, GeneralConfiguration.class);
-			LinkedHashMap<String, EventConfiguration> tableToFhirMap = generalConfiguration.getEventConfigurations();
+			Map<String, EventConfiguration> tableToFhirMap = generalConfiguration.getEventConfigurations();
 			String[] searchList = searchString.split(",");
-			Map<String, String> reverseMap = new LinkedHashMap<String, String>();
+			Map<String, String> reverseMap = new HashMap<String, String>();
 			for (Map.Entry<String, EventConfiguration> entry : tableToFhirMap.entrySet()) {
-				LinkedHashMap<String, String> linkTemplate = entry.getValue().getLinkTemplates();
+				Map<String, String> linkTemplate = entry.getValue().getLinkTemplates();
 				for (String search : searchList) {
 					if (linkTemplate.containsKey("fhir") && linkTemplate.get("fhir") != null) {
 						String[] resourceName = linkTemplate.get("fhir").split("/");
