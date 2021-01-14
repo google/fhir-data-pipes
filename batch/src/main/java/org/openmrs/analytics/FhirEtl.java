@@ -357,7 +357,6 @@ public class FhirEtl {
 		}
 		
 		PipelineResult.State result = pipeline.run().waitUntilFinish();
-		System.out.println(result);
 	}
 	
 	public static void main(String[] args)
