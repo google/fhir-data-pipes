@@ -3,6 +3,7 @@
     "location": {
       "enabled": "false",
       "title": "Location",
+      "parentTable": "location",
       "linkTemplates": {
         "rest": "/ws/rest/v1/location/{uuid}?v=full",
         "fhir": "/Location/{uuid}"
@@ -11,6 +12,7 @@
     "concept": {
       "enabled": "false",
       "title": "Concept",
+      "parentTable": "concept",
       "linkTemplates": {
         "rest": "/ws/rest/v1/concept/{uuid}?v=full"
       }
@@ -18,6 +20,7 @@
     "cohort": {
       "enabled": "true",
       "title": "Cohort",
+      "parentTable": "cohort",
       "linkTemplates": {
         "rest": "/ws/rest/v1/cohort/{uuid}?v=full",
         "fhir": "/Group/{uuid}"
@@ -26,6 +29,7 @@
     "visittype": {
       "enabled": "false",
       "title": "Visit Type",
+      "parentTable": "visittype",
       "linkTemplates": {
         "rest": "/ws/rest/v1/visittype/{uuid}?v=full"
       }
@@ -33,6 +37,7 @@
     "person_address": {
       "enabled": "false",
       "title": "PersonAddress",
+      "parentTable": "person_address",
       "linkTemplates": {
         "rest": "/ws/rest/v1/person/{parent-uuid}/address/{uuid}?v=full"
       }
@@ -40,6 +45,7 @@
     "person_name": {
       "enabled": "false",
       "title": "PersonName",
+      "parentTable": "person_name",
       "linkTemplates": {
         "rest": "/ws/rest/v1/person/{parent-uuid}/name/{uuid}?v=full"
       }
@@ -47,6 +53,7 @@
     "patient_identifier": {
       "enabled": "false",
       "title": "PatientIdentifier",
+      "parentTable": "patient_identifier",
       "linkTemplates": {
         "rest": "/ws/rest/v1/patient/{parent-uuid}/identifier/{uuid}?v=full"
       }
@@ -54,6 +61,7 @@
     "person_attribute": {
       "enabled": "false",
       "title": "PersonAttribute",
+      "parentTable": "person_attribute",
       "linkTemplates": {
         "rest": "/ws/rest/v1/person/{parent-uuid}/attribute/{uuid}?v=full"
       }
@@ -61,6 +69,7 @@
     "person": {
       "enabled": "true",
       "title": "Person",
+      "parentTable": "person",
       "linkTemplates": {
         "rest": "/ws/rest/v1/person/{uuid}?v=full",
         "fhir": "/Person/{uuid}"
@@ -69,6 +78,7 @@
     "provider": {
       "enabled": "true",
       "title": "Provider",
+      "parentTable": "provider",
       "linkTemplates": {
         "rest": "/ws/rest/v1/provider/{uuid}?v=full",
         "fhir": "/Provider/{uuid}"
@@ -77,6 +87,7 @@
     "user": {
       "enabled": "false",
       "title": "User",
+      "parentTable": "user",
       "linkTemplates": {
         "rest": "/ws/rest/v1/user/{uuid}?v=full"
       }
@@ -84,6 +95,7 @@
     "patient": {
       "enabled": "true",
       "title": "Patient",
+      "parentTable": "person",
       "linkTemplates": {
         "rest": "/ws/rest/v1/patient/{uuid}?v=full",
         "fhir": "/Patient/{uuid}"
@@ -92,6 +104,7 @@
     "relationship": {
       "enabled": "true",
       "title": "Relationship",
+      "parentTable": "relationship",
       "linkTemplates": {
         "rest": "/ws/rest/v1/relationship/{uuid}?v=full",
         "fhir": "/Relationship/{uuid}"
@@ -100,6 +113,7 @@
     "drug": {
       "enabled": "true",
       "title": "Drug",
+      "parentTable": "drug",
       "linkTemplates": {
         "rest": "/ws/rest/v1/drug/{uuid}?v=full",
         "fhir": "/Drug/{uuid}"
@@ -108,6 +122,7 @@
     "allergy": {
       "enabled": "true",
       "title": "Allergy",
+      "parentTable": "allergy",
       "linkTemplates": {
         "rest": "/ws/rest/v1/allergy/{uuid}?v=full",
         "fhir": "/AllergyIntolerance/{uuid}"
@@ -116,6 +131,7 @@
     "form":{
       "enabled": "true",
       "title": "Form",
+      "parentTable": "form",
       "linkTemplates": {
         "rest": "/ws/rest/v1/form/{uuid}?v=full"
       }
@@ -123,6 +139,7 @@
     "order": {
       "enabled": "true",
       "title": "Order",
+      "parentTable": "order",
       "linkTemplates": {
         "rest": "/ws/rest/v1/order/{uuid}?v=full",
         "fhir": "/Order/{uuid}"
@@ -131,6 +148,7 @@
     "drug_order":{
       "enabled": "true",
       "title": "DrugOrder",
+      "parentTable": "drug_order",
       "linkTemplates": {
         "rest": "/ws/rest/v1/drug_order/{uuid}?v=full",
         "fhir": "/MedicationRequest/{uuid}"
@@ -139,6 +157,7 @@
     "test_order": {
       "enabled": "true",
       "title": "TestOrder",
+      "parentTable": "test_order",
       "linkTemplates": {
         "rest": "/ws/rest/v1/test_order/{uuid}?v=full",
         "fhir": "/ProcedureRequest/{uuid}"
@@ -147,6 +166,7 @@
     "obs": {
       "enabled": "true",
       "title": "Observation",
+      "parentTable": "obs",
       "linkTemplates": {
         "rest": "/ws/rest/v1/obs/{uuid}?v=full",
         "fhir": "/Observation/{uuid}"
@@ -155,6 +175,7 @@
     "encounter":{
       "enabled": "true",
       "title": "Encounter",
+      "parentTable": "encounter",
       "linkTemplates": {
         "rest": "/ws/rest/v1/encounter/{uuid}?v=full",
         "fhir": "/Encounter/{uuid}"
@@ -163,6 +184,7 @@
     "visit":{
       "enabled": "false",
       "title": "Visit",
+      "parentTable": "visit",
       "linkTemplates": {
         "rest": "/ws/rest/v1/visit/{uuid}?v=full",
         "fhir": "/Encounter/{uuid}"
@@ -171,6 +193,7 @@
     "program":{
       "enabled": "true",
       "title": "Program",
+      "parentTable": "program",
       "linkTemplates": {
         "rest": "/ws/rest/v1/program/{uuid}?v=full",
         "fhir": "/Program/{uuid}"
@@ -179,6 +202,7 @@
     "programenrollment":{
       "enabled": "true",
       "title": "Program Enrollment",
+      "parentTable": "programenrollment",
       "linkTemplates": {
         "rest": "/ws/rest/v1/programenrollment/{uuid}?v=full",
         "fhir": "/Programenrollment/{uuid}"
@@ -187,6 +211,7 @@
     "privilege":{
       "enabled": "true",
       "title": "Privilege",
+      "parentTable": "privilege",
       "linkTemplates": {
         "rest": "/ws/rest/v1/privilege/{uuid}?v=full"
       }
@@ -194,6 +219,7 @@
     "audit_message":{
       "enabled": "true",
       "title": "AuditMessage",
+      "parentTable": "audit_message",
       "linkTemplates": {
         "rest": "/ws/rest/sync2/messages/{uuid}"
       }

@@ -30,5 +30,9 @@ public class EventConfiguration {
 	
 	@Getter
 	@Setter
+	private String parentTable;
+	
+	@Getter
+	@Setter
 	private LinkedHashMap<String, String> linkTemplates;
 }
