@@ -1,0 +1,13 @@
+{
+    "version": "1.10.0",
+    "minimumCoreVersion": "3.4.0",
+    "protocol": "https",
+    "host": "localhost",
+    "port": 8093,
+    "title": "Admin Console",
+    "footerTitle": "OpenHIM Administration Console",
+    "footerPoweredBy": "<a href='http://openhim.org/' target='_blank'>Powered by OpenHIM</a>",
+    "loginBanner": "",
+    "mediatorLastHeartbeatWarningSeconds": 60,
+    "mediatorLastHeartbeatDangerSeconds": 120
+  }
