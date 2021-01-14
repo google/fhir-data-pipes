@@ -347,7 +347,7 @@ public class FhirEtl {
 			                options.getFileParquetPath(), options.getOpenmrsUserName(), options.getOpenmrsPassword())))
 			        .setCoder(AvroCoder.of(GenericRecord.class, schema));
 			
-			// TODO: create a unified method without passing
+			// TODO: Refactor the pipeline from after `CreateSearchSegments` and merge with its counterpart in runFhirFetch.
 			if (!options.getFileParquetPath().isEmpty()) {
 				String outputFile = options.getFileParquetPath() + resourceType;
 				ParquetIO.Sink sink = ParquetIO.sink(schema);
