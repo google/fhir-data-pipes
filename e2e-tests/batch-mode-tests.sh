@@ -11,7 +11,7 @@ until [[ ${statuscode} -eq 200 ]]; do
 done
 echo "${print_prefix} OPENMRS SERVER STARTED SUCCESSFULLY"
 echo "${print_prefix} BUILD THE ANALYTICS PROJECT"
-mvn clean install
+mvn clean install -DskipTests=true 
 rm -rf /tmp/analytics-tests
 mktemp -d /tmp/analytics-tests
 echo "${print_prefix} RUN BATCH MODE WITH PARQUET SYNC"
@@ -24,13 +24,20 @@ echo "${print_prefix} PARQUET FILES SYNCED IN /tmp/analytics-tests DIRECTORY"​
 current_path=`pwd`
 echo "${print_prefix} COPYING PARQUET TOOLS JAR FILE TO ROOT"
 cp e2e-tests/parquet-tools-1.11.1.jar /tmp/analytics-tests/
-if ! command -v jq &> /dev/null; then #add !
-    echo "${print_prefix} INSTALLING JSON COMMAND-LINE PROCESS, JQ"
-    sudo apt install jq
+if ! [[ $(command -v jq) ]]; then
+    echo "INSTALLING JSON COMMAND-LINE PROCESSOR, JQ" >&2
+    if [[ "$OSTYPE" == "linux-gnu"* ]]; then
+        echo "OSTYPE: linux"
+        sudo apt install jq
+    elif [[ "$OSTYPE" == "darwin"* ]]; then
+        echo "OSTYPE: Mac OSX"
+        brew install jq
+    fi
 fi
-if ! command -v jq &> /dev/null; then #add !
-    echo "${print_prefix} JQ COULD NOT BE INSTALLED, INSTALL JQ MANUALLY TO CONTINUE RUNNING THE TESTS"
-    exit 0
+
+if ! [[ $(command -v jq) ]]; then
+  echo "COULD NOT INSTALL JQ, INSTALL MANUALLY TO CONTINUE RUNNING THE TEST" >&2
+  brew install jq
 fi
 cd /tmp/analytics-tests
 mkdir omrs
@@ -45,13 +52,13 @@ curl -L -X GET -u admin:Admin123 http://localhost:8099/openmrs/ws/fhir2/R4/Obser
 total_test_obs=$(jq '.total' ./omrs/obs.json)
 echo "${print_prefix} Total openmrs test obs ---> ${total_test_obs}"
 echo "${print_prefix} Counting number of patients, encounters and obs sinked to parquet files"
-total_patients_streamed=$(java -jar ./parquet-tools-1.11.1.jar rowcount ./Patient/)
+total_patients_streamed=$(java -jar ./parquet-tools-1.11.1.jar rowcount ./Patient/ | awk '{print $3}')
 echo "${print_prefix} Total patients synched to parquet ---> ${total_patients_streamed}"
-total_encounters_streamed=$(java -jar ./parquet-tools-1.11.1.jar rowcount ./Encounter/)
+total_encounters_streamed=$(java -jar ./parquet-tools-1.11.1.jar rowcount ./Encounter/ | awk '{print $3}')
 echo "${print_prefix} Total encounters synched to parquet ---> ${total_encounters_streamed}"
-total_obs_streamed=$(java -jar ./parquet-tools-1.11.1.jar rowcount ./Observation/)
+total_obs_streamed=$(java -jar ./parquet-tools-1.11.1.jar rowcount ./Observation/ | awk '{print $3}')
 echo "${print_prefix} Total obs synched to parquet ---> ${total_obs_streamed}"
-if [[ ($total_patients_streamed == *$total_test_patients*) && ($total_encounters_streamed == *$total_test_encounters*) && ($total_obs_streamed == *$total_obs_encounters*)]] ;
+if [[ (${total_patients_streamed} == ${total_test_patients}) && (${total_encounters_streamed} == ${total_test_encounters}) && ($total_obs_streamed == ${total_test_obs})]] ;
 then
   echo "${print_prefix} BATCH MODE WITH PARQUET SYNC EXECUTED SUCCESSFULLY"
 else
