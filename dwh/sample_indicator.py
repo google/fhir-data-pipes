@@ -148,7 +148,7 @@ if __name__ == '__main__':
   print('Date range:  {0} - {1}'.format(start_date, end_date))
   print('Codes are: {0}'.format(args.code_list))
   conf = (SparkConf()
-          .setMaster('local')
+          .setMaster('local[20]')
           .setAppName('IndicatorsApp')
           .set('spark.executor.memory', '1g'))
   spark = SparkSession.builder.config(conf=conf).getOrCreate()
