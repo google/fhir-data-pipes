@@ -345,7 +345,7 @@ so it is a good idea to first create a Python `virtualenv`:
 ```
 $ virtualenv -p python3.8 venv
 $ . ./venv/bin/activate
-$ pip install pyspark
+(venv) $ pip install pyspark
 ```
 *Tip*: If you use IntelliJ, the `virtualenv` can be created by (and used in)
 the IDE.
@@ -372,6 +372,43 @@ descriptions, try:
 ```
 $ python sample_indicator.py --help
 ```
+
+## Using Jupyter Notebooks
+
+While in your virtualenv, run:
+```bash
+(venv) $ pip3 install jupyter
+```
+Then from a terminal that can run GUI applications, run:
+```bash
+(venv) $ jupyter notebook
+```
+This should start a Jupyter server and bring up its UI in a browser tab.
+
+In caset that auto-completion functionality is not working, this might be due
+to a recent regression; check the solution
+[here](https://github.com/ipython/ipython/issues/12740#issuecomment-751273584)
+to downgrade your `jedi`.
+
+Also if you like to automatically record the execution time of different cells
+(and other nice features/extensions) install
+[nbextensions](https://jupyter-contrib-nbextensions.readthedocs.io/en/latest/install.html).
+
+A sample notebook is provided at [`dwh/test_spark.ipynb`](dwh/test_spark.ipynb)
+which uses
+[Pandas Dataframes](https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.html)
+and `matplotlib` too, so to run this you have to have Pandas installed too:
+```
+(venv) $ pip3 install pandas
+(venv) $ pip3 install matplotlib
+```
+At the end of this notebook, we wrap up the tests into reusable functions that
+we can use outside the Jupyter environment e.g., for automated indicator
+computation.
+
+TODO: Add a `setup.py` for all requirements to automate dependency installation.
+
+
 # Integrating with OpenHIM (Middleware component)
 For the case, where there are several OpenMRS systems,
 OpenHIM can be used as a middleware component to integrate/track/log requests from several OpenMRS instances.
