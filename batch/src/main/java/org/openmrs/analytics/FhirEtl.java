@@ -85,7 +85,7 @@ public class FhirEtl {
 		
 		@Description("The number of resources to be fetched in one API call. "
 		        + "For the JDBC mode passing > 170 could result in HTTP 400 Bad Request")
-		@Default.Integer(170)
+		@Default.Integer(100)
 		int getBatchSize();
 		
 		void setBatchSize(int value);
@@ -194,6 +194,11 @@ public class FhirEtl {
 	
 	static Map<String, List<SearchSegmentDescriptor>> createSegments(FhirEtlOptions options, FhirContext fhirContext)
 	        throws CannotProvideCoderException {
+		if (options.getBatchSize() > 100) {
+			// TODO: Probe this value from the server and set the maximum automatically.
+			log.warn("NOTE batchSize flag is higher than 100; make sure that `fhir2.paging.maximum` "
+			        + "is set accordingly on the OpenMRS server.");
+		}
 		FhirSearchUtil fhirSearchUtil = createFhirSearchUtil(options, fhirContext);
 		Map<String, List<SearchSegmentDescriptor>> segmentMap = new HashMap<>();
 		for (String search : options.getSearchList().split(",")) {
