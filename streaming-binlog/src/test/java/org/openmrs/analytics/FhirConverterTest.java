@@ -14,10 +14,14 @@
 
 package org.openmrs.analytics;
 
+import static org.mockito.Mockito.mock;
+
 import java.io.IOException;
 import java.util.Map;
 
 import io.debezium.data.Envelope.Operation;
+
+import org.apache.camel.Exchange;
 import org.apache.camel.Produce;
 import org.apache.camel.ProducerTemplate;
 import org.apache.camel.RoutesBuilder;
@@ -212,5 +216,26 @@ public class FhirConverterTest extends CamelTestSupport {
 		
 		Mockito.verify(openmrsUtil, Mockito.times(0)).fetchFhirResource(Mockito.anyString());
 	}
+
+	@Test
+	public void shouldCallProcessMethod(){
+	  //mock the fhirConverter
+	  FhirConverter fhirCvt = mock(FhirConverter.class);
+
+     //mock Exchange
+	 Exchange exchange = mock(Exchange.class);
+	 
+	 Map<String, String> messageBody = DebeziumTestUtil.genExpectedBody();
+	Map<String, Object> messageHeaders = DebeziumTestUtil.genExpectedHeaders(Operation.CREATE, "person");
+
+	Mockito.doNothing().when(fhirConverter).process(exchange);
+
+	eventsProducer.sendBodyAndHeaders(messageBody, messageHeaders);
+
+	Mockito.verify(fhirConverter, Mockito.times(1)).process(exchange);
+
+	}
+	
+	
 	
 }
