@@ -6,9 +6,9 @@ services:
   - docker
 before_install:
   - chmod +x ./travis.sh
-  - travis_wait ./travis.sh
+    #- travis_wait ./travis.sh
+  - sudo apt-get install python3
 before_script:
-  - apt-get install python
     #  - |
     #    statuscode=$(curl -o /dev/null --head -w "%{http_code}" -L -X GET -u admin:Admin123 http://localhost:8099/openmrs/ws/rest/v1/visittype)
     #    echo "Curl Status Code --> $statuscode"
@@ -17,5 +17,5 @@ before_script:
     #    fi
 script:
   #- mvn clean install
-  - dwh/validate_indicators.sh
+  - cd dwh; ./validate_indicators.sh
 
