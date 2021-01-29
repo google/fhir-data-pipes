@@ -16,4 +16,5 @@ before_script:
     fi
 script:
   - mvn clean install
+  - dwh/validate_indicators.sh
 
