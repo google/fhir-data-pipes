@@ -18,7 +18,7 @@
 See test_spark.ipynb for real examples of how
 """
 
-from typing import Tuple, List
+from typing import List
 from datetime import datetime
 import pandas
 from pyspark.sql import DataFrame
