@@ -60,10 +60,13 @@ public class DebeziumListener extends RouteBuilder {
 		OpenmrsUtil openmrsUtil = new OpenmrsUtil(fhirBaseUrl, params.openmrUserName, params.openmrsPassword, fhirContext);
 		FhirStoreUtil fhirStoreUtil = FhirStoreUtil.createFhirStoreUtil(params.fhirSinkPath, params.sinkUserName,
 		    params.sinkPassword, fhirContext.getRestfulClientFactory());
+		JdbcConnectionUtil jdbcConnectionUtil = new JdbcConnectionUtil(params.jdbcDriverClass, params.jDBCURLinput,
+		        params.databaseUser, params.databasePassword);
 		ParquetUtil parquetUtil = new ParquetUtil(params.fileParquetPath, params.secondsToFlushParquetFiles,
 		        params.rowGroupSizeForParquetFiles);
 		camelContext.addService(new ParquetService(parquetUtil), true);
-		return new FhirConverter(openmrsUtil, fhirStoreUtil, parquetUtil, params.fhirDebeziumEventConfigPath);
+		return new FhirConverter(openmrsUtil, fhirStoreUtil, parquetUtil, params.fhirDebeziumEventConfigPath,
+		        jdbcConnectionUtil);
 	}
 	
 	private String getDebeziumConfig() {
@@ -155,6 +158,12 @@ public class DebeziumListener extends RouteBuilder {
 		
 		@Parameter(names = { "--fhirDebeziumEventConfigPath" }, description = "Google cloud FHIR store")
 		public String fhirDebeziumEventConfigPath = "utils/dbz_event_to_fhir_config.json";
+		
+		@Parameter(names = { "--jdbcDriverClass" }, description = "JDBC MySQL driver class")
+		public String jdbcDriverClass = "com.mysql.cj.jdbc.Driver";
+		
+		@Parameter(names = { "--getJdbcUrl" }, description = "JDBC URL input")
+		public String jDBCURLinput = "jdbc:mysql://localhost:3308/openmrs";
 		
 	}
 }

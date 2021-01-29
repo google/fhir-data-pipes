@@ -21,15 +21,11 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.sql.Connection;
-import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.sql.Statement;
 import java.util.Map;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.gson.Gson;
-import com.mchange.v2.c3p0.ComboPooledDataSource;
 import io.debezium.data.Envelope.Operation;
 import org.apache.camel.Exchange;
 import org.apache.camel.Message;
@@ -52,13 +48,11 @@ public class FhirConverter implements Processor {
 	
 	private final ParquetUtil parquetUtil;
 	
+	private JdbcConnectionUtil jdbcConnectionUtil;
+	
+	private GetUuidUtil getUuidUtil;
+	
 	private final GeneralConfiguration generalConfiguration;
-	
-	private ComboPooledDataSource comboPooledDataSource;
-	
-	private static final String JDBC_DRIVER = "com.mysql.cj.jdbc.Driver";
-	
-	private static final String DB_URL = "jdbc:mysql://localhost:3306/openmrs?autoReconnect=true&useSSL=false";
 	
 	@VisibleForTesting
 	FhirConverter() {
@@ -70,15 +64,16 @@ public class FhirConverter implements Processor {
 	}
 	
 	public FhirConverter(OpenmrsUtil openmrsUtil, FhirStoreUtil fhirStoreUtil, ParquetUtil parquetUtil,
-	    String configFileName) throws IOException {
+	    String configFileName, JdbcConnectionUtil jdbcConnectionUtil) throws IOException {
 		// TODO add option for switching to Parquet-file outputs.
 		this.openmrsUtil = openmrsUtil;
 		this.fhirStoreUtil = fhirStoreUtil;
 		this.parquetUtil = parquetUtil;
 		this.generalConfiguration = getEventsToFhirConfig(configFileName);
+		this.jdbcConnectionUtil = jdbcConnectionUtil;
 	}
 	
-	public void process(Exchange exchange) throws PropertyVetoException {
+	public void process(Exchange exchange) throws PropertyVetoException, ClassNotFoundException, SQLException {
 		Message message = exchange.getMessage();
 		final Map payload = message.getBody(Map.class);
 		final Map sourceMetadata = message.getHeader(DebeziumConstants.HEADER_SOURCE_METADATA, Map.class);
@@ -103,13 +98,17 @@ public class FhirConverter implements Processor {
 			log.trace("Skipping disabled events ..." + table);
 			return;
 		}
-		if (payload.get("uuid") == null) {
-			String resultUuid = getUuid(config.getParentTable(), config.getParentForeignKey(), config.getChildPrimaryKey(),
+		
+		String uuid = "";
+		
+		if (payload.get("uuid") != null) {
+			uuid = payload.get("uuid").toString();
+		} else {
+			getUuidUtil = new GetUuidUtil(jdbcConnectionUtil);
+			uuid = getUuidUtil.getUuid(config.getParentTable(), config.getParentForeignKey(), config.getChildPrimaryKey(),
 			    payload);
-			
-			payload.put("uuid", resultUuid);
 		}
-		final String uuid = payload.get("uuid").toString();
+		
 		final String fhirUrl = config.getLinkTemplates().get("fhir").replace("{uuid}", uuid);
 		log.info("Fetching FHIR resource at " + fhirUrl);
 		Resource resource = openmrsUtil.fetchFhirResource(fhirUrl);
@@ -141,56 +140,4 @@ public class FhirConverter implements Processor {
 			return generalConfiguration;
 		}
 	}
-	
-	private String getUuid(String parentTable, String parentForeignKey, String childPrimaryKeyValue, Map payload)
-	        throws PropertyVetoException {
-		
-		final String USER_NAME = "root";
-		final String PASS_WORD = "debezium";
-		
-		comboPooledDataSource = new ComboPooledDataSource();
-		comboPooledDataSource.setDriverClass(JDBC_DRIVER);
-		comboPooledDataSource.setJdbcUrl(DB_URL);
-		comboPooledDataSource.setUser(USER_NAME);
-		comboPooledDataSource.setPassword(PASS_WORD);
-		
-		Connection conn = null;
-		Statement stmt = null;
-		String uuidResultFromSql = null;
-		try {
-			Class.forName("com.mysql.cj.jdbc.Driver");
-			
-			//Connecting to openmrs database
-			conn = comboPooledDataSource.getConnection();
-			//Creating statement
-			stmt = conn.createStatement();
-			
-			String sql = String.format("SELECT uuid FROM %s WHERE %s = %s", parentTable, parentForeignKey,
-			    payload.get(childPrimaryKeyValue.toString()));
-			
-			ResultSet rs = stmt.executeQuery(sql);
-			while (rs.next()) {
-				uuidResultFromSql = rs.getString("uuid");
-				rs.close();
-			}
-			
-		}
-		catch (ClassNotFoundException classNotFoundException) {
-			classNotFoundException.printStackTrace();
-		}
-		catch (SQLException exception) {
-			exception.printStackTrace();
-		}
-		finally {
-			if (stmt != null)
-				
-				comboPooledDataSource.close();
-			if (conn != null)
-				comboPooledDataSource.close();
-		}
-		
-		return uuidResultFromSql;
-		
-	}
-	
 }

@@ -323,8 +323,10 @@ public class FhirEtl {
 	static void runFhirJdbcFetch(FhirEtlOptions options, FhirContext fhirContext)
 	        throws PropertyVetoException, IOException, SQLException {
 		Pipeline pipeline = Pipeline.create(options);
-		JdbcFetchUtil jdbcUtil = new JdbcFetchUtil(options.getJdbcDriverClass(), options.getJdbcUrl(), options.getDbUser(),
-		        options.getDbPassword(), options.getJdbcMaxPoolSize());
+		
+		JdbcConnectionUtil jdbcConnectionUtil = new JdbcConnectionUtil(options.getJdbcDriverClass(), options.getJdbcUrl(),
+		        options.getDbUser(), options.getDbPassword(), options.getJdbcMaxPoolSize());
+		JdbcFetchUtil jdbcUtil = new JdbcFetchUtil(jdbcConnectionUtil);
 		JdbcIO.DataSourceConfiguration jdbcConfig = jdbcUtil.getJdbcConfig();
 		int batchSize = Math.min(options.getBatchSize(), 170); // batch size > 200 will result in HTTP 400 Bad Request
 		int jdbcFetchSize = options.getJdbcFetchSize();
