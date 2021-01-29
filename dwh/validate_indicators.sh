@@ -8,7 +8,7 @@ if [[ -z ${has_virtualenv} ]]; then
   echo "ERROR: 'virtualnv' not found; make sure it is installed and is in PATH."
   exit 1
 fi
-virtualenv -p python3.8 venv_test
+virtualenv -p python3 venv_test
 source ./venv_test/bin/activate
 # Making sure the pip3 is from the virtualenv
 declare -r has_pip3=$(which pip3 | grep 'venv_test')
