@@ -2,12 +2,14 @@ language: java
 jdk:
   - openjdk8
   - openjdk11
+python:
+  - "3.8"
 services:
   - docker
 before_install:
   - chmod +x ./travis.sh
     #- travis_wait ./travis.sh
-  - sudo apt-get install python3.8
+    #- sudo apt-get install python3.8
 before_script:
     #  - |
     #    statuscode=$(curl -o /dev/null --head -w "%{http_code}" -L -X GET -u admin:Admin123 http://localhost:8099/openmrs/ws/rest/v1/visittype)
