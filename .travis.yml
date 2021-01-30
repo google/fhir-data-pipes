@@ -8,6 +8,7 @@ matrix:
         - docker
       before_install:
         - chmod +x ./travis.sh
+        - travis_wait ./travis.sh
       before_script:
         - |
           statuscode=$(curl -o /dev/null --head -w "%{http_code}" -L -X GET -u admin:Admin123 http://localhost:8099/openmrs/ws/rest/v1/visittype)
