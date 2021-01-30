@@ -18,7 +18,7 @@ matrix:
       script:
         - mvn clean install
 
-  - language: python
-    python:  "3.8"
-    script:
-      - cd dwh; ./validate_indicators.sh
+    - language: python
+      python:  "3.8"
+      script:
+        - cd dwh; ./validate_indicators.sh
