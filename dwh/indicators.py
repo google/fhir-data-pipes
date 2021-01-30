@@ -116,6 +116,8 @@ if __name__ == '__main__':
   custom_log(
     'Number of joined patient_agg_obs= {}'.format(patient_agg_obs_df.count()))
 
+  # DUMMY
+
   # Spark is supposed to automatically cache DFs after shuffle but it seems
   # this is not happening!
   patient_agg_obs_df.cache()
