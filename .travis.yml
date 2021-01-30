@@ -1,15 +1,24 @@
-language: java
-jdk:
-  - openjdk8
-  - openjdk11
-python:
-  "3.8"
-services:
-  - docker
-before_install:
-  - chmod +x ./travis.sh
-  - apt-cache search python 2>&1
-  - sudo apt-get install python3.6
-script:
-  - cd dwh; ./validate_indicators.sh
+matrix:
+  include:
+    - language: java
+      jdk:
+        - openjdk8
+        - openjdk11
+      services:
+        - docker
+      before_install:
+        - chmod +x ./travis.sh
+      before_script:
+        - |
+          statuscode=$(curl -o /dev/null --head -w "%{http_code}" -L -X GET -u admin:Admin123 http://localhost:8099/openmrs/ws/rest/v1/visittype)
+          echo "Curl Status Code --> $statuscode"
+          if [ "$statuscode" -ne 200 ]; then
+            travis_terminate 1
+          fi
+      script:
+        - mvn clean install
 
+  - language: python
+    python:  "3.8"
+    script:
+      - cd dwh; ./validate_indicators.sh
