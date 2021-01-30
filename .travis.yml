@@ -1,4 +1,4 @@
-language: python3
+language: java,python
 jdk:
   - openjdk8
   - openjdk11
@@ -8,8 +8,8 @@ services:
   - docker
 before_install:
   - chmod +x ./travis.sh
-    #- apt-cache search python
-    #- sudo apt-get install python3.6
+  - apt-cache search python 2>&1
+  - sudo apt-get install python3.6
 script:
   - cd dwh; ./validate_indicators.sh
 
