@@ -28,14 +28,14 @@ public class GetUuidUtil {
 		this.jdbcConnectionUtil = jdbcConnectionUtil;
 	}
 	
-	public String getUuid(String parentTable, String parentForeignKey, String childPrimaryKeyValue, Map payload)
+	public String getUuid(String parentTable, String parentForeignKey, String childPrimaryKey, Map payload)
 	        throws PropertyVetoException, SQLException, ClassNotFoundException {
 		
 		Statement stmt = jdbcConnectionUtil.createStatement();
 		String uuidResultFromSql = null;
 		
 		String sql = String.format("SELECT uuid FROM %s WHERE %s = %s", parentTable, parentForeignKey,
-		    payload.get(childPrimaryKeyValue.toString()));
+		    payload.get(childPrimaryKey.toString()));
 		
 		ResultSet rs = stmt.executeQuery(sql);
 		while (rs.next()) {
