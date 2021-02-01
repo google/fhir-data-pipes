@@ -37,7 +37,7 @@ public class GetUuidUtilTest extends TestCase {
 	
 	private final String dbDriver = "com.mysql.cj.jdbc.Driver";
 	
-	private final String dbUrl = "jdbc:mysql://localhost:3308/openmrs";
+	private final String dbUrl = "jdbc:mysql://localhost:3306/openmrs";
 	
 	private final String dbUser = "root";
 	
@@ -59,6 +59,7 @@ public class GetUuidUtilTest extends TestCase {
 		config.setParentForeignKey("person_id");
 		config.setChildPrimaryKey("patient_id");
 		config.setParentTable("person");
+		
 		uuid = getUuidUtil.getUuid(config.getParentTable(), config.getParentForeignKey(), config.getChildPrimaryKey(),
 		    payload);
 		
