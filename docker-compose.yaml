@@ -25,7 +25,7 @@ services:
       test: "exit 0"
     environment:
      - SINK_PATH=http://localhost:8098/fhir
-     - SOURCE_URL=https://localhost:8099/openmrs
+     - SERVER_URL=http://localhost:8099/openmrs
      - SEARCH_LIST=Patient,Encounter,Observation
      - BATCH_SIZE=20
      - TARGET_PARALLELISM=20

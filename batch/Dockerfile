@@ -21,7 +21,7 @@ WORKDIR ${WORK_DIR}
 ENV SINK_PATH="http://localhost:8098/fhir"
 ENV SINK_USERNAME=""
 ENV SINK_PASSWORD=""
-ENV SERVER_URL="http://localhost:8091/openmrs"
+ENV SERVER_URL="http://localhost:8099/openmrs"
 ENV USERNAME="admin"
 ENV PASSWORD="Admin123"
 ENV SEARCH_LIST="Patient"
