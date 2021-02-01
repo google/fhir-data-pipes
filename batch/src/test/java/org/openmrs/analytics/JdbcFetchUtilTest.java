@@ -74,9 +74,10 @@ public class JdbcFetchUtilTest extends TestCase {
 		String[] args = { "--fhirSinkPath=", "--openmrsServerUrl=http://localhost:8099/openmrs" };
 		FhirEtl.FhirEtlOptions options = PipelineOptionsFactory.fromArgs(args).withValidation()
 		        .as(FhirEtl.FhirEtlOptions.class);
+		JdbcConnectionUtil jdbcConnectionUtil = new JdbcConnectionUtil(options.getJdbcDriverClass(), options.getJdbcUrl(),
+		        options.getDbUser(), options.getDbPassword(), options.getJdbcMaxPoolSize());
+		jdbcFetchUtil = new JdbcFetchUtil(jdbcConnectionUtil);
 		
-		jdbcFetchUtil = new JdbcFetchUtil(options.getJdbcDriverClass(), options.getJdbcUrl(), options.getDbUser(),
-		        options.getDbPassword(), options.getJdbcMaxPoolSize());
 		parquetUtil = new ParquetUtil(basePath);
 		// clean up if folder exists
 		File file = new File(basePath);

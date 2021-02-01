@@ -40,7 +40,6 @@ public class GetUuidUtil {
 		ResultSet rs = stmt.executeQuery(sql);
 		while (rs.next()) {
 			uuidResultFromSql = rs.getString("uuid");
-			
 		}
 		rs.close();
 		stmt.close();
