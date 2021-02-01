@@ -149,7 +149,7 @@ if __name__ == '__main__':
   print('Codes are: {0}'.format(args.code_list))
   conf = (SparkConf()
           .setMaster('local[20]')
-          .setAppName('IndicatorsApp')
+          .setAppName('SampleIndicatorsApp')
           .set('spark.executor.memory', '1g'))
   spark = SparkSession.builder.config(conf=conf).getOrCreate()
 
