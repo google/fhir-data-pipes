@@ -41,7 +41,6 @@
     <version.kafka>2.4.0</version.kafka>
     <version.plugin.docker>0.31.0</version.plugin.docker>
     <version.plugin.shade>3.2.1</version.plugin.shade>
-    <c3p0.version>0.9.5.4</c3p0.version>
   </properties>
 
   <dependencyManagement>
@@ -78,12 +77,6 @@
       <groupId>${project.parent.groupId}</groupId>
       <artifactId>fhir-common</artifactId>
       <version>${project.parent.version}</version>
-    </dependency>
-    <dependency>
-      <!--JDBC connection pool will make concurrent JDBC connections more efficient-->
-      <groupId>com.mchange</groupId>
-      <artifactId>c3p0</artifactId>
-      <version>${c3p0.version}</version>
     </dependency>
     <dependency>
       <groupId>org.apache.camel</groupId>

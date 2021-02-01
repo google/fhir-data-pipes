@@ -129,7 +129,7 @@ public class JdbcFetchUtil {
 					        List<String> uuids = new ArrayList<String>();
 					        element.getValue().forEach(uuids::add);
 					        r.output(SearchSegmentDescriptor
-					                .create(String.format("%s?_id=%s", baseBundleUrl, String.join(",", uuids)), uuids.size() // please note that, setting count here has no effect.
+					                .create(String.format("%s?_id=%s", baseBundleUrl, String.join(",", uuids)), uuids.size() //please note that, setting count here has no effect.
 					        ));
 					        
 				        }
