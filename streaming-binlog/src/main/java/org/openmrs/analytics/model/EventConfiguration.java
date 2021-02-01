@@ -35,4 +35,56 @@ public class EventConfiguration {
 	@Getter
 	@Setter
 	private LinkedHashMap<String, String> linkTemplates;
+	
+	@Getter
+	@Setter
+	private String databaseHostName;
+	
+	@Getter
+	@Setter
+	private int databasePort;
+	
+	@Getter
+	@Setter
+	private String databaseUser;
+	
+	@Getter
+	@Setter
+	private String databasePassword;
+	
+	@Getter
+	@Setter
+	private String databaseName;
+	
+	@Getter
+	@Setter
+	private int databaseServerId;
+	
+	@Getter
+	@Setter
+	private String databaseServerName;
+	
+	@Getter
+	@Setter
+	private String databaseSchema;
+	
+	@Getter
+	@Setter
+	private String offsetStorage;
+	
+	@Getter
+	@Setter
+	private String databaseOffsetStorage;
+	
+	@Getter
+	@Setter
+	private String databaseHistory;
+	
+	@Getter
+	@Setter
+	private String snapshotMode;
+	
+	@Getter
+	@Setter
+	private String openmrsfhirBaseEndpoint;
 }

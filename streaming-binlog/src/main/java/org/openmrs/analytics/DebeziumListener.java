@@ -25,6 +25,7 @@ import org.apache.camel.CamelContext;
 import org.apache.camel.LoggingLevel;
 import org.apache.camel.Service;
 import org.apache.camel.builder.RouteBuilder;
+import org.openmrs.analytics.model.GeneralConfiguration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -63,20 +64,24 @@ public class DebeziumListener extends RouteBuilder {
 		ParquetUtil parquetUtil = new ParquetUtil(params.fileParquetPath, params.secondsToFlushParquetFiles,
 		        params.rowGroupSizeForParquetFiles);
 		camelContext.addService(new ParquetService(parquetUtil), true);
-		return new FhirConverter(openmrsUtil, fhirStoreUtil, parquetUtil, params.fhirDebeziumEventConfigPath);
+		return new FhirConverter(openmrsUtil, fhirStoreUtil, parquetUtil, params.fhirDebeziumConfigPath);
 	}
 	
-	private String getDebeziumConfig() {
-		return "debezium-mysql:" + params.databaseHostName + "?" + "databaseHostname=" + params.databaseHostName
-		        + "&databaseServerId=" + params.databaseServerId + "&databasePort=" + params.databasePort.intValue()
-		        + "&databaseUser=" + params.databaseUser + "&databasePassword=" + params.databasePassword
-				//+ "&name={{database.dbname}}"
-		        + "&databaseServerName=" + params.databaseName + "&databaseWhitelist=" + params.databaseSchema
-		        + "&offsetStorage=org.apache.kafka.connect.storage.FileOffsetBackingStore" + "&offsetStorageFileName="
-		        + params.databaseOffsetStorage + "&databaseHistoryFileFilename=" + params.databaseHistory + "&snapshotMode="
-		        + params.snapshotMode
-		//+ "&tableWhitelist={{database.schema}}.encounter,{{database.schema}}.obs"
-		;
+	private String getDebeziumConfig() throws IOException {
+		GeneralConfiguration gc = new GeneralConfiguration();
+		GeneralConfiguration generalConfiguration = gc.getFhirDebeziumConfigPath(params.fhirDebeziumConfigPath);
+		return "debezium-mysql:" + generalConfiguration.getDbzConfigs().get("databaseHostName") + "?" + "databaseHostname="
+		        + generalConfiguration.getDbzConfigs().get("databaseName") + "&databaseServerId="
+		        + generalConfiguration.getDbzConfigs().get("databaseServerId") + "&databasePort="
+		        + generalConfiguration.getDbzConfigs().get("databasePort") + "&databaseUser="
+		        + generalConfiguration.getDbzConfigs().get("databaseUser") + "&databasePassword="
+		        + generalConfiguration.getDbzConfigs().get("databasePassword") + "&databaseServerName="
+		        + generalConfiguration.getDbzConfigs().get("databaseName") + "&databaseWhitelist="
+		        + generalConfiguration.getDbzConfigs().get("databaseSchema") + "&offsetStorage="
+		        + generalConfiguration.getDbzConfigs().get("OffsetStorage") + "&offsetStorageFileName="
+		        + generalConfiguration.getDbzConfigs().get("databaseOffsetStorage") + "&databaseHistoryFileFilename="
+		        + generalConfiguration.getDbzConfigs().get("databaseHistory") + "&snapshotMode="
+		        + generalConfiguration.getDbzConfigs().get("snapshotMode");
 	}
 	
 	/**
@@ -153,8 +158,8 @@ public class DebeziumListener extends RouteBuilder {
 		@Parameter(names = { "--openmrsfhirBaseEndpoint" }, description = "Fhir base endpoint")
 		public String openmrsfhirBaseEndpoint = "/ws/fhir2/R4";
 		
-		@Parameter(names = { "--fhirDebeziumEventConfigPath" }, description = "Google cloud FHIR store")
-		public String fhirDebeziumEventConfigPath = "utils/dbz_event_to_fhir_config.json";
+		@Parameter(names = { "--fhirDebeziumConfigPath" }, description = "Google cloud FHIR store")
+		public String fhirDebeziumConfigPath = "utils/dbz_event_to_fhir_config.json";
 		
 	}
 }
