@@ -158,6 +158,12 @@ public class FhirEtl {
 		
 		void setJdbcMaxPoolSize(int value);
 		
+		@Description("JDBC initial pool size")
+		@Default.Integer(50)
+		int getJdbcInitialPoolSize();
+		
+		void setJdbcInitialPoolSize(int value);
+		
 		@Description("MySQL DB user")
 		@Default.String("root")
 		String getDbUser();
@@ -325,7 +331,8 @@ public class FhirEtl {
 		Pipeline pipeline = Pipeline.create(options);
 		
 		JdbcConnectionUtil jdbcConnectionUtil = new JdbcConnectionUtil(options.getJdbcDriverClass(), options.getJdbcUrl(),
-		        options.getDbUser(), options.getDbPassword(), options.getJdbcMaxPoolSize());
+		        options.getDbUser(), options.getDbPassword(), options.getJdbcMaxPoolSize(),
+		        options.getJdbcInitialPoolSize());
 		JdbcFetchUtil jdbcUtil = new JdbcFetchUtil(jdbcConnectionUtil);
 		JdbcIO.DataSourceConfiguration jdbcConfig = jdbcUtil.getJdbcConfig();
 		int batchSize = Math.min(options.getBatchSize(), 170); // batch size > 200 will result in HTTP 400 Bad Request

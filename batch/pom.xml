@@ -47,7 +47,7 @@
     <nemo.version>0.1</nemo.version>
     <flink.artifact.name>beam-runners-flink-1.9</flink.artifact.name>
     <mysql.driver.version>8.0.16</mysql.driver.version>
-    <c3p0.version>0.9.5.4</c3p0.version>
+    
 
   </properties>
 
@@ -266,12 +266,6 @@
     </dependency>
 
     <!--JDBC specific dependencies-->
-    <dependency>
-      <!--JDBC connection pool will make concurrent JDBC connections more efficient-->
-      <groupId>com.mchange</groupId>
-      <artifactId>c3p0</artifactId>
-      <version>${c3p0.version}</version>
-    </dependency>
 
     <dependency>
       <groupId>mysql</groupId>

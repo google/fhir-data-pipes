@@ -43,8 +43,11 @@ public class GetUuidUtil {
 		}
 		rs.close();
 		stmt.close();
-		
-		return uuidResultFromSql;
+		if (uuidResultFromSql == null) {
+			throw new SQLException("Could not find the uuid in the DB");
+		} else {
+			return uuidResultFromSql;
+		}
 		
 	}
 	

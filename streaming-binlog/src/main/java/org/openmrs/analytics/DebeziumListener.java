@@ -61,7 +61,7 @@ public class DebeziumListener extends RouteBuilder {
 		FhirStoreUtil fhirStoreUtil = FhirStoreUtil.createFhirStoreUtil(params.fhirSinkPath, params.sinkUserName,
 		    params.sinkPassword, fhirContext.getRestfulClientFactory());
 		JdbcConnectionUtil jdbcConnectionUtil = new JdbcConnectionUtil(params.jdbcDriverClass, params.jDBCURLinput,
-		        params.databaseUser, params.databasePassword);
+		        params.databaseUser, params.databasePassword, params.initialPoolSize, params.jdbcMaxPoolSize);
 		ParquetUtil parquetUtil = new ParquetUtil(params.fileParquetPath, params.secondsToFlushParquetFiles,
 		        params.rowGroupSizeForParquetFiles);
 		camelContext.addService(new ParquetService(parquetUtil), true);
@@ -164,6 +164,12 @@ public class DebeziumListener extends RouteBuilder {
 		
 		@Parameter(names = { "--getJdbcUrl" }, description = "JDBC URL input")
 		public String jDBCURLinput = "jdbc:mysql://localhost:3308/openmrs";
+		
+		@Parameter(names = { "--jdbcMaxPoolSize" }, description = "JDBC maximum pool size")
+		public int jdbcMaxPoolSize = 50;
+		
+		@Parameter(names = { "--initialPoolSize" }, description = "JDBC initial pool size")
+		public int initialPoolSize = 10;
 		
 	}
 }

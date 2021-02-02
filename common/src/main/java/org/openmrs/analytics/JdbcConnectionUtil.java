@@ -41,24 +41,15 @@ public class JdbcConnectionUtil {
 	
 	private Integer dbcMaxPoolSize;
 	
-	JdbcConnectionUtil(String jdbcDriverClass, String jdbcUrl, String dbUser, String dbPassword)
-	        throws PropertyVetoException {
-		
-		this.jdbcDriverClass = jdbcDriverClass;
-		this.jdbcUrl = jdbcUrl;
-		this.dbUser = dbUser;
-		this.dbPassword = dbPassword;
-	}
-	
-	JdbcConnectionUtil(String jdbcDriverClass, String jdbcUrl, String dbUser, String dbPassword, int dbcMaxPoolSize)
-	        throws PropertyVetoException {
+	JdbcConnectionUtil(String jdbcDriverClass, String jdbcUrl, String dbUser, String dbPassword, int dbcMaxPoolSize,
+	    int initialPoolSize) {
 		
 		this.jdbcDriverClass = jdbcDriverClass;
 		this.jdbcUrl = jdbcUrl;
 		this.dbUser = dbUser;
 		this.dbPassword = dbPassword;
 		this.dbcMaxPoolSize = dbcMaxPoolSize;
-		this.initialPoolSize = 10;
+		this.initialPoolSize = initialPoolSize;
 	}
 	
 	public Statement createStatement() throws SQLException, PropertyVetoException {
@@ -72,10 +63,8 @@ public class JdbcConnectionUtil {
 		comboPooledDataSource.setJdbcUrl(this.jdbcUrl);
 		comboPooledDataSource.setUser(this.dbUser);
 		comboPooledDataSource.setPassword(this.dbPassword);
-		if (this.dbcMaxPoolSize != null || this.initialPoolSize != null) {
-			comboPooledDataSource.setMaxPoolSize(this.dbcMaxPoolSize);
-			comboPooledDataSource.setInitialPoolSize(10);
-		}
+		comboPooledDataSource.setMaxPoolSize(this.dbcMaxPoolSize);
+		comboPooledDataSource.setInitialPoolSize(10);
 		return comboPooledDataSource;
 	}
 	

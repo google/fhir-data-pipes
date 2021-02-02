@@ -75,7 +75,8 @@ public class JdbcFetchUtilTest extends TestCase {
 		FhirEtl.FhirEtlOptions options = PipelineOptionsFactory.fromArgs(args).withValidation()
 		        .as(FhirEtl.FhirEtlOptions.class);
 		JdbcConnectionUtil jdbcConnectionUtil = new JdbcConnectionUtil(options.getJdbcDriverClass(), options.getJdbcUrl(),
-		        options.getDbUser(), options.getDbPassword(), options.getJdbcMaxPoolSize());
+		        options.getDbUser(), options.getDbPassword(), options.getJdbcMaxPoolSize(),
+		        options.getJdbcInitialPoolSize());
 		jdbcFetchUtil = new JdbcFetchUtil(jdbcConnectionUtil);
 		
 		parquetUtil = new ParquetUtil(basePath);

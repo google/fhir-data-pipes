@@ -14,6 +14,8 @@
 
 package org.openmrs.analytics;
 
+import java.beans.PropertyVetoException;
+import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -33,7 +35,7 @@ public class GetUuidUtilTest extends TestCase {
 	
 	private EventConfiguration config;
 	
-	private Map<String, String> payload;
+	private Map<String, String> payload = new HashMap<>();;
 	
 	private final String dbDriver = "com.mysql.cj.jdbc.Driver";
 	
@@ -43,30 +45,30 @@ public class GetUuidUtilTest extends TestCase {
 	
 	private final String dbPassword = "debezium";
 	
+	private final int dbMaxSize = 50;
+	
+	private final int dbInitialPoolSize = 10;
+	
 	private String uuid = "";
 	
 	@Before
 	public void setUp() throws Exception {
-		jdbcConnectionUtil = new JdbcConnectionUtil(dbDriver, dbUrl, dbUser, dbPassword);
+		jdbcConnectionUtil = new JdbcConnectionUtil(dbDriver, dbUrl, dbUser, dbPassword, dbMaxSize, dbInitialPoolSize);
 		getUuidUtil = new GetUuidUtil(jdbcConnectionUtil);
-		payload = new HashMap<>();
 		config = new EventConfiguration();
-		
 		payload.put("name", "patient");
 		payload.put("sex", "patient_female");
 		payload.put("patient_id", "1");
-		
 		config.setParentForeignKey("person_id");
 		config.setChildPrimaryKey("patient_id");
 		config.setParentTable("person");
 		
-		uuid = getUuidUtil.getUuid(config.getParentTable(), config.getParentForeignKey(), config.getChildPrimaryKey(),
-		    payload);
-		
 	}
 	
 	@Test
-	public void shouldGetUuidFromPatentTbale() {
+	public void shouldGetUuidFromPatentTbale() throws ClassNotFoundException, PropertyVetoException, SQLException {
+		uuid = getUuidUtil.getUuid(config.getParentTable(), config.getParentForeignKey(), config.getChildPrimaryKey(),
+		    payload);
 		assertNotNull(uuid);
 		assertEquals(uuid, "1296b0dc-440a-11e6-a65c-00e04c680037");
 		
