@@ -71,14 +71,14 @@ public class DebeziumListener extends RouteBuilder {
 		GeneralConfiguration gc = new GeneralConfiguration();
 		GeneralConfiguration generalConfiguration = gc.getFhirDebeziumConfigPath(params.fhirDebeziumConfigPath);
 		return "debezium-mysql:" + generalConfiguration.getDbzConfigs().get("databaseHostName") + "?" + "databaseHostname="
-		        + generalConfiguration.getDbzConfigs().get("databaseName") + "&databaseServerId="
+		        + generalConfiguration.getDbzConfigs().get("databaseHostName") + "&databaseServerId="
 		        + generalConfiguration.getDbzConfigs().get("databaseServerId") + "&databasePort="
 		        + generalConfiguration.getDbzConfigs().get("databasePort") + "&databaseUser="
 		        + generalConfiguration.getDbzConfigs().get("databaseUser") + "&databasePassword="
 		        + generalConfiguration.getDbzConfigs().get("databasePassword") + "&databaseServerName="
 		        + generalConfiguration.getDbzConfigs().get("databaseName") + "&databaseWhitelist="
-		        + generalConfiguration.getDbzConfigs().get("databaseSchema") + "&offsetStorage="
-		        + generalConfiguration.getDbzConfigs().get("OffsetStorage") + "&offsetStorageFileName="
+		        + generalConfiguration.getDbzConfigs().get("databaseSchema")
+		        + "org.apache.kafka.connect.storage.FileOffsetBackingStore" + "&offsetStorageFileName="
 		        + generalConfiguration.getDbzConfigs().get("databaseOffsetStorage") + "&databaseHistoryFileFilename="
 		        + generalConfiguration.getDbzConfigs().get("databaseHistory") + "&snapshotMode="
 		        + generalConfiguration.getDbzConfigs().get("snapshotMode");

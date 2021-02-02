@@ -70,10 +70,6 @@ public class EventConfiguration {
 	
 	@Getter
 	@Setter
-	private String offsetStorage;
-	
-	@Getter
-	@Setter
 	private String databaseOffsetStorage;
 	
 	@Getter

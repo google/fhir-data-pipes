@@ -189,8 +189,7 @@ $ mvn compile exec:java -pl streaming-binlog \
     --snapshotMode=initial \
     --fhirSinkPath=projects/PROJECT/locations/LOCATION/datasets/DATASET/fhirStores/FHIRSTORENAME \
     --sinkUserName=hapi --sinkPassword=hapi \
-    --fileParquetPath=/tmp/ \
-    --fhirDebeziumEventConfigPath=./utils/dbz_event_to_fhir_config.json"
+    --fileParquetPath=/tmp/ \ "
  ```
 NOTE : In order to export data to a fhir sink , pass the '--fhirSinkPath' argument , 
 In order to  generate Parquet files, pass the '--fileParquetPath' argument 
