@@ -114,22 +114,19 @@ public class FhirConverterTest extends CamelTestSupport {
 		Map<String, String> messageBody = DebeziumTestUtil.genExpectedBody();
 		Map<String, Object> messageHeaders = DebeziumTestUtil.genExpectedHeaders(Operation.CREATE, "patient");
 		statement = jdbcConnectionUtil.createStatement();
-		String uuid = getUuidUtil.getUuid(Mockito.anyString(), Mockito.anyString(), Mockito.anyString(), Mockito.anyMap());
+		String uuid = getUuidUtil.getUuid(Mockito.anyString(), Mockito.anyString(), Mockito.anyString());
 		
 		lenient().when(jdbcConnectionUtil.createStatement()).thenReturn(statement);
 		
-		lenient().when(getUuidUtil.getUuid(Mockito.anyString(), Mockito.anyString(), Mockito.anyString(), Mockito.anyMap()))
-		        .thenReturn(uuid);
+		lenient().when(getUuidUtil.getUuid(Mockito.anyString(), Mockito.anyString(), Mockito.anyString())).thenReturn(uuid);
 		
 		// Actual event that will trigger process().
 		eventsProducer.sendBodyAndHeaders(messageBody, messageHeaders);
 		
 		Mockito.verify(jdbcConnectionUtil, times(1)).createStatement();
 		Mockito.verify(jdbcConnectionUtil).createStatement();
-		Mockito.verify(getUuidUtil, times(1)).getUuid(Mockito.anyString(), Mockito.anyString(), Mockito.anyString(),
-		    Mockito.anyMap());
-		Mockito.verify(getUuidUtil).getUuid(Mockito.anyString(), Mockito.anyString(), Mockito.anyString(), Mockito.anyMap());
-		
+		Mockito.verify(getUuidUtil, times(1)).getUuid(Mockito.anyString(), Mockito.anyString(), Mockito.anyString());
+		Mockito.verify(getUuidUtil).getUuid(Mockito.anyString(), Mockito.anyString(), Mockito.anyString());
 	}
 	
 	@Test

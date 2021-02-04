@@ -64,7 +64,7 @@ public class JdbcConnectionUtil {
 		comboPooledDataSource.setUser(this.dbUser);
 		comboPooledDataSource.setPassword(this.dbPassword);
 		comboPooledDataSource.setMaxPoolSize(this.dbcMaxPoolSize);
-		comboPooledDataSource.setInitialPoolSize(10);
+		comboPooledDataSource.setInitialPoolSize(this.initialPoolSize);
 		return comboPooledDataSource;
 	}
 	

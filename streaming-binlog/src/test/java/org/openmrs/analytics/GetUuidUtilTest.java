@@ -62,13 +62,12 @@ public class GetUuidUtilTest extends TestCase {
 		config.setParentForeignKey("person_id");
 		config.setChildPrimaryKey("patient_id");
 		config.setParentTable("person");
-		
 	}
 	
 	@Test
 	public void shouldGetUuidFromPatentTbale() throws ClassNotFoundException, PropertyVetoException, SQLException {
-		uuid = getUuidUtil.getUuid(config.getParentTable(), config.getParentForeignKey(), config.getChildPrimaryKey(),
-		    payload);
+		uuid = getUuidUtil.getUuid(config.getParentTable(), config.getParentForeignKey(),
+		    payload.get(config.getChildPrimaryKey()));
 		assertNotNull(uuid);
 		assertEquals(uuid, "1296b0dc-440a-11e6-a65c-00e04c680037");
 		

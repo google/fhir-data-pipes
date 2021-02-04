@@ -18,7 +18,6 @@ import java.beans.PropertyVetoException;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
-import java.util.Map;
 
 public class GetUuidUtil {
 	
@@ -28,14 +27,13 @@ public class GetUuidUtil {
 		this.jdbcConnectionUtil = jdbcConnectionUtil;
 	}
 	
-	public String getUuid(String parentTable, String parentForeignKey, String childPrimaryKey, Map payload)
+	public String getUuid(String parentTable, String parentForeignKey, String childPrimaryKey)
 	        throws PropertyVetoException, SQLException, ClassNotFoundException {
 		
 		Statement stmt = jdbcConnectionUtil.createStatement();
 		String uuidResultFromSql = null;
 		
-		String sql = String.format("SELECT uuid FROM %s WHERE %s = %s", parentTable, parentForeignKey,
-		    payload.get(childPrimaryKey.toString()));
+		String sql = String.format("SELECT uuid FROM %s WHERE %s = %s", parentTable, parentForeignKey, childPrimaryKey);
 		
 		ResultSet rs = stmt.executeQuery(sql);
 		while (rs.next()) {

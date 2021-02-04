@@ -105,8 +105,12 @@ public class FhirConverter implements Processor {
 			uuid = payload.get("uuid").toString();
 		} else {
 			getUuidUtil = new GetUuidUtil(jdbcConnectionUtil);
-			uuid = getUuidUtil.getUuid(config.getParentTable(), config.getParentForeignKey(), config.getChildPrimaryKey(),
-			    payload);
+			if (config.getParentTable() == null) {
+				log.error(String.format("No parentTable in %s ignoring payload %s ", table, payload));
+				return;
+			}
+			uuid = getUuidUtil.getUuid(config.getParentTable(), config.getParentForeignKey(),
+			    payload.get(config.getChildPrimaryKey()).toString());
 		}
 		
 		final String fhirUrl = config.getLinkTemplates().get("fhir").replace("{uuid}", uuid);
