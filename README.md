@@ -180,16 +180,14 @@ $ mvn compile exec:java -pl streaming-binlog
  ```
 $ mvn compile exec:java -pl streaming-binlog \
     -Dexec.args="--databaseHostName=localhost \
-    --databasePort=3306 --databaseUser=root --databasePassword=debezium \
-    --databaseName=mysql --databaseSchema=openmrs --databaseServerId=223344 \
-    --databaseOffsetStorage=offset.dat --databaseHistory=dbhistory.dat \
+    --databaseUser=root --databasePassword=debezium \
+    --databaseSchema=openmrs \
     --openmrsUserName=admin --openmrsPassword=Admin123 \
     --openmrsServerUrl=http://localhost:8099/openmrs \
     --openmrsfhirBaseEndpoint=/ws/fhir2/R4 \
     --snapshotMode=initial \
     --fhirSinkPath=projects/PROJECT/locations/LOCATION/datasets/DATASET/fhirStores/FHIRSTORENAME \
-    --sinkUserName=hapi --sinkPassword=hapi \
-    --fileParquetPath=/tmp/ \ "
+    --sinkUserName=hapi --sinkPassword=hapi \"
  ```
 NOTE : In order to export data to a fhir sink , pass the '--fhirSinkPath' argument , 
 In order to  generate Parquet files, pass the '--fileParquetPath' argument 
@@ -466,13 +464,12 @@ for streaming
 
     mvn compile exec:java -pl streaming-binlog \
       -Dexec.args="--databaseHostName=localhost \
-      --databasePort=3306 --databaseUser=root --databasePassword=debezium\
-      --databaseName=mysql --databaseSchema=openmrs --databaseServerId=223344 \
+      --databaseUser=root --databasePassword=debezium\
+      --databaseSchema=openmrs \
       --openmrsUserName=admin --openmrsPassword=Admin123 \
       --openmrsServerUrl=http://localhost:8099/openmrs \
       --fhirSinkPath=http://localhost:5001/fhir \
-      --sinkUserName=hapi --sinkPassword=Admin123 \
-      --fileParquetPath=/tmp/" 
+      --sinkUserName=hapi --sinkPassword=Admin123 \" 
       
 
 You can track all the transactions in the OpenHIM instance Under the Tab `Transaction Log`
