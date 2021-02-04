@@ -126,29 +126,14 @@ public class DebeziumListener extends RouteBuilder {
 		@Parameter(names = { "--databaseHostName" }, description = "Host name on which the source database runs")
 		public String databaseHostName = "localhost";
 		
-		@Parameter(names = { "--databasePort" }, description = "Port of the source database")
-		public Integer databasePort = 3306;
-		
 		@Parameter(names = { "--databaseUser" }, description = "User name of the host Database")
 		public String databaseUser = "root";
 		
 		@Parameter(names = { "--databasePassword" }, description = "Passowrd for the user of the host Database")
 		public String databasePassword = "debezium";
 		
-		@Parameter(names = { "--databaseName" }, description = "Name Database")
-		public String databaseName = "mysql";
-		
 		@Parameter(names = { "--databaseSchema" }, description = "Name the Schema")
 		public String databaseSchema = "openmrs";
-		
-		@Parameter(names = { "--databaseServerId" }, description = "Server Id of the source database")
-		public Integer databaseServerId = 223344;
-		
-		@Parameter(names = { "--databaseOffsetStorage" }, description = "Database OffsetStorage setting")
-		public String databaseOffsetStorage = "data/offset.dat";
-		
-		@Parameter(names = { "--databaseHistory" }, description = "replacing Offset by History")
-		public String databaseHistory = "data/dbhistory.dat";
 		
 		@Parameter(names = { "--snapshotMode" }, description = "criteria for running DB snapshot, options include: "
 		        + "when_needed, schema_only, initial, never, e.t.c. To read events from day 0 of db data-entry, use 'initial'. "
