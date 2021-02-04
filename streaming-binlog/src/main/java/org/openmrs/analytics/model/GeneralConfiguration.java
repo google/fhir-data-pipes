@@ -25,15 +25,13 @@ import com.google.gson.Gson;
 import lombok.Getter;
 import lombok.Setter;
 
+@Getter
+@Setter
 public class GeneralConfiguration {
 	
-	@Getter
-	@Setter
 	private LinkedHashMap<String, EventConfiguration> eventConfigurations;
 	
-	@Getter
-	@Setter
-	private LinkedHashMap<String, String> dbzConfigs;
+	private LinkedHashMap<String, String> debeziumConfigurations;
 	
 	public GeneralConfiguration getFhirDebeziumConfigPath(String fileName) throws IOException {
 		Gson gson = new Gson();

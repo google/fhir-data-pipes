@@ -1,5 +1,5 @@
 {
-  "dbzConfigs": {
+  "debeziumConfigurations": {
     "databaseName" : "mysql",
     "databaseHostName" : "localhost",
     "databaseServerId" : "223344",

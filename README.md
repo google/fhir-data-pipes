@@ -181,7 +181,7 @@ $ mvn compile exec:java -pl streaming-binlog
 $ mvn compile exec:java -pl streaming-binlog \
     -Dexec.args="--databaseHostName=localhost \
     --databasePort=3306 --databaseUser=root --databasePassword=debezium \
-    --databaseName=mysql --databaseSchema=openmrs --databaseServerId=77 \
+    --databaseName=mysql --databaseSchema=openmrs --databaseServerId=223344 \
     --databaseOffsetStorage=offset.dat --databaseHistory=dbhistory.dat \
     --openmrsUserName=admin --openmrsPassword=Admin123 \
     --openmrsServerUrl=http://localhost:8099/openmrs \
@@ -467,7 +467,7 @@ for streaming
     mvn compile exec:java -pl streaming-binlog \
       -Dexec.args="--databaseHostName=localhost \
       --databasePort=3306 --databaseUser=root --databasePassword=debezium\
-      --databaseName=mysql --databaseSchema=openmrs --databaseServerId=77 \
+      --databaseName=mysql --databaseSchema=openmrs --databaseServerId=223344 \
       --openmrsUserName=admin --openmrsPassword=Admin123 \
       --openmrsServerUrl=http://localhost:8099/openmrs \
       --fhirSinkPath=http://localhost:5001/fhir \

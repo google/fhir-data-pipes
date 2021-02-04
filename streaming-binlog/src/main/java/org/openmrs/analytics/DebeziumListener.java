@@ -70,18 +70,18 @@ public class DebeziumListener extends RouteBuilder {
 	private String getDebeziumConfig() throws IOException {
 		GeneralConfiguration gc = new GeneralConfiguration();
 		GeneralConfiguration generalConfiguration = gc.getFhirDebeziumConfigPath(params.fhirDebeziumConfigPath);
-		return "debezium-mysql:" + generalConfiguration.getDbzConfigs().get("databaseHostName") + "?" + "databaseHostname="
-		        + generalConfiguration.getDbzConfigs().get("databaseHostName") + "&databaseServerId="
-		        + generalConfiguration.getDbzConfigs().get("databaseServerId") + "&databasePort="
-		        + generalConfiguration.getDbzConfigs().get("databasePort") + "&databaseUser="
-		        + generalConfiguration.getDbzConfigs().get("databaseUser") + "&databasePassword="
-		        + generalConfiguration.getDbzConfigs().get("databasePassword") + "&databaseServerName="
-		        + generalConfiguration.getDbzConfigs().get("databaseName") + "&databaseWhitelist="
-		        + generalConfiguration.getDbzConfigs().get("databaseSchema")
+		return "debezium-mysql:" + generalConfiguration.getDebeziumConfigurations().get("databaseHostName") + "?"
+		        + "databaseHostname=" + generalConfiguration.getDebeziumConfigurations().get("databaseHostName")
+		        + "&databaseServerId=" + generalConfiguration.getDebeziumConfigurations().get("databaseServerId")
+		        + "&databasePort=" + generalConfiguration.getDebeziumConfigurations().get("databasePort") + "&databaseUser="
+		        + generalConfiguration.getDebeziumConfigurations().get("databaseUser") + "&databasePassword="
+		        + generalConfiguration.getDebeziumConfigurations().get("databasePassword") + "&databaseServerName="
+		        + generalConfiguration.getDebeziumConfigurations().get("databaseName") + "&databaseWhitelist="
+		        + generalConfiguration.getDebeziumConfigurations().get("databaseSchema")
 		        + "org.apache.kafka.connect.storage.FileOffsetBackingStore" + "&offsetStorageFileName="
-		        + generalConfiguration.getDbzConfigs().get("databaseOffsetStorage") + "&databaseHistoryFileFilename="
-		        + generalConfiguration.getDbzConfigs().get("databaseHistory") + "&snapshotMode="
-		        + generalConfiguration.getDbzConfigs().get("snapshotMode");
+		        + generalConfiguration.getDebeziumConfigurations().get("databaseOffsetStorage")
+		        + "&databaseHistoryFileFilename=" + generalConfiguration.getDebeziumConfigurations().get("databaseHistory")
+		        + "&snapshotMode=" + generalConfiguration.getDebeziumConfigurations().get("snapshotMode");
 	}
 	
 	/**
@@ -142,7 +142,7 @@ public class DebeziumListener extends RouteBuilder {
 		public String databaseSchema = "openmrs";
 		
 		@Parameter(names = { "--databaseServerId" }, description = "Server Id of the source database")
-		public Integer databaseServerId = 77;
+		public Integer databaseServerId = 223344;
 		
 		@Parameter(names = { "--databaseOffsetStorage" }, description = "Database OffsetStorage setting")
 		public String databaseOffsetStorage = "data/offset.dat";
