@@ -3,6 +3,7 @@
 ##############################
 .mtj.tmp/
 *.class
+!e2e-test/parquet-tools-*.jar
 *.war
 *.ear
 *.nar
