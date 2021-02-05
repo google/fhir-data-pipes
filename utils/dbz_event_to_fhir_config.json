@@ -1,4 +1,18 @@
 {
+  "debeziumConfigurations": {
+    "databaseName" : "mysql",
+    "databaseHostName" : "localhost",
+    "databaseServerId" : "223344",
+    "databasePort" : "3306",
+    "databaseUser" : "root",
+    "databasePassword" : "debezium",
+    "databaseServerName" : "mysql",
+    "databaseSchema" : "openmrs",
+    "databaseOffsetStorage" : "data/offset.dat",
+    "databaseHistory" : "data/dbhistory.dat",
+    "snapshotMode" : "initial",
+    "openmrsfhirBaseEndpoint" : "/ws/fhir2/R4"
+   },
   "eventConfigurations": {
     "location": {
       "enabled": "false",

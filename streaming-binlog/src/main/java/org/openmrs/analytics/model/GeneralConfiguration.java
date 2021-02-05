@@ -13,17 +13,33 @@
 // limitations under the License.
 package org.openmrs.analytics.model;
 
+import java.io.IOException;
+import java.io.Reader;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.LinkedHashMap;
 
+import com.google.gson.Gson;
 import lombok.Getter;
 import lombok.Setter;
 
+@Getter
+@Setter
 public class GeneralConfiguration {
 	
-	@Getter
-	@Setter
 	private LinkedHashMap<String, EventConfiguration> eventConfigurations;
 	
-	// TODO add Debezium config to the model + json
+	private LinkedHashMap<String, String> debeziumConfigurations;
+	
+	public GeneralConfiguration getFhirDebeziumConfigPath(String fileName) throws IOException {
+		Gson gson = new Gson();
+		Path pathToFile = Paths.get(fileName);
+		try (Reader reader = Files.newBufferedReader(pathToFile, StandardCharsets.UTF_8)) {
+			GeneralConfiguration generalConfiguration = gson.fromJson(reader, GeneralConfiguration.class);
+			return generalConfiguration;
+		}
+	}
 	
 }
