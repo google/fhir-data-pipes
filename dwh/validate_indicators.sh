@@ -51,12 +51,14 @@ counts=$(cat ${TEMP_OUT} | awk -F, '
     /False,ALL-AGES_ALL-GENDERS/ {num_false=$3}
     /True,ALL-AGES_ALL-GENDERS/ {num_true=$3}
     /None,ALL-AGES_ALL-GENDERS/ {num_none=$3}
-    END {printf("%d,%d,%d", num_true, num_false, num_none); }')
+    /True,25-49_male/ {num_male_25=$3}
+    END {printf("%d,%d,%d,%d", num_true, num_false, num_none, num_male_25); }')
 
 echo "Number of suppressed vs non-suppressed vs none: ${counts}"
-if [[ "${counts}" != "34,13,0" ]]; then
+if [[ "${counts}" != "34,13,0,5" ]]; then
   echo "ERROR: The number of  suppressed vs non-suppressed vs none are " \
-    "expected to be '34,13,0' GOT ${counts}"
+    "expected to be '34,13,0,5' GOT ${counts}"
   exit 1
 fi
 echo "SUCCESS!"
+deactivate

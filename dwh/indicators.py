@@ -121,6 +121,7 @@ if __name__ == '__main__':
   # this is not happening!
   patient_agg_obs_df.cache()
   VL_df_P = indicator_lib.calc_TX_PVLS(
-      patient_agg_obs_df, VL_code='5090AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA')
+      patient_agg_obs_df, VL_code='5090AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA',
+      end_date_str=end_date)
   VL_df_P.to_csv(args.output_csv, index=False)
 
