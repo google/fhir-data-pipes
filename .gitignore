@@ -91,3 +91,4 @@ nb-configuration.xml
 ##############################
 /dwh/venv*
 .ipynb_checkpoints/
+/dwh/__pycache__
