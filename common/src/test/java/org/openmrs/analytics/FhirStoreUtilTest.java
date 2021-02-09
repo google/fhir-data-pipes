@@ -27,7 +27,7 @@ import ca.uhn.fhir.parser.IParser;
 import ca.uhn.fhir.rest.api.MethodOutcome;
 import ca.uhn.fhir.rest.client.api.IGenericClient;
 import ca.uhn.fhir.rest.client.api.IRestfulClientFactory;
-import ca.uhn.fhir.rest.gclient.ICreateTyped;
+import ca.uhn.fhir.rest.gclient.IUpdateTyped;
 import org.hamcrest.Matchers;
 import org.hl7.fhir.r4.model.Bundle;
 import org.hl7.fhir.r4.model.Patient;
@@ -49,7 +49,7 @@ public class FhirStoreUtilTest {
 	private IGenericClient client;
 	
 	@Mock
-	ICreateTyped iexec;
+	IUpdateTyped iexec;
 	
 	private FhirStoreUtil fhirStoreUtil;
 	
@@ -79,7 +79,7 @@ public class FhirStoreUtilTest {
 		patient = (Patient) patientBundle.getEntryFirstRep().getResource();
 		
 		when(clientFactory.newGenericClient(sinkUrl)).thenReturn(client);
-		when(client.create().resource(patient).encodedJson()).thenReturn(iexec);
+		when(client.update().resource(patient).withId(patient.getId()).encodedJson()).thenReturn(iexec);
 		when(client.transaction().withBundle(ArgumentMatchers.any(Bundle.class)).execute())
 		        .thenReturn(patientResponseBundle);
 		doReturn(outcome).when(iexec).execute();
