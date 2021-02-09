@@ -33,9 +33,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.hl7.fhir.instance.model.api.IBaseOperationOutcome;
 import org.hl7.fhir.r4.model.Bundle;
 import org.hl7.fhir.r4.model.Coding;
-import org.hl7.fhir.r4.model.IdType;
 import org.hl7.fhir.r4.model.Meta;
-import org.hl7.fhir.r4.model.Observation;
 import org.hl7.fhir.r4.model.Resource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -126,12 +124,12 @@ public class FhirStoreUtil {
 		
 		for (Bundle.BundleEntryComponent entry : bundle.getEntry()) {
 			Resource resource = entry.getResource();
-			IdType type= new IdType(resource.getId());
 			removeSubsettedTag(resource.getMeta());
 			
 			Bundle.BundleEntryComponent component = transactionBundle.addEntry();
 			component.setResource(resource);
-			component.getRequest().setUrl(resource.fhirType() + "/" + type.getIdPart()).setMethod(Bundle.HTTPVerb.PUT);
+			component.getRequest().setUrl(resource.fhirType() + "/" + resource.getIdElement().getIdPart())
+			        .setMethod(Bundle.HTTPVerb.PUT);
 		}
 		
 		Bundle outcomes = client.transaction().withBundle(transactionBundle).execute();
