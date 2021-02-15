@@ -8,7 +8,6 @@ jobs:
         - docker
       before_install:
         - sudo apt install jq
-        - chmod +x ./e2e-tests/batch-mode-tests.sh
       script:
         - mvn clean install
         - ./e2e-tests/batch-mode-tests.sh
