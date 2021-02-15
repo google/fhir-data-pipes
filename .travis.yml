@@ -8,9 +8,10 @@ jobs:
         - docker
       before_install:
         - sudo apt install jq
+        - chmod +x ./e2e-tests/batch-mode-tests.sh
       script:
         - mvn clean install
-        - cd e2e-tests; ./batch-mode-tests.sh
+        - ./e2e-tests/batch-mode-tests.sh
 
     - language: python
       python:  "3.8"
