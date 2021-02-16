@@ -10,56 +10,13 @@ function print_message() {
   echo "${print_prefix} $*"
 }
 
-
 #######################################
-# Function that sets up testing env
+# Call common-mode-tests to setup 
+# the testing env
+#  
 #######################################
-function setup() {
-  HOME_PATH=$(pwd)
-
-  print_message "BUILDING THE ANALYTICS PROJECT"
-  mvn compile
-
-  print_message "STARTING SERVERs"
-  docker-compose -f docker/openmrs-compose.yaml up -d --remove-orphans
-  openmrs_start_wait_time=0
-  contenttype=$(curl -o /dev/null --head -w "%{content_type}\n" -X GET -u admin:Admin123 --connect-timeout 5 \
-    --max-time 20 http://localhost:8099/openmrs/ws/fhir2/R4/Patient 2>/dev/null | cut -d ";" -f 1)
-  until [[ ${contenttype} == "application/fhir+json" ]]; do
-    sleep 60s
-    print_message "WAITING FOR OPENMRS SERVER TO START"
-    contenttype=$(curl -o /dev/null --head -w "%{content_type}\n" -X GET -u admin:Admin123 --connect-timeout 5 \
-      --max-time 20 http://localhost:8099/openmrs/ws/fhir2/R4/Patient 2>/dev/null | cut -d ";" -f 1)
-    ((openmrs_start_wait_time += 1))
-    if [[ ${openmrs_start_wait_time} == 20 ]]; then
-      print_message "TERMINATING TEST AS OPENMRS TOOK TOO LONG TO START"
-      exit 1
-    fi
-  done
-  print_message "OPENMRS SERVER STARTED SUCCESSFULLY"
-
-  docker-compose -f  docker/sink-compose.yml up -d
-  fhir_server_start_wait_time=0
-  fhir_server_status_code=$(curl -o /dev/null --head -w "%{http_code}" -L -X GET -u hapi:hapi --connect-timeout 5 \
-    --max-time 20 http://localhost:8098/fhir/Observation 2>/dev/null)
-  until [[ ${fhir_server_status_code} -eq 200 ]]; do
-    sleep 1s
-    print_message "WAITING FOR FHIR SERVER TO START"
-    fhir_server_status_code=$(curl -o /dev/null --head -w "%{http_code}" -L -X GET -u hapi:hapi --connect-timeout 5 \
-      --max-time 20 http://localhost:8098/fhir/Observation 2>/dev/null)
-    ((fhir_server_start_wait_time += 1))
-    if [[ fhir_server_start_wait_time == 10 ]]; then
-      print_message "TERMINATING AS FHIR SERVER TOOK TOO LONG TO START"
-      exit 1
-    fi
-  done
-  print_message "FHIR SERVER STARTED SUCCESSFULLY"
-
-  TEST_DIR_FHIR=$(mktemp -d -t analytics_tests__XXXXXX_FHIRSEARCH)
-  TEST_DIR_JDBC=$(mktemp -d -t analytics_tests__XXXXXX_JDBC)
-  JDBC_SETTINGS="--jdbcModeEnabled=true"
-}
-
+source ./e2e-tests/common-mode-tests.sh
+setup
 
 #######################################
 # Function that tests sinking to parquet files
@@ -70,6 +27,11 @@ function setup() {
 #   the mode to test: FHIR Search vs JDBC
 #######################################
 function test_parquet_sink() {
+  
+  TEST_DIR_FHIR=$(mktemp -d -t analytics_tests__XXXXXX_FHIRSEARCH)
+  TEST_DIR_JDBC=$(mktemp -d -t analytics_tests__XXXXXX_JDBC)
+  JDBC_SETTINGS="--jdbcModeEnabled=true --jdbcUrl=jdbc:mysql://localhost:3306/openmrs --dbUser=mysqluser \
+                 --dbPassword=mysqlpw --jdbcMaxPoolSize=50 --jdbcDriverClass=com.mysql.cj.jdbc.Driver"
   local command=(mvn exec:java -pl batch "-Dexec.args=--openmrsServerUrl=http://localhost:8099/openmrs \
         --openmrsUserName=admin --openmrsPassword=Admin123 \
         --resourceList=Patient,Encounter,Observation --batchSize=20 $1")
