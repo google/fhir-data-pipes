@@ -1,1 +1,0 @@
-docker-compose -f openmrs-compose.yaml up -d

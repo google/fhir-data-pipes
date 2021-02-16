@@ -479,3 +479,19 @@ You can track all the transactions in the OpenHIM instance Under the Tab `Transa
 see demo at  https://youtu.be/U1Sz3GUKbIw
 
 see https://openhim.readthedocs.io/en/latest/how-to/how-to-setup-and-configure-openhim.html for more details about setting up OpenHIM
+
+# Running end-to-end tests
+Parquet tools library is used to inspect parquet files. The jar file has been included in the project under ```/e2e-tests/parquet-tools-1.11.1.jar```
+
+To regenerate this jar file, 
+1. Clone [parquet-mr](https://github.com/apache/parquet-mr)
+2. Checkout last released version ```git checkout apache-parquet-1.11.1```
+3. [Install](https://github.com/apache/parquet-mr#install-thrift) thrift compiler v0.12.0
+4. To build the jar file run ```mvn -pl parquet-tools -am clean install -Plocal -DskipTests```  
+  You should be able to see ```parquet-tools-1.11.1.jar``` inside parquet-tools module.
+5. Command usage for parquet tools
+  ```java -jar ./parquet-tools-<VERSION>.jar <command> my_parquet_file```
+
+    NOTE: Parquet tools will be replaced with parquet cli in the next release ```apache-parquet-1.12.0```
+
+To run the e2e tests, execute ```sh /e2e-tests/run.sh```
