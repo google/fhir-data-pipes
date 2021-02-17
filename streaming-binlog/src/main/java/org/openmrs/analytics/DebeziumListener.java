@@ -79,18 +79,15 @@ public class DebeziumListener extends RouteBuilder {
 	private String getDebeziumConfig() throws IOException {
 		this.generalConfiguration = getFhirDebeziumConfigPath(params.fhirDebeziumConfigPath);
 		LinkedHashMap<String, String> debeziumConfigs = generalConfiguration.getDebeziumConfigurations();
-		return "debezium-mysql:" + debeziumConfigs.get("databaseHostName") + "?" 
-				+ "databaseHostname="+ debeziumConfigs.get("databaseHostName") 
-				+ "&databaseServerId=" + debeziumConfigs.get("databaseServerId")
-		        + "&databasePort=" + debeziumConfigs.get("databasePort") 
-				+ "&databaseUser="+ debeziumConfigs.get("databaseUser") 
-				+ "&databasePassword=" + debeziumConfigs.get("databasePassword")
-		        + "&databaseServerName=" + debeziumConfigs.get("databaseName") 
-				+ "&databaseWhitelist="+ debeziumConfigs.get("databaseSchema")
-		        + "&offsetStorage=org.apache.kafka.connect.storage.FileOffsetBackingStore" 
-				+ "&offsetStorageFileName="+ debeziumConfigs.get("databaseOffsetStorage") 
-				+ "&databaseHistoryFileFilename=" + debeziumConfigs.get("databaseHistory") 
-				+ "&snapshotMode=" + debeziumConfigs.get("snapshotMode");
+		return "debezium-mysql:" + debeziumConfigs.get("databaseHostName") + "?" + "databaseHostname="
+		        + debeziumConfigs.get("databaseHostName") + "&databaseServerId=" + debeziumConfigs.get("databaseServerId")
+		        + "&databasePort=" + debeziumConfigs.get("databasePort") + "&databaseUser="
+		        + debeziumConfigs.get("databaseUser") + "&databasePassword=" + debeziumConfigs.get("databasePassword")
+		        + "&databaseServerName=" + debeziumConfigs.get("databaseName") + "&databaseWhitelist="
+		        + debeziumConfigs.get("databaseSchema")
+		        + "&offsetStorage=org.apache.kafka.connect.storage.FileOffsetBackingStore" + "&offsetStorageFileName="
+		        + debeziumConfigs.get("databaseOffsetStorage") + "&databaseHistoryFileFilename="
+		        + debeziumConfigs.get("databaseHistory") + "&snapshotMode=" + debeziumConfigs.get("snapshotMode");
 	}
 	
 	/**
