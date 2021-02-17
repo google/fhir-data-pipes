@@ -24,8 +24,8 @@ services:
     healthcheck:
       test: "exit 0"
     environment:
+     - OPENMRS_URL=http://localhost:8099/openmrs
      - SINK_PATH=http://localhost:8098/fhir
-     - SOURCE_URL=https://localhost:8099/openmrs
      - SEARCH_LIST=Patient,Encounter,Observation
      - BATCH_SIZE=20
      - TARGET_PARALLELISM=20
@@ -64,7 +64,7 @@ services:
     healthcheck:
       test: "exit 0"
     environment:
-      - SOURCE_URL=http://localhost8099/openmrs
+      - OPENMRS_URL=http://localhost:8099/openmrs
       - SINK_URL=http://localhost:8098/fhir
 
   streaming-atomfeed-db:
