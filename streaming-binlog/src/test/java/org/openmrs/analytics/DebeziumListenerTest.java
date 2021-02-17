@@ -43,7 +43,8 @@ public class DebeziumListenerTest extends CamelTestSupport {
 	protected RoutesBuilder createRouteBuilder() throws Exception {
 		// mock properties
 		String[] args = { "--databaseHostName=hostname", "--databaseUser=root", "--openmrsUserName=user",
-		        "--fhirSinkPath=projects/PROJECT/locations/LOCATION/datasets/DATASET/fhirStores/FHIRSTORENAME " };
+		        "--fhirSinkPath=projects/PROJECT/locations/LOCATION/datasets/DATASET/fhirStores/FHIRSTORENAME ",
+		        "--fhirDebeziumConfigPath=../utils/dbz_event_to_fhir_config.json" };
 		
 		// Using a simple mock object would be more work since we need to provide stubs for the superclasses too.
 		fhirConverterMock = new FhirConverter() {

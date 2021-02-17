@@ -124,12 +124,12 @@ public class FhirStoreUtil {
 		
 		for (Bundle.BundleEntryComponent entry : bundle.getEntry()) {
 			Resource resource = entry.getResource();
-			
 			removeSubsettedTag(resource.getMeta());
 			
 			Bundle.BundleEntryComponent component = transactionBundle.addEntry();
 			component.setResource(resource);
-			component.getRequest().setUrl(resource.fhirType()).setMethod(Bundle.HTTPVerb.POST);
+			component.getRequest().setUrl(resource.fhirType() + "/" + resource.getIdElement().getIdPart())
+			        .setMethod(Bundle.HTTPVerb.PUT);
 		}
 		
 		Bundle outcomes = client.transaction().withBundle(transactionBundle).execute();
@@ -169,7 +169,7 @@ public class FhirStoreUtil {
 		removeSubsettedTag(resource.getMeta());
 		
 		// Initialize the client, which will be used to interact with the service.
-		MethodOutcome outcome = client.create().resource(resource).encodedJson().execute();
+		MethodOutcome outcome = client.update().resource(resource).withId(resource.getId()).encodedJson().execute();
 		
 		log.debug("FHIR resource created at" + sinkUrl + "? " + outcome.getCreated());
 		
