@@ -20,7 +20,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.LinkedHashMap;
+import java.util.Map;
 
 import ca.uhn.fhir.context.FhirContext;
 import com.beust.jcommander.JCommander;
@@ -45,9 +45,10 @@ public class DebeziumListener extends RouteBuilder {
 	
 	private DebeziumArgs params;
 	
-	public DebeziumListener(String[] args) {
+	public DebeziumListener(String[] args) throws IOException {
 		this.params = new DebeziumArgs();
 		JCommander.newBuilder().addObject(params).build().parse(args);
+		this.generalConfiguration = getFhirDebeziumConfigPath(params.fhirDebeziumConfigPath);
 	}
 	
 	@VisibleForTesting
@@ -77,8 +78,7 @@ public class DebeziumListener extends RouteBuilder {
 	}
 	
 	private String getDebeziumConfig() throws IOException {
-		this.generalConfiguration = getFhirDebeziumConfigPath(params.fhirDebeziumConfigPath);
-		LinkedHashMap<String, String> debeziumConfigs = generalConfiguration.getDebeziumConfigurations();
+		Map<String, String> debeziumConfigs = this.generalConfiguration.getDebeziumConfigurations();
 		return "debezium-mysql:" + debeziumConfigs.get("databaseHostName") + "?" + "databaseHostname="
 		        + debeziumConfigs.get("databaseHostName") + "&databaseServerId=" + debeziumConfigs.get("databaseServerId")
 		        + "&databasePort=" + debeziumConfigs.get("databasePort") + "&databaseUser="
