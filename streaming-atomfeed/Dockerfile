@@ -17,12 +17,12 @@ COPY ./streaming-binlog /app/openmrs-fhir-analytics/streaming-binlog
 
 RUN mvn -B install -DskipTests -Dlicense.skip=true -pl streaming-atomfeed -am
 
-ENV SOURCE_URL=""
-ENV SOURCE_USERNAME=""
-ENV SOURCE_PW=""
+ENV OPENMRS_URL=""
+ENV OPENMRS_USERNAME=""
+ENV OPENMRS_PASSWORD=""
 ENV SINK_URL=""
 ENV SINK_USERNAME=""
 ENV SINK_PASSWORD=""
 
 ENTRYPOINT mvn exec:java -pl streaming-atomfeed -Dexec.mainClass=org.openmrs.analytics.FhirStreaming \
-    -Dexec.args="--openmrsServerUrl=$SOURCE_URL --openmrsUserName=$SOURCE_USERNAME --openmrsPassword=$SOURCE_PW --fhirSinkPath=$SINK_URL --sinkUserName=$SINK_USERNAME --sinkPassword=$SINK_PASSWORD"
+    -Dexec.args="--openmrsServerUrl=$OPENMRS_URL --openmrsUserName=$OPENMRS_USERNAME --openmrsPassword=$OPENMRS_PASSWORD --fhirSinkPath=$SINK_URL --sinkUserName=$SINK_USERNAME --sinkPassword=$SINK_PASSWORD"
