@@ -33,7 +33,7 @@ services:
     volumes:
       - ./utils/mysql.cnf:/etc/mysql/conf.d/custom.cnf  # mysql config preconfigured to allow binlog/debezium
       #- ./data:/var/lib/mysql
-      - ./utils/dbdump:/docker-entrypoint-initdb.d # will execute any sql dumped here
+      - ${DATABASE_DUMP_PATH}:/docker-entrypoint-initdb.d # will execute any sql dumped here
 
   openmrs:
     restart: "always"
@@ -53,5 +53,5 @@ services:
       DB_CREATE_TABLES: 'false'
       DB_AUTO_UPDATE: 'false'
       MODULE_WEB_ADMIN: 'true'
-      _JAVA_OPTIONS: -Xmx1g -Xms1g # change this depending on the server config
+      #_JAVA_OPTIONS: -Xmx1g -Xms1g # change this depending on the server config
 
