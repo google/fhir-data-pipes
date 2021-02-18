@@ -43,14 +43,9 @@ services:
       - ./utils/dbz_event_to_fhir_config.json:/deployments/utils/dbz_event_to_fhir_config.json
     environment:
       - JAVA_MAIN_CLASS=org.openmrs.analytics.Runner
-      - JAVA_OPTIONS=--databaseHostName=localhost 
-                     --databasePort=3306 --databaseUser=root --databasePassword=debezium 
-                     --databaseName=mysql --databaseSchema=openmrs --databaseServerId=77 
-                     --databaseOffsetStorage=offset.dat --databaseHistory=/tmp/dbhistory.dat 
-                     --openmrsUserName=admin --openmrsPassword=Admin123 
+      - JAVA_OPTIONS=--openmrsUserName=admin --openmrsPassword=Admin123 
                      --openmrsServerUrl=http://localhost:8099/openmrs 
                      --openmrsfhirBaseEndpoint=/ws/fhir2/R4 
-                     --snapshotMode=initial 
                      --fhirSinkPath=http://localhost:8098/fhir
                      --fileParquetPath=/tmp/ 
                      --fhirDebeziumEventConfigPath=./utils/dbz_event_to_fhir_config.json

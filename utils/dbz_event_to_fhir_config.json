@@ -10,8 +10,7 @@
     "databaseSchema" : "openmrs",
     "databaseOffsetStorage" : "data/offset.dat",
     "databaseHistory" : "data/dbhistory.dat",
-    "snapshotMode" : "initial",
-    "openmrsfhirBaseEndpoint" : "/ws/fhir2/R4"
+    "snapshotMode" : "initial"
    },
   "eventConfigurations": {
     "location": {
