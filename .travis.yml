@@ -11,6 +11,11 @@ jobs:
       script:
         - mvn clean install
         - ./e2e-tests/batch-mode-tests.sh
+      env:
+        global:
+          - CODECOV_TOKEN='c1a56ea5-6142-4108-a721-9e0e2e2a8083'
+      after_success:
+        - bash <(curl -s https://codecov.io/bash)
 
     - language: python
       python:  "3.8"
