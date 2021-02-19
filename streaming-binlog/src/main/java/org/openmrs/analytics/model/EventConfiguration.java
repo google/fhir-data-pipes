@@ -79,8 +79,4 @@ public class EventConfiguration {
 	@Getter
 	@Setter
 	private String snapshotMode;
-	
-	@Getter
-	@Setter
-	private String openmrsfhirBaseEndpoint;
 }

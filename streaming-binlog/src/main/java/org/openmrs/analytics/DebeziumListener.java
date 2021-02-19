@@ -15,12 +15,19 @@
 package org.openmrs.analytics;
 
 import java.io.IOException;
+import java.io.Reader;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.Map;
 
 import ca.uhn.fhir.context.FhirContext;
 import com.beust.jcommander.JCommander;
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.Parameters;
 import com.google.common.annotations.VisibleForTesting;
+import com.google.gson.Gson;
 import org.apache.camel.CamelContext;
 import org.apache.camel.LoggingLevel;
 import org.apache.camel.Service;
@@ -34,11 +41,14 @@ public class DebeziumListener extends RouteBuilder {
 	
 	private static final Logger log = LoggerFactory.getLogger(DebeziumListener.class);
 	
+	private GeneralConfiguration generalConfiguration;
+	
 	private DebeziumArgs params;
 	
-	public DebeziumListener(String[] args) {
+	public DebeziumListener(String[] args) throws IOException {
 		this.params = new DebeziumArgs();
 		JCommander.newBuilder().addObject(params).build().parse(args);
+		this.generalConfiguration = getFhirDebeziumConfigPath(params.fhirDebeziumConfigPath);
 	}
 	
 	@VisibleForTesting
@@ -68,20 +78,16 @@ public class DebeziumListener extends RouteBuilder {
 	}
 	
 	private String getDebeziumConfig() throws IOException {
-		GeneralConfiguration gc = new GeneralConfiguration();
-		GeneralConfiguration generalConfiguration = gc.getFhirDebeziumConfigPath(params.fhirDebeziumConfigPath);
-		return "debezium-mysql:" + generalConfiguration.getDebeziumConfigurations().get("databaseHostName") + "?"
-		        + "databaseHostname=" + generalConfiguration.getDebeziumConfigurations().get("databaseHostName")
-		        + "&databaseServerId=" + generalConfiguration.getDebeziumConfigurations().get("databaseServerId")
-		        + "&databasePort=" + generalConfiguration.getDebeziumConfigurations().get("databasePort") + "&databaseUser="
-		        + generalConfiguration.getDebeziumConfigurations().get("databaseUser") + "&databasePassword="
-		        + generalConfiguration.getDebeziumConfigurations().get("databasePassword") + "&databaseServerName="
-		        + generalConfiguration.getDebeziumConfigurations().get("databaseName") + "&databaseWhitelist="
-		        + generalConfiguration.getDebeziumConfigurations().get("databaseSchema")
-		        + "org.apache.kafka.connect.storage.FileOffsetBackingStore" + "&offsetStorageFileName="
-		        + generalConfiguration.getDebeziumConfigurations().get("databaseOffsetStorage")
-		        + "&databaseHistoryFileFilename=" + generalConfiguration.getDebeziumConfigurations().get("databaseHistory")
-		        + "&snapshotMode=" + generalConfiguration.getDebeziumConfigurations().get("snapshotMode");
+		Map<String, String> debeziumConfigs = this.generalConfiguration.getDebeziumConfigurations();
+		return "debezium-mysql:" + debeziumConfigs.get("databaseHostName") + "?" + "databaseHostname="
+		        + debeziumConfigs.get("databaseHostName") + "&databaseServerId=" + debeziumConfigs.get("databaseServerId")
+		        + "&databasePort=" + debeziumConfigs.get("databasePort") + "&databaseUser="
+		        + debeziumConfigs.get("databaseUser") + "&databasePassword=" + debeziumConfigs.get("databasePassword")
+		        + "&databaseServerName=" + debeziumConfigs.get("databaseName") + "&databaseWhitelist="
+		        + debeziumConfigs.get("databaseSchema")
+		        + "&offsetStorage=org.apache.kafka.connect.storage.FileOffsetBackingStore" + "&offsetStorageFileName="
+		        + debeziumConfigs.get("databaseOffsetStorage") + "&databaseHistoryFileFilename="
+		        + debeziumConfigs.get("databaseHistory") + "&snapshotMode=" + debeziumConfigs.get("snapshotMode");
 	}
 	
 	/**
@@ -123,28 +129,19 @@ public class DebeziumListener extends RouteBuilder {
 		public DebeziumArgs() {
 		};
 		
-		@Parameter(names = { "--databaseHostName" }, description = "Host name on which the source database runs")
-		public String databaseHostName = "localhost";
-		
-		@Parameter(names = { "--databaseUser" }, description = "User name of the host Database")
-		public String databaseUser = "root";
-		
-		@Parameter(names = { "--databasePassword" }, description = "Passowrd for the user of the host Database")
-		public String databasePassword = "debezium";
-		
-		@Parameter(names = { "--databaseSchema" }, description = "Name the Schema")
-		public String databaseSchema = "openmrs";
-		
-		@Parameter(names = { "--snapshotMode" }, description = "criteria for running DB snapshot, options include: "
-		        + "when_needed, schema_only, initial, never, e.t.c. To read events from day 0 of db data-entry, use 'initial'. "
-		        + "To read only new events, use 'schema_only' ")
-		public String snapshotMode = "initial";
-		
 		@Parameter(names = { "--openmrsfhirBaseEndpoint" }, description = "Fhir base endpoint")
 		public String openmrsfhirBaseEndpoint = "/ws/fhir2/R4";
 		
 		@Parameter(names = { "--fhirDebeziumConfigPath" }, description = "Google cloud FHIR store")
 		public String fhirDebeziumConfigPath = "utils/dbz_event_to_fhir_config.json";
-		
+	}
+	
+	private GeneralConfiguration getFhirDebeziumConfigPath(String fileName) throws IOException {
+		Gson gson = new Gson();
+		Path pathToFile = Paths.get(fileName);
+		try (Reader reader = Files.newBufferedReader(pathToFile, StandardCharsets.UTF_8)) {
+			GeneralConfiguration generalConfiguration = gson.fromJson(reader, GeneralConfiguration.class);
+			return generalConfiguration;
+		}
 	}
 }
