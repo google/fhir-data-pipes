@@ -13,8 +13,8 @@
 -- limitations under the License.
 
 -- This is to create a database for Atom Feed Client of OpenMRS.
--- To use this, run: mysql --user=[USER] --password=[PASSWORD] < create_db.sql
--- Or use this for a password prompt: mysql --user=[USER] -p < create_db.sql
+-- To use this, run: mysql --user=[USER] --password=[PASSWORD] < atomfeed_db.sql
+-- Or use this for a password prompt: mysql --user=[USER] -p < atomfeed_db.sql
 
 CREATE DATABASE IF NOT EXISTS `atomfeed_client`;
 USE `atomfeed_client`;
