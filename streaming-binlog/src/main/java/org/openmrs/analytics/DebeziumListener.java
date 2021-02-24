@@ -45,8 +45,6 @@ public class DebeziumListener extends RouteBuilder {
 	
 	private DebeziumArgs params;
 	
-	//private Map<String, String> debeziumConfigs = this.generalConfiguration.getDebeziumConfigurations();
-	
 	public DebeziumListener(String[] args) throws IOException {
 		this.params = new DebeziumArgs();
 		JCommander.newBuilder().addObject(params).build().parse(args);
@@ -69,7 +67,6 @@ public class DebeziumListener extends RouteBuilder {
 	@VisibleForTesting
 	FhirConverter createFhirConverter(CamelContext camelContext) throws IOException, Exception {
 		FhirContext fhirContext = FhirContext.forR4();
-		//Map<String, String> debeziumConfigs = this.generalConfiguration.getDebeziumConfigurations();
 		String fhirBaseUrl = params.openmrsServerUrl + params.openmrsfhirBaseEndpoint;
 		OpenmrsUtil openmrsUtil = new OpenmrsUtil(fhirBaseUrl, params.openmrUserName, params.openmrsPassword, fhirContext);
 		FhirStoreUtil fhirStoreUtil = FhirStoreUtil.createFhirStoreUtil(params.fhirSinkPath, params.sinkUserName,
