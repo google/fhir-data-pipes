@@ -26,6 +26,9 @@
 	</parent>
 
 	<artifactId>fhir-common</artifactId>
+	<properties>
+	 <c3p0.version>0.9.5.4</c3p0.version>
+	</properties>
 
 	<dependencies>
 		<dependency>
@@ -34,6 +37,12 @@
 			<version>${log4j2.version}</version>
 			<scope>runtime</scope>
 		</dependency>
+	 <dependency>
+      <!--JDBC connection pool will make concurrent JDBC connections more efficient-->
+      <groupId>com.mchange</groupId>
+      <artifactId>c3p0</artifactId>
+	   <version>${c3p0.version}</version>
+     </dependency>
 
 		<dependency>
 			<groupId>junit</groupId>

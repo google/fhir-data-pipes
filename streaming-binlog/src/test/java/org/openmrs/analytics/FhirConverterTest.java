@@ -14,7 +14,13 @@
 
 package org.openmrs.analytics;
 
+import static org.mockito.Mockito.lenient;
+import static org.mockito.Mockito.times;
+
+import java.beans.PropertyVetoException;
 import java.io.IOException;
+import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.Map;
 
 import io.debezium.data.Envelope.Operation;
@@ -53,6 +59,15 @@ public class FhirConverterTest extends CamelTestSupport {
 	private Resource resource;
 	
 	@Mock
+	private JdbcConnectionUtil jdbcConnectionUtil;
+	
+	@Mock
+	private GetUuidUtil getUuidUtil;
+	
+	@Mock
+	private Statement statement;
+	
+	@Mock
 	private ParquetUtil parquetUtil;
 	
 	private FhirConverter fhirConverter;
@@ -65,7 +80,8 @@ public class FhirConverterTest extends CamelTestSupport {
 			public void configure() throws Exception {
 				
 				String fhirDebeziumEventConfigPath = "../utils/dbz_event_to_fhir_config.json";
-				fhirConverter = new FhirConverter(openmrsUtil, fhirStoreUtil, parquetUtil, fhirDebeziumEventConfigPath);
+				fhirConverter = new FhirConverter(openmrsUtil, fhirStoreUtil, parquetUtil, fhirDebeziumEventConfigPath,
+				        jdbcConnectionUtil);
 				
 				// Inject FhirUriGenerator;
 				from(TEST_ROUTE).process(fhirConverter); // inject target processor here
@@ -90,6 +106,27 @@ public class FhirConverterTest extends CamelTestSupport {
 		Mockito.verify(openmrsUtil).fetchFhirResource(Mockito.anyString());
 		Mockito.verify(fhirStoreUtil).uploadResource(resource);
 		Mockito.verify(parquetUtil, Mockito.never()).write(Mockito.<Resource> any());
+	}
+	
+	@Test
+	public void shouldGetUuidFromParent() throws SQLException, PropertyVetoException, ClassNotFoundException {
+		
+		Map<String, String> messageBody = DebeziumTestUtil.genExpectedBody();
+		Map<String, Object> messageHeaders = DebeziumTestUtil.genExpectedHeaders(Operation.CREATE, "patient");
+		statement = jdbcConnectionUtil.createStatement();
+		String uuid = getUuidUtil.getUuid(Mockito.anyString(), Mockito.anyString(), Mockito.anyString());
+		
+		lenient().when(jdbcConnectionUtil.createStatement()).thenReturn(statement);
+		
+		lenient().when(getUuidUtil.getUuid(Mockito.anyString(), Mockito.anyString(), Mockito.anyString())).thenReturn(uuid);
+		
+		// Actual event that will trigger process().
+		eventsProducer.sendBodyAndHeaders(messageBody, messageHeaders);
+		
+		Mockito.verify(jdbcConnectionUtil, times(1)).createStatement();
+		Mockito.verify(jdbcConnectionUtil).createStatement();
+		Mockito.verify(getUuidUtil, times(1)).getUuid(Mockito.anyString(), Mockito.anyString(), Mockito.anyString());
+		Mockito.verify(getUuidUtil).getUuid(Mockito.anyString(), Mockito.anyString(), Mockito.anyString());
 	}
 	
 	@Test

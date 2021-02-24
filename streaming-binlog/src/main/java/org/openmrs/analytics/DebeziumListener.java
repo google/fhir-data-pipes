@@ -45,6 +45,8 @@ public class DebeziumListener extends RouteBuilder {
 	
 	private DebeziumArgs params;
 	
+	//private Map<String, String> debeziumConfigs = this.generalConfiguration.getDebeziumConfigurations();
+	
 	public DebeziumListener(String[] args) throws IOException {
 		this.params = new DebeziumArgs();
 		JCommander.newBuilder().addObject(params).build().parse(args);
@@ -67,14 +69,19 @@ public class DebeziumListener extends RouteBuilder {
 	@VisibleForTesting
 	FhirConverter createFhirConverter(CamelContext camelContext) throws IOException, Exception {
 		FhirContext fhirContext = FhirContext.forR4();
+		//Map<String, String> debeziumConfigs = this.generalConfiguration.getDebeziumConfigurations();
 		String fhirBaseUrl = params.openmrsServerUrl + params.openmrsfhirBaseEndpoint;
 		OpenmrsUtil openmrsUtil = new OpenmrsUtil(fhirBaseUrl, params.openmrUserName, params.openmrsPassword, fhirContext);
 		FhirStoreUtil fhirStoreUtil = FhirStoreUtil.createFhirStoreUtil(params.fhirSinkPath, params.sinkUserName,
 		    params.sinkPassword, fhirContext.getRestfulClientFactory());
 		ParquetUtil parquetUtil = new ParquetUtil(params.fileParquetPath, params.secondsToFlushParquetFiles,
 		        params.rowGroupSizeForParquetFiles);
+		JdbcConnectionUtil jdbcConnectionUtil = new JdbcConnectionUtil(params.jdbcDriverClass, params.jDBCURLinput,
+		        this.generalConfiguration.getDebeziumConfigurations().get("databaseUser"),
+		        this.generalConfiguration.getDebeziumConfigurations().get("databasePassword"), params.initialPoolSize,
+		        params.jdbcMaxPoolSize);
 		camelContext.addService(new ParquetService(parquetUtil), true);
-		return new FhirConverter(openmrsUtil, fhirStoreUtil, parquetUtil, params.fhirDebeziumConfigPath);
+		return new FhirConverter(openmrsUtil, fhirStoreUtil, parquetUtil, params.fhirDebeziumConfigPath, jdbcConnectionUtil);
 	}
 	
 	private String getDebeziumConfig() throws IOException {
@@ -134,6 +141,18 @@ public class DebeziumListener extends RouteBuilder {
 		
 		@Parameter(names = { "--fhirDebeziumConfigPath" }, description = "Google cloud FHIR store")
 		public String fhirDebeziumConfigPath = "utils/dbz_event_to_fhir_config.json";
+		
+		@Parameter(names = { "--jdbcDriverClass" }, description = "JDBC MySQL driver class")
+		public String jdbcDriverClass = "com.mysql.cj.jdbc.Driver";
+		
+		@Parameter(names = { "--getJdbcUrl" }, description = "JDBC URL input")
+		public String jDBCURLinput = "jdbc:mysql://localhost:3308/openmrs";
+		
+		@Parameter(names = { "--jdbcMaxPoolSize" }, description = "JDBC maximum pool size")
+		public int jdbcMaxPoolSize = 50;
+		
+		@Parameter(names = { "--initialPoolSize" }, description = "JDBC initial pool size")
+		public int initialPoolSize = 10;
 	}
 	
 	private GeneralConfiguration getFhirDebeziumConfigPath(String fileName) throws IOException {
