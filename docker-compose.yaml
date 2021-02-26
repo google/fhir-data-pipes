@@ -76,4 +76,4 @@ services:
       - MYSQL_DATABASE=atomfeed_client
       - MYSQL_ROOT_HOST=%
     volumes:
-      - ./utils/dbdump/create_db.sql:/docker-entrypoint-initdb.d/dump.sql
+      - ./utils/dbdump/atomfeed_db_sql:/docker-entrypoint-initdb.d/dump.sql

@@ -78,12 +78,12 @@ use MySQL for this purpose. If you don't have an available MySQL service, you ca
 
 Now you should have MySQL running on the default port 3306, and can run:
 
-`mysql --user=USER --password=PASSWORD < utils/dbdump/create_db.sql`
+`mysql --user=USER --password=PASSWORD < utils/dbdump/atomfeed_db_sql`
 
 This will create a database called `atomfeed_client` with required tables (the
 `USER` should have permission to create databases). If you want to change the
-default database name `atomfeed_client`, you can edit [`utils/dbdump/create_db.sql`](
-utils/dbdump/create_db.sql) but then you need to change the database name in
+default database name `atomfeed_client`, you can edit [`utils/dbdump/atomfeed_db_sql`](
+utils/dbdump/atomfeed_db_sql) but then you need to change the database name in
 [`src/main/resources/hibernate.default.properties`](
 src/main/resources/hibernate.default.properties) accordingly.
 
