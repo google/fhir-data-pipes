@@ -19,11 +19,11 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 
-public class GetUuidUtil {
+public class UuidUtil {
 	
 	private JdbcConnectionUtil jdbcConnectionUtil;
 	
-	public GetUuidUtil(JdbcConnectionUtil jdbcConnectionUtil) {
+	public UuidUtil(JdbcConnectionUtil jdbcConnectionUtil) {
 		this.jdbcConnectionUtil = jdbcConnectionUtil;
 	}
 	

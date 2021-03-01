@@ -52,7 +52,7 @@ public class FhirConverter implements Processor {
 	
 	private JdbcConnectionUtil jdbcConnectionUtil;
 	
-	private GetUuidUtil getUuidUtil;
+	private UuidUtil getUuidUtil;
 	
 	@VisibleForTesting
 	FhirConverter() {
@@ -102,7 +102,7 @@ public class FhirConverter implements Processor {
 		if (payload.get("uuid") != null) {
 			uuid = payload.get("uuid").toString();
 		} else {
-			getUuidUtil = new GetUuidUtil(jdbcConnectionUtil);
+			getUuidUtil = new UuidUtil(jdbcConnectionUtil);
 			if (config.getParentTable() == null) {
 				log.error(String.format("No parentTable in %s ignoring payload %s ", table, payload));
 				return;
