@@ -1,4 +1,5 @@
 [![Build Status](https://travis-ci.org/GoogleCloudPlatform/openmrs-fhir-analytics.svg?branch=master)](https://travis-ci.org/GoogleCloudPlatform/openmrs-fhir-analytics)
+[![codecov](https://codecov.io/gh/GoogleCloudPlatform/openmrs-fhir-analytics/branch/master/graph/badge.svg)](https://codecov.io/gh/GoogleCloudPlatform/openmrs-fhir-analytics)
 
 **NOTE**: This is a work in progress and the current version is only for
 demonstration purposes. Once these tools reach Alpha status, this note should be
@@ -124,7 +125,7 @@ parameters.
 
 To start Batch Mode using FHIR Search, run:
 
-```
+```shell
 $ java -cp batch/target/fhir-batch-etl-bundled-0.1.0-SNAPSHOT.jar \
     org.openmrs.analytics.FhirEtl \
     --openmrsServerUrl=http://localhost:8099/openmrs \
@@ -148,7 +149,7 @@ Parameters:
 
 To start Batch Mode using JDBC, run:
 
-```
+```shell
 $ java -cp batch/target/fhir-batch-etl-bundled-0.1.0-SNAPSHOT.jar \
     org.openmrs.analytics.FhirEtl \
     --openmrsServerUrl=http://localhost:8099/openmrs \
@@ -205,7 +206,7 @@ resume from the last processed offset.
 3.  Build binaries with `mvn clean install`.
 4.  Run the pipeline:
 
-    ```
+    ```shell
     $ mvn compile exec:java -pl streaming-binlog \
         -Dexec.args="--openmrsServerUrl=http://localhost:8099/openmrs \
         --openmrsUserName=admin --openmrsPassword=Admin123 \
@@ -316,11 +317,11 @@ used in the code and examples. Adjust these values as necessary.
 Next, create the necessary database and tables. From your MySQL server run:
 
 ```shell
-mysql --user=fhir --password=fhiranalytics < utils/dbdump/create_db.sql
+mysql --user=fhir --password=fhiranalytics < utils/dbdump/atomfeed_db_sql
 ```
 
 The default database name is `atomfeed_client`. You can change this by editing
-[`utils/dbdump/create_db.sql`](utils/dbdump/create_db.sql).
+[`utils/dbdump/atomfeed_db_sql`](utils/dbdump/atomfeed_db_sql).
 
 Finally, update
 [`src/main/resources/hibernate.default.properties`](src/main/resources/hibernate.default.properties)
@@ -615,7 +616,7 @@ To regenerate this jar file:
     NOTE: Parquet tools will be replaced with parquet cli in the next release
     `apache-parquet-1.12.0`
 
-To run the e2e tests, execute `sh /e2e-tests/run.sh`
+To run the e2e tests, execute ```sh /e2e-tests/run.sh```
 
 ## Create a Google Cloud FHIR Store and BigQuery Dataset
 
@@ -675,4 +676,3 @@ You can run the script with no arguments to see a sample usage. After you create
 the FHIR store, its full URL would be:
 
 `https://healthcare.googleapis.com/v1/projects/PROJECT/locations/LOCATION/datasets/DATASET/fhirStores/FHIR-STORE-NAME`
-
