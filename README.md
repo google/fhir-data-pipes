@@ -8,20 +8,23 @@ future.
 
 # What is this?
 
-This repository includes tools that manage the export data from an
+This repository includes tools that manage and export data from an
 [OpenMRS](https://openmrs.org) instance using the
 [FHIR format](https://www.hl7.org/fhir/overview.html) and facilitate the
 transfer to a data warehouse using
-[Apache Parquet files](https://parquet.apache.org), FHIR APIs, or Google Cloud
-FHIR Stores. The tools use the
+[Apache Parquet files](https://parquet.apache.org), or another FHIR server
+(e.g., a HAPI FHIR server or Google Cloud FHIR store). The tools use the
 [OpenMRS FHIR2 Module](https://addons.openmrs.org/show/org.openmrs.module.openmrs-fhir2-module)
 to transform the data for transfer.
 
-There are three modes of transfer:
+There are four modes of transfer:
 
--   [**Batch mode**](#batch-mode): This mode reads the contents of an OpenMRS
-    MySQL database, transforms them into FHIR resources, and transfers the data
-    via FHIR APIs or Parquet files.
+-   [**Batch mode (FHIR)**](#batch-mode-using-fhir-search): This mode uses FHIR
+    Search APIs to select resources to copy, retrieves them as FHIR resources,
+    and transfers the data via FHIR APIs or Parquet files.
+-   [**Batch mode (JDBC)**](#batch-mode-using-jdbc): This mode uses JDBC to read
+    the contents of an OpenMRS MySQL database, retrieves those entities as FHIR
+    resources, and transfers the data via FHIR APIs or Parquet files.
 -   **[Streaming mode (Debezium)](#streaming-mode-debezium)**: This mode
     continuously listens for changes to the underlying OpenMRS MySQL database
     using
@@ -41,17 +44,18 @@ There is also a query module built on top of the generated data warehouse.
         image with these prerequisites and demo data you can use to try things
         out.
 -   A target output for the data. Supported options are Apache Parquet files
-    (not supported by Atom Feed mode), FHIR API resources, and
+    (not supported by Atom Feed mode)or a FHIR server such as HAPI FHIR or
     [Google Cloud Platform FHIR stores](https://cloud.google.com/healthcare/docs/how-tos/fhir).
     -   You can use our [HAPI FHIR server](#run-hapi-fhir-server-using-docker)
         image for testing FHIR API targets.
-    -   [Learn how to create a compatible GCP FHIR store](#create-a-google-cloud-fhir-store-and-bigquery-dataset).
+    -   [Learn how to create a compatible GCP FHIR store](#create-a-google-cloud-fhir-store-and-bigquery-dataset),
+        if you want to use this option.
 
 ### Installing the FHIR2 Module
 
 **To install via web**: Log in to OpenMRS as an administrator, go to **System
-Administration > Manage Modules > Search from Addons**, search for the `FHIR2`
-module, and install. Make sure to install the FHIR2 module, not FHIR.
+Administration > Manage Modules > Search from Addons**, search for the `fhir2`
+module, and install. Make sure to install the `fhir2` module, not `fhir`.
 
 **To install via .omod file**: Go to
 [FHIR2 Module](https://addons.openmrs.org/show/org.openmrs.module.openmrs-fhir2-module)
@@ -76,24 +80,29 @@ folder then restart OpenMRS.
 Although each mode of transfer uses a different binary, they use some common
 parameters which are documented here.
 
--   `openmrsServerUrl` - The base URL of the source OpenMRS instance (e.g.,
-    `http://localhost:8099/openmrs`).
+-   `openmrsServerUrl` - The base URL of the source OpenMRS instance. Default:
+    `http://localhost:8099/openmrs`
 -   `openmrsUserName` - The HTTP Basic Auth username to access the OpenMRS APIs.
+    Default: `admin`
 -   `openmrsPassword` - The HTTP Basic Auth password to access the OpenMRS APIs.
+    Default: `Admin123`
 -   `fhirSinkPath` - A base URL to a target FHIR server, or the relative path of
     a GCP FHIR store, e.g. `http://localhost:8098/fhir` for a FHIR server or
     `projects/PROJECT/locations/LOCATION/datasets/DATASET/fhirStores/FHIR-STORE-NAME`
     for a GCP FHIR store.
--   `sinkUserName` - The HTTP Basic Auth username to access the FHIR sink.
--   `sinkPassword` - The HTTP Basic Auth password to access the FHIR sink.
--   `fileParquetPath` - A relative file path to write Parquet files to.
+-   `sinkUserName` - The HTTP Basic Auth username to access the FHIR sink. Not
+    used for GCP FHIR stores.
+-   `sinkPassword` - The HTTP Basic Auth password to access the FHIR sink. Not
+    used for GCP FHIR stores.
+-   `fileParquetPath` - The file path to write Parquet files to, e.g.,
+    `./tmp/parquet/`.
 -   `secondsToFlushParquetFiles` - The number of seconds to wait before flushing
     all Parquet writers with non-empty content to files. Use `0` to disable.
-    Default: 3600.
+    Default: `3600`.
 -   `rowGroupSizeForParquetFiles` - The approximate size in bytes of the
     row-groups in Parquet files. When this size is reached, the content is
     flushed to disk. This is not used if there are less than 100 records. Use
-    `0` to use the default Parquet row-group size. Default: 0.
+    `0` to use the default Parquet row-group size. Default: `0`.
 
 ## Batch mode
 
@@ -153,119 +162,87 @@ $ java -cp batch/target/fhir-batch-etl-bundled-0.1.0-SNAPSHOT.jar \
 
 ```
 
--   `jdbcModeEnabled` - If true, uses JDBC mode. Default: false
+Parameters:
+
+-   `jdbcModeEnabled` - If true, uses JDBC mode. Default: `false`
 -   `jdbcUrl` - The
-    [JDBC database connection URL](https://docs.oracle.com/javase/tutorial/jdbc/basics/connecting.html#db_connection_url).
-    for the OpenMRS MySQL database. Default: jdbc:mysql://localhost:3306/openmrs
--   `dbUser` - The name of a user that has access to the database. Default: root
--   `dbPassword` - The password of `dbUser`. Default: debezium
--   `jdbcMaxPoolSize` - The maximum number of database connections. Default: 50
--   `jdbcDriverClass` - The fully qualified class name of the JDBC driver.
-    Default: com.mysql.cj.jdbc.Driver
+    [JDBC database connection URL](https://docs.oracle.com/javase/tutorial/jdbc/basics/connecting.html#db_connection_url)
+    for the OpenMRS MySQL database. Default:
+    `jdbc:mysql://localhost:3306/openmrs`
+-   `dbUser` - The name of a user that has access to the database. Default:
+    `root`
+-   `dbPassword` - The password of `dbUser`. Default: `debezium`
+-   `jdbcMaxPoolSize` - The maximum number of database connections. Default:
+    `50`
+-   `jdbcDriverClass` - The fully qualified class name of the JDBC driver. This
+    generally should not be changed. Default: `com.mysql.cj.jdbc.Driver`
 
 ## Streaming mode (Debezium)
 
-The goal of the debezium-based streaming mode is to provide real-time downstream
-consumption of incremental updates, even for operations that were performed
-outside OpenMRS API, e.g., data cleaning, module operations, and data
-syncing/migration. It captures incremental updates from the MySQL database
-binlog then streams both FHIR and non-FHIR data for downstream consumption. It
-is not based on Hibernate Interceptor or Event Module; therefore, all events are
-captured from day 0 and can be used independently without the need for a batch
-pipeline. It guarantees tolerance to failure such that when the application is
-restarted or crashed, the pipeline will resume from the last processed offset.
+The Debezium-based streaming mode provides real-time downstream consumption of
+incremental updates, even for operations that were performed outside the OpenMRS
+API, e.g., data cleaning, module operations, and data syncing/migration. It
+captures incremental updates from the MySQL database binlog then streams both
+FHIR and non-FHIR data for downstream consumption. It is not based on Hibernate
+Interceptor or Event Module; therefore, all events are captured from day 0 and
+can be used independently without the need for a batch pipeline. It also
+tolerates failures like application restarts or crashes, as the pipeline will
+resume from the last processed offset.
 
 ### Getting Started
 
--   Fire up OpenMRS Stack (containing FHIR2 module and demo data ~ 300,000 obs)
-
-```
-$ docker-compose -f openmrs-compose.yaml up # change ports appropriately (optional)
-```
-
-You should be able to access OpenMRS via http://localhost:8099/openmrs/ using
-refApp credentials i.e username is admin and password Admin123
-
--   Run the streaming pipeline using default config (pointed to
-    openmrs-compose.yaml )
-
-    ```
-    $ mvn clean install
-    $ mvn compile exec:java -pl streaming-binlog
-    ```
-
--   Or customize the configuration (including gcpFhirStore, OpenMRS basicAuth)
+1.  Complete the Debezium
+    [MySQL Setup](https://debezium.io/documentation/reference/1.4/connectors/mysql.html#setting-up-mysql).
+    At a minimum,
+    [create a user](https://debezium.io/documentation/reference/1.4/connectors/mysql.html#mysql-creating-user)
+    and
+    [enable the binlog](https://debezium.io/documentation/reference/1.4/connectors/mysql.html#enable-mysql-binlog).
+2.  Edit `./utils/dbz_event_to_fhir_config.json`. Find the
+    `debeziumConfigurations` section at the top of the file and edit the values
+    to match your environment. See the documentation on
+    [Debezium MySQL Connector properties](https://debezium.io/documentation/reference/connectors/mysql.html#mysql-property-name)
+    for more information.
+3.  Build binaries with `mvn clean install`.
+4.  Run the pipeline:
 
     ```
     $ mvn compile exec:java -pl streaming-binlog \
-       -Dexec.args="--databaseHostName=localhost \
-       --databasePort=3306 --databaseUser=root --databasePassword=debezium \
-       --databaseName=mysql --databaseSchema=openmrs --databaseServerId=77 \
-       --databaseOffsetStorage=offset.dat --databaseHistory=dbhistory.dat \
-       --openmrsUserName=admin --openmrsPassword=Admin123 \
-       --openmrsServerUrl=http://localhost:8099/openmrs \
-       --openmrsfhirBaseEndpoint=/ws/fhir2/R4 \
-       --snapshotMode=initial \
-       --fhirSinkPath=projects/PROJECT/locations/LOCATION/datasets/DATASET/fhirStores/FHIRSTORENAME \
-       --sinkUserName=hapi --sinkPassword=hapi \
-       --fileParquetPath=/tmp/ \
-       --fhirDebeziumEventConfigPath=./utils/dbz_event_to_fhir_config.json"
+        -Dexec.args="--openmrsServerUrl=http://localhost:8099/openmrs \
+        --openmrsUserName=admin --openmrsPassword=Admin123 \
+        --fhirSinkPath=http://localhost:8098/fhir \
+        --sinkUserName=hapi --sinkPassword=hapi \
+        --fileParquetPath=tmp/TEST/ \
+        --fhirDebeziumEventConfigPath=./utils/dbz_event_to_fhir_config.json \
+        --openmrsfhirBaseEndpoint=/ws/fhir2/R4"
     ```
 
-    NOTE : In order to export data to a fhir sink , pass the '--fhirSinkPath'
-    argument , In order to generate Parquet files, pass the '--fileParquetPath'
-    argument
+The next sections describe parameters specific to Debezium Streaming mode. See
+[Common Parameters](#common-parameters) for information about the other
+parameters.
+
+Parameters:
+
+-   `fhirDebeziumConfigPath` - The path to the configuration file containing
+    MySQL parameters and FHIR mappings. This generally should not be changed.
+    Default: `utils/dbz_event_to_fhir_config.json`
+-   `openmrsfhirBaseEndpoint` - The OpenMRS server base path for its FHIR API
+    endpoints. Using all default values, you would find Patient resources at
+    `http://localhost:8099/openmrs/ws/fhir2/R4/Patient`. This generally should
+    not be changed. Default: `/ws/fhir2/R4`
 
 ### Common questions
 
-*   **Will I be able to stream historical data that were recorded prior to
-    enabling the `mysql binlog`?** Yes, by default, the pipeline takes a
-    snapshot of the entire database, making it possible to stream in events from
-    day 0 of data-entry.
+*   **Will this pipeline include historical data recorded before the `mysql
+    binlog` was enabled?** Yes. By default, the pipeline takes a snapshot of the
+    entire database and will include all historical data.
 
-*   **How do I stop debezium from taking a snapshot of the entire database?**
-    You can do this by overriding the `snapshotMode` option to `schema_only`
-    i.e, `--snapshotMode=schema_only` Other options include: when_needed,
-    schema_only, initial (default), never, e.t.c. Please check the
+*   **How do I stop Debezium from taking a snapshot of the entire database?**
+    Set `snapshotMode` to `schema_only` i.e, `--snapshotMode=schema_only`. Other
+    options include: `when_needed`, `schema_only`, `initial` (default), `never`,
+    e.t.c. See the
     [`debezium documentation`](https://camel.apache.org/components/latest/debezium-mysql-component.html)
     for more details.
 
-### Debezium prerequisite
-
-The provided openmrs-compose.yaml (MySQL) has been configured to support
-debezium, however, to connect to an existing MySQl instance, you'll need to
-configure your DB to support row-based replication. There are a few
-configuration options required to ensure your database can participate in
-emitting binlog.
-
--   The source MySQL instance must have the following server configs set to
-    generate binary logs in a format it can be consumed:
-    -   server_id = {value}
-    -   log_bin = {value}
-    -   binlog_format = row
-    -   binlog_row_image = full
--   Depending on server defaults and table size, it may also be necessary to
-    increase the binlog retention period.
-
-An example of mysql.conf has bee provided with the above configurations
-
-```
-# ----------------------------------------------
-# Enable the binlog for replication & CDC
-# ----------------------------------------------
-
-# Enable binary replication log and set the prefix, expiration, and log format.
-# The prefix is arbitrary, expiration can be short for integration tests but would
-# be longer on a production system. Row-level info is required for ingest to work.
-# Server ID is required, but this will vary on production systems
-server-id         = 223344
-log_bin           = mysql-bin
-expire_logs_days  = 1
-binlog_format     = row
-
-```
-
-For more information, please visit https://debezium.io
 
 ### Dev. tip
 
@@ -291,7 +268,9 @@ corresponding FHIR resources.
 
 ### Add the Atom Feed module to OpenMRS
 
-Install the [Atom Feed Module](https://addons.openmrs.org/show/org.openmrs.module.atomfeed) if necessary.
+Install the
+[Atom Feed Module](https://addons.openmrs.org/show/org.openmrs.module.atomfeed)
+if necessary.
 
 ### Update the Atom Feed configuration
 
@@ -378,16 +357,8 @@ mvn exec:java -pl streaming-atomfeed \
     --fhirSinkPath=projects/PROJECT/locations/LOCATION/datasets/DATASET/fhirStores/FHIRSTORENAME"`
 ```
 
--   `openmrsServerUrl` is the path to your source OpenMRS instance (e.g.,
-    `http://localhost:8099/openmrs` in this case)
--   `openmrsUserName` is the username for accessing the OpenMRS APIs using
-    BasicAuth.
--   `openmrsPassword` is the password for accessing the OpenMRS APIs using
-    BasicAuth.
--   `fhirSinkPath` is the relative path of the FHIR store you set up in the
-    previous step, e.g.:
-    `projects/PROJECT/locations/LOCATION/datasets/DATASET/fhirStores/FHIR-STORE-NAME`
-    where all-caps segments are based on what you set up above.
+See [Common Parameters](#common-parameters) for information about the
+parameters.
 
 To test your changes, create a new patient (or observation) in OpenMRS and check
 that a corresponding Patient (or Observation) FHIR resource is created in the
@@ -704,3 +675,4 @@ You can run the script with no arguments to see a sample usage. After you create
 the FHIR store, its full URL would be:
 
 `https://healthcare.googleapis.com/v1/projects/PROJECT/locations/LOCATION/datasets/DATASET/fhirStores/FHIR-STORE-NAME`
+
