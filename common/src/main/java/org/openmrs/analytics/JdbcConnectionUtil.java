@@ -20,11 +20,10 @@ import java.sql.SQLException;
 import java.sql.Statement;
 
 import com.mchange.v2.c3p0.ComboPooledDataSource;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import lombok.Getter;
 import lombok.Setter;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @Getter
 @Setter
