@@ -432,14 +432,14 @@ $ docker-compose up --build streaming-binlog
  $ docker-compose up -d --build streaming-atomfeed-db streaming-atomfeed
 ```
 
-# How to query the data warehouse
+## How to query the data warehouse
 
 Here we only focus on the case where the FHIR resources are transformed into
 Parquet files in previous steps and we want to query them through Spark.
 
 Some sample queries using `pyspark` are available in the [`dwh/`](dwh) folder.
 
-## Setting up Apache Spark
+### Setting up Apache Spark
 
 Details on how to set up a Spark cluster with all different cluster management
 options is beyond this doc. Here we only show how to run the sample queries in
@@ -491,7 +491,7 @@ spark-submit sample_indicator.py --src_dir=test_files/ \
   --code_list {SPACE SEPARATED LIST OF CODES}
 ```
 
-## Using Jupyter Notebooks
+### Using Jupyter Notebooks
 
 While in your virtualenv, run:
 
