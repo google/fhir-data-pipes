@@ -37,12 +37,12 @@
 			<version>${log4j2.version}</version>
 			<scope>runtime</scope>
 		</dependency>
-	 <dependency>
-      <!--JDBC connection pool will make concurrent JDBC connections more efficient-->
-      <groupId>com.mchange</groupId>
-      <artifactId>c3p0</artifactId>
-	   <version>${c3p0.version}</version>
-     </dependency>
+	    <dependency>
+        <!--JDBC connection pool will make concurrent JDBC connections more efficient-->
+           <groupId>com.mchange</groupId>
+           <artifactId>c3p0</artifactId>
+	       <version>${c3p0.version}</version>
+        </dependency>
 
 		<dependency>
 			<groupId>junit</groupId>
@@ -57,12 +57,12 @@
 			<version>1.30.9</version>
 		</dependency>
 
-	   <dependency>
+	    <dependency>
           <groupId>org.projectlombok</groupId>
           <artifactId>lombok</artifactId>
           <version>1.18.16</version>
           <scope>provided</scope>
-       </dependency>
+        </dependency>
 
 		<!-- dependency>
 		  <groupId>com.google.auth</groupId>
