@@ -16,7 +16,6 @@ package org.openmrs.analytics;
 
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.times;
-
 import java.beans.PropertyVetoException;
 import java.io.IOException;
 import java.sql.SQLException;
