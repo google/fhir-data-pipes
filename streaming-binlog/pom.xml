@@ -130,6 +130,29 @@
 
   <build>
     <plugins>
+      <!-- Generates self-contained jars with dependencies-->
+      <plugin>
+        <artifactId>maven-assembly-plugin</artifactId>
+        <configuration>
+          <archive>
+            <manifest>
+              <mainClass>org.openmrs.analytics.Runner</mainClass>
+            </manifest>
+          </archive>
+          <descriptorRefs>
+            <descriptorRef>jar-with-dependencies</descriptorRef>
+          </descriptorRefs>
+        </configuration>
+        <executions>
+          <execution>
+            <id>make-assembly</id>
+            <phase>package</phase>
+            <goals>
+              <goal>single</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
 
       <!-- Allows the example to be run via IDE or 'mvn compile exec:java -pl streaming-binlog/' -->
       <plugin>

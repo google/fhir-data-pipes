@@ -12,8 +12,27 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-FROM fabric8/java-centos-openjdk8-jdk
+FROM openjdk:8
 
-COPY target/dependency/* /deployments/
-COPY target/*.jar /deployments/app.jar
-ENTRYPOINT [ "/deployments/run-java.sh" ]
+ARG WORK_DIR="./deployments"
+COPY target/fhir-binlog-streaming-etl-0.1.0-SNAPSHOT-jar-with-dependencies.jar ${WORK_DIR}/app.jar
+WORKDIR ${WORK_DIR}
+ENV OPENMRS_URL="http://localhost:8099/openmrs"
+ENV OPENMRS_USERNAME="admin"
+ENV OPENMRS_PASSWORD="Admin123"
+ENV SINK_URL=""
+ENV SINK_USERNAME=""
+ENV SINK_PASSWORD=""
+ENV PARQUET_PATH="/tmp/"
+ENV FHIR_DEBEZIUM_CONFIG_PATH="/deployments/dbz_event_to_fhir_config.json"
+RUN echo 'Debezium Streaming Job started'
+
+ENTRYPOINT java -jar app.jar \
+           --openmrsServerUrl=${OPENMRS_URL}  \
+           --openmrsUserName=${OPENMRS_USERNAME}  \
+           --openmrsPassword=${OPENMRS_PASSWORD} \
+           --fhirSinkPath=${SINK_URL}  \
+           --sinkUserName=${SINK_USERNAME} \
+           --sinkPassword=${SINK_PASSWORD} \
+           --fileParquetPath=${PARQUET_PATH} \
+           --fhirDebeziumConfigPath=${FHIR_DEBEZIUM_CONFIG_PATH}

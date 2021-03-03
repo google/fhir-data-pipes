@@ -33,22 +33,22 @@ services:
   streaming-binlog: # To run independently: docker-compose up --build streaming-binlog
     build:
       context: streaming-binlog
-    image: openmrs-fhir-analytics/streaming-pipeline:${DEBEZIUM_VERSION}
+    image: openmrs-fhir-analytics/streaming-binlog:latest
     container_name: streaming-pipeline
     network_mode: host
     healthcheck:
       test: "exit 0"
     volumes:
-      - ./dbz:/tmp
-      - ./utils/dbz_event_to_fhir_config.json:/deployments/utils/dbz_event_to_fhir_config.json
+      - ./utils/dbz_event_to_fhir_config.json:/deployments/dbz_event_to_fhir_config.json
+      # parquet_store is the directory which you want to persist the generated parquet files
+      - ./parquet_store:/tmp
     environment:
-      - JAVA_MAIN_CLASS=org.openmrs.analytics.Runner
-      - JAVA_OPTIONS=--openmrsUserName=admin --openmrsPassword=Admin123 
-                     --openmrsServerUrl=http://localhost:8099/openmrs 
-                     --openmrsfhirBaseEndpoint=/ws/fhir2/R4 
-                     --fhirSinkPath=http://localhost:8098/fhir
-                     --fileParquetPath=/tmp/ 
-                     --fhirDebeziumEventConfigPath=./utils/dbz_event_to_fhir_config.json
+      - OPENMRS_URL=http://localhost:8099/openmrs
+      - OPENMRS_USERNAME="admin"
+      - OPENMRS_PASSWORD="Admin123"
+      # the 2 variable below should be same as volume mappings above
+      - PARQUET_PATH=/tmp/
+      - FHIR_DEBEZIUM_CONFIG_PATH=/deployments/dbz_event_to_fhir_config.json
 
   streaming-atomfeed:
     container_name: streaming-atomfeed
