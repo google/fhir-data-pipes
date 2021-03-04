@@ -27,9 +27,9 @@
 
 	<artifactId>fhir-common</artifactId>
 	
-	<properties>
-	  <c3p0.version>0.9.5.4</c3p0.version>
-	</properties>
+		<properties>
+		<c3p0.version>0.9.5.4</c3p0.version>
+		</properties>
 
 	<dependencies>
 		<dependency>
@@ -57,13 +57,6 @@
 			<artifactId>google-api-client-gson</artifactId>
 			<version>1.30.9</version>
 		</dependency>
-
-	    <dependency>
-          <groupId>org.projectlombok</groupId>
-          <artifactId>lombok</artifactId>
-          <version>1.18.16</version>
-          <scope>provided</scope>
-        </dependency>
 
 		<!-- dependency>
 		  <groupId>com.google.auth</groupId>

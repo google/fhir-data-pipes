@@ -31,7 +31,6 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
-import org.openmrs.analytics.model.EventConfiguration;
 
 @RunWith(MockitoJUnitRunner.class)
 public class UuidUtilTest extends TestCase {
@@ -45,13 +44,9 @@ public class UuidUtilTest extends TestCase {
 	@Mock
 	private ResultSet resultset;
 	
-	private EventConfiguration config;
-	
-	private Map<String, String> payLoad;
-	
 	private String uuid;
 	
-	private String table;
+	private String table ;
 	
 	private String keyColumn;
 	
@@ -59,30 +54,13 @@ public class UuidUtilTest extends TestCase {
 	
 	@Before
 	public void beforeTestCase() throws Exception {
-		payLoad = new HashMap<>();
-		config = new EventConfiguration();
-		
-		payLoad.put("uuid", "1");
-		payLoad.put("sex", "male");
-		payLoad.put("patient_id", "5");
-		
-		config.setParentTable("person");
-		config.setParentForeignKey("person_id");
-		config.setChildPrimaryKey("patient_id");
 		
 		uuid = "1296b0dc-440a-11e6-a65c-00e04c680037";
-		table = config.getParentTable();
-		keyColumn = config.getParentForeignKey();
-		keyValue = payLoad.get(config.getChildPrimaryKey()).toString();
+		table = "person";
+		keyColumn = "person_id";
+		keyValue = "5";
 		
 		String sql = String.format("SELECT uuid FROM %s WHERE %s = %s", table, keyColumn, keyValue);
-		
-		lenient().when(jdbcConnectionUtil.getJdbcDriverClass()).thenReturn("com.mysql.cj.jdbc.Driver");
-		lenient().when(jdbcConnectionUtil.getJdbcUrl()).thenReturn("jdbc:mysql://localhost:3308/openmrs");
-		lenient().when(jdbcConnectionUtil.getDbUser()).thenReturn("root");
-		lenient().when(jdbcConnectionUtil.getDbPassword()).thenReturn("debezium");
-		lenient().when(jdbcConnectionUtil.getInitialPoolSize()).thenReturn(10);
-		lenient().when(jdbcConnectionUtil.getDbcMaxPoolSize()).thenReturn(50);
 		
 		when(jdbcConnectionUtil.createStatement()).thenReturn(statement);
 		when(statement.executeQuery(sql)).thenReturn(resultset);
@@ -91,7 +69,7 @@ public class UuidUtilTest extends TestCase {
 	}
 	
 	@Test
-	public void shouldCallGetUuid() throws ClassNotFoundException, PropertyVetoException, SQLException {
+	public void shouldReturnValidUuid() throws ClassNotFoundException, PropertyVetoException, SQLException {
 		
 		UuidUtil uuidUtil = new UuidUtil(jdbcConnectionUtil);
 		String uuid = uuidUtil.getUuid(table, keyColumn, keyValue);

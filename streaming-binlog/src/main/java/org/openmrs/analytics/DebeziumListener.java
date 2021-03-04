@@ -73,7 +73,7 @@ public class DebeziumListener extends RouteBuilder {
 		    params.sinkPassword, fhirContext.getRestfulClientFactory());
 		ParquetUtil parquetUtil = new ParquetUtil(params.fileParquetPath, params.secondsToFlushParquetFiles,
 		        params.rowGroupSizeForParquetFiles);
-		JdbcConnectionUtil jdbcConnectionUtil = new JdbcConnectionUtil(params.jdbcDriverClass, params.jDBCURLinput,
+		JdbcConnectionUtil jdbcConnectionUtil = new JdbcConnectionUtil(params.jdbcDriverClass, params.jdbcUrlInput,
 		        this.generalConfiguration.getDebeziumConfigurations().get("databaseUser"),
 		        this.generalConfiguration.getDebeziumConfigurations().get("databasePassword"), params.initialPoolSize,
 		        params.jdbcMaxPoolSize);
@@ -143,7 +143,7 @@ public class DebeziumListener extends RouteBuilder {
 		public String jdbcDriverClass = "com.mysql.cj.jdbc.Driver";
 		
 		@Parameter(names = { "--getJdbcUrl" }, description = "JDBC URL input")
-		public String jDBCURLinput = "jdbc:mysql://localhost:3308/openmrs";
+		public String jdbcUrlInput = "jdbc:mysql://localhost:3308/openmrs";
 		
 		@Parameter(names = { "--jdbcMaxPoolSize" }, description = "JDBC maximum pool size")
 		public int jdbcMaxPoolSize = 50;

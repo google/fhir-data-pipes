@@ -15,7 +15,6 @@
 package org.openmrs.analytics;
 
 import static org.mockito.Mockito.lenient;
-import static org.mockito.Mockito.times;
 import java.beans.PropertyVetoException;
 import java.io.IOException;
 import java.sql.SQLException;
@@ -61,15 +60,17 @@ public class FhirConverterTest extends CamelTestSupport {
 	private JdbcConnectionUtil jdbcConnectionUtil;
 	
 	@Mock
-	private UuidUtil getUuidUtil;
-	
+	private static UuidUtil uuidUtil;
+
 	@Mock
 	private Statement statement;
-	
+
 	@Mock
 	private ParquetUtil parquetUtil;
-	
+
 	private FhirConverter fhirConverter;
+
+	//private static final String UUID = uuidUtil.getUuid(Mockito.anyString(), Mockito.anyString(), Mockito.anyString());
 	
 	@Override
 	protected RoutesBuilder createRouteBuilder() throws Exception {
@@ -111,18 +112,17 @@ public class FhirConverterTest extends CamelTestSupport {
 	public void shouldGetUuidFromParent() throws SQLException, PropertyVetoException, ClassNotFoundException {
 		
 		Map<String, String> messageBody = DebeziumTestUtil.genExpectedBody();
-		Map<String, Object> messageHeaders = DebeziumTestUtil.genExpectedHeaders(Operation.CREATE, "patient");
-		String uuid = getUuidUtil.getUuid(Mockito.anyString(), Mockito.anyString(), Mockito.anyString());
-		
-		lenient().when(jdbcConnectionUtil.createStatement()).thenReturn(statement);
-		
-		lenient().when(getUuidUtil.getUuid(Mockito.anyString(), Mockito.anyString(), Mockito.anyString())).thenReturn(uuid);
-		
+		Map<String, Object> messageHeaders = DebeziumTestUtil.genExpectedHeaders(Operation.CREATE, "encounter");
+		String uuid = uuidUtil.getUuid(Mockito.anyString(), Mockito.anyString(), Mockito.anyString());
+		resource = new Encounter();
+		resource.setId(uuid);
+	   
 		// Actual event that will trigger process().
 		eventsProducer.sendBodyAndHeaders(messageBody, messageHeaders);
-		
-		Mockito.verify(getUuidUtil, times(1)).getUuid(Mockito.anyString(), Mockito.anyString(), Mockito.anyString());
-		Mockito.verify(getUuidUtil).getUuid(Mockito.anyString(), Mockito.anyString(), Mockito.anyString());
+
+		Mockito.verify(openmrsUtil).fetchFhirResource(Mockito.anyString());
+		Mockito.verify(uuidUtil, Mockito.times(1)).getUuid(Mockito.anyString(), Mockito.anyString(), Mockito.anyString());
+		Mockito.verify(uuidUtil).getUuid(Mockito.anyString(), Mockito.anyString(), Mockito.anyString());
 	}
 	
 	@Test
