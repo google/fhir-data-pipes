@@ -191,8 +191,8 @@ public class FhirEtl {
 		
 		void setJdbcModeEnabled(Boolean value);
 		
-		@Description("Number of output file shards to use; default 0 leaves it to the runner to decide.")
-		@Default.Integer(0)
+		@Description("Number of output file shards; 0 leaves it to the runner to decide but is not recommended.")
+		@Default.Integer(3)
 		int getNumParquetShards();
 		
 		void setNumParquetShards(int value);
@@ -411,7 +411,7 @@ public class FhirEtl {
 		
 		FhirEtlOptions options = PipelineOptionsFactory.fromArgs(args).withValidation().as(FhirEtlOptions.class);
 		if (!options.getFileParquetPath().isEmpty() && options.getNumParquetShards() == 0) {
-			log.warn("Not setting --numParquetShards can hinder Parquet generation performance significantly!");
+			log.warn("Setting --numParquetShards=0 can hinder Parquet generation performance significantly!");
 		}
 		
 		ParquetUtil.initializeAvroConverters();
