@@ -163,12 +163,10 @@ $ java -cp batch/target/fhir-batch-etl-bundled-0.1.0-SNAPSHOT.jar \
 
 Parameters:
 
--   `searchList` - A comma-separated list of
-    [FHIR Search](https://www.hl7.org/fhir/search.html) URLs. For example,
-    `Patient?given=Susan` will extract only Patient resources that meet the
-    `given=Susan` criteria. Default: `Patient,Encounter,Observation`
--   `batchSize` - The number of resources to fetch in each API call.
-    Default: `100`
+-   `searchList` - A comma-separated list of FHIR Resources to be fetched from
+    OpenMRS. Default: `Patient,Encounter,Observation`
+-   `batchSize` - The number of resources to fetch in each API call. Default:
+    `100`
 -   `serverFhirEndpoint` - The OpenMRS server base path for its FHIR API
     endpoints. Using all default values, you would find Patient resources at
     `http://localhost:8099/openmrs/ws/fhir2/R4/Patient`. This generally should
@@ -268,7 +266,7 @@ If `fileParquetPath` is set, there are additional parameters:
 
 *   **How do I stop Debezium from taking a snapshot of the entire database?**
     Set `snapshotMode` in the config file to `schema_only` i.e,
-    `--snapshotMode=schema_only`. Other options include: `when_needed`,
+    `"snapshotMode" : "initial"`. Other options include: `when_needed`,
     `schema_only`, `initial` (default), `never`, e.t.c. See the
     [`debezium documentation`](https://camel.apache.org/components/latest/debezium-mysql-component.html)
     for more details.
