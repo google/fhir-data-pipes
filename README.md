@@ -204,6 +204,8 @@ resume from the last processed offset.
     [create a user](https://debezium.io/documentation/reference/1.4/connectors/mysql.html#mysql-creating-user)
     and
     [enable the binlog](https://debezium.io/documentation/reference/1.4/connectors/mysql.html#enable-mysql-binlog).
+    (The test [Docker image](#run-openmrs-and-mysql-using-docker) has already
+    done these steps.)
 2.  Edit `./utils/dbz_event_to_fhir_config.json`. Find the
     `debeziumConfigurations` section at the top of the file and edit the values
     to match your environment. See the documentation on
