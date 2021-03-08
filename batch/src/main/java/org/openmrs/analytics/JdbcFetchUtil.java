@@ -138,15 +138,6 @@ public class JdbcFetchUtil {
 	
 	public Integer fetchMaxId(String tableName) throws SQLException, PropertyVetoException {
 		String tableId = tableName + "_id";
-<<<<<<< HEAD
-		Connection con = this.comboPooledDataSource.getConnection();
-		try (Statement statement = con.createStatement();
-		        ResultSet resultSet = statement
-		                .executeQuery(String.format("SELECT MAX(`%s`) as max_id FROM %s", tableId, tableName));) {
-			resultSet.first();
-			return resultSet.getInt("max_id");
-		}
-=======
 		Statement statement = jdbcConnectionUtil.createStatement();
 		ResultSet resultSet = statement
 		        .executeQuery(String.format("SELECT MAX(`%s`) as max_id FROM %s", tableId, tableName));
@@ -155,7 +146,6 @@ public class JdbcFetchUtil {
 		resultSet.close();
 		statement.close();
 		return maxId;
->>>>>>> 59954fb... UUIDS:Fix Debezium events to FHIR mapping where uuid is missing for specific tables
 	}
 	
 	public JdbcIO.DataSourceConfiguration getJdbcConfig() throws PropertyVetoException {
