@@ -148,14 +148,12 @@ public class JdbcFetchUtil {
 	public Integer fetchMaxId(String tableName) throws SQLException {
 		String tableId = tableName + "_id";
 		Connection con = this.comboPooledDataSource.getConnection();
-		Statement statement = con.createStatement();
-		ResultSet resultSet = statement
-		        .executeQuery(String.format("SELECT MAX(`%s`) as max_id FROM %s", tableId, tableName));
-		resultSet.first();
-		int maxId = resultSet.getInt("max_id");
-		resultSet.close();
-		statement.close();
-		return maxId;
+		try (Statement statement = con.createStatement();
+		        ResultSet resultSet = statement
+		                .executeQuery(String.format("SELECT MAX(`%s`) as max_id FROM %s", tableId, tableName));) {
+			resultSet.first();
+			return resultSet.getInt("max_id");
+		}
 	}
 	
 	public JdbcIO.DataSourceConfiguration getJdbcConfig() {
