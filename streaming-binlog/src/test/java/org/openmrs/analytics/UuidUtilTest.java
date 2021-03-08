@@ -15,15 +15,12 @@
 
 package org.openmrs.analytics;
 
-import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.when;
 
 import java.beans.PropertyVetoException;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
-import java.util.HashMap;
-import java.util.Map;
 
 import junit.framework.TestCase;
 import org.junit.Before;
@@ -46,7 +43,7 @@ public class UuidUtilTest extends TestCase {
 	
 	private String uuid;
 	
-	private String table ;
+	private String table;
 	
 	private String keyColumn;
 	

@@ -14,11 +14,9 @@
 
 package org.openmrs.analytics;
 
-import static org.mockito.Mockito.lenient;
 import java.beans.PropertyVetoException;
 import java.io.IOException;
 import java.sql.SQLException;
-import java.sql.Statement;
 import java.util.Map;
 
 import io.debezium.data.Envelope.Operation;
@@ -28,6 +26,7 @@ import org.apache.camel.RoutesBuilder;
 import org.apache.camel.builder.RouteBuilder;
 import org.apache.camel.test.junit4.CamelTestSupport;
 import org.hl7.fhir.r4.model.Encounter;
+import org.hl7.fhir.r4.model.Patient;
 import org.hl7.fhir.r4.model.Resource;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -44,6 +43,8 @@ public class FhirConverterTest extends CamelTestSupport {
 	
 	private static final String TEST_ID = "ID";
 	
+	private static final String TEST_UUID = "UUID";
+	
 	@Produce(TEST_ROUTE)
 	protected ProducerTemplate eventsProducer;
 	
@@ -57,20 +58,12 @@ public class FhirConverterTest extends CamelTestSupport {
 	private Resource resource;
 	
 	@Mock
-	private JdbcConnectionUtil jdbcConnectionUtil;
+	private UuidUtil uuidUtil;
 	
 	@Mock
-	private static UuidUtil uuidUtil;
-
-	@Mock
-	private Statement statement;
-
-	@Mock
 	private ParquetUtil parquetUtil;
-
+	
 	private FhirConverter fhirConverter;
-
-	//private static final String UUID = uuidUtil.getUuid(Mockito.anyString(), Mockito.anyString(), Mockito.anyString());
 	
 	@Override
 	protected RoutesBuilder createRouteBuilder() throws Exception {
@@ -81,7 +74,7 @@ public class FhirConverterTest extends CamelTestSupport {
 				
 				String fhirDebeziumEventConfigPath = "../utils/dbz_event_to_fhir_config.json";
 				fhirConverter = new FhirConverter(openmrsUtil, fhirStoreUtil, parquetUtil, fhirDebeziumEventConfigPath,
-				        jdbcConnectionUtil);
+				        uuidUtil);
 				
 				// Inject FhirUriGenerator;
 				from(TEST_ROUTE).process(fhirConverter); // inject target processor here
@@ -97,7 +90,7 @@ public class FhirConverterTest extends CamelTestSupport {
 		resource.setId(TEST_ID);
 		Mockito.when(openmrsUtil.fetchFhirResource(Mockito.anyString())).thenReturn(resource);
 		Mockito.when(fhirStoreUtil.getSinkUrl()).thenReturn("sinkPath");
-		//empty parquet File Path
+		// empty parquet File Path
 		Mockito.when(parquetUtil.getParquetPath()).thenReturn("");
 		
 		// Actual event that will trigger process().
@@ -110,17 +103,16 @@ public class FhirConverterTest extends CamelTestSupport {
 	
 	@Test
 	public void shouldGetUuidFromParent() throws SQLException, PropertyVetoException, ClassNotFoundException {
+		Map<String, String> messageBody = DebeziumTestUtil.genExpectedBodyWithoutUUid();
+		Map<String, Object> messageHeaders = DebeziumTestUtil.genExpectedHeaders(Operation.CREATE, "patient");
+		resource = new Patient();
 		
-		Map<String, String> messageBody = DebeziumTestUtil.genExpectedBody();
-		Map<String, Object> messageHeaders = DebeziumTestUtil.genExpectedHeaders(Operation.CREATE, "encounter");
-		String uuid = uuidUtil.getUuid(Mockito.anyString(), Mockito.anyString(), Mockito.anyString());
-		resource = new Encounter();
-		resource.setId(uuid);
-	   
+		Mockito.when(uuidUtil.getUuid("person", "person_id", "1")).thenReturn(TEST_UUID);
+		
 		// Actual event that will trigger process().
 		eventsProducer.sendBodyAndHeaders(messageBody, messageHeaders);
-
-		Mockito.verify(openmrsUtil).fetchFhirResource(Mockito.anyString());
+		
+		Mockito.verify(openmrsUtil).fetchFhirResource("/Patient/UUID");
 		Mockito.verify(uuidUtil, Mockito.times(1)).getUuid(Mockito.anyString(), Mockito.anyString(), Mockito.anyString());
 		Mockito.verify(uuidUtil).getUuid(Mockito.anyString(), Mockito.anyString(), Mockito.anyString());
 	}

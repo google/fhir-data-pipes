@@ -77,8 +77,9 @@ public class DebeziumListener extends RouteBuilder {
 		        this.generalConfiguration.getDebeziumConfigurations().get("databaseUser"),
 		        this.generalConfiguration.getDebeziumConfigurations().get("databasePassword"), params.initialPoolSize,
 		        params.jdbcMaxPoolSize);
+		UuidUtil uuidUtil = new UuidUtil(jdbcConnectionUtil);
 		camelContext.addService(new ParquetService(parquetUtil), true);
-		return new FhirConverter(openmrsUtil, fhirStoreUtil, parquetUtil, params.fhirDebeziumConfigPath, jdbcConnectionUtil);
+		return new FhirConverter(openmrsUtil, fhirStoreUtil, parquetUtil, params.fhirDebeziumConfigPath, uuidUtil);
 	}
 	
 	private String getDebeziumConfig() throws IOException {

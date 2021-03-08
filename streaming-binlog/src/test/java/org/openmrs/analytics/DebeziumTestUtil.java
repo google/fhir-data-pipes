@@ -30,6 +30,16 @@ public class DebeziumTestUtil {
 		};
 	}
 	
+	static Map<String, String> genExpectedBodyWithoutUUid() {
+		return new HashMap<String, String>() {
+			
+			{
+				put("patient_id", "1");
+				
+			}
+		};
+	}
+	
 	static Map<String, Object> genExpectedHeaders(final Operation operation, final String tableName) {
 		return new HashMap<String, Object>() {
 			

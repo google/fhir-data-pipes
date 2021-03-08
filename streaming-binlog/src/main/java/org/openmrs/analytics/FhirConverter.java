@@ -50,9 +50,7 @@ public class FhirConverter implements Processor {
 	
 	private final GeneralConfiguration generalConfiguration;
 	
-	private JdbcConnectionUtil jdbcConnectionUtil;
-	
-	private UuidUtil getUuidUtil;
+	private UuidUtil uuidUtil;
 	
 	@VisibleForTesting
 	FhirConverter() {
@@ -64,13 +62,13 @@ public class FhirConverter implements Processor {
 	}
 	
 	public FhirConverter(OpenmrsUtil openmrsUtil, FhirStoreUtil fhirStoreUtil, ParquetUtil parquetUtil,
-	    String configFileName, JdbcConnectionUtil jdbcConnectionUtil) throws IOException {
+	    String configFileName, UuidUtil uuidUtil) throws IOException {
 		// TODO add option for switching to Parquet-file outputs.
 		this.openmrsUtil = openmrsUtil;
 		this.fhirStoreUtil = fhirStoreUtil;
 		this.parquetUtil = parquetUtil;
 		this.generalConfiguration = getEventsToFhirConfig(configFileName);
-		this.jdbcConnectionUtil = jdbcConnectionUtil;
+		this.uuidUtil = uuidUtil;
 	}
 	
 	public void process(Exchange exchange) throws PropertyVetoException, ClassNotFoundException, SQLException {
@@ -102,12 +100,11 @@ public class FhirConverter implements Processor {
 		if (payload.get("uuid") != null) {
 			uuid = payload.get("uuid").toString();
 		} else {
-			getUuidUtil = new UuidUtil(jdbcConnectionUtil);
 			if (config.getParentTable() == null) {
 				log.error(String.format("No parentTable in %s ignoring payload %s ", table, payload));
 				return;
 			}
-			uuid = getUuidUtil.getUuid(config.getParentTable(), config.getParentForeignKey(),
+			uuid = uuidUtil.getUuid(config.getParentTable(), config.getParentForeignKey(),
 			    payload.get(config.getChildPrimaryKey()).toString());
 		}
 		final String fhirUrl = config.getLinkTemplates().get("fhir").replace("{uuid}", uuid);

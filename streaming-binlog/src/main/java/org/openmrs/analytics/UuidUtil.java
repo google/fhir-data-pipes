@@ -46,7 +46,5 @@ public class UuidUtil {
 		} else {
 			return uuidResultFromSql;
 		}
-		
 	}
-	
 }
