@@ -22,7 +22,8 @@ if [[ $# -ne 4 ]]; then
   exit 1
 fi
 
-# TODO create GCP Healthcare data-set too instead of assuming it exists.
+# Create GCP Healthcare dataset if it does not exist
+gcloud healthcare datasets create ${3} --location=${2}
 
 # Creating FHIR store
 curl --request POST -H "Authorization: Bearer $(gcloud auth print-access-token)" \
@@ -31,7 +32,8 @@ curl --request POST -H "Authorization: Bearer $(gcloud auth print-access-token)"
   --data '{"version":"R4", "enableUpdateCreate":true,"disableReferentialIntegrity":true}' \
   -w '\nFHIR store creation status code: %{http_code}\n'
 
-# TODO create BQ dataset instead of assuming it exists.
+# Create BQ dataset 
+bq --location=${2} mk --dataset ${1}:${3}
 
 # Setting up BQ streaming
 curl -X PATCH \

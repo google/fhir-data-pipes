@@ -41,8 +41,8 @@ The steps for using this tool are:
 ## Add Atom Feed module to OpenMRS
 Assuming that you are using the Reference App of OpenMRS (for example, installed
 at `http://localhost:9016`), after login, go to
-"System Administration" > "Manage Modules" > "Search from Addons" and search
-for the Atom Feed module (e.g., install version 1.0.12).
+"System Administration" > "Advanced Administration" -> "Manage Modules" > "Add or Upgrade Module  " and search
+for the Atom Feed module (e.g., install version 1.0.13).
 
 For any changes in the OpenMRS database, this module creates entries with
 payloads related to that change, including URLs for FHIR resources if the
@@ -51,7 +51,7 @@ change has corresponding FHIR resources.
 ## Add FHIR2 module to OpenMRS and update Atom Feed config
 The [FHIR module in OpenMRS](
 https://wiki.openmrs.org/display/projects/OpenMRS+FHIR+Module) is being
-reimplemented in the `fhir2` module. You need to download the [latest released version](https://addons.openmrs.org/show/org.openmrs.module.openmrs-fhir2-module)  and install the module through the admin page in OpenMRS (or copy that file to the `modules` directory of your OpenMRS installation).
+reimplemented in the `fhir2` module. You need to download the [latest released version](https://addons.openmrs.org/show/org.openmrs.module.openmrs-fhir2-module)  and install the module through the admin page in OpenMRS (or copy that file to the `appdata/modules` directory of your OpenMRS installation).
 
 The URLs for FHIR resources of this module have the form `/ws/fhir2/R4/RESOURCE`
 e.g., `http://localhost:9016/openmrs/ws/fhir2/R4/Patient`. Therefor we need to
@@ -75,7 +75,7 @@ OR
 ## Set up the Atom Feed client side database
 The Atomfeed client requires a database to store failed event and marker information, and we'll
 use MySQL for this purpose. If you don't have an available MySQL service, you can start one up using docker:
-`docker run -e "MYSQL_ROOT_PASSWORD=root" -p 127.0.0.1:3306:3306 --name=atomfeed-db -d mysql/mysql-server:latest`
+`docker run -e "MYSQL_ROOT_PASSWORD=root" -p 127.0.0.1:3306:3306 --name=streaming-atomfeed-db -d mysql/mysql-server:latest`
 
 Now you should have MySQL running on the default port 3306, and can run:
 
@@ -85,8 +85,8 @@ This will create a database called `atomfeed_client` with required tables (the
 `USER` should have permission to create databases). If you want to change the
 default database name `atomfeed_client`, you can edit [`utils/dbdump/atomfeed_db_sql`](
 utils/dbdump/atomfeed_db_sql) but then you need to change the database name in
-[`src/main/resources/hibernate.default.properties`](
-src/main/resources/hibernate.default.properties) accordingly.
+[`hibernate.default.properties`](
+streaming-atomfeed/src/main/resources/hibernate.default.properties) accordingly.
 
 ## Create the sink FHIR store and BigQuery dataset
 To set up GCP project that you can use as a sink FHIR store:
@@ -134,7 +134,7 @@ mvn exec:java -pl streaming-atomfeed \
     -Dexec.args=" --openmrsUserName=admin --openmrsPassword=Admin123 \
     --openmrsServerUrl=http://localhost:8099/openmrs \
     --fhirSinkPath=projects/PROJECT/locations/LOCATION/datasets/DATASET/fhirStores/FHIRSTORENAME \
-    --sinkUserName=hapi --sinkPassword=hapi "`
+    --sinkUserName=hapi --sinkPassword=hapi "
 ```
 
 - `openmrsServerUrl` is the path to your source OpenMRS instance (e.g., `http://localhost:9016/openmrs` in this case)
@@ -253,11 +253,11 @@ run using a command like:
 
 ```
 $ java -cp batch/target/fhir-batch-etl-bundled-0.1.0-SNAPSHOT.jar \
-    org.openmrs.analytics.FhirEtl --openmrsServerUrl=http://localhost:9018/openmrs \
+    org.openmrs.analytics.FhirEtl --openmrsServerUrl=http://localhost:9016/openmrs \
     --searchList=Patient,Encounter,Observation --batchSize=20 \
    --targetParallelism=20 --fhirSinkPath=projects/PROJECT/locations/LOCATION/datasets/DATASET/ \
    --sinkUserName=hapi --sinkPassword=hapi --fileParquetPath=tmp/TEST/ \
-   --openmrsUserName=admin --openmrsPassword=Admin123 `
+   --openmrsUserName=admin --openmrsPassword=Admin123 
 ```
 The `searchList` argument accepts a comma separated list of FHIR search URLs.
 For example, one can use `Patient?given=Susan` to extract only Patient resources
