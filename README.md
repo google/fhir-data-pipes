@@ -24,8 +24,8 @@ There are four modes of transfer:
     Search APIs to select resources to copy, retrieves them as FHIR resources,
     and transfers the data via FHIR APIs or Parquet files.
 -   [**Batch mode (JDBC)**](#batch-mode-using-jdbc): This mode uses JDBC to read
-    the contents of an OpenMRS MySQL database, retrieves those entities as FHIR
-    resources, and transfers the data via FHIR APIs or Parquet files.
+    the IDs of entities in an OpenMRS MySQL database, retrieves those entities
+    as FHIR resources, and transfers the data via FHIR APIs or Parquet files.
 -   **[Streaming mode (Debezium)](#streaming-mode-debezium)**: This mode
     continuously listens for changes to the underlying OpenMRS MySQL database
     using
@@ -41,11 +41,11 @@ There is also a query module built on top of the generated data warehouse.
 -   An [OpenMRS](https://openmrs.org) instance with the latest version of the
     [FHIR2 Module](https://addons.openmrs.org/show/org.openmrs.module.openmrs-fhir2-module)
     installed.
-    -   There is a [OpenMRS Reference Application](#run-openmrs-using-docker)
+    -   There is an [OpenMRS Reference Application](#run-openmrs-using-docker)
         image with these prerequisites and demo data you can use to try things
         out.
 -   A target output for the data. Supported options are Apache Parquet files
-    (not supported by Atom Feed mode)or a FHIR server such as HAPI FHIR or
+    (not supported by Atom Feed mode) or a FHIR server such as HAPI FHIR or
     [Google Cloud Platform FHIR stores](https://cloud.google.com/healthcare/docs/how-tos/fhir).
     -   You can use our [HAPI FHIR server](#run-hapi-fhir-server-using-docker)
         image for testing FHIR API targets.
@@ -97,13 +97,6 @@ parameters which are documented here.
     used for GCP FHIR stores.
 -   `fileParquetPath` - The file path to write Parquet files to, e.g.,
     `./tmp/parquet/`.
--   `secondsToFlushParquetFiles` - The number of seconds to wait before flushing
-    all Parquet writers with non-empty content to files. Use `0` to disable.
-    Default: `3600`.
--   `rowGroupSizeForParquetFiles` - The approximate size in bytes of the
-    row-groups in Parquet files. When this size is reached, the content is
-    flushed to disk. This is not used if there are less than 100 records. Use
-    `0` to use the default Parquet row-group size. Default: `0`.
 
 ## Batch mode
 
@@ -132,7 +125,7 @@ $ java -cp batch/target/fhir-batch-etl-bundled-0.1.0-SNAPSHOT.jar \
     --openmrsUserName=admin --openmrsPassword=Admin123 \
     --fhirSinkPath=http://localhost:8098/fhir \
     --sinkUserName=hapi --sinkPassword=hapi \
-    --fileParquetPath=tmp/TEST/ \
+    --fileParquetPath=/tmp/TEST/ \
     --searchList=Patient,Encounter,Observation --batchSize=20
 ```
 
@@ -141,9 +134,13 @@ Parameters:
 -   `searchList` - A comma-separated list of
     [FHIR Search](https://www.hl7.org/fhir/search.html) URLs. For example,
     `Patient?given=Susan` will extract only Patient resources that meet the
-    `given=Susan` criteria.
+    `given=Susan` criteria. Default: `Patient,Encounter,Observation`
 -   `batchSize` - The number of resources to fetch in each API call.
-    Default: 100.
+    Default: `100`
+-   `serverFhirEndpoint` - The OpenMRS server base path for its FHIR API
+    endpoints. Using all default values, you would find Patient resources at
+    `http://localhost:8099/openmrs/ws/fhir2/R4/Patient`. This generally should
+    not be changed. Default: `/ws/fhir2/R4`
 
 ### Batch mode using JDBC
 
@@ -156,7 +153,8 @@ $ java -cp batch/target/fhir-batch-etl-bundled-0.1.0-SNAPSHOT.jar \
     --openmrsUserName=admin --openmrsPassword=Admin123 \
     --fhirSinkPath=http://localhost:8098/fhir \
     --sinkUserName=hapi --sinkPassword=hapi \
-    --fileParquetPath=tmp/TEST/ \
+    --fileParquetPath=/tmp/TEST/ \
+    --searchList=Patient,Encounter,Observation --batchSize=20 \
     --jdbcModeEnabled=true --jdbcUrl=jdbc:mysql://localhost:3306/openmrs \
     --dbUser=root --dbPassword=debezium --jdbcMaxPoolSize=50 \
     --jdbcDriverClass=com.mysql.cj.jdbc.Driver
@@ -165,6 +163,16 @@ $ java -cp batch/target/fhir-batch-etl-bundled-0.1.0-SNAPSHOT.jar \
 
 Parameters:
 
+-   `searchList` - A comma-separated list of
+    [FHIR Search](https://www.hl7.org/fhir/search.html) URLs. For example,
+    `Patient?given=Susan` will extract only Patient resources that meet the
+    `given=Susan` criteria. Default: `Patient,Encounter,Observation`
+-   `batchSize` - The number of resources to fetch in each API call.
+    Default: `100`
+-   `serverFhirEndpoint` - The OpenMRS server base path for its FHIR API
+    endpoints. Using all default values, you would find Patient resources at
+    `http://localhost:8099/openmrs/ws/fhir2/R4/Patient`. This generally should
+    not be changed. Default: `/ws/fhir2/R4`
 -   `jdbcModeEnabled` - If true, uses JDBC mode. Default: `false`
 -   `jdbcUrl` - The
     [JDBC database connection URL](https://docs.oracle.com/javase/tutorial/jdbc/basics/connecting.html#db_connection_url)
@@ -204,7 +212,7 @@ resume from the last processed offset.
     [Debezium MySQL Connector properties](https://debezium.io/documentation/reference/connectors/mysql.html#mysql-property-name)
     for more information.
 3.  Build binaries with `mvn clean install`.
-4.  Run the pipeline:
+4.  Run the pipeline to a FHIR server and Parquet files:
 
     ```shell
     $ mvn compile exec:java -pl streaming-binlog \
@@ -212,7 +220,18 @@ resume from the last processed offset.
         --openmrsUserName=admin --openmrsPassword=Admin123 \
         --fhirSinkPath=http://localhost:8098/fhir \
         --sinkUserName=hapi --sinkPassword=hapi \
-        --fileParquetPath=tmp/TEST/ \
+        --fileParquetPath=/tmp/TEST/ \
+        --fhirDebeziumEventConfigPath=./utils/dbz_event_to_fhir_config.json \
+        --openmrsfhirBaseEndpoint=/ws/fhir2/R4"
+    ```
+
+    Or to a GCP FHIR store:
+
+    ```shell
+    $ mvn compile exec:java -pl streaming-binlog \
+        -Dexec.args="--openmrsServerUrl=http://localhost:8099/openmrs \
+        --openmrsUserName=admin --openmrsPassword=Admin123 \
+        --fhirSinkPath=projects/PROJECT/locations/LOCATION/datasets/DATASET/fhirStores/FHIRSTORENAME \
         --fhirDebeziumEventConfigPath=./utils/dbz_event_to_fhir_config.json \
         --openmrsfhirBaseEndpoint=/ws/fhir2/R4"
     ```
@@ -231,6 +250,16 @@ Parameters:
     `http://localhost:8099/openmrs/ws/fhir2/R4/Patient`. This generally should
     not be changed. Default: `/ws/fhir2/R4`
 
+If `fileParquetPath` is set, there are additional parameters:
+
+-   `secondsToFlushParquetFiles` - The number of seconds to wait before flushing
+    all Parquet writers with non-empty content to files. Use `0` to disable.
+    Default: `3600`.
+-   `rowGroupSizeForParquetFiles` - The approximate size in bytes of the
+    row-groups in Parquet files. When this size is reached, the content is
+    flushed to disk. This is not used if there are less than 100 records. Use
+    `0` to use the default Parquet row-group size. Default: `0`.
+
 ### Common questions
 
 *   **Will this pipeline include historical data recorded before the `mysql
@@ -238,12 +267,11 @@ Parameters:
     entire database and will include all historical data.
 
 *   **How do I stop Debezium from taking a snapshot of the entire database?**
-    Set `snapshotMode` to `schema_only` i.e, `--snapshotMode=schema_only`. Other
-    options include: `when_needed`, `schema_only`, `initial` (default), `never`,
-    e.t.c. See the
+    Set `snapshotMode` in the config file to `schema_only` i.e,
+    `--snapshotMode=schema_only`. Other options include: `when_needed`,
+    `schema_only`, `initial` (default), `never`, e.t.c. See the
     [`debezium documentation`](https://camel.apache.org/components/latest/debezium-mysql-component.html)
     for more details.
-
 
 ### Dev. tip
 
@@ -284,7 +312,7 @@ provided in this repository then click **Import**.
 To test, visit the Atom Feed URL for a resource, e.g.
 [http://localhost:8099/openmrs/ws/atomfeed/patient/1](). Find an `entry` and
 it's `content` tag. Find the `fhir` path, append it to your OpenMRS URL, and
-open it. You should download the associated FHIR resource.
+open it. It should download the associated FHIR resource.
 
 For example, if OpenMRS is running at [http://localhost:8099/openmrs]() and this
 is your content tag:
@@ -312,7 +340,7 @@ $ docker run --name=atomfeed-db -d mysql/mysql-server:latest \
 ```
 
 This will create the MySQL user `fhir` with password `fhiranalytics` which is
-used in the code and examples. Adjust these values as necessary.
+used in the following code and examples. Adjust these values as necessary.
 
 Next, create the necessary database and tables. From your MySQL server run:
 
@@ -334,7 +362,7 @@ with any customizations you've made. Pay extra attention to
 From the root of your git repo, compile the client:
 
 ```
-mvn clean -B install -DskipTests -pl streaming-atomfeed -am
+mvn clean install -pl streaming-atomfeed -am
 ```
 
 Based on the flags and their values, the client will infer what the target is.
@@ -370,21 +398,23 @@ GCP FHIR store and corresponding rows added to the BigQuery tables.
 You can run the entire pipeline using Docker containers by following these
 instructions.
 
-### Run OpenMRS using Docker
+### Run OpenMRS and MySQL using Docker
 
 ```
-$ docker-compose -f openmrs-compose.yaml up # change ports appropriately (optional)
+$ docker-compose -f openmrs-compose.yaml up
 ```
 
 Once running you can access OpenMRS at <http://localhost:8099/openmrs/> using
 username "admin" and password "Admin123". The Docker image includes the required
-FHIR2 module and demo data.
+FHIR2 module and demo data. Edit `openmrs-compose.yaml` to change the default
+port.
 
 If `docker-compose` fails, you may need to adjust file permissions.
 
 ```
 $ docker-compose -f openmrs-compose.yaml down -v
-$ chmod -R 755 ./utils
+$ chmod a+rx ./utils ./utils/dbdump
+$ chmod -R a+r ./utils
 $ docker-compose -f openmrs-compose.yaml up
 ```
 
@@ -392,18 +422,21 @@ In order to see the demo data in OpenMRS you must rebuild the search index. In
 OpenMRS go to **Home > System Administration > Advanced Administration**. Under
 **Maintenance** go to **Search Index** then **Rebuild Search Index**.
 
-### Run HAPI FHIR server using Docker
+### (Optional) Run HAPI FHIR server using Docker
+
+This is only needed if you want to test sending data to a FHIR server and is not
+needed if you are only generating Parquet files.
 
 ```
-$ docker-compose -f sink-compose.yml up # change ports appropriately (optional)
+$ docker-compose -f sink-compose.yml up
 ```
 
 You can access the FHIR server at <http://localhost:8098/fhir/>. Edit
 `sink-compose.yml` to change the default port.
 
-### Configure ./docker-compose.yaml
+### Configure docker-compose.yaml
 
-Parameters (e.g port/url ) have been configured to point to
+Parameters (e.g port/url) have been configured to point to
 http://localhost:8099/openmrs/
 
 Remember to appropriately change other parameters such as source url, sink path,
@@ -428,7 +461,7 @@ $ docker-compose up --build streaming-binlog
 ##### Streaming Pipeline (Atomfeed)
 
 ```
- $ mvn clean -B install -DskipTests -pl streaming-atomfeed -am
+ $ mvn clean install -pl streaming-atomfeed -am
  $ docker-compose up -d --build streaming-atomfeed-db streaming-atomfeed
 ```
 
@@ -517,8 +550,13 @@ Also if you like to automatically record the execution time of different cells
 [nbextensions](https://jupyter-contrib-nbextensions.readthedocs.io/en/latest/install.html).
 
 A sample notebook is provided at [`dwh/test_spark.ipynb`](dwh/test_spark.ipynb)
-which uses `matplotlib` too, so to run this you need to install it too: `(venv)
-$ pip3 install matplotlib` At the end of this notebook, we wrap up the tests
+which uses `matplotlib` too, so to run this you need to install it too:
+
+```bash
+(venv) $ pip3 install matplotlib
+```
+
+At the end of this notebook, we wrap up the tests
 into reusable functions that we can use outside the Jupyter environment e.g.,
 for automated indicator computation.
 
@@ -546,7 +584,7 @@ credentials i.e
 
 Note: You will have problems logging in if your OpenHIM server is still setup to
 use a self-signed certificate (the default). Visit the following link:
-https://localhost:8093/authenticate/root@openhim.org in Chrome.
+https://localhost:8093/authenticate/root@openhim.org in your browser.
 
 You should see a message saying “Your connection is not private”. Click
 “Advanced” and then click “Proceed”.
@@ -559,7 +597,7 @@ Now, you should be able to go back to the OpenHIM console login page and login.
 This problem will occur every now and then until you load a properly signed
 certificate into the OpenHIM core server.
 
-For the first Login .youll be requested to change your root password!
+For the first Login you will be requested to change your root password!
 
 Then Go to the 'Export/Import' tab and import the default config file under
 `Utils/openhim-config.json` for a basic configuration.
@@ -582,14 +620,14 @@ see section *Using Docker compose* to fire up the Hapi fhir server and openmrs.
 \
 Note that Openhim listens to client requests at `port:5001` by default.
 
-you can now start the pipeline with these args below to point to the OpenHIm
+You can now start the pipeline with these args below to point to the OpenHIM
 instance
 
 ```
 `--sinkUserName=hapi --sinkPassword=Admin123 --fhirSinkPath=http://localhost:5001/fhir`
 ```
 
-ie
+e.g.,
 
 for batch
 
@@ -619,10 +657,10 @@ mvn compile exec:java -pl streaming-binlog \
 You can track all the transactions in the OpenHIM instance Under the Tab
 `Transaction Log`
 
-see demo at https://youtu.be/U1Sz3GUKbIw
+See a demo at [](https://youtu.be/U1Sz3GUKbIw)
 
 see
-https://openhim.readthedocs.io/en/latest/how-to/how-to-setup-and-configure-openhim.html
+[here](https://openhim.readthedocs.io/en/latest/how-to/how-to-setup-and-configure-openhim.html)
 for more details about setting up OpenHIM
 
 ## Running end-to-end tests
