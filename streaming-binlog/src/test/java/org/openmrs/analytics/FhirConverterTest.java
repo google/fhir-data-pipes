@@ -90,7 +90,7 @@ public class FhirConverterTest extends CamelTestSupport {
 		resource.setId(TEST_ID);
 		Mockito.when(openmrsUtil.fetchFhirResource(Mockito.anyString())).thenReturn(resource);
 		Mockito.when(fhirStoreUtil.getSinkUrl()).thenReturn("sinkPath");
-		// empty parquet File Path
+		//empty parquet File Path
 		Mockito.when(parquetUtil.getParquetPath()).thenReturn("");
 		
 		// Actual event that will trigger process().
