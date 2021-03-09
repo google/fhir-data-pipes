@@ -84,11 +84,11 @@ public class DebeziumListener extends RouteBuilder {
 	
 	private String getDebeziumConfig() {
 		Map<String, String> debeziumConfigs = this.generalConfiguration.getDebeziumConfigurations();
-		return "debezium-mysql:" + debeziumConfigs.get("databaseHostName") + "?" + "databaseHostname="
+		return "debezium-mysql:" + debeziumConfigs.get("databaseServerName") + "?" + "databaseHostname="
 		        + debeziumConfigs.get("databaseHostName") + "&databaseServerId=" + debeziumConfigs.get("databaseServerId")
 		        + "&databasePort=" + debeziumConfigs.get("databasePort") + "&databaseUser="
 		        + debeziumConfigs.get("databaseUser") + "&databasePassword=" + debeziumConfigs.get("databasePassword")
-		        + "&databaseServerName=" + debeziumConfigs.get("databaseName") + "&databaseWhitelist="
+		        + "&databaseServerName=" + debeziumConfigs.get("databaseServerName") + "&databaseWhitelist="
 		        + debeziumConfigs.get("databaseSchema")
 		        + "&offsetStorage=org.apache.kafka.connect.storage.FileOffsetBackingStore" + "&offsetStorageFileName="
 		        + debeziumConfigs.get("databaseOffsetStorage") + "&databaseHistoryFileFilename="

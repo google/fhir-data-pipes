@@ -221,7 +221,7 @@ resume from the last processed offset.
         --fhirSinkPath=http://localhost:8098/fhir \
         --sinkUserName=hapi --sinkPassword=hapi \
         --outputParquetPath=/tmp/TEST/ \
-        --fhirDebeziumEventConfigPath=./utils/dbz_event_to_fhir_config.json \
+        --fhirDebeziumConfigPath=./utils/dbz_event_to_fhir_config.json \
         --openmrsfhirBaseEndpoint=/ws/fhir2/R4"
     ```
 
@@ -232,7 +232,7 @@ resume from the last processed offset.
         -Dexec.args="--openmrsServerUrl=http://localhost:8099/openmrs \
         --openmrsUserName=admin --openmrsPassword=Admin123 \
         --fhirSinkPath=projects/PROJECT/locations/LOCATION/datasets/DATASET/fhirStores/FHIRSTORENAME \
-        --fhirDebeziumEventConfigPath=./utils/dbz_event_to_fhir_config.json \
+        --fhirDebeziumConfigPath=./utils/dbz_event_to_fhir_config.json \
         --openmrsfhirBaseEndpoint=/ws/fhir2/R4"
     ```
 
@@ -646,7 +646,7 @@ for streaming
 mvn compile exec:java -pl streaming-binlog \
   -Dexec.args="--databaseHostName=localhost \
   --databasePort=3306 --databaseUser=root --databasePassword=debezium\
-  --databaseName=mysql --databaseSchema=openmrs --databaseServerId=77 \
+  --databaseServerName=mysql --databaseSchema=openmrs --databaseServerId=77 \
   --openmrsUserName=admin --openmrsPassword=Admin123 \
   --openmrsServerUrl=http://localhost:8099/openmrs \
   --fhirSinkPath=http://localhost:5001/fhir \
