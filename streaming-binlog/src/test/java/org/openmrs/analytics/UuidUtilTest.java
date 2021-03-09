@@ -50,8 +50,7 @@ public class UuidUtilTest extends TestCase {
 	private String keyValue;
 	
 	@Before
-	public void beforeTestCase() throws Exception {
-		
+	public void beforeTestCase() throws Exception {	
 		uuid = "1296b0dc-440a-11e6-a65c-00e04c680037";
 		table = "person";
 		keyColumn = "person_id";
