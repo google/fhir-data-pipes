@@ -23,12 +23,20 @@ services:
     container_name: batch-cloud
     healthcheck:
       test: "exit 0"
+    volumes:
+      - ./utils/dbz_event_to_fhir_config.json:/usr/src/Main/dbz_event_to_fhir_config.json
+      # data is the directory which you want to persist the generated parquet files
+      - ./data:/tmp
     environment:
      - OPENMRS_URL=http://localhost:8099/openmrs
-     - SINK_PATH=http://localhost:8098/fhir
      - SEARCH_LIST=Patient,Encounter,Observation
-     - BATCH_SIZE=20
-     - TARGET_PARALLELISM=20
+     - BATCH_SIZE=90
+     - TARGET_PARALLELISM=5
+     - OPENMRS_USERNAME=admin
+     - OPENMRS_PASSWORD=Admin123
+     # the 2 variable below should be same as volume mappings above
+     - PARQUET_PATH=/tmp/
+     - FHIR_DEBEZIUM_CONFIG_PATH=/usr/src/Main/dbz_event_to_fhir_config.json
 
   streaming-binlog: # To run independently: docker-compose up --build streaming-binlog
     build:
@@ -40,12 +48,12 @@ services:
       test: "exit 0"
     volumes:
       - ./utils/dbz_event_to_fhir_config.json:/deployments/dbz_event_to_fhir_config.json
-      # parquet_store is the directory which you want to persist the generated parquet files
-      - ./parquet_store:/tmp
+      # data is the directory which you want to persist the generated parquet files
+      - ./data:/tmp
     environment:
       - OPENMRS_URL=http://localhost:8099/openmrs
-      - OPENMRS_USERNAME="admin"
-      - OPENMRS_PASSWORD="Admin123"
+      - OPENMRS_USERNAME=admin
+      - OPENMRS_PASSWORD=Admin123
       # the 2 variable below should be same as volume mappings above
       - PARQUET_PATH=/tmp/
       - FHIR_DEBEZIUM_CONFIG_PATH=/deployments/dbz_event_to_fhir_config.json

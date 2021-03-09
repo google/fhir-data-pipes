@@ -14,9 +14,8 @@
 
 FROM openjdk:8
 
-ARG WORK_DIR="./deployments"
-COPY target/fhir-binlog-streaming-etl-0.1.0-SNAPSHOT-jar-with-dependencies.jar ${WORK_DIR}/app.jar
-WORKDIR ${WORK_DIR}
+COPY target/fhir-binlog-streaming-etl-bundled-0.1.0-SNAPSHOT.jar /deployments/app.jar
+WORKDIR /deployments
 ENV OPENMRS_URL="http://localhost:8099/openmrs"
 ENV OPENMRS_USERNAME="admin"
 ENV OPENMRS_PASSWORD="Admin123"
@@ -25,9 +24,9 @@ ENV SINK_USERNAME=""
 ENV SINK_PASSWORD=""
 ENV PARQUET_PATH="/tmp/"
 ENV FHIR_DEBEZIUM_CONFIG_PATH="/deployments/dbz_event_to_fhir_config.json"
-RUN echo 'Debezium Streaming Job started'
+RUN echo "Debezium Streaming Job started"
 
-ENTRYPOINT java -jar app.jar \
+ENTRYPOINT java -cp app.jar org.openmrs.analytics.Runner \
            --openmrsServerUrl=${OPENMRS_URL}  \
            --openmrsUserName=${OPENMRS_USERNAME}  \
            --openmrsPassword=${OPENMRS_PASSWORD} \
