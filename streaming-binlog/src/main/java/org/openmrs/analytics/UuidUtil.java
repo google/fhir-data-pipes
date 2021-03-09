@@ -20,13 +20,12 @@ import java.sql.SQLException;
 import java.sql.Statement;
 
 public class UuidUtil {
-	
 	private JdbcConnectionUtil jdbcConnectionUtil;
 	
 	public UuidUtil(JdbcConnectionUtil jdbcConnectionUtil) {
 		this.jdbcConnectionUtil = jdbcConnectionUtil;
 	}
-	
+
 	public String getUuid(String table, String keyColumn, String keyValue)
 	        throws PropertyVetoException, SQLException, ClassNotFoundException {
 		
