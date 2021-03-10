@@ -41,8 +41,6 @@
     <version.kafka>2.4.0</version.kafka>
     <version.plugin.docker>0.31.0</version.plugin.docker>
     <version.plugin.shade>3.2.1</version.plugin.shade>
-    <maven-jar-plugin.version>3.0.2</maven-jar-plugin.version>
-    <maven-shade-plugin.version>3.1.0</maven-shade-plugin.version>
   </properties>
 
   <dependencyManagement>
@@ -132,22 +130,13 @@
 
   <build>
     <plugins>
-      <!-- Ensure that the Maven jar plugin runs before the Maven
-       shade plugin by listing the plugin higher within the file. -->
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-jar-plugin</artifactId>
-        <version>${maven-jar-plugin.version}</version>
       </plugin>
-
-      <!--
-        Configures `mvn package` to produce a bundled jar ("fat jar") for runners
-        that require this for job submission to a cluster.
-      -->
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-shade-plugin</artifactId>
-        <version>${maven-shade-plugin.version}</version>
         <executions>
           <execution>
             <phase>package</phase>

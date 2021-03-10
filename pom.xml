@@ -178,6 +178,16 @@
           <artifactId>maven-surefire-plugin</artifactId>
           <version>2.22.1</version>
         </plugin>
+        <!-- Ensure that the Maven jar plugin runs before the Maven
+             shade plugin by listing the plugin higher within the file. -->
+        <plugin>
+          <artifactId>maven-shade-plugin</artifactId>
+          <version>3.1.0</version>
+        </plugin>
+        <!--
+           Configures `mvn package` to produce a bundled jar ("fat jar") for runners
+           that require this for job submission to a cluster.
+         -->
         <plugin>
           <artifactId>maven-jar-plugin</artifactId>
           <version>3.0.2</version>
