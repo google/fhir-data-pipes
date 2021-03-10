@@ -20,7 +20,6 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -31,7 +30,6 @@ import java.util.List;
 import java.util.Map;
 
 import com.google.gson.Gson;
-import com.mchange.v2.c3p0.ComboPooledDataSource;
 import org.apache.beam.sdk.coders.NullableCoder;
 import org.apache.beam.sdk.coders.StringUtf8Coder;
 import org.apache.beam.sdk.io.jdbc.JdbcIO;
@@ -47,17 +45,10 @@ public class JdbcFetchUtil {
 	
 	private static final Logger log = LoggerFactory.getLogger(JdbcFetchUtil.class);
 	
-	private ComboPooledDataSource comboPooledDataSource;
+	private JdbcConnectionUtil jdbcConnectionUtil;
 	
-	JdbcFetchUtil(String jdbcDriverClass, String jdbcUrl, String dbUser, String dbPassword, int dbcMaxPoolSize)
-	        throws PropertyVetoException {
-		comboPooledDataSource = new ComboPooledDataSource();
-		comboPooledDataSource.setDriverClass(jdbcDriverClass);
-		comboPooledDataSource.setJdbcUrl(jdbcUrl);
-		comboPooledDataSource.setUser(dbUser);
-		comboPooledDataSource.setPassword(dbPassword);
-		comboPooledDataSource.setMaxPoolSize(dbcMaxPoolSize);
-		comboPooledDataSource.setInitialPoolSize(10); // TODO: make this configurable if issues arises
+	JdbcFetchUtil(JdbcConnectionUtil jdbcConnectionUtil) throws PropertyVetoException {
+		this.jdbcConnectionUtil = jdbcConnectionUtil;
 	}
 	
 	public static class FetchUuids extends PTransform<PCollection<KV<Integer, Integer>>, PCollection<String>> {
@@ -145,19 +136,20 @@ public class JdbcFetchUtil {
 		}
 	}
 	
-	public Integer fetchMaxId(String tableName) throws SQLException {
+	public Integer fetchMaxId(String tableName) throws SQLException, PropertyVetoException {
 		String tableId = tableName + "_id";
-		Connection con = this.comboPooledDataSource.getConnection();
-		try (Statement statement = con.createStatement();
-		        ResultSet resultSet = statement
-		                .executeQuery(String.format("SELECT MAX(`%s`) as max_id FROM %s", tableId, tableName));) {
-			resultSet.first();
-			return resultSet.getInt("max_id");
-		}
+		Statement statement = jdbcConnectionUtil.createStatement();
+		ResultSet resultSet = statement
+		        .executeQuery(String.format("SELECT MAX(`%s`) as max_id FROM %s", tableId, tableName));
+		resultSet.first();
+		int maxId = resultSet.getInt("max_id");
+		resultSet.close();
+		statement.close();
+		return maxId;
 	}
 	
-	public JdbcIO.DataSourceConfiguration getJdbcConfig() {
-		return JdbcIO.DataSourceConfiguration.create(this.comboPooledDataSource);
+	public JdbcIO.DataSourceConfiguration getJdbcConfig() throws PropertyVetoException {
+		return JdbcIO.DataSourceConfiguration.create(this.jdbcConnectionUtil.getConnectionObject());
 	}
 	
 	public Map<Integer, Integer> createIdRanges(int count, int rangeSize) {

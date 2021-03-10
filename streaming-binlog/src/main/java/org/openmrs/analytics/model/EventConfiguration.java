@@ -30,6 +30,14 @@ public class EventConfiguration {
 	
 	@Getter
 	@Setter
+	private String parentForeignKey;
+	
+	@Getter
+	@Setter
+	private String childPrimaryKey;
+	
+	@Getter
+	@Setter
 	private String parentTable;
 	
 	@Getter

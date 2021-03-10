@@ -14,12 +14,14 @@
 
 package org.openmrs.analytics;
 
+import java.beans.PropertyVetoException;
 import java.io.IOException;
 import java.io.Reader;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.sql.SQLException;
 import java.util.Map;
 
 import com.google.common.annotations.VisibleForTesting;
@@ -48,6 +50,8 @@ public class FhirConverter implements Processor {
 	
 	private final GeneralConfiguration generalConfiguration;
 	
+	private UuidUtil uuidUtil;
+	
 	@VisibleForTesting
 	FhirConverter() {
 		this.openmrsUtil = null;
@@ -58,15 +62,16 @@ public class FhirConverter implements Processor {
 	}
 	
 	public FhirConverter(OpenmrsUtil openmrsUtil, FhirStoreUtil fhirStoreUtil, ParquetUtil parquetUtil,
-	    String configFileName) throws IOException {
+	    String configFileName, UuidUtil uuidUtil) throws IOException {
 		// TODO add option for switching to Parquet-file outputs.
 		this.openmrsUtil = openmrsUtil;
 		this.fhirStoreUtil = fhirStoreUtil;
 		this.parquetUtil = parquetUtil;
 		this.generalConfiguration = getEventsToFhirConfig(configFileName);
+		this.uuidUtil = uuidUtil;
 	}
 	
-	public void process(Exchange exchange) {
+	public void process(Exchange exchange) throws PropertyVetoException, ClassNotFoundException, SQLException {
 		Message message = exchange.getMessage();
 		final Map payload = message.getBody(Map.class);
 		final Map sourceMetadata = message.getHeader(DebeziumConstants.HEADER_SOURCE_METADATA, Map.class);
@@ -91,11 +96,17 @@ public class FhirConverter implements Processor {
 			log.trace("Skipping disabled events ..." + table);
 			return;
 		}
-		if (payload.get("uuid") == null) {
-			log.error(String.format("No uuid column for table %s ignoring payload %s ", table, payload));
-			return;
+		String uuid = "";
+		if (payload.get("uuid") != null) {
+			uuid = payload.get("uuid").toString();
+		} else {
+			if (config.getParentTable() == null) {
+				log.error(String.format("No parentTable in %s ignoring payload %s ", table, payload));
+				return;
+			}
+			uuid = uuidUtil.getUuid(config.getParentTable(), config.getParentForeignKey(),
+			    payload.get(config.getChildPrimaryKey()).toString());
 		}
-		final String uuid = payload.get("uuid").toString();
 		final String fhirUrl = config.getLinkTemplates().get("fhir").replace("{uuid}", uuid);
 		log.info("Fetching FHIR resource at " + fhirUrl);
 		Resource resource = openmrsUtil.fetchFhirResource(fhirUrl);

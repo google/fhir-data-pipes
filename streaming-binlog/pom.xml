@@ -120,16 +120,7 @@
       <artifactId>gson</artifactId>
       <version>2.8.6</version>
     </dependency>
-    <!-- remember to install Lombok IDE plugin: by first ticking the "Enable annotation processing"
-      checkbox in Settings->Compiler->Annotation Processors. Secondly, Install the plugin
-       of Lombok for idea and restart IDE for change to take effect.
-    -->
-    <dependency>
-      <groupId>org.projectlombok</groupId>
-      <artifactId>lombok</artifactId>
-      <version>1.18.16</version>
-      <scope>provided</scope>
-    </dependency>
+    
     <dependency>
       <groupId>com.beust</groupId>
       <artifactId>jcommander</artifactId>

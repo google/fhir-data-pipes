@@ -14,7 +14,9 @@
 
 package org.openmrs.analytics;
 
+import java.beans.PropertyVetoException;
 import java.io.IOException;
+import java.sql.SQLException;
 import java.util.Map;
 
 import io.debezium.data.Envelope.Operation;
@@ -24,6 +26,7 @@ import org.apache.camel.RoutesBuilder;
 import org.apache.camel.builder.RouteBuilder;
 import org.apache.camel.test.junit4.CamelTestSupport;
 import org.hl7.fhir.r4.model.Encounter;
+import org.hl7.fhir.r4.model.Patient;
 import org.hl7.fhir.r4.model.Resource;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -40,6 +43,8 @@ public class FhirConverterTest extends CamelTestSupport {
 	
 	private static final String TEST_ID = "ID";
 	
+	private static final String TEST_UUID = "UUID";
+	
 	@Produce(TEST_ROUTE)
 	protected ProducerTemplate eventsProducer;
 	
@@ -51,6 +56,9 @@ public class FhirConverterTest extends CamelTestSupport {
 	
 	@Mock
 	private Resource resource;
+	
+	@Mock
+	private UuidUtil uuidUtil;
 	
 	@Mock
 	private ParquetUtil parquetUtil;
@@ -65,7 +73,8 @@ public class FhirConverterTest extends CamelTestSupport {
 			public void configure() throws Exception {
 				
 				String fhirDebeziumEventConfigPath = "../utils/dbz_event_to_fhir_config.json";
-				fhirConverter = new FhirConverter(openmrsUtil, fhirStoreUtil, parquetUtil, fhirDebeziumEventConfigPath);
+				fhirConverter = new FhirConverter(openmrsUtil, fhirStoreUtil, parquetUtil, fhirDebeziumEventConfigPath,
+				        uuidUtil);
 				
 				// Inject FhirUriGenerator;
 				from(TEST_ROUTE).process(fhirConverter); // inject target processor here
@@ -90,6 +99,22 @@ public class FhirConverterTest extends CamelTestSupport {
 		Mockito.verify(openmrsUtil).fetchFhirResource(Mockito.anyString());
 		Mockito.verify(fhirStoreUtil).uploadResource(resource);
 		Mockito.verify(parquetUtil, Mockito.never()).write(Mockito.<Resource> any());
+	}
+	
+	@Test
+	public void shouldGetUuidFromParent() throws SQLException, PropertyVetoException, ClassNotFoundException {
+		Map<String, String> messageBody = DebeziumTestUtil.genExpectedBodyWithoutUUid();
+		Map<String, Object> messageHeaders = DebeziumTestUtil.genExpectedHeaders(Operation.CREATE, "patient");
+		resource = new Patient();
+		
+		Mockito.when(uuidUtil.getUuid("person", "person_id", "1")).thenReturn(TEST_UUID);
+		
+		// Actual event that will trigger process().
+		eventsProducer.sendBodyAndHeaders(messageBody, messageHeaders);
+		
+		Mockito.verify(openmrsUtil).fetchFhirResource("/Patient/UUID");
+		Mockito.verify(uuidUtil, Mockito.times(1)).getUuid(Mockito.anyString(), Mockito.anyString(), Mockito.anyString());
+		Mockito.verify(uuidUtil).getUuid(Mockito.anyString(), Mockito.anyString(), Mockito.anyString());
 	}
 	
 	@Test

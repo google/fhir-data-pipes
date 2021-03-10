@@ -127,6 +127,16 @@
       <scope>test</scope>
     </dependency>
 
+    <!-- remember to install Lombok IDE plugin: by first ticking the "Enable annotation processing"
+      checkbox in Settings->Compiler->Annotation Processors. Secondly, Install the plugin
+       of Lombok for idea and restart IDE for change to take effect.
+    -->
+    <dependency>
+      <groupId>org.projectlombok</groupId>
+      <artifactId>lombok</artifactId>
+      <version>1.18.16</version>
+    </dependency>
+
     <dependency>
       <groupId>org.hamcrest</groupId>
       <artifactId>hamcrest-core</artifactId>
