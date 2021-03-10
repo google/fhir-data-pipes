@@ -17,7 +17,6 @@ package org.openmrs.analytics;
 
 import static org.mockito.Mockito.when;
 
-import java.beans.PropertyVetoException;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
@@ -50,7 +49,7 @@ public class UuidUtilTest extends TestCase {
 	private String keyValue;
 	
 	@Before
-	public void beforeTestCase() throws Exception {	
+	public void beforeTestCase() throws Exception {
 		uuid = "1296b0dc-440a-11e6-a65c-00e04c680037";
 		table = "person";
 		keyColumn = "person_id";
@@ -65,7 +64,7 @@ public class UuidUtilTest extends TestCase {
 	}
 	
 	@Test
-	public void shouldReturnValidUuid() throws ClassNotFoundException, PropertyVetoException, SQLException {
+	public void shouldReturnValidUuid() throws SQLException {
 		
 		UuidUtil uuidUtil = new UuidUtil(jdbcConnectionUtil);
 		String uuid = uuidUtil.getUuid(table, keyColumn, keyValue);

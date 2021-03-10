@@ -65,7 +65,7 @@ public class DebeziumListener extends RouteBuilder {
 	}
 	
 	@VisibleForTesting
-	FhirConverter createFhirConverter(CamelContext camelContext) throws IOException, Exception {
+	FhirConverter createFhirConverter(CamelContext camelContext) throws Exception {
 		FhirContext fhirContext = FhirContext.forR4();
 		String fhirBaseUrl = params.openmrsServerUrl + params.openmrsfhirBaseEndpoint;
 		OpenmrsUtil openmrsUtil = new OpenmrsUtil(fhirBaseUrl, params.openmrUserName, params.openmrsPassword, fhirContext);
@@ -82,7 +82,7 @@ public class DebeziumListener extends RouteBuilder {
 		return new FhirConverter(openmrsUtil, fhirStoreUtil, parquetUtil, params.fhirDebeziumConfigPath, uuidUtil);
 	}
 	
-	private String getDebeziumConfig() throws IOException {
+	private String getDebeziumConfig() {
 		Map<String, String> debeziumConfigs = this.generalConfiguration.getDebeziumConfigurations();
 		return "debezium-mysql:" + debeziumConfigs.get("databaseHostName") + "?" + "databaseHostname="
 		        + debeziumConfigs.get("databaseHostName") + "&databaseServerId=" + debeziumConfigs.get("databaseServerId")

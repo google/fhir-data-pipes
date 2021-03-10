@@ -14,20 +14,19 @@
 
 package org.openmrs.analytics;
 
-import java.beans.PropertyVetoException;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 
 public class UuidUtil {
-	private JdbcConnectionUtil jdbcConnectionUtil;
+	
+	private final JdbcConnectionUtil jdbcConnectionUtil;
 	
 	public UuidUtil(JdbcConnectionUtil jdbcConnectionUtil) {
 		this.jdbcConnectionUtil = jdbcConnectionUtil;
 	}
-
-	public String getUuid(String table, String keyColumn, String keyValue)
-	        throws PropertyVetoException, SQLException, ClassNotFoundException {
+	
+	public String getUuid(String table, String keyColumn, String keyValue) throws SQLException {
 		
 		Statement stmt = jdbcConnectionUtil.createStatement();
 		String uuidResultFromSql = null;
