@@ -27,7 +27,6 @@ public class UuidUtil {
 	}
 	
 	public String getUuid(String table, String keyColumn, String keyValue) throws SQLException {
-		
 		Statement stmt = jdbcConnectionUtil.createStatement();
 		String uuidResultFromSql = null;
 		
