@@ -35,8 +35,8 @@ public class BaseArgs {
 	@Parameter(names = { "--sinkPassword" }, description = "Sink BasicAuth Password")
 	public String sinkPassword = "";
 	
-	@Parameter(names = { "--fileParquetPath" }, description = "The base path for output Parquet files")
-	public String fileParquetPath = "";
+	@Parameter(names = { "--outputParquetPath" }, description = "The base path for output Parquet files")
+	public String outputParquetPath = "";
 	
 	@Parameter(names = { "--secondsToFlushParquetFiles" }, description = "The number of seconds after which all Parquet "
 	        + "writers with non-empty content are flushed to files; use 0 to disable.")

@@ -47,7 +47,7 @@ services:
                      --openmrsServerUrl=http://localhost:8099/openmrs 
                      --openmrsfhirBaseEndpoint=/ws/fhir2/R4 
                      --fhirSinkPath=http://localhost:8098/fhir
-                     --fileParquetPath=/tmp/ 
+                     --outputParquetPath=/tmp/ 
                      --fhirDebeziumEventConfigPath=./utils/dbz_event_to_fhir_config.json
 
   streaming-atomfeed:
