@@ -14,7 +14,6 @@
 
 package org.openmrs.analytics;
 
-import java.beans.PropertyVetoException;
 import java.io.IOException;
 import java.io.Reader;
 import java.nio.charset.StandardCharsets;
@@ -71,7 +70,7 @@ public class FhirConverter implements Processor {
 		this.uuidUtil = uuidUtil;
 	}
 	
-	public void process(Exchange exchange) throws PropertyVetoException, ClassNotFoundException, SQLException {
+	public void process(Exchange exchange) throws SQLException {
 		Message message = exchange.getMessage();
 		final Map payload = message.getBody(Map.class);
 		final Map sourceMetadata = message.getHeader(DebeziumConstants.HEADER_SOURCE_METADATA, Map.class);

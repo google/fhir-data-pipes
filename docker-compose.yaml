@@ -23,32 +23,60 @@ services:
     container_name: batch-cloud
     healthcheck:
       test: "exit 0"
+    volumes:
+      - ./utils/dbz_event_to_fhir_config.json:/usr/src/Main/dbz_event_to_fhir_config.json
+      # data is the directory which you want to persist the generated parquet files
+      - ./data:/tmp
     environment:
      - OPENMRS_URL=http://localhost:8099/openmrs
-     - SINK_PATH=http://localhost:8098/fhir
      - SEARCH_LIST=Patient,Encounter,Observation
-     - BATCH_SIZE=20
-     - TARGET_PARALLELISM=20
+     - OPENMRS_USERNAME=admin
+     - OPENMRS_PASSWORD=Admin123
+     - SINK_PATH=
+     - SINK_USERNAME=
+     - SINK_PASSWORD=
+     - BATCH_SIZE=90
+     - TARGET_PARALLELISM=5
+     - JDBC_MODE_ENABLED=false
+     - JDBC_DRIVER_CLASS=com.mysql.cj.jdbc.Driver
+     - DB_USER=root
+     - DB_PASSWORD=debezium
+     - JDBC_FETCH_SIZE=10000
+     - JDBC_MAX_POOL_SIZE=50
+     - JDBC_INITIAL_POOL_SIZE=10
+     - JDBC_URL=jdbc:mysql://localhost:3306/openmrs
+     - NUM_PARQUET_SHARDS=3
+     # the 2 variable below should be same as volume mappings above
+     - PARQUET_PATH=/tmp/
+     - FHIR_DEBEZIUM_CONFIG_PATH=/usr/src/Main/dbz_event_to_fhir_config.json
 
   streaming-binlog: # To run independently: docker-compose up --build streaming-binlog
     build:
       context: streaming-binlog
-    image: openmrs-fhir-analytics/streaming-pipeline:${DEBEZIUM_VERSION}
+    image: openmrs-fhir-analytics/streaming-binlog:latest
     container_name: streaming-pipeline
     network_mode: host
     healthcheck:
       test: "exit 0"
     volumes:
-      - ./dbz:/tmp
-      - ./utils/dbz_event_to_fhir_config.json:/deployments/utils/dbz_event_to_fhir_config.json
+      - ./utils/dbz_event_to_fhir_config.json:/deployments/dbz_event_to_fhir_config.json
+      # data is the directory which you want to persist the generated parquet files
+      - ./data:/tmp
     environment:
-      - JAVA_MAIN_CLASS=org.openmrs.analytics.Runner
-      - JAVA_OPTIONS=--openmrsUserName=admin --openmrsPassword=Admin123 
-                     --openmrsServerUrl=http://localhost:8099/openmrs 
-                     --openmrsfhirBaseEndpoint=/ws/fhir2/R4 
-                     --fhirSinkPath=http://localhost:8098/fhir
-                     --outputParquetPath=/tmp/ 
-                     --fhirDebeziumEventConfigPath=./utils/dbz_event_to_fhir_config.json
+      - OPENMRS_URL=http://localhost:8099/openmrs
+      - OPENMRS_USERNAME=admin
+      - OPENMRS_PASSWORD=Admin123
+      - SINK_URL=
+      - SINK_USERNAME=
+      - SINK_PASSWORD=
+      - JDBC_FETCH_SIZE=10000
+      - JDBC_MAX_POOL_SIZE=50
+      - JDBC_INITIAL_POOL_SIZE=10
+      - JDBC_URL=jdbc:mysql://localhost:3306/openmrs
+      - JDBC_DRIVER_CLASS=com.mysql.cj.jdbc.Driver
+      # the 2 variable below should be same as volume mappings above
+      - PARQUET_PATH=/tmp/
+      - FHIR_DEBEZIUM_CONFIG_PATH=/deployments/dbz_event_to_fhir_config.json
 
   streaming-atomfeed:
     container_name: streaming-atomfeed

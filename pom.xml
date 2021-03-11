@@ -178,6 +178,14 @@
           <artifactId>maven-surefire-plugin</artifactId>
           <version>2.22.1</version>
         </plugin>
+        <!--
+           Configures `mvn package` to produce a bundled jar ("fat jar") for runners
+           that require this for job submission to a cluster.
+         -->
+        <plugin>
+          <artifactId>maven-shade-plugin</artifactId>
+          <version>3.1.0</version>
+        </plugin>
         <plugin>
           <artifactId>maven-jar-plugin</artifactId>
           <version>3.0.2</version>
