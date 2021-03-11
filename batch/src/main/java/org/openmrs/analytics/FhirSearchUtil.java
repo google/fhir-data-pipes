@@ -43,7 +43,7 @@ public class FhirSearchUtil {
 			return result;
 		}
 		catch (Exception e) {
-			log.error("Failed to search for url:" + searchUrl + ";  " + "Exception: " + e);
+			log.error("Failed to search for url: " + searchUrl + " ;  " + "Exception: " + e);
 		}
 		return null;
 	}

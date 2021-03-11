@@ -18,7 +18,6 @@ import java.io.File;
 import java.io.IOException;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
-import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -64,7 +63,7 @@ public class JdbcFetchUtilTest extends TestCase {
 	private String basePath = "/tmp/JUNIT/Parquet/TEST/";
 	
 	@Before
-	public void setup() throws IOException, PropertyVetoException, SQLException {
+	public void setup() throws IOException, PropertyVetoException {
 		URL url = Resources.getResource("encounter.json");
 		resourceStr = Resources.toString(url, StandardCharsets.UTF_8);
 		this.fhirContext = FhirContext.forDstu3();
@@ -72,12 +71,13 @@ public class JdbcFetchUtilTest extends TestCase {
 		resource = parser.parseResource(Encounter.class, resourceStr);
 		
 		String[] args = { "--fhirSinkPath=", "--openmrsServerUrl=http://localhost:8099/openmrs" };
-		FhirEtl.FhirEtlOptions options = PipelineOptionsFactory.fromArgs(args).withValidation()
-		        .as(FhirEtl.FhirEtlOptions.class);
+		FhirEtlOptions options = PipelineOptionsFactory.fromArgs(args).withValidation().as(FhirEtlOptions.class);
 		
 		JdbcConnectionUtil jdbcConnectionUtil = new JdbcConnectionUtil(options.getJdbcDriverClass(), options.getJdbcUrl(),
 		        options.getDbUser(), options.getDbPassword(), options.getJdbcMaxPoolSize(),
 		        options.getJdbcInitialPoolSize());
+		// TODO jdbcConnectionUtil should be replaced by a mocked JdbcConnectionUtil which does not
+		// depend on options either, since we don't need real DB connections for unit-testing.
 		jdbcFetchUtil = new JdbcFetchUtil(jdbcConnectionUtil);
 		parquetUtil = new ParquetUtil(basePath);
 		// clean up if folder exists
@@ -133,21 +133,14 @@ public class JdbcFetchUtilTest extends TestCase {
 	@Test
 	public void testCreateFhirReverseMap() throws IOException {
 		// here we pass Encounters as such we expect visits to be included in the reverseMap as well
-		String[] args = { "--tableFhirMapPath=../utils/dbz_event_to_fhir_config.json",
-		        "--searchList=Patient,Encounter,Observation", "--fhirSinkPath=", "--fileParquetPath=/tmp/TEST/",
-		        "--openmrsServerUrl=http://localhost:8099/openmrs" };
-		FhirEtl.FhirEtlOptions options = PipelineOptionsFactory.fromArgs(args).withValidation()
-		        .as(FhirEtl.FhirEtlOptions.class);
-		
-		Map<String, String> reverseMap = jdbcFetchUtil.createFhirReverseMap(options.getSearchList(),
-		    options.getTableFhirMapPath());
+		Map<String, String> reverseMap = jdbcFetchUtil.createFhirReverseMap("Patient,Encounter,Observation",
+		    "../utils/dbz_event_to_fhir_config.json");
 		// we expect 4 objects, and visit should be included
-		assertTrue(reverseMap.size() == 4);// not 3
+		assertEquals(4, reverseMap.size());// not 3
 		assertFalse(reverseMap.get("visit").isEmpty());
 		assertFalse(reverseMap.get("encounter").isEmpty());
 		assertFalse(reverseMap.get("obs").isEmpty());
 		assertFalse(reverseMap.get("person").isEmpty());
-		
 	}
 	
 }

@@ -31,24 +31,15 @@ import org.apache.beam.sdk.PipelineResult;
 import org.apache.beam.sdk.coders.AvroCoder;
 import org.apache.beam.sdk.coders.CannotProvideCoderException;
 import org.apache.beam.sdk.io.FileIO;
+import org.apache.beam.sdk.io.TextIO;
 import org.apache.beam.sdk.io.jdbc.JdbcIO;
 import org.apache.beam.sdk.io.parquet.ParquetIO;
-import org.apache.beam.sdk.metrics.Counter;
-import org.apache.beam.sdk.metrics.MetricNameFilter;
-import org.apache.beam.sdk.metrics.MetricQueryResults;
-import org.apache.beam.sdk.metrics.MetricResult;
-import org.apache.beam.sdk.metrics.MetricResults;
-import org.apache.beam.sdk.metrics.Metrics;
-import org.apache.beam.sdk.metrics.MetricsFilter;
-import org.apache.beam.sdk.options.Default;
-import org.apache.beam.sdk.options.Description;
-import org.apache.beam.sdk.options.PipelineOptions;
 import org.apache.beam.sdk.options.PipelineOptionsFactory;
-import org.apache.beam.sdk.options.Validation.Required;
 import org.apache.beam.sdk.transforms.Create;
-import org.apache.beam.sdk.transforms.DoFn;
 import org.apache.beam.sdk.transforms.ParDo;
 import org.apache.beam.sdk.values.PCollection;
+import org.apache.beam.sdk.values.PCollectionTuple;
+import org.apache.beam.sdk.values.TupleTagList;
 import org.hl7.fhir.r4.model.Bundle;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -60,150 +51,6 @@ public class FhirEtl {
 	
 	private static final Logger log = LoggerFactory.getLogger(FhirEtl.class);
 	
-	private static final String METRICS_NAMESPACE = "FhirEtl";
-	
-	/**
-	 * Options supported by {@link FhirEtl}.
-	 */
-	public interface FhirEtlOptions extends PipelineOptions {
-		
-		/**
-		 * By default, this reads from the OpenMRS instance `openmrs` at the default port on localhost.
-		 */
-		@Description("OpenMRS server URL")
-		@Required
-		@Default.String("http://localhost:8099/openmrs")
-		String getOpenmrsServerUrl();
-		
-		void setOpenmrsServerUrl(String value);
-		
-		@Description("OpenMRS server fhir endpoint")
-		@Default.String("/ws/fhir2/R4")
-		String getServerFhirEndpoint();
-		
-		void setServerFhirEndpoint(String value);
-		
-		@Description("Comma separated list of resource and search parameters to fetch; in its simplest "
-		        + "form this is a list of resources, e.g., `Patient,Encounter,Observation` but more "
-		        + "complex search paths are possible too, e.g., `Patient?name=Susan.`"
-		        + "Please note that complex search params doesn't work when JDBC mode is enabled.")
-		@Default.String("Patient,Encounter,Observation")
-		String getSearchList();
-		
-		void setSearchList(String value);
-		
-		@Description("The number of resources to be fetched in one API call. "
-		        + "For the JDBC mode passing > 170 could result in HTTP 400 Bad Request")
-		@Default.Integer(100)
-		int getBatchSize();
-		
-		void setBatchSize(int value);
-		
-		@Description("For the JDBC mode, this is the size of each ID chunk. Setting high values will yield faster query "
-		        + "execution.")
-		@Default.Integer(10000)
-		int getJdbcFetchSize();
-		
-		void setJdbcFetchSize(int value);
-		
-		@Description("Openmrs BasicAuth Username")
-		@Default.String("admin")
-		String getOpenmrsUserName();
-		
-		void setOpenmrsUserName(String value);
-		
-		@Description("Openmrs BasicAuth Password")
-		@Default.String("Admin123")
-		String getOpenmrsPassword();
-		
-		void setOpenmrsPassword(String value);
-		
-		@Description("The path to the target generic fhir store, or a GCP fhir store with the format: "
-		        + "`projects/[\\w-]+/locations/[\\w-]+/datasets/[\\w-]+/fhirStores/[\\w-]+`, e.g., "
-		        + "`projects/my-project/locations/us-central1/datasets/openmrs_fhir_test/fhirStores/test`")
-		@Required
-		@Default.String("")
-		String getFhirSinkPath();
-		
-		void setFhirSinkPath(String value);
-		
-		@Description("Sink BasicAuth Username")
-		@Default.String("")
-		String getSinkUserName();
-		
-		void setSinkUserName(String value);
-		
-		@Description("Sink BasicAuth Password")
-		@Default.String("")
-		String getSinkPassword();
-		
-		void setSinkPassword(String value);
-		
-		@Description("The base name for output Parquet file; for each resource, one fileset will be created.")
-		@Default.String("")
-		String getFileParquetPath();
-		
-		void setFileParquetPath(String value);
-		
-		/**
-		 * JDBC DB settings: defaults values have been pointed to ./openmrs-compose.yaml
-		 */
-		
-		@Description("JDBC URL input")
-		@Default.String("jdbc:mysql://localhost:3306/openmrs")
-		String getJdbcUrl();
-		
-		void setJdbcUrl(String value);
-		
-		@Description("JDBC MySQL driver class")
-		@Default.String("com.mysql.cj.jdbc.Driver")
-		String getJdbcDriverClass();
-		
-		void setJdbcDriverClass(String value);
-		
-		@Description("JDBC maximum pool size")
-		@Default.Integer(50)
-		int getJdbcMaxPoolSize();
-		
-		void setJdbcMaxPoolSize(int value);
-		
-		@Description("JDBC initial pool size")
-		@Default.Integer(10)
-		int getJdbcInitialPoolSize();
-		
-		void setJdbcInitialPoolSize(int value);
-		
-		@Description("MySQL DB user")
-		@Default.String("root")
-		String getDbUser();
-		
-		void setDbUser(String value);
-		
-		@Description("MySQL DB user password")
-		@Default.String("debezium")
-		String getDbPassword();
-		
-		void setDbPassword(String value);
-		
-		@Description("Path to Table-FHIR map config")
-		@Default.String("utils/dbz_event_to_fhir_config.json")
-		String getTableFhirMapPath();
-		
-		void setTableFhirMapPath(String value);
-		
-		@Description("Flag to switch between the 2 modes of batch extract")
-		@Default.Boolean(false)
-		Boolean isJdbcModeEnabled();
-		
-		void setJdbcModeEnabled(Boolean value);
-		
-		@Description("Number of output file shards; 0 leaves it to the runner to decide but is not recommended.")
-		@Default.Integer(3)
-		int getNumParquetShards();
-		
-		void setNumParquetShards(int value);
-	}
-	
 	static FhirSearchUtil createFhirSearchUtil(FhirEtlOptions options, FhirContext fhirContext) {
 		return new FhirSearchUtil(createOpenmrsUtil(options.getOpenmrsServerUrl() + options.getServerFhirEndpoint(),
 		    options.getOpenmrsUserName(), options.getOpenmrsPassword(), fhirContext));
@@ -213,8 +60,7 @@ public class FhirEtl {
 		return new OpenmrsUtil(sourceUrl, sourceUser, sourcePw, fhirContext);
 	}
 	
-	static Map<String, List<SearchSegmentDescriptor>> createSegments(FhirEtlOptions options, FhirContext fhirContext)
-	        throws CannotProvideCoderException {
+	static Map<String, List<SearchSegmentDescriptor>> createSegments(FhirEtlOptions options, FhirContext fhirContext) {
 		if (options.getBatchSize() > 100) {
 			// TODO: Probe this value from the server and set the maximum automatically.
 			log.warn("NOTE batchSize flag is higher than 100; make sure that `fhir2.paging.maximum` "
@@ -248,89 +94,6 @@ public class FhirEtl {
 		return segmentMap;
 	}
 	
-	// TODO: Move this class and a few static methods after it to a separate file with unit-tests.
-	static class FetchSearchPageFn extends DoFn<SearchSegmentDescriptor, GenericRecord> {
-		
-		private final Counter numFetchedResources;
-		
-		private final Counter totalGenerateTimeMillis;
-		
-		private final Counter totalFetchTimeMillis;
-		
-		private final String sourceUrl;
-		
-		private final String sourceUser;
-		
-		private final String sourcePw;
-		
-		private final String sinkPath;
-		
-		private final String sinkUsername;
-		
-		private final String sinkPassword;
-		
-		private final String parquetFile;
-		
-		private final String resourceType;
-		
-		private ParquetUtil parquetUtil;
-		
-		private FhirContext fhirContext;
-		
-		private FhirSearchUtil fhirSearchUtil;
-		
-		private FhirStoreUtil fhirStoreUtil;
-		
-		private OpenmrsUtil openmrsUtil;
-		
-		FetchSearchPageFn(String fhirSinkPath, String sinkUsername, String sinkPassword, String sourceUrl,
-		    String parquetFile, String sourceUser, String sourcePw, String resourceType) {
-			this.sinkPath = fhirSinkPath;
-			this.sinkUsername = sinkUsername;
-			this.sinkPassword = sinkPassword;
-			this.sourceUrl = sourceUrl;
-			this.sourceUser = sourceUser;
-			this.sourcePw = sourcePw;
-			this.parquetFile = parquetFile;
-			this.resourceType = resourceType;
-			this.numFetchedResources = Metrics.counter(METRICS_NAMESPACE, "numFetchedResources_" + resourceType);
-			this.totalGenerateTimeMillis = Metrics.counter(METRICS_NAMESPACE, "totalGenerateTimeMillis_" + resourceType);
-			this.totalFetchTimeMillis = Metrics.counter(METRICS_NAMESPACE, "totalFetchTimeMillis_" + resourceType);
-		}
-		
-		@Setup
-		public void Setup() {
-			fhirContext = FhirContext.forR4();
-			fhirStoreUtil = FhirStoreUtil.createFhirStoreUtil(sinkPath, sinkUsername, sinkPassword,
-			    fhirContext.getRestfulClientFactory());
-			openmrsUtil = createOpenmrsUtil(sourceUrl, sourceUser, sourcePw, fhirContext);
-			fhirSearchUtil = new FhirSearchUtil(openmrsUtil);
-			parquetUtil = new ParquetUtil(parquetFile);
-		}
-		
-		@ProcessElement
-		public void ProcessElement(@Element SearchSegmentDescriptor segment, OutputReceiver<GenericRecord> out) {
-			String searchUrl = segment.searchUrl();
-			log.info(String.format("Fetching %d %s resources: %s", segment.count(), this.resourceType,
-			    searchUrl.substring(0, Math.min(200, searchUrl.length()))));
-			long fetchStartTime = System.currentTimeMillis();
-			Bundle pageBundle = fhirSearchUtil.searchByUrl(searchUrl, segment.count(), SummaryEnum.DATA);
-			totalFetchTimeMillis.inc(System.currentTimeMillis() - fetchStartTime);
-			if (!parquetFile.isEmpty()) {
-				long startTime = System.currentTimeMillis();
-				List<GenericRecord> recordList = parquetUtil.generateRecords(pageBundle);
-				numFetchedResources.inc(recordList.size());
-				for (GenericRecord record : recordList) {
-					out.output(record);
-				}
-				totalGenerateTimeMillis.inc(System.currentTimeMillis() - startTime);
-			}
-			if (!sinkPath.isEmpty()) {
-				fhirStoreUtil.uploadBundle(pageBundle);
-			}
-		}
-	}
-	
 	static String findSearchedResource(String search) {
 		int argsStart = search.indexOf('?');
 		if (argsStart >= 0) {
@@ -339,31 +102,28 @@ public class FhirEtl {
 		return search;
 	}
 	
-	private static void logMetrics(MetricResults metricResults) {
-		MetricQueryResults metrics = metricResults.queryMetrics(
-		    MetricsFilter.builder().addNameFilter(MetricNameFilter.inNamespace(METRICS_NAMESPACE)).build());
-		for (MetricResult<Long> counter : metrics.getCounters()) {
-			log.info(String.format("Pipeline counter %s : %s", counter.getName(), counter.getCommitted()));
-		}
-	}
-	
 	private static void fetchSegments(PCollection<SearchSegmentDescriptor> inputSegments, String search,
 	        FhirEtlOptions options) {
 		String resourceType = findSearchedResource(search);
-		ParquetUtil parquetUtil = new ParquetUtil(options.getFileParquetPath());
+		ParquetUtil parquetUtil = new ParquetUtil(options.getOutputParquetPath());
 		Schema schema = parquetUtil.getResourceSchema(resourceType);
-		PCollection<GenericRecord> records = inputSegments
-		        .apply(ParDo.of(
-		            new FetchSearchPageFn(options.getFhirSinkPath(), options.getSinkUserName(), options.getSinkPassword(),
-		                    options.getOpenmrsServerUrl() + options.getServerFhirEndpoint(), options.getFileParquetPath(),
-		                    options.getOpenmrsUserName(), options.getOpenmrsPassword(), resourceType)))
-		        .setCoder(AvroCoder.of(GenericRecord.class, schema));
-		if (!options.getFileParquetPath().isEmpty()) {
-			// TODO: Make sure getFileParquetPath() is a directory.
-			String outputFile = options.getFileParquetPath() + resourceType;
+		FetchSearchPageFn fetchSearchPageFn = new FetchSearchPageFn(options, resourceType);
+		PCollectionTuple records = inputSegments.apply(ParDo.of(fetchSearchPageFn).withOutputTags(fetchSearchPageFn.avroTag,
+		    TupleTagList.of(fetchSearchPageFn.jsonTag)));
+		records.get(fetchSearchPageFn.avroTag).setCoder(AvroCoder.of(GenericRecord.class, schema));
+		if (!options.getOutputParquetPath().isEmpty()) {
+			// TODO: Make sure getOutputParquetPath() is a directory.
+			String outputFile = options.getOutputParquetPath() + resourceType;
 			ParquetIO.Sink sink = ParquetIO.sink(schema); // TODO add an option for .withCompressionCodec();
-			records.apply(FileIO.<GenericRecord> write().via(sink).to(outputFile).withSuffix(".parquet")
-			        .withNumShards(options.getNumParquetShards()));
+			records.get(fetchSearchPageFn.avroTag).apply(FileIO.<GenericRecord> write().via(sink).to(outputFile)
+			        .withSuffix(".parquet").withNumShards(options.getNumFileShards()));
+			// TODO add Avro output option
+			// apply("WriteToAvro", AvroIO.writeGenericRecords(schema).to(outputFile).withSuffix(".avro")
+			//        .withNumShards(options.getNumParquetShards()));
+		}
+		if (!options.getOutputJsonPath().isEmpty()) {
+			records.get(fetchSearchPageFn.jsonTag).apply("WriteToText",
+			    TextIO.write().to(options.getOutputJsonPath() + resourceType).withSuffix(".txt"));
 		}
 	}
 	
@@ -380,7 +140,7 @@ public class FhirEtl {
 		}
 		PipelineResult result = pipeline.run();
 		result.waitUntilFinish();
-		logMetrics(result.metrics());
+		EtlUtils.logMetrics(result.metrics());
 	}
 	
 	static void runFhirJdbcFetch(FhirEtlOptions options, FhirContext fhirContext)
@@ -409,7 +169,7 @@ public class FhirEtl {
 		}
 		PipelineResult result = pipeline.run();
 		result.waitUntilFinish();
-		logMetrics(result.metrics());
+		EtlUtils.logMetrics(result.metrics());
 	}
 	
 	public static void main(String[] args)
@@ -418,8 +178,9 @@ public class FhirEtl {
 		FhirContext fhirContext = FhirContext.forR4();
 		
 		FhirEtlOptions options = PipelineOptionsFactory.fromArgs(args).withValidation().as(FhirEtlOptions.class);
-		if (!options.getFileParquetPath().isEmpty() && options.getNumParquetShards() == 0) {
-			log.warn("Setting --numParquetShards=0 can hinder Parquet generation performance significantly!");
+		if (options.getNumFileShards() == 0) {
+			if (!options.getOutputParquetPath().isEmpty() || !options.getOutputJsonPath().isEmpty())
+				log.warn("Setting --numFileShards=0 can hinder output file generation performance significantly!");
 		}
 		
 		ParquetUtil.initializeAvroConverters();

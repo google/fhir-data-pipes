@@ -224,7 +224,6 @@ public class ParquetUtil {
 		if (bundle.getTotal() == 0) {
 			return records;
 		}
-		String resourceType = bundle.getEntry().get(0).getResource().getResourceType().name();
 		for (BundleEntryComponent entry : bundle.getEntry()) {
 			Resource resource = entry.getResource();
 			// TODO: Check why Bunsen returns IndexedRecord instead of GenericRecord.
