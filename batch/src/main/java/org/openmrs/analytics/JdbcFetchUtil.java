@@ -77,7 +77,7 @@ public class JdbcFetchUtil {
 				            }
 			            })
 			            .withQuery(
-			                String.format("SELECT uuid FROM %s WHERE %s >= ? AND %s < ?", this.tableName, tableId, tableId))
+			                String.format("SELECT uuid FROM %s WHERE %s >= ? AND %s <= ?", this.tableName, tableId, tableId))
 			            .withRowMapper(new JdbcIO.RowMapper<String>() {
 				            
 				            @Override
@@ -156,7 +156,7 @@ public class JdbcFetchUtil {
 		int ranges = count / rangeSize;
 		Map<Integer, Integer> rangeMap = new HashMap<Integer, Integer>();
 		for (int i = 0; i < ranges; i++) {
-			int rangeFrom = i * rangeSize;
+			int rangeFrom = (i * rangeSize) + 1;
 			int rangeTo = (i + 1) * rangeSize;
 			rangeMap.put(rangeFrom, rangeTo);
 		}
