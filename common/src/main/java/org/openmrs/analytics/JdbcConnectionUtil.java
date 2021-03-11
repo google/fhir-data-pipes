@@ -20,51 +20,28 @@ import java.sql.SQLException;
 import java.sql.Statement;
 
 import com.mchange.v2.c3p0.ComboPooledDataSource;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 public class JdbcConnectionUtil {
 	
-	private static final Logger log = LoggerFactory.getLogger(JdbcConnectionUtil.class);
-	
-	private static ComboPooledDataSource comboPooledDataSource;
-	
-	private String jdbcDriverClass;
-	
-	private String jdbcUrl;
-	
-	private String dbUser;
-	
-	private String dbPassword;
-	
-	private Integer initialPoolSize;
-	
-	private Integer dbcMaxPoolSize;
+	private final ComboPooledDataSource comboPooledDataSource;
 	
 	JdbcConnectionUtil(String jdbcDriverClass, String jdbcUrl, String dbUser, String dbPassword, int dbcMaxPoolSize,
-	    int initialPoolSize) {
-		
-		this.jdbcDriverClass = jdbcDriverClass;
-		this.jdbcUrl = jdbcUrl;
-		this.dbUser = dbUser;
-		this.dbPassword = dbPassword;
-		this.dbcMaxPoolSize = dbcMaxPoolSize;
-		this.initialPoolSize = initialPoolSize;
+	    int initialPoolSize) throws PropertyVetoException {
+		comboPooledDataSource = new ComboPooledDataSource();
+		comboPooledDataSource.setDriverClass(jdbcDriverClass);
+		comboPooledDataSource.setJdbcUrl(jdbcUrl);
+		comboPooledDataSource.setUser(dbUser);
+		comboPooledDataSource.setPassword(dbPassword);
+		comboPooledDataSource.setMaxPoolSize(dbcMaxPoolSize);
+		comboPooledDataSource.setInitialPoolSize(initialPoolSize);
 	}
 	
-	public Statement createStatement() throws SQLException, PropertyVetoException {
+	public Statement createStatement() throws SQLException {
 		Connection con = getConnectionObject().getConnection();
 		return con.createStatement();
 	}
 	
-	public ComboPooledDataSource getConnectionObject() throws PropertyVetoException {
-		comboPooledDataSource = new ComboPooledDataSource();
-		comboPooledDataSource.setDriverClass(this.jdbcDriverClass);
-		comboPooledDataSource.setJdbcUrl(this.jdbcUrl);
-		comboPooledDataSource.setUser(this.dbUser);
-		comboPooledDataSource.setPassword(this.dbPassword);
-		comboPooledDataSource.setMaxPoolSize(this.dbcMaxPoolSize);
-		comboPooledDataSource.setInitialPoolSize(this.initialPoolSize);
+	public ComboPooledDataSource getConnectionObject() {
 		return comboPooledDataSource;
 	}
 }

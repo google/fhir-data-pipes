@@ -13,7 +13,6 @@
 // limitations under the License.
 package org.openmrs.analytics;
 
-import java.beans.PropertyVetoException;
 import java.io.IOException;
 import java.io.Reader;
 import java.nio.charset.StandardCharsets;
@@ -47,7 +46,7 @@ public class JdbcFetchUtil {
 	
 	private JdbcConnectionUtil jdbcConnectionUtil;
 	
-	JdbcFetchUtil(JdbcConnectionUtil jdbcConnectionUtil) throws PropertyVetoException {
+	JdbcFetchUtil(JdbcConnectionUtil jdbcConnectionUtil) {
 		this.jdbcConnectionUtil = jdbcConnectionUtil;
 	}
 	
@@ -136,7 +135,7 @@ public class JdbcFetchUtil {
 		}
 	}
 	
-	public Integer fetchMaxId(String tableName) throws SQLException, PropertyVetoException {
+	public Integer fetchMaxId(String tableName) throws SQLException {
 		String tableId = tableName + "_id";
 		Statement statement = jdbcConnectionUtil.createStatement();
 		ResultSet resultSet = statement
@@ -148,7 +147,7 @@ public class JdbcFetchUtil {
 		return maxId;
 	}
 	
-	public JdbcIO.DataSourceConfiguration getJdbcConfig() throws PropertyVetoException {
+	public JdbcIO.DataSourceConfiguration getJdbcConfig() {
 		return JdbcIO.DataSourceConfiguration.create(this.jdbcConnectionUtil.getConnectionObject());
 	}
 	

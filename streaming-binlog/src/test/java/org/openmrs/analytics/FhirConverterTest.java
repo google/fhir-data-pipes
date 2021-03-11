@@ -14,7 +14,6 @@
 
 package org.openmrs.analytics;
 
-import java.beans.PropertyVetoException;
 import java.io.IOException;
 import java.sql.SQLException;
 import java.util.Map;
@@ -26,7 +25,6 @@ import org.apache.camel.RoutesBuilder;
 import org.apache.camel.builder.RouteBuilder;
 import org.apache.camel.test.junit4.CamelTestSupport;
 import org.hl7.fhir.r4.model.Encounter;
-import org.hl7.fhir.r4.model.Patient;
 import org.hl7.fhir.r4.model.Resource;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -66,7 +64,7 @@ public class FhirConverterTest extends CamelTestSupport {
 	private FhirConverter fhirConverter;
 	
 	@Override
-	protected RoutesBuilder createRouteBuilder() throws Exception {
+	protected RoutesBuilder createRouteBuilder() {
 		return new RouteBuilder() {
 			
 			@Override
@@ -102,10 +100,9 @@ public class FhirConverterTest extends CamelTestSupport {
 	}
 	
 	@Test
-	public void shouldGetUuidFromParent() throws SQLException, PropertyVetoException, ClassNotFoundException {
+	public void shouldGetUuidFromParent() throws SQLException {
 		Map<String, String> messageBody = DebeziumTestUtil.genExpectedBodyWithoutUUid();
 		Map<String, Object> messageHeaders = DebeziumTestUtil.genExpectedHeaders(Operation.CREATE, "patient");
-		resource = new Patient();
 		
 		Mockito.when(uuidUtil.getUuid("person", "person_id", "1")).thenReturn(TEST_UUID);
 		
@@ -113,8 +110,7 @@ public class FhirConverterTest extends CamelTestSupport {
 		eventsProducer.sendBodyAndHeaders(messageBody, messageHeaders);
 		
 		Mockito.verify(openmrsUtil).fetchFhirResource("/Patient/UUID");
-		Mockito.verify(uuidUtil, Mockito.times(1)).getUuid(Mockito.anyString(), Mockito.anyString(), Mockito.anyString());
-		Mockito.verify(uuidUtil).getUuid(Mockito.anyString(), Mockito.anyString(), Mockito.anyString());
+		Mockito.verify(uuidUtil).getUuid("person", "person_id", "1");
 	}
 	
 	@Test
@@ -178,7 +174,7 @@ public class FhirConverterTest extends CamelTestSupport {
 	}
 	
 	@Test
-	public void shouldIgnoreEventWithUnknownTable() throws Exception {
+	public void shouldIgnoreEventWithUnknownTable() {
 		Map<String, String> messageBody = DebeziumTestUtil.genExpectedBody();
 		Map<String, Object> messageHeaders = DebeziumTestUtil.genExpectedHeaders(Operation.UPDATE, "dummy");
 		
