@@ -144,7 +144,7 @@ public class DebeziumListener extends RouteBuilder {
 		public String jdbcDriverClass = "com.mysql.cj.jdbc.Driver";
 		
 		@Parameter(names = { "--jdbcUrl" }, description = "JDBC URL input")
-		public String jdbcUrlInput = "jdbc:mysql://localhost:3308/openmrs";
+		public String jdbcUrlInput = "jdbc:mysql://localhost:3306/openmrs";
 		
 		@Parameter(names = { "--jdbcMaxPoolSize" }, description = "JDBC maximum pool size")
 		public int jdbcMaxPoolSize = 50;
