@@ -22,17 +22,24 @@ if [[ $# -ne 4 ]]; then
   exit 1
 fi
 
-
+# Function that creates dataset and checks if the dataset already exist
 function create_dataset
 {
+  # Run command passed in
   output=`$@ 2>&1`
+  
+  # Store the returned code
   code=$?
   
+  # If operation succeeded, output that dataset was created 
   if [[ $code -eq 0 ]]; then
       echo 'Created dataset'
   else   
+    # If the dataset already exists, let user know
     if [[ $output == *'already exists'* ]]; then
           echo 'Dataset already exists'
+    
+    # For any other error, output the error and exit
     else
           echo $output
           exit -1
@@ -40,7 +47,7 @@ function create_dataset
   fi  
 }
 
-# Create GCP Healthcare dataset 
+# Creating GCP Healthcare dataset 
 echo "Creating GCP Healthcare dataset.."
 create_dataset "gcloud healthcare datasets create ${3} --location=${2}"
 
@@ -51,7 +58,7 @@ curl --request POST -H "Authorization: Bearer $(gcloud auth print-access-token)"
   --data '{"version":"R4", "enableUpdateCreate":true,"disableReferentialIntegrity":true}' \
   -w '\nFHIR store creation status code: %{http_code}\n'
 
-# Create BQ dataset
+# Creating BQ dataset
 echo "Creating BQ dataset..."
 create_dataset "bq --location=${2} mk --dataset ${1}:${3}"
 
