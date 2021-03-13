@@ -15,6 +15,7 @@
 package org.openmrs.analytics;
 
 import java.io.IOException;
+import java.sql.SQLException;
 import java.util.Map;
 
 import io.debezium.data.Envelope.Operation;
@@ -40,6 +41,8 @@ public class FhirConverterTest extends CamelTestSupport {
 	
 	private static final String TEST_ID = "ID";
 	
+	private static final String TEST_UUID = "UUID";
+	
 	@Produce(TEST_ROUTE)
 	protected ProducerTemplate eventsProducer;
 	
@@ -53,19 +56,23 @@ public class FhirConverterTest extends CamelTestSupport {
 	private Resource resource;
 	
 	@Mock
+	private UuidUtil uuidUtil;
+	
+	@Mock
 	private ParquetUtil parquetUtil;
 	
 	private FhirConverter fhirConverter;
 	
 	@Override
-	protected RoutesBuilder createRouteBuilder() throws Exception {
+	protected RoutesBuilder createRouteBuilder() {
 		return new RouteBuilder() {
 			
 			@Override
 			public void configure() throws Exception {
 				
 				String fhirDebeziumEventConfigPath = "../utils/dbz_event_to_fhir_config.json";
-				fhirConverter = new FhirConverter(openmrsUtil, fhirStoreUtil, parquetUtil, fhirDebeziumEventConfigPath);
+				fhirConverter = new FhirConverter(openmrsUtil, fhirStoreUtil, parquetUtil, fhirDebeziumEventConfigPath,
+				        uuidUtil);
 				
 				// Inject FhirUriGenerator;
 				from(TEST_ROUTE).process(fhirConverter); // inject target processor here
@@ -90,6 +97,20 @@ public class FhirConverterTest extends CamelTestSupport {
 		Mockito.verify(openmrsUtil).fetchFhirResource(Mockito.anyString());
 		Mockito.verify(fhirStoreUtil).uploadResource(resource);
 		Mockito.verify(parquetUtil, Mockito.never()).write(Mockito.<Resource> any());
+	}
+	
+	@Test
+	public void shouldGetUuidFromParent() throws SQLException {
+		Map<String, String> messageBody = DebeziumTestUtil.genExpectedBodyWithoutUUid();
+		Map<String, Object> messageHeaders = DebeziumTestUtil.genExpectedHeaders(Operation.CREATE, "patient");
+		
+		Mockito.when(uuidUtil.getUuid("person", "person_id", "1")).thenReturn(TEST_UUID);
+		
+		// Actual event that will trigger process().
+		eventsProducer.sendBodyAndHeaders(messageBody, messageHeaders);
+		
+		Mockito.verify(openmrsUtil).fetchFhirResource("/Patient/UUID");
+		Mockito.verify(uuidUtil).getUuid("person", "person_id", "1");
 	}
 	
 	@Test
@@ -153,7 +174,7 @@ public class FhirConverterTest extends CamelTestSupport {
 	}
 	
 	@Test
-	public void shouldIgnoreEventWithUnknownTable() throws Exception {
+	public void shouldIgnoreEventWithUnknownTable() {
 		Map<String, String> messageBody = DebeziumTestUtil.genExpectedBody();
 		Map<String, Object> messageHeaders = DebeziumTestUtil.genExpectedHeaders(Operation.UPDATE, "dummy");
 		

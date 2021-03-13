@@ -10,7 +10,7 @@
     "databaseSchema" : "openmrs",
     "databaseOffsetStorage" : "data/offset.dat",
     "databaseHistory" : "data/dbhistory.dat",
-    "snapshotMode" : "initial"
+    "snapshotMode" : "schema_only"
    },
   "eventConfigurations": {
     "location": {
@@ -109,6 +109,8 @@
       "enabled": "true",
       "title": "Patient",
       "parentTable": "person",
+      "parentForeignKey": "person_id",
+      "childPrimaryKey":"patient_id",
       "linkTemplates": {
         "rest": "/ws/rest/v1/patient/{uuid}?v=full",
         "fhir": "/Patient/{uuid}"
@@ -162,6 +164,8 @@
       "enabled": "true",
       "title": "DrugOrder",
       "parentTable": "drug_order",
+      "parentForeignKey": "order_id",
+      "childPrimaryKey":"order_id",
       "linkTemplates": {
         "rest": "/ws/rest/v1/drug_order/{uuid}?v=full",
         "fhir": "/MedicationRequest/{uuid}"
@@ -171,6 +175,8 @@
       "enabled": "true",
       "title": "TestOrder",
       "parentTable": "test_order",
+      "parentForeignKey": "order_id",
+      "childPrimaryKey":"order_id",
       "linkTemplates": {
         "rest": "/ws/rest/v1/test_order/{uuid}?v=full",
         "fhir": "/ProcedureRequest/{uuid}"

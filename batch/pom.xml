@@ -37,8 +37,6 @@
     <hamcrest.version>2.1</hamcrest.version>
     <jackson.version>2.10.2</jackson.version>
     <joda.version>2.10.5</joda.version>
-    <maven-jar-plugin.version>3.0.2</maven-jar-plugin.version>
-    <maven-shade-plugin.version>3.1.0</maven-shade-plugin.version>
     <pubsub.version>v1-rev20191111-1.30.3</pubsub.version>
     <auto-value.version>1.7.2</auto-value.version>
     <spark.version>2.4.5</spark.version>
@@ -47,7 +45,6 @@
     <nemo.version>0.1</nemo.version>
     <flink.artifact.name>beam-runners-flink-1.9</flink.artifact.name>
     <mysql.driver.version>8.0.16</mysql.driver.version>
-    <c3p0.version>0.9.5.4</c3p0.version>
 
   </properties>
 
@@ -84,23 +81,15 @@
           </dependency>
         </dependencies>
       </plugin>
-
       <!-- Ensure that the Maven jar plugin runs before the Maven
-        shade plugin by listing the plugin higher within the file. -->
+            shade plugin by listing the plugin higher within the file. -->
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-jar-plugin</artifactId>
-        <version>${maven-jar-plugin.version}</version>
       </plugin>
-
-      <!--
-        Configures `mvn package` to produce a bundled jar ("fat jar") for runners
-        that require this for job submission to a cluster.
-      -->
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-shade-plugin</artifactId>
-        <version>${maven-shade-plugin.version}</version>
         <executions>
           <execution>
             <phase>package</phase>
@@ -266,12 +255,6 @@
     </dependency>
 
     <!--JDBC specific dependencies-->
-    <dependency>
-      <!--JDBC connection pool will make concurrent JDBC connections more efficient-->
-      <groupId>com.mchange</groupId>
-      <artifactId>c3p0</artifactId>
-      <version>${c3p0.version}</version>
-    </dependency>
 
     <dependency>
       <groupId>mysql</groupId>

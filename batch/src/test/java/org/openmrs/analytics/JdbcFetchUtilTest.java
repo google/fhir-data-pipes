@@ -75,8 +75,10 @@ public class JdbcFetchUtilTest extends TestCase {
 		FhirEtl.FhirEtlOptions options = PipelineOptionsFactory.fromArgs(args).withValidation()
 		        .as(FhirEtl.FhirEtlOptions.class);
 		
-		jdbcFetchUtil = new JdbcFetchUtil(options.getJdbcDriverClass(), options.getJdbcUrl(), options.getDbUser(),
-		        options.getDbPassword(), options.getJdbcMaxPoolSize());
+		JdbcConnectionUtil jdbcConnectionUtil = new JdbcConnectionUtil(options.getJdbcDriverClass(), options.getJdbcUrl(),
+		        options.getDbUser(), options.getDbPassword(), options.getJdbcMaxPoolSize(),
+		        options.getJdbcInitialPoolSize());
+		jdbcFetchUtil = new JdbcFetchUtil(jdbcConnectionUtil);
 		parquetUtil = new ParquetUtil(basePath);
 		// clean up if folder exists
 		File file = new File(basePath);

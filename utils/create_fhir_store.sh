@@ -25,6 +25,22 @@ fi
 # Create GCP Healthcare dataset if it does not exist
 gcloud healthcare datasets create ${3} --location=${2}
 
+# output=$(gcloud healthcare datasets create ${3} --location=${2} 2>&1)
+# code=$?
+
+# if [[ $code -eq 0 ]]; then
+#     echo 'Created dataset'
+# else   
+#   if [[ $output == *'already exists'* ]]; then
+#         echo 'Dataset already exists'
+#   else
+#         echo $output
+#         exit -1
+#   fi
+# fi
+
+
+
 # Creating FHIR store
 curl --request POST -H "Authorization: Bearer $(gcloud auth print-access-token)" \
   -H "Content-Type: application/fhir+json; charset=utf-8" \

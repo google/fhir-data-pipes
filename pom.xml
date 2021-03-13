@@ -127,6 +127,16 @@
       <scope>test</scope>
     </dependency>
 
+    <!-- remember to install Lombok IDE plugin: by first ticking the "Enable annotation processing"
+      checkbox in Settings->Compiler->Annotation Processors. Secondly, Install the plugin
+       of Lombok for idea and restart IDE for change to take effect.
+    -->
+    <dependency>
+      <groupId>org.projectlombok</groupId>
+      <artifactId>lombok</artifactId>
+      <version>1.18.16</version>
+    </dependency>
+
     <dependency>
       <groupId>org.hamcrest</groupId>
       <artifactId>hamcrest-core</artifactId>
@@ -167,6 +177,14 @@
         <plugin>
           <artifactId>maven-surefire-plugin</artifactId>
           <version>2.22.1</version>
+        </plugin>
+        <!--
+           Configures `mvn package` to produce a bundled jar ("fat jar") for runners
+           that require this for job submission to a cluster.
+         -->
+        <plugin>
+          <artifactId>maven-shade-plugin</artifactId>
+          <version>3.1.0</version>
         </plugin>
         <plugin>
           <artifactId>maven-jar-plugin</artifactId>
