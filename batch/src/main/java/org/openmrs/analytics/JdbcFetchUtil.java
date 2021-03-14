@@ -76,7 +76,7 @@ public class JdbcFetchUtil {
 				            }
 			            })
 			            .withQuery(
-			                String.format("SELECT uuid FROM %s WHERE %s >= ? AND %s < ?", this.tableName, tableId, tableId))
+			                String.format("SELECT uuid FROM %s WHERE %s >= ? AND %s <= ?", this.tableName, tableId, tableId))
 			            .withRowMapper(new JdbcIO.RowMapper<String>() {
 				            
 				            @Override

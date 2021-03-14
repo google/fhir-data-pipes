@@ -122,6 +122,7 @@
         <artifactId>exec-maven-plugin</artifactId>
         <configuration>
           <mainClass>org.openmrs.analytics.FhirEtl</mainClass>
+          <cleanupDaemonThreads>false</cleanupDaemonThreads>
           <includePluginDependencies>false</includePluginDependencies>
         </configuration>
       </plugin>
