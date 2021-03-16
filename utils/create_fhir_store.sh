@@ -22,18 +22,44 @@ if [[ $# -ne 4 ]]; then
   exit 1
 fi
 
-# TODO create GCP Healthcare data-set too instead of assuming it exists.
+#######################################
+## Function that creates dataset and checks if the dataset already exist
+# Arguments:
+#   gcloud command to create a dataset
+#######################################
+function create_dataset() {
+  output=`$@ 2>&1`
 
-# Creating FHIR store
+  code=$?
+
+  if [[ $code -eq 0 ]]; then
+    echo "Created dataset"
+  else
+    # If the dataset already exists, let user know
+    if [[ "${output}" == *"already exists"* ]]; then
+      echo "Dataset already exists"
+
+    else
+      echo "ERROR ${output}" >&2
+      exit 1
+    fi
+  fi
+}
+
+echo "Creating GCP Healthcare dataset.."
+create_dataset "gcloud healthcare datasets create ${3} --location=${2}"
+
+echo "Creating FHIR Store..."
 curl --request POST -H "Authorization: Bearer $(gcloud auth print-access-token)" \
   -H "Content-Type: application/fhir+json; charset=utf-8" \
   "https://healthcare.googleapis.com/v1/projects/${1}/locations/${2}/datasets/${3}/fhirStores?fhirStoreId=${4}" \
   --data '{"version":"R4", "enableUpdateCreate":true,"disableReferentialIntegrity":true}' \
   -w '\nFHIR store creation status code: %{http_code}\n'
 
-# TODO create BQ dataset instead of assuming it exists.
+echo "Creating BQ dataset..."
+create_dataset "bq --location=${2} mk --dataset ${1}:${3}"
 
-# Setting up BQ streaming
+echo "Setting up BQ streaming..."
 curl -X PATCH \
   -H "Authorization: Bearer $(gcloud auth application-default print-access-token)" \
   -H "Content-Type: application/json; charset=utf-8" \
@@ -51,3 +77,5 @@ curl -X PATCH \
   }" \
   "https://healthcare.googleapis.com/v1/projects/${1}/locations/${2}/datasets/${3}/fhirStores/${4}?updateMask=streamConfigs" \
   -w '\nFHIR store BQ streaming set up status code: %{http_code}\n'
+
+echo "Complete!!"
