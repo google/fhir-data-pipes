@@ -98,8 +98,8 @@ public class JdbcFetchUtilTest extends TestCase {
 		int maxId = 200;
 		Map<Integer, Integer> idRanges = jdbcFetchUtil.createIdRanges(maxId, batchSize);
 		Map<Integer, Integer> expectedMap = new HashMap<Integer, Integer>();
-		expectedMap.put(100, 200);
-		expectedMap.put(0, 100);
+		expectedMap.put(101, 200);
+		expectedMap.put(1, 100);
 		assertEquals(idRanges, expectedMap);
 	}
 	
