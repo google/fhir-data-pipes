@@ -25,10 +25,10 @@ echo "${print_prefix} PARQUET FILES WILL BE WRITTEN INTO $test_dir DIRECTORY"
 echo "${print_prefix} RUNNING BATCH MODE WITH PARQUET SYNC"
 echo "${print_prefix} mvn exec:java -pl batch \
       -Dexec.args=--openmrsServerUrl=http://localhost:8099/openmrs --openmrsUserName=admin --openmrsPassword=Admin123
-      --searchList=Patient,Encounter,Observation --batchSize=20 --targetParallelism=20 --fileParquetPath='${test_dir}' "
+      --searchList=Patient,Encounter,Observation --batchSize=20 --targetParallelism=20 --outputParquetPath='${test_dir}' "
 mvn exec:java -pl batch \
  "-Dexec.args=--openmrsServerUrl=http://localhost:8099/openmrs --openmrsUserName=admin --openmrsPassword=Admin123  \
-      --searchList=Patient,Encounter,Observation --batchSize=20 --targetParallelism=20 --fileParquetPath='${test_dir}'/ "
+      --searchList=Patient,Encounter,Observation --batchSize=20 --targetParallelism=20 --outputParquetPath='${test_dir}'/ "
 if [[ -z $(ls "${test_dir}"/Patient) ]]; then
   echo "${print_prefix} DATA NOT SYNCED TO PARQUET FILES"
   exit 1

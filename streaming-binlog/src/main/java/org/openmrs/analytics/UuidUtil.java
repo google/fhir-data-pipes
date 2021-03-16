@@ -21,7 +21,7 @@ import java.sql.Statement;
 public class UuidUtil {
 	
 	private final JdbcConnectionUtil jdbcConnectionUtil;
-	
+
 	public UuidUtil(JdbcConnectionUtil jdbcConnectionUtil) {
 		this.jdbcConnectionUtil = jdbcConnectionUtil;
 	}
