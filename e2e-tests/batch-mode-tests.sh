@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 #######################################
-## Function that prints messages
+# Function that prints messages
 # Arguments:
 #   anything that needs printing
 #######################################
@@ -12,7 +12,7 @@ function print_message() {
 
 
 #######################################
-## Function that sets up testing env
+# Function that sets up testing env
 #######################################
 function setup() {
   HOME_PATH=$(pwd)
@@ -63,8 +63,8 @@ function setup() {
 
 
 #######################################
-## Function that tests sinking to parquet files
-## and compares output to what is in openmrs server
+# Function that tests sinking to parquet files
+# and compares output to what is in openmrs server
 # Arguments:
 #   extra flags for Dexex.args
 #   file path
@@ -126,8 +126,8 @@ function test_parquet_sink() {
 }
 
 #######################################
-## Function that tests sinking to FHIR server
-## and compares output to what is in openmrs server
+# Function that tests sinking to FHIR server
+# and compares output to what is in openmrs server
 # Arguments:
 #   extra flags for Dexex.args
 #   file path
@@ -169,6 +169,7 @@ print_message "---- STARTING PARQUET SINK TEST ----"
 test_parquet_sink "--fileParquetPath=${TEST_DIR_FHIR}/" "${TEST_DIR_FHIR}" "FHIR_SEARCH"
 test_parquet_sink "--fileParquetPath=${TEST_DIR_JDBC}/ ${JDBC_SETTINGS}" "${TEST_DIR_JDBC}" "JDBC"
 
+# TODO(omarismail) merge so that both FHIR Sink test and Parquet Sink test are one
 print_message "---- STARTING FHIR SINK TEST ----"
 test_fhir_sink "${JDBC_SETTINGS}" "${TEST_DIR_JDBC}" "JDBC"
 test_fhir_sink "" "${TEST_DIR_FHIR}" "FHIR_SEARCH"

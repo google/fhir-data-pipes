@@ -122,6 +122,7 @@
         <artifactId>exec-maven-plugin</artifactId>
         <configuration>
           <mainClass>org.openmrs.analytics.FhirEtl</mainClass>
+          <!--Fixes WARNING and threading messages when running in JDBC mode-->
           <cleanupDaemonThreads>false</cleanupDaemonThreads>
           <includePluginDependencies>false</includePluginDependencies>
         </configuration>
