@@ -95,7 +95,7 @@ parameters which are documented here.
     used for GCP FHIR stores.
 -   `sinkPassword` - The HTTP Basic Auth password to access the FHIR sink. Not
     used for GCP FHIR stores.
--   `fileParquetPath` - The file path to write Parquet files to, e.g.,
+-   `outputParquetPath` - The file path to write Parquet files to, e.g.,
     `./tmp/parquet/`.
 
 ## Batch mode
@@ -125,7 +125,7 @@ $ java -cp batch/target/fhir-batch-etl-bundled-0.1.0-SNAPSHOT.jar \
     --openmrsUserName=admin --openmrsPassword=Admin123 \
     --fhirSinkPath=http://localhost:8098/fhir \
     --sinkUserName=hapi --sinkPassword=hapi \
-    --fileParquetPath=/tmp/TEST/ \
+    --outputParquetPath=/tmp/TEST/ \
     --searchList=Patient,Encounter,Observation --batchSize=20
 ```
 
@@ -153,7 +153,7 @@ $ java -cp batch/target/fhir-batch-etl-bundled-0.1.0-SNAPSHOT.jar \
     --openmrsUserName=admin --openmrsPassword=Admin123 \
     --fhirSinkPath=http://localhost:8098/fhir \
     --sinkUserName=hapi --sinkPassword=hapi \
-    --fileParquetPath=/tmp/TEST/ \
+    --outputParquetPath=/tmp/TEST/ \
     --searchList=Patient,Encounter,Observation --batchSize=20 \
     --jdbcModeEnabled=true --jdbcUrl=jdbc:mysql://localhost:3306/openmrs \
     --dbUser=root --dbPassword=debezium --jdbcMaxPoolSize=50 \
@@ -220,7 +220,7 @@ resume from the last processed offset.
         --openmrsUserName=admin --openmrsPassword=Admin123 \
         --fhirSinkPath=http://localhost:8098/fhir \
         --sinkUserName=hapi --sinkPassword=hapi \
-        --fileParquetPath=/tmp/TEST/ \
+        --outputParquetPath=/tmp/TEST/ \
         --fhirDebeziumEventConfigPath=./utils/dbz_event_to_fhir_config.json \
         --openmrsfhirBaseEndpoint=/ws/fhir2/R4"
     ```
@@ -250,7 +250,7 @@ Parameters:
     `http://localhost:8099/openmrs/ws/fhir2/R4/Patient`. This generally should
     not be changed. Default: `/ws/fhir2/R4`
 
-If `fileParquetPath` is set, there are additional parameters:
+If `outputParquetPath` is set, there are additional parameters:
 
 -   `secondsToFlushParquetFiles` - The number of seconds to wait before flushing
     all Parquet writers with non-empty content to files. Use `0` to disable.
@@ -651,7 +651,7 @@ mvn compile exec:java -pl streaming-binlog \
   --openmrsServerUrl=http://localhost:8099/openmrs \
   --fhirSinkPath=http://localhost:5001/fhir \
   --sinkUserName=hapi --sinkPassword=Admin123 \
-  --fileParquetPath=/tmp/"
+  --outputParquetPath=/tmp/"
 ```
 
 You can track all the transactions in the OpenHIM instance Under the Tab

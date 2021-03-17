@@ -39,7 +39,7 @@ ENTRYPOINT java -cp app.jar org.openmrs.analytics.Runner \
            --fhirSinkPath=${SINK_URL}  \
            --sinkUserName=${SINK_USERNAME} \
            --sinkPassword=${SINK_PASSWORD} \
-           --fileParquetPath=${PARQUET_PATH} \
+           --outputParquetPath=${PARQUET_PATH} \
            --fhirDebeziumConfigPath=${FHIR_DEBEZIUM_CONFIG_PATH} \
            --jdbcDriverClass=${JDBC_DRIVER_CLASS} \
            --jdbcMaxPoolSize=${JDBC_MAX_POOL_SIZE} \
