@@ -166,8 +166,8 @@ function test_fhir_sink() {
 
 setup
 print_message "---- STARTING PARQUET SINK TEST ----"
-test_parquet_sink "--fileParquetPath=${TEST_DIR_FHIR}/" "${TEST_DIR_FHIR}" "FHIR_SEARCH"
-test_parquet_sink "--fileParquetPath=${TEST_DIR_JDBC}/ ${JDBC_SETTINGS}" "${TEST_DIR_JDBC}" "JDBC"
+test_parquet_sink "--outputParquetPath=${TEST_DIR_FHIR}/" "${TEST_DIR_FHIR}" "FHIR_SEARCH"
+test_parquet_sink "--outputParquetPath=${TEST_DIR_JDBC}/ ${JDBC_SETTINGS}" "${TEST_DIR_JDBC}" "JDBC"
 
 # TODO(omarismail) merge so that both FHIR Sink test and Parquet Sink test are one
 print_message "---- STARTING FHIR SINK TEST ----"
