@@ -105,3 +105,23 @@ services:
       - MYSQL_ROOT_HOST=%
     volumes:
       - ./utils/dbdump/atomfeed_db_sql:/docker-entrypoint-initdb.d/dump.sql
+
+  indicator-gen: # To run independently: docker-compose up --build indicator-gen
+    build:
+      context: dwh
+    image: openmrs-fhir-analytics/dwh:latest
+    container_name: indicator-gen
+    network_mode: host
+    healthcheck:
+      test: "exit 0"
+    volumes:
+      # input: path to the parquet file
+      - ./dwh/test_files:/dwh/input
+      # output: path to indicator csv and other outputs
+      - ./data/output:/dwh/output
+      # indicator: path to indicator definition entry-point
+      - ./dwh/indicators.py:/dwh/main.py
+    environment:
+      # PARQUET_PATH below should be consistent as volume mappings above (input)
+      - PARQUET_PATH=/dwh/input
+      - OUTPUT_CSV=indicators_output_XXXXXX.csv
