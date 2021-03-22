@@ -21,7 +21,7 @@ TEMP_OUT=$(mktemp  /dwh/output/${OUTPUT_CSV})
 echo "${print_prefix} Output indicators file is: ${TEMP_OUT}"
 
 spark-submit main.py --src_dir=${PARQUET_PATH} --output_csv=${TEMP_OUT} \
-  --last_date=2020-12-30 --num_days=28 # add any other parameters specific to main.py
+  --last_date=${LAST_DATE} --num_days=${NUM_DAYS} --custom_parameters=${CUSTOM_PARAMETERS} # add any other parameters specific to main.py
 
 COUNT=$(wc -l < ${TEMP_OUT})
 echo "${print_prefix} Number of records generated: ${COUNT}"

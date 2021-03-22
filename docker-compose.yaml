@@ -125,3 +125,6 @@ services:
       # PARQUET_PATH below should be consistent as volume mappings above (input)
       - PARQUET_PATH=/dwh/input
       - OUTPUT_CSV=indicators_output_XXXXXX.csv
+      - NUM_DAYS=28
+      - LAST_DATE=2020-12-30
+      - CUSTOM_PARAMETERS=
