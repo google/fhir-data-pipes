@@ -180,8 +180,8 @@ public class JdbcFetchUtil {
 				for (String search : searchList) {
 					if (linkTemplate.containsKey("fhir") && linkTemplate.get("fhir") != null) {
 						String[] resourceName = linkTemplate.get("fhir").split("/");
-						if (resourceName.length >= 1 && resourceName[1].equals(search)) {
-							reverseMap.put(entry.getValue().getParentTable(), resourceName[1]);
+						if (resourceName.length >= 1 && resourceName[1].equals(search) && entry.getValue().isEnabled()) {
+							reverseMap.put(resourceName[1], entry.getValue().getParentTable());
 						}
 					}
 				}

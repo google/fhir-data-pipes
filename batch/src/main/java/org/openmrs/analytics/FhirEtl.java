@@ -179,8 +179,8 @@ public class FhirEtl {
 		    options.getTableFhirMapPath());
 		// process each table-resource mappings
 		for (Map.Entry<String, String> entry : reverseMap.entrySet()) {
-			String tableName = entry.getKey();
-			String resourceType = entry.getValue();
+			String tableName = entry.getValue();
+			String resourceType = entry.getKey();
 			String baseBundleUrl = options.getOpenmrsServerUrl() + options.getServerFhirEndpoint() + "/" + resourceType;
 			int maxId = jdbcUtil.fetchMaxId(tableName);
 			Map<Integer, Integer> IdRanges = jdbcUtil.createIdRanges(maxId, jdbcFetchSize);
