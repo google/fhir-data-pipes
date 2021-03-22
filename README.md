@@ -657,7 +657,7 @@ mvn compile exec:java -pl streaming-binlog \
 You can track all the transactions in the OpenHIM instance Under the Tab
 `Transaction Log`
 
-See a demo at [](https://youtu.be/U1Sz3GUKbIw)
+See a demo at [https://youtu.be/U1Sz3GUKbIw]()
 
 see
 [here](https://openhim.readthedocs.io/en/latest/how-to/how-to-setup-and-configure-openhim.html)
