@@ -165,4 +165,11 @@ public interface FhirEtlOptions extends PipelineOptions {
 	int getNumFileShards();
 	
 	void setNumFileShards(int value);
+	
+	@Description("The number of seconds after which records are flushed into Parquet/text files; "
+	        + "use 0 to disable (note this may have undesired memory implications).")
+	@Default.Integer(600)
+	int getSecondsToFlushFiles();
+	
+	void setSecondsToFlushFiles(int value);
 }
