@@ -113,6 +113,7 @@ public class FhirEtl {
 		}
 		// We are dealing with a bounded source hence we can simply use the single Global window.
 		// Also we don't need to deal with late data.
+		// TODO: Implement an easy way to unit-test this functionality.
 		return records.apply(Window.<T> into(new GlobalWindows())
 		        .triggering(Repeatedly.forever(
 		            AfterProcessingTime.pastFirstElementInPane().plusDelayOf(Duration.standardSeconds(secondsToFlush))))
