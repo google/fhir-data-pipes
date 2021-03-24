@@ -62,10 +62,6 @@ public class EventConfiguration {
 	
 	@Getter
 	@Setter
-	private String databaseName;
-	
-	@Getter
-	@Setter
 	private int databaseServerId;
 	
 	@Getter
