@@ -13,7 +13,6 @@
 // limitations under the License.
 package org.openmrs.analytics;
 
-import java.io.IOException;
 import java.io.Reader;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -27,6 +26,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import com.google.gson.Gson;
 import org.apache.beam.sdk.coders.NullableCoder;
@@ -167,7 +167,7 @@ public class JdbcFetchUtil {
 		return rangeMap;
 	}
 	
-	public Map<String, String> createFhirReverseMap(String searchString, String tableFhirMapPath) throws IOException {
+	public Map<String, String> createFhirReverseMap(String searchString, String tableFhirMapPath) throws Exception {
 		Gson gson = new Gson();
 		Path pathToFile = Paths.get(tableFhirMapPath);
 		try (Reader reader = Files.newBufferedReader(pathToFile.toAbsolutePath(), StandardCharsets.UTF_8)) {
@@ -180,16 +180,27 @@ public class JdbcFetchUtil {
 				for (String search : searchList) {
 					if (linkTemplate.containsKey("fhir") && linkTemplate.get("fhir") != null) {
 						String[] resourceName = linkTemplate.get("fhir").split("/");
-						if (resourceName.length >= 1 && resourceName[1].equals(search) && entry.getValue().isEnabled()) {
-							reverseMap.put(resourceName[1], entry.getValue().getParentTable());
+						if (resourceName.length >= 1 && resourceName[1].equals(search)) {
+							if (!reverseMap.containsKey(resourceName[1])) {
+								reverseMap.put(resourceName[1], entry.getValue().getParentTable());
+							} else {
+								log.error("Some tables are mapped to the same Resources");
+								throw new Exception("config file has duplicate Resource mappings");
+							}
 						}
 					}
 				}
 			}
-			if (reverseMap.size() < searchList.length) {
-				log.error("Some of the passed FHIR resources are not mapped to any table, please check the config");
-			}
 			return reverseMap;
 		}
 	}
+	
+	public Map<String, ArrayList<String>> deduplicateReverseMap(Map<String, String> reverseMap) {
+		Map<String, ArrayList<String>> deduplicatedReverseMap = new HashMap<>(
+		        reverseMap.entrySet().stream().collect(Collectors.groupingBy(Map.Entry::getValue)).values().stream()
+		                .collect(Collectors.toMap(item -> item.get(0).getValue(),
+		                    item -> new ArrayList<>(item.stream().map(Map.Entry::getKey).collect(Collectors.toList())))));
+		return deduplicatedReverseMap;
+	}
+	
 }

@@ -131,7 +131,7 @@ public class JdbcFetchUtilTest extends TestCase {
 	}
 	
 	@Test
-	public void testCreateFhirReverseMap() throws IOException {
+	public void testCreateFhirReverseMap() throws Exception {
 		Map<String, String> reverseMap = jdbcFetchUtil.createFhirReverseMap("Patient,Person,Encounter,Observation",
 		    "../utils/dbz_event_to_fhir_config.json");
 		assertEquals(4, reverseMap.size());
@@ -139,6 +139,23 @@ public class JdbcFetchUtilTest extends TestCase {
 		assertEquals(reverseMap.get("Person"), "person");
 		assertEquals(reverseMap.get("Encounter"), "encounter");
 		assertEquals(reverseMap.get("Observation"), "obs");
+		
+		Map<String, ArrayList<String>> deduplicatedRerveseMap = jdbcFetchUtil.deduplicateReverseMap(reverseMap);
+		
+		assertEquals(3, deduplicatedRerveseMap.size());
+		assertEquals(deduplicatedRerveseMap.size(), 3);
+		assertEquals(deduplicatedRerveseMap.get("person").size(), 2);
+		assertTrue(deduplicatedRerveseMap.get("person").contains("Patient"));
+		assertTrue(deduplicatedRerveseMap.get("person").contains("Person"));
+		assertTrue(deduplicatedRerveseMap.get("encounter").contains("Encounter"));
+		assertTrue(deduplicatedRerveseMap.get("obs").contains("Observation"));
+	}
+	
+	@Test(expected = Exception.class)
+	public void createFhirReverseMapShouldThrowErrorOnDuplicateResourceMappings() throws Exception {
+		Map<String, String> reverseMap = jdbcFetchUtil.createFhirReverseMap("Patient,Person",
+		    "src/test/resources/duplicate_dbz_event_to_fhir_config.json");
+		assertEquals(4, reverseMap.size());
 	}
 	
 }

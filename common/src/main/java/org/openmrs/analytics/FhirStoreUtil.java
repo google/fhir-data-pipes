@@ -29,6 +29,7 @@ import ca.uhn.fhir.rest.client.api.IGenericClient;
 import ca.uhn.fhir.rest.client.api.IRestfulClientFactory;
 import ca.uhn.fhir.rest.client.interceptor.AdditionalRequestHeadersInterceptor;
 import ca.uhn.fhir.rest.client.interceptor.BasicAuthInterceptor;
+import ca.uhn.fhir.rest.server.exceptions.ResourceVersionConflictException;
 import org.apache.commons.lang3.StringUtils;
 import org.hl7.fhir.instance.model.api.IBaseOperationOutcome;
 import org.hl7.fhir.r4.model.Bundle;
@@ -91,7 +92,14 @@ public class FhirStoreUtil {
 			interceptors = Collections.singleton(new BasicAuthInterceptor(sinkUsername, sinkPassword));
 		}
 		
-		return uploadBundle(sinkUrl, bundle, interceptors);
+		Collection<MethodOutcome> responses;
+		try {
+			responses = uploadBundle(sinkUrl, bundle, interceptors);
+		}
+		catch (ResourceVersionConflictException e) {
+			responses = uploadBundle(sinkUrl, bundle, interceptors);
+		}
+		return responses;
 	}
 	
 	protected IGenericClient createGenericClient(String sinkUrl, Collection<IClientInterceptor> interceptors) {
