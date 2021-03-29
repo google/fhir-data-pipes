@@ -1,4 +1,4 @@
-# Atom Feed Module
+# Atom Feed Mode
 
 **NOTE:** The Atom Feed mode is deprecated and may be removed in a future
 version. We strongly recommend using one of the other modes instead.
