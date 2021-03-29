@@ -79,13 +79,6 @@ def create_args(parser: argparse.ArgumentParser):
       type=str
   )
 
-  parser.add_argument(
-        '--custom_parameters',
-        help='A string of user defined parameters',
-        required=False,
-        type=str
-    )
-
 
 def find_date_range(args: argparse.ArgumentParser) -> Tuple[str, str]:
   end_date_str = args.last_date.strftime('%Y-%m-%d')
@@ -130,13 +123,5 @@ if __name__ == '__main__':
   VL_df_P = indicator_lib.calc_TX_PVLS(
       patient_agg_obs_df, VL_code='5090AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA',
       end_date_str=end_date)
-
-  # TODO : Extend indicator_lib.py to support multi-coded indicators, see issue #147
-  TX_CURR_df_P = indicator_lib.calc_TX_CURR(
-        patient_agg_obs_df, ART_code='5090AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA',
-        end_date_str=end_date)
-
-  VL_df_P\
-  .merge(TX_CURR_df_P, on=['agg_bucket'], how='left')\
-  .to_csv(args.output_csv, index=False)
+  VL_df_P.to_csv(args.output_csv, index=False)
 

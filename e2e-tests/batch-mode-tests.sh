@@ -21,7 +21,7 @@ function setup() {
   mvn compile
 
   print_message "STARTING SERVERs"
-  docker-compose -f openmrs-compose.yaml up -d --remove-orphans
+  docker-compose -f docker/openmrs-compose.yaml up -d --remove-orphans
   openmrs_start_wait_time=0
   contenttype=$(curl -o /dev/null --head -w "%{content_type}\n" -X GET -u admin:Admin123 --connect-timeout 5 \
     --max-time 20 http://localhost:8099/openmrs/ws/fhir2/R4/Patient 2>/dev/null | cut -d ";" -f 1)

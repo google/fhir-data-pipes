@@ -13,15 +13,15 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-
 # This script is the entry-point to any indicator calculation logic.
+set -e  # Make sure that we exit after the very first error.
 print_prefix="INDICATOR GENERATION:"
 echo "${print_prefix} Transformation STARTED..."
-TEMP_OUT=$(mktemp  /dwh/output/${OUTPUT_CSV})
+TEMP_OUT=$(mktemp  /dwh/output/${OUTPUT_CSV}.XXXXXXX.csv)
 echo "${print_prefix} Output indicators file is: ${TEMP_OUT}"
 
 spark-submit main.py --src_dir=${PARQUET_PATH} --output_csv=${TEMP_OUT} \
-  --last_date=${LAST_DATE} --num_days=${NUM_DAYS} --custom_parameters=${CUSTOM_PARAMETERS} # add any other parameters specific to main.py
+  --last_date=${LAST_DATE} --num_days=${NUM_DAYS}
 
 COUNT=$(wc -l < ${TEMP_OUT})
 echo "${print_prefix} Number of records generated: ${COUNT}"

@@ -55,5 +55,5 @@ services:
       test: ["CMD", "curl", "-f", "http://localhost:80/"]
       timeout: 20s    
     volumes:
-      - ./utils/openhim-default.json:/usr/share/nginx/html/config/default.json
+      - ../utils/openhim-default.json:/usr/share/nginx/html/config/default.json
     
