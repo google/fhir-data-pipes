@@ -37,10 +37,15 @@ import org.apache.beam.sdk.io.parquet.ParquetIO;
 import org.apache.beam.sdk.options.PipelineOptionsFactory;
 import org.apache.beam.sdk.transforms.Create;
 import org.apache.beam.sdk.transforms.ParDo;
+import org.apache.beam.sdk.transforms.windowing.AfterProcessingTime;
+import org.apache.beam.sdk.transforms.windowing.GlobalWindows;
+import org.apache.beam.sdk.transforms.windowing.Repeatedly;
+import org.apache.beam.sdk.transforms.windowing.Window;
 import org.apache.beam.sdk.values.PCollection;
 import org.apache.beam.sdk.values.PCollectionTuple;
 import org.apache.beam.sdk.values.TupleTagList;
 import org.hl7.fhir.r4.model.Bundle;
+import org.joda.time.Duration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -102,6 +107,19 @@ public class FhirEtl {
 		return search;
 	}
 	
+	static <T> PCollection<T> addWindow(PCollection<T> records, int secondsToFlush) {
+		if (secondsToFlush <= 0) {
+			return records;
+		}
+		// We are dealing with a bounded source hence we can simply use the single Global window.
+		// Also we don't need to deal with late data.
+		// TODO: Implement an easy way to unit-test this functionality.
+		return records.apply(Window.<T> into(new GlobalWindows())
+		        .triggering(Repeatedly.forever(
+		            AfterProcessingTime.pastFirstElementInPane().plusDelayOf(Duration.standardSeconds(secondsToFlush))))
+		        .discardingFiredPanes());
+	}
+	
 	private static void fetchSegments(PCollection<SearchSegmentDescriptor> inputSegments, String search,
 	        FhirEtlOptions options) {
 		String resourceType = findSearchedResource(search);
@@ -112,17 +130,21 @@ public class FhirEtl {
 		    TupleTagList.of(fetchSearchPageFn.jsonTag)));
 		records.get(fetchSearchPageFn.avroTag).setCoder(AvroCoder.of(GenericRecord.class, schema));
 		if (!options.getOutputParquetPath().isEmpty()) {
+			PCollection<GenericRecord> windowedRecords = addWindow(records.get(fetchSearchPageFn.avroTag),
+			    options.getSecondsToFlushFiles());
 			// TODO: Make sure getOutputParquetPath() is a directory.
 			String outputFile = options.getOutputParquetPath() + resourceType;
 			ParquetIO.Sink sink = ParquetIO.sink(schema); // TODO add an option for .withCompressionCodec();
-			records.get(fetchSearchPageFn.avroTag).apply(FileIO.<GenericRecord> write().via(sink).to(outputFile)
-			        .withSuffix(".parquet").withNumShards(options.getNumFileShards()));
+			windowedRecords.apply(FileIO.<GenericRecord> write().via(sink).to(outputFile).withSuffix(".parquet")
+			        .withNumShards(options.getNumFileShards()));
 			// TODO add Avro output option
 			// apply("WriteToAvro", AvroIO.writeGenericRecords(schema).to(outputFile).withSuffix(".avro")
 			//        .withNumShards(options.getNumParquetShards()));
 		}
 		if (!options.getOutputJsonPath().isEmpty()) {
-			records.get(fetchSearchPageFn.jsonTag).apply("WriteToText",
+			PCollection<String> windowedRecords = addWindow(records.get(fetchSearchPageFn.jsonTag),
+			    options.getSecondsToFlushFiles());
+			windowedRecords.apply("WriteToText",
 			    TextIO.write().to(options.getOutputJsonPath() + resourceType).withSuffix(".txt"));
 		}
 	}
