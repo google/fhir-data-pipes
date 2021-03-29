@@ -1,0 +1,61 @@
+{ 
+    "resourceType": "Patient",
+    "text": {
+        "status": "generated",
+        "div": "<div xmlns=\"http://www.w3.org/1999/xhtml\"><table class=\"hapiPropertyTable\"><tbody><tr><td>Id:</td><td>1e7e9782-2e97-44a0-ab2e-9d04498d4ca6</td></tr><tr><td>Identifier:</td><td><div>10000X</div></td></tr><tr><td>Active:</td><td>true</td></tr><tr><td>Name:</td><td> Paul <b>WALKER </b></td></tr><tr><td>Gender:</td><td>MALE</td></tr><tr><td>Birth Date:</td><td>11/04/1971</td></tr><tr><td>Deceased:</td><td>false</td></tr><tr><td>Address:</td><td><span>City7001 </span><span>State7001 </span><span>Country7001 </span></td></tr></tbody></table></div>"
+    },
+    "identifier": [
+        {
+            "id": "05a29f94-c0ed-11e2-94be-8c13b969e334",
+            "extension": [
+                {
+                    "url": "http://fhir.openmrs.org/ext/patient/identifier#location",
+                    "valueReference": {
+                        "reference": "Location/8d6c993e-c2cc-11de-8d13-0010c6dffd0f",
+                        "type": "Location",
+                        "display": "Unknown Location"
+                    }
+                }
+            ],
+            "use": "official",
+            "type": {
+                "text": "OpenMRS ID"
+            },
+            "value": "10002T"
+        }
+    ],
+    "active": true,
+    "name": [
+        {
+            "id": "9d550771-11d6-41b6-89c1-893ecd78210b",
+            "family": "Clive",
+            "given": [
+                "Jita"
+            ]
+        }
+    ],
+    "gender": "male",
+    "birthDate": "1971-04-11",
+    "deceasedBoolean": false,
+    "address": [
+        {
+            "id": "f4ba90db-e412-4aa3-a519-2c33eac3e867",
+            "extension": [
+                {
+                    "url": "http://fhir.openmrs.org/ext/address",
+                    "extension": [
+                        {
+                            "url": "http://fhir.openmrs.org/ext/address#address1",
+                            "valueString": "Address17001"
+                        }
+                    ]
+                }
+            ],
+            "use": "home",
+            "city": "City7001",
+            "state": "State7001",
+            "postalCode": "47002",
+            "country": "Country7001"
+        }
+    ]
+}

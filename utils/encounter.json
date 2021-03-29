@@ -1,0 +1,12 @@
+{
+    "encounterDatetime":"2020-09-16T14:08:40.000+0530",
+    "patient":"957d5571-dee2-4e5e-8ece-b65d2d965248",
+    "location":"aff27d58-a15c-49a6-9beb-d30dcfc0c66e",
+    "encounterType":"e22e39fd-7db2-45e7-80f1-60fa0d5a4378",
+    "encounterProviders": [
+        {
+          "provider": "fb6adae0-191d-4d5f-9c7a-54af74270c67",
+          "encounterRole": "240b26f9-dd88-4172-823d-4a8bfeb7841f"
+        }
+      ]
+}
