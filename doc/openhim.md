@@ -1,10 +1,10 @@
-## Integrating with OpenHIM (Middleware component)
+# Integrating with OpenHIM (Middleware component)
 
 For the case, where there are several OpenMRS systems, OpenHIM can be used as a
 middleware component to integrate/track/log requests from several OpenMRS
 instances.
 
-### 1. Fire up OpenHIM Instance
+## Fire up OpenHIM Instance
 
 After spinning up the Hapi FHIR instance, see details above, you can spin up an
 OpenHIM instance.

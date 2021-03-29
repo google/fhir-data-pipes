@@ -1,4 +1,4 @@
-## Create a Google Cloud FHIR Store and BigQuery Dataset
+# Create a Google Cloud FHIR Store and BigQuery Dataset
 
 One of the supported FHIR sinks is
 [Google Cloud FHIR store](https://cloud.google.com/healthcare/docs/concepts/fhir)
@@ -56,4 +56,3 @@ You can run the script with no arguments to see a sample usage. After you create
 the FHIR store, its full URL would be:
 
 `https://healthcare.googleapis.com/v1/projects/PROJECT/locations/LOCATION/datasets/DATASET/fhirStores/FHIR-STORE-NAME`
-

@@ -10,13 +10,13 @@ The Atom Feed mode listens to the
 for new or modified data. The feed is modified to also include URLs to the
 corresponding FHIR resources.
 
-### Add the Atom Feed module to OpenMRS
+## Add the Atom Feed module to OpenMRS
 
 Install the
 [Atom Feed Module](https://addons.openmrs.org/show/org.openmrs.module.atomfeed)
 if necessary.
 
-### Update the Atom Feed configuration
+## Update the Atom Feed configuration
 
 Next, update the Atom Feed module to include FHIR resource URLs in its output.
 From the OpenMRS home page click **Atomfeed > Load Configuration > Choose
@@ -41,7 +41,7 @@ path and
 [http://localhost:8099/openmrs/ws/fhir2/R4/Patient/ab6cba2e-8e03-41ec-a551-aab6e04b27f6]()
 is the URL for the FHIR resource.
 
-### Set up the Atom Feed client side database
+## Set up the Atom Feed client side database
 
 The Atom Feed-based streaming client requires a MySQL database to store failed
 events and progress markers.
@@ -72,7 +72,7 @@ with any customizations you've made. Pay extra attention to
 `hibernate.connection.url`, `hibernate.connection.username`, and
 `hibernate.connection.password`.
 
-### Compile and run
+## Compile and run
 
 From the root of your git repo, compile the client:
 
@@ -107,4 +107,3 @@ parameters.
 To test your changes, create a new patient (or observation) in OpenMRS and check
 that a corresponding Patient (or Observation) FHIR resource is created in the
 GCP FHIR store and corresponding rows added to the BigQuery tables.
-
