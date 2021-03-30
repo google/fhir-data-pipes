@@ -38,7 +38,7 @@ function setup() {
   done
   print_message "OPENMRS SERVER STARTED SUCCESSFULLY"
 
-  docker-compose -f sink-compose.yml up -d
+  docker-compose -f  docker/sink-compose.yml up -d
   fhir_server_start_wait_time=0
   fhir_server_status_code=$(curl -o /dev/null --head -w "%{http_code}" -L -X GET -u hapi:hapi --connect-timeout 5 \
     --max-time 20 http://localhost:8098/fhir/Observation 2>/dev/null)
