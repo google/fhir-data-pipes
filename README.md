@@ -290,21 +290,21 @@ instructions.
 ### Run OpenMRS and MySQL using Docker
 
 ```
-$ docker-compose -f openmrs-compose.yaml up
+$ docker-compose -f docker/openmrs-compose.yaml up
 ```
 
 Once running you can access OpenMRS at <http://localhost:8099/openmrs/> using
 username "admin" and password "Admin123". The Docker image includes the required
-FHIR2 module and demo data. Edit `openmrs-compose.yaml` to change the default
+FHIR2 module and demo data. Edit `docker/openmrs-compose.yaml` to change the default
 port.
 
 If `docker-compose` fails, you may need to adjust file permissions.
 
 ```
-$ docker-compose -f openmrs-compose.yaml down -v
+$ docker-compose -f docker/openmrs-compose.yaml down -v
 $ chmod a+rx ./utils ./utils/dbdump
 $ chmod -R a+r ./utils
-$ docker-compose -f openmrs-compose.yaml up
+$ docker-compose -f docker/openmrs-compose.yaml up
 ```
 
 In order to see the demo data in OpenMRS you must rebuild the search index. In
@@ -317,7 +317,7 @@ This is only needed if you want to test sending data to a FHIR server and is not
 needed if you are only generating Parquet files.
 
 ```
-$ docker-compose -f sink-compose.yml up
+$ docker-compose -f docker/sink-compose.yml up
 ```
 
 You can access the FHIR server at <http://localhost:8098/fhir/>. Edit
@@ -337,21 +337,21 @@ and any required authentication information.
 
 ```
 $ mvn clean install
-$ docker-compose up --build batch
+$ docker-compose -f docker/docker-compose.yaml up --build batch
 ```
 
 ##### Streaming Pipeline (Debezium)
 
 ```
 $ mvn clean install
-$ docker-compose up --build streaming-binlog
+$ docker-compose -f docker/docker-compose.yaml up --build streaming-binlog
 ```
 
 ##### Streaming Pipeline (Atomfeed)
 
 ```
  $ mvn clean install -pl streaming-atomfeed -am
- $ docker-compose up -d --build streaming-atomfeed-db streaming-atomfeed
+ $ docker-compose -f docker/docker-compose.yaml up -d --build streaming-atomfeed-db streaming-atomfeed
 ```
 
 ## How to query the data warehouse
@@ -448,4 +448,3 @@ which uses `matplotlib` too, so to run this you need to install it too:
 At the end of this notebook, we wrap up the tests
 into reusable functions that we can use outside the Jupyter environment e.g.,
 for automated indicator computation.
-

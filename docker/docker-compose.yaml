@@ -17,16 +17,16 @@ version: '2.1'
 services:
   batch:
     build:
-      context: batch
+      context: ../batch
     image: openmrs-fhir-analytics/batch-job:latest
     network_mode: host
     container_name: batch-cloud
     healthcheck:
       test: "exit 0"
     volumes:
-      - ./utils/dbz_event_to_fhir_config.json:/usr/src/Main/dbz_event_to_fhir_config.json
+      - ../utils/dbz_event_to_fhir_config.json:/usr/src/Main/dbz_event_to_fhir_config.json
       # data is the directory which you want to persist the generated parquet files
-      - ./data:/tmp
+      - ../data:/tmp
     environment:
      - OPENMRS_URL=http://localhost:8099/openmrs
      - SEARCH_LIST=Patient,Encounter,Observation
@@ -52,16 +52,16 @@ services:
 
   streaming-binlog: # To run independently: docker-compose up --build streaming-binlog
     build:
-      context: streaming-binlog
+      context: ../streaming-binlog
     image: openmrs-fhir-analytics/streaming-binlog:latest
     container_name: streaming-pipeline
     network_mode: host
     healthcheck:
       test: "exit 0"
     volumes:
-      - ./utils/dbz_event_to_fhir_config.json:/deployments/dbz_event_to_fhir_config.json
+      - ../utils/dbz_event_to_fhir_config.json:/deployments/dbz_event_to_fhir_config.json
       # data is the directory which you want to persist the generated parquet files
-      - ./data:/tmp
+      - ../data:/tmp
     environment:
       - OPENMRS_URL=http://localhost:8099/openmrs
       - OPENMRS_USERNAME=admin
@@ -82,8 +82,8 @@ services:
     container_name: streaming-atomfeed
     hostname: streaming-atomfeed
     build:
-      context: ./
-      dockerfile: ./streaming-atomfeed/Dockerfile
+      context: ..
+      dockerfile: ../streaming-atomfeed/Dockerfile
     healthcheck:
       test: "exit 0"
     environment:
@@ -104,4 +104,5 @@ services:
       - MYSQL_DATABASE=atomfeed_client
       - MYSQL_ROOT_HOST=%
     volumes:
-      - ./utils/dbdump/atomfeed_db_sql:/docker-entrypoint-initdb.d/dump.sql
+      - ../utils/dbdump/atomfeed_db_sql:/docker-entrypoint-initdb.d/dump.sql
+
