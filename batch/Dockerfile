@@ -24,7 +24,7 @@ ENV OPENMRS_PASSWORD="Admin123"
 ENV SINK_PATH=""
 ENV SINK_USERNAME=""
 ENV SINK_PASSWORD=""
-ENV SEARCH_LIST="Patient,Encounter,Observation"
+ENV RESOURCE_LIST="Patient,Encounter,Observation"
 ENV BATCH_SIZE=10
 ENV TARGET_PARALLELISM=10
 ENV PARQUET_PATH="/tmp/"
@@ -44,7 +44,7 @@ VOLUME [ "${WORK_DIR}" ]
 
 ENTRYPOINT java -cp app.jar org.openmrs.analytics.FhirEtl \
            --openmrsServerUrl=${OPENMRS_URL} --openmrsUserName=${OPENMRS_USERNAME} --openmrsPassword=${OPENMRS_PASSWORD} \
-           --searchList=${SEARCH_LIST} --batchSize=${BATCH_SIZE} --targetParallelism=${TARGET_PARALLELISM} \
+           --resourceList=${RESOURCE_LIST} --batchSize=${BATCH_SIZE} --targetParallelism=${TARGET_PARALLELISM} \
            --fhirSinkPath=${SINK_PATH}  --sinkUserName=${SINK_USERNAME} --sinkPassword=${SINK_PASSWORD} \
            --outputParquetPath=${PARQUET_PATH} --jdbcModeEnabled=${JDBC_MODE_ENABLED} --jdbcDriverClass=${JDBC_DRIVER_CLASS} \
            --dbUser=${DB_USER} --dbPassword=${DB_PASSWORD} --jdbcMaxPoolSize=${JDBC_MAX_POOL_SIZE} --jdbcUrl=${JDBC_URL} \

@@ -73,7 +73,7 @@ function setup() {
 function test_parquet_sink() {
   local command=(mvn exec:java -pl batch "-Dexec.args=--openmrsServerUrl=http://localhost:8099/openmrs \
         --openmrsUserName=admin --openmrsPassword=Admin123 \
-        --searchList=Patient,Encounter,Observation --batchSize=20 $1")
+        --resourceList=Patient,Encounter,Observation --batchSize=20 $1")
   local test_dir=$2
   local mode=$3
   print_message "PARQUET FILES WILL BE WRITTEN INTO ${test_dir} DIRECTORY"
@@ -134,7 +134,7 @@ function test_parquet_sink() {
 #   the mode to test: FHIR Search vs JDBC
 #######################################
 function test_fhir_sink() {
-  local command=(mvn exec:java -pl batch "-Dexec.args=--searchList=Patient --batchSize=20  \
+  local command=(mvn exec:java -pl batch "-Dexec.args=--resourceList=Patient --batchSize=20  \
   --fhirSinkPath=http://localhost:8098/fhir  --sinkUserName=hapi --sinkPassword=hapi $1")
   local test_dir=$2
   local mode=$3

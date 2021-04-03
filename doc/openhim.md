@@ -71,7 +71,7 @@ for batch
 
 ```
 mvn compile exec:java -pl batch \
-    "-Dexec.args=--openmrsServerUrl=http://localhost:8099/openmrs  --searchList=Patient \
+    "-Dexec.args=--openmrsServerUrl=http://localhost:8099/openmrs  --resourceList=Patient \
     --batchSize=20 --targetParallelism=20  \
     --fhirSinkPath=http://localhost:5001/fhir \
     --sinkUserName=hapi --sinkPassword=Admin123 \
