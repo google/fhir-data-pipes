@@ -134,6 +134,7 @@ public class DebeziumListener extends RouteBuilder {
 		public DebeziumArgs() {
 		};
 		
+		// TODO merge this with `openmrsServerUrl` flag to `fhirBaseUrl`.
 		@Parameter(names = { "--openmrsfhirBaseEndpoint" }, description = "Fhir base endpoint")
 		public String openmrsfhirBaseEndpoint = "/ws/fhir2/R4";
 		

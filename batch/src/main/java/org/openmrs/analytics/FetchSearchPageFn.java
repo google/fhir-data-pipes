@@ -17,24 +17,28 @@ import java.util.List;
 
 import ca.uhn.fhir.context.FhirContext;
 import ca.uhn.fhir.parser.IParser;
-import ca.uhn.fhir.rest.api.SummaryEnum;
 import org.apache.avro.generic.GenericRecord;
 import org.apache.beam.sdk.metrics.Counter;
 import org.apache.beam.sdk.metrics.Metrics;
 import org.apache.beam.sdk.transforms.DoFn;
+import org.apache.beam.sdk.values.PCollection;
+import org.apache.beam.sdk.values.PCollectionTuple;
 import org.apache.beam.sdk.values.TupleTag;
 import org.hl7.fhir.r4.model.Bundle;
 import org.hl7.fhir.r4.model.Bundle.BundleEntryComponent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+// TODO: Add unit-tests for this class and its sub-classes in PTransforms.
+
 /**
- * This function object fetches all input segments from the FHIR source and converts each resource
- * to JSON or Avro (or both). If a FHIR sink address is provided, those resources are passed to that
- * FHIR sink too.
+ * This is the common functionality for all Fns that need to fetch FHIR resources and convert them
+ * to Avro and JSON records. The non-abstract sub-classes should implement `ProcessElement` using
+ * `processBundle` auxiliary method.
+ *
+ * @param <T> The type of the elements of the input PCollection.
  */
-// TODO: Add unit-tests for this class.
-class FetchSearchPageFn extends DoFn<SearchSegmentDescriptor, GenericRecord> {
+abstract class FetchSearchPageFn<T> extends DoFn<T, GenericRecord> {
 	
 	private static final Logger log = LoggerFactory.getLogger(FetchSearchPageFn.class);
 	
@@ -46,9 +50,9 @@ class FetchSearchPageFn extends DoFn<SearchSegmentDescriptor, GenericRecord> {
 	
 	private final Counter totalPushTimeMillis;
 	
-	final TupleTag<GenericRecord> avroTag = new TupleTag<GenericRecord>() {};
+	protected final TupleTag<GenericRecord> avroTag = new TupleTag<GenericRecord>() {};
 	
-	final TupleTag<String> jsonTag = new TupleTag<String>() {};
+	protected final TupleTag<String> jsonTag = new TupleTag<String>() {};
 	
 	private final String sourceUrl;
 	
@@ -62,7 +66,7 @@ class FetchSearchPageFn extends DoFn<SearchSegmentDescriptor, GenericRecord> {
 	
 	private final String sinkPassword;
 	
-	private final String resourceType;
+	protected final String stageIdentifier;
 	
 	private final String parquetFile;
 	
@@ -70,27 +74,27 @@ class FetchSearchPageFn extends DoFn<SearchSegmentDescriptor, GenericRecord> {
 	
 	private ParquetUtil parquetUtil;
 	
-	private FhirSearchUtil fhirSearchUtil;
+	protected FhirSearchUtil fhirSearchUtil;
 	
 	private FhirStoreUtil fhirStoreUtil;
 	
 	private IParser parser;
 	
-	FetchSearchPageFn(FhirEtlOptions options, String resourceType) {
+	FetchSearchPageFn(FhirEtlOptions options, String stageIdentifier) {
 		this.sinkPath = options.getFhirSinkPath();
 		this.sinkUsername = options.getSinkUserName();
 		this.sinkPassword = options.getSinkPassword();
 		this.sourceUrl = options.getOpenmrsServerUrl() + options.getServerFhirEndpoint();
 		this.sourceUser = options.getOpenmrsUserName();
 		this.sourcePw = options.getOpenmrsPassword();
-		this.resourceType = resourceType;
+		this.stageIdentifier = stageIdentifier;
 		this.parquetFile = options.getOutputParquetPath();
 		this.jsonFile = options.getOutputJsonPath();
-		this.numFetchedResources = Metrics.counter(EtlUtils.METRICS_NAMESPACE, "numFetchedResources_" + resourceType);
-		this.totalFetchTimeMillis = Metrics.counter(EtlUtils.METRICS_NAMESPACE, "totalFetchTimeMillis_" + resourceType);
+		this.numFetchedResources = Metrics.counter(EtlUtils.METRICS_NAMESPACE, "numFetchedResources_" + stageIdentifier);
+		this.totalFetchTimeMillis = Metrics.counter(EtlUtils.METRICS_NAMESPACE, "totalFetchTimeMillis_" + stageIdentifier);
 		this.totalGenerateTimeMillis = Metrics.counter(EtlUtils.METRICS_NAMESPACE,
-		    "totalGenerateTimeMillis_" + resourceType);
-		this.totalPushTimeMillis = Metrics.counter(EtlUtils.METRICS_NAMESPACE, "totalPushTimeMillis_" + resourceType);
+		    "totalGenerateTimeMillis_" + stageIdentifier);
+		this.totalPushTimeMillis = Metrics.counter(EtlUtils.METRICS_NAMESPACE, "totalPushTimeMillis_" + stageIdentifier);
 	}
 	
 	@Setup
@@ -103,34 +107,40 @@ class FetchSearchPageFn extends DoFn<SearchSegmentDescriptor, GenericRecord> {
 		parser = fhirContext.newJsonParser();
 	}
 	
-	@ProcessElement
-	public void ProcessElement(@Element SearchSegmentDescriptor segment, MultiOutputReceiver out) {
-		String searchUrl = segment.searchUrl();
-		log.info(String.format("Fetching %d %s resources: %s", segment.count(), this.resourceType,
-		    searchUrl.substring(0, Math.min(200, searchUrl.length()))));
-		long fetchStartTime = System.currentTimeMillis();
-		Bundle pageBundle = fhirSearchUtil.searchByUrl(searchUrl, segment.count(), SummaryEnum.DATA);
-		totalFetchTimeMillis.inc(System.currentTimeMillis() - fetchStartTime);
-		if (pageBundle != null && pageBundle.getEntry() != null) {
-			numFetchedResources.inc(pageBundle.getEntry().size());
+	protected void addFetchTime(long millis) {
+		totalFetchTimeMillis.inc(millis);
+	}
+	
+	protected void processBundle(Bundle bundle, MultiOutputReceiver out) {
+		if (bundle != null && bundle.getEntry() != null) {
+			numFetchedResources.inc(bundle.getEntry().size());
 			if (!parquetFile.isEmpty()) {
 				long startTime = System.currentTimeMillis();
-				List<GenericRecord> recordList = parquetUtil.generateRecords(pageBundle);
+				List<GenericRecord> recordList = parquetUtil.generateRecords(bundle);
 				for (GenericRecord record : recordList) {
 					out.get(avroTag).output(record);
 				}
 				totalGenerateTimeMillis.inc(System.currentTimeMillis() - startTime);
 			}
 			if (!jsonFile.isEmpty()) {
-				for (BundleEntryComponent entry : pageBundle.getEntry()) {
+				for (BundleEntryComponent entry : bundle.getEntry()) {
 					out.get(jsonTag).output(parser.encodeResourceToString(entry.getResource()));
 				}
 			}
-		}
-		if (!this.sinkPath.isEmpty()) {
-			long pushStartTime = System.currentTimeMillis();
-			fhirStoreUtil.uploadBundle(pageBundle);
-			totalPushTimeMillis.inc(System.currentTimeMillis() - pushStartTime);
+			if (!this.sinkPath.isEmpty()) {
+				long pushStartTime = System.currentTimeMillis();
+				fhirStoreUtil.uploadBundle(bundle);
+				totalPushTimeMillis.inc(System.currentTimeMillis() - pushStartTime);
+			}
 		}
 	}
+	
+	protected PCollection<GenericRecord> getAvroRecords(PCollectionTuple records) {
+		return records.get(avroTag);
+	}
+	
+	protected PCollection<String> getJsonRecords(PCollectionTuple records) {
+		return records.get(jsonTag);
+	}
+	
 }

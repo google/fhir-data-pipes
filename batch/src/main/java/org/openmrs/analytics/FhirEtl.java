@@ -16,19 +16,20 @@ package org.openmrs.analytics;
 
 import java.beans.PropertyVetoException;
 import java.io.IOException;
+import java.nio.file.FileSystems;
 import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import ca.uhn.fhir.context.FhirContext;
-import ca.uhn.fhir.rest.api.SummaryEnum;
+import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
+import com.google.common.collect.Sets;
 import org.apache.avro.Schema;
 import org.apache.avro.generic.GenericRecord;
 import org.apache.beam.sdk.Pipeline;
 import org.apache.beam.sdk.PipelineResult;
-import org.apache.beam.sdk.coders.AvroCoder;
 import org.apache.beam.sdk.coders.CannotProvideCoderException;
 import org.apache.beam.sdk.io.FileIO;
 import org.apache.beam.sdk.io.TextIO;
@@ -36,15 +37,16 @@ import org.apache.beam.sdk.io.jdbc.JdbcIO;
 import org.apache.beam.sdk.io.parquet.ParquetIO;
 import org.apache.beam.sdk.options.PipelineOptionsFactory;
 import org.apache.beam.sdk.transforms.Create;
-import org.apache.beam.sdk.transforms.ParDo;
+import org.apache.beam.sdk.transforms.Flatten;
+import org.apache.beam.sdk.transforms.Sum;
 import org.apache.beam.sdk.transforms.windowing.AfterProcessingTime;
 import org.apache.beam.sdk.transforms.windowing.GlobalWindows;
 import org.apache.beam.sdk.transforms.windowing.Repeatedly;
 import org.apache.beam.sdk.transforms.windowing.Window;
+import org.apache.beam.sdk.values.KV;
 import org.apache.beam.sdk.values.PCollection;
+import org.apache.beam.sdk.values.PCollectionList;
 import org.apache.beam.sdk.values.PCollectionTuple;
-import org.apache.beam.sdk.values.TupleTagList;
-import org.hl7.fhir.r4.model.Bundle;
 import org.joda.time.Duration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -57,54 +59,12 @@ public class FhirEtl {
 	private static final Logger log = LoggerFactory.getLogger(FhirEtl.class);
 	
 	static FhirSearchUtil createFhirSearchUtil(FhirEtlOptions options, FhirContext fhirContext) {
-		return new FhirSearchUtil(createOpenmrsUtil(options.getOpenmrsServerUrl() + options.getServerFhirEndpoint(),
-		    options.getOpenmrsUserName(), options.getOpenmrsPassword(), fhirContext));
+		return new FhirSearchUtil(createOpenmrsUtil(options, fhirContext));
 	}
 	
-	static OpenmrsUtil createOpenmrsUtil(String sourceUrl, String sourceUser, String sourcePw, FhirContext fhirContext) {
-		return new OpenmrsUtil(sourceUrl, sourceUser, sourcePw, fhirContext);
-	}
-	
-	static Map<String, List<SearchSegmentDescriptor>> createSegments(FhirEtlOptions options, FhirContext fhirContext) {
-		if (options.getBatchSize() > 100) {
-			// TODO: Probe this value from the server and set the maximum automatically.
-			log.warn("NOTE batchSize flag is higher than 100; make sure that `fhir2.paging.maximum` "
-			        + "is set accordingly on the OpenMRS server.");
-		}
-		FhirSearchUtil fhirSearchUtil = createFhirSearchUtil(options, fhirContext);
-		Map<String, List<SearchSegmentDescriptor>> segmentMap = new HashMap<>();
-		for (String search : options.getSearchList().split(",")) {
-			List<SearchSegmentDescriptor> segments = new ArrayList<>();
-			segmentMap.put(search, segments);
-			String searchUrl = options.getOpenmrsServerUrl() + options.getServerFhirEndpoint() + "/" + search;
-			log.info("searchUrl is " + searchUrl);
-			Bundle searchBundle = fhirSearchUtil.searchByUrl(searchUrl, options.getBatchSize(), SummaryEnum.DATA);
-			if (searchBundle == null) {
-				log.error("Cannot fetch resources for " + searchUrl);
-				throw new IllegalStateException("Cannot fetch resources for " + searchUrl);
-			}
-			int total = searchBundle.getTotal();
-			log.info(String.format("Number of resources for %s search is %d", search, total));
-			if (searchBundle.getEntry().size() >= total) {
-				// No parallelism is needed in this case; we get all resources in one bundle.
-				segments.add(SearchSegmentDescriptor.create(searchUrl, options.getBatchSize()));
-			} else {
-				for (int offset = 0; offset < total; offset += options.getBatchSize()) {
-					String pageSearchUrl = fhirSearchUtil.findBaseSearchUrl(searchBundle) + "&_getpagesoffset=" + offset;
-					segments.add(SearchSegmentDescriptor.create(pageSearchUrl, options.getBatchSize()));
-				}
-				log.info(String.format("Total number of segments for search %s is %d", search, segments.size()));
-			}
-		}
-		return segmentMap;
-	}
-	
-	static String findSearchedResource(String search) {
-		int argsStart = search.indexOf('?');
-		if (argsStart >= 0) {
-			return search.substring(0, argsStart);
-		}
-		return search;
+	static OpenmrsUtil createOpenmrsUtil(FhirEtlOptions options, FhirContext fhirContext) {
+		return new OpenmrsUtil(options.getOpenmrsServerUrl() + options.getServerFhirEndpoint(), options.getOpenmrsUserName(),
+		        options.getOpenmrsPassword(), fhirContext);
 	}
 	
 	static <T> PCollection<T> addWindow(PCollection<T> records, int secondsToFlush) {
@@ -120,45 +80,96 @@ public class FhirEtl {
 		        .discardingFiredPanes());
 	}
 	
-	private static void fetchSegments(PCollection<SearchSegmentDescriptor> inputSegments, String search,
-	        FhirEtlOptions options) {
-		String resourceType = findSearchedResource(search);
-		ParquetUtil parquetUtil = new ParquetUtil(options.getOutputParquetPath());
-		Schema schema = parquetUtil.getResourceSchema(resourceType);
-		FetchSearchPageFn fetchSearchPageFn = new FetchSearchPageFn(options, resourceType);
-		PCollectionTuple records = inputSegments.apply(ParDo.of(fetchSearchPageFn).withOutputTags(fetchSearchPageFn.avroTag,
-		    TupleTagList.of(fetchSearchPageFn.jsonTag)));
-		records.get(fetchSearchPageFn.avroTag).setCoder(AvroCoder.of(GenericRecord.class, schema));
+	private static Schema getSchema(String resourceType) {
+		ParquetUtil parquetUtil = new ParquetUtil(null); // This is used only to get schema.
+		return parquetUtil.getResourceSchema(resourceType);
+	}
+	
+	static void writeToParquet(PCollection<GenericRecord> records, FhirEtlOptions options, String resourceType,
+	        String subDir) {
 		if (!options.getOutputParquetPath().isEmpty()) {
-			PCollection<GenericRecord> windowedRecords = addWindow(records.get(fetchSearchPageFn.avroTag),
-			    options.getSecondsToFlushFiles());
-			// TODO: Make sure getOutputParquetPath() is a directory.
-			String outputFile = options.getOutputParquetPath() + resourceType;
-			ParquetIO.Sink sink = ParquetIO.sink(schema); // TODO add an option for .withCompressionCodec();
-			windowedRecords.apply(FileIO.<GenericRecord> write().via(sink).to(outputFile).withSuffix(".parquet")
+			PCollection<GenericRecord> windowedRecords = addWindow(records, options.getSecondsToFlushFiles());
+			String outputDir = FileSystems.getDefault().getPath(options.getOutputParquetPath(), resourceType, subDir)
+			        .toString();
+			log.info("Will write Parquet files to " + outputDir);
+			ParquetIO.Sink sink = ParquetIO.sink(getSchema(resourceType)); // TODO add an option for .withCompressionCodec();
+			windowedRecords.apply(FileIO.<GenericRecord> write().via(sink).to(outputDir).withSuffix(".parquet")
 			        .withNumShards(options.getNumFileShards()));
 			// TODO add Avro output option
 			// apply("WriteToAvro", AvroIO.writeGenericRecords(schema).to(outputFile).withSuffix(".avro")
 			//        .withNumShards(options.getNumParquetShards()));
 		}
+	}
+	
+	static void writeToJson(PCollection<String> records, FhirEtlOptions options, String resourceType, String subDir) {
 		if (!options.getOutputJsonPath().isEmpty()) {
-			PCollection<String> windowedRecords = addWindow(records.get(fetchSearchPageFn.jsonTag),
-			    options.getSecondsToFlushFiles());
-			windowedRecords.apply("WriteToText",
-			    TextIO.write().to(options.getOutputJsonPath() + resourceType).withSuffix(".txt"));
+			PCollection<String> windowedRecords = addWindow(records, options.getSecondsToFlushFiles());
+			String outputDir = FileSystems.getDefault().getPath(options.getOutputParquetPath(), resourceType, subDir)
+			        .toString();
+			log.info("Will write JSON files to " + outputDir);
+			windowedRecords.apply("WriteToText", TextIO.write().to(outputDir).withSuffix(".txt"));
 		}
 	}
 	
-	static void runFhirFetch(FhirEtlOptions options, FhirContext fhirContext) throws CannotProvideCoderException {
-		Map<String, List<SearchSegmentDescriptor>> segmentMap = createSegments(options, fhirContext);
+	/**
+	 * For each SearchSegmentDescriptor, it fetches the given resources, convert them to output
+	 * Parquet/JSON files, and output the IDs of the fetched resources.
+	 *
+	 * @param inputSegments each element defines a set of resources to be fetched in one FHIR call.
+	 * @param resourceType the type of the resources, e.g., Patient or Observation
+	 * @param options the pipeline options
+	 * @return a PCollection of all patient IDs of fetched resources or empty if `resourceType` has no
+	 *         patient ID association.
+	 */
+	private static PCollection<KV<String, Integer>> fetchSegmentsAndReturnPatientIds(
+	        PCollection<SearchSegmentDescriptor> inputSegments, String resourceType, FhirEtlOptions options) {
+		Schema schema = getSchema(resourceType);
+		FetchResources fetchResources = new FetchResources(options, resourceType, schema);
+		PCollectionTuple records = inputSegments.apply(fetchResources);
+		writeToParquet(fetchResources.getAvroRecords(records), options, resourceType, "active");
+		writeToJson(fetchResources.getJsonRecords(records), options, resourceType, "active");
+		return fetchResources.getPatientIds(records);
+	}
+	
+	static void runFhirFetch(FhirEtlOptions options, FhirContext fhirContext) {
+		FhirSearchUtil fhirSearchUtil = createFhirSearchUtil(options, fhirContext);
+		Map<String, List<SearchSegmentDescriptor>> segmentMap = Maps.newHashMap();
+		try {
+			segmentMap = fhirSearchUtil.createSegments(options);
+		}
+		catch (IllegalArgumentException e) {
+			log.error("Either the date format in the active period is wrong or none of the resources support 'date' feature"
+			        + e.getMessage());
+			throw e;
+		}
 		if (segmentMap.isEmpty()) {
 			return;
 		}
 		
 		Pipeline pipeline = Pipeline.create(options);
+		List<PCollection<KV<String, Integer>>> allPatientIds = Lists.newArrayList();
 		for (Map.Entry<String, List<SearchSegmentDescriptor>> entry : segmentMap.entrySet()) {
+			String resourceType = entry.getKey();
 			PCollection<SearchSegmentDescriptor> inputSegments = pipeline.apply(Create.of(entry.getValue()));
-			fetchSegments(inputSegments, entry.getKey(), options);
+			PCollection<KV<String, Integer>> patientIds = fetchSegmentsAndReturnPatientIds(inputSegments, resourceType,
+			    options);
+			if (!options.getActivePeriod().isEmpty()) {
+				allPatientIds.add(patientIds);
+			}
+		}
+		if (!options.getActivePeriod().isEmpty()) {
+			Set<String> patientAssociatedResources = fhirSearchUtil.findPatientAssociatedResources(segmentMap.keySet());
+			PCollectionList<KV<String, Integer>> patientIdList = PCollectionList.<KV<String, Integer>> empty(pipeline)
+			        .and(allPatientIds);
+			PCollection<KV<String, Integer>> flattenedPatients = patientIdList.apply(Flatten.pCollections());
+			PCollection<KV<String, Integer>> mergedPatients = flattenedPatients.apply(Sum.integersPerKey());
+			for (String resourceType : patientAssociatedResources) {
+				FetchPatientHistory fetchPatientHistory = new FetchPatientHistory(options, resourceType,
+				        getSchema(resourceType));
+				PCollectionTuple records = mergedPatients.apply(fetchPatientHistory);
+				writeToParquet(fetchPatientHistory.getAvroRecords(records), options, resourceType, "history");
+				writeToJson(fetchPatientHistory.getJsonRecords(records), options, resourceType, "history");
+			}
 		}
 		PipelineResult result = pipeline.run();
 		result.waitUntilFinish();
@@ -175,7 +186,7 @@ public class FhirEtl {
 		JdbcIO.DataSourceConfiguration jdbcConfig = jdbcUtil.getJdbcConfig();
 		int batchSize = Math.min(options.getBatchSize(), 170); // batch size > 200 will result in HTTP 400 Bad Request
 		int jdbcFetchSize = options.getJdbcFetchSize();
-		Map<String, String> reverseMap = jdbcUtil.createFhirReverseMap(options.getSearchList(),
+		Map<String, String> reverseMap = jdbcUtil.createFhirReverseMap(options.getResourceList(),
 		    options.getTableFhirMapPath());
 		// process each table-resource mappings
 		for (Map.Entry<String, String> entry : reverseMap.entrySet()) {
@@ -187,11 +198,31 @@ public class FhirEtl {
 			PCollection<SearchSegmentDescriptor> inputSegments = pipeline.apply(Create.of(IdRanges))
 			        .apply(new JdbcFetchUtil.FetchUuids(tableName, jdbcConfig))
 			        .apply(new JdbcFetchUtil.CreateSearchSegments(resourceType, baseBundleUrl, batchSize));
-			fetchSegments(inputSegments, resourceType, options);
+			fetchSegmentsAndReturnPatientIds(inputSegments, resourceType, options);
 		}
 		PipelineResult result = pipeline.run();
 		result.waitUntilFinish();
 		EtlUtils.logMetrics(result.metrics());
+	}
+	
+	static void validateOptions(FhirEtlOptions options) {
+		if (options.getNumFileShards() == 0) {
+			if (!options.getOutputParquetPath().isEmpty() || !options.getOutputJsonPath().isEmpty()) {
+				log.warn("Setting --numFileShards=0 can hinder output file generation performance significantly!");
+			}
+		}
+		
+		if (!options.getActivePeriod().isEmpty()) {
+			if (options.isJdbcModeEnabled()) {
+				throw new IllegalArgumentException("--activePeriod is not supported in JDBC mode.");
+			}
+			Set<String> resourceSet = Sets.newHashSet(options.getResourceList().split(","));
+			if (resourceSet.contains("Patinet")) {
+				throw new IllegalArgumentException(
+				        "Using --activePeriod feature requires 'Patient' to be in --resourceList got: "
+				                + options.getResourceList());
+			}
+		}
 	}
 	
 	public static void main(String[] args)
@@ -199,15 +230,16 @@ public class FhirEtl {
 		// Todo: Autowire
 		FhirContext fhirContext = FhirContext.forR4();
 		
-		FhirEtlOptions options = PipelineOptionsFactory.fromArgs(args).withValidation().as(FhirEtlOptions.class);
-		if (options.getNumFileShards() == 0) {
-			if (!options.getOutputParquetPath().isEmpty() || !options.getOutputJsonPath().isEmpty())
-				log.warn("Setting --numFileShards=0 can hinder output file generation performance significantly!");
-		}
-		
 		ParquetUtil.initializeAvroConverters();
 		
+		FhirEtlOptions options = PipelineOptionsFactory.fromArgs(args).withValidation().as(FhirEtlOptions.class);
+		validateOptions(options);
+		
 		if (options.isJdbcModeEnabled()) {
+			if (!options.getActivePeriod().isEmpty()) {
+				log.error("The 'active period' feature is not supported in JDBC mode.");
+				return;
+			}
 			runFhirJdbcFetch(options, fhirContext);
 		} else {
 			runFhirFetch(options, fhirContext);

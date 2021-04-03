@@ -18,6 +18,7 @@ import ca.uhn.fhir.context.FhirContext;
 import ca.uhn.fhir.rest.client.api.IClientInterceptor;
 import ca.uhn.fhir.rest.client.api.IGenericClient;
 import ca.uhn.fhir.rest.client.interceptor.BasicAuthInterceptor;
+import ca.uhn.fhir.rest.client.interceptor.LoggingInterceptor;
 import org.hl7.fhir.instance.model.api.IBaseResource;
 import org.hl7.fhir.r4.model.Resource;
 import org.slf4j.Logger;
@@ -65,11 +66,22 @@ public class OpenmrsUtil {
 	}
 	
 	public IGenericClient getSourceClient() {
+		return getSourceClient(false);
+	}
+	
+	public IGenericClient getSourceClient(boolean enableRequestLogging) {
 		IClientInterceptor authInterceptor = new BasicAuthInterceptor(this.sourceUser, this.sourcePw);
 		fhirContext.getRestfulClientFactory().setSocketTimeout(200 * 1000);
 		
 		IGenericClient client = fhirContext.getRestfulClientFactory().newGenericClient(this.fhirUrl);
 		client.registerInterceptor(authInterceptor);
+		
+		if (enableRequestLogging) {
+			LoggingInterceptor loggingInterceptor = new LoggingInterceptor();
+			loggingInterceptor.setLogger(log);
+			loggingInterceptor.setLogRequestSummary(true);
+			client.registerInterceptor(loggingInterceptor);
+		}
 		
 		return client;
 	}
