@@ -14,6 +14,9 @@
 
 package org.openmrs.analytics;
 
+import java.beans.PropertyVetoException;
+import java.io.IOException;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -135,9 +138,8 @@ public class FhirEtl {
 			windowedRecords.apply(FileIO.<GenericRecord> write().via(sink).to(outputFile).withSuffix(".parquet")
 			        .withNumShards(options.getNumFileShards()));
 			// TODO add Avro output option
-			// apply("WriteToAvro",
-			// AvroIO.writeGenericRecords(schema).to(outputFile).withSuffix(".avro")
-			// .withNumShards(options.getNumParquetShards()));
+			// apply("WriteToAvro", AvroIO.writeGenericRecords(schema).to(outputFile).withSuffix(".avro")
+			//        .withNumShards(options.getNumParquetShards()));
 		}
 		if (!options.getOutputJsonPath().isEmpty()) {
 			PCollection<String> windowedRecords = addWindow(records.get(fetchSearchPageFn.jsonTag),
@@ -163,7 +165,8 @@ public class FhirEtl {
 		EtlUtils.logMetrics(result.metrics());
 	}
 	
-	static void runFhirJdbcFetch(FhirEtlOptions options, FhirContext fhirContext) throws Exception {
+	static void runFhirJdbcFetch(FhirEtlOptions options, FhirContext fhirContext)
+	        throws PropertyVetoException, IOException, SQLException {
 		Pipeline pipeline = Pipeline.create(options);
 		JdbcConnectionUtil jdbcConnectionUtil = new JdbcConnectionUtil(options.getJdbcDriverClass(), options.getJdbcUrl(),
 		        options.getDbUser(), options.getDbPassword(), options.getJdbcMaxPoolSize(),
@@ -172,12 +175,10 @@ public class FhirEtl {
 		JdbcIO.DataSourceConfiguration jdbcConfig = jdbcUtil.getJdbcConfig();
 		int batchSize = Math.min(options.getBatchSize(), 170); // batch size > 200 will result in HTTP 400 Bad Request
 		int jdbcFetchSize = options.getJdbcFetchSize();
-		Map<String, String> reverseMap = jdbcUtil.createFhirReverseMap(options.getSearchList(),
+		Map<String, ArrayList<String>> reverseMap = jdbcUtil.createFhirReverseMap(options.getSearchList(),
 		    options.getTableFhirMapPath());
 		// process each table-resource mappings
-		Map<String, ArrayList<String>> deduplicatedReverseMap = jdbcUtil.deduplicateReverseMap(reverseMap);
-		for (Map.Entry<String, ArrayList<String>> entry : deduplicatedReverseMap.entrySet()) {
-			
+		for (Map.Entry<String, ArrayList<String>> entry : reverseMap.entrySet()) {
 			String tableName = entry.getKey();
 			int maxId = jdbcUtil.fetchMaxId(tableName);
 			Map<Integer, Integer> IdRanges = jdbcUtil.createIdRanges(maxId, jdbcFetchSize);
@@ -194,7 +195,8 @@ public class FhirEtl {
 		EtlUtils.logMetrics(result.metrics());
 	}
 	
-	public static void main(String[] args) throws Exception {
+	public static void main(String[] args)
+	        throws CannotProvideCoderException, PropertyVetoException, IOException, SQLException {
 		// Todo: Autowire
 		FhirContext fhirContext = FhirContext.forR4();
 		

@@ -1,3 +1,4 @@
+
 // Copyright 2020 Google LLC
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,6 +14,7 @@
 // limitations under the License.
 package org.openmrs.analytics;
 
+import java.io.IOException;
 import java.io.Reader;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -26,7 +28,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 import com.google.gson.Gson;
 import org.apache.beam.sdk.coders.NullableCoder;
@@ -167,40 +168,37 @@ public class JdbcFetchUtil {
 		return rangeMap;
 	}
 	
-	public Map<String, String> createFhirReverseMap(String searchString, String tableFhirMapPath) throws Exception {
+	public Map<String, ArrayList<String>> createFhirReverseMap(String searchString, String tableFhirMapPath)
+	        throws IOException {
 		Gson gson = new Gson();
 		Path pathToFile = Paths.get(tableFhirMapPath);
 		try (Reader reader = Files.newBufferedReader(pathToFile.toAbsolutePath(), StandardCharsets.UTF_8)) {
 			GeneralConfiguration generalConfiguration = gson.fromJson(reader, GeneralConfiguration.class);
 			Map<String, EventConfiguration> tableToFhirMap = generalConfiguration.getEventConfigurations();
 			String[] searchList = searchString.split(",");
-			Map<String, String> reverseMap = new HashMap<String, String>();
+			Map<String, ArrayList<String>> reverseMap = new HashMap<String, ArrayList<String>>();
 			for (Map.Entry<String, EventConfiguration> entry : tableToFhirMap.entrySet()) {
 				Map<String, String> linkTemplate = entry.getValue().getLinkTemplates();
 				for (String search : searchList) {
 					if (linkTemplate.containsKey("fhir") && linkTemplate.get("fhir") != null) {
 						String[] resourceName = linkTemplate.get("fhir").split("/");
+						ArrayList<String> resources = new ArrayList<String>();
 						if (resourceName.length >= 1 && resourceName[1].equals(search)) {
-							if (!reverseMap.containsKey(resourceName[1])) {
-								reverseMap.put(resourceName[1], entry.getValue().getParentTable());
+							if (reverseMap.containsKey(entry.getValue().getParentTable())) {
+								resources = reverseMap.get(entry.getValue().getParentTable());
+								resources.add(resourceName[1]);
 							} else {
-								log.error("Some tables are mapped to the same Resources");
-								throw new Exception("config file has duplicate Resource mappings");
+								resources.add(resourceName[1]);
 							}
+							reverseMap.put(entry.getValue().getParentTable(), resources);
 						}
 					}
 				}
 			}
+			if (reverseMap.size() < searchList.length) {
+				log.error("Some of the passed FHIR resources are not mapped to any table, please check the config");
+			}
 			return reverseMap;
 		}
 	}
-	
-	public Map<String, ArrayList<String>> deduplicateReverseMap(Map<String, String> reverseMap) {
-		Map<String, ArrayList<String>> deduplicatedReverseMap = new HashMap<>(
-		        reverseMap.entrySet().stream().collect(Collectors.groupingBy(Map.Entry::getValue)).values().stream()
-		                .collect(Collectors.toMap(item -> item.get(0).getValue(),
-		                    item -> new ArrayList<>(item.stream().map(Map.Entry::getKey).collect(Collectors.toList())))));
-		return deduplicatedReverseMap;
-	}
-	
 }

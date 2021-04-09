@@ -204,7 +204,8 @@
       "title": "Visit",
       "parentTable": "visit",
       "linkTemplates": {
-        "rest": "/ws/rest/v1/visit/{uuid}?v=full"
+        "rest": "/ws/rest/v1/visit/{uuid}?v=full",
+        "fhir": "/Encounter/{uuid}"
       }
     },
     "program":{
