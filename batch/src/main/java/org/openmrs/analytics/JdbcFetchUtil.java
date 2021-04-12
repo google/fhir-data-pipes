@@ -167,26 +167,26 @@ public class JdbcFetchUtil {
 		return rangeMap;
 	}
 	
-	public Map<String, String> createFhirReverseMap(String searchString, String tableFhirMapPath) throws IOException {
+	public Map<String, String> createFhirReverseMap(String resourceString, String tableFhirMapPath) throws IOException {
 		Gson gson = new Gson();
 		Path pathToFile = Paths.get(tableFhirMapPath);
 		try (Reader reader = Files.newBufferedReader(pathToFile.toAbsolutePath(), StandardCharsets.UTF_8)) {
 			GeneralConfiguration generalConfiguration = gson.fromJson(reader, GeneralConfiguration.class);
 			Map<String, EventConfiguration> tableToFhirMap = generalConfiguration.getEventConfigurations();
-			String[] searchList = searchString.split(",");
+			String[] resourceList = resourceString.split(",");
 			Map<String, String> reverseMap = new HashMap<String, String>();
 			for (Map.Entry<String, EventConfiguration> entry : tableToFhirMap.entrySet()) {
 				Map<String, String> linkTemplate = entry.getValue().getLinkTemplates();
-				for (String search : searchList) {
+				for (String resource : resourceList) {
 					if (linkTemplate.containsKey("fhir") && linkTemplate.get("fhir") != null) {
 						String[] resourceName = linkTemplate.get("fhir").split("/");
-						if (resourceName.length >= 1 && resourceName[1].equals(search)) {
+						if (resourceName.length >= 1 && resourceName[1].equals(resource)) {
 							reverseMap.put(entry.getValue().getParentTable(), resourceName[1]);
 						}
 					}
 				}
 			}
-			if (reverseMap.size() < searchList.length) {
+			if (reverseMap.size() < resourceList.length) {
 				log.error("Some of the passed FHIR resources are not mapped to any table, please check the config");
 			}
 			return reverseMap;

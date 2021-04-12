@@ -29,7 +29,7 @@ services:
       - ../data:/tmp
     environment:
      - OPENMRS_URL=http://localhost:8099/openmrs
-     - SEARCH_LIST=Patient,Encounter,Observation
+     - RESOURCE_LIST=Patient,Encounter,Observation
      - OPENMRS_USERNAME=admin
      - OPENMRS_PASSWORD=Admin123
      - SINK_PATH=

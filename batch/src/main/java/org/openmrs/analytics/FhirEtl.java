@@ -163,6 +163,11 @@ public class FhirEtl {
 			        .and(allPatientIds);
 			PCollection<KV<String, Integer>> flattenedPatients = patientIdList.apply(Flatten.pCollections());
 			PCollection<KV<String, Integer>> mergedPatients = flattenedPatients.apply(Sum.integersPerKey());
+			final String patientType = "Patient";
+			FetchPatients fetchPatients = new FetchPatients(options, getSchema(patientType));
+			PCollectionTuple patientRecords = mergedPatients.apply(fetchPatients);
+			writeToParquet(fetchPatients.getAvroRecords(patientRecords), options, patientType, "active");
+			writeToJson(fetchPatients.getJsonRecords(patientRecords), options, patientType, "active");
 			for (String resourceType : patientAssociatedResources) {
 				FetchPatientHistory fetchPatientHistory = new FetchPatientHistory(options, resourceType,
 				        getSchema(resourceType));
@@ -217,9 +222,9 @@ public class FhirEtl {
 				throw new IllegalArgumentException("--activePeriod is not supported in JDBC mode.");
 			}
 			Set<String> resourceSet = Sets.newHashSet(options.getResourceList().split(","));
-			if (resourceSet.contains("Patinet")) {
+			if (resourceSet.contains("Patient")) {
 				throw new IllegalArgumentException(
-				        "Using --activePeriod feature requires 'Patient' to be in --resourceList got: "
+				        "When using --activePeriod feature, 'Patient' should not be in --resourceList got: "
 				                + options.getResourceList());
 			}
 		}

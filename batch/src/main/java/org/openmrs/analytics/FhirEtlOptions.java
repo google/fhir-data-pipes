@@ -180,6 +180,7 @@ public interface FhirEtlOptions extends PipelineOptions {
 	        + "The format of DATE1 and DATE2 follows the dateTime format in the FHIR standard:\n"
 	        + "https://www.hl7.org/fhir/datatypes.html#dateTime\n"
 	        + "For example: --activePeriod=2020-11-10T00:00:00_2020-11-20\n"
+	        + "Note this feature implies fetching Patient resources that were active in the given period.\n"
 	        + "Default empty string disables this feature, i.e., all requested resources are fetched.")
 	@Default.String("")
 	String getActivePeriod();

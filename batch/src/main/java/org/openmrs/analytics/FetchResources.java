@@ -85,7 +85,7 @@ public class FetchResources extends PTransform<PCollection<SearchSegmentDescript
 	
 	@VisibleForTesting
 	static String getSubjectPatientIdOrNull(Resource resource) {
-		String patinetId = null;
+		String patientId = null;
 		Property subject = resource.getNamedProperty("subject");
 		if (subject != null) {
 			List<Base> values = subject.getValues();
@@ -96,9 +96,9 @@ public class FetchResources extends PTransform<PCollection<SearchSegmentDescript
 				String refStr = reference.getReference();
 				Matcher matcher = PATIENT_REFERENCE.matcher(refStr);
 				if (matcher.matches()) {
-					patinetId = matcher.group(1);
+					patientId = matcher.group(1);
 				}
-				if (patinetId == null) {
+				if (patientId == null) {
 					log.warn(String.format("Ignoring subject of %s with id %s because it is not a Patient reference: %s",
 					    resource.getResourceType(), resource.getId(), refStr));
 				}
@@ -108,7 +108,7 @@ public class FetchResources extends PTransform<PCollection<SearchSegmentDescript
 				    resource.getId()));
 			}
 		}
-		return patinetId;
+		return patientId;
 	}
 	
 	@Override

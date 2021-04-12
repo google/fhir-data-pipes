@@ -74,6 +74,8 @@ abstract class FetchSearchPageFn<T> extends DoFn<T, GenericRecord> {
 	
 	private ParquetUtil parquetUtil;
 	
+	protected OpenmrsUtil openmrsUtil;
+	
 	protected FhirSearchUtil fhirSearchUtil;
 	
 	private FhirStoreUtil fhirStoreUtil;
@@ -102,7 +104,8 @@ abstract class FetchSearchPageFn<T> extends DoFn<T, GenericRecord> {
 		FhirContext fhirContext = FhirContext.forR4();
 		fhirStoreUtil = FhirStoreUtil.createFhirStoreUtil(sinkPath, sinkUsername, sinkPassword,
 		    fhirContext.getRestfulClientFactory());
-		fhirSearchUtil = new FhirSearchUtil(new OpenmrsUtil(sourceUrl, sourceUser, sourcePw, fhirContext));
+		openmrsUtil = new OpenmrsUtil(sourceUrl, sourceUser, sourcePw, fhirContext);
+		fhirSearchUtil = new FhirSearchUtil(openmrsUtil);
 		parquetUtil = new ParquetUtil(this.parquetFile);
 		parser = fhirContext.newJsonParser();
 	}
