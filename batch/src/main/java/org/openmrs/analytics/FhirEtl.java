@@ -139,7 +139,7 @@ public class FhirEtl {
 			        .withNumShards(options.getNumFileShards()));
 			// TODO add Avro output option
 			// apply("WriteToAvro", AvroIO.writeGenericRecords(schema).to(outputFile).withSuffix(".avro")
-			//        .withNumShards(options.getNumParquetShards()));
+			//        .withNumShards(options.getnumFileShards()));
 		}
 		if (!options.getOutputJsonPath().isEmpty()) {
 			PCollection<String> windowedRecords = addWindow(records.get(fetchSearchPageFn.jsonTag),
