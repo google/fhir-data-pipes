@@ -11,7 +11,7 @@ function print_message() {
 }
 
 #######################################
-# Call common-mode-tests to setup 
+# Call common.sh to setup 
 # the testing env
 #  
 #######################################
@@ -54,27 +54,8 @@ function test_parquet_sink() {
     exit 1
   fi
   cd "${test_dir}"
-  mkdir omrs
-  print_message "Finding number of patients, encounters and obs in openmrs server"
-  curl -L -X GET -u admin:Admin123 --connect-timeout 5 --max-time 20 \
-    http://localhost:8099/openmrs/ws/fhir2/R4/Patient/ 2>/dev/null >>./omrs/patients.json
-  total_test_patients=$(jq '.total' ./omrs/patients.json)
-  print_message "Total openmrs test patients ---> ${total_test_patients}"
-  curl -L -X GET -u admin:Admin123 --connect-timeout 5 --max-time 20 \
-    http://localhost:8099/openmrs/ws/fhir2/R4/Encounter/ 2>/dev/null >>./omrs/encounters.json
-  total_test_encounters=$(jq '.total' ./omrs/encounters.json)
-  print_message "Total openmrs test encounters ---> ${total_test_encounters}"
-  curl -L -X GET -u admin:Admin123 --connect-timeout 5 --max-time 20 \
-    http://localhost:8099/openmrs/ws/fhir2/R4/Observation/ 2>/dev/null >>./omrs/obs.json
-  total_test_obs=$(jq '.total' ./omrs/obs.json)
-  print_message "Total openmrs test obs ---> ${total_test_obs}"
-  print_message "Counting number of patients, encounters and obs sinked to parquet files"
-  total_patients_streamed=$(java -jar ./parquet-tools-1.11.1.jar rowcount ./Patient/ | awk '{print $3}')
-  print_message "Total patients synced to parquet ---> ${total_patients_streamed}"
-  total_encounters_streamed=$(java -jar ./parquet-tools-1.11.1.jar rowcount ./Encounter/ | awk '{print $3}')
-  print_message "Total encounters synced to parquet ---> ${total_encounters_streamed}"
-  total_obs_streamed=$(java -jar ./parquet-tools-1.11.1.jar rowcount ./Observation/ | awk '{print $3}')
-  print_message "Total obs synced to parquet ---> ${total_obs_streamed}"
+  source ./e2e-tests/common.sh
+  test
 
   if [[ ${total_patients_streamed} == ${total_test_patients} && ${total_encounters_streamed} == ${total_test_encounters} && ${total_obs_streamed} == ${total_test_obs} ]] \
     ; then
