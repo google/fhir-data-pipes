@@ -15,8 +15,13 @@ function print_message() {
 # the testing env
 #  
 #######################################
+<<<<<<< HEAD
 source ./e2e-tests/common-mode-tests.sh
 setup
+=======
+source ./e2e-tests/common.sh
+ setup
+>>>>>>> 5becddd... e2e:edit container endpoints
 
 #######################################
 # Function that tests sinking to parquet files
@@ -27,11 +32,6 @@ setup
 #   the mode to test: FHIR Search vs JDBC
 #######################################
 function test_parquet_sink() {
-  
-  TEST_DIR_FHIR=$(mktemp -d -t analytics_tests__XXXXXX_FHIRSEARCH)
-  TEST_DIR_JDBC=$(mktemp -d -t analytics_tests__XXXXXX_JDBC)
-  JDBC_SETTINGS="--jdbcModeEnabled=true --jdbcUrl=jdbc:mysql://localhost:3306/openmrs --dbUser=mysqluser \
-                 --dbPassword=mysqlpw --jdbcMaxPoolSize=50 --jdbcDriverClass=com.mysql.cj.jdbc.Driver"
   local command=(mvn exec:java -pl batch "-Dexec.args=--openmrsServerUrl=http://localhost:8099/openmrs \
         --openmrsUserName=admin --openmrsPassword=Admin123 \
         --resourceList=Patient,Encounter,Observation --batchSize=20 $1")
@@ -54,8 +54,8 @@ function test_parquet_sink() {
     exit 1
   fi
   cd "${test_dir}"
-  source ./e2e-tests/common.sh
-  test
+
+  validate_counts
 
   if [[ ${total_patients_streamed} == ${total_test_patients} && ${total_encounters_streamed} == ${total_test_encounters} && ${total_obs_streamed} == ${total_test_obs} ]] \
     ; then

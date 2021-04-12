@@ -16,38 +16,23 @@ function print_message() {
 #  
 #######################################
 source ./e2e-tests/common.sh
-setup
-
+ setupopenmrsFhirBaseEndpoint
 test_dir=$(mktemp -d -t analytics_tests__XXXXXX_streaming)
-
 command=(mvn compile exec:java -pl streaming-binlog \
    -Dexec.args="--openmrsUserName=admin --openmrsPassword=Admin123 \
    --openmrsServerUrl=http://localhost:8099/openmrs \
-   --openmrsfhirBaseEndpoint=/ws/fhir2/R4 \
-   --outputParquetPath='${test_dir}' --fhirSinkPath=http://localhost:8098/fhir --sinkUserName=hapi --sinkPassword=hai ")
+   --openmrsFhirBaseEndpoint=/ws/fhir2/R4 \
+   --outputParquetPath='${test_dir}' --fhirSinkPath=http://localhost:8098/fhir --sinkUserName=hapi --sinkPassword=hapi123 ")
 
 print_message "PARQUET FILES WILL BE WRITTEN INTO $test_dir DIRECTORY"
-
 print_message "BUILDING THE ANALYTICS  PIPELINE"
-
 timeout 1m "${command[@]}"
-
-print_message "SEARCH INDEX REBUILD"
-
-curl -i -u admin:Admin123 -X POST http://localhost:8099/openmrs/ws/rest/v1/searchindexupdate
-
 print_message "CREATE A PATIENT IN OPENMRS TO BE STREAMED"
-
 curl -i -u admin:Admin123 -H "Content-type: application/json" -X POST http://localhost:8099/openmrs/ws/fhir2/R4/Patient -d @./e2e-tests/patient.json
-
 print_message "CREATE AN ENCOUNTER IN OPENMRS TO BE STREAMED"
-
 curl -i -u admin:Admin123 -H "Content-type: application/json" -X POST http://localhost:8099/openmrs/ws/rest/v1/encounter -d @./e2e-tests/encounter.json
-
 print_message "CREATE AN OBSERVATION IN OPENMRS TO BE STREAMED"
-
 curl -i -u admin:Admin123 -H "Content-type: application/json" -X POST http://localhost:8099/openmrs/ws/fhir2/R4/Observation -d @./e2e-tests/obs.json
-
 print_message "RUNNING STREAMING MODE WITH PARQUET & FHIR SYNC"
 print_message "${command[@]}"
 
@@ -65,20 +50,18 @@ if ! [[ $(command -v jq) ]]; then
     exit 1
 fi
 cd "${test_dir}"
-source ./e2e-tests/common.sh
-test "?family=Clive" "?subject.given=Cliff" "?subject.given=Cliff"
 
+validate_counts "?family=Clive" "?subject.given=Cliff" "?subject.given=Cliff"
 if [[ ${total_patients_streamed} == ${total_test_patients}
       && ${total_encounters_streamed} == ${total_test_encounters}
       && $total_obs_streamed == ${total_test_obs} ]] ;
 then
-  print_message "STREAMING MODE WITH PARQUET SYNC EXECUTED SUCCESSFULLY"
+  print_message "STREAMING MODE WITH PARQUET SINK EXECUTED SUCCESSFULLY"
 else
-  print_message "STREAMING MODE WITH PARQUET SYNC TEST FAILED"
+  print_message "STREAMING MODE WITH PARQUET SINK TEST FAILED"
   exit 1
 fi
 
-cd "${test_dir}"
 mkdir fhir
 print_message "Counting number of patients, encounters and obs sinked to fhir files"
 curl -L -X GET -u hapi:hapi --connect-timeout 5 --max-time 20 \
