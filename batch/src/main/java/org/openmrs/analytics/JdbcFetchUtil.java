@@ -166,7 +166,9 @@ public class JdbcFetchUtil {
 		}
 		return rangeMap;
 	}
-	
+	/**
+	 * creates a Map<String, List<String>> of table names to a list of coresponding Resources passed to the searchList argument
+	 */
 	public Map<String, List<String>> createFhirReverseMap(String searchString, String tableFhirMapPath) throws IOException {
 		Gson gson = new Gson();
 		Path pathToFile = Paths.get(tableFhirMapPath);
