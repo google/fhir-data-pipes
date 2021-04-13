@@ -132,9 +132,8 @@ public class JdbcFetchUtilTest extends TestCase {
 	
 	@Test
 	public void testCreateFhirReverseMap() throws Exception {
-		Map<String, ArrayList<String>> reverseMap = jdbcFetchUtil
-		        .createFhirReverseMap("Patient,Person,Encounter,Observation", "../utils/dbz_event_to_fhir_config.json");
-		System.out.println(reverseMap);
+		Map<String, List<String>> reverseMap = jdbcFetchUtil.createFhirReverseMap("Patient,Person,Encounter,Observation",
+		    "../utils/dbz_event_to_fhir_config.json");
 		
 		assertEquals(reverseMap.size(), 4);
 		assertEquals(reverseMap.get("person").size(), 2);

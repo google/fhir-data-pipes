@@ -175,10 +175,10 @@ public class FhirEtl {
 		JdbcIO.DataSourceConfiguration jdbcConfig = jdbcUtil.getJdbcConfig();
 		int batchSize = Math.min(options.getBatchSize(), 170); // batch size > 200 will result in HTTP 400 Bad Request
 		int jdbcFetchSize = options.getJdbcFetchSize();
-		Map<String, ArrayList<String>> reverseMap = jdbcUtil.createFhirReverseMap(options.getSearchList(),
+		Map<String, List<String>> reverseMap = jdbcUtil.createFhirReverseMap(options.getSearchList(),
 		    options.getTableFhirMapPath());
 		// process each table-resource mappings
-		for (Map.Entry<String, ArrayList<String>> entry : reverseMap.entrySet()) {
+		for (Map.Entry<String, List<String>> entry : reverseMap.entrySet()) {
 			String tableName = entry.getKey();
 			int maxId = jdbcUtil.fetchMaxId(tableName);
 			Map<Integer, Integer> IdRanges = jdbcUtil.createIdRanges(maxId, jdbcFetchSize);

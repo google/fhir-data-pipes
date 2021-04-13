@@ -1,4 +1,3 @@
-
 // Copyright 2020 Google LLC
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -168,29 +167,30 @@ public class JdbcFetchUtil {
 		return rangeMap;
 	}
 	
-	public Map<String, ArrayList<String>> createFhirReverseMap(String searchString, String tableFhirMapPath)
-	        throws IOException {
+	public Map<String, List<String>> createFhirReverseMap(String searchString, String tableFhirMapPath) throws IOException {
 		Gson gson = new Gson();
 		Path pathToFile = Paths.get(tableFhirMapPath);
 		try (Reader reader = Files.newBufferedReader(pathToFile.toAbsolutePath(), StandardCharsets.UTF_8)) {
 			GeneralConfiguration generalConfiguration = gson.fromJson(reader, GeneralConfiguration.class);
 			Map<String, EventConfiguration> tableToFhirMap = generalConfiguration.getEventConfigurations();
 			String[] searchList = searchString.split(",");
-			Map<String, ArrayList<String>> reverseMap = new HashMap<String, ArrayList<String>>();
+			Map<String, List<String>> reverseMap = new HashMap<String, List<String>>();
 			for (Map.Entry<String, EventConfiguration> entry : tableToFhirMap.entrySet()) {
 				Map<String, String> linkTemplate = entry.getValue().getLinkTemplates();
 				for (String search : searchList) {
 					if (linkTemplate.containsKey("fhir") && linkTemplate.get("fhir") != null) {
 						String[] resourceName = linkTemplate.get("fhir").split("/");
-						ArrayList<String> resources = new ArrayList<String>();
+						List<String> resources;
 						if (resourceName.length >= 1 && resourceName[1].equals(search)) {
 							if (reverseMap.containsKey(entry.getValue().getParentTable())) {
 								resources = reverseMap.get(entry.getValue().getParentTable());
 								resources.add(resourceName[1]);
 							} else {
+								resources = new ArrayList<String>();
 								resources.add(resourceName[1]);
+								reverseMap.put(entry.getValue().getParentTable(), resources);
 							}
-							reverseMap.put(entry.getValue().getParentTable(), resources);
+							
 						}
 					}
 				}
