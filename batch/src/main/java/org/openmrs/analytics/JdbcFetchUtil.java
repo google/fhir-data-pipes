@@ -166,8 +166,14 @@ public class JdbcFetchUtil {
 		}
 		return rangeMap;
 	}
+	
 	/**
-	 * creates a Map<String, List<String>> of table names to a list of coresponding Resources passed to the searchList argument
+	 * Creates a map from database table names to the list of FHIR resources that correspond to that
+	 * table. For example: person->Person,Patient and visit->Encounter.
+	 *
+	 * @param searchString the comma separated list of FHIR resources we care about.
+	 * @param tableFhirMapPath the file that contains the general configuration.
+	 * @return the computed map.
 	 */
 	public Map<String, List<String>> createFhirReverseMap(String searchString, String tableFhirMapPath) throws IOException {
 		Gson gson = new Gson();
@@ -182,13 +188,12 @@ public class JdbcFetchUtil {
 				for (String search : searchList) {
 					if (linkTemplate.containsKey("fhir") && linkTemplate.get("fhir") != null) {
 						String[] resourceName = linkTemplate.get("fhir").split("/");
-						List<String> resources;
 						if (resourceName.length >= 1 && resourceName[1].equals(search)) {
 							if (reverseMap.containsKey(entry.getValue().getParentTable())) {
-								resources = reverseMap.get(entry.getValue().getParentTable());
+								List<String> resources = reverseMap.get(entry.getValue().getParentTable());
 								resources.add(resourceName[1]);
 							} else {
-								resources = new ArrayList<String>();
+								List<String> resources = new ArrayList<String>();
 								resources.add(resourceName[1]);
 								reverseMap.put(entry.getValue().getParentTable(), resources);
 							}
