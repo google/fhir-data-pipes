@@ -191,19 +191,20 @@ public class FhirEtl {
 		JdbcIO.DataSourceConfiguration jdbcConfig = jdbcUtil.getJdbcConfig();
 		int batchSize = Math.min(options.getBatchSize(), 170); // batch size > 200 will result in HTTP 400 Bad Request
 		int jdbcFetchSize = options.getJdbcFetchSize();
-		Map<String, String> reverseMap = jdbcUtil.createFhirReverseMap(options.getResourceList(),
+		Map<String, List<String>> reverseMap = jdbcUtil.createFhirReverseMap(options.getResourceList(),
 		    options.getTableFhirMapPath());
 		// process each table-resource mappings
-		for (Map.Entry<String, String> entry : reverseMap.entrySet()) {
+		for (Map.Entry<String, List<String>> entry : reverseMap.entrySet()) {
 			String tableName = entry.getKey();
-			String resourceType = entry.getValue();
-			String baseBundleUrl = options.getOpenmrsServerUrl() + options.getServerFhirEndpoint() + "/" + resourceType;
 			int maxId = jdbcUtil.fetchMaxId(tableName);
 			Map<Integer, Integer> IdRanges = jdbcUtil.createIdRanges(maxId, jdbcFetchSize);
-			PCollection<SearchSegmentDescriptor> inputSegments = pipeline.apply(Create.of(IdRanges))
-			        .apply(new JdbcFetchUtil.FetchUuids(tableName, jdbcConfig))
-			        .apply(new JdbcFetchUtil.CreateSearchSegments(resourceType, baseBundleUrl, batchSize));
-			fetchSegmentsAndReturnPatientIds(inputSegments, resourceType, options);
+			for (String resourceType : entry.getValue()) {
+				String baseBundleUrl = options.getOpenmrsServerUrl() + options.getServerFhirEndpoint() + "/" + resourceType;
+				PCollection<SearchSegmentDescriptor> inputSegments = pipeline.apply(Create.of(IdRanges))
+				        .apply(new JdbcFetchUtil.FetchUuids(tableName, jdbcConfig))
+				        .apply(new JdbcFetchUtil.CreateSearchSegments(resourceType, baseBundleUrl, batchSize));
+				fetchSegmentsAndReturnPatientIds(inputSegments, resourceType, options);
+			}
 		}
 		PipelineResult result = pipeline.run();
 		result.waitUntilFinish();
