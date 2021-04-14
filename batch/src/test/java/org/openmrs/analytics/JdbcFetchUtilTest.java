@@ -131,16 +131,16 @@ public class JdbcFetchUtilTest extends TestCase {
 	}
 	
 	@Test
-	public void testCreateFhirReverseMap() throws IOException {
-		// here we pass Encounters as such we expect visits to be included in the reverseMap as well
-		Map<String, String> reverseMap = jdbcFetchUtil.createFhirReverseMap("Patient,Encounter,Observation",
+	public void testCreateFhirReverseMap() throws Exception {
+		Map<String, List<String>> reverseMap = jdbcFetchUtil.createFhirReverseMap("Patient,Person,Encounter,Observation",
 		    "../utils/dbz_event_to_fhir_config.json");
-		// we expect 4 objects, and visit should be included
-		assertEquals(4, reverseMap.size());// not 3
-		assertFalse(reverseMap.get("visit").isEmpty());
-		assertFalse(reverseMap.get("encounter").isEmpty());
-		assertFalse(reverseMap.get("obs").isEmpty());
-		assertFalse(reverseMap.get("person").isEmpty());
+		
+		assertEquals(reverseMap.size(), 4);
+		assertEquals(reverseMap.get("person").size(), 2);
+		assertTrue(reverseMap.get("person").contains("Patient"));
+		assertTrue(reverseMap.get("person").contains("Person"));
+		assertTrue(reverseMap.get("encounter").contains("Encounter"));
+		assertTrue(reverseMap.get("visit").contains("Encounter"));
+		assertTrue(reverseMap.get("obs").contains("Observation"));
 	}
-	
 }

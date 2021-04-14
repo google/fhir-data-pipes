@@ -167,21 +167,37 @@ public class JdbcFetchUtil {
 		return rangeMap;
 	}
 	
-	public Map<String, String> createFhirReverseMap(String searchString, String tableFhirMapPath) throws IOException {
+	/**
+	 * Creates a map from database table names to the list of FHIR resources that correspond to that
+	 * table. For example: person->Person,Patient and visit->Encounter.
+	 *
+	 * @param searchString the comma separated list of FHIR resources we care about.
+	 * @param tableFhirMapPath the file that contains the general configuration.
+	 * @return the computed map.
+	 */
+	public Map<String, List<String>> createFhirReverseMap(String searchString, String tableFhirMapPath) throws IOException {
 		Gson gson = new Gson();
 		Path pathToFile = Paths.get(tableFhirMapPath);
 		try (Reader reader = Files.newBufferedReader(pathToFile.toAbsolutePath(), StandardCharsets.UTF_8)) {
 			GeneralConfiguration generalConfiguration = gson.fromJson(reader, GeneralConfiguration.class);
 			Map<String, EventConfiguration> tableToFhirMap = generalConfiguration.getEventConfigurations();
 			String[] searchList = searchString.split(",");
-			Map<String, String> reverseMap = new HashMap<String, String>();
+			Map<String, List<String>> reverseMap = new HashMap<String, List<String>>();
 			for (Map.Entry<String, EventConfiguration> entry : tableToFhirMap.entrySet()) {
 				Map<String, String> linkTemplate = entry.getValue().getLinkTemplates();
 				for (String search : searchList) {
 					if (linkTemplate.containsKey("fhir") && linkTemplate.get("fhir") != null) {
 						String[] resourceName = linkTemplate.get("fhir").split("/");
 						if (resourceName.length >= 1 && resourceName[1].equals(search)) {
-							reverseMap.put(entry.getValue().getParentTable(), resourceName[1]);
+							if (reverseMap.containsKey(entry.getValue().getParentTable())) {
+								List<String> resources = reverseMap.get(entry.getValue().getParentTable());
+								resources.add(resourceName[1]);
+							} else {
+								List<String> resources = new ArrayList<String>();
+								resources.add(resourceName[1]);
+								reverseMap.put(entry.getValue().getParentTable(), resources);
+							}
+							
 						}
 					}
 				}
