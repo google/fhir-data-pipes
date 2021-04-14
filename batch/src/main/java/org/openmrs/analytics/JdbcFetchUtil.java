@@ -171,24 +171,25 @@ public class JdbcFetchUtil {
 	 * Creates a map from database table names to the list of FHIR resources that correspond to that
 	 * table. For example: person->Person,Patient and visit->Encounter.
 	 *
-	 * @param searchString the comma separated list of FHIR resources we care about.
+	 * @param resourceString the comma separated list of FHIR resources we care about.
 	 * @param tableFhirMapPath the file that contains the general configuration.
 	 * @return the computed map.
 	 */
-	public Map<String, List<String>> createFhirReverseMap(String searchString, String tableFhirMapPath) throws IOException {
+	public Map<String, List<String>> createFhirReverseMap(String resourceString, String tableFhirMapPath)
+	        throws IOException {
 		Gson gson = new Gson();
 		Path pathToFile = Paths.get(tableFhirMapPath);
 		try (Reader reader = Files.newBufferedReader(pathToFile.toAbsolutePath(), StandardCharsets.UTF_8)) {
 			GeneralConfiguration generalConfiguration = gson.fromJson(reader, GeneralConfiguration.class);
 			Map<String, EventConfiguration> tableToFhirMap = generalConfiguration.getEventConfigurations();
-			String[] searchList = searchString.split(",");
+			String[] resourceList = resourceString.split(",");
 			Map<String, List<String>> reverseMap = new HashMap<String, List<String>>();
 			for (Map.Entry<String, EventConfiguration> entry : tableToFhirMap.entrySet()) {
 				Map<String, String> linkTemplate = entry.getValue().getLinkTemplates();
-				for (String search : searchList) {
+				for (String resource : resourceList) {
 					if (linkTemplate.containsKey("fhir") && linkTemplate.get("fhir") != null) {
 						String[] resourceName = linkTemplate.get("fhir").split("/");
-						if (resourceName.length >= 1 && resourceName[1].equals(search)) {
+						if (resourceName.length >= 1 && resourceName[1].equals(resource)) {
 							if (reverseMap.containsKey(entry.getValue().getParentTable())) {
 								List<String> resources = reverseMap.get(entry.getValue().getParentTable());
 								resources.add(resourceName[1]);
@@ -197,12 +198,11 @@ public class JdbcFetchUtil {
 								resources.add(resourceName[1]);
 								reverseMap.put(entry.getValue().getParentTable(), resources);
 							}
-							
 						}
 					}
 				}
 			}
-			if (reverseMap.size() < searchList.length) {
+			if (reverseMap.size() < resourceList.length) {
 				log.error("Some of the passed FHIR resources are not mapped to any table, please check the config");
 			}
 			return reverseMap;

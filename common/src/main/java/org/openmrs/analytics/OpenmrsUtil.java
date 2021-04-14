@@ -18,6 +18,7 @@ import ca.uhn.fhir.context.FhirContext;
 import ca.uhn.fhir.rest.client.api.IClientInterceptor;
 import ca.uhn.fhir.rest.client.api.IGenericClient;
 import ca.uhn.fhir.rest.client.interceptor.BasicAuthInterceptor;
+import ca.uhn.fhir.rest.client.interceptor.LoggingInterceptor;
 import org.hl7.fhir.instance.model.api.IBaseResource;
 import org.hl7.fhir.r4.model.Resource;
 import org.slf4j.Logger;
@@ -43,33 +44,48 @@ public class OpenmrsUtil {
 		this.fhirContext = fhirContext;
 	}
 	
-	public Resource fetchFhirResource(String resourceUrl) {
+	public Resource fetchFhirResource(String resourceType, String resourceId) {
 		try {
 			// Create client
 			IGenericClient client = getSourceClient();
-			
-			// Parse resourceUrl
-			String[] sepUrl = resourceUrl.split("/");
-			String resourceId = sepUrl[sepUrl.length - 1];
-			String resourceType = sepUrl[sepUrl.length - 2];
-			
 			// TODO add summary mode for data only.
 			IBaseResource resource = client.read().resource(resourceType).withId(resourceId).execute();
-			
 			return (Resource) resource;
 		}
 		catch (Exception e) {
-			log.error("Failed fetching FHIR resource at " + resourceUrl + ": " + e);
+			log.error(String.format("Failed fetching FHIR %s resource with Id %s: %s", resourceType, resourceId, e));
 			return null;
 		}
 	}
 	
+	public Resource fetchFhirResource(String resourceUrl) {
+		// Create client
+		IGenericClient client = getSourceClient();
+		
+		// Parse resourceUrl
+		String[] sepUrl = resourceUrl.split("/");
+		String resourceId = sepUrl[sepUrl.length - 1];
+		String resourceType = sepUrl[sepUrl.length - 2];
+		return fetchFhirResource(resourceType, resourceId);
+	}
+	
 	public IGenericClient getSourceClient() {
+		return getSourceClient(false);
+	}
+	
+	public IGenericClient getSourceClient(boolean enableRequestLogging) {
 		IClientInterceptor authInterceptor = new BasicAuthInterceptor(this.sourceUser, this.sourcePw);
 		fhirContext.getRestfulClientFactory().setSocketTimeout(200 * 1000);
 		
 		IGenericClient client = fhirContext.getRestfulClientFactory().newGenericClient(this.fhirUrl);
 		client.registerInterceptor(authInterceptor);
+		
+		if (enableRequestLogging) {
+			LoggingInterceptor loggingInterceptor = new LoggingInterceptor();
+			loggingInterceptor.setLogger(log);
+			loggingInterceptor.setLogRequestSummary(true);
+			client.registerInterceptor(loggingInterceptor);
+		}
 		
 		return client;
 	}

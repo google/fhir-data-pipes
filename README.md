@@ -126,13 +126,13 @@ $ java -cp batch/target/fhir-batch-etl-bundled-0.1.0-SNAPSHOT.jar \
     --fhirSinkPath=http://localhost:8098/fhir \
     --sinkUserName=hapi --sinkPassword=hapi \
     --outputParquetPath=/tmp/TEST/ \
-    --searchList=Patient,Encounter,Observation --batchSize=20
+    --resourceList=Patient,Encounter,Observation --batchSize=20
 ```
 
 Parameters:
 
--   `searchList` - A comma-separated list of
-    [FHIR Search](https://www.hl7.org/fhir/search.html) URLs. For example,
+-   `resourceList` - A comma-separated list of
+    [FHIR resources](https://www.hl7.org/fhir/resourcelist.html) URLs. For example,
     `Patient?given=Susan` will extract only Patient resources that meet the
     `given=Susan` criteria. Default: `Patient,Encounter,Observation`
 -   `batchSize` - The number of resources to fetch in each API call.
@@ -154,7 +154,7 @@ $ java -cp batch/target/fhir-batch-etl-bundled-0.1.0-SNAPSHOT.jar \
     --fhirSinkPath=http://localhost:8098/fhir \
     --sinkUserName=hapi --sinkPassword=hapi \
     --outputParquetPath=/tmp/TEST/ \
-    --searchList=Patient,Encounter,Observation --batchSize=20 \
+    --resourceList=Patient,Encounter,Observation --batchSize=20 \
     --jdbcModeEnabled=true --jdbcUrl=jdbc:mysql://localhost:3306/openmrs \
     --dbUser=root --dbPassword=debezium --jdbcMaxPoolSize=50 \
     --jdbcDriverClass=com.mysql.cj.jdbc.Driver
@@ -163,7 +163,7 @@ $ java -cp batch/target/fhir-batch-etl-bundled-0.1.0-SNAPSHOT.jar \
 
 Parameters:
 
--   `searchList` - A comma-separated list of FHIR Resources to be fetched from
+-   `resourceList` - A comma-separated list of FHIR Resources to be fetched from
     OpenMRS. Default: `Patient,Encounter,Observation`
 -   `batchSize` - The number of resources to fetch in each API call. Default:
     `100`

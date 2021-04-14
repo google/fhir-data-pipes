@@ -33,23 +33,22 @@ public interface FhirEtlOptions extends PipelineOptions {
 	
 	void setOpenmrsServerUrl(String value);
 	
+	// TODO merge this with `openmrsServerUrl` to `fhirBaseUrl`
 	@Description("OpenMRS server fhir endpoint")
 	@Default.String("/ws/fhir2/R4")
 	String getServerFhirEndpoint();
 	
 	void setServerFhirEndpoint(String value);
 	
-	@Description("Comma separated list of resource and search parameters to fetch; in its simplest "
-	        + "form this is a list of resources, e.g., `Patient,Encounter,Observation` but more "
-	        + "complex search paths are possible too, e.g., `Patient?name=Susan.`"
-	        + "Please note that complex search params doesn't work when JDBC mode is enabled.")
+	@Description("Comma separated list of resource to fetch, e.g., 'Patient,Encounter,Observation'.")
 	@Default.String("Patient,Encounter,Observation")
-	String getSearchList();
+	String getResourceList();
 	
-	void setSearchList(String value);
+	void setResourceList(String value);
 	
 	@Description("The number of resources to be fetched in one API call. "
-	        + "For the JDBC mode passing > 170 could result in HTTP 400 Bad Request")
+	        + "For the JDBC mode passing > 170 could result in HTTP 400 Bad Request. "
+	        + "Note by default the maximum bundle size for OpenMRS FHIR module is 100.")
 	@Default.Integer(100)
 	int getBatchSize();
 	
@@ -172,4 +171,19 @@ public interface FhirEtlOptions extends PipelineOptions {
 	int getSecondsToFlushFiles();
 	
 	void setSecondsToFlushFiles(int value);
+	
+	@Description("The active period with format: 'DATE1_DATE2' OR 'DATE1'. The first form declares "
+	        + "the first date-time (non-inclusive) and last date-time (inclusive); the second form declares "
+	        + "the active period to be from the given date-time (non-inclusive) until now. Resources outside "
+	        + "the active period are only fetched if they are associated with Patients in the active period. "
+	        + "All requested resources in the active period are fetched.\n"
+	        + "The format of DATE1 and DATE2 follows the dateTime format in the FHIR standard:\n"
+	        + "https://www.hl7.org/fhir/datatypes.html#dateTime\n"
+	        + "For example: --activePeriod=2020-11-10T00:00:00_2020-11-20\n"
+	        + "Note this feature implies fetching Patient resources that were active in the given period.\n"
+	        + "Default empty string disables this feature, i.e., all requested resources are fetched.")
+	@Default.String("")
+	String getActivePeriod();
+	
+	void setActivePeriod(String value);
 }
