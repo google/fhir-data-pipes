@@ -154,7 +154,7 @@ public class JdbcFetchUtil {
 			log.info("SQL query: " + query);
 			resultSet = statement.executeQuery(query);
 		} else {
-			final String query = String.format("SELECT uuid FROM %s WHERE %s > '%s' AND %s < '%s'", tableName, dateColumn,
+			final String query = String.format("SELECT uuid FROM %s WHERE %s > '%s' AND %s <= '%s'", tableName, dateColumn,
 			    dateRange[0], dateColumn, dateRange[1]);
 			log.info("SQL query: " + query);
 			resultSet = statement.executeQuery(query);
