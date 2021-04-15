@@ -177,7 +177,7 @@ public interface FhirEtlOptions extends PipelineOptions {
 	        + "the active period to be from the given date-time (non-inclusive) until now. Resources outside "
 	        + "the active period are only fetched if they are associated with Patients in the active period. "
 	        + "All requested resources in the active period are fetched.\n"
-	        + "The format of DATE1 and DATE2 follows the dateTime format in the FHIR standard:\n"
+	        + "The date format follows the dateTime format in the FHIR standard, without the time-zone:\n"
 	        + "https://www.hl7.org/fhir/datatypes.html#dateTime\n"
 	        + "For example: --activePeriod=2020-11-10T00:00:00_2020-11-20\n"
 	        + "Note this feature implies fetching Patient resources that were active in the given period.\n"

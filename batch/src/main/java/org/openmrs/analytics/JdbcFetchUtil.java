@@ -28,11 +28,19 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Preconditions;
+import com.google.common.collect.Lists;
 import com.google.gson.Gson;
+import org.apache.beam.sdk.Pipeline;
 import org.apache.beam.sdk.coders.NullableCoder;
 import org.apache.beam.sdk.coders.StringUtf8Coder;
 import org.apache.beam.sdk.io.jdbc.JdbcIO;
-import org.apache.beam.sdk.transforms.*;
+import org.apache.beam.sdk.transforms.Create;
+import org.apache.beam.sdk.transforms.DoFn;
+import org.apache.beam.sdk.transforms.GroupIntoBatches;
+import org.apache.beam.sdk.transforms.PTransform;
+import org.apache.beam.sdk.transforms.ParDo;
 import org.apache.beam.sdk.values.KV;
 import org.apache.beam.sdk.values.PCollection;
 import org.openmrs.analytics.model.EventConfiguration;
@@ -70,7 +78,7 @@ public class JdbcFetchUtil {
 				            
 				            @Override
 				            public void setParameters(KV<Integer, Integer> element, PreparedStatement preparedStatement)
-				                    throws Exception {
+				                    throws SQLException {
 					            preparedStatement.setInt(1, element.getKey());
 					            preparedStatement.setInt(2, element.getValue());
 				            }
@@ -80,7 +88,7 @@ public class JdbcFetchUtil {
 			            .withRowMapper(new JdbcIO.RowMapper<String>() {
 				            
 				            @Override
-				            public String mapRow(ResultSet resultSet) throws Exception {
+				            public String mapRow(ResultSet resultSet) throws SQLException {
 					            return resultSet.getString("uuid");
 				            }
 			            }).withCoder(NullableCoder.of(StringUtf8Coder.of())));
@@ -135,7 +143,38 @@ public class JdbcFetchUtil {
 		}
 	}
 	
-	public Integer fetchMaxId(String tableName) throws SQLException {
+	public PCollection<String> FetchUuidsByDate(Pipeline pipeline, String tableName, String dateColumn, String activePeriod)
+	        throws SQLException {
+		Preconditions.checkArgument(!activePeriod.isEmpty());
+		String[] dateRange = activePeriod.split("_");
+		Statement statement = jdbcConnectionUtil.createStatement();
+		ResultSet resultSet;
+		if (dateRange.length == 1) {
+			final String query = String.format("SELECT uuid FROM %s WHERE %s > '%s'", tableName, dateColumn, dateRange[0]);
+			log.info("SQL query: " + query);
+			resultSet = statement.executeQuery(query);
+		} else {
+			final String query = String.format("SELECT uuid FROM %s WHERE %s > '%s' AND %s < '%s'", tableName, dateColumn,
+			    dateRange[0], dateColumn, dateRange[1]);
+			log.info("SQL query: " + query);
+			resultSet = statement.executeQuery(query);
+		}
+		List<String> uuids = Lists.newArrayList();
+		while (resultSet.next()) {
+			uuids.add(resultSet.getString("uuid"));
+		}
+		resultSet.close();
+		statement.close();
+		return pipeline.apply(Create.of(uuids));
+	}
+	
+	public PCollection<String> fetchAllUuids(Pipeline pipeline, String tableName, int jdbcFetchSize) throws SQLException {
+		int maxId = fetchMaxId(tableName);
+		Map<Integer, Integer> idRanges = createIdRanges(maxId, jdbcFetchSize);
+		return pipeline.apply(Create.of(idRanges)).apply(new JdbcFetchUtil.FetchUuids(tableName, getJdbcConfig()));
+	}
+	
+	private Integer fetchMaxId(String tableName) throws SQLException {
 		String tableId = tableName + "_id";
 		Statement statement = jdbcConnectionUtil.createStatement();
 		ResultSet resultSet = statement
@@ -147,21 +186,23 @@ public class JdbcFetchUtil {
 		return maxId;
 	}
 	
-	public JdbcIO.DataSourceConfiguration getJdbcConfig() {
+	@VisibleForTesting
+	JdbcIO.DataSourceConfiguration getJdbcConfig() {
 		return JdbcIO.DataSourceConfiguration.create(this.jdbcConnectionUtil.getConnectionObject());
 	}
 	
-	public Map<Integer, Integer> createIdRanges(int count, int rangeSize) {
-		int ranges = count / rangeSize;
+	@VisibleForTesting
+	Map<Integer, Integer> createIdRanges(int maxId, int rangeSize) {
 		Map<Integer, Integer> rangeMap = new HashMap<Integer, Integer>();
+		int ranges = maxId / rangeSize;
 		for (int i = 0; i < ranges; i++) {
 			int rangeFrom = (i * rangeSize) + 1;
 			int rangeTo = (i + 1) * rangeSize;
 			rangeMap.put(rangeFrom, rangeTo);
 		}
-		if (count > ranges * rangeSize) {
+		if (maxId > ranges * rangeSize) {
 			int rangeFrom = ranges * rangeSize;
-			int rangeTo = ranges * rangeSize + count % rangeSize;
+			int rangeTo = ranges * rangeSize + maxId % rangeSize;
 			rangeMap.put(rangeFrom, rangeTo);
 		}
 		return rangeMap;

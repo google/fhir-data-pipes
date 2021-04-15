@@ -17,6 +17,7 @@ import java.util.List;
 
 import ca.uhn.fhir.context.FhirContext;
 import ca.uhn.fhir.parser.IParser;
+import org.apache.avro.AvroTypeException;
 import org.apache.avro.generic.GenericRecord;
 import org.apache.beam.sdk.metrics.Counter;
 import org.apache.beam.sdk.metrics.Metrics;
@@ -121,7 +122,14 @@ abstract class FetchSearchPageFn<T> extends DoFn<T, GenericRecord> {
 				long startTime = System.currentTimeMillis();
 				List<GenericRecord> recordList = parquetUtil.generateRecords(bundle);
 				for (GenericRecord record : recordList) {
-					out.get(avroTag).output(record);
+					try {
+						out.get(avroTag).output(record);
+					}
+					catch (AvroTypeException e) {
+						// TODO fix the root cause of this exception!
+						log.error(String.format("Dropping record with id %s at stage %s due to exception: %s ",
+						    record.get("id"), stageIdentifier, e));
+					}
 				}
 				totalGenerateTimeMillis.inc(System.currentTimeMillis() - startTime);
 			}
