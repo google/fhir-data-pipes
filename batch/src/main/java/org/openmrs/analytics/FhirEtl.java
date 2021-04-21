@@ -59,11 +59,17 @@ public class FhirEtl {
 	
 	private static final Logger log = LoggerFactory.getLogger(FhirEtl.class);
 	
+	/**
+	 * This map is used when the activePeriod feature is enabled in the JDBC mode. For each table it
+	 * indicates the column on which the date filter is applied. It is best if these columns are not
+	 * nullable and there is an index on them.
+	 */
 	private static final Map<String, String> tableDateColumn;
 	static {
 		Map<String, String> tempMap = Maps.newHashMap();
 		tempMap.put("encounter", "encounter_datetime");
 		tempMap.put("obs", "obs_datetime");
+		tempMap.put("visit", "date_started");
 		tableDateColumn = Collections.unmodifiableMap(tempMap);
 	}
 	
@@ -193,7 +199,7 @@ public class FhirEtl {
 	}
 	
 	static void runFhirJdbcFetch(FhirEtlOptions options, FhirContext fhirContext)
-	        throws PropertyVetoException, IOException, SQLException {
+	        throws PropertyVetoException, IOException, SQLException, CannotProvideCoderException {
 		FhirSearchUtil fhirSearchUtil = createFhirSearchUtil(options, fhirContext);
 		Pipeline pipeline = Pipeline.create(options);
 		JdbcConnectionUtil jdbcConnectionUtil = new JdbcConnectionUtil(options.getJdbcDriverClass(), options.getJdbcUrl(),
@@ -211,16 +217,20 @@ public class FhirEtl {
 			log.info(String.format("List of resources for table %s is %s", tableName, entry.getValue()));
 			PCollection<String> uuids;
 			if (options.getActivePeriod().isEmpty() || !tableDateColumn.containsKey(tableName)) {
+				if (!options.getActivePeriod().isEmpty()) {
+					log.warn(String.format("There is no date mapping for table %s; fetching all rows.", tableName));
+				}
 				uuids = jdbcUtil.fetchAllUuids(pipeline, tableName, options.getJdbcFetchSize());
 			} else {
-				uuids = jdbcUtil.FetchUuidsByDate(pipeline, tableName, tableDateColumn.get(tableName),
+				uuids = jdbcUtil.fetchUuidsByDate(pipeline, tableName, tableDateColumn.get(tableName),
 				    options.getActivePeriod());
 			}
 			for (String resourceType : entry.getValue()) {
 				resourceTypes.add(resourceType);
 				String baseBundleUrl = options.getOpenmrsServerUrl() + options.getServerFhirEndpoint() + "/" + resourceType;
-				PCollection<SearchSegmentDescriptor> inputSegments = uuids
-				        .apply(new JdbcFetchUtil.CreateSearchSegments(resourceType, baseBundleUrl, batchSize));
+				PCollection<SearchSegmentDescriptor> inputSegments = uuids.apply(
+				    String.format("CreateSearchSegments_%s_table_%s", resourceType, tableName),
+				    new JdbcFetchUtil.CreateSearchSegments(resourceType, baseBundleUrl, batchSize));
 				allPatientIds.add(fetchSegmentsAndReturnPatientIds(inputSegments, resourceType, options));
 			}
 		}

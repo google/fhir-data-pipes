@@ -33,6 +33,7 @@ import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
 import com.google.gson.Gson;
 import org.apache.beam.sdk.Pipeline;
+import org.apache.beam.sdk.coders.CannotProvideCoderException;
 import org.apache.beam.sdk.coders.NullableCoder;
 import org.apache.beam.sdk.coders.StringUtf8Coder;
 import org.apache.beam.sdk.io.jdbc.JdbcIO;
@@ -143,8 +144,8 @@ public class JdbcFetchUtil {
 		}
 	}
 	
-	public PCollection<String> FetchUuidsByDate(Pipeline pipeline, String tableName, String dateColumn, String activePeriod)
-	        throws SQLException {
+	public PCollection<String> fetchUuidsByDate(Pipeline pipeline, String tableName, String dateColumn, String activePeriod)
+	        throws SQLException, CannotProvideCoderException {
 		Preconditions.checkArgument(!activePeriod.isEmpty());
 		String[] dateRange = activePeriod.split("_");
 		Statement statement = jdbcConnectionUtil.createStatement();
@@ -165,11 +166,14 @@ public class JdbcFetchUtil {
 		}
 		resultSet.close();
 		statement.close();
-		return pipeline.apply(Create.of(uuids));
+		log.info(String.format("Will fetch %d rows matching activePeriod in table %s", uuids.size(), tableName));
+		// We need to specify the coder in case `uuids` is empty.
+		return pipeline.apply(Create.of(uuids).withCoder(pipeline.getCoderRegistry().getCoder(String.class)));
 	}
 	
 	public PCollection<String> fetchAllUuids(Pipeline pipeline, String tableName, int jdbcFetchSize) throws SQLException {
 		int maxId = fetchMaxId(tableName);
+		log.info(String.format("Will fetch up to %d rows from table %s", maxId, tableName));
 		Map<Integer, Integer> idRanges = createIdRanges(maxId, jdbcFetchSize);
 		return pipeline.apply(Create.of(idRanges)).apply(new JdbcFetchUtil.FetchUuids(tableName, getJdbcConfig()));
 	}
