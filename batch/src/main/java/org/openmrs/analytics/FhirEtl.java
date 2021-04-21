@@ -18,6 +18,8 @@ import java.beans.PropertyVetoException;
 import java.io.IOException;
 import java.nio.file.FileSystems;
 import java.sql.SQLException;
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -33,7 +35,6 @@ import org.apache.beam.sdk.PipelineResult;
 import org.apache.beam.sdk.coders.CannotProvideCoderException;
 import org.apache.beam.sdk.io.FileIO;
 import org.apache.beam.sdk.io.TextIO;
-import org.apache.beam.sdk.io.jdbc.JdbcIO;
 import org.apache.beam.sdk.io.parquet.ParquetIO;
 import org.apache.beam.sdk.options.PipelineOptionsFactory;
 import org.apache.beam.sdk.transforms.Create;
@@ -57,6 +58,20 @@ import org.slf4j.LoggerFactory;
 public class FhirEtl {
 	
 	private static final Logger log = LoggerFactory.getLogger(FhirEtl.class);
+	
+	/**
+	 * This map is used when the activePeriod feature is enabled in the JDBC mode. For each table it
+	 * indicates the column on which the date filter is applied. It is best if these columns are not
+	 * nullable and there is an index on them.
+	 */
+	private static final Map<String, String> tableDateColumn;
+	static {
+		Map<String, String> tempMap = Maps.newHashMap();
+		tempMap.put("encounter", "encounter_datetime");
+		tempMap.put("obs", "obs_datetime");
+		tempMap.put("visit", "date_started");
+		tableDateColumn = Collections.unmodifiableMap(tempMap);
+	}
 	
 	static FhirSearchUtil createFhirSearchUtil(FhirEtlOptions options, FhirContext fhirContext) {
 		return new FhirSearchUtil(createOpenmrsUtil(options, fhirContext));
@@ -131,10 +146,31 @@ public class FhirEtl {
 		return fetchResources.getPatientIds(records);
 	}
 	
+	static void fetchPatientHistory(Pipeline pipeline, List<PCollection<KV<String, Integer>>> allPatientIds,
+	        Set<String> patientAssociatedResources, FhirEtlOptions options) {
+		PCollectionList<KV<String, Integer>> patientIdList = PCollectionList.<KV<String, Integer>> empty(pipeline)
+		        .and(allPatientIds);
+		PCollection<KV<String, Integer>> flattenedPatients = patientIdList.apply(Flatten.pCollections());
+		PCollection<KV<String, Integer>> mergedPatients = flattenedPatients.apply(Sum.integersPerKey());
+		final String patientType = "Patient";
+		FetchPatients fetchPatients = new FetchPatients(options, getSchema(patientType));
+		PCollectionTuple patientRecords = mergedPatients.apply(fetchPatients);
+		writeToParquet(fetchPatients.getAvroRecords(patientRecords), options, patientType, "active");
+		writeToJson(fetchPatients.getJsonRecords(patientRecords), options, patientType, "active");
+		for (String resourceType : patientAssociatedResources) {
+			FetchPatientHistory fetchPatientHistory = new FetchPatientHistory(options, resourceType,
+			        getSchema(resourceType));
+			PCollectionTuple records = mergedPatients.apply(fetchPatientHistory);
+			writeToParquet(fetchPatientHistory.getAvroRecords(records), options, resourceType, "history");
+			writeToJson(fetchPatientHistory.getJsonRecords(records), options, resourceType, "history");
+		}
+	}
+	
 	static void runFhirFetch(FhirEtlOptions options, FhirContext fhirContext) {
 		FhirSearchUtil fhirSearchUtil = createFhirSearchUtil(options, fhirContext);
 		Map<String, List<SearchSegmentDescriptor>> segmentMap = Maps.newHashMap();
 		try {
+			// TODO in the activePeriod case, among patientAssociatedResources, only fetch Encounter here.
 			segmentMap = fhirSearchUtil.createSegments(options);
 		}
 		catch (IllegalArgumentException e) {
@@ -151,30 +187,11 @@ public class FhirEtl {
 		for (Map.Entry<String, List<SearchSegmentDescriptor>> entry : segmentMap.entrySet()) {
 			String resourceType = entry.getKey();
 			PCollection<SearchSegmentDescriptor> inputSegments = pipeline.apply(Create.of(entry.getValue()));
-			PCollection<KV<String, Integer>> patientIds = fetchSegmentsAndReturnPatientIds(inputSegments, resourceType,
-			    options);
-			if (!options.getActivePeriod().isEmpty()) {
-				allPatientIds.add(patientIds);
-			}
+			allPatientIds.add(fetchSegmentsAndReturnPatientIds(inputSegments, resourceType, options));
 		}
 		if (!options.getActivePeriod().isEmpty()) {
 			Set<String> patientAssociatedResources = fhirSearchUtil.findPatientAssociatedResources(segmentMap.keySet());
-			PCollectionList<KV<String, Integer>> patientIdList = PCollectionList.<KV<String, Integer>> empty(pipeline)
-			        .and(allPatientIds);
-			PCollection<KV<String, Integer>> flattenedPatients = patientIdList.apply(Flatten.pCollections());
-			PCollection<KV<String, Integer>> mergedPatients = flattenedPatients.apply(Sum.integersPerKey());
-			final String patientType = "Patient";
-			FetchPatients fetchPatients = new FetchPatients(options, getSchema(patientType));
-			PCollectionTuple patientRecords = mergedPatients.apply(fetchPatients);
-			writeToParquet(fetchPatients.getAvroRecords(patientRecords), options, patientType, "active");
-			writeToJson(fetchPatients.getJsonRecords(patientRecords), options, patientType, "active");
-			for (String resourceType : patientAssociatedResources) {
-				FetchPatientHistory fetchPatientHistory = new FetchPatientHistory(options, resourceType,
-				        getSchema(resourceType));
-				PCollectionTuple records = mergedPatients.apply(fetchPatientHistory);
-				writeToParquet(fetchPatientHistory.getAvroRecords(records), options, resourceType, "history");
-				writeToJson(fetchPatientHistory.getJsonRecords(records), options, resourceType, "history");
-			}
+			fetchPatientHistory(pipeline, allPatientIds, patientAssociatedResources, options);
 		}
 		PipelineResult result = pipeline.run();
 		result.waitUntilFinish();
@@ -182,29 +199,44 @@ public class FhirEtl {
 	}
 	
 	static void runFhirJdbcFetch(FhirEtlOptions options, FhirContext fhirContext)
-	        throws PropertyVetoException, IOException, SQLException {
+	        throws PropertyVetoException, IOException, SQLException, CannotProvideCoderException {
+		FhirSearchUtil fhirSearchUtil = createFhirSearchUtil(options, fhirContext);
 		Pipeline pipeline = Pipeline.create(options);
 		JdbcConnectionUtil jdbcConnectionUtil = new JdbcConnectionUtil(options.getJdbcDriverClass(), options.getJdbcUrl(),
 		        options.getDbUser(), options.getDbPassword(), options.getJdbcMaxPoolSize(),
 		        options.getJdbcInitialPoolSize());
 		JdbcFetchUtil jdbcUtil = new JdbcFetchUtil(jdbcConnectionUtil);
-		JdbcIO.DataSourceConfiguration jdbcConfig = jdbcUtil.getJdbcConfig();
 		int batchSize = Math.min(options.getBatchSize(), 170); // batch size > 200 will result in HTTP 400 Bad Request
-		int jdbcFetchSize = options.getJdbcFetchSize();
 		Map<String, List<String>> reverseMap = jdbcUtil.createFhirReverseMap(options.getResourceList(),
 		    options.getTableFhirMapPath());
 		// process each table-resource mappings
+		Set<String> resourceTypes = new HashSet<>();
+		List<PCollection<KV<String, Integer>>> allPatientIds = Lists.newArrayList();
 		for (Map.Entry<String, List<String>> entry : reverseMap.entrySet()) {
 			String tableName = entry.getKey();
-			int maxId = jdbcUtil.fetchMaxId(tableName);
-			Map<Integer, Integer> IdRanges = jdbcUtil.createIdRanges(maxId, jdbcFetchSize);
-			for (String resourceType : entry.getValue()) {
-				String baseBundleUrl = options.getOpenmrsServerUrl() + options.getServerFhirEndpoint() + "/" + resourceType;
-				PCollection<SearchSegmentDescriptor> inputSegments = pipeline.apply(Create.of(IdRanges))
-				        .apply(new JdbcFetchUtil.FetchUuids(tableName, jdbcConfig))
-				        .apply(new JdbcFetchUtil.CreateSearchSegments(resourceType, baseBundleUrl, batchSize));
-				fetchSegmentsAndReturnPatientIds(inputSegments, resourceType, options);
+			log.info(String.format("List of resources for table %s is %s", tableName, entry.getValue()));
+			PCollection<String> uuids;
+			if (options.getActivePeriod().isEmpty() || !tableDateColumn.containsKey(tableName)) {
+				if (!options.getActivePeriod().isEmpty()) {
+					log.warn(String.format("There is no date mapping for table %s; fetching all rows.", tableName));
+				}
+				uuids = jdbcUtil.fetchAllUuids(pipeline, tableName, options.getJdbcFetchSize());
+			} else {
+				uuids = jdbcUtil.fetchUuidsByDate(pipeline, tableName, tableDateColumn.get(tableName),
+				    options.getActivePeriod());
 			}
+			for (String resourceType : entry.getValue()) {
+				resourceTypes.add(resourceType);
+				String baseBundleUrl = options.getOpenmrsServerUrl() + options.getServerFhirEndpoint() + "/" + resourceType;
+				PCollection<SearchSegmentDescriptor> inputSegments = uuids.apply(
+				    String.format("CreateSearchSegments_%s_table_%s", resourceType, tableName),
+				    new JdbcFetchUtil.CreateSearchSegments(resourceType, baseBundleUrl, batchSize));
+				allPatientIds.add(fetchSegmentsAndReturnPatientIds(inputSegments, resourceType, options));
+			}
+		}
+		if (!options.getActivePeriod().isEmpty()) {
+			Set<String> patientAssociatedResources = fhirSearchUtil.findPatientAssociatedResources(resourceTypes);
+			fetchPatientHistory(pipeline, allPatientIds, patientAssociatedResources, options);
 		}
 		PipelineResult result = pipeline.run();
 		result.waitUntilFinish();
@@ -219,13 +251,15 @@ public class FhirEtl {
 		}
 		
 		if (!options.getActivePeriod().isEmpty()) {
-			if (options.isJdbcModeEnabled()) {
-				throw new IllegalArgumentException("--activePeriod is not supported in JDBC mode.");
-			}
 			Set<String> resourceSet = Sets.newHashSet(options.getResourceList().split(","));
 			if (resourceSet.contains("Patient")) {
 				throw new IllegalArgumentException(
 				        "When using --activePeriod feature, 'Patient' should not be in --resourceList got: "
+				                + options.getResourceList());
+			}
+			if (!resourceSet.contains("Encounter")) {
+				throw new IllegalArgumentException(
+				        "When using --activePeriod feature, 'Encounter' should be in --resourceList got: "
 				                + options.getResourceList());
 			}
 		}
@@ -242,10 +276,6 @@ public class FhirEtl {
 		validateOptions(options);
 		
 		if (options.isJdbcModeEnabled()) {
-			if (!options.getActivePeriod().isEmpty()) {
-				log.error("The 'active period' feature is not supported in JDBC mode.");
-				return;
-			}
 			runFhirJdbcFetch(options, fhirContext);
 		} else {
 			runFhirFetch(options, fhirContext);
