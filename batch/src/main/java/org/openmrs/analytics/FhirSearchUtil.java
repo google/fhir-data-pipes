@@ -28,6 +28,7 @@ import ca.uhn.fhir.rest.gclient.DateClientParam;
 import ca.uhn.fhir.rest.gclient.IQuery;
 import ca.uhn.fhir.rest.gclient.ReferenceClientParam;
 import ca.uhn.fhir.rest.server.exceptions.InvalidRequestException;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import org.apache.http.NameValuePair;
@@ -60,13 +61,14 @@ public class FhirSearchUtil {
 	}
 	
 	public String getNextUrl(Bundle bundle) {
-		if (bundle.getLink(Bundle.LINK_NEXT) != null) {
+		if (bundle != null && bundle.getLink(Bundle.LINK_NEXT) != null) {
 			return bundle.getLink(Bundle.LINK_NEXT).getUrl();
 		}
 		return null;
 	}
 	
-	public String findBaseSearchUrl(Bundle searchBundle) {
+	@VisibleForTesting
+	String findBaseSearchUrl(Bundle searchBundle) {
 		String searchLink = getNextUrl(searchBundle);
 		if (searchLink == null) {
 			throw new IllegalArgumentException(String.format("No proper link information in bundle %s", searchBundle));
