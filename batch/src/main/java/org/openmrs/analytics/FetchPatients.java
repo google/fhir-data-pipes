@@ -51,7 +51,7 @@ public class FetchPatients extends PTransform<PCollection<KV<String, Integer>>, 
 		fetchSearchPageFn = new FetchSearchPageFn<KV<String, Integer>>(options, "PatientById") {
 			
 			@ProcessElement
-			public void ProcessElement(@Element KV<String, Integer> patientIdCount, MultiOutputReceiver out) {
+			public void processElement(@Element KV<String, Integer> patientIdCount, MultiOutputReceiver out) {
 				String patientId = patientIdCount.getKey();
 				log.info(String.format("Already fetched %d resources for patient %s", patientIdCount.getValue(), patientId));
 				// TODO use openmrsUtil.fetchResource() instead of search and process bundle.

@@ -23,6 +23,9 @@ import com.google.common.collect.Lists;
 import org.apache.avro.Schema;
 import org.apache.avro.generic.GenericRecord;
 import org.apache.beam.sdk.coders.AvroCoder;
+import org.apache.beam.sdk.transforms.DoFn.Element;
+import org.apache.beam.sdk.transforms.DoFn.MultiOutputReceiver;
+import org.apache.beam.sdk.transforms.DoFn.ProcessElement;
 import org.apache.beam.sdk.transforms.PTransform;
 import org.apache.beam.sdk.transforms.ParDo;
 import org.apache.beam.sdk.values.KV;
@@ -44,7 +47,6 @@ import org.slf4j.LoggerFactory;
  * to JSON or Avro (or both). If a FHIR sink address is provided, those resources are passed to that
  * FHIR sink too.
  */
-// TODO: Add unit-tests for this class
 public class FetchResources extends PTransform<PCollection<SearchSegmentDescriptor>, PCollectionTuple> {
 	
 	private static final Logger log = LoggerFactory.getLogger(FetchResources.class);
@@ -53,34 +55,14 @@ public class FetchResources extends PTransform<PCollection<SearchSegmentDescript
 	
 	final private Schema schema;
 	
-	final private FetchSearchPageFn<SearchSegmentDescriptor> fetchSearchPageFn;
+	@VisibleForTesting
+	protected FetchSearchPageFn<SearchSegmentDescriptor> fetchSearchPageFn;
 	
-	final private TupleTag<KV<String, Integer>> patientIdTag = new TupleTag<KV<String, Integer>>() {};
+	static final private TupleTag<KV<String, Integer>> patientIdTag = new TupleTag<KV<String, Integer>>() {};
 	
 	FetchResources(FhirEtlOptions options, String stageIdentifier, Schema schema) {
 		this.schema = schema;
-		fetchSearchPageFn = new FetchSearchPageFn<SearchSegmentDescriptor>(options, stageIdentifier) {
-			
-			@ProcessElement
-			public void ProcessElement(@Element SearchSegmentDescriptor segment, MultiOutputReceiver out) {
-				String searchUrl = segment.searchUrl();
-				log.info(String.format("Fetching %d resources for statge %s; URL= %s", segment.count(), this.stageIdentifier,
-				    searchUrl.substring(0, Math.min(200, searchUrl.length()))));
-				long fetchStartTime = System.currentTimeMillis();
-				Bundle pageBundle = fhirSearchUtil.searchByUrl(searchUrl, segment.count(), SummaryEnum.DATA);
-				addFetchTime(System.currentTimeMillis() - fetchStartTime);
-				processBundle(pageBundle, out);
-				if (pageBundle != null && pageBundle.getEntry() != null) {
-					for (BundleEntryComponent entry : pageBundle.getEntry()) {
-						String patientId = getSubjectPatientIdOrNull(entry.getResource());
-						if (patientId != null) {
-							out.get(patientIdTag).output(KV.of(patientId, 1));
-						}
-					}
-				}
-			}
-		};
-		
+		fetchSearchPageFn = new SearchFn(options, stageIdentifier);
 	}
 	
 	@VisibleForTesting
@@ -129,5 +111,31 @@ public class FetchResources extends PTransform<PCollection<SearchSegmentDescript
 	
 	public PCollection<KV<String, Integer>> getPatientIds(PCollectionTuple records) {
 		return records.get(patientIdTag);
+	}
+
+	static class SearchFn extends FetchSearchPageFn<SearchSegmentDescriptor> {
+		
+		SearchFn(FhirEtlOptions options, String stageIdentifier) {
+			super(options, stageIdentifier);
+		}
+		
+		@ProcessElement
+		public void processElement(@Element SearchSegmentDescriptor segment, MultiOutputReceiver out) {
+			String searchUrl = segment.searchUrl();
+			log.info(String.format("Fetching %d resources for statge %s; URL= %s", segment.count(), this.stageIdentifier,
+			    searchUrl.substring(0, Math.min(200, searchUrl.length()))));
+			long fetchStartTime = System.currentTimeMillis();
+			Bundle pageBundle = fhirSearchUtil.searchByUrl(searchUrl, segment.count(), SummaryEnum.DATA);
+			addFetchTime(System.currentTimeMillis() - fetchStartTime);
+			processBundle(pageBundle, out);
+			if (pageBundle != null && pageBundle.getEntry() != null) {
+				for (BundleEntryComponent entry : pageBundle.getEntry()) {
+					String patientId = getSubjectPatientIdOrNull(entry.getResource());
+					if (patientId != null) {
+						out.get(patientIdTag).output(KV.of(patientId, 1));
+					}
+				}
+			}
+		}
 	}
 }
