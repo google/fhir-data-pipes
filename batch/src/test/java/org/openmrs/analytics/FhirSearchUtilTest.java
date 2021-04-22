@@ -15,6 +15,7 @@ package org.openmrs.analytics;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.nullValue;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.when;
@@ -46,8 +47,6 @@ public class FhirSearchUtilTest {
 	
 	private static final String SEARCH_URL = "Patient?given=TEST";
 	
-	private String bundleStr;
-	
 	@Mock
 	private OpenmrsUtil openmrsUtil;
 	
@@ -69,7 +68,7 @@ public class FhirSearchUtilTest {
 	@Before
 	public void setup() throws IOException {
 		URL url = Resources.getResource("bundle.json");
-		bundleStr = Resources.toString(url, StandardCharsets.UTF_8);
+		String bundleStr = Resources.toString(url, StandardCharsets.UTF_8);
 		this.fhirContext = FhirContext.forR4();
 		IParser parser = fhirContext.newJsonParser();
 		bundle = parser.parseResource(Bundle.class, bundleStr);
@@ -94,5 +93,19 @@ public class FhirSearchUtilTest {
 	public void testSearchForResource() {
 		Bundle actualBundle = fhirSearchUtil.searchByUrl(SEARCH_URL, 10, SummaryEnum.DATA);
 		assertThat(actualBundle.equalsDeep(bundle), equalTo(true));
+	}
+	
+	@Test
+	public void testGetNextUrlNull() {
+		String bundleStr = "{ \"resourceType\": \"Bundle\",\n" + "    \"id\": \"3beab86b-ca1a-427b-8c5f-07635010c1d5\",\n"
+		        + "    \"meta\": { \"lastUpdated\": \"2021-04-22T05:08:33.750+03:00\" },\n"
+		        + "    \"type\": \"searchset\",\n" + "    \"total\": 0,\n" + "    \"link\": [\n" + "        {\n"
+		        + "            \"relation\": \"self\",\n"
+		        + "            \"url\": \"http://domain.com/openmrs/ws/fhir2/R4/Encounter?_count=100&_summary=data\"\n"
+		        + "        }\n" + "    ]\n" + "}";
+		IParser parser = fhirContext.newJsonParser();
+		bundle = parser.parseResource(Bundle.class, bundleStr);
+		String nextUrl = fhirSearchUtil.getNextUrl(bundle);
+		assertThat(nextUrl, nullValue());
 	}
 }
