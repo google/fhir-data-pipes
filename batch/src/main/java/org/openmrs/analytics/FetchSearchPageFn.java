@@ -30,8 +30,6 @@ import org.hl7.fhir.r4.model.Bundle.BundleEntryComponent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-// TODO: Add unit-tests for this class and its sub-classes in PTransforms.
-
 /**
  * This is the common functionality for all Fns that need to fetch FHIR resources and convert them
  * to Avro and JSON records. The non-abstract sub-classes should implement `ProcessElement` using
@@ -101,7 +99,7 @@ abstract class FetchSearchPageFn<T> extends DoFn<T, GenericRecord> {
 	}
 	
 	@Setup
-	public void Setup() {
+	public void setup() {
 		FhirContext fhirContext = FhirContext.forR4();
 		fhirStoreUtil = FhirStoreUtil.createFhirStoreUtil(sinkPath, sinkUsername, sinkPassword,
 		    fhirContext.getRestfulClientFactory());

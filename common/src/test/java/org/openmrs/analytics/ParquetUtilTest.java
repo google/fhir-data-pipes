@@ -16,8 +16,10 @@ package org.openmrs.analytics;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.notNullValue;
+import static org.hamcrest.number.IsCloseTo.closeTo;
 
 import java.io.IOException;
+import java.math.BigDecimal;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.FileSystem;
 import java.nio.file.FileSystems;
@@ -34,9 +36,11 @@ import com.google.common.io.Resources;
 import com.google.common.jimfs.Configuration;
 import com.google.common.jimfs.Jimfs;
 import org.apache.avro.Schema;
+import org.apache.avro.generic.GenericData;
 import org.apache.avro.generic.GenericData.Record;
 import org.apache.avro.generic.GenericRecord;
 import org.hl7.fhir.r4.model.Bundle;
+import org.hl7.fhir.r4.model.Observation;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -214,5 +218,17 @@ public class ParquetUtilTest {
 		Stream<Path> files = Files.list(rootPath.resolve("Observation"))
 		        .filter(f -> f.toString().startsWith(rootPath.toString() + "/Observation/output-"));
 		assertThat(files.count(), equalTo(1L));
+	}
+	
+	@Test
+	public void convertObservationWithBigDecimalValue() throws IOException {
+		String observationStr = Resources.toString(Resources.getResource("observation_decimal.json"),
+		    StandardCharsets.UTF_8);
+		IParser parser = fhirContext.newJsonParser();
+		Observation observation = parser.parseResource(Observation.class, observationStr);
+		GenericRecord record = parquetUtil.convertToAvro(observation);
+		GenericData.Record valueRecord = (GenericData.Record) record.get("value");
+		BigDecimal value = (BigDecimal) ((GenericData.Record) valueRecord.get("quantity")).get("value");
+		assertThat(value.doubleValue(), closeTo(1.8287, 0.001));
 	}
 }
