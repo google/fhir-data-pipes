@@ -112,7 +112,7 @@ public class FetchResources extends PTransform<PCollection<SearchSegmentDescript
 	public PCollection<KV<String, Integer>> getPatientIds(PCollectionTuple records) {
 		return records.get(patientIdTag);
 	}
-
+	
 	static class SearchFn extends FetchSearchPageFn<SearchSegmentDescriptor> {
 		
 		SearchFn(FhirEtlOptions options, String stageIdentifier) {

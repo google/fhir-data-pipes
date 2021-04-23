@@ -45,10 +45,10 @@ import org.mockito.junit.MockitoJUnitRunner;
 
 @RunWith(MockitoJUnitRunner.class)
 public class FetchResourcesTest {
-
+	
 	@Rule
 	public transient TestPipeline testPipeline = TestPipeline.create();
-
+	
 	private FetchResources fetchResources;
 	
 	private FhirContext fhirContext;
@@ -98,13 +98,15 @@ public class FetchResourcesTest {
 		MockedFetchResources(FhirEtlOptions options, Bundle bundle, Schema schema) {
 			super(options, "TEST_FetchResources", schema);
 			this.fetchSearchPageFn = new SearchFn(options, "TEST_FetchResources") {
+				
 				@Override
 				public void setup() {
-				  super.setup();
+					super.setup();
 					this.fhirSearchUtil = Mockito.mock(FhirSearchUtil.class);
 					FhirSearchUtil mockedSearch = this.fhirSearchUtil;
-					when(mockedSearch.searchByUrl(any(String.class), any(Integer.class), any(SummaryEnum.class))).thenReturn(bundle);
-        }
+					when(mockedSearch.searchByUrl(any(String.class), any(Integer.class), any(SummaryEnum.class)))
+					        .thenReturn(bundle);
+				}
 			};
 		}
 	}
