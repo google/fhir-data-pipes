@@ -115,6 +115,35 @@ def find_age_band(birth_date: str, end_date: datetime) -> str:
     return '25-49'
   return '50+'
 
+def find_time_buckets(recorded_date: str,) -> str:
+  """Given the datetime eg agg_obs datetime, finds the time_monthly band for PEPFAR disaggregation."""
+  datetiem_recorded_date = datetime.strptime(recorded_date, '%Y-%m-%d')
+  if datetiem_recorded_date.strftime("%m") == 1:
+     return 'January'
+  if datetiem_recorded_date.strftime("%m") == 2:
+     return 'February'
+  if datetiem_recorded_date.strftime("%m") == 3:
+     return 'March'
+  if datetiem_recorded_date.strftime("%m") == 4:
+     return 'April'
+  if datetiem_recorded_date.strftime("%m") == 5:
+     return 'May'
+  if datetiem_recorded_date.strftime("%m") == 6:
+     return 'June'
+  if datetiem_recorded_date.strftime("%m") == 7:
+     return 'July'
+  if datetiem_recorded_date.strftime("%m") == 8:
+     return 'August'
+  if datetiem_recorded_date.strftime("%m") == 9:
+     return 'September'
+  if datetiem_recorded_date.strftime("%m") == 10:
+     return 'October'
+  if datetiem_recorded_date.strftime("%m") == 11:
+     return 'November'
+  if datetiem_recorded_date.strftime("%m") == 12:
+     return 'December'
+  return None   
+   
 
 def agg_buckets(birth_date: str, gender: str, end_date: datetime) -> List[str]:
   """Generates the list of all PEPFRA disaggregation buckets."""
@@ -139,16 +168,19 @@ def calc_TX_PVLS(patient_agg_obs: DataFrame, VL_code: str,
   agg_buckets_udf = F.UserDefinedFunction(
       lambda a, g: agg_buckets(a, g, end_date),
       T.ArrayType(T.StringType()))
+  find_time_buckets_udf = F.UserDefinedFunction(
+      lambda a: find_time_buckets(a),T.StringType())   
   VL_df = patient_agg_obs.withColumn(
       'sup_VL', patient_agg_obs[VL_code + '_max_value'] < 150).withColumn(
       'agg_buckets', agg_buckets_udf(
           patient_agg_obs['birthDate'], patient_agg_obs['gender'])
-  )
+  ).withColumn('month',find_time_buckets_udf(patient_agg_obs['datetime']))
   num_patients = VL_df.count()
   VL_agg_P = VL_df.select(
+      VL_df.month,
       VL_df.sup_VL,
       F.explode(VL_df.agg_buckets).alias('agg_bucket')).groupBy(
-      'sup_VL', 'agg_bucket').agg(
+      'month','sup_VL', 'agg_bucket').agg(
       F.count('*').alias('count')).toPandas().sort_values(
       ['agg_bucket', 'sup_VL'])
   VL_agg_P['ratio'] = VL_agg_P['count']/num_patients
