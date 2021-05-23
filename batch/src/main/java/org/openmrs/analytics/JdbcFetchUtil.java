@@ -34,6 +34,7 @@ import com.google.common.collect.Lists;
 import com.google.gson.Gson;
 import org.apache.beam.sdk.Pipeline;
 import org.apache.beam.sdk.coders.CannotProvideCoderException;
+import org.apache.beam.sdk.coders.KvCoder;
 import org.apache.beam.sdk.coders.NullableCoder;
 import org.apache.beam.sdk.coders.StringUtf8Coder;
 import org.apache.beam.sdk.io.jdbc.JdbcIO;
@@ -171,11 +172,17 @@ public class JdbcFetchUtil {
 		return pipeline.apply(Create.of(uuids).withCoder(pipeline.getCoderRegistry().getCoder(String.class)));
 	}
 	
-	public PCollection<String> fetchAllUuids(Pipeline pipeline, String tableName, int jdbcFetchSize) throws SQLException {
+	public PCollection<String> fetchAllUuids(Pipeline pipeline, String tableName, int jdbcFetchSize)
+	        throws SQLException, CannotProvideCoderException {
 		int maxId = fetchMaxId(tableName);
 		log.info(String.format("Will fetch up to %d rows from table %s", maxId, tableName));
 		Map<Integer, Integer> idRanges = createIdRanges(maxId, jdbcFetchSize);
-		return pipeline.apply(Create.of(idRanges)).apply(new JdbcFetchUtil.FetchUuids(tableName, getJdbcConfig()));
+		// We need to specify the coder in case idRanges are empty.
+		return pipeline
+		        .apply(Create.of(idRanges)
+		                .withCoder(KvCoder.of(pipeline.getCoderRegistry().getCoder(Integer.class),
+		                    pipeline.getCoderRegistry().getCoder(Integer.class))))
+		        .apply(new JdbcFetchUtil.FetchUuids(tableName, getJdbcConfig()));
 	}
 	
 	private Integer fetchMaxId(String tableName) throws SQLException {
