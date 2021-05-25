@@ -16,7 +16,6 @@ package org.openmrs.analytics;
 
 import java.beans.PropertyVetoException;
 import java.io.IOException;
-import java.nio.file.FileSystems;
 import java.sql.SQLException;
 import java.util.Collections;
 import java.util.HashSet;
@@ -29,26 +28,16 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import org.apache.avro.Schema;
-import org.apache.avro.generic.GenericRecord;
 import org.apache.beam.sdk.Pipeline;
 import org.apache.beam.sdk.PipelineResult;
 import org.apache.beam.sdk.coders.CannotProvideCoderException;
-import org.apache.beam.sdk.io.FileIO;
-import org.apache.beam.sdk.io.TextIO;
-import org.apache.beam.sdk.io.parquet.ParquetIO;
 import org.apache.beam.sdk.options.PipelineOptionsFactory;
 import org.apache.beam.sdk.transforms.Create;
 import org.apache.beam.sdk.transforms.Flatten;
 import org.apache.beam.sdk.transforms.Sum;
-import org.apache.beam.sdk.transforms.windowing.AfterProcessingTime;
-import org.apache.beam.sdk.transforms.windowing.GlobalWindows;
-import org.apache.beam.sdk.transforms.windowing.Repeatedly;
-import org.apache.beam.sdk.transforms.windowing.Window;
 import org.apache.beam.sdk.values.KV;
 import org.apache.beam.sdk.values.PCollection;
 import org.apache.beam.sdk.values.PCollectionList;
-import org.apache.beam.sdk.values.PCollectionTuple;
-import org.joda.time.Duration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -82,48 +71,9 @@ public class FhirEtl {
 		        options.getOpenmrsPassword(), fhirContext);
 	}
 	
-	static <T> PCollection<T> addWindow(PCollection<T> records, int secondsToFlush) {
-		if (secondsToFlush <= 0) {
-			return records;
-		}
-		// We are dealing with a bounded source hence we can simply use the single Global window.
-		// Also we don't need to deal with late data.
-		// TODO: Implement an easy way to unit-test this functionality.
-		return records.apply(Window.<T> into(new GlobalWindows())
-		        .triggering(Repeatedly.forever(
-		            AfterProcessingTime.pastFirstElementInPane().plusDelayOf(Duration.standardSeconds(secondsToFlush))))
-		        .discardingFiredPanes());
-	}
-	
 	private static Schema getSchema(String resourceType) {
 		ParquetUtil parquetUtil = new ParquetUtil(null); // This is used only to get schema.
 		return parquetUtil.getResourceSchema(resourceType);
-	}
-	
-	static void writeToParquet(PCollection<GenericRecord> records, FhirEtlOptions options, String resourceType,
-	        String subDir) {
-		if (!options.getOutputParquetPath().isEmpty()) {
-			PCollection<GenericRecord> windowedRecords = addWindow(records, options.getSecondsToFlushFiles());
-			String outputDir = FileSystems.getDefault().getPath(options.getOutputParquetPath(), resourceType, subDir)
-			        .toString();
-			log.info("Will write Parquet files to " + outputDir);
-			ParquetIO.Sink sink = ParquetIO.sink(getSchema(resourceType)); // TODO add an option for .withCompressionCodec();
-			windowedRecords.apply(FileIO.<GenericRecord> write().via(sink).to(outputDir).withSuffix(".parquet")
-			        .withNumShards(options.getNumFileShards()));
-			// TODO add Avro output option
-			// apply("WriteToAvro", AvroIO.writeGenericRecords(schema).to(outputFile).withSuffix(".avro")
-			//        .withNumShards(options.getnumFileShards()));
-		}
-	}
-	
-	static void writeToJson(PCollection<String> records, FhirEtlOptions options, String resourceType, String subDir) {
-		if (!options.getOutputJsonPath().isEmpty()) {
-			PCollection<String> windowedRecords = addWindow(records, options.getSecondsToFlushFiles());
-			String outputDir = FileSystems.getDefault().getPath(options.getOutputParquetPath(), resourceType, subDir)
-			        .toString();
-			log.info("Will write JSON files to " + outputDir);
-			windowedRecords.apply("WriteToText", TextIO.write().to(outputDir).withSuffix(".txt"));
-		}
 	}
 	
 	/**
@@ -140,10 +90,7 @@ public class FhirEtl {
 	        PCollection<SearchSegmentDescriptor> inputSegments, String resourceType, FhirEtlOptions options) {
 		Schema schema = getSchema(resourceType);
 		FetchResources fetchResources = new FetchResources(options, resourceType, schema);
-		PCollectionTuple records = inputSegments.apply(fetchResources);
-		writeToParquet(fetchResources.getAvroRecords(records), options, resourceType, "active");
-		writeToJson(fetchResources.getJsonRecords(records), options, resourceType, "active");
-		return fetchResources.getPatientIds(records);
+		return inputSegments.apply(fetchResources);
 	}
 	
 	static void fetchPatientHistory(Pipeline pipeline, List<PCollection<KV<String, Integer>>> allPatientIds,
@@ -154,15 +101,11 @@ public class FhirEtl {
 		PCollection<KV<String, Integer>> mergedPatients = flattenedPatients.apply(Sum.integersPerKey());
 		final String patientType = "Patient";
 		FetchPatients fetchPatients = new FetchPatients(options, getSchema(patientType));
-		PCollectionTuple patientRecords = mergedPatients.apply(fetchPatients);
-		writeToParquet(fetchPatients.getAvroRecords(patientRecords), options, patientType, "active");
-		writeToJson(fetchPatients.getJsonRecords(patientRecords), options, patientType, "active");
+		mergedPatients.apply(fetchPatients);
 		for (String resourceType : patientAssociatedResources) {
 			FetchPatientHistory fetchPatientHistory = new FetchPatientHistory(options, resourceType,
 			        getSchema(resourceType));
-			PCollectionTuple records = mergedPatients.apply(fetchPatientHistory);
-			writeToParquet(fetchPatientHistory.getAvroRecords(records), options, resourceType, "history");
-			writeToJson(fetchPatientHistory.getJsonRecords(records), options, resourceType, "history");
+			mergedPatients.apply(fetchPatientHistory);
 		}
 	}
 	
@@ -244,12 +187,6 @@ public class FhirEtl {
 	}
 	
 	static void validateOptions(FhirEtlOptions options) {
-		if (options.getNumFileShards() == 0) {
-			if (!options.getOutputParquetPath().isEmpty() || !options.getOutputJsonPath().isEmpty()) {
-				log.warn("Setting --numFileShards=0 can hinder output file generation performance significantly!");
-			}
-		}
-		
 		if (!options.getActivePeriod().isEmpty()) {
 			Set<String> resourceSet = Sets.newHashSet(options.getResourceList().split(","));
 			if (resourceSet.contains("Patient")) {
@@ -273,6 +210,7 @@ public class FhirEtl {
 		ParquetUtil.initializeAvroConverters();
 		
 		FhirEtlOptions options = PipelineOptionsFactory.fromArgs(args).withValidation().as(FhirEtlOptions.class);
+		log.info("Flags: " + options);
 		validateOptions(options);
 		
 		if (options.isJdbcModeEnabled()) {
@@ -280,6 +218,6 @@ public class FhirEtl {
 		} else {
 			runFhirFetch(options, fhirContext);
 		}
-		
+		log.info("DONE!");
 	}
 }

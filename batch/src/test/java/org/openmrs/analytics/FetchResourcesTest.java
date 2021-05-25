@@ -22,6 +22,7 @@ import static org.mockito.Mockito.when;
 import java.io.IOException;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.List;
 
 import ca.uhn.fhir.context.FhirContext;
@@ -31,8 +32,10 @@ import com.google.common.collect.Lists;
 import com.google.common.io.Resources;
 import org.apache.avro.Schema;
 import org.apache.beam.sdk.options.PipelineOptionsFactory;
+import org.apache.beam.sdk.testing.PAssert;
 import org.apache.beam.sdk.testing.TestPipeline;
 import org.apache.beam.sdk.transforms.Create;
+import org.apache.beam.sdk.values.KV;
 import org.apache.beam.sdk.values.PCollection;
 import org.hl7.fhir.r4.model.Bundle;
 import org.hl7.fhir.r4.model.Observation;
@@ -84,12 +87,14 @@ public class FetchResourcesTest {
 	}
 	
 	@Test
-	public void testDecimalConversionBug() {
+	public void testPatientIdsFromBundle() {
 		List<SearchSegmentDescriptor> searchSegments = Lists.newArrayList(SearchSegmentDescriptor.create("test_url", 10));
 		PCollection<SearchSegmentDescriptor> segments = testPipeline.apply("Input", Create.of(searchSegments));
 		segments.apply(fetchResources);
-		// This test is just to demonstrate the BigDecimal conversion exception hence no validation
-		// until we fix the underlying issue.
+		PCollection<KV<String, Integer>> patientIds = segments.apply("Extract PatientIds", fetchResources);
+		List<KV<String, Integer>> expectedIds = new ArrayList<>();
+		expectedIds.add(KV.of("7_SOME_PATIENT_REF", 1));
+		PAssert.that(patientIds).containsInAnyOrder(expectedIds);
 		testPipeline.run();
 	}
 	
@@ -103,9 +108,9 @@ public class FetchResourcesTest {
 				public void setup() {
 					super.setup();
 					this.fhirSearchUtil = Mockito.mock(FhirSearchUtil.class);
-					FhirSearchUtil mockedSearch = this.fhirSearchUtil;
-					when(mockedSearch.searchByUrl(any(String.class), any(Integer.class), any(SummaryEnum.class)))
+					when(fhirSearchUtil.searchByUrl(any(String.class), any(Integer.class), any(SummaryEnum.class)))
 					        .thenReturn(bundle);
+					this.parquetUtil = Mockito.mock(ParquetUtil.class);
 				}
 			};
 		}

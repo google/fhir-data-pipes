@@ -13,25 +13,22 @@
 // limitations under the License.
 package org.openmrs.analytics;
 
+import java.io.IOException;
 import java.util.List;
 
 import ca.uhn.fhir.rest.api.SummaryEnum;
 import com.google.common.base.Preconditions;
-import com.google.common.collect.Lists;
 import org.apache.avro.Schema;
-import org.apache.avro.generic.GenericRecord;
-import org.apache.beam.sdk.coders.AvroCoder;
 import org.apache.beam.sdk.transforms.PTransform;
 import org.apache.beam.sdk.transforms.ParDo;
 import org.apache.beam.sdk.values.KV;
 import org.apache.beam.sdk.values.PCollection;
-import org.apache.beam.sdk.values.PCollectionTuple;
-import org.apache.beam.sdk.values.TupleTagList;
+import org.apache.beam.sdk.values.PDone;
 import org.hl7.fhir.r4.model.Bundle;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class FetchPatients extends PTransform<PCollection<KV<String, Integer>>, PCollectionTuple> {
+public class FetchPatients extends PTransform<PCollection<KV<String, Integer>>, PDone> {
 	
 	private static final Logger log = LoggerFactory.getLogger(FetchPatientHistory.class);
 	
@@ -51,30 +48,20 @@ public class FetchPatients extends PTransform<PCollection<KV<String, Integer>>, 
 		fetchSearchPageFn = new FetchSearchPageFn<KV<String, Integer>>(options, "PatientById") {
 			
 			@ProcessElement
-			public void processElement(@Element KV<String, Integer> patientIdCount, MultiOutputReceiver out) {
+			public void processElement(@Element KV<String, Integer> patientIdCount) throws IOException {
 				String patientId = patientIdCount.getKey();
 				log.info(String.format("Already fetched %d resources for patient %s", patientIdCount.getValue(), patientId));
 				// TODO use openmrsUtil.fetchResource() instead of search and process bundle.
 				Bundle bundle = this.fhirSearchUtil.searchByUrl(PATIENT + "?_id=" + patientId, count, SummaryEnum.DATA);
-				processBundle(bundle, out);
+				processBundle(bundle);
 			}
 		};
 	}
 	
 	@Override
-	public PCollectionTuple expand(PCollection<KV<String, Integer>> patientIdCounts) {
-		PCollectionTuple records = patientIdCounts.apply(ParDo.of(fetchSearchPageFn)
-		        .withOutputTags(fetchSearchPageFn.avroTag, TupleTagList.of(Lists.newArrayList(fetchSearchPageFn.jsonTag))));
-		records.get(fetchSearchPageFn.avroTag).setCoder(AvroCoder.of(GenericRecord.class, schema));
-		return records;
-	}
-	
-	public PCollection<GenericRecord> getAvroRecords(PCollectionTuple records) {
-		return fetchSearchPageFn.getAvroRecords(records);
-	}
-	
-	public PCollection<String> getJsonRecords(PCollectionTuple records) {
-		return fetchSearchPageFn.getJsonRecords(records);
+	public PDone expand(PCollection<KV<String, Integer>> patientIdCounts) {
+		patientIdCounts.apply(ParDo.of(fetchSearchPageFn));
+		return PDone.in(patientIdCounts.getPipeline());
 	}
 	
 }

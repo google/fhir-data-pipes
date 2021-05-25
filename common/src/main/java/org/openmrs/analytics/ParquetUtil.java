@@ -23,17 +23,15 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
+import java.util.Random;
 import java.util.Timer;
 import java.util.TimerTask;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-import java.util.stream.Stream;
 
 import ca.uhn.fhir.context.FhirContext;
 import com.cerner.bunsen.avro.AvroConverter;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
+import org.apache.avro.AvroTypeException;
 import org.apache.avro.Conversions.DecimalConversion;
 import org.apache.avro.Schema;
 import org.apache.avro.generic.GenericData;
@@ -52,8 +50,6 @@ public class ParquetUtil {
 	
 	private static final Logger log = LoggerFactory.getLogger(ParquetUtil.class);
 	
-	private static final Pattern OUTPUT_PATTERN = Pattern.compile(".*output-streaming-([\\p{Digit}]{5}+)");
-	
 	private final FhirContext fhirContext;
 	
 	private final Map<String, AvroConverter> converterMap;
@@ -65,6 +61,12 @@ public class ParquetUtil {
 	private final String parquetFilePath;
 	
 	private final FileSystem fileSystem;
+	
+	private final Timer timer;
+	
+	private final Random random;
+	
+	private final String namePrefix;
 	
 	/**
 	 * This is to fix the logical type conversions for BigDecimal. This should be called once before any
@@ -89,7 +91,7 @@ public class ParquetUtil {
 	 * @param parquetFilePath The directory under which the Parquet files are written.
 	 */
 	public ParquetUtil(String parquetFilePath) {
-		this(parquetFilePath, 0, 0, FileSystems.getDefault());
+		this(parquetFilePath, 0, 0, "", FileSystems.getDefault());
 	}
 	
 	/**
@@ -100,17 +102,18 @@ public class ParquetUtil {
 	 * @param rowGroupSize The approximate size of row-groups in the Parquet files (0 means use
 	 *            default).
 	 */
-	public ParquetUtil(String parquetFilePath, int secondsToFlush, int rowGroupSize) {
-		this(parquetFilePath, secondsToFlush, rowGroupSize, FileSystems.getDefault());
+	public ParquetUtil(String parquetFilePath, int secondsToFlush, int rowGroupSize, String namePrefix) {
+		this(parquetFilePath, secondsToFlush, rowGroupSize, namePrefix, FileSystems.getDefault());
 	}
 	
 	@VisibleForTesting
-	ParquetUtil(String parquetFilePath, int secondsToFlush, int rowGroupSize, FileSystem fileSystem) {
+	ParquetUtil(String parquetFilePath, int secondsToFlush, int rowGroupSize, String namePrefix, FileSystem fileSystem) {
 		this.fhirContext = FhirContext.forDstu3();
 		this.converterMap = new HashMap<>();
 		this.writerMap = new HashMap<>();
 		this.parquetFilePath = parquetFilePath;
 		this.rowGroupSize = rowGroupSize;
+		this.namePrefix = namePrefix;
 		this.fileSystem = fileSystem;
 		if (secondsToFlush > 0) {
 			TimerTask task = new TimerTask() {
@@ -118,6 +121,7 @@ public class ParquetUtil {
 				@Override
 				public void run() {
 					try {
+						log.info("Flushing all Parquet writers for thread " + Thread.currentThread().getId());
 						flushAll();
 					}
 					catch (IOException e) {
@@ -125,8 +129,12 @@ public class ParquetUtil {
 					}
 				}
 			};
-			new Timer().scheduleAtFixedRate(task, secondsToFlush * 1000, secondsToFlush * 1000);
+			this.timer = new Timer();
+			timer.scheduleAtFixedRate(task, secondsToFlush * 1000, secondsToFlush * 1000);
+		} else {
+			timer = null;
 		}
+		this.random = new Random(System.currentTimeMillis());
 	}
 	
 	synchronized private AvroConverter getConverter(String resourceType) {
@@ -138,33 +146,19 @@ public class ParquetUtil {
 	}
 	
 	@VisibleForTesting
-	synchronized Path bestOutputFile(String resourceType) throws IOException {
+	synchronized Path uniqueOutputFile(String resourceType) throws IOException {
 		java.nio.file.Path outputDir = fileSystem.getPath(getParquetPath(), resourceType);
 		Files.createDirectories(outputDir);
-		Stream<java.nio.file.Path> files = Files.list(outputDir);
-		Optional<Integer> maxIndex = files.map(f -> {
-			Matcher matcher = OUTPUT_PATTERN.matcher(f.toString());
-			if (matcher.matches()) {
-				return new Integer(matcher.group(1).replaceFirst("^0+(?!$)", ""));
-			}
-			return -1;
-		}).max(Integer::compareTo);
-		int bestIndex = maxIndex.map(integer -> integer + 1).orElse(0);
-		if (bestIndex > 99999) {
-			// TODO: Handle cases with more than 100K files in a directory, e.g., by creating an extra
-			// layer in the directory hierarchy.
-			throw new IOException(
-			        "It is not wise to create more than 100K files in a directory, please adjust your configuration params!");
-		}
-		String bestFileName = String.format("output-streaming-%05d", bestIndex);
-		Path bestFilePath = new Path(Paths.get(getParquetPath(), resourceType).toString(), bestFileName);
+		String uniquetFileName = String.format(namePrefix + "output-parquet-th-%d-ts-%d-r-%d",
+		    Thread.currentThread().getId(), System.currentTimeMillis(), random.nextInt(1000000));
+		Path bestFilePath = new Path(Paths.get(getParquetPath(), resourceType).toString(), uniquetFileName);
 		log.info("Creating new Parguet file " + bestFilePath);
 		return bestFilePath;
 	}
 	
 	synchronized private void createWriter(String resourceType) throws IOException {
 		// TODO: Find a way to convince Hadoop file operations to use `fileSystem` (needed for testing).
-		AvroParquetWriter.Builder<GenericRecord> builder = AvroParquetWriter.builder(bestOutputFile(resourceType));
+		AvroParquetWriter.Builder<GenericRecord> builder = AvroParquetWriter.builder(uniqueOutputFile(resourceType));
 		// TODO: Adjust other parquet file parameters for our needs or make them configurable.
 		if (rowGroupSize > 0) {
 			builder.withRowGroupSize(rowGroupSize);
@@ -188,7 +182,14 @@ public class ParquetUtil {
 			createWriter(resourceType);
 		}
 		final ParquetWriter<GenericRecord> parquetWriter = writerMap.get(resourceType);
-		parquetWriter.write(this.convertToAvro(resource));
+		try {
+			parquetWriter.write(this.convertToAvro(resource));
+		}
+		catch (AvroTypeException e) {
+			// TODO fix the root cause of this exception! Check the unit-test that exposes this.
+			log.error(String.format("Dropping %s resource with id %s due to exception: %s ", resource.fhirType(),
+			    resource.getId(), e));
+		}
 	}
 	
 	synchronized private void flush(String resourceType) throws IOException {
@@ -206,8 +207,12 @@ public class ParquetUtil {
 	}
 	
 	synchronized public void closeAllWriters() throws IOException {
+		if (timer != null) {
+			timer.cancel();
+		}
 		for (Map.Entry<String, ParquetWriter<GenericRecord>> entry : writerMap.entrySet()) {
 			entry.getValue().close();
+			writerMap.put(entry.getKey(), null);
 		}
 	}
 	
@@ -218,7 +223,6 @@ public class ParquetUtil {
 		return schema;
 	}
 	
-	// Assumes every entry in the bundle have the same type.
 	public List<GenericRecord> generateRecords(Bundle bundle) {
 		List<GenericRecord> records = new ArrayList<>();
 		if (bundle.getTotal() == 0) {
@@ -230,6 +234,16 @@ public class ParquetUtil {
 			records.add(convertToAvro(resource));
 		}
 		return records;
+	}
+	
+	public void writeRecords(Bundle bundle) throws IOException {
+		if (bundle.getTotal() == 0) {
+			return;
+		}
+		for (BundleEntryComponent entry : bundle.getEntry()) {
+			Resource resource = entry.getResource();
+			write(resource);
+		}
 	}
 	
 	@VisibleForTesting
