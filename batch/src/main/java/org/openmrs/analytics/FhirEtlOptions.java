@@ -36,9 +36,9 @@ public interface FhirEtlOptions extends PipelineOptions {
 	// TODO merge this with `openmrsServerUrl` after deprecating the atom-feed mode.
 	@Description("OpenMRS server fhir endpoint")
 	@Default.String("/ws/fhir2/R4")
-	String getOpenmrsfhirBaseEndpoint();
+	String getOpenmrsFhirBaseEndpoint();
 	
-	void setOpenmrsfhirBaseEndpoint(String value);
+	void setOpenmrsFhirBaseEndpoint(String value);
 	
 	@Description("Comma separated list of resource to fetch, e.g., 'Patient,Encounter,Observation'.")
 	@Default.String("Patient,Encounter,Observation")

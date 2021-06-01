@@ -85,7 +85,7 @@ abstract class FetchSearchPageFn<T> extends DoFn<T, GenericRecord> {
 		this.sinkPath = options.getFhirSinkPath();
 		this.sinkUsername = options.getSinkUserName();
 		this.sinkPassword = options.getSinkPassword();
-		this.sourceUrl = options.getOpenmrsServerUrl() + options.getOpenmrsfhirBaseEndpoint();
+		this.sourceUrl = options.getOpenmrsServerUrl() + options.getOpenmrsFhirBaseEndpoint();
 		this.sourceUser = options.getOpenmrsUserName();
 		this.sourcePw = options.getOpenmrsPassword();
 		this.stageIdentifier = stageIdentifier;
