@@ -137,7 +137,7 @@ Parameters:
     `given=Susan` criteria. Default: `Patient,Encounter,Observation`
 -   `batchSize` - The number of resources to fetch in each API call.
     Default: `100`
--   `serverFhirEndpoint` - The OpenMRS server base path for its FHIR API
+-   `openmrsfhirBaseEndpoint` - The OpenMRS server base path for its FHIR API
     endpoints. Using all default values, you would find Patient resources at
     `http://localhost:8099/openmrs/ws/fhir2/R4/Patient`. This generally should
     not be changed. Default: `/ws/fhir2/R4`
@@ -167,7 +167,7 @@ Parameters:
     OpenMRS. Default: `Patient,Encounter,Observation`
 -   `batchSize` - The number of resources to fetch in each API call. Default:
     `100`
--   `serverFhirEndpoint` - The OpenMRS server base path for its FHIR API
+-   `openmrsfhirBaseEndpoint` - The OpenMRS server base path for its FHIR API
     endpoints. Using all default values, you would find Patient resources at
     `http://localhost:8099/openmrs/ws/fhir2/R4/Patient`. This generally should
     not be changed. Default: `/ws/fhir2/R4`

@@ -33,7 +33,7 @@ public interface FhirEtlOptions extends PipelineOptions {
 	
 	void setOpenmrsServerUrl(String value);
 	
-	// TODO merge this with `openmrsServerUrl` to `fhirBaseUrl`
+	// TODO merge this with `openmrsServerUrl` after deprecating the atom-feed mode.
 	@Description("OpenMRS server fhir endpoint")
 	@Default.String("/ws/fhir2/R4")
 	String getOpenmrsfhirBaseEndpoint();
