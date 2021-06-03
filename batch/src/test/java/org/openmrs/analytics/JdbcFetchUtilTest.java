@@ -164,7 +164,7 @@ public class JdbcFetchUtilTest extends TestCase {
 		when(mockedResultSet.getInt("max_id")).thenReturn(0);
 		
 		PCollection<String> uuids = mockedJdbcFetchUtil.fetchAllUuids(testPipeline, "obs", 20);
-		//pipeline should fail on empty uuids	
+		//pipeline should not fail on empty uuids	
 		PAssert.that(uuids).empty();
 		testPipeline.run();
 	}

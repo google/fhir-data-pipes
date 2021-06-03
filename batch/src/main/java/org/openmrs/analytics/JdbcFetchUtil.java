@@ -171,8 +171,7 @@ public class JdbcFetchUtil {
 		return pipeline.apply(Create.of(uuids).withCoder(pipeline.getCoderRegistry().getCoder(String.class)));
 	}
 	
-	public PCollection<String> fetchAllUuids(Pipeline pipeline, String tableName, int jdbcFetchSize)
-	        throws SQLException, CannotProvideCoderException {
+	public PCollection<String> fetchAllUuids(Pipeline pipeline, String tableName, int jdbcFetchSize) throws SQLException {
 		int maxId = fetchMaxId(tableName);
 		if (maxId == 0) {
 			return pipeline.apply(Create.empty(StringUtf8Coder.of()));
