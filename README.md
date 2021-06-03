@@ -137,7 +137,7 @@ Parameters:
     `given=Susan` criteria. Default: `Patient,Encounter,Observation`
 -   `batchSize` - The number of resources to fetch in each API call.
     Default: `100`
--   `serverFhirEndpoint` - The OpenMRS server base path for its FHIR API
+-   `openmrsFhirBaseEndpoint` - The OpenMRS server base path for its FHIR API
     endpoints. Using all default values, you would find Patient resources at
     `http://localhost:8099/openmrs/ws/fhir2/R4/Patient`. This generally should
     not be changed. Default: `/ws/fhir2/R4`
@@ -167,7 +167,7 @@ Parameters:
     OpenMRS. Default: `Patient,Encounter,Observation`
 -   `batchSize` - The number of resources to fetch in each API call. Default:
     `100`
--   `serverFhirEndpoint` - The OpenMRS server base path for its FHIR API
+-   `openmrsFhirBaseEndpoint` - The OpenMRS server base path for its FHIR API
     endpoints. Using all default values, you would find Patient resources at
     `http://localhost:8099/openmrs/ws/fhir2/R4/Patient`. This generally should
     not be changed. Default: `/ws/fhir2/R4`
@@ -222,7 +222,7 @@ resume from the last processed offset.
         --sinkUserName=hapi --sinkPassword=hapi \
         --outputParquetPath=/tmp/TEST/ \
         --fhirDebeziumConfigPath=./utils/dbz_event_to_fhir_config.json \
-        --openmrsfhirBaseEndpoint=/ws/fhir2/R4"
+        --openmrsFhirBaseEndpoint=/ws/fhir2/R4"
     ```
 
     Or to a GCP FHIR store:
@@ -233,7 +233,7 @@ resume from the last processed offset.
         --openmrsUserName=admin --openmrsPassword=Admin123 \
         --fhirSinkPath=projects/PROJECT/locations/LOCATION/datasets/DATASET/fhirStores/FHIRSTORENAME \
         --fhirDebeziumConfigPath=./utils/dbz_event_to_fhir_config.json \
-        --openmrsfhirBaseEndpoint=/ws/fhir2/R4"
+        --openmrsFhirBaseEndpoint=/ws/fhir2/R4"
     ```
 
 The next sections describe parameters specific to Debezium Streaming mode. See
@@ -245,7 +245,7 @@ Parameters:
 -   `fhirDebeziumConfigPath` - The path to the configuration file containing
     MySQL parameters and FHIR mappings. This generally should not be changed.
     Default: `utils/dbz_event_to_fhir_config.json`
--   `openmrsfhirBaseEndpoint` - The OpenMRS server base path for its FHIR API
+-   `openmrsFhirBaseEndpoint` - The OpenMRS server base path for its FHIR API
     endpoints. Using all default values, you would find Patient resources at
     `http://localhost:8099/openmrs/ws/fhir2/R4/Patient`. This generally should
     not be changed. Default: `/ws/fhir2/R4`
