@@ -160,8 +160,7 @@ public interface FhirEtlOptions extends PipelineOptions {
 	void setSecondsToFlushParquetFiles(int value);
 	
 	@Description("The approximate size (bytes) of the row-groups in Parquet files. When this size is "
-	        + "reached, the content is flushed to disk. This won't be triggered if there "
-	        + "are less than 100 records.\n"
+	        + "reached, the content is flushed to disk. This won't be triggered if there are less than 100 records.\n"
 	        + "The default 0 uses the default row-group size of Parquet writers.")
 	@Default.Integer(0)
 	int getRowGroupSizeForParquetFiles();
