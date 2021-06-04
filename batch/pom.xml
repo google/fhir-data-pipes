@@ -407,12 +407,5 @@
       <artifactId>fhir-common</artifactId>
       <version>${project.parent.version}</version>
     </dependency>
-    <!-- TODO move common model and services from fhir-binlog-streaming-etl to fhir-common-->
-    <dependency>
-      <groupId>${project.parent.groupId}</groupId>
-      <artifactId>fhir-binlog-streaming-etl</artifactId>
-      <version>${project.parent.version}</version>
-      <scope>compile</scope>
-    </dependency>
   </dependencies>
 </project>

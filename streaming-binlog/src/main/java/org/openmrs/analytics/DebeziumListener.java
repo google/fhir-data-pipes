@@ -15,11 +15,6 @@
 package org.openmrs.analytics;
 
 import java.io.IOException;
-import java.io.Reader;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.Map;
 
 import ca.uhn.fhir.context.FhirContext;
@@ -27,12 +22,11 @@ import com.beust.jcommander.JCommander;
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.Parameters;
 import com.google.common.annotations.VisibleForTesting;
-import com.google.gson.Gson;
 import org.apache.camel.CamelContext;
 import org.apache.camel.LoggingLevel;
 import org.apache.camel.Service;
 import org.apache.camel.builder.RouteBuilder;
-import org.openmrs.analytics.model.GeneralConfiguration;
+import org.openmrs.analytics.model.DatabaseConfiguration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -41,14 +35,14 @@ public class DebeziumListener extends RouteBuilder {
 	
 	private static final Logger log = LoggerFactory.getLogger(DebeziumListener.class);
 	
-	private GeneralConfiguration generalConfiguration;
+	private DatabaseConfiguration databaseConfiguration;
 	
 	private DebeziumArgs params;
 	
 	public DebeziumListener(String[] args) throws IOException {
 		this.params = new DebeziumArgs();
 		JCommander.newBuilder().addObject(params).build().parse(args);
-		this.generalConfiguration = getFhirDebeziumConfigPath(params.fhirDebeziumConfigPath);
+		this.databaseConfiguration = DatabaseConfiguration.createConfigFromFile(params.fhirDebeziumConfigPath);
 	}
 	
 	@VisibleForTesting
@@ -73,9 +67,10 @@ public class DebeziumListener extends RouteBuilder {
 		    params.sinkPassword, fhirContext.getRestfulClientFactory());
 		ParquetUtil parquetUtil = new ParquetUtil(params.outputParquetPath, params.secondsToFlushParquetFiles,
 		        params.rowGroupSizeForParquetFiles, "streaming_");
-		JdbcConnectionUtil jdbcConnectionUtil = new JdbcConnectionUtil(params.jdbcDriverClass, params.jdbcUrlInput,
-		        this.generalConfiguration.getDebeziumConfigurations().get("databaseUser"),
-		        this.generalConfiguration.getDebeziumConfigurations().get("databasePassword"), params.initialPoolSize,
+		JdbcConnectionUtil jdbcConnectionUtil = new JdbcConnectionUtil(params.jdbcDriverClass,
+		        this.databaseConfiguration.makeJdbsUrlFromConfig(),
+		        this.databaseConfiguration.getDebeziumConfigurations().get("databaseUser"),
+		        this.databaseConfiguration.getDebeziumConfigurations().get("databasePassword"), params.initialPoolSize,
 		        params.jdbcMaxPoolSize);
 		UuidUtil uuidUtil = new UuidUtil(jdbcConnectionUtil);
 		camelContext.addService(new ParquetService(parquetUtil), true);
@@ -83,13 +78,13 @@ public class DebeziumListener extends RouteBuilder {
 	}
 	
 	private String getDebeziumConfig() {
-		Map<String, String> debeziumConfigs = this.generalConfiguration.getDebeziumConfigurations();
+		Map<String, String> debeziumConfigs = this.databaseConfiguration.getDebeziumConfigurations();
 		return "debezium-mysql:" + debeziumConfigs.get("databaseServerName") + "?" + "databaseHostname="
 		        + debeziumConfigs.get("databaseHostName") + "&databaseServerId=" + debeziumConfigs.get("databaseServerId")
 		        + "&databasePort=" + debeziumConfigs.get("databasePort") + "&databaseUser="
 		        + debeziumConfigs.get("databaseUser") + "&databasePassword=" + debeziumConfigs.get("databasePassword")
 		        + "&databaseServerName=" + debeziumConfigs.get("databaseServerName") + "&databaseWhitelist="
-		        + debeziumConfigs.get("databaseSchema")
+		        + debeziumConfigs.get("databaseName")
 		        + "&offsetStorage=org.apache.kafka.connect.storage.FileOffsetBackingStore" + "&offsetStorageFileName="
 		        + debeziumConfigs.get("databaseOffsetStorage") + "&databaseHistoryFileFilename="
 		        + debeziumConfigs.get("databaseHistory") + "&snapshotMode=" + debeziumConfigs.get("snapshotMode");
@@ -144,9 +139,6 @@ public class DebeziumListener extends RouteBuilder {
 		@Parameter(names = { "--jdbcDriverClass" }, description = "JDBC MySQL driver class")
 		public String jdbcDriverClass = "com.mysql.cj.jdbc.Driver";
 		
-		@Parameter(names = { "--jdbcUrl" }, description = "JDBC URL input")
-		public String jdbcUrlInput = "jdbc:mysql://localhost:3306/openmrs";
-		
 		@Parameter(names = { "--jdbcMaxPoolSize" }, description = "JDBC maximum pool size")
 		public int jdbcMaxPoolSize = 50;
 		
@@ -154,12 +146,4 @@ public class DebeziumListener extends RouteBuilder {
 		public int initialPoolSize = 10;
 	}
 	
-	private GeneralConfiguration getFhirDebeziumConfigPath(String fileName) throws IOException {
-		Gson gson = new Gson();
-		Path pathToFile = Paths.get(fileName);
-		try (Reader reader = Files.newBufferedReader(pathToFile, StandardCharsets.UTF_8)) {
-			GeneralConfiguration generalConfiguration = gson.fromJson(reader, GeneralConfiguration.class);
-			return generalConfiguration;
-		}
-	}
 }

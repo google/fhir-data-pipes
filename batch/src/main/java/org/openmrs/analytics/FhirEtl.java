@@ -38,6 +38,7 @@ import org.apache.beam.sdk.transforms.Sum;
 import org.apache.beam.sdk.values.KV;
 import org.apache.beam.sdk.values.PCollection;
 import org.apache.beam.sdk.values.PCollectionList;
+import org.openmrs.analytics.model.DatabaseConfiguration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -141,17 +142,16 @@ public class FhirEtl {
 		EtlUtils.logMetrics(result.metrics());
 	}
 	
-	static void runFhirJdbcFetch(FhirEtlOptions options, FhirContext fhirContext)
+	static void runFhirJdbcFetch(FhirEtlOptions options, DatabaseConfiguration dbConfig, FhirContext fhirContext)
 	        throws PropertyVetoException, IOException, SQLException, CannotProvideCoderException {
 		FhirSearchUtil fhirSearchUtil = createFhirSearchUtil(options, fhirContext);
 		Pipeline pipeline = Pipeline.create(options);
-		JdbcConnectionUtil jdbcConnectionUtil = new JdbcConnectionUtil(options.getJdbcDriverClass(), options.getJdbcUrl(),
-		        options.getDbUser(), options.getDbPassword(), options.getJdbcMaxPoolSize(),
-		        options.getJdbcInitialPoolSize());
+		JdbcConnectionUtil jdbcConnectionUtil = new JdbcConnectionUtil(options.getJdbcDriverClass(),
+		        dbConfig.makeJdbsUrlFromConfig(), dbConfig.getDbUser(), dbConfig.getDbPassword(),
+		        options.getJdbcMaxPoolSize(), options.getJdbcInitialPoolSize());
 		JdbcFetchUtil jdbcUtil = new JdbcFetchUtil(jdbcConnectionUtil);
 		int batchSize = Math.min(options.getBatchSize(), 170); // batch size > 200 will result in HTTP 400 Bad Request
-		Map<String, List<String>> reverseMap = jdbcUtil.createFhirReverseMap(options.getResourceList(),
-		    options.getTableFhirMapPath());
+		Map<String, List<String>> reverseMap = jdbcUtil.createFhirReverseMap(options.getResourceList(), dbConfig);
 		// process each table-resource mappings
 		Set<String> resourceTypes = new HashSet<>();
 		List<PCollection<KV<String, Integer>>> allPatientIds = Lists.newArrayList();
@@ -215,7 +215,8 @@ public class FhirEtl {
 		validateOptions(options);
 		
 		if (options.isJdbcModeEnabled()) {
-			runFhirJdbcFetch(options, fhirContext);
+			DatabaseConfiguration dbConfig = DatabaseConfiguration.createConfigFromFile(options.getFhirDebeziumConfigPath());
+			runFhirJdbcFetch(options, dbConfig, fhirContext);
 		} else {
 			runFhirFetch(options, fhirContext);
 		}

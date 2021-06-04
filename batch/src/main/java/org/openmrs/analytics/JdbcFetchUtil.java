@@ -13,12 +13,6 @@
 // limitations under the License.
 package org.openmrs.analytics;
 
-import java.io.IOException;
-import java.io.Reader;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -31,7 +25,6 @@ import java.util.Map;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
-import com.google.gson.Gson;
 import org.apache.beam.sdk.Pipeline;
 import org.apache.beam.sdk.coders.CannotProvideCoderException;
 import org.apache.beam.sdk.coders.NullableCoder;
@@ -44,8 +37,8 @@ import org.apache.beam.sdk.transforms.PTransform;
 import org.apache.beam.sdk.transforms.ParDo;
 import org.apache.beam.sdk.values.KV;
 import org.apache.beam.sdk.values.PCollection;
+import org.openmrs.analytics.model.DatabaseConfiguration;
 import org.openmrs.analytics.model.EventConfiguration;
-import org.openmrs.analytics.model.GeneralConfiguration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -217,40 +210,34 @@ public class JdbcFetchUtil {
 	 * table. For example: person->Person,Patient and visit->Encounter.
 	 *
 	 * @param resourceString the comma separated list of FHIR resources we care about.
-	 * @param tableFhirMapPath the file that contains the general configuration.
+	 * @param dbConfig the general DB configuration.
 	 * @return the computed map.
 	 */
-	public Map<String, List<String>> createFhirReverseMap(String resourceString, String tableFhirMapPath)
-	        throws IOException {
-		Gson gson = new Gson();
-		Path pathToFile = Paths.get(tableFhirMapPath);
-		try (Reader reader = Files.newBufferedReader(pathToFile.toAbsolutePath(), StandardCharsets.UTF_8)) {
-			GeneralConfiguration generalConfiguration = gson.fromJson(reader, GeneralConfiguration.class);
-			Map<String, EventConfiguration> tableToFhirMap = generalConfiguration.getEventConfigurations();
-			String[] resourceList = resourceString.split(",");
-			Map<String, List<String>> reverseMap = new HashMap<String, List<String>>();
-			for (Map.Entry<String, EventConfiguration> entry : tableToFhirMap.entrySet()) {
-				Map<String, String> linkTemplate = entry.getValue().getLinkTemplates();
-				for (String resource : resourceList) {
-					if (linkTemplate.containsKey("fhir") && linkTemplate.get("fhir") != null) {
-						String[] resourceName = linkTemplate.get("fhir").split("/");
-						if (resourceName.length >= 1 && resourceName[1].equals(resource)) {
-							if (reverseMap.containsKey(entry.getValue().getParentTable())) {
-								List<String> resources = reverseMap.get(entry.getValue().getParentTable());
-								resources.add(resourceName[1]);
-							} else {
-								List<String> resources = new ArrayList<String>();
-								resources.add(resourceName[1]);
-								reverseMap.put(entry.getValue().getParentTable(), resources);
-							}
+	public Map<String, List<String>> createFhirReverseMap(String resourceString, DatabaseConfiguration dbConfig) {
+		Map<String, EventConfiguration> tableToFhirMap = dbConfig.getEventConfigurations();
+		String[] resourceList = resourceString.split(",");
+		Map<String, List<String>> reverseMap = new HashMap<String, List<String>>();
+		for (Map.Entry<String, EventConfiguration> entry : tableToFhirMap.entrySet()) {
+			Map<String, String> linkTemplate = entry.getValue().getLinkTemplates();
+			for (String resource : resourceList) {
+				if (linkTemplate.containsKey("fhir") && linkTemplate.get("fhir") != null) {
+					String[] resourceName = linkTemplate.get("fhir").split("/");
+					if (resourceName.length >= 1 && resourceName[1].equals(resource)) {
+						if (reverseMap.containsKey(entry.getValue().getParentTable())) {
+							List<String> resources = reverseMap.get(entry.getValue().getParentTable());
+							resources.add(resourceName[1]);
+						} else {
+							List<String> resources = new ArrayList<String>();
+							resources.add(resourceName[1]);
+							reverseMap.put(entry.getValue().getParentTable(), resources);
 						}
 					}
 				}
 			}
-			if (reverseMap.size() < resourceList.length) {
-				log.error("Some of the passed FHIR resources are not mapped to any table, please check the config");
-			}
-			return reverseMap;
 		}
+		if (reverseMap.size() < resourceList.length) {
+			log.error("Some of the passed FHIR resources are not mapped to any table, please check the config");
+		}
+		return reverseMap;
 	}
 }
