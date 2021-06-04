@@ -14,24 +14,16 @@
 package org.openmrs.analytics;
 
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.number.IsCloseTo.closeTo;
-import static org.mockito.ArgumentMatchers.any;
+import static org.hamcrest.Matchers.equalTo;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
 
 import java.io.IOException;
-import java.math.BigDecimal;
 import java.nio.charset.StandardCharsets;
 
 import ca.uhn.fhir.context.FhirContext;
 import ca.uhn.fhir.parser.IParser;
 import com.google.common.io.Resources;
-import org.apache.avro.generic.GenericData;
-import org.apache.avro.generic.GenericRecord;
 import org.apache.beam.sdk.options.PipelineOptionsFactory;
-import org.apache.beam.sdk.transforms.DoFn.MultiOutputReceiver;
-import org.apache.beam.sdk.transforms.DoFn.OutputReceiver;
-import org.apache.beam.sdk.values.TupleTag;
 import org.hl7.fhir.r4.model.Bundle;
 import org.junit.Before;
 import org.junit.Test;
@@ -49,22 +41,26 @@ public class FetchSearchPageFnTest {
 	private FhirContext fhirContext;
 	
 	@Mock
-	private MultiOutputReceiver multiOutputReceiver;
-	
-	@Mock
-	private OutputReceiver<GenericRecord> outputReceiver;
+	private ParquetUtil mockParquetUtil;
 	
 	@Captor
-	private ArgumentCaptor<GenericRecord> recordCaptor;
+	private ArgumentCaptor<Bundle> bundleCaptor;
 	
 	@Before
 	public void setUp() {
 		String[] args = { "--outputParquetPath=SOME_PATH" };
 		FhirEtlOptions options = PipelineOptionsFactory.fromArgs(args).withValidation().as(FhirEtlOptions.class);
-		fetchSearchPageFn = new FetchSearchPageFn<String>(options, "TEST") {};
+		fetchSearchPageFn = new FetchSearchPageFn<String>(options, "TEST") {
+			
+			@Override
+			public void setup() {
+				super.setup();
+				parquetUtil = mockParquetUtil;
+			}
+		};
 		this.fhirContext = FhirContext.forR4();
-		when(multiOutputReceiver.get(any(TupleTag.class))).thenReturn(outputReceiver);
 		fetchSearchPageFn.setup();
+		ParquetUtil.initializeAvroConverters();
 	}
 	
 	@Test
@@ -73,14 +69,12 @@ public class FetchSearchPageFnTest {
 		    StandardCharsets.UTF_8);
 		IParser parser = fhirContext.newJsonParser();
 		Bundle bundle = parser.parseResource(Bundle.class, observationBundleStr);
-		fetchSearchPageFn.processBundle(bundle, multiOutputReceiver);
+		fetchSearchPageFn.processBundle(bundle);
 		
-		// Verify the generated record has the right "value".
-		verify(outputReceiver).output(recordCaptor.capture());
-		GenericRecord record = recordCaptor.getValue();
-		GenericData.Record valueRecord = (GenericData.Record) record.get("value");
-		BigDecimal value = (BigDecimal) ((GenericData.Record) valueRecord.get("quantity")).get("value");
-		assertThat(value.doubleValue(), closeTo(1.8287, 0.001));
+		// Verify the bundle is sent to the writer.
+		verify(mockParquetUtil).writeRecords(bundleCaptor.capture());
+		Bundle capturedBundle = bundleCaptor.getValue();
+		assertThat(bundle, equalTo(capturedBundle));
 	}
 	
 }
