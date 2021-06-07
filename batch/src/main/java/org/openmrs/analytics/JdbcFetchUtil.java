@@ -173,6 +173,9 @@ public class JdbcFetchUtil {
 	
 	public PCollection<String> fetchAllUuids(Pipeline pipeline, String tableName, int jdbcFetchSize) throws SQLException {
 		int maxId = fetchMaxId(tableName);
+		if (maxId == 0) {
+			return pipeline.apply(Create.empty(StringUtf8Coder.of()));
+		}
 		log.info(String.format("Will fetch up to %d rows from table %s", maxId, tableName));
 		Map<Integer, Integer> idRanges = createIdRanges(maxId, jdbcFetchSize);
 		return pipeline.apply(Create.of(idRanges)).apply(new JdbcFetchUtil.FetchUuids(tableName, getJdbcConfig()));
