@@ -100,13 +100,6 @@ public interface FhirEtlOptions extends PipelineOptions {
 	
 	void setOutputParquetPath(String value);
 	
-	@Description("The base name for output ND-JSON files; for each resource, one fileset will be created. "
-	        + "This options is mostly intended for test purposes.")
-	@Default.String("")
-	String getOutputJsonPath();
-	
-	void setOutputJsonPath(String value);
-	
 	/**
 	 * JDBC DB settings: defaults values have been pointed to ./openmrs-compose.yaml
 	 */
@@ -159,18 +152,20 @@ public interface FhirEtlOptions extends PipelineOptions {
 	
 	void setJdbcModeEnabled(Boolean value);
 	
-	@Description("Number of output file shards; 0 leaves it to the runner to decide but is not recommended.")
-	@Default.Integer(3)
-	int getNumFileShards();
-	
-	void setNumFileShards(int value);
-	
 	@Description("The number of seconds after which records are flushed into Parquet/text files; "
 	        + "use 0 to disable (note this may have undesired memory implications).")
 	@Default.Integer(600)
-	int getSecondsToFlushFiles();
+	int getSecondsToFlushParquetFiles();
 	
-	void setSecondsToFlushFiles(int value);
+	void setSecondsToFlushParquetFiles(int value);
+	
+	@Description("The approximate size (bytes) of the row-groups in Parquet files. When this size is "
+	        + "reached, the content is flushed to disk. This won't be triggered if there are less than 100 records.\n"
+	        + "The default 0 uses the default row-group size of Parquet writers.")
+	@Default.Integer(0)
+	int getRowGroupSizeForParquetFiles();
+	
+	void setRowGroupSizeForParquetFiles(int value);
 	
 	@Description("The active period with format: 'DATE1_DATE2' OR 'DATE1'. The first form declares "
 	        + "the first date-time (non-inclusive) and last date-time (inclusive); the second form declares "

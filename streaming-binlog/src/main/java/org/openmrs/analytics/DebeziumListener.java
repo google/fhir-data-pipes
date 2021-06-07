@@ -72,7 +72,7 @@ public class DebeziumListener extends RouteBuilder {
 		FhirStoreUtil fhirStoreUtil = FhirStoreUtil.createFhirStoreUtil(params.fhirSinkPath, params.sinkUserName,
 		    params.sinkPassword, fhirContext.getRestfulClientFactory());
 		ParquetUtil parquetUtil = new ParquetUtil(params.outputParquetPath, params.secondsToFlushParquetFiles,
-		        params.rowGroupSizeForParquetFiles);
+		        params.rowGroupSizeForParquetFiles, "streaming_");
 		JdbcConnectionUtil jdbcConnectionUtil = new JdbcConnectionUtil(params.jdbcDriverClass, params.jdbcUrlInput,
 		        this.generalConfiguration.getDebeziumConfigurations().get("databaseUser"),
 		        this.generalConfiguration.getDebeziumConfigurations().get("databasePassword"), params.initialPoolSize,

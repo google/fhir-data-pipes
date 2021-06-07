@@ -13,26 +13,21 @@
 // limitations under the License.
 package org.openmrs.analytics;
 
+import java.io.IOException;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import ca.uhn.fhir.rest.api.SummaryEnum;
 import com.google.common.annotations.VisibleForTesting;
-import com.google.common.collect.Lists;
 import org.apache.avro.Schema;
-import org.apache.avro.generic.GenericRecord;
-import org.apache.beam.sdk.coders.AvroCoder;
 import org.apache.beam.sdk.transforms.DoFn.Element;
-import org.apache.beam.sdk.transforms.DoFn.MultiOutputReceiver;
 import org.apache.beam.sdk.transforms.DoFn.ProcessElement;
 import org.apache.beam.sdk.transforms.PTransform;
 import org.apache.beam.sdk.transforms.ParDo;
 import org.apache.beam.sdk.values.KV;
 import org.apache.beam.sdk.values.PCollection;
-import org.apache.beam.sdk.values.PCollectionTuple;
 import org.apache.beam.sdk.values.TupleTag;
-import org.apache.beam.sdk.values.TupleTagList;
 import org.hl7.fhir.r4.model.Base;
 import org.hl7.fhir.r4.model.Bundle;
 import org.hl7.fhir.r4.model.Bundle.BundleEntryComponent;
@@ -43,11 +38,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * This function object fetches all input segments from the FHIR source and converts each resource
- * to JSON or Avro (or both). If a FHIR sink address is provided, those resources are passed to that
- * FHIR sink too.
+ * This function object fetches all input segments from the FHIR source and writes each resource to
+ * a Parquet file. If a FHIR sink address is provided, those resources are passed to that FHIR sink
+ * too. The output PCollection contains, as keys, patient-ids extracted from the fetched resources,
+ * with 1s as the value to make it easy to count in downstream functors.
  */
-public class FetchResources extends PTransform<PCollection<SearchSegmentDescriptor>, PCollectionTuple> {
+public class FetchResources extends PTransform<PCollection<SearchSegmentDescriptor>, PCollection<KV<String, Integer>>> {
 	
 	private static final Logger log = LoggerFactory.getLogger(FetchResources.class);
 	
@@ -94,23 +90,8 @@ public class FetchResources extends PTransform<PCollection<SearchSegmentDescript
 	}
 	
 	@Override
-	public PCollectionTuple expand(PCollection<SearchSegmentDescriptor> segments) {
-		PCollectionTuple records = segments.apply(ParDo.of(fetchSearchPageFn).withOutputTags(fetchSearchPageFn.avroTag,
-		    TupleTagList.of(Lists.newArrayList(fetchSearchPageFn.jsonTag, patientIdTag))));
-		records.get(fetchSearchPageFn.avroTag).setCoder(AvroCoder.of(GenericRecord.class, schema));
-		return records;
-	}
-	
-	public PCollection<GenericRecord> getAvroRecords(PCollectionTuple records) {
-		return fetchSearchPageFn.getAvroRecords(records);
-	}
-	
-	public PCollection<String> getJsonRecords(PCollectionTuple records) {
-		return fetchSearchPageFn.getJsonRecords(records);
-	}
-	
-	public PCollection<KV<String, Integer>> getPatientIds(PCollectionTuple records) {
-		return records.get(patientIdTag);
+	public PCollection<KV<String, Integer>> expand(PCollection<SearchSegmentDescriptor> segments) {
+		return segments.apply(ParDo.of(fetchSearchPageFn));
 	}
 	
 	static class SearchFn extends FetchSearchPageFn<SearchSegmentDescriptor> {
@@ -120,19 +101,20 @@ public class FetchResources extends PTransform<PCollection<SearchSegmentDescript
 		}
 		
 		@ProcessElement
-		public void processElement(@Element SearchSegmentDescriptor segment, MultiOutputReceiver out) {
+		public void processElement(@Element SearchSegmentDescriptor segment, OutputReceiver<KV<String, Integer>> out)
+		        throws IOException {
 			String searchUrl = segment.searchUrl();
 			log.info(String.format("Fetching %d resources for statge %s; URL= %s", segment.count(), this.stageIdentifier,
 			    searchUrl.substring(0, Math.min(200, searchUrl.length()))));
 			long fetchStartTime = System.currentTimeMillis();
 			Bundle pageBundle = fhirSearchUtil.searchByUrl(searchUrl, segment.count(), SummaryEnum.DATA);
 			addFetchTime(System.currentTimeMillis() - fetchStartTime);
-			processBundle(pageBundle, out);
+			processBundle(pageBundle);
 			if (pageBundle != null && pageBundle.getEntry() != null) {
 				for (BundleEntryComponent entry : pageBundle.getEntry()) {
 					String patientId = getSubjectPatientIdOrNull(entry.getResource());
 					if (patientId != null) {
-						out.get(patientIdTag).output(KV.of(patientId, 1));
+						out.output(KV.of(patientId, 1));
 					}
 				}
 			}

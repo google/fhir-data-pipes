@@ -13,20 +13,16 @@
 // limitations under the License.
 package org.openmrs.analytics;
 
-import java.util.List;
+import java.io.IOException;
 
 import ca.uhn.fhir.context.FhirContext;
 import ca.uhn.fhir.parser.IParser;
-import org.apache.avro.AvroTypeException;
-import org.apache.avro.generic.GenericRecord;
+import com.google.common.annotations.VisibleForTesting;
 import org.apache.beam.sdk.metrics.Counter;
 import org.apache.beam.sdk.metrics.Metrics;
 import org.apache.beam.sdk.transforms.DoFn;
-import org.apache.beam.sdk.values.PCollection;
-import org.apache.beam.sdk.values.PCollectionTuple;
-import org.apache.beam.sdk.values.TupleTag;
+import org.apache.beam.sdk.values.KV;
 import org.hl7.fhir.r4.model.Bundle;
-import org.hl7.fhir.r4.model.Bundle.BundleEntryComponent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -37,7 +33,7 @@ import org.slf4j.LoggerFactory;
  *
  * @param <T> The type of the elements of the input PCollection.
  */
-abstract class FetchSearchPageFn<T> extends DoFn<T, GenericRecord> {
+abstract class FetchSearchPageFn<T> extends DoFn<T, KV<String, Integer>> {
 	
 	private static final Logger log = LoggerFactory.getLogger(FetchSearchPageFn.class);
 	
@@ -48,10 +44,6 @@ abstract class FetchSearchPageFn<T> extends DoFn<T, GenericRecord> {
 	private final Counter totalGenerateTimeMillis;
 	
 	private final Counter totalPushTimeMillis;
-	
-	protected final TupleTag<GenericRecord> avroTag = new TupleTag<GenericRecord>() {};
-	
-	protected final TupleTag<String> jsonTag = new TupleTag<String>() {};
 	
 	private final String sourceUrl;
 	
@@ -69,9 +61,12 @@ abstract class FetchSearchPageFn<T> extends DoFn<T, GenericRecord> {
 	
 	private final String parquetFile;
 	
-	private final String jsonFile;
+	private final int secondsToFlush;
 	
-	private ParquetUtil parquetUtil;
+	private final int rowGroupSize;
+	
+	@VisibleForTesting
+	protected ParquetUtil parquetUtil;
 	
 	protected OpenmrsUtil openmrsUtil;
 	
@@ -90,7 +85,8 @@ abstract class FetchSearchPageFn<T> extends DoFn<T, GenericRecord> {
 		this.sourcePw = options.getOpenmrsPassword();
 		this.stageIdentifier = stageIdentifier;
 		this.parquetFile = options.getOutputParquetPath();
-		this.jsonFile = options.getOutputJsonPath();
+		this.secondsToFlush = options.getSecondsToFlushParquetFiles();
+		this.rowGroupSize = options.getRowGroupSizeForParquetFiles();
 		this.numFetchedResources = Metrics.counter(EtlUtils.METRICS_NAMESPACE, "numFetchedResources_" + stageIdentifier);
 		this.totalFetchTimeMillis = Metrics.counter(EtlUtils.METRICS_NAMESPACE, "totalFetchTimeMillis_" + stageIdentifier);
 		this.totalGenerateTimeMillis = Metrics.counter(EtlUtils.METRICS_NAMESPACE,
@@ -105,36 +101,26 @@ abstract class FetchSearchPageFn<T> extends DoFn<T, GenericRecord> {
 		    fhirContext.getRestfulClientFactory());
 		openmrsUtil = new OpenmrsUtil(sourceUrl, sourceUser, sourcePw, fhirContext);
 		fhirSearchUtil = new FhirSearchUtil(openmrsUtil);
-		parquetUtil = new ParquetUtil(this.parquetFile);
+		parquetUtil = new ParquetUtil(parquetFile, secondsToFlush, rowGroupSize, stageIdentifier + "_");
 		parser = fhirContext.newJsonParser();
+	}
+	
+	@Teardown
+	public void teardown() throws IOException {
+		parquetUtil.closeAllWriters();
 	}
 	
 	protected void addFetchTime(long millis) {
 		totalFetchTimeMillis.inc(millis);
 	}
 	
-	protected void processBundle(Bundle bundle, MultiOutputReceiver out) {
+	protected void processBundle(Bundle bundle) throws IOException {
 		if (bundle != null && bundle.getEntry() != null) {
 			numFetchedResources.inc(bundle.getEntry().size());
 			if (!parquetFile.isEmpty()) {
 				long startTime = System.currentTimeMillis();
-				List<GenericRecord> recordList = parquetUtil.generateRecords(bundle);
-				for (GenericRecord record : recordList) {
-					try {
-						out.get(avroTag).output(record);
-					}
-					catch (AvroTypeException e) {
-						// TODO fix the root cause of this exception!
-						log.error(String.format("Dropping record with id %s at stage %s due to exception: %s ",
-						    record.get("id"), stageIdentifier, e));
-					}
-				}
+				parquetUtil.writeRecords(bundle);
 				totalGenerateTimeMillis.inc(System.currentTimeMillis() - startTime);
-			}
-			if (!jsonFile.isEmpty()) {
-				for (BundleEntryComponent entry : bundle.getEntry()) {
-					out.get(jsonTag).output(parser.encodeResourceToString(entry.getResource()));
-				}
 			}
 			if (!this.sinkPath.isEmpty()) {
 				long pushStartTime = System.currentTimeMillis();
@@ -142,14 +128,6 @@ abstract class FetchSearchPageFn<T> extends DoFn<T, GenericRecord> {
 				totalPushTimeMillis.inc(System.currentTimeMillis() - pushStartTime);
 			}
 		}
-	}
-	
-	protected PCollection<GenericRecord> getAvroRecords(PCollectionTuple records) {
-		return records.get(avroTag);
-	}
-	
-	protected PCollection<String> getJsonRecords(PCollectionTuple records) {
-		return records.get(jsonTag);
 	}
 	
 }

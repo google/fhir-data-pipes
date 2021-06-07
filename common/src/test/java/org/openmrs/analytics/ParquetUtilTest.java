@@ -15,6 +15,7 @@ package org.openmrs.analytics;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.matchesPattern;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.number.IsCloseTo.closeTo;
 
@@ -76,7 +77,7 @@ public class ParquetUtilTest {
 		patientBundle = Resources.toString(Resources.getResource("patient_bundle.json"), StandardCharsets.UTF_8);
 		observationBundle = Resources.toString(Resources.getResource("observation_bundle.json"), StandardCharsets.UTF_8);
 		this.fhirContext = FhirContext.forR4();
-		parquetUtil = new ParquetUtil(PARQUET_ROOT, 0, 0, fileSystem);
+		parquetUtil = new ParquetUtil(PARQUET_ROOT, 0, 0, "TEST_", fileSystem);
 	}
 	
 	@Test
@@ -140,27 +141,18 @@ public class ParquetUtilTest {
 	
 	@Test
 	public void bestOutputFile_NoDir() throws IOException {
-		org.apache.hadoop.fs.Path bestFile = parquetUtil.bestOutputFile("Patient");
-		assertThat(bestFile.toString(), equalTo("/parquet_root/Patient/output-streaming-00000"));
+		org.apache.hadoop.fs.Path bestFile = parquetUtil.uniqueOutputFile("Patient");
+		assertThat(bestFile.toString(),
+		    matchesPattern("/parquet_root/Patient/TEST_output-parquet-th-[\\p{Digit}]+-ts-[\\p{Digit}]+-r-[\\p{Digit}]+"));
 	}
 	
 	@Test
 	public void bestOutputFile_NoFiles() throws IOException {
 		Path patientPath = rootPath.resolve("Patient");
 		Files.createDirectory(patientPath);
-		org.apache.hadoop.fs.Path bestFile = parquetUtil.bestOutputFile("Patient");
-		assertThat(bestFile.toString(), equalTo("/parquet_root/Patient/output-streaming-00000"));
-	}
-	
-	@Test
-	public void bestOutputFile_SomeFiles() throws IOException {
-		Path patientPath = rootPath.resolve("Patient");
-		Files.createDirectory(patientPath);
-		Files.createFile(patientPath.resolve("output-streaming-00000"));
-		Files.createFile(patientPath.resolve("output-streaming-00010"));
-		Files.createFile(patientPath.resolve("output-streaming-00005"));
-		org.apache.hadoop.fs.Path bestFile = parquetUtil.bestOutputFile("Patient");
-		assertThat(bestFile.toString(), equalTo("/parquet_root/Patient/output-streaming-00011"));
+		org.apache.hadoop.fs.Path bestFile = parquetUtil.uniqueOutputFile("Patient");
+		assertThat(bestFile.toString(),
+		    matchesPattern("/parquet_root/Patient/TEST_output-parquet-th-[\\p{Digit}]+-ts-[\\p{Digit}]+-r-[\\p{Digit}]+"));
 	}
 	
 	private void initilizeLocalFileSystem() throws IOException {
@@ -173,7 +165,7 @@ public class ParquetUtilTest {
 	@Test
 	public void createSingleOutput() throws IOException {
 		initilizeLocalFileSystem();
-		parquetUtil = new ParquetUtil(rootPath.toString(), 0, 0, fileSystem);
+		parquetUtil = new ParquetUtil(rootPath.toString(), 0, 0, "", fileSystem);
 		IParser parser = fhirContext.newJsonParser();
 		Bundle bundle = parser.parseResource(Bundle.class, observationBundle);
 		for (Bundle.BundleEntryComponent entry : bundle.getEntry()) {
@@ -188,7 +180,7 @@ public class ParquetUtilTest {
 	@Test
 	public void createMultipleOutputByTime() throws IOException, InterruptedException {
 		initilizeLocalFileSystem();
-		parquetUtil = new ParquetUtil(rootPath.toString(), 1, 0, fileSystem);
+		parquetUtil = new ParquetUtil(rootPath.toString(), 1, 0, "", fileSystem);
 		IParser parser = fhirContext.newJsonParser();
 		Bundle bundle = parser.parseResource(Bundle.class, observationBundle);
 		for (Bundle.BundleEntryComponent entry : bundle.getEntry()) {
@@ -204,7 +196,7 @@ public class ParquetUtilTest {
 	@Test
 	public void createSingleOutputWithRowGroupSize() throws IOException {
 		initilizeLocalFileSystem();
-		parquetUtil = new ParquetUtil(rootPath.toString(), 0, 1, fileSystem);
+		parquetUtil = new ParquetUtil(rootPath.toString(), 0, 1, "", fileSystem);
 		IParser parser = fhirContext.newJsonParser();
 		Bundle bundle = parser.parseResource(Bundle.class, observationBundle);
 		// There are 7 resources in the bundle so we write 15*7 (>100) resources, such that the page
@@ -230,5 +222,21 @@ public class ParquetUtilTest {
 		GenericData.Record valueRecord = (GenericData.Record) record.get("value");
 		BigDecimal value = (BigDecimal) ((GenericData.Record) valueRecord.get("quantity")).get("value");
 		assertThat(value.doubleValue(), closeTo(1.8287, 0.001));
+	}
+	
+	/**
+	 * This is the test to demonstrate the BigDecimal conversion bug. If we remove the try/catch for
+	 * AvroTypeException in `ParquetUtil.write` this test will fail. Note the previous test shows the
+	 * conversion of such record is fine.
+	 */
+	@Test
+	public void writeObservationWithBigDecimalValue() throws IOException {
+		initilizeLocalFileSystem();
+		parquetUtil = new ParquetUtil(rootPath.toString(), 0, 0, "", fileSystem);
+		String observationStr = Resources.toString(Resources.getResource("observation_decimal.json"),
+		    StandardCharsets.UTF_8);
+		IParser parser = fhirContext.newJsonParser();
+		Observation observation = parser.parseResource(Observation.class, observationStr);
+		parquetUtil.write(observation);
 	}
 }
