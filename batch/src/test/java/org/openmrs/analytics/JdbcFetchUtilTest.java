@@ -13,11 +13,17 @@
 // limitations under the License.
 package org.openmrs.analytics;
 
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
+
 import java.beans.PropertyVetoException;
 import java.io.File;
 import java.io.IOException;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -28,6 +34,7 @@ import ca.uhn.fhir.context.FhirContext;
 import ca.uhn.fhir.parser.IParser;
 import com.google.common.io.Resources;
 import junit.framework.TestCase;
+import org.apache.beam.sdk.coders.CannotProvideCoderException;
 import org.apache.beam.sdk.io.jdbc.JdbcIO;
 import org.apache.beam.sdk.options.PipelineOptionsFactory;
 import org.apache.beam.sdk.testing.PAssert;
@@ -146,5 +153,23 @@ public class JdbcFetchUtilTest extends TestCase {
 		assertTrue(reverseMap.get("encounter").contains("Encounter"));
 		assertTrue(reverseMap.get("visit").contains("Encounter"));
 		assertTrue(reverseMap.get("obs").contains("Observation"));
+	}
+	
+	@Test
+	public void testFetchAllUuidUtilonEmptyTable() throws SQLException, CannotProvideCoderException {
+		JdbcFetchUtil mockedJdbcFetchUtil = mock(JdbcFetchUtil.class);
+		JdbcConnectionUtil mockedJdbcConnectionUtil = mock(JdbcConnectionUtil.class);
+		Statement mockedStatement = mock(Statement.class);
+		ResultSet mockedResultSet = mock(ResultSet.class);
+		mockedJdbcFetchUtil = new JdbcFetchUtil(mockedJdbcConnectionUtil);
+		
+		when(mockedJdbcConnectionUtil.createStatement()).thenReturn(mockedStatement);
+		when(mockedStatement.executeQuery("SELECT MAX(`obs_id`) as max_id FROM obs")).thenReturn(mockedResultSet);
+		when(mockedResultSet.getInt("max_id")).thenReturn(0);
+		
+		PCollection<String> uuids = mockedJdbcFetchUtil.fetchAllUuids(testPipeline, "obs", 20);
+		//pipeline should not fail on empty uuids	
+		PAssert.that(uuids).empty();
+		testPipeline.run();
 	}
 }
