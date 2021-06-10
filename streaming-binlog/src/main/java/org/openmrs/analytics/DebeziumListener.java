@@ -156,10 +156,6 @@ public class DebeziumListener extends RouteBuilder {
 		
 		@Parameter(names = { "--statusPort" }, description = "The port on which the status server listens.")
 		public int statusPort = 9033;
-		
-		@Parameter(names = { "--outputParquetPath" }, description = "The base path for output Parquet files")
-		public String outputParquetPath = "";
-		
 	}
 	
 }

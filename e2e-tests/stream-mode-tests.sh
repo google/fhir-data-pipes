@@ -1,4 +1,17 @@
 #!/usr/bin/env bash
+# Copyright 2020 Google LLC
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
 
 #######################################
 # Function that prints messages
@@ -15,8 +28,8 @@ function print_message() {
 # the testing env
 #  
 #######################################
-source ./e2e-tests/common.sh
- setupopenmrsFhirBaseEndpoint
+source ./e2e-tests/common-mode-tests.sh
+setup
 test_dir=$(mktemp -d -t analytics_tests__XXXXXX_streaming)
 command=(mvn compile exec:java -pl streaming-binlog \
    -Dexec.args="--openmrsUserName=admin --openmrsPassword=Admin123 \
@@ -35,46 +48,20 @@ print_message "CREATE AN OBSERVATION IN OPENMRS TO BE STREAMED"
 curl -i -u admin:Admin123 -H "Content-type: application/json" -X POST http://localhost:8099/openmrs/ws/fhir2/R4/Observation -d @./e2e-tests/obs.json
 print_message "RUNNING STREAMING MODE WITH PARQUET & FHIR SYNC"
 print_message "${command[@]}"
-
 timeout 2m "${command[@]}"
 if [[ -z $(ls "${test_dir}"/Patient) ]]; then
    print_message "DATA NOT SYNCED TO PARQUET FILES"
   exit 1
 fi
- print_message "PARQUET FILES SYNCED TO ${test_dir​}"
+print_message "PARQUET FILES WRITTEN TO ${test_dir​}"
 current_path=$(pwd)
- print_message "COPYING PARQUET TOOLS JAR FILE TO ROOT"
+print_message "COPYING PARQUET TOOLS JAR FILE TO ROOT"
 cp e2e-tests/parquet-tools-1.11.1.jar "${test_dir}"
 if ! [[ $(command -v jq) ]]; then
     print_message "COULD NOT INSTALL JQ, INSTALL MANUALLY TO CONTINUE RUNNING THE TEST"
     exit 1
 fi
 cd "${test_dir}"
-
-validate_counts "?family=Clive" "?subject.given=Cliff" "?subject.given=Cliff"
-if [[ ${total_patients_streamed} == ${total_test_patients}
-      && ${total_encounters_streamed} == ${total_test_encounters}
-      && $total_obs_streamed == ${total_test_obs} ]] ;
-then
-  print_message "STREAMING MODE WITH PARQUET SINK EXECUTED SUCCESSFULLY"
-else
-  print_message "STREAMING MODE WITH PARQUET SINK TEST FAILED"
-  exit 1
-fi
-
-mkdir fhir
-print_message "Counting number of patients, encounters and obs sinked to fhir files"
-curl -L -X GET -u hapi:hapi --connect-timeout 5 --max-time 20 \
-      http://localhost:8098/fhir/Patient?family=Clive 2>/dev/null >> ./fhir/patients.json
-total_patients_sinked_fhir=$(jq '.total' ./fhir/patients.json)
-
-print_message "Total patients sinked to fhir ---> ${total_patients_sinked_fhir}"
-
-if [[ ${total_patients_sinked_fhir} == ${total_test_patients} ]] ;
-then
-  print_message "STREAMING MODE WITH FHIR SERVER SINK EXECUTED SUCCESSFULLY"
-else
-  print_message "STREAMING MODE WITH FHIR SERVER SINK TEST FAILED"
-  exit 1
-fi
+validate_parquet_counts "?family=Clive" "?subject.given=Cliff" "?subject.given=Cliff"
+validate_fhir_counts "?family=Clive"
 print_message "END!!"
