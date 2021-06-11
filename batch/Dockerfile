@@ -30,14 +30,11 @@ ENV TARGET_PARALLELISM=10
 ENV PARQUET_PATH="/tmp/"
 ENV JDBC_MODE_ENABLED=false
 ENV JDBC_DRIVER_CLASS="com.mysql.cj.jdbc.Driver"
-ENV DB_USER="root"
-ENV DB_PASSWORD="debezium"
 ENV JDBC_FETCH_SIZE=10000
 ENV JDBC_MAX_POOL_SIZE=50
 ENV JDBC_INITIAL_POOL_SIZE=10
-ENV JDBC_URL="jdbc:mysql://localhost:3306/openmrs"
 ENV NUM_FILE_SHARDS=3
-
+ENV FHIR_DEBEZIUM_CONFIG_PATH="utils/dbz_event_to_fhir_config.json"
 
 RUN echo 'Batch Job started'
 VOLUME [ "${WORK_DIR}" ]
@@ -47,5 +44,5 @@ ENTRYPOINT java -cp app.jar org.openmrs.analytics.FhirEtl \
            --resourceList=${RESOURCE_LIST} --batchSize=${BATCH_SIZE} --targetParallelism=${TARGET_PARALLELISM} \
            --fhirSinkPath=${SINK_PATH}  --sinkUserName=${SINK_USERNAME} --sinkPassword=${SINK_PASSWORD} \
            --outputParquetPath=${PARQUET_PATH} --jdbcModeEnabled=${JDBC_MODE_ENABLED} --jdbcDriverClass=${JDBC_DRIVER_CLASS} \
-           --dbUser=${DB_USER} --dbPassword=${DB_PASSWORD} --jdbcMaxPoolSize=${JDBC_MAX_POOL_SIZE} --jdbcUrl=${JDBC_URL} \
-           --jdbcInitialPoolSize=${JDBC_INITIAL_POOL_SIZE} --jdbcFetchSize=${JDBC_FETCH_SIZE} --numFileShards=${NUM_FILE_SHARDS}
+           --jdbcMaxPoolSize=${JDBC_MAX_POOL_SIZE} --fhirDebeziumConfigPath=${FHIR_DEBEZIUM_CONFIG_PATH} \
+           --jdbcInitialPoolSize=${JDBC_INITIAL_POOL_SIZE} --jdbcFetchSize=${JDBC_FETCH_SIZE}

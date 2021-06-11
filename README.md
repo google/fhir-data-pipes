@@ -155,8 +155,7 @@ $ java -cp batch/target/fhir-batch-etl-bundled-0.1.0-SNAPSHOT.jar \
     --sinkUserName=hapi --sinkPassword=hapi \
     --outputParquetPath=/tmp/TEST/ \
     --resourceList=Patient,Encounter,Observation --batchSize=20 \
-    --jdbcModeEnabled=true --jdbcUrl=jdbc:mysql://localhost:3306/openmrs \
-    --dbUser=root --dbPassword=debezium --jdbcMaxPoolSize=50 \
+    --jdbcModeEnabled=true --jdbcMaxPoolSize=50 \
     --jdbcDriverClass=com.mysql.cj.jdbc.Driver
 
 ```
@@ -172,13 +171,6 @@ Parameters:
     `http://localhost:8099/openmrs/ws/fhir2/R4/Patient`. This generally should
     not be changed. Default: `/ws/fhir2/R4`
 -   `jdbcModeEnabled` - If true, uses JDBC mode. Default: `false`
--   `jdbcUrl` - The
-    [JDBC database connection URL](https://docs.oracle.com/javase/tutorial/jdbc/basics/connecting.html#db_connection_url)
-    for the OpenMRS MySQL database. Default:
-    `jdbc:mysql://localhost:3306/openmrs`
--   `dbUser` - The name of a user that has access to the database. Default:
-    `root`
--   `dbPassword` - The password of `dbUser`. Default: `debezium`
 -   `jdbcMaxPoolSize` - The maximum number of database connections. Default:
     `50`
 -   `jdbcDriverClass` - The fully qualified class name of the JDBC driver. This
