@@ -61,6 +61,9 @@ public class FhirConverterTest extends CamelTestSupport {
 	@Mock
 	private ParquetUtil parquetUtil;
 	
+	@Mock
+	private StatusServer statusServer;
+	
 	private FhirConverter fhirConverter;
 	
 	@Override
@@ -72,7 +75,7 @@ public class FhirConverterTest extends CamelTestSupport {
 				
 				String fhirDebeziumEventConfigPath = "../utils/dbz_event_to_fhir_config.json";
 				fhirConverter = new FhirConverter(openmrsUtil, fhirStoreUtil, parquetUtil, fhirDebeziumEventConfigPath,
-				        uuidUtil);
+				        uuidUtil, statusServer);
 				
 				// Inject FhirUriGenerator;
 				from(TEST_ROUTE).process(fhirConverter); // inject target processor here

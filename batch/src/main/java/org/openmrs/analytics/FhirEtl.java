@@ -89,8 +89,7 @@ public class FhirEtl {
 	 */
 	private static PCollection<KV<String, Integer>> fetchSegmentsAndReturnPatientIds(
 	        PCollection<SearchSegmentDescriptor> inputSegments, String resourceType, FhirEtlOptions options) {
-		Schema schema = getSchema(resourceType);
-		FetchResources fetchResources = new FetchResources(options, resourceType, schema);
+		FetchResources fetchResources = new FetchResources(options, resourceType + "_main");
 		return inputSegments.apply(fetchResources);
 	}
 	
@@ -104,8 +103,7 @@ public class FhirEtl {
 		FetchPatients fetchPatients = new FetchPatients(options, getSchema(patientType));
 		mergedPatients.apply(fetchPatients);
 		for (String resourceType : patientAssociatedResources) {
-			FetchPatientHistory fetchPatientHistory = new FetchPatientHistory(options, resourceType,
-			        getSchema(resourceType));
+			FetchPatientHistory fetchPatientHistory = new FetchPatientHistory(options, resourceType);
 			mergedPatients.apply(fetchPatientHistory);
 		}
 	}

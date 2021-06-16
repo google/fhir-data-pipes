@@ -149,7 +149,7 @@ public class ParquetUtil {
 	synchronized Path uniqueOutputFile(String resourceType) throws IOException {
 		java.nio.file.Path outputDir = fileSystem.getPath(getParquetPath(), resourceType);
 		Files.createDirectories(outputDir);
-		String uniquetFileName = String.format(namePrefix + "output-parquet-th-%d-ts-%d-r-%d",
+		String uniquetFileName = String.format("%s%s_output-parquet-th-%d-ts-%d-r-%d", namePrefix, resourceType,
 		    Thread.currentThread().getId(), System.currentTimeMillis(), random.nextInt(1000000));
 		Path bestFilePath = new Path(Paths.get(getParquetPath(), resourceType).toString(), uniquetFileName);
 		log.info("Creating new Parguet file " + bestFilePath);

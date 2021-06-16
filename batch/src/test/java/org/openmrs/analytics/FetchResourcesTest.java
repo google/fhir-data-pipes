@@ -30,7 +30,6 @@ import ca.uhn.fhir.parser.IParser;
 import ca.uhn.fhir.rest.api.SummaryEnum;
 import com.google.common.collect.Lists;
 import com.google.common.io.Resources;
-import org.apache.avro.Schema;
 import org.apache.beam.sdk.options.PipelineOptionsFactory;
 import org.apache.beam.sdk.testing.PAssert;
 import org.apache.beam.sdk.testing.TestPipeline;
@@ -69,9 +68,7 @@ public class FetchResourcesTest {
 		bundle = parser.parseResource(Bundle.class, bundleStr);
 		String[] args = { "--outputParquetPath=SOME_PATH" };
 		FhirEtlOptions options = PipelineOptionsFactory.fromArgs(args).withValidation().as(FhirEtlOptions.class);
-		ParquetUtil parquetUtil = new ParquetUtil(null); // This is used only to get schema.
-		Schema schema = parquetUtil.getResourceSchema("Observation");
-		fetchResources = new MockedFetchResources(options, bundle, schema);
+		fetchResources = new MockedFetchResources(options, bundle);
 		ParquetUtil.initializeAvroConverters();
 	}
 	
@@ -100,8 +97,8 @@ public class FetchResourcesTest {
 	
 	static class MockedFetchResources extends FetchResources {
 		
-		MockedFetchResources(FhirEtlOptions options, Bundle bundle, Schema schema) {
-			super(options, "TEST_FetchResources", schema);
+		MockedFetchResources(FhirEtlOptions options, Bundle bundle) {
+			super(options, "TEST_FetchResources");
 			this.fetchSearchPageFn = new SearchFn(options, "TEST_FetchResources") {
 				
 				@Override

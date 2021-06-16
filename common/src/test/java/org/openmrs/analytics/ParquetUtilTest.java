@@ -142,8 +142,8 @@ public class ParquetUtilTest {
 	@Test
 	public void bestOutputFile_NoDir() throws IOException {
 		org.apache.hadoop.fs.Path bestFile = parquetUtil.uniqueOutputFile("Patient");
-		assertThat(bestFile.toString(),
-		    matchesPattern("/parquet_root/Patient/TEST_output-parquet-th-[\\p{Digit}]+-ts-[\\p{Digit}]+-r-[\\p{Digit}]+"));
+		assertThat(bestFile.toString(), matchesPattern(
+		    "/parquet_root/Patient/TEST_Patient_output-parquet-th-[\\p{Digit}]+-ts-[\\p{Digit}]+-r-[\\p{Digit}]+"));
 	}
 	
 	@Test
@@ -151,8 +151,8 @@ public class ParquetUtilTest {
 		Path patientPath = rootPath.resolve("Patient");
 		Files.createDirectory(patientPath);
 		org.apache.hadoop.fs.Path bestFile = parquetUtil.uniqueOutputFile("Patient");
-		assertThat(bestFile.toString(),
-		    matchesPattern("/parquet_root/Patient/TEST_output-parquet-th-[\\p{Digit}]+-ts-[\\p{Digit}]+-r-[\\p{Digit}]+"));
+		assertThat(bestFile.toString(), matchesPattern(
+		    "/parquet_root/Patient/TEST_Patient_output-parquet-th-[\\p{Digit}]+-ts-[\\p{Digit}]+-r-[\\p{Digit}]+"));
 	}
 	
 	private void initilizeLocalFileSystem() throws IOException {
@@ -173,7 +173,7 @@ public class ParquetUtilTest {
 		}
 		parquetUtil.closeAllWriters();
 		Stream<Path> files = Files.list(rootPath.resolve("Observation"))
-		        .filter(f -> f.toString().startsWith(rootPath.toString() + "/Observation/output-"));
+		        .filter(f -> f.toString().startsWith(rootPath.toString() + "/Observation/Observation_output-"));
 		assertThat(files.count(), equalTo(1L));
 	}
 	
@@ -189,7 +189,7 @@ public class ParquetUtilTest {
 		}
 		parquetUtil.closeAllWriters();
 		Stream<Path> files = Files.list(rootPath.resolve("Observation"))
-		        .filter(f -> f.toString().startsWith(rootPath.toString() + "/Observation/output-"));
+		        .filter(f -> f.toString().startsWith(rootPath.toString() + "/Observation/Observation_output-"));
 		assertThat(files.count(), equalTo(7L));
 	}
 	
@@ -208,7 +208,7 @@ public class ParquetUtilTest {
 		}
 		parquetUtil.closeAllWriters();
 		Stream<Path> files = Files.list(rootPath.resolve("Observation"))
-		        .filter(f -> f.toString().startsWith(rootPath.toString() + "/Observation/output-"));
+		        .filter(f -> f.toString().startsWith(rootPath.toString() + "/Observation/Observation_output-"));
 		assertThat(files.count(), equalTo(1L));
 	}
 	

@@ -141,18 +141,30 @@ public class JdbcFetchUtil {
 	        throws SQLException, CannotProvideCoderException {
 		Preconditions.checkArgument(!activePeriod.isEmpty());
 		String[] dateRange = activePeriod.split("_");
+		Preconditions.checkArgument(dateRange.length > 0);
+		String lowerConstraint = "";
+		if (!dateRange[0].isEmpty()) {
+			lowerConstraint = String.format("%s > '%s'", dateColumn, dateRange[0]);
+		}
+		String upperConstraint = "";
+		if (dateRange.length > 1 && !dateRange[1].isEmpty()) {
+			upperConstraint = String.format("%s <= '%s'", dateColumn, dateRange[1]);
+		}
+		String constraint = "";
+		if (!lowerConstraint.isEmpty() && !upperConstraint.isEmpty()) {
+			constraint = String.format(" WHERE %s AND %s ", lowerConstraint, upperConstraint);
+		} else {
+			if (!lowerConstraint.isEmpty()) {
+				constraint = String.format(" WHERE %s ", lowerConstraint);
+			} else if (!upperConstraint.isEmpty()) {
+				constraint = String.format(" WHERE %s ", upperConstraint);
+			}
+		}
 		Statement statement = jdbcConnectionUtil.createStatement();
 		ResultSet resultSet;
-		if (dateRange.length == 1) {
-			final String query = String.format("SELECT uuid FROM %s WHERE %s > '%s'", tableName, dateColumn, dateRange[0]);
-			log.info("SQL query: " + query);
-			resultSet = statement.executeQuery(query);
-		} else {
-			final String query = String.format("SELECT uuid FROM %s WHERE %s > '%s' AND %s <= '%s'", tableName, dateColumn,
-			    dateRange[0], dateColumn, dateRange[1]);
-			log.info("SQL query: " + query);
-			resultSet = statement.executeQuery(query);
-		}
+		final String query = String.format("SELECT uuid FROM %s %s", tableName, constraint);
+		log.info("SQL query: " + query);
+		resultSet = statement.executeQuery(query);
 		List<String> uuids = Lists.newArrayList();
 		while (resultSet.next()) {
 			uuids.add(resultSet.getString("uuid"));

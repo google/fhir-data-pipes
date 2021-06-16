@@ -16,6 +16,10 @@ package org.openmrs.analytics;
 
 import java.io.IOException;
 import java.sql.SQLException;
+import java.time.Instant;
+import java.time.ZoneOffset;
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.Map;
 
 import com.google.common.annotations.VisibleForTesting;
@@ -43,7 +47,9 @@ public class FhirConverter implements Processor {
 	
 	private final DatabaseConfiguration databaseConfiguration;
 	
-	private UuidUtil uuidUtil;
+	private final UuidUtil uuidUtil;
+	
+	private final StatusServer statusServer;
 	
 	@VisibleForTesting
 	FhirConverter() {
@@ -51,17 +57,29 @@ public class FhirConverter implements Processor {
 		this.fhirStoreUtil = null;
 		this.parquetUtil = null;
 		this.databaseConfiguration = null;
-		
+		this.uuidUtil = null;
+		this.statusServer = null;
 	}
 	
 	public FhirConverter(OpenmrsUtil openmrsUtil, FhirStoreUtil fhirStoreUtil, ParquetUtil parquetUtil,
-	    String configFileName, UuidUtil uuidUtil) throws IOException {
+	    String configFileName, UuidUtil uuidUtil, StatusServer statusServer) throws IOException {
 		// TODO add option for switching to Parquet-file outputs.
 		this.openmrsUtil = openmrsUtil;
 		this.fhirStoreUtil = fhirStoreUtil;
 		this.parquetUtil = parquetUtil;
 		this.databaseConfiguration = DatabaseConfiguration.createConfigFromFile(configFileName);
 		this.uuidUtil = uuidUtil;
+		this.statusServer = statusServer;
+	}
+	
+	@VisibleForTesting
+	void updateLastResourceTime(String fhirResource, Message message) {
+		Long messageTime = message.getHeader(DebeziumConstants.HEADER_TIMESTAMP, Long.class);
+		if (messageTime != null) {
+			String messageTimeStr = ZonedDateTime.ofInstant(Instant.ofEpochMilli(messageTime), ZoneOffset.UTC)
+			        .format(DateTimeFormatter.ISO_OFFSET_DATE_TIME);
+			statusServer.setVar("last_" + fhirResource, messageTimeStr);
+		}
 	}
 	
 	public void process(Exchange exchange) throws SQLException {
@@ -107,6 +125,8 @@ public class FhirConverter implements Processor {
 			// TODO: check how this can be signalled to Camel to be retried.
 			return;
 		}
+		final String fhirResource = config.getLinkTemplates().get("fhir").replace("/{uuid}", "").replaceAll("/", "");
+		updateLastResourceTime(fhirResource, message);
 		
 		if (!parquetUtil.getParquetPath().isEmpty()) {
 			try {
