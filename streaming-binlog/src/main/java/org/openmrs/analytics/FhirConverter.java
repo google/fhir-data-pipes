@@ -15,24 +15,18 @@
 package org.openmrs.analytics;
 
 import java.io.IOException;
-import java.io.Reader;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.sql.SQLException;
 import java.util.Map;
 
 import com.google.common.annotations.VisibleForTesting;
-import com.google.gson.Gson;
 import io.debezium.data.Envelope.Operation;
 import org.apache.camel.Exchange;
 import org.apache.camel.Message;
 import org.apache.camel.Processor;
 import org.apache.camel.component.debezium.DebeziumConstants;
 import org.hl7.fhir.r4.model.Resource;
+import org.openmrs.analytics.model.DatabaseConfiguration;
 import org.openmrs.analytics.model.EventConfiguration;
-import org.openmrs.analytics.model.GeneralConfiguration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -47,7 +41,7 @@ public class FhirConverter implements Processor {
 	
 	private final ParquetUtil parquetUtil;
 	
-	private final GeneralConfiguration generalConfiguration;
+	private final DatabaseConfiguration databaseConfiguration;
 	
 	private UuidUtil uuidUtil;
 	
@@ -56,7 +50,7 @@ public class FhirConverter implements Processor {
 		this.openmrsUtil = null;
 		this.fhirStoreUtil = null;
 		this.parquetUtil = null;
-		this.generalConfiguration = null;
+		this.databaseConfiguration = null;
 		
 	}
 	
@@ -66,7 +60,7 @@ public class FhirConverter implements Processor {
 		this.openmrsUtil = openmrsUtil;
 		this.fhirStoreUtil = fhirStoreUtil;
 		this.parquetUtil = parquetUtil;
-		this.generalConfiguration = getEventsToFhirConfig(configFileName);
+		this.databaseConfiguration = DatabaseConfiguration.createConfigFromFile(configFileName);
 		this.uuidUtil = uuidUtil;
 	}
 	
@@ -85,7 +79,7 @@ public class FhirConverter implements Processor {
 		}
 		final String table = sourceMetadata.get("table").toString();
 		log.debug("Processing Table --> " + table);
-		final EventConfiguration config = generalConfiguration.getEventConfigurations().get(table);
+		final EventConfiguration config = databaseConfiguration.getEventConfigurations().get(table);
 		
 		if (config == null || !config.getLinkTemplates().containsKey("fhir")) {
 			log.trace("Skipping unmapped data ..." + table);
@@ -126,15 +120,5 @@ public class FhirConverter implements Processor {
 			fhirStoreUtil.uploadResource(resource);
 		}
 		
-	}
-	
-	@VisibleForTesting
-	GeneralConfiguration getEventsToFhirConfig(String fileName) throws IOException {
-		Gson gson = new Gson();
-		Path pathToFile = Paths.get(fileName);
-		try (Reader reader = Files.newBufferedReader(pathToFile.toAbsolutePath(), StandardCharsets.UTF_8)) {
-			GeneralConfiguration generalConfiguration = gson.fromJson(reader, GeneralConfiguration.class);
-			return generalConfiguration;
-		}
 	}
 }

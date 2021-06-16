@@ -1,12 +1,12 @@
 {
   "debeziumConfigurations": {
-    "databaseServerName" : "mysql",
+    "databaseServerName" : "MyDbName",
     "databaseHostName" : "localhost",
     "databaseServerId" : "223344",
     "databasePort" : "3306",
     "databaseUser" : "root",
     "databasePassword" : "debezium",
-    "databaseSchema" : "openmrs",
+    "databaseName" : "openmrs",
     "databaseOffsetStorage" : "data/offset.dat",
     "databaseHistory" : "data/dbhistory.dat",
     "snapshotMode" : "schema_only"

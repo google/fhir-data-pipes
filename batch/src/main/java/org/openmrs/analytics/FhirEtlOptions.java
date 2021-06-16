@@ -104,12 +104,6 @@ public interface FhirEtlOptions extends PipelineOptions {
 	 * JDBC DB settings: defaults values have been pointed to ./openmrs-compose.yaml
 	 */
 	
-	@Description("JDBC URL input")
-	@Default.String("jdbc:mysql://localhost:3306/openmrs")
-	String getJdbcUrl();
-	
-	void setJdbcUrl(String value);
-	
 	@Description("JDBC MySQL driver class")
 	@Default.String("com.mysql.cj.jdbc.Driver")
 	String getJdbcDriverClass();
@@ -128,23 +122,11 @@ public interface FhirEtlOptions extends PipelineOptions {
 	
 	void setJdbcInitialPoolSize(int value);
 	
-	@Description("MySQL DB user")
-	@Default.String("root")
-	String getDbUser();
-	
-	void setDbUser(String value);
-	
-	@Description("MySQL DB user password")
-	@Default.String("debezium")
-	String getDbPassword();
-	
-	void setDbPassword(String value);
-	
 	@Description("Path to Table-FHIR map config")
 	@Default.String("utils/dbz_event_to_fhir_config.json")
-	String getTableFhirMapPath();
+	String getFhirDebeziumConfigPath();
 	
-	void setTableFhirMapPath(String value);
+	void setFhirDebeziumConfigPath(String value);
 	
 	@Description("Flag to switch between the 2 modes of batch extract")
 	@Default.Boolean(false)

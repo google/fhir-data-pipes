@@ -57,8 +57,7 @@ function setup() {
 
   TEST_DIR_FHIR=$(mktemp -d -t analytics_tests__XXXXXX_FHIRSEARCH)
   TEST_DIR_JDBC=$(mktemp -d -t analytics_tests__XXXXXX_JDBC)
-  JDBC_SETTINGS="--jdbcModeEnabled=true --jdbcUrl=jdbc:mysql://localhost:3306/openmrs --dbUser=mysqluser \
-                 --dbPassword=mysqlpw --jdbcMaxPoolSize=50 --jdbcDriverClass=com.mysql.cj.jdbc.Driver"
+  JDBC_SETTINGS="--jdbcModeEnabled=true"
 }
 
 
@@ -77,15 +76,15 @@ function test_parquet_sink() {
   local test_dir=$2
   local mode=$3
   print_message "PARQUET FILES WILL BE WRITTEN INTO ${test_dir} DIRECTORY"
-  print_message "RUNNING BATCH MODE WITH PARQUET SYNC FOR $2 MODE"
+  print_message "RUNNING BATCH MODE WITH PARQUET SINK FOR $2 MODE"
   print_message " ${command[*]}"
   "${command[@]}"
 
   if [[ -z $(ls "${test_dir}"/Patient) ]]; then
-    print_message "DATA NOT SYNCED TO PARQUET FILES"
+    print_message "PARQUET FILES NOT CREATED"
     exit 1
   fi
-  print_message "PARQUET FILES SYNCED TO ${test_dir}"
+  print_message "PARQUET FILES OUTPUT DIR IS ${test_dir}"
   print_message "COPYING PARQUET TOOLS JAR FILE TO ROOT"
   cp e2e-tests/parquet-tools-1.11.1.jar "${test_dir}"
   if ! [[ $(command -v jq) ]]; then
@@ -117,10 +116,10 @@ function test_parquet_sink() {
 
   if [[ ${total_patients_streamed} == ${total_test_patients} && ${total_encounters_streamed} == ${total_test_encounters} && ${total_obs_streamed} == ${total_test_obs} ]] \
     ; then
-    print_message "BATCH MODE WITH PARQUET SYNC EXECUTED SUCCESSFULLY USING ${mode} MODE"
+    print_message "BATCH MODE WITH PARQUET SINK EXECUTED SUCCESSFULLY USING ${mode} MODE"
     cd "${HOME_PATH}"
   else
-    print_message "BATCH MODE WITH PARQUET SYNC TEST FAILED USING ${mode} MODE"
+    print_message "BATCH MODE WITH PARQUET SINK TEST FAILED USING ${mode} MODE"
     exit 1
   fi
 }

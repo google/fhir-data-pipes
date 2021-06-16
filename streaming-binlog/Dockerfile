@@ -27,7 +27,6 @@ ENV FHIR_DEBEZIUM_CONFIG_PATH="/deployments/dbz_event_to_fhir_config.json"
 ENV JDBC_FETCH_SIZE=10000
 ENV JDBC_MAX_POOL_SIZE=50
 ENV JDBC_INITIAL_POOL_SIZE=10
-ENV JDBC_URL="jdbc:mysql://localhost:3306/openmrs"
 ENV JDBC_DRIVER_CLASS="com.mysql.cj.jdbc.Driver"
 
 RUN echo "Debezium Streaming Job started"
@@ -43,5 +42,4 @@ ENTRYPOINT java -cp app.jar org.openmrs.analytics.Runner \
            --fhirDebeziumConfigPath=${FHIR_DEBEZIUM_CONFIG_PATH} \
            --jdbcDriverClass=${JDBC_DRIVER_CLASS} \
            --jdbcMaxPoolSize=${JDBC_MAX_POOL_SIZE} \
-           --jdbcUrl=${JDBC_URL} \
            --jdbcInitialPoolSize=${JDBC_INITIAL_POOL_SIZE}

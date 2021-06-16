@@ -50,6 +50,7 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.junit.MockitoJUnitRunner;
+import org.openmrs.analytics.model.DatabaseConfiguration;
 
 @RunWith(MockitoJUnitRunner.class)
 public class JdbcFetchUtilTest extends TestCase {
@@ -69,6 +70,8 @@ public class JdbcFetchUtilTest extends TestCase {
 	
 	private String basePath = "/tmp/JUNIT/Parquet/TEST/";
 	
+	private DatabaseConfiguration dbConfig;
+	
 	@Before
 	public void setup() throws IOException, PropertyVetoException {
 		URL url = Resources.getResource("encounter.json");
@@ -79,10 +82,11 @@ public class JdbcFetchUtilTest extends TestCase {
 		
 		String[] args = { "--fhirSinkPath=", "--openmrsServerUrl=http://localhost:8099/openmrs" };
 		FhirEtlOptions options = PipelineOptionsFactory.fromArgs(args).withValidation().as(FhirEtlOptions.class);
+		dbConfig = DatabaseConfiguration.createConfigFromFile("../utils/dbz_event_to_fhir_config.json");
 		
-		JdbcConnectionUtil jdbcConnectionUtil = new JdbcConnectionUtil(options.getJdbcDriverClass(), options.getJdbcUrl(),
-		        options.getDbUser(), options.getDbPassword(), options.getJdbcMaxPoolSize(),
-		        options.getJdbcInitialPoolSize());
+		JdbcConnectionUtil jdbcConnectionUtil = new JdbcConnectionUtil(options.getJdbcDriverClass(),
+		        dbConfig.makeJdbsUrlFromConfig(), dbConfig.getDbUser(), dbConfig.getDbPassword(),
+		        options.getJdbcMaxPoolSize(), options.getJdbcInitialPoolSize());
 		// TODO jdbcConnectionUtil should be replaced by a mocked JdbcConnectionUtil which does not
 		// depend on options either, since we don't need real DB connections for unit-testing.
 		jdbcFetchUtil = new JdbcFetchUtil(jdbcConnectionUtil);
@@ -140,7 +144,7 @@ public class JdbcFetchUtilTest extends TestCase {
 	@Test
 	public void testCreateFhirReverseMap() throws Exception {
 		Map<String, List<String>> reverseMap = jdbcFetchUtil.createFhirReverseMap("Patient,Person,Encounter,Observation",
-		    "../utils/dbz_event_to_fhir_config.json");
+		    dbConfig);
 		
 		assertEquals(reverseMap.size(), 4);
 		assertEquals(reverseMap.get("person").size(), 2);
