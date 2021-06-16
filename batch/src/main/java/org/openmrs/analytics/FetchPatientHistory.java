@@ -17,8 +17,6 @@ import java.io.IOException;
 import java.util.List;
 
 import ca.uhn.fhir.rest.api.SummaryEnum;
-import com.google.common.base.Preconditions;
-import org.apache.avro.Schema;
 import org.apache.beam.sdk.transforms.PTransform;
 import org.apache.beam.sdk.transforms.ParDo;
 import org.apache.beam.sdk.values.KV;
@@ -34,23 +32,31 @@ public class FetchPatientHistory extends PTransform<PCollection<KV<String, Integ
 	
 	private final FetchSearchPageFn<KV<String, Integer>> fetchSearchPageFn;
 	
-	private final Schema schema;
+	private final String startDate;
 	
-	FetchPatientHistory(FhirEtlOptions options, String resourceType, Schema schema) {
-		Preconditions.checkState(!options.getActivePeriod().isEmpty());
+	FetchPatientHistory(FhirEtlOptions options, String resourceType) {
 		List<String> dateRange = FhirSearchUtil.getDateRange(options.getActivePeriod());
+		final String stageId = resourceType + "_history";
+		if (dateRange.isEmpty() || dateRange.get(0).isEmpty()) {
+			startDate = "";
+			log.info("Empty start of active period; skipping step " + stageId);
+		} else {
+			startDate = dateRange.get(0);
+			log.info("The last date for fetching patient history is " + startDate);
+		}
 		
 		int count = options.getBatchSize();
-		this.schema = schema;
 		
-		fetchSearchPageFn = new FetchSearchPageFn<KV<String, Integer>>(options, resourceType + "_history") {
+		fetchSearchPageFn = new FetchSearchPageFn<KV<String, Integer>>(options, stageId) {
 			
 			@ProcessElement
 			public void ProcessElement(@Element KV<String, Integer> patientIdCount) throws IOException {
+				if (startDate.isEmpty()) {
+					return;
+				}
 				String patientId = patientIdCount.getKey();
 				log.info(String.format("Fetching historical %s resources for patient  %s", resourceType, patientId));
-				Bundle bundle = this.fhirSearchUtil.searchByPatientAndLastDate(resourceType, patientId, dateRange.get(0),
-				    count);
+				Bundle bundle = this.fhirSearchUtil.searchByPatientAndLastDate(resourceType, patientId, startDate, count);
 				processBundle(bundle);
 				String nextUrl = this.fhirSearchUtil.getNextUrl(bundle);
 				while (nextUrl != null) {

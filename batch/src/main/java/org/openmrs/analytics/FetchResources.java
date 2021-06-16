@@ -20,14 +20,12 @@ import java.util.regex.Pattern;
 
 import ca.uhn.fhir.rest.api.SummaryEnum;
 import com.google.common.annotations.VisibleForTesting;
-import org.apache.avro.Schema;
 import org.apache.beam.sdk.transforms.DoFn.Element;
 import org.apache.beam.sdk.transforms.DoFn.ProcessElement;
 import org.apache.beam.sdk.transforms.PTransform;
 import org.apache.beam.sdk.transforms.ParDo;
 import org.apache.beam.sdk.values.KV;
 import org.apache.beam.sdk.values.PCollection;
-import org.apache.beam.sdk.values.TupleTag;
 import org.hl7.fhir.r4.model.Base;
 import org.hl7.fhir.r4.model.Bundle;
 import org.hl7.fhir.r4.model.Bundle.BundleEntryComponent;
@@ -49,15 +47,10 @@ public class FetchResources extends PTransform<PCollection<SearchSegmentDescript
 	
 	private static final Pattern PATIENT_REFERENCE = Pattern.compile(".*Patient/([^/]+)");
 	
-	final private Schema schema;
-	
 	@VisibleForTesting
 	protected FetchSearchPageFn<SearchSegmentDescriptor> fetchSearchPageFn;
 	
-	static final private TupleTag<KV<String, Integer>> patientIdTag = new TupleTag<KV<String, Integer>>() {};
-	
-	FetchResources(FhirEtlOptions options, String stageIdentifier, Schema schema) {
-		this.schema = schema;
+	FetchResources(FhirEtlOptions options, String stageIdentifier) {
 		fetchSearchPageFn = new SearchFn(options, stageIdentifier);
 	}
 	

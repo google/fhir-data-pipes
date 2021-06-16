@@ -15,6 +15,9 @@
 package org.openmrs.analytics;
 
 import java.io.IOException;
+import java.time.ZoneOffset;
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.Map;
 
 import ca.uhn.fhir.context.FhirContext;
@@ -74,7 +77,13 @@ public class DebeziumListener extends RouteBuilder {
 		        params.jdbcMaxPoolSize);
 		UuidUtil uuidUtil = new UuidUtil(jdbcConnectionUtil);
 		camelContext.addService(new ParquetService(parquetUtil), true);
-		return new FhirConverter(openmrsUtil, fhirStoreUtil, parquetUtil, params.fhirDebeziumConfigPath, uuidUtil);
+		StatusServer statusServer = new StatusServer(params.statusPort);
+		// TODO: Improve this `start` signal to make sure every resource after this time are fetched;
+		// also handle the case with pre-existing offset file.
+		// Note we use UTC because otherwise SQL queries comparing this with DB dates, do not pick the right range.
+		statusServer.setVar("start", ZonedDateTime.now(ZoneOffset.UTC).format(DateTimeFormatter.ISO_OFFSET_DATE_TIME));
+		return new FhirConverter(openmrsUtil, fhirStoreUtil, parquetUtil, params.fhirDebeziumConfigPath, uuidUtil,
+		        statusServer);
 	}
 	
 	private String getDebeziumConfig() {
@@ -144,6 +153,9 @@ public class DebeziumListener extends RouteBuilder {
 		
 		@Parameter(names = { "--jdbcInitialPoolSize" }, description = "JDBC initial pool size")
 		public int initialPoolSize = 10;
+		
+		@Parameter(names = { "--statusPort" }, description = "The port on which the status server listens.")
+		public int statusPort = 9033;
 	}
 	
 }
