@@ -25,6 +25,9 @@ from pyspark.sql import DataFrame
 import pyspark.sql.functions as F
 import pyspark.sql.types as T
 
+def custom_log(t: str) -> None:
+  print('[INDICATORS_LOG {}] {}'.format(
+    datetime.now().strftime('%Y-%m-%d %H:%M:%S.%f'), t))
 
 def flatten_obs(obs: DataFrame) -> DataFrame:
   """Creates a flat version of Observation FHIR resources.
@@ -103,11 +106,11 @@ def find_age_band(birth_date: str, end_date: datetime) -> str:
     birth = datetime.strptime(birth_date, '%Y-%m-%d')
     age = int((end_date - birth).days / 365.25)
   except Exception as e:
-    print("Error!", e.__class__, "occurred.")
+    custom_log('Invalid birth_date format: {}'.format(e))
     age = 999999
 
   if age == 999999:
-      return 'ERROR'
+    return 'ERROR'
   if age < 1:
     return '0-1'
   if age <= 4:
@@ -150,7 +153,7 @@ def calc_TX_PVLS(patient_agg_obs: DataFrame, VL_code: str, failure_threshold: in
       lambda a, g: agg_buckets(a, g, end_date),
       T.ArrayType(T.StringType()))
   VL_df = patient_agg_obs.withColumn(
-      'sup_VL', patient_agg_obs[VL_code + '_max_value'] > failure_threshold).withColumn(
+      'sup_VL', patient_agg_obs[VL_code + '_max_value'] < failure_threshold).withColumn(
       'agg_buckets', agg_buckets_udf(
           patient_agg_obs['birthDate'], patient_agg_obs['gender'])
   )
