@@ -32,10 +32,6 @@ _CODE_LIST = ['5089AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA',  # Weight
               ]
 
 
-def custom_log(t: str) -> None:
-  print('[INDICATORS_LOG {}] {}'.format(
-    datetime.now().strftime('%Y-%m-%d %H:%M:%S.%f'), t))
-
 
 def valid_date(date_str: str) -> datetime:
   try:
@@ -105,16 +101,16 @@ if __name__ == '__main__':
   spark = SparkSession.builder.config(conf=conf).getOrCreate()
   # Loading Parquet files and do some count queries for sanity checking.
   patient_df = spark.read.parquet(args.src_dir + '/Patient')
-  custom_log('Number of Patient resources= {}'.format(patient_df.count()))
+  indicator_lib.custom_log('Number of Patient resources= {}'.format(patient_df.count()))
   observation_df = spark.read.parquet(args.src_dir + '/Observation')
-  custom_log(
+  indicator_lib.custom_log(
     'Number of Observation resources= {}'.format(observation_df.count()))
   agg_obs_df = indicator_lib.aggregate_all_codes_per_patient(
       observation_df, _CODE_LIST,  start_date, end_date)
-  custom_log('Number of aggregated obs= {}'.format(agg_obs_df.count()))
+  indicator_lib.custom_log('Number of aggregated obs= {}'.format(agg_obs_df.count()))
   patient_agg_obs_df = indicator_lib.join_patients_agg_obs(
       patient_df, agg_obs_df, args.base_patient_url)
-  custom_log(
+  indicator_lib.custom_log(
     'Number of joined patient_agg_obs= {}'.format(patient_agg_obs_df.count()))
 
   # Spark is supposed to automatically cache DFs after shuffle but it seems
@@ -122,6 +118,7 @@ if __name__ == '__main__':
   patient_agg_obs_df.cache()
   VL_df_P = indicator_lib.calc_TX_PVLS(
       patient_agg_obs_df, VL_code='5090AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA',
+      failure_threshold=150,
       end_date_str=end_date)
   VL_df_P.to_csv(args.output_csv, index=False)
 
