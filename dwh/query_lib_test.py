@@ -17,7 +17,6 @@ import unittest
 import query_lib
 
 
-# TODO add these tests to continuous build.
 class PatientQueryTest(unittest.TestCase):
 
   def test_single_code_with_values(self):

@@ -38,6 +38,9 @@ if [[ -z ${has_pip3} ]]; then
 fi
 pip3 install -r requirements.txt
 
+# Run unit-tests first:
+python -m unittest query_lib_test.PatientQueryTest
+
 # Run indicator calculation logic.
 
 TEMP_OUT=$(mktemp indicators_output_XXXXXX.csv --tmpdir)

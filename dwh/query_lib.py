@@ -23,13 +23,22 @@ function that defines the source of the data.
 # See https://stackoverflow.com/questions/33533148 why this is needed.
 from __future__ import annotations
 from enum import Enum
-from typing import List
+from typing import List, Any
 import pandas
 from pyspark import SparkConf
 from pyspark.sql import SparkSession, DataFrame
 import pyspark.sql.functions as F
+import pyspark.sql.types as T
 
 import common
+
+
+# This separator is used to merge date and values into one string.
+DATE_VALUE_SEPARATOR = '_SeP_'
+
+
+def merge_date_and_value(d: str, v: Any) -> str:
+  return '{}{}{}'.format(d, DATE_VALUE_SEPARATOR, v)
 
 
 class Runner(Enum):
@@ -262,15 +271,25 @@ class _SparkPatientQuery(PatientQuery):
       - `dateTime` from the input's `effective.dateTime`
     """
     sys_str = '="{}"'.format(code_system) if code_system else 'IS NULL'
+    merge_udf = F.UserDefinedFunction(
+        lambda d, v: merge_date_and_value(d, v), T.StringType())
+    #df.withColumn('merged', merge_udf(df['col3'], df['col4']))
     return obs.withColumn('coding', F.explode('code.coding')).filter(
         'coding.system {}'.format(sys_str)).withColumn(
         # We can't filter valueCoding.system here since valueCoding can be null.
-        'valueCoding', F.explode_outer('value.codeableConcept.coding')).select(
+        'valueCoding',
+        F.explode_outer('value.codeableConcept.coding')).withColumn(
+        'dateAndValue', merge_udf(F.col('effective.dateTime'),
+                                  F.col('value.quantity.value'))).withColumn(
+        'dateAndValueCode', merge_udf(F.col('effective.dateTime'),
+                                      F.col('valueCoding.code'))).select(
         F.col('coding'),
         F.col('valueCoding'),
         F.col('value'),
         F.col('subject.patientId').alias('patientId'),
-        F.col('effective.dateTime').alias('dateTime')
+        F.col('effective.dateTime').alias('dateTime'),
+        F.col('dateAndValue'),
+        F.col('dateAndValueCode')
     )
 
   @staticmethod
@@ -287,7 +306,11 @@ class _SparkPatientQuery(PatientQuery):
         F.min('value.quantity.value').alias('min_value'),
         F.max('value.quantity.value').alias('max_value'),
         F.min('dateTime').alias('min_date'),
-        F.max('dateTime').alias('max_date')
+        F.max('dateTime').alias('max_date'),
+        F.min('dateAndValue').alias('min_date_value'),
+        F.max('dateAndValue').alias('max_date_value'),
+        F.min('dateAndValueCode').alias('min_date_value_code'),
+        F.max('dateAndValueCode').alias('max_date_value_code'),
     )
 
   @staticmethod
@@ -311,7 +334,9 @@ class _SparkPatientQuery(PatientQuery):
         agg_obs, flat_patients.actual_id == agg_obs.patientId).select(
         'patientId', 'birthDate', 'gender', 'coding.code',
         F.col('valueCoding.code').alias('valueCode'),
-        'num_obs', 'min_value', 'max_value', 'min_date', 'max_date')
+        'num_obs', 'min_value', 'max_value', 'min_date', 'max_date',
+        'min_date_value', 'max_date_value', 'min_date_value_code',
+        'max_date_value_code')
 
 
 class _BigQueryPatientQuery(PatientQuery):
