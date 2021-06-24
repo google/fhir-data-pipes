@@ -25,8 +25,8 @@ import indicator_lib
 import query_lib
 
 
-_TB_CODE = '5089AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA'  # Weight
 _VL_CODE = '5090AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA'  # Height
+_TB_CODE = '159394AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA'  # Diagnosis certainty
 
 
 def valid_date(date_str: str) -> datetime:
@@ -89,11 +89,14 @@ if __name__ == '__main__':
   print('Date range:  {0} - {1}'.format(start_date, end_date))
   patient_query = query_lib.patient_query_factory(
       query_lib.Runner.SPARK, args.src_dir)
+  # TODO check why without this constraint, `validate_indicators.sh` fails.
   patient_query.include_obs_values_in_time_range(
       _VL_CODE, min_time=start_date, max_time=end_date)
-  patient_query.include_obs_values_in_time_range(
-      _TB_CODE, ['SOME_SPECIAL_VAL'], min_time=prev_start, max_time=start_date)
-  patient_query.include_all_other_codes(start_date, end_date)
+  # TODO add more interesting constraints/indicators like:
+  #patient_query.include_obs_values_in_time_range(
+  #    _TB_CODE, ['159393AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA'],
+  #    min_time=prev_start, max_time=start_date)
+  patient_query.include_all_other_codes(min_time=start_date, max_time=end_date)
   patient_agg_obs_df = patient_query.find_patient_aggregates(
       args.base_patient_url)
   VL_df_P = indicator_lib.calc_TX_PVLS(

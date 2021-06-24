@@ -61,15 +61,16 @@ def patient_query_factory(runner: Runner, data_source: str) -> PatientQuery:
 
 class _ObsConstraints():
 
-  def __init__(self, code: str, values: List[str] = None,
-       min_value: float = None, max_value: float = None,
-       min_time: str = None, max_time: str = None) -> None:
-     self._code = code
-     self._values = values
-     self._min_time = min_time
-     self._max_time = max_time
-     self._min_value = min_value
-     self._max_value = max_value
+  def __init__(self, code: str, values: List[str] = None, value_sys: str = None,
+      min_value: float = None, max_value: float = None,
+      min_time: str = None, max_time: str = None) -> None:
+    self._code = code
+    self._sys_str = '="{}"'.format(value_sys) if value_sys else 'IS NULL'
+    self._values = values
+    self._min_time = min_time
+    self._max_time = max_time
+    self._min_value = min_value
+    self._max_value = max_value
 
   @staticmethod
   def time_constraint(min_time: str = None, max_time: str = None):
@@ -90,9 +91,11 @@ class _ObsConstraints():
     """
     cl = [self.time_constraint(self._min_time, self._max_time)]
     cl.append('coding.code="{}"'.format(self._code))
+    # We don't need to filter coding.system as it is already done in flattening.
     if self._values:
       codes_str = ','.join(['"{}"'.format(v) for v in self._values])
-      cl.append('value.string IN ({})'.format(codes_str))
+      cl.append('value.codeableConcept.coding IN ({})'.format(codes_str))
+      cl.append('value.codeableConcept.system {}'.format(self._sys_str))
     elif self._min_value or self._max_value:
       if self._min_value:
         cl.append(' value.quantity.value >= {} '.format(self._min_value))
@@ -101,6 +104,7 @@ class _ObsConstraints():
     return '({})'.format(' AND '.join(cl))
 
 
+# TODO add Patient filtering criteria to this query API.
 class PatientQuery():
   """The main class for specifying a patient query.
 
@@ -113,11 +117,12 @@ class PatientQuery():
   - The DataFrame is fetched or more manipulation is done on it by the library.
   """
 
-  def __init__(self):
+  def __init__(self, code_system: str = None):
     self._code_constraint = {}
     self._include_all_codes = False
     self._all_codes_min_time = None
     self._all_codes_max_time = None
+    self._code_system = code_system
 
   def include_obs_in_value_and_time_range(self, code: str,
       min_val: float = None, max_val: float = None, min_time: str = None,
@@ -125,7 +130,8 @@ class PatientQuery():
     if code in self._code_constraint:
       raise ValueError('Duplicate constraints for code {}'.format(code))
     self._code_constraint[code] = _ObsConstraints(
-        code, min_value=min_val, max_value=max_val, min_time=min_time, max_time=max_time)
+        code, value_sys=self._code_system, min_value=min_val,
+        max_value=max_val, min_time=min_time, max_time=max_time)
     return self
 
   def include_obs_values_in_time_range(self, code: str,
@@ -134,12 +140,13 @@ class PatientQuery():
     if code in self._code_constraint:
       raise ValueError('Duplicate constraints for code {}'.format(code))
     self._code_constraint[code] = _ObsConstraints(
-        code, values=values, min_time=min_time, max_time=max_time)
+        code, values=values, value_sys=self._code_system, min_time=min_time,
+        max_time=max_time)
     return self
 
   def include_all_other_codes(self, include: bool = True, min_time: str = None,
       max_time: str = None) -> PatientQuery:
-    self._include_all_codes = True
+    self._include_all_codes = include
     self._all_codes_min_time = min_time
     self._all_codes_max_time = max_time
     return self
@@ -162,6 +169,27 @@ class PatientQuery():
 
   # TODO remove `base_patient_url` parameter once issue #55 is fixed.
   def find_patient_aggregates(self, base_patient_url: str) -> pandas.DataFrame:
+    """Loads the data and finds the aggregates.
+
+    Args:
+      base_patient_url: See issue #55!
+
+    Returns:
+      A Pandas DataFrame with the following columns:
+        - `patientId` the patient for whom the aggregation is done
+        - `birthDate` the patient's birth date
+        - `gender` the patient's gender
+        - `code` the code of the observation in the `code_system`
+        - `valueCode` the value code of the observation in the `code_system` or
+          `None` if this observation does not have a coded value.
+        - `num_obs` number of observations with above spec
+        - `min_value` the minimum obs value in the specified period or `None` if
+          this observation does not have a numeric value.
+        - `max_value` the maximum obs value in the specified period or `None`
+        - `min_date` the first time that an observation with the given code was
+           observed in the specified period.
+        - `max_date` ditto for last time
+    """
     raise NotImplementedError('This should be implemented by sub-classes!')
 
 
@@ -177,7 +205,9 @@ class _SparkPatientQuery(PatientQuery):
     self._patient_agg_obs_df = None
 
   def find_patient_aggregates(self, base_patient_url: str) -> pandas.DataFrame:
+    """See super-class doc."""
     if not self._spark:
+      # TODO add the option for using a running Spark cluster.
       conf = (SparkConf()
               .setMaster('local[20]')
               .setAppName('IndicatorsApp')
@@ -195,14 +225,15 @@ class _SparkPatientQuery(PatientQuery):
           'Number of Patient resources= {}'.format(self._patient_df.count()))
       common.custom_log(
           'Number of Observation resources= {}'.format(self._obs_df.count()))
-      self._flat_obs = _SparkPatientQuery._flatten_obs(self._obs_df)
+      self._flat_obs = _SparkPatientQuery._flatten_obs(
+          self._obs_df, self._code_system)
       common.custom_log(
           'Number of flattened obs rows = {}'.format(self._flat_obs.count()))
     work_df = self._flat_obs.where(self.all_constraints_sql())
-    agg_obs_df = _SparkPatientQuery._aggregate_all_codes_per_patient(work_df)
+    agg_obs_df = _SparkPatientQuery._aggregate_patient_codes(work_df)
     common.custom_log(
       'Number of aggregated obs= {}'.format(agg_obs_df.count()))
-    self._patient_agg_obs_df = _SparkPatientQuery.join_patients_agg_obs(
+    self._patient_agg_obs_df = _SparkPatientQuery._join_patients_agg_obs(
         self._patient_df, agg_obs_df, base_patient_url)
     common.custom_log('Number of joined patient_agg_obs= {}'.format(
         self._patient_agg_obs_df.count()))
@@ -212,45 +243,55 @@ class _SparkPatientQuery(PatientQuery):
     return self._patient_agg_obs_df.toPandas()
 
   @staticmethod
-  def _flatten_obs(obs: DataFrame) -> DataFrame:
+  def _flatten_obs(obs: DataFrame, code_system: str = None) -> DataFrame:
     """Creates a flat version of Observation FHIR resources.
+
+    Note `code_system` is only applied on `code.coding` which is a required
+    filed, i.e., it is not applied on `value.codeableConcept.coding`.
 
     Args:
       obs: A collection of Observation FHIR resources.
+      code_system: The code system to be used for filtering `code.coding`.
     Returns:
-      A DataFrame with three columns where `coding` arrays are flattened.
+      A DataFrame with the following columns (note one input observation might
+      be repeated, once for each of its codes):
+      - `coding` from the input obsservation's `code.coding`
+      - `valueCoding` from the input's `value.codeableConcept.coding`
+      - `value` from the input's `value`
+      - `patientId` from the input's `subject.patientId`
+      - `dateTime` from the input's `effective.dateTime`
     """
-    return obs.select(
-        obs.subject.patientId.alias('patientId'),
-        obs.effective.dateTime.alias('dateTime'),
-        obs.value,
-        F.explode(obs.code.coding).alias('coding'))
-
-  @staticmethod
-  def _aggregate_all_codes_per_patient(flat_obs: DataFrame,
-      codes: List[str]=None ) -> DataFrame:
-    """ For each patientId, generates aggregate values for all their observations.
-
-    Args:
-        flat_obs: A collection of flattened Observations.
-        codes: A list of codes for which aggregates are generated or None to
-          indicate all codes.
-    Returns:
-      A DataFrame with one row for each patient and several aggregate columns
-      for each Observation code.
-    """
-    return flat_obs.groupBy([
-        flat_obs.patientId,
-    ]).pivot('coding.code', values=codes).agg(
-        F.count('*').alias('num_obs'),
-        F.min(flat_obs.value.quantity.value).alias('min_value'),
-        F.max(flat_obs.value.quantity.value).alias('max_value'),
-        F.min(flat_obs.dateTime).alias('min_date'),
-        F.max(flat_obs.dateTime).alias('max_date')
+    sys_str = '="{}"'.format(code_system) if code_system else 'IS NULL'
+    return obs.withColumn('coding', F.explode('code.coding')).filter(
+        'coding.system {}'.format(sys_str)).withColumn(
+        # We can't filter valueCoding.system here since valueCoding can be null.
+        'valueCoding', F.explode_outer('value.codeableConcept.coding')).select(
+        F.col('coding'),
+        F.col('valueCoding'),
+        F.col('value'),
+        F.col('subject.patientId').alias('patientId'),
+        F.col('effective.dateTime').alias('dateTime')
     )
 
   @staticmethod
-  def join_patients_agg_obs(
+  def _aggregate_patient_codes(flat_obs: DataFrame) -> DataFrame:
+    """ Find aggregates for each patientId, conceptCode, and codedValue.
+
+    Args:
+        flat_obs: A collection of flattened Observations.
+    Returns:
+      A DataFrame with the following columns:
+    """
+    return flat_obs.groupBy(['patientId', 'coding', 'valueCoding']).agg(
+        F.count('*').alias('num_obs'),
+        F.min('value.quantity.value').alias('min_value'),
+        F.max('value.quantity.value').alias('max_value'),
+        F.min('dateTime').alias('min_date'),
+        F.max('dateTime').alias('max_date')
+    )
+
+  @staticmethod
+  def _join_patients_agg_obs(
       patients: DataFrame,
       agg_obs: DataFrame,
       base_patient_url: str) -> DataFrame:
@@ -264,9 +305,13 @@ class _SparkPatientQuery(PatientQuery):
     """
     flat_patients = patients.select(
         patients.id, patients.birthDate, patients.gender).withColumn(
-        'actual_id', F.regexp_replace('id', base_patient_url, ''))
+        'actual_id', F.regexp_replace('id', base_patient_url, '')).select(
+        'actual_id', 'birthDate', 'gender')
     return flat_patients.join(
-        agg_obs, flat_patients.actual_id == agg_obs.patientId)
+        agg_obs, flat_patients.actual_id == agg_obs.patientId).select(
+        'patientId', 'birthDate', 'gender', 'coding.code',
+        F.col('valueCoding.code').alias('valueCode'),
+        'num_obs', 'min_value', 'max_value', 'min_date', 'max_date')
 
 
 class _BigQueryPatientQuery(PatientQuery):
