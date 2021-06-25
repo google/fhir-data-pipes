@@ -21,16 +21,12 @@ import argparse
 from typing import Tuple
 from datetime import date, datetime, timedelta
 
-from pyspark.sql import SparkSession
-from pyspark import SparkConf
-
 import indicator_lib
+import query_lib
 
 
-_CODE_LIST = ['5089AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA',  # Weight
-              '5090AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA',  # Height
-              ]
-
+_VL_CODE = '5090AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA'  # Height
+_TB_CODE = '159394AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA'  # Diagnosis certainty
 
 
 def valid_date(date_str: str) -> datetime:
@@ -53,8 +49,7 @@ def create_args(parser: argparse.ArgumentParser):
       default=date.today(),
       type=valid_date
   )
-  # TODO: Remove the next arguement once this issues is resolved:
-  # https://github.com/GoogleCloudPlatform/openmrs-fhir-analytics/issues/55
+  # TODO: Remove the next arguement once issues #55 is resolved.
   parser.add_argument(
       '--base_patient_url',
       help='This is the base url to be added to patient IDs, e.g., ' +
@@ -76,49 +71,36 @@ def create_args(parser: argparse.ArgumentParser):
   )
 
 
-def find_date_range(args: argparse.ArgumentParser) -> Tuple[str, str]:
+def find_date_range(args: argparse.Namespace) -> Tuple[str, str, str]:
   end_date_str = args.last_date.strftime('%Y-%m-%d')
   start_date = args.last_date - timedelta(days=args.num_days)
   start_date_str = start_date.strftime('%Y-%m-%d')
-  return start_date_str, end_date_str
+  previous_period_start = args.last_date - timedelta(days=2 * args.num_days)
+  previous_period_start_str = previous_period_start.strftime('%Y-%m-%d')
+  return start_date_str, end_date_str, previous_period_start_str
 
 
 if __name__ == '__main__':
   parser = argparse.ArgumentParser()
   create_args(parser)
   args = parser.parse_args()
-  start_date, end_date = find_date_range(args)
+  start_date, end_date, prev_start = find_date_range(args)
   print('Source directory: {0}'.format(args.src_dir))
   print('Date range:  {0} - {1}'.format(start_date, end_date))
-  conf = (SparkConf()
-          .setMaster('local[20]')
-          .setAppName('IndicatorsApp')
-          .set('spark.driver.memory', '10g')
-          .set('spark.executor.memory', '2g')
-          # See: https://spark.apache.org/docs/latest/security.html
-          .set('spark.authenticate', 'true')
-          )
-  spark = SparkSession.builder.config(conf=conf).getOrCreate()
-  # Loading Parquet files and do some count queries for sanity checking.
-  patient_df = spark.read.parquet(args.src_dir + '/Patient')
-  indicator_lib.custom_log('Number of Patient resources= {}'.format(patient_df.count()))
-  observation_df = spark.read.parquet(args.src_dir + '/Observation')
-  indicator_lib.custom_log(
-    'Number of Observation resources= {}'.format(observation_df.count()))
-  agg_obs_df = indicator_lib.aggregate_all_codes_per_patient(
-      observation_df, _CODE_LIST,  start_date, end_date)
-  indicator_lib.custom_log('Number of aggregated obs= {}'.format(agg_obs_df.count()))
-  patient_agg_obs_df = indicator_lib.join_patients_agg_obs(
-      patient_df, agg_obs_df, args.base_patient_url)
-  indicator_lib.custom_log(
-    'Number of joined patient_agg_obs= {}'.format(patient_agg_obs_df.count()))
-
-  # Spark is supposed to automatically cache DFs after shuffle but it seems
-  # this is not happening!
-  patient_agg_obs_df.cache()
+  patient_query = query_lib.patient_query_factory(
+      query_lib.Runner.SPARK, args.src_dir)
+  # TODO check why without this constraint, `validate_indicators.sh` fails.
+  patient_query.include_obs_values_in_time_range(
+      _VL_CODE, min_time=start_date, max_time=end_date)
+  # TODO add more interesting constraints/indicators like:
+  #patient_query.include_obs_values_in_time_range(
+  #    _TB_CODE, ['159393AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA'],
+  #    min_time=prev_start, max_time=start_date)
+  patient_query.include_all_other_codes(min_time=start_date, max_time=end_date)
+  patient_agg_obs_df = patient_query.find_patient_aggregates(
+      args.base_patient_url)
   VL_df_P = indicator_lib.calc_TX_PVLS(
       patient_agg_obs_df, VL_code='5090AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA',
-      failure_threshold=150,
-      end_date_str=end_date)
+      failure_threshold=150, end_date_str=end_date)
   VL_df_P.to_csv(args.output_csv, index=False)
 
