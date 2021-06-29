@@ -87,6 +87,9 @@ def calc_TX_PVLS(patient_agg_obs: pandas.DataFrame, VL_code: str,
   temp_df['buckets'] = temp_df.apply(
       lambda x: _agg_buckets(x.birthDate, x.gender, datetime.today()), axis=1)
   temp_df_exp = temp_df.explode('buckets')
-  # TODO add ratios
-  #VL_agg_P['ratio'] = VL_agg_P['count']/num_patients
-  return temp_df_exp.groupby(['sup_VL', 'buckets'], as_index=False).size()
+  temp_df_exp = temp_df_exp.groupby(['sup_VL', 'buckets'], as_index=False)\
+      .count()[['sup_VL', 'buckets', 'patientId']]\
+      .rename(columns={'patientId': 'count'})
+  # calculate ratio
+  temp_df_exp['ratio'] = temp_df_exp['count']/temp_df['sup_VL'].count()
+  return temp_df_exp
