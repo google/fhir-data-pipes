@@ -102,5 +102,12 @@ if __name__ == '__main__':
   VL_df_P = indicator_lib.calc_TX_PVLS(
       patient_agg_obs_df, VL_code='5090AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA',
       failure_threshold=150, end_date_str=end_date)
-  VL_df_P.to_csv(args.output_csv, index=False)
+  # TX_NEW
+  TX_NEW_df_P = indicator_lib.calc_TX_NEW(
+      patient_agg_obs_df, ARV_plan='159394AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA',
+      start_drug=['159393AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA'], end_date_str=end_date)
+
+  VL_df_P.merge(TX_NEW_df_P, how='outer', left_on=['buckets', 'sup_VL'],
+                right_on=['buckets', 'TX_NEW'])\
+      .to_csv(args.output_csv, index=False)
 

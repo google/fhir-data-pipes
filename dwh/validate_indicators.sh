@@ -49,6 +49,7 @@ echo "Output indicators file is: ${TEMP_OUT}"
 spark-submit indicators.py --src_dir=./test_files \
   --last_date=2020-12-30 --num_days=28 --output_csv=${TEMP_OUT}
 
+# PVLS Test
 counts=$(cat ${TEMP_OUT} | awk -F, '
     BEGIN {num_true = 0; num_false = 0; num_none = 0;}
     /False,ALL-AGES_ALL-GENDERS/ {num_false=$3}
@@ -76,6 +77,22 @@ PVLS_ratio=$(cat ${TEMP_OUT} | awk -F, '
 if [[ "${PVLS_ratio}" != "0.723,0.277,0,0.0851" ]]; then
   echo "ERROR: The ratio of  suppressed vs non-suppressed vs none are " \
     "expected to be '0.723,0.277,0,0.0851' GOT ${PVLS_ratio}"
+  exit 1
+fi
+
+# TX_NEW Test
+TX_NEW_counts=$(cat ${TEMP_OUT} | awk -F, '
+    BEGIN {num_true = 0; num_false = 0; num_none = 0;}
+    /False,ALL-AGES_ALL-GENDERS/ {num_false=$6}
+    /True,ALL-AGES_ALL-GENDERS/ {num_true=$6}
+    /None,ALL-AGES_ALL-GENDERS/ {num_none=$6}
+    /True,25-49_male/ {num_male_25=$6}
+    END {printf("%d,%d,%d,%d", num_true, num_false, num_none, num_male_25); }')
+
+echo "Number of TX_NEW vs non-TX_NEW vs none: ${TX_NEW_counts}"
+if [[ "${TX_NEW_counts}" != "28,31,0,4" ]]; then
+  echo "ERROR: The number of  TX_NEW vs non-TX_NEW vs none are " \
+    "expected to be '28,31,0,4' GOT ${TX_NEW_counts}"
   exit 1
 fi
 
