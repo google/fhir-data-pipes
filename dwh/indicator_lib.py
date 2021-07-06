@@ -91,5 +91,6 @@ def calc_TX_PVLS(patient_agg_obs: pandas.DataFrame, VL_code: str,
       .count()[['sup_VL', 'buckets', 'patientId']]\
       .rename(columns={'patientId': 'count'})
   # calculate ratio
-  temp_df_exp['ratio'] = temp_df_exp['count']/temp_df['sup_VL'].count()
+  num_patients = len(temp_df.index)
+  temp_df_exp['ratio'] = temp_df_exp['count']/num_patients
   return temp_df_exp

@@ -64,5 +64,19 @@ if [[ "${counts}" != "34,13,0,4" ]]; then
     "expected to be '34,13,0,4' GOT ${counts}"
   exit 1
 fi
+
+PVLS_ratio=$(cat ${TEMP_OUT} | awk -F, '
+    BEGIN {ratio_true = 0; ratio_false = 0; ratio_none = 0;}
+    /False,ALL-AGES_ALL-GENDERS/ {ratio_false=$4}
+    /True,ALL-AGES_ALL-GENDERS/ {ratio_true=$4}
+    /None,ALL-AGES_ALL-GENDERS/ {ratio_none=$4}
+    /True,25-49_male/ {ratio_male_25=$4}
+    END {printf("%.3g,%.3g,%.3g,%.3g", ratio_true, ratio_false, ratio_none, ratio_male_25); }')
+if [[ "${PVLS_ratio}" != "0.723,0.277,0,0.0851" ]]; then
+  echo "ERROR: The ratio of  suppressed vs non-suppressed vs none are " \
+    "expected to be '0.723,0.277,0,0.0851' GOT ${PVLS_ratio}"
+  exit 1
+fi
+
 echo "SUCCESS!"
 deactivate
