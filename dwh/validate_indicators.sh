@@ -65,6 +65,7 @@ if [[ "${counts}" != "34,13,0,4" ]]; then
   exit 1
 fi
 
+# TODO merge this awk with the previous one and add error tolerance for floating points.
 PVLS_ratio=$(cat ${TEMP_OUT} | awk -F, '
     BEGIN {ratio_true = 0; ratio_false = 0; ratio_none = 0;}
     /False,ALL-AGES_ALL-GENDERS/ {ratio_false=$4}
