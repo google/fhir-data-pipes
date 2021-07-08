@@ -59,10 +59,9 @@ counts=$(cat ${TEMP_OUT} | awk -F, '
     END {printf("%d,%d,%d,%d", num_true, num_false, num_none, num_male_25); }')
 
 echo "Number of suppressed vs non-suppressed vs none: ${counts}"
-# TODO investigate 5->4 change before submit!
-if [[ "${counts}" != "34,13,0,4" ]]; then
+if [[ "${counts}" != "34,13,0,5" ]]; then
   echo "ERROR: The number of  suppressed vs non-suppressed vs none are " \
-    "expected to be '34,13,0,4' GOT ${counts}"
+    "expected to be '34,13,0,5' GOT ${counts}"
   exit 1
 fi
 
@@ -74,9 +73,9 @@ PVLS_ratio=$(cat ${TEMP_OUT} | awk -F, '
     /None,ALL-AGES_ALL-GENDERS/ {ratio_none=$4}
     /True,25-49_male/ {ratio_male_25=$4}
     END {printf("%.3g,%.3g,%.3g,%.3g", ratio_true, ratio_false, ratio_none, ratio_male_25); }')
-if [[ "${PVLS_ratio}" != "0.723,0.277,0,0.0851" ]]; then
+if [[ "${PVLS_ratio}" != "0.723,0.277,0,0.106" ]]; then
   echo "ERROR: The ratio of  suppressed vs non-suppressed vs none are " \
-    "expected to be '0.723,0.277,0,0.0851' GOT ${PVLS_ratio}"
+    "expected to be '0.723,0.277,0,0.106' GOT ${PVLS_ratio}"
   exit 1
 fi
 
@@ -90,9 +89,9 @@ TX_NEW_counts=$(cat ${TEMP_OUT} | awk -F, '
     END {printf("%d,%d,%d,%d", num_true, num_false, num_none, num_male_25); }')
 
 echo "Number of TX_NEW vs non-TX_NEW vs none: ${TX_NEW_counts}"
-if [[ "${TX_NEW_counts}" != "28,31,0,4" ]]; then
+if [[ "${TX_NEW_counts}" != "28,31,0,5" ]]; then
   echo "ERROR: The number of  TX_NEW vs non-TX_NEW vs none are " \
-    "expected to be '28,31,0,4' GOT ${TX_NEW_counts}"
+    "expected to be '28,31,0,5' GOT ${TX_NEW_counts}"
   exit 1
 fi
 
