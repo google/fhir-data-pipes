@@ -25,7 +25,8 @@ import indicator_lib
 import query_lib
 
 
-_VL_CODE = '5090AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA'  # Height
+_CODE_SYSTEM = 'http://snomed.info/sct'
+_VL_CODE = '50373000'  # Height
 _TB_CODE = '159394AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA'  # Diagnosis certainty
 
 
@@ -88,7 +89,7 @@ if __name__ == '__main__':
   print('Source directory: {0}'.format(args.src_dir))
   print('Date range:  {0} - {1}'.format(start_date, end_date))
   patient_query = query_lib.patient_query_factory(
-      query_lib.Runner.SPARK, args.src_dir)
+      query_lib.Runner.SPARK, args.src_dir, _CODE_SYSTEM)
   # TODO check why without this constraint, `validate_indicators.sh` fails.
   patient_query.include_obs_values_in_time_range(
       _VL_CODE, min_time=start_date, max_time=end_date)
@@ -100,7 +101,7 @@ if __name__ == '__main__':
   patient_agg_obs_df = patient_query.find_patient_aggregates(
       args.base_patient_url)
   VL_df_P = indicator_lib.calc_TX_PVLS(
-      patient_agg_obs_df, VL_code='5090AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA',
+      patient_agg_obs_df, VL_code=_VL_CODE,
       failure_threshold=150, end_date_str=end_date)
   # TX_NEW
   TX_NEW_df_P = indicator_lib.calc_TX_NEW(
