@@ -47,7 +47,8 @@ class Runner(Enum):
   #FHIR_SERVER = 3
 
 
-def patient_query_factory(runner: Runner, data_source: str) -> PatientQuery:
+def patient_query_factory(runner: Runner, data_source: str,
+    code_system: str = None) -> PatientQuery:
   """Returns the right instance of `PatientQuery` based on `data_source`.
 
   Args:
@@ -62,9 +63,9 @@ def patient_query_factory(runner: Runner, data_source: str) -> PatientQuery:
     ValueError: When the input `data_source` is malformed or not implemented.
   """
   if runner == Runner.SPARK:
-    return _SparkPatientQuery(data_source)
+    return _SparkPatientQuery(data_source, code_system)
   if runner == Runner.BIG_QUERY:
-    return _BigQueryPatientQuery(data_source)
+    return _BigQueryPatientQuery(data_source, code_system)
   raise ValueError('Query engine {} is not supported yet.'.format(runner))
 
 
@@ -204,8 +205,8 @@ class PatientQuery():
 
 class _SparkPatientQuery(PatientQuery):
 
-  def __init__(self, file_root: str):
-    super().__init__()
+  def __init__(self, file_root: str, code_system: str):
+    super().__init__(code_system)
     self._file_root = file_root
     self._spark = None
     self._patient_df = None
@@ -277,6 +278,7 @@ class _SparkPatientQuery(PatientQuery):
     return obs.withColumn('coding', F.explode('code.coding')).filter(
         'coding.system {}'.format(sys_str)).withColumn(
         # We can't filter valueCoding.system here since valueCoding can be null.
+        # TODO decide on how the value coding system filter should be applied.
         'valueCoding',
         F.explode_outer('value.codeableConcept.coding')).withColumn(
         'dateAndValue', merge_udf(F.col('effective.dateTime'),
@@ -309,6 +311,8 @@ class _SparkPatientQuery(PatientQuery):
         F.max('dateTime').alias('max_date'),
         F.min('dateAndValue').alias('min_date_value'),
         F.max('dateAndValue').alias('max_date_value'),
+        # TODO either drop the next two aggregates or `valueCoding` from the
+        #  groupBy list; otherwise the value suffix is redundant.
         F.min('dateAndValueCode').alias('min_date_value_code'),
         F.max('dateAndValueCode').alias('max_date_value_code'),
     )
@@ -342,7 +346,7 @@ class _SparkPatientQuery(PatientQuery):
 class _BigQueryPatientQuery(PatientQuery):
   # TODO implement this!
 
-  def __init__(self, bq_dataset: str):
-    super().__init__()
+  def __init__(self, bq_dataset: str, code_system: str):
+    super().__init__(code_system)
     raise ValueError('BigQuery query engine is not implemented yet!')
 
