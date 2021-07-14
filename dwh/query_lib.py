@@ -190,8 +190,6 @@ class PatientQuery():
         - `birthDate` the patient's birth date
         - `gender` the patient's gender
         - `code` the code of the observation in the `code_system`
-        - `valueCode` the value code of the observation in the `code_system` or
-          `None` if this observation does not have a coded value.
         - `num_obs` number of observations with above spec
         - `min_value` the minimum obs value in the specified period or `None` if
           this observation does not have a numeric value.
@@ -199,6 +197,10 @@ class PatientQuery():
         - `min_date` the first time that an observation with the given code was
            observed in the specified period.
         - `max_date` ditto for last time
+        - `first_value` the value corresponding to `min_date`
+        - `last_value` the value corresponding to `max_date`
+        - `first_value_code` the coded value corresponding to `min_date`
+        - `last_value_code` the coded value corresponding to `max_date`
     """
     raise NotImplementedError('This should be implemented by sub-classes!')
 
@@ -250,7 +252,21 @@ class _SparkPatientQuery(PatientQuery):
     # Spark is supposed to automatically cache DFs after shuffle but it seems
     # this is not happening!
     self._patient_agg_obs_df.cache()
-    return self._patient_agg_obs_df.toPandas()
+    temp_pd_df = self._patient_agg_obs_df.toPandas()
+    temp_pd_df['last_value'] = temp_pd_df.max_date_value.str.split(
+        DATE_VALUE_SEPARATOR, expand=True)[1]
+    temp_pd_df['first_value'] = temp_pd_df.min_date_value.str.split(
+        DATE_VALUE_SEPARATOR, expand=True)[1]
+    temp_pd_df['last_value_code'] = temp_pd_df.max_date_value_code.str.split(
+        DATE_VALUE_SEPARATOR, expand=True)[1]
+    temp_pd_df['first_value_code'] = temp_pd_df.min_date_value_code.str.split(
+        DATE_VALUE_SEPARATOR, expand=True)[1]
+    # This is good for debug!
+    # return temp_pd_df
+    return temp_pd_df[[
+        'patientId', 'birthDate', 'gender', 'code', 'num_obs', 'min_value',
+        'max_value', 'min_date', 'max_date', 'first_value', 'last_value',
+        'first_value_code', 'last_value_code']]
 
   @staticmethod
   def _flatten_obs(obs: DataFrame, code_system: str = None) -> DataFrame:
@@ -271,18 +287,19 @@ class _SparkPatientQuery(PatientQuery):
       - `patientId` from the input's `subject.patientId`
       - `dateTime` from the input's `effective.dateTime`
     """
-    sys_str = '="{}"'.format(code_system) if code_system else 'IS NULL'
+    sys_str = 'coding.system="{}"'.format(
+        code_system) if code_system else 'coding.system IS NULL'
+    value_sys_str_base = 'valueCoding.system="{}"'.format(
+        code_system) if code_system else 'valueCoding.system IS NULL'
+    value_sys_str = '(valueCoding IS NULL OR {})'.format(value_sys_str_base)
     merge_udf = F.UserDefinedFunction(
         lambda d, v: merge_date_and_value(d, v), T.StringType())
     #df.withColumn('merged', merge_udf(df['col3'], df['col4']))
-    return obs.withColumn('coding', F.explode('code.coding')).filter(
-        'coding.system {}'.format(sys_str)).withColumn(
-        # We can't filter valueCoding.system here since valueCoding can be null.
-        # TODO decide on how the value coding system filter should be applied.
-        'valueCoding',
-        F.explode_outer('value.codeableConcept.coding')).withColumn(
-        'dateAndValue', merge_udf(F.col('effective.dateTime'),
-                                  F.col('value.quantity.value'))).withColumn(
+    return obs.withColumn('coding', F.explode('code.coding')).where(
+        sys_str).withColumn('valueCoding', # Note valueCoding can be null.
+        F.explode_outer('value.codeableConcept.coding')).where(
+        value_sys_str).withColumn('dateAndValue', merge_udf(
+        F.col('effective.dateTime'), F.col('value.quantity.value'))).withColumn(
         'dateAndValueCode', merge_udf(F.col('effective.dateTime'),
                                       F.col('valueCoding.code'))).select(
         F.col('coding'),
@@ -303,7 +320,7 @@ class _SparkPatientQuery(PatientQuery):
     Returns:
       A DataFrame with the following columns:
     """
-    return flat_obs.groupBy(['patientId', 'coding', 'valueCoding']).agg(
+    return flat_obs.groupBy(['patientId', 'coding']).agg(
         F.count('*').alias('num_obs'),
         F.min('value.quantity.value').alias('min_value'),
         F.max('value.quantity.value').alias('max_value'),
@@ -311,8 +328,6 @@ class _SparkPatientQuery(PatientQuery):
         F.max('dateTime').alias('max_date'),
         F.min('dateAndValue').alias('min_date_value'),
         F.max('dateAndValue').alias('max_date_value'),
-        # TODO either drop the next two aggregates or `valueCoding` from the
-        #  groupBy list; otherwise the value suffix is redundant.
         F.min('dateAndValueCode').alias('min_date_value_code'),
         F.max('dateAndValueCode').alias('max_date_value_code'),
     )
@@ -337,7 +352,6 @@ class _SparkPatientQuery(PatientQuery):
     return flat_patients.join(
         agg_obs, flat_patients.actual_id == agg_obs.patientId).select(
         'patientId', 'birthDate', 'gender', 'coding.code',
-        F.col('valueCoding.code').alias('valueCode'),
         'num_obs', 'min_value', 'max_value', 'min_date', 'max_date',
         'min_date_value', 'max_date_value', 'min_date_value_code',
         'max_date_value_code')

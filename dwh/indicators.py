@@ -26,8 +26,11 @@ import query_lib
 
 
 _CODE_SYSTEM = 'http://snomed.info/sct'
+# Fake codes for SNOMED-CT that matches our test data.
 _VL_CODE = '50373000'  # Height
-_TB_CODE = '159394AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA'  # Diagnosis certainty
+_ARV_PLAN = '106230009'  # Diagnosis certainty
+_DRUG1 = '410596003'  # Likely outcome
+_DRUG2 = '395098000'  # Disorder confirmed
 
 
 def valid_date(date_str: str) -> datetime:
@@ -93,22 +96,20 @@ if __name__ == '__main__':
   # TODO check why without this constraint, `validate_indicators.sh` fails.
   patient_query.include_obs_values_in_time_range(
       _VL_CODE, min_time=start_date, max_time=end_date)
-  # TODO add more interesting constraints/indicators like:
-  #patient_query.include_obs_values_in_time_range(
-  #    _TB_CODE, ['159393AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA'],
-  #    min_time=prev_start, max_time=start_date)
   patient_query.include_all_other_codes(min_time=start_date, max_time=end_date)
   patient_agg_obs_df = patient_query.find_patient_aggregates(
       args.base_patient_url)
-  VL_df_P = indicator_lib.calc_TX_PVLS(
+  VL_df = indicator_lib.calc_TX_PVLS(
       patient_agg_obs_df, VL_code=_VL_CODE,
       failure_threshold=150, end_date_str=end_date)
   # TX_NEW
-  TX_NEW_df_P = indicator_lib.calc_TX_NEW(
-      patient_agg_obs_df, ARV_plan='159394AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA',
-      start_drug=['159393AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA'], end_date_str=end_date)
+  # TODO add _DRUG2, right now all observations are either _DRUG1 or _DRUG2.
+  TX_NEW_df = indicator_lib.calc_TX_NEW(
+      patient_agg_obs_df, ARV_plan=_ARV_PLAN,
+      start_drug=[_DRUG1], end_date_str=end_date)
 
-  VL_df_P.merge(TX_NEW_df_P, how='outer', left_on=['buckets', 'sup_VL'],
-                right_on=['buckets', 'TX_NEW'])\
-      .to_csv(args.output_csv, index=False)
+  # TODO the logic behind this merge is not clear, especially for null keys.
+  VL_df.merge(TX_NEW_df, how='outer', left_on=['buckets', 'sup_VL'],
+                right_on=['buckets', 'TX_NEW']).to_csv(
+      args.output_csv, index=False)
 

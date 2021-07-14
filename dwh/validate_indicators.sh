@@ -53,11 +53,13 @@ spark-submit indicators.py --src_dir=./test_files \
 # Assertion function that tests aggregates generated
 # by comparing them to what is expected
 # Arguments:
-#   $expected_aggr which is the expected aggregates
-#   $indicator_label which is the indicator label
-#   $col_index which is the column index for indicator value
+#   $1 a message identifying the indicator being validated
+#   $2 the expected aggregates as a string containing comma separated values
+#   $3 the column index in the CSV for the indicator value
+# Globals:
+#   ${FAILED} is set if the actual value is different from the expected
 ##########################################
-function assert() {
+function validate() {
   local indicator_label=$1
   local expected=$2
   local col_index=$3
@@ -73,18 +75,25 @@ function assert() {
   if [[ "${actual}" != "${expected}" ]]; then
     echo "ERROR: ${indicator_label}" \
       "expected to be ${expected} GOT ${actual}"
-    exit 1
+    FAILED="yes"
   fi
 }
 
+FAILED=""
 # PVLS counts
-assert "The number of suppressed vs non-suppressed vs none are" "34,13,0,5" 3
+validate "Suppressed, non-suppressed, none, male_25 numbers are" "34,13,0,5" 3
 # PVLS ratio
-assert "The ratio of suppressed vs non-suppressed vs none are" "0.723,0.277,0,0.106" 4
+validate "Suppressed, non-suppressed, none, male_25 ratios are" \
+  "0.723,0.277,0,0.106" 4
 # TX_NEW counts
-assert "The number of TX_NEW vs non-TX_NEW vs none are" "28,31,0,5" 6
+# TODO validate these manually by querying the DB
+validate "TX_NEW, non-TX_NEW, none, male_25 numbers are" "27,20,0,5" 6
 # TX_NEW ratio
-assert "The ratio of TX_NEW vs non-TX_NEW vs none are" "0.475,0.525,0,0.0847" 7
+validate "TX_NEW, non-TX_NEW, none, male_25 ratios are" "0.574,0.426,0,0.106" 7
 
-echo "SUCCESS!"
+if [[ -n "${FAILED}" ]]; then
+  echo "FAILED!"
+else
+  echo "SUCCESS!"
+fi
 deactivate
