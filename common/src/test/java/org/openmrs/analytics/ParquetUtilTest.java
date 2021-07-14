@@ -60,6 +60,8 @@ public class ParquetUtilTest {
 	
 	private String observationBundle;
 	
+	private String observationBundleWithBigDecimal;
+	
 	private ParquetUtil parquetUtil;
 	
 	private FhirContext fhirContext;
@@ -76,6 +78,8 @@ public class ParquetUtilTest {
 		ParquetUtil.initializeAvroConverters();
 		patientBundle = Resources.toString(Resources.getResource("patient_bundle.json"), StandardCharsets.UTF_8);
 		observationBundle = Resources.toString(Resources.getResource("observation_bundle.json"), StandardCharsets.UTF_8);
+		observationBundleWithBigDecimal = Resources.toString(Resources.getResource("observation_bundle2.json"),
+		    StandardCharsets.UTF_8);
 		this.fhirContext = FhirContext.forR4();
 		parquetUtil = new ParquetUtil(PARQUET_ROOT, 0, 0, "TEST_", fileSystem);
 	}
@@ -168,6 +172,21 @@ public class ParquetUtilTest {
 		parquetUtil = new ParquetUtil(rootPath.toString(), 0, 0, "", fileSystem);
 		IParser parser = fhirContext.newJsonParser();
 		Bundle bundle = parser.parseResource(Bundle.class, observationBundle);
+		for (Bundle.BundleEntryComponent entry : bundle.getEntry()) {
+			parquetUtil.write(entry.getResource());
+		}
+		parquetUtil.closeAllWriters();
+		Stream<Path> files = Files.list(rootPath.resolve("Observation"))
+		        .filter(f -> f.toString().startsWith(rootPath.toString() + "/Observation/Observation_output-"));
+		assertThat(files.count(), equalTo(1L));
+	}
+	
+	@Test
+	public void writeBundlesWithBigDecimalValue() throws IOException {
+		initilizeLocalFileSystem();
+		parquetUtil = new ParquetUtil(rootPath.toString(), 0, 0, "", fileSystem);
+		IParser parser = fhirContext.newJsonParser();
+		Bundle bundle = parser.parseResource(Bundle.class, observationBundleWithBigDecimal);
 		for (Bundle.BundleEntryComponent entry : bundle.getEntry()) {
 			parquetUtil.write(entry.getResource());
 		}
