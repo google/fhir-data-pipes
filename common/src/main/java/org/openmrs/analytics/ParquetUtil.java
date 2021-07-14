@@ -31,7 +31,6 @@ import ca.uhn.fhir.context.FhirContext;
 import com.cerner.bunsen.avro.AvroConverter;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
-import org.apache.avro.AvroTypeException;
 import org.apache.avro.Conversions.DecimalConversion;
 import org.apache.avro.Schema;
 import org.apache.avro.generic.GenericData;
@@ -185,7 +184,7 @@ public class ParquetUtil {
 		try {
 			parquetWriter.write(this.convertToAvro(resource));
 		}
-		catch (AvroTypeException e) {
+		catch (Exception e) {
 			// TODO fix the root cause of this exception! Check the unit-test that exposes this.
 			log.error(String.format("Dropping %s resource with id %s due to exception: %s ", resource.fhirType(),
 			    resource.getId(), e));
