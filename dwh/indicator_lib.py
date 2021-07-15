@@ -24,6 +24,7 @@ See test_spark.ipynb for real examples of how to create/use these functions.
 
 from typing import List
 from datetime import datetime
+from dateutil.parser import parse
 import pandas as pd
 
 import common
@@ -31,17 +32,9 @@ import query_lib
 
 def _find_age_band(birth_date: str, end_date: datetime) -> str:
   """Given the birth date, finds the age_band for PEPFAR disaggregation."""
-  age = None
-  try:
-    # TODO handle all different formats (issues #174)
-    birth = datetime.strptime(birth_date, '%Y-%m-%d')
-    age = int((end_date - birth).days / 365.25)
-  except Exception as e:
-    common.custom_log('Invalid birth_date format: {}'.format(e))
-    age = 999999
+  birth = parse(birth_date)
+  age = int((end_date - birth).days / 365.25)
 
-  if age == 999999:
-    return 'ERROR'
   if age < 1:
     return '0-1'
   if age <= 4:
