@@ -20,6 +20,7 @@
 import argparse
 from typing import Tuple
 from datetime import date, datetime, timedelta
+from dateutil.parser import parse as parse_date
 
 import indicator_lib
 import query_lib
@@ -35,7 +36,7 @@ _DRUG2 = '395098000'  # Disorder confirmed
 
 def valid_date(date_str: str) -> datetime:
   try:
-    return datetime.strptime(date_str, '%Y-%m-%d')
+    return parse_date(date_str)
   except ValueError:
     raise argparse.ArgumentTypeError('Valid dates have YYYY-MM-DD format!')
 

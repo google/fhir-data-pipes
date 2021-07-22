@@ -24,6 +24,7 @@ See test_spark.ipynb for real examples of how to create/use these functions.
 
 from typing import List
 from datetime import datetime
+from dateutil.parser import parse as parse_date
 import pandas as pd
 
 import common
@@ -31,17 +32,9 @@ import query_lib
 
 def _find_age_band(birth_date: str, end_date: datetime) -> str:
   """Given the birth date, finds the age_band for PEPFAR disaggregation."""
-  age = None
-  try:
-    # TODO handle all different formats (issues #174)
-    birth = datetime.strptime(birth_date, '%Y-%m-%d')
-    age = int((end_date - birth).days / 365.25)
-  except Exception as e:
-    common.custom_log('Invalid birth_date format: {}'.format(e))
-    age = 999999
+  birth = parse_date(birth_date)
+  age = int((end_date - birth).days / 365.25)
 
-  if age == 999999:
-    return 'ERROR'
   if age < 1:
     return '0-1'
   if age <= 4:
@@ -96,7 +89,7 @@ def calc_TX_PVLS(patient_agg_obs: pd.DataFrame, VL_code: str,
   """
   end_date = datetime.today()
   if end_date_str:
-    end_date = datetime.strptime(end_date_str, '%Y-%m-%d')
+    end_date = parse_date(end_date_str)
   temp_df = patient_agg_obs[(patient_agg_obs['code'] == VL_code)].copy()
   # Note the above copy is used to avoid setting a new column on a slice next:
   temp_df['latest_vl_value'] = temp_df['last_value'].astype(float)
@@ -122,7 +115,7 @@ def calc_TX_NEW(patient_agg_obs:  pd.DataFrame, ARV_plan: str,
   """
   end_date = datetime.today()
   if end_date_str:
-    end_date = datetime.strptime(end_date_str, '%Y-%m-%d')
+    end_date = parse_date(end_date_str)
   temp_df = patient_agg_obs[(patient_agg_obs['code'] == ARV_plan)].copy()
   # Note the above copy is used to avoid setting a new column on a slice next:
   temp_df['TX_NEW'] = (temp_df['last_value_code'].isin(start_drug))
