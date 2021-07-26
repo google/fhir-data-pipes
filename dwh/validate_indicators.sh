@@ -49,35 +49,51 @@ echo "Output indicators file is: ${TEMP_OUT}"
 spark-submit indicators.py --src_dir=./test_files \
   --last_date=2020-12-30 --num_days=28 --output_csv=${TEMP_OUT}
 
-counts=$(cat ${TEMP_OUT} | awk -F, '
-    BEGIN {num_true = 0; num_false = 0; num_none = 0;}
-    /False,ALL-AGES_ALL-GENDERS/ {num_false=$3}
-    /True,ALL-AGES_ALL-GENDERS/ {num_true=$3}
-    /None,ALL-AGES_ALL-GENDERS/ {num_none=$3}
-    /True,25-49_male/ {num_male_25=$3}
-    END {printf("%d,%d,%d,%d", num_true, num_false, num_none, num_male_25); }')
+##########################################
+# Assertion function that tests aggregates generated
+# by comparing them to what is expected
+# Arguments:
+#   $1 a message identifying the indicator being validated
+#   $2 the expected aggregates as a string containing comma separated values
+#   $3 the column index in the CSV for the indicator value
+# Globals:
+#   ${FAILED} is set if the actual value is different from the expected
+##########################################
+function validate() {
+  local indicator_label=$1
+  local expected=$2
+  local col_index=$3
+  actual=$(cat ${TEMP_OUT} | awk -v col_index="$col_index" -F, '
+      BEGIN {value_true = 0; value_false = 0; value_none = 0;}
+      /False,ALL-AGES_ALL-GENDERS/ {value_false=$col_index}
+      /True,ALL-AGES_ALL-GENDERS/ {value_true=$col_index}
+      /None,ALL-AGES_ALL-GENDERS/ {value_none=$col_index}
+      /True,25-49_male/ {value_male_25=$col_index}
+      END {printf("%.3g,%.3g,%.3g,%.3g", value_true, value_false, value_none, value_male_25); }')
 
-echo "Number of suppressed vs non-suppressed vs none: ${counts}"
-# TODO investigate 5->4 change before submit!
-if [[ "${counts}" != "34,13,0,4" ]]; then
-  echo "ERROR: The number of  suppressed vs non-suppressed vs none are " \
-    "expected to be '34,13,0,4' GOT ${counts}"
-  exit 1
+  echo "${indicator_label} : ${actual}"
+  if [[ "${actual}" != "${expected}" ]]; then
+    echo "ERROR: ${indicator_label}" \
+      "expected to be ${expected} GOT ${actual}"
+    FAILED="yes"
+  fi
+}
+
+FAILED=""
+# PVLS counts
+validate "Suppressed, non-suppressed, none, male_25 numbers are" "34,13,0,5" 3
+# PVLS ratio
+validate "Suppressed, non-suppressed, none, male_25 ratios are" \
+  "0.723,0.277,0,0.106" 4
+# TX_NEW counts
+# TODO validate these manually by querying the DB
+validate "TX_NEW, non-TX_NEW, none, male_25 numbers are" "27,20,0,5" 6
+# TX_NEW ratio
+validate "TX_NEW, non-TX_NEW, none, male_25 ratios are" "0.574,0.426,0,0.106" 7
+
+if [[ -n "${FAILED}" ]]; then
+  echo "FAILED!"
+else
+  echo "SUCCESS!"
 fi
-
-# TODO merge this awk with the previous one and add error tolerance for floating points.
-PVLS_ratio=$(cat ${TEMP_OUT} | awk -F, '
-    BEGIN {ratio_true = 0; ratio_false = 0; ratio_none = 0;}
-    /False,ALL-AGES_ALL-GENDERS/ {ratio_false=$4}
-    /True,ALL-AGES_ALL-GENDERS/ {ratio_true=$4}
-    /None,ALL-AGES_ALL-GENDERS/ {ratio_none=$4}
-    /True,25-49_male/ {ratio_male_25=$4}
-    END {printf("%.3g,%.3g,%.3g,%.3g", ratio_true, ratio_false, ratio_none, ratio_male_25); }')
-if [[ "${PVLS_ratio}" != "0.723,0.277,0,0.0851" ]]; then
-  echo "ERROR: The ratio of  suppressed vs non-suppressed vs none are " \
-    "expected to be '0.723,0.277,0,0.0851' GOT ${PVLS_ratio}"
-  exit 1
-fi
-
-echo "SUCCESS!"
 deactivate
