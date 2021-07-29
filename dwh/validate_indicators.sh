@@ -90,6 +90,10 @@ validate "Suppressed, non-suppressed, none, male_25 ratios are" \
 validate "TX_NEW, non-TX_NEW, none, male_25 numbers are" "27,20,0,5" 6
 # TX_NEW ratio
 validate "TX_NEW, non-TX_NEW, none, male_25 ratios are" "0.574,0.426,0,0.106" 7
+# TB_STAT counts
+validate "TB_STAT, non-TB_STAT, none, male_25 numbers are" "27,20,0,5" 9
+# TB_STAT ratio
+validate "TB_STAT, non-TB_STAT, none, male_25 ratios are" "0.574,0.426,0,0.106" 10
 
 if [[ -n "${FAILED}" ]]; then
   echo "FAILED!"

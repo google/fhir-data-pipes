@@ -32,6 +32,10 @@ _VL_CODE = '50373000'  # Height
 _ARV_PLAN = '106230009'  # Diagnosis certainty
 _DRUG1 = '410596003'  # Likely outcome
 _DRUG2 = '395098000'  # Disorder confirmed
+_TB_TX_PLAN = '106230009'  # Diagnosis certainty
+_TB_TEST_STATUS = '106230009'  # Diagnosis certainty
+_YES_CODE = '410596003'  # dummy code for yes
+
 
 
 def valid_date(date_str: str) -> datetime:
@@ -109,8 +113,15 @@ if __name__ == '__main__':
       patient_agg_obs_df, ARV_plan=_ARV_PLAN,
       start_drug=[_DRUG1], end_date_str=end_date)
 
+  TB_STAT_df = indicator_lib.calc_TB_STAT(
+      patient_agg_obs_df, TB_TX_plan=_TB_TX_PLAN, ARV_plan=_ARV_PLAN,
+      TB_test_status=_TB_TEST_STATUS, yes_code=_YES_CODE,
+      start_drug=[_DRUG1], end_date_str=end_date)
+
   # TODO the logic behind this merge is not clear, especially for null keys.
   VL_df.merge(TX_NEW_df, how='outer', left_on=['buckets', 'sup_VL'],
-                right_on=['buckets', 'TX_NEW']).to_csv(
-      args.output_csv, index=False)
+                right_on=['buckets', 'TX_NEW']).merge(
+      TB_STAT_df, how='outer', left_on=['buckets', 'sup_VL'],
+      right_on=['buckets', 'TB_STAT']
+  ).to_csv(args.output_csv, index=False)
 
