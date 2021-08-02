@@ -221,6 +221,13 @@
   </profiles>
 
   <dependencies>
+
+		<dependency>
+			<groupId>com.google.apis</groupId>
+			<artifactId>google-api-services-healthcare</artifactId>
+			<version>v1-rev20200515-1.30.9</version>
+		</dependency>
+    
     <!-- Adds a dependency on the Beam SDK. -->
     <dependency>
       <groupId>org.apache.beam</groupId>

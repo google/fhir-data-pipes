@@ -97,7 +97,7 @@ public class FetchResources extends PTransform<PCollection<SearchSegmentDescript
 		public void processElement(@Element SearchSegmentDescriptor segment, OutputReceiver<KV<String, Integer>> out)
 		        throws IOException {
 			String searchUrl = segment.searchUrl();
-			log.info(String.format("Fetching %d resources for statge %s; URL= %s", segment.count(), this.stageIdentifier,
+			log.info(String.format("Fetching %d resources for state %s; URL= %s", segment.count(), this.stageIdentifier,
 			    searchUrl.substring(0, Math.min(200, searchUrl.length()))));
 			long fetchStartTime = System.currentTimeMillis();
 			Bundle pageBundle = fhirSearchUtil.searchByUrl(searchUrl, segment.count(), SummaryEnum.DATA);

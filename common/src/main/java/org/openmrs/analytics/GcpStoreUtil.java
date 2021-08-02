@@ -23,13 +23,14 @@ import ca.uhn.fhir.rest.api.MethodOutcome;
 import ca.uhn.fhir.rest.client.api.IClientInterceptor;
 import ca.uhn.fhir.rest.client.api.IRestfulClientFactory;
 import ca.uhn.fhir.rest.client.interceptor.BearerTokenAuthInterceptor;
-import com.google.api.client.googleapis.auth.oauth2.GoogleCredential;
-import com.google.api.client.http.HttpRequest;
 import com.google.api.client.http.HttpRequestInitializer;
 import com.google.api.client.http.javanet.NetHttpTransport;
-import com.google.api.client.json.gson.GsonFactory;
+import com.google.api.client.json.JsonFactory;
+import com.google.api.client.json.jackson2.JacksonFactory;
 import com.google.api.services.healthcare.v1.CloudHealthcare;
 import com.google.api.services.healthcare.v1.CloudHealthcareScopes;
+import com.google.auth.http.HttpCredentialsAdapter;
+import com.google.auth.oauth2.GoogleCredentials;
 import org.apache.http.client.utils.URIBuilder;
 import org.hl7.fhir.r4.model.Bundle;
 import org.hl7.fhir.r4.model.Resource;
@@ -46,11 +47,13 @@ import org.slf4j.LoggerFactory;
  */
 class GcpStoreUtil extends FhirStoreUtil {
 	
-	private static final Logger log = LoggerFactory.getLogger(GcpStoreUtil.class);
-	
-	private static final GsonFactory JSON_FACTORY = new GsonFactory();
+	private static final JsonFactory JSON_FACTORY = new JacksonFactory();
 	
 	private static final NetHttpTransport HTTP_TRANSPORT = new NetHttpTransport();
+	
+	private static final Logger log = LoggerFactory.getLogger(GcpStoreUtil.class);
+	
+	private GoogleCredentials credential = null;
 	
 	protected GcpStoreUtil(String sinkUrl, IRestfulClientFactory clientFactory) {
 		super(sinkUrl, "", "", clientFactory);
@@ -77,7 +80,7 @@ class GcpStoreUtil extends FhirStoreUtil {
 			log.info("Full URL is: {}", uriBuilder.build());
 			
 			return super.uploadBundle(uri, bundle,
-			    Collections.singletonList(new BearerTokenAuthInterceptor(getAccessToken())));
+			    Collections.singletonList(new BearerTokenAuthInterceptor(credential.refreshAccessToken().getTokenValue())));
 		}
 		catch (IOException e) {
 			log.error("IOException while using Google APIs: {}", e.toString(), e);
@@ -96,8 +99,8 @@ class GcpStoreUtil extends FhirStoreUtil {
 			URIBuilder uriBuilder = new URIBuilder(uri);
 			log.info(String.format("Full URL is: %s", uriBuilder.build()));
 			
-			return super.updateFhirResource(uri, resource,
-			    Collections.<IClientInterceptor> singletonList(new BearerTokenAuthInterceptor(getAccessToken())));
+			return super.updateFhirResource(uri, resource, Collections.<IClientInterceptor> singletonList(
+			    new BearerTokenAuthInterceptor(credential.refreshAccessToken().getTokenValue())));
 		}
 		catch (IOException e) {
 			log.error(String.format("IOException while using Google APIs: %s", e.toString()));
@@ -109,42 +112,20 @@ class GcpStoreUtil extends FhirStoreUtil {
 	}
 	
 	private CloudHealthcare createClient() throws IOException {
-		final GoogleCredential credential = getGoogleCredential();
-		HttpRequestInitializer requestInitializer = new HttpRequestInitializer() {
-			
-			@Override
-			public void initialize(HttpRequest httpRequest) throws IOException {
-				credential.initialize(httpRequest);
-				httpRequest.setConnectTimeout(60000); // 1 minute connect timeout
-				httpRequest.setReadTimeout(60000); // 1 minute read timeout
-			}
+		// Use Application Default Credentials (ADC) to authenticate the requests
+		// For more information see https://cloud.google.com/docs/authentication/production
+		credential = GoogleCredentials.getApplicationDefault()
+		        .createScoped(Collections.singleton(CloudHealthcareScopes.CLOUD_PLATFORM));
+		
+		// Create a HttpRequestInitializer, which will provide a baseline configuration to all requests.
+		HttpRequestInitializer requestInitializer = request -> {
+			new HttpCredentialsAdapter(credential).initialize(request);
+			request.setConnectTimeout(60000); // 1 minute connect timeout
+			request.setReadTimeout(60000); // 1 minute read timeout
 		};
 		
 		// Build the client for interacting with the service.
 		return new CloudHealthcare.Builder(HTTP_TRANSPORT, JSON_FACTORY, requestInitializer)
 		        .setApplicationName("openmrs-fhir-warehouse").build();
 	}
-	
-	private String getAccessToken() throws IOException {
-		GoogleCredential credential = getGoogleCredential();
-		credential.refreshToken();
-		return credential.getAccessToken();
-	}
-	
-	private GoogleCredential getGoogleCredential() throws IOException {
-		/*
-		// TODO figure out why scope creation fails in this case.
-		// Use Application Default Credentials (ADC) to authenticate the requests
-		// For more information see https://cloud.google.com/docs/authentication/production
-		final GoogleCredentials credentials =
-		GoogleCredentials.getApplicationDefault()//;
-		    .createScoped(Collections.singleton(CloudHealthcareScopes.CLOUD_PLATFORM));
-		credentials.refreshAccessToken();
-		return credentials.getAccessToken().getTokenValue();
-		 */
-		GoogleCredential credential = GoogleCredential.getApplicationDefault(HTTP_TRANSPORT, JSON_FACTORY)
-		        .createScoped(Collections.singleton(CloudHealthcareScopes.CLOUD_PLATFORM));
-		return credential;
-	}
-	
 }
