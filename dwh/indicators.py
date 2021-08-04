@@ -32,6 +32,15 @@ _VL_CODE = '50373000'  # Height
 _ARV_PLAN = '106230009'  # Diagnosis certainty
 _DRUG1 = '410596003'  # Likely outcome
 _DRUG2 = '395098000'  # Disorder confirmed
+_TB_TX_PLAN = '106230009'  # Diagnosis certainty
+_TB_TEST_STATUS = '106230009'  # Diagnosis certainty
+# TODO: Generate representable dataset corresponding to snomed
+_YES_CODE = '410596003'  # dummy code for yes
+_CONTINUE_REGIMEN = '410596003'  # Likely outcome
+_START_DRUG = '410596003'  # Likely outcome
+_COMPLETE_REGIMEN = '410596003'  # Likely outcome
+_TB_PREV_plan = '106230009'  # Diagnosis certainty
+_TB_screening = '106230009'
 
 
 def valid_date(date_str: str) -> datetime:
@@ -76,26 +85,32 @@ def create_args(parser: argparse.ArgumentParser):
   )
 
 
-def find_date_range(args: argparse.Namespace) -> Tuple[str, str, str]:
+def find_date_range(args: argparse.Namespace) -> Tuple[str, str, str, str, str]:
   end_date_str = args.last_date.strftime('%Y-%m-%d')
   start_date = args.last_date - timedelta(days=args.num_days)
   start_date_str = start_date.strftime('%Y-%m-%d')
   previous_period_start = args.last_date - timedelta(days=2 * args.num_days)
   previous_period_start_str = previous_period_start.strftime('%Y-%m-%d')
-  return start_date_str, end_date_str, previous_period_start_str
+  semiannual_start = args.last_date - timedelta(days=6 * args.num_days)
+  semiannual_start_str = semiannual_start.strftime('%Y-%m-%d')
+  quarterly_start = args.last_date - timedelta(days=3 * args.num_days)
+  quarterly_start_str = quarterly_start.strftime('%Y-%m-%d')
+  return (start_date_str, end_date_str, previous_period_start_str,
+         semiannual_start_str, quarterly_start_str)
 
 
 if __name__ == '__main__':
   parser = argparse.ArgumentParser()
   create_args(parser)
   args = parser.parse_args()
-  start_date, end_date, prev_start = find_date_range(args)
+  (start_date, end_date, prev_start, semiannual_start_str,
+      quarterly_start_str) = find_date_range(args)
   print('Source directory: {0}'.format(args.src_dir))
   print('Date range:  {0} - {1}'.format(start_date, end_date))
-  patient_query = query_lib.patient_query_factory(
+  base_query = query_lib.patient_query_factory(
       query_lib.Runner.SPARK, args.src_dir, _CODE_SYSTEM)
   # TODO check why without this constraint, `validate_indicators.sh` fails.
-  patient_query.include_obs_values_in_time_range(
+  patient_query = base_query.include_obs_values_in_time_range(
       _VL_CODE, min_time=start_date, max_time=end_date)
   patient_query.include_all_other_codes(min_time=start_date, max_time=end_date)
   patient_agg_obs_df = patient_query.find_patient_aggregates(
@@ -109,8 +124,69 @@ if __name__ == '__main__':
       patient_agg_obs_df, ARV_plan=_ARV_PLAN,
       start_drug=[_DRUG1], end_date_str=end_date)
 
+  TB_STAT_df = indicator_lib.calc_TB_STAT(
+      patient_agg_obs_df, TB_TX_plan=_TB_TX_PLAN, ARV_plan=_ARV_PLAN,
+      TB_plan_answer=[_START_DRUG], end_date_str=end_date)
+
+  TX_CURR_df = indicator_lib.calc_TX_CURR(
+      patient_agg_obs_df, ARV_plan=_ARV_PLAN,
+      ARV_plan_answer=[_CONTINUE_REGIMEN, _START_DRUG],
+      end_date_str=end_date)
+
+  TB_ART_df = indicator_lib.calc_TB_ART(
+      patient_agg_obs_df, TB_TX_plan=_TB_TX_PLAN, ARV_plan=_ARV_PLAN,
+      TB_plan_answer=[_CONTINUE_REGIMEN, _START_DRUG],
+      ART_plan_answer=[_CONTINUE_REGIMEN, _START_DRUG],
+      end_date_str=end_date)
+
+  TB_PREV_df = indicator_lib.calc_TB_PREV(
+      patient_agg_obs_df, TB_PREV_plan=_TB_PREV_plan, ARV_plan=_ARV_PLAN,
+      TB_PREV_plan_answer=[_CONTINUE_REGIMEN, _START_DRUG],
+      TB_CURR_plan_answer=[_COMPLETE_REGIMEN],
+      ART_plan_answer=[_CONTINUE_REGIMEN, _START_DRUG],
+      end_date_str=end_date)
+
+  # Because we can't do muliple constraints for one code
+  base_query = query_lib.patient_query_factory(
+      query_lib.Runner.SPARK, args.src_dir, _CODE_SYSTEM)
+  tb_annual_query = base_query.include_obs_values_in_time_range(
+      _TB_screening, min_time=semiannual_start_str, max_time=end_date)
+  tb_annual_query.include_all_other_codes(min_time=semiannual_start_str, max_time=end_date)
+  tb_annual_agg_obs_df = tb_annual_query.find_patient_aggregates(args.base_patient_url)
+
+  TX_TB_df = indicator_lib.calc_TX_TB(
+      tb_annual_agg_obs_df, TB_TX_plan=_TB_TX_PLAN, ARV_plan=_ARV_PLAN,
+      TB_screening=_TB_screening, YES_CODE=_YES_CODE,
+      TB_plan_answer=[_CONTINUE_REGIMEN, _START_DRUG],
+      ART_plan_answer=[_CONTINUE_REGIMEN, _START_DRUG],
+      end_date_str=end_date)
+
+  # Because we can't do muliple constraints for one code
+  base_query = query_lib.patient_query_factory(
+      query_lib.Runner.SPARK, args.src_dir, _CODE_SYSTEM)
+  tx_quarterly_query = base_query.include_obs_values_in_time_range(
+      _ARV_PLAN, min_time=quarterly_start_str, max_time=end_date)
+  tx_quarterly_query.include_all_other_codes(min_time=quarterly_start_str, max_time=end_date)
+  tx_quarterly_agg_obs_df = tx_quarterly_query.find_patient_aggregates(args.base_patient_url)
+
+  TX_ML_df = indicator_lib.calc_TX_ML(
+      tx_quarterly_agg_obs_df, ARV_plan=_ARV_PLAN,
+      ARV_plan_answer=[_CONTINUE_REGIMEN, _START_DRUG], end_date_str=end_date)
+
   # TODO the logic behind this merge is not clear, especially for null keys.
   VL_df.merge(TX_NEW_df, how='outer', left_on=['buckets', 'sup_VL'],
-                right_on=['buckets', 'TX_NEW']).to_csv(
-      args.output_csv, index=False)
+                right_on=['buckets', 'TX_NEW']).merge(
+      TB_STAT_df, how='outer', left_on=['buckets', 'sup_VL'],
+      right_on=['buckets', 'TB_STAT']).merge(
+      TX_CURR_df, how='outer', left_on=['buckets', 'sup_VL'],
+      right_on=['buckets', 'TX_CURR']).merge(
+      TB_ART_df, how='outer', left_on=['buckets', 'sup_VL'],
+      right_on=['buckets', 'TB_ART']).merge(
+      TB_PREV_df, how='outer', left_on=['buckets', 'sup_VL'],
+      right_on=['buckets', 'TB_PREV']).merge(
+      TX_TB_df, how='outer', left_on=['buckets', 'sup_VL'],
+      right_on=['buckets', 'TX_TB']).merge(
+      TX_ML_df, how='outer', left_on=['buckets', 'sup_VL'],
+      right_on=['buckets', 'TX_ML']
+  ).to_csv(args.output_csv, index=False)
 
