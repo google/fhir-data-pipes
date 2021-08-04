@@ -17,6 +17,9 @@ services:
   sink-server:
     image: "hapiproject/hapi:latest"
     container_name: sink-server
+    environment:
+     - hapi.fhir.enforce_referential_integrity_on_delete=false
+     - hapi.fhir.enforce_referential_integrity_on_write=false
     restart: unless-stopped
     ports:
       - 8098:8080
