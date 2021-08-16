@@ -50,8 +50,7 @@ public class FhirStoreUtil {
 	
 	private final String sinkPassword;
 	
-	private static final Pattern GCP_PATTERN = Pattern
-	        .compile("projects/[\\w-]+/locations/[\\w-]+/datasets/[\\w-]+/fhirStores/[\\w-]+");
+	private static final Pattern GCP_PATTERN = Pattern.compile("projects/(.*)/locations/(.*)/datasets/(.*)/fhirStores/(.*)");
 	
 	protected FhirStoreUtil(String sinkUrl, String sinkUsername, String sinkPassword, IRestfulClientFactory clientFactory) {
 		this.clientFactory = clientFactory;
