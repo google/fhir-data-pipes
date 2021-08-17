@@ -98,7 +98,7 @@ if __name__ == '__main__':
   patient_query.include_obs_values_in_time_range(
       _VL_CODE, min_time=start_date, max_time=end_date)
   patient_query.include_all_other_codes(min_time=start_date, max_time=end_date)
-  patient_agg_obs_df = patient_query.find_patient_aggregates(
+  patient_agg_obs_df = patient_query.get_patient_obs_view(
       args.base_patient_url)
   VL_df = indicator_lib.calc_TX_PVLS(
       patient_agg_obs_df, VL_code=_VL_CODE,
