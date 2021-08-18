@@ -9,8 +9,12 @@ jobs:
       before_install:
         - sudo apt install jq
       script:
-        - mvn clean install
-        - ./e2e-tests/batch-mode-tests.sh
+        - cd bunsen
+        - mvn --no-transfer-progress clean install
+        - cd ../pipelines
+        - mvn --no-transfer-progress clean install
+        - export ROOT_PATH="${TRAVIS_BUILD_DIR}"
+        - ../e2e-tests/batch-mode-tests.sh
       env:
         global:
           - CODECOV_TOKEN='c1a56ea5-6142-4108-a721-9e0e2e2a8083'
