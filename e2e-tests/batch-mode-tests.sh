@@ -109,8 +109,8 @@ function openmrs_query() {
 #   the mode to test: FHIR Search vs JDBC
 #######################################
 function test_parquet_sink() {
-  local command=(mvn exec:java -pl batch "-Dexec.args=--openmrsServerUrl=\
-    http://localhost:8099/openmrs --openmrsUserName=admin --openmrsPassword=Admin123 \
+  local command=(mvn exec:java -pl batch "-Dexec.args=--openmrsUserName=admin \
+    --openmrsServerUrl=http://localhost:8099/openmrs --openmrsPassword=Admin123 \
     --resourceList=Patient,Encounter,Observation --batchSize=20 $1")
   local test_dir=$2
   local mode=$3
