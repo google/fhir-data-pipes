@@ -57,17 +57,17 @@
 			<artifactId>google-api-client-gson</artifactId>
 			<version>1.30.9</version>
 		</dependency>
-
-		<!-- dependency>
-		  <groupId>com.google.auth</groupId>
-		  <artifactId>google-auth-library-oauth2-http</artifactId>
-		  <version>0.19.0</version>
-		</dependency -->
+    
+		<dependency>
+			<groupId>com.google.auth</groupId>
+			<artifactId>google-auth-library-oauth2-http</artifactId>
+			<version>1.0.0</version>
+		</dependency>
 
 		<dependency>
 			<groupId>com.google.apis</groupId>
 			<artifactId>google-api-services-healthcare</artifactId>
-			<version>v1-rev20200515-1.30.9</version>
+			<version>v1beta1-rev20210217-1.31.0</version>
 		</dependency>
 
 		<dependency>
