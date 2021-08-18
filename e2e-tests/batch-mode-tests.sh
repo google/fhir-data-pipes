@@ -1,5 +1,8 @@
 #!/usr/bin/env bash
 
+# TODO add
+# set -e
+
 #######################################
 # Function that prints messages
 # Arguments:
@@ -15,13 +18,18 @@ function print_message() {
 # Function that sets up testing env
 #######################################
 function setup() {
+  if [[ -z "${ROOT_PATH}" ]]; then
+    echo "ERROR: environment variable ROOT_PATH not set!"
+    exit 1
+  fi
+  cd ${ROOT_PATH}/pipelines
   HOME_PATH=$(pwd)
 
   print_message "BUILDING THE ANALYTICS PROJECT"
   mvn compile
 
   print_message "STARTING SERVERs"
-  docker-compose -f docker/openmrs-compose.yaml up -d --remove-orphans
+  docker-compose -f ${ROOT_PATH}/docker/openmrs-compose.yaml up -d --remove-orphans
   openmrs_start_wait_time=0
   contenttype=$(curl -o /dev/null --head -w "%{content_type}\n" -X GET -u admin:Admin123 --connect-timeout 5 \
     --max-time 20 http://localhost:8099/openmrs/ws/fhir2/R4/Patient 2>/dev/null | cut -d ";" -f 1)
@@ -38,7 +46,7 @@ function setup() {
   done
   print_message "OPENMRS SERVER STARTED SUCCESSFULLY"
 
-  docker-compose -f  docker/sink-compose.yml up -d
+  docker-compose -f ${ROOT_PATH}/docker/sink-compose.yml up -d
   fhir_server_start_wait_time=0
   fhir_server_status_code=$(curl -o /dev/null --head -w "%{http_code}" -L -X GET -u hapi:hapi --connect-timeout 5 \
     --max-time 20 http://localhost:8098/fhir/Observation 2>/dev/null)
@@ -109,7 +117,7 @@ function test_parquet_sink() {
   fi
   print_message "PARQUET FILES OUTPUT DIR IS ${test_dir}"
   print_message "COPYING PARQUET TOOLS JAR FILE TO ROOT"
-  cp e2e-tests/parquet-tools-1.11.1.jar "${test_dir}"
+  cp ${ROOT_PATH}/e2e-tests/parquet-tools-1.11.1.jar "${test_dir}"
   if ! [[ $(command -v jq) ]]; then
     print_message "COULD NOT INSTALL JQ, INSTALL MANUALLY TO CONTINUE RUNNING THE TEST"
     exit 1
