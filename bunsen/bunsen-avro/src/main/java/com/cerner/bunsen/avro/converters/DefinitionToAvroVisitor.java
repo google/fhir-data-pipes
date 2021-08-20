@@ -18,16 +18,12 @@ import com.cerner.bunsen.definitions.PrimitiveConverter;
 import com.cerner.bunsen.definitions.StringConverter;
 import com.cerner.bunsen.definitions.StructureField;
 import com.google.common.collect.ImmutableMap;
-import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
-import org.apache.avro.Conversion;
-import org.apache.avro.Conversions;
 import org.apache.avro.JsonProperties;
-import org.apache.avro.LogicalTypes;
 import org.apache.avro.Schema;
 import org.apache.avro.Schema.Field;
 import org.apache.avro.Schema.Type;
@@ -75,30 +71,17 @@ public class DefinitionToAvroVisitor implements DefinitionVisitor<HapiConverter<
     }
   };
 
-  private static final LogicalTypes.Decimal DECIMAL_PRECISION
-      = LogicalTypes.decimal(12, 4);
+  private static final Schema DOUBLE_SCHEMA = Schema.create(Type.DOUBLE);
 
-  private static final Schema DECIMAL_SCHEMA =
-      DECIMAL_PRECISION.addToSchema(Schema.create(Type.BYTES));
-
-  private static final HapiConverter DECIMAL_CONVERTER = new PrimitiveConverter<Schema>("Decimal") {
-
-    private final Conversion<BigDecimal> conversion = new Conversions.DecimalConversion();
-
-    @Override
-    public void toHapi(Object input, IPrimitiveType primitive) {
-
-      primitive.setValue(input);
-    }
-
-    protected Object fromHapi(IPrimitiveType primitive) {
-
-      return primitive.getValue();
-    }
+  // We cannot use Avro logical type `decimal` to represent FHIR `decimal` type. The reason is that
+  // Avro `decimal` type  has a fixed scale and a maximum precision but with a fixed scale we have
+  // no guarantees on the precision of the FHIR `decimal` type. See this for more details:
+  // https://github.com/GoogleCloudPlatform/openmrs-fhir-analytics/issues/156#issuecomment-880964207
+  private static final HapiConverter DOUBLE_CONVERTER = new PrimitiveConverter<Schema>("Double") {
 
     @Override
     public Schema getDataType() {
-      return DECIMAL_SCHEMA;
+      return DOUBLE_SCHEMA;
     }
   };
 
@@ -116,7 +99,7 @@ public class DefinitionToAvroVisitor implements DefinitionVisitor<HapiConverter<
           .put("string", STRING_CONVERTER)
           .put("oid", STRING_CONVERTER)
           .put("xhtml", STRING_CONVERTER)
-          .put("decimal", DECIMAL_CONVERTER)
+          .put("decimal", DOUBLE_CONVERTER)
           .put("integer", INTEGER_CONVERTER)
           .put("unsignedInt", INTEGER_CONVERTER)
           .put("positiveInt", INTEGER_CONVERTER)
