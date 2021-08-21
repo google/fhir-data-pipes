@@ -324,14 +324,16 @@ class _SparkPatientQuery(PatientQuery):
       self._flat_enc = flat_df.select(
           'id', F.col('subject.patientId').alias('patientId'),
           F.col('locationFlat.location.LocationId').alias('locationId'),
-          F.col('typeFlat.coding.system').alias('typeSystem'),
-          F.col('typeFlat.coding.code').alias('typeCode'),
+          F.col('locationFlat.location.display').alias('displayName'),
+          F.col('typeFlat.coding.system').alias('encTypeSystem'),
+          F.col('typeFlat.coding.code').alias('encTypeCode'),
           F.col('period.start').alias('first'),
           F.col('period.end').alias('last'),
       )
     # Any filters can be applied here too.
     return self._flat_enc.groupBy(
-        ['patientId', 'locationId', 'typeSystem', 'typeCode']).agg(
+        ['patientId', 'locationId', 'displayName', 'encTypeSystem',
+         'encTypeCode']).agg(
         F.count('*').alias('numEncounters'),
         F.min('first').alias('firstDate'),
         F.max('last').alias('lastDate')
