@@ -225,9 +225,8 @@ public class ParquetUtilTest {
 	}
 	
 	/**
-	 * This is the test to demonstrate the BigDecimal conversion bug. If we remove the try/catch for
-	 * AvroTypeException in `ParquetUtil.write` this test will fail. Note the previous test shows the
-	 * conversion of such record is fine.
+	 * This is the test to demonstrate the BigDecimal conversion bug. See:
+	 * https://github.com/GoogleCloudPlatform/openmrs-fhir-analytics/issues/156
 	 */
 	@Test
 	public void writeObservationWithBigDecimalValue() throws IOException {
@@ -238,5 +237,19 @@ public class ParquetUtilTest {
 		IParser parser = fhirContext.newJsonParser();
 		Observation observation = parser.parseResource(Observation.class, observationStr);
 		parquetUtil.write(observation);
+	}
+	
+	/**
+	 * This is similar to the above test but has more `decimal` examples with different scales.
+	 */
+	@Test
+	public void writeObservationBundleWithDecimalConversionIssue() throws IOException {
+		initilizeLocalFileSystem();
+		parquetUtil = new ParquetUtil(rootPath.toString(), 0, 0, "", fileSystem);
+		String observationBundleStr = Resources.toString(Resources.getResource("observation_decimal_bundle.json"),
+		    StandardCharsets.UTF_8);
+		IParser parser = fhirContext.newJsonParser();
+		Bundle bundle = parser.parseResource(Bundle.class, observationBundleStr);
+		parquetUtil.writeRecords(bundle);
 	}
 }
