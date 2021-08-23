@@ -1,0 +1,188 @@
+{
+  "resourceType": "Bundle",
+  "id": "bf3bcfcc-2b34-45e3-8a60-ef04ef7060ef",
+  "meta": {
+    "lastUpdated": "2020-09-30T14:04:02.282-04:00",
+    "tag": [
+      {
+        "system": "http://hl7.org/fhir/v3/ObservationValue",
+        "code": "SUBSETTED",
+        "display": "Resource encoded in summary mode"
+      }
+    ]
+  },
+  "type": "searchset",
+  "total": 4,
+  "link": [
+    {
+      "relation": "self",
+      "url": "http://localhost:9020/openmrs/ws/fhir2/R4/Observation?_count=10&_getpagesoffset=0&_summary=data"
+    }
+  ],
+  "entry": [
+    {
+      "fullUrl": "http://localhost:9020/openmrs/ws/fhir2/R4/Observation/2c98a790-1a48-4b75-b458-ceb2d51f5df1",
+      "resource": {
+        "resourceType": "Observation",
+        "id": "2c98a790-1a48-4b75-b458-ceb2d51f5df1",
+        "status": "final",
+        "category": [
+          {
+            "coding": [
+              {
+                "system": "http://terminology.hl7.org/CodeSystem/observation-category",
+                "code": "laboratory",
+                "display": "Laboratory"
+              }
+            ]
+          }
+        ],
+        "code": {
+          "coding": [
+            {
+              "code": "a898c87a-1350-11df-a1f1-0026b9348838",
+              "display": "BODY SURFACE AREA"
+            }
+          ]
+        },
+        "subject": {
+          "reference": "Patient/7_SOME_PATIENT_REF",
+          "type": "Patient",
+          "display": "NO_NAME"
+        },
+        "encounter": {
+          "reference": "Encounter/8_SOME_ENC_REF",
+          "type": "Encounter"
+        },
+        "effectiveDateTime": "2021-04-16T11:12:33+03:00",
+        "issued": "2021-04-16T11:13:33.000+03:00",
+        "valueQuantity": {
+          "value": 1.8287822299126937
+        }
+      }
+    },
+    {
+      "fullUrl": "http://localhost:9020/openmrs/ws/fhir2/R4/Observation/2c98a790-1a48-4b75-b458-ceb2d51f5df2",
+      "resource": {
+        "resourceType": "Observation",
+        "id": "2c98a790-1a48-4b75-b458-ceb2d51f5df2",
+        "status": "final",
+        "category": [
+          {
+            "coding": [
+              {
+                "system": "http://terminology.hl7.org/CodeSystem/observation-category",
+                "code": "laboratory",
+                "display": "Laboratory"
+              }
+            ]
+          }
+        ],
+        "code": {
+          "coding": [
+            {
+              "code": "a898c87a-1350-11df-a1f1-0026b9348838",
+              "display": "BODY SURFACE AREA"
+            }
+          ]
+        },
+        "subject": {
+          "reference": "Patient/7_SOME_PATIENT_REF",
+          "type": "Patient",
+          "display": "NO_NAME"
+        },
+        "encounter": {
+          "reference": "Encounter/8_SOME_ENC_REF",
+          "type": "Encounter"
+        },
+        "effectiveDateTime": "2021-04-16T11:12:33+03:00",
+        "issued": "2021-04-16T11:13:33.000+03:00",
+        "valueQuantity": {
+          "value": 182878222991.26937
+        }
+      }
+    },
+    {
+      "fullUrl": "http://localhost:9020/openmrs/ws/fhir2/R4/Observation/2c98a790-1a48-4b75-b458-ceb2d51f5df3",
+      "resource": {
+        "resourceType": "Observation",
+        "id": "2c98a790-1a48-4b75-b458-ceb2d51f5df3",
+        "status": "final",
+        "category": [
+          {
+            "coding": [
+              {
+                "system": "http://terminology.hl7.org/CodeSystem/observation-category",
+                "code": "laboratory",
+                "display": "Laboratory"
+              }
+            ]
+          }
+        ],
+        "code": {
+          "coding": [
+            {
+              "code": "a898c87a-1350-11df-a1f1-0026b9348838",
+              "display": "BODY SURFACE AREA"
+            }
+          ]
+        },
+        "subject": {
+          "reference": "Patient/7_SOME_PATIENT_REF",
+          "type": "Patient",
+          "display": "NO_NAME"
+        },
+        "encounter": {
+          "reference": "Encounter/8_SOME_ENC_REF",
+          "type": "Encounter"
+        },
+        "effectiveDateTime": "2021-04-16T11:12:33+03:00",
+        "issued": "2021-04-16T11:13:33.000+03:00",
+        "valueQuantity": {
+          "value": 182878222991269.37
+        }
+      }
+    },
+    {
+      "fullUrl": "http://localhost:9020/openmrs/ws/fhir2/R4/Observation/2c98a790-1a48-4b75-b458-ceb2d51f5df4",
+      "resource": {
+        "resourceType": "Observation",
+        "id": "2c98a790-1a48-4b75-b458-ceb2d51f5df4",
+        "status": "final",
+        "category": [
+          {
+            "coding": [
+              {
+                "system": "http://terminology.hl7.org/CodeSystem/observation-category",
+                "code": "laboratory",
+                "display": "Laboratory"
+              }
+            ]
+          }
+        ],
+        "code": {
+          "coding": [
+            {
+              "code": "a898c87a-1350-11df-a1f1-0026b9348838",
+              "display": "BODY SURFACE AREA"
+            }
+          ]
+        },
+        "subject": {
+          "reference": "Patient/7_SOME_PATIENT_REF",
+          "type": "Patient",
+          "display": "NO_NAME"
+        },
+        "encounter": {
+          "reference": "Encounter/8_SOME_ENC_REF",
+          "type": "Encounter"
+        },
+        "effectiveDateTime": "2021-04-16T11:12:33+03:00",
+        "issued": "2021-04-16T11:13:33.000+03:00",
+        "valueQuantity": {
+          "value": 18287822299126937
+        }
+      }
+    }
+  ]
+}
