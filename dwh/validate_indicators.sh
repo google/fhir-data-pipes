@@ -103,17 +103,13 @@ validate "TB_ART, non-TB_ART, none, male_25 numbers are" "27,20,0,5" 15
 # TB_ART ratio
 validate "TB_ART, non-TB_ART, none, male_25 ratios are" "0.574,0.426,0,0.106" 16
 # TB_PREV counts
-validate "TB_PREV, non-TB_PREV, none, male_25 numbers are" "16,31,0,2" 18
+validate "TB_PREV, non-TB_PREV, none, male_25 numbers are" "233,680,0,34" 18
 # TB_PREV ratio
-validate "TB_PREV, non-TB_PREV, none, male_25 ratios are" "0.34,0.66,0,0.0426" 19
+validate "TB_PREV, non-TB_PREV, none, male_25 ratios are" "0.255,0.745,0,0.0372" 19
 # TX_TB counts
-validate "TX_TB, non-TX_TB, none, male_25 numbers are" "347,240,0,48" 21
+validate "TX_TB, non-TX_TB, none, male_25 numbers are" "568,345,0,79" 21
 # TX_TB ratio
-validate "TX_TB, non-TX_TB, none, male_25 ratios are" "0.591,0.409,0,0.0818" 22
-# TX_ML counts
-validate "TX_ML, non-TX_ML, none, male_25 numbers are" "0,318,0,0" 24
-# TX_ML ratio
-validate "TX_ML, non-TX_ML, none, male_25 ratios are" "0,1,0,0" 25
+validate "TX_TB, non-TX_TB, none, male_25 ratios are" "0.622,0.378,0,0.0865" 22
 
 if [[ -n "${FAILED}" ]]; then
   echo "FAILED!"

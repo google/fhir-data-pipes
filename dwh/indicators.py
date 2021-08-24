@@ -20,7 +20,7 @@
 import argparse
 from typing import Tuple
 from datetime import date, datetime, timedelta
-from dateutil.parser import parse as parse_date
+from dateutil import parser as date_parser
 
 import indicator_lib
 import query_lib
@@ -45,7 +45,7 @@ _TB_screening = '106230009'
 
 def valid_date(date_str: str) -> datetime:
   try:
-    return parse_date(date_str)
+    return date_parser.parse(date_str)
   except ValueError:
     raise argparse.ArgumentTypeError('Valid dates have YYYY-MM-DD format!')
 
@@ -107,71 +107,68 @@ if __name__ == '__main__':
       quarterly_start_str) = find_date_range(args)
   print('Source directory: {0}'.format(args.src_dir))
   print('Date range:  {0} - {1}'.format(start_date, end_date))
-  base_query = query_lib.patient_query_factory(
-      query_lib.Runner.SPARK, args.src_dir, _CODE_SYSTEM)
   # TODO check why without this constraint, `validate_indicators.sh` fails.
-  patient_query = base_query.include_obs_values_in_time_range(
+  # Monthly query
+  monthly_query = query_lib.patient_query_factory(
+      query_lib.Runner.SPARK, args.src_dir, _CODE_SYSTEM).include_obs_values_in_time_range(
       _VL_CODE, min_time=start_date, max_time=end_date)
-  patient_query.include_all_other_codes(min_time=start_date, max_time=end_date)
-  patient_agg_obs_df = patient_query.find_patient_aggregates(
-      args.base_patient_url)
+  monthly_query.include_all_other_codes(min_time=start_date, max_time=end_date)
+  # Semiannual query
+  semi_annual_query = query_lib.patient_query_factory(
+      query_lib.Runner.SPARK, args.src_dir, _CODE_SYSTEM).include_all_other_codes(
+      min_time=semiannual_start_str, max_time=end_date)
+  # Prev Month query
+  prev_month_query = query_lib.patient_query_factory(
+      query_lib.Runner.SPARK, args.src_dir, _CODE_SYSTEM).include_all_other_codes(
+      min_time=prev_start, max_time=end_date)
+  # Quarterlly query
+  quarterly_query = query_lib.patient_query_factory(
+      query_lib.Runner.SPARK, args.src_dir, _CODE_SYSTEM).include_all_other_codes(
+      min_time=quarterly_start_str, max_time=end_date)
+
+  # Fetch aggregated obs
+  current_month_df = monthly_query.find_patient_aggregates(args.base_patient_url)
+  prev_month_df = prev_month_query.find_patient_aggregates(args.base_patient_url)
+  annual_df = semi_annual_query.find_patient_aggregates(args.base_patient_url)
+  quarterly_df = quarterly_query.find_patient_aggregates(args.base_patient_url)
+
   VL_df = indicator_lib.calc_TX_PVLS(
-      patient_agg_obs_df, VL_code=_VL_CODE,
+      current_month_df, VL_code=_VL_CODE,
       failure_threshold=150, end_date_str=end_date)
   # TX_NEW
   # TODO add _DRUG2, right now all observations are either _DRUG1 or _DRUG2.
   TX_NEW_df = indicator_lib.calc_TX_NEW(
-      patient_agg_obs_df, ARV_plan=_ARV_PLAN,
+      current_month_df, ARV_plan=_ARV_PLAN,
       start_drug=[_DRUG1], end_date_str=end_date)
 
   TB_STAT_df = indicator_lib.calc_TB_STAT(
-      patient_agg_obs_df, TB_TX_plan=_TB_TX_PLAN, ARV_plan=_ARV_PLAN,
+      current_month_df, TB_TX_plan=_TB_TX_PLAN, ARV_plan=_ARV_PLAN,
       TB_plan_answer=[_START_DRUG], end_date_str=end_date)
 
   TX_CURR_df = indicator_lib.calc_TX_CURR(
-      patient_agg_obs_df, ARV_plan=_ARV_PLAN,
+      current_month_df, ARV_plan=_ARV_PLAN,
       ARV_plan_answer=[_CONTINUE_REGIMEN, _START_DRUG],
       end_date_str=end_date)
 
   TB_ART_df = indicator_lib.calc_TB_ART(
-      patient_agg_obs_df, TB_TX_plan=_TB_TX_PLAN, ARV_plan=_ARV_PLAN,
+      current_month_df, TB_TX_plan=_TB_TX_PLAN, ARV_plan=_ARV_PLAN,
       TB_plan_answer=[_CONTINUE_REGIMEN, _START_DRUG],
-      ART_plan_answer=[_CONTINUE_REGIMEN, _START_DRUG],
+      ARV_plan_answer=[_CONTINUE_REGIMEN, _START_DRUG],
       end_date_str=end_date)
 
   TB_PREV_df = indicator_lib.calc_TB_PREV(
-      patient_agg_obs_df, TB_PREV_plan=_TB_PREV_plan, ARV_plan=_ARV_PLAN,
+      prev_month_df, TB_PREV_plan=_TB_PREV_plan, ARV_plan=_ARV_PLAN,
       TB_PREV_plan_answer=[_CONTINUE_REGIMEN, _START_DRUG],
       TB_CURR_plan_answer=[_COMPLETE_REGIMEN],
       ART_plan_answer=[_CONTINUE_REGIMEN, _START_DRUG],
       end_date_str=end_date)
 
-  # Because we can't do muliple constraints for one code
-  base_query = query_lib.patient_query_factory(
-      query_lib.Runner.SPARK, args.src_dir, _CODE_SYSTEM)
-  tb_annual_query = base_query.include_obs_values_in_time_range(
-      _TB_screening, min_time=semiannual_start_str, max_time=end_date)
-  tb_annual_query.include_all_other_codes(min_time=semiannual_start_str, max_time=end_date)
-  tb_annual_agg_obs_df = tb_annual_query.find_patient_aggregates(args.base_patient_url)
-
   TX_TB_df = indicator_lib.calc_TX_TB(
-      tb_annual_agg_obs_df, TB_TX_plan=_TB_TX_PLAN, ARV_plan=_ARV_PLAN,
+      annual_df, TB_TX_plan=_TB_TX_PLAN, ARV_plan=_ARV_PLAN,
       TB_screening=_TB_screening, YES_CODE=_YES_CODE,
       TB_plan_answer=[_CONTINUE_REGIMEN, _START_DRUG],
       ART_plan_answer=[_CONTINUE_REGIMEN, _START_DRUG],
       end_date_str=end_date)
-
-  # Because we can't do muliple constraints for one code
-  base_query = query_lib.patient_query_factory(
-      query_lib.Runner.SPARK, args.src_dir, _CODE_SYSTEM)
-  tx_quarterly_query = base_query.include_obs_values_in_time_range(
-      _ARV_PLAN, min_time=quarterly_start_str, max_time=end_date)
-  tx_quarterly_query.include_all_other_codes(min_time=quarterly_start_str, max_time=end_date)
-  tx_quarterly_agg_obs_df = tx_quarterly_query.find_patient_aggregates(args.base_patient_url)
-
-  TX_ML_df = indicator_lib.calc_TX_ML(
-      tx_quarterly_agg_obs_df, ARV_plan=_ARV_PLAN,
-      ARV_plan_answer=[_CONTINUE_REGIMEN, _START_DRUG], end_date_str=end_date)
 
   # TODO the logic behind this merge is not clear, especially for null keys.
   VL_df.merge(TX_NEW_df, how='outer', left_on=['buckets', 'sup_VL'],
@@ -185,8 +182,5 @@ if __name__ == '__main__':
       TB_PREV_df, how='outer', left_on=['buckets', 'sup_VL'],
       right_on=['buckets', 'TB_PREV']).merge(
       TX_TB_df, how='outer', left_on=['buckets', 'sup_VL'],
-      right_on=['buckets', 'TX_TB']).merge(
-      TX_ML_df, how='outer', left_on=['buckets', 'sup_VL'],
-      right_on=['buckets', 'TX_ML']
+      right_on=['buckets', 'TX_TB']
   ).to_csv(args.output_csv, index=False)
-
