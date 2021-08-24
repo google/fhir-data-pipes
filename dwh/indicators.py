@@ -32,7 +32,7 @@ _VL_CODE = '50373000'  # Height
 _ARV_PLAN = '106230009'  # Diagnosis certainty
 _DRUG1 = '410596003'  # Likely outcome
 _DRUG2 = '395098000'  # Disorder confirmed
-_TB_TX_PLAN = '106230009'  # Diagnosis certainty
+_TX_TB_PLAN = '106230009'  # Diagnosis certainty
 _TB_TEST_STATUS = '106230009'  # Diagnosis certainty
 # TODO: Generate representable dataset corresponding to snomed
 _YES_CODE = '410596003'  # dummy code for yes
@@ -142,7 +142,7 @@ if __name__ == '__main__':
       start_drug=[_DRUG1], end_date_str=end_date)
 
   TB_STAT_df = indicator_lib.calc_TB_STAT(
-      current_month_df, TB_TX_plan=_TB_TX_PLAN, ARV_plan=_ARV_PLAN,
+      current_month_df, TB_TX_plan=_TX_TB_PLAN, ARV_plan=_ARV_PLAN,
       TB_plan_answer=[_START_DRUG], end_date_str=end_date)
 
   TX_CURR_df = indicator_lib.calc_TX_CURR(
@@ -151,7 +151,7 @@ if __name__ == '__main__':
       end_date_str=end_date)
 
   TB_ART_df = indicator_lib.calc_TB_ART(
-      current_month_df, TB_TX_plan=_TB_TX_PLAN, ARV_plan=_ARV_PLAN,
+      current_month_df, TB_TX_plan=_TX_TB_PLAN, ARV_plan=_ARV_PLAN,
       TB_plan_answer=[_CONTINUE_REGIMEN, _START_DRUG],
       ARV_plan_answer=[_CONTINUE_REGIMEN, _START_DRUG],
       end_date_str=end_date)
@@ -164,9 +164,9 @@ if __name__ == '__main__':
       end_date_str=end_date)
 
   TX_TB_df = indicator_lib.calc_TX_TB(
-      annual_df, TB_TX_plan=_TB_TX_PLAN, ARV_plan=_ARV_PLAN,
+      annual_df, TX_TB_plan=_TX_TB_PLAN, ARV_plan=_ARV_PLAN,
       TB_screening=_TB_screening, YES_CODE=_YES_CODE,
-      TB_plan_answer=[_CONTINUE_REGIMEN, _START_DRUG],
+      TX_TB_plan_answer=[_CONTINUE_REGIMEN, _START_DRUG],
       ART_plan_answer=[_CONTINUE_REGIMEN, _START_DRUG],
       end_date_str=end_date)
 
