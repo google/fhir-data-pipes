@@ -58,8 +58,8 @@ def create_args(parser: argparse.ArgumentParser):
   parser.add_argument(
       '--base_patient_url',
       help='This is the base url to be added to patient IDs, e.g., ' +
-           'http://localhost:8099/openmrs/ws/fhir2/R4/Patient/',
-      default='http://localhost:8099/openmrs/ws/fhir2/R4/Patient/',
+           'http://localhost:8099/openmrs/ws/fhir2/R4/',
+      default='http://localhost:8099/openmrs/ws/fhir2/R4/',
       type=str
   )
   parser.add_argument(

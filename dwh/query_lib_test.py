@@ -28,7 +28,25 @@ class PatientQueryTest(unittest.TestCase):
         '((dateTime >= "2021-06-01" AND dateTime <= "2021-07-10" AND '
         'coding.code="TEST_CODE" AND '
         'value.codeableConcept.coding IN ("VAL1","VAL2") AND '
-        'value.codeableConcept.system IS NULL))'))
+        'value.codeableConcept.system IS NULL))'
+        ' AND TRUE AND TRUE AND TRUE'
+    ))
+
+  def test_single_code_with_values_and_encounter(self):
+    patient_query = query_lib.PatientQuery()
+    patient_query.include_obs_values_in_time_range(
+        'TEST_CODE', ['VAL1', 'VAL2'], '2021-06-01', '2021-07-10')
+    patient_query.encounter_constraints(
+        locationId='LOC', typeCode='TYPE_CODE', typeSystem='TYPE_SYS')
+    sql_constraint = patient_query.all_constraints_sql()
+    self.assertEqual(sql_constraint, (
+        '((dateTime >= "2021-06-01" AND dateTime <= "2021-07-10" AND '
+        'coding.code="TEST_CODE" AND '
+        'value.codeableConcept.coding IN ("VAL1","VAL2") AND '
+        'value.codeableConcept.system IS NULL)) '
+        'AND locationId="LOC" AND encTypeCode="TYPE_CODE" AND '
+        'encTypeSystem="TYPE_SYS"'
+    ))
 
   def test_two_codes_with_values_and_range(self):
     patient_query = query_lib.PatientQuery()
@@ -43,7 +61,9 @@ class PatientQueryTest(unittest.TestCase):
         'value.codeableConcept.coding IN ("VAL1","VAL2") AND '
         'value.codeableConcept.system IS NULL) '
         'OR (dateTime >= "2021-07-09" AND dateTime <= "2021-07-10" AND '
-        'coding.code="TEST_CODE2" AND  value.quantity.value >= 0.1 ))'))
+        'coding.code="TEST_CODE2" AND  value.quantity.value >= 0.1 ))'
+        ' AND TRUE AND TRUE AND TRUE'
+    ))
 
   def test_two_codes_with_values_and_range_and_other_codes(self):
     patient_query = query_lib.PatientQuery()
@@ -61,6 +81,7 @@ class PatientQueryTest(unittest.TestCase):
         'OR (dateTime >= "2021-07-09" AND dateTime <= "2021-07-10" AND '
         'coding.code="TEST_CODE2" AND  value.quantity.value >= 0.1 ) '
         'OR (coding.code!="TEST_CODE1" AND coding.code!="TEST_CODE2" AND TRUE))'
+        ' AND TRUE AND TRUE AND TRUE'
     ))
 
   def test_two_codes_with_values_and_range_and_other_codes_with_date(self):
@@ -81,6 +102,7 @@ class PatientQueryTest(unittest.TestCase):
         'coding.code="TEST_CODE2" AND  value.quantity.value >= 0.1 ) '
         'OR (coding.code!="TEST_CODE1" AND coding.code!="TEST_CODE2" AND '
         'dateTime >= "2020-05-01" AND dateTime <= "2020-07-10"))'
+        ' AND TRUE AND TRUE AND TRUE'
     ))
 
   # TODO add tests with code and value systems.
