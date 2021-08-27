@@ -90,6 +90,26 @@ validate "Suppressed, non-suppressed, none, male_25 ratios are" \
 validate "TX_NEW, non-TX_NEW, none, male_25 numbers are" "27,20,0,5" 6
 # TX_NEW ratio
 validate "TX_NEW, non-TX_NEW, none, male_25 ratios are" "0.574,0.426,0,0.106" 7
+# TB_STAT counts
+validate "TB_STAT, non-TB_STAT, none, male_25 numbers are" "27,20,0,5" 9
+# TB_STAT ratio
+validate "TB_STAT, non-TB_STAT, none, male_25 ratios are" "0.574,0.426,0,0.106" 10
+# TX_CURR counts
+validate "TX_CURR, non-TX_CURR, none, male_25 numbers are" "27,20,0,5" 12
+# TX_CURR ratio
+validate "TX_CURR, non-TX_CURR, none, male_25 ratios are" "0.574,0.426,0,0.106" 13
+# TB_ART counts
+validate "TB_ART, non-TB_ART, none, male_25 numbers are" "27,20,0,5" 15
+# TB_ART ratio
+validate "TB_ART, non-TB_ART, none, male_25 ratios are" "0.574,0.426,0,0.106" 16
+# TB_PREV counts
+validate "TB_PREV, non-TB_PREV, none, male_25 numbers are" "233,680,0,34" 18
+# TB_PREV ratio
+validate "TB_PREV, non-TB_PREV, none, male_25 ratios are" "0.255,0.745,0,0.0372" 19
+# TX_TB counts
+validate "TX_TB, non-TX_TB, none, male_25 numbers are" "568,345,0,79" 21
+# TX_TB ratio
+validate "TX_TB, non-TX_TB, none, male_25 ratios are" "0.622,0.378,0,0.0865" 22
 
 if [[ -n "${FAILED}" ]]; then
   echo "FAILED!"
