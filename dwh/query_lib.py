@@ -178,8 +178,11 @@ class PatientQuery():
     return '({} OR ({}))'.format(constraints_str, others_str)
 
   # TODO remove `base_patient_url` parameter once issue #55 is fixed.
-  def find_patient_aggregates(self, base_patient_url: str) -> pandas.DataFrame:
-    """Loads the data and finds the aggregates.
+  def get_patient_obs_view(self, base_patient_url: str) -> pandas.DataFrame:
+    """Creates a patient * observation code aggregated view.
+
+    For each patient and observation code, group all such observation and
+    returns some aggregated values. Loads the data if that is necessary.
 
     Args:
       base_patient_url: See issue #55!
@@ -204,6 +207,24 @@ class PatientQuery():
     """
     raise NotImplementedError('This should be implemented by sub-classes!')
 
+  def get_patient_encounter_view(self) -> pandas.DataFrame:
+    """Aggregates encounters for each patient based on location, type, etc.
+
+    For each patient and encounter attributes (e.g., location, type, etc.) finds
+    aggregate values. Loads the data if that is necessary.
+
+    Returns:
+      A Pandas DataFrame with the following columns:
+        - `patientId` the patient for whom the aggregation is done
+        - `locationId` the location ID of where the encounters took place
+        - `typeSystem` the encounter type system
+        - `typeCode` the encounter type code
+        - `numEncounters` number of encounters with that type and location
+        - `firstDate` the first date such an encounter happened
+        - `lastDate` the last date such an encounter happened
+    """
+    raise NotImplementedError('This should be implemented by sub-classes!')
+
 
 class _SparkPatientQuery(PatientQuery):
 
@@ -215,9 +236,10 @@ class _SparkPatientQuery(PatientQuery):
     self._obs_df = None
     self._flat_obs = None
     self._patient_agg_obs_df = None
+    self._enc_df = None
+    self._flat_enc = None
 
-  def find_patient_aggregates(self, base_patient_url: str) -> pandas.DataFrame:
-    """See super-class doc."""
+  def _make_sure_spark(self):
     if not self._spark:
       # TODO add the option for using a running Spark cluster.
       conf = (SparkConf()
@@ -229,18 +251,38 @@ class _SparkPatientQuery(PatientQuery):
               .set('spark.authenticate', 'true')
               )
       self._spark = SparkSession.builder.config(conf=conf).getOrCreate()
+
+  def _make_sure_patient(self):
+    if not self._patient_df:
       # Loading Parquet files and flattening only happens once.
       self._patient_df = self._spark.read.parquet(self._file_root + '/Patient')
-      self._obs_df = self._spark.read.parquet(self._file_root + '/Observation')
       # TODO create inspection functions
       common.custom_log(
           'Number of Patient resources= {}'.format(self._patient_df.count()))
+
+  def _make_sure_obs(self):
+    if not self._obs_df:
+      self._obs_df = self._spark.read.parquet(self._file_root + '/Observation')
       common.custom_log(
           'Number of Observation resources= {}'.format(self._obs_df.count()))
+
+  def _make_sure_encounter(self):
+    if not self._enc_df:
+      self._enc_df = self._spark.read.parquet(self._file_root + '/Encounter')
+      common.custom_log(
+          'Number of Encounter resources= {}'.format(self._enc_df.count()))
+
+  def get_patient_obs_view(self, base_patient_url: str) -> pandas.DataFrame:
+    """See super-class doc."""
+    self._make_sure_spark()
+    self._make_sure_patient()
+    self._make_sure_obs()
+    if not self._flat_obs:
       self._flat_obs = _SparkPatientQuery._flatten_obs(
           self._obs_df, self._code_system)
       common.custom_log(
           'Number of flattened obs rows = {}'.format(self._flat_obs.count()))
+    # Recalculating the rest is needed since the constraints can be updated.
     work_df = self._flat_obs.where(self.all_constraints_sql())
     agg_obs_df = _SparkPatientQuery._aggregate_patient_codes(work_df)
     common.custom_log(
@@ -268,6 +310,35 @@ class _SparkPatientQuery(PatientQuery):
         'max_value', 'min_date', 'max_date', 'first_value', 'last_value',
         'first_value_code', 'last_value_code']]
 
+  def get_patient_encounter_view(self) -> pandas.DataFrame:
+    """See super-class doc."""
+    self._make_sure_spark()
+    self._make_sure_patient()
+    self._make_sure_encounter()
+    if not self._flat_enc:
+      temp_df = self._enc_df
+      flat_df = temp_df.select(
+          'subject', 'id', 'location', 'type', 'period').withColumn(
+          'locationFlat', F.explode_outer('location')).withColumn(
+          'typeFlat', F.explode_outer('type'))
+      self._flat_enc = flat_df.select(
+          'id', F.col('subject.patientId').alias('patientId'),
+          F.col('locationFlat.location.LocationId').alias('locationId'),
+          F.col('locationFlat.location.display').alias('displayName'),
+          F.col('typeFlat.coding.system').alias('encTypeSystem'),
+          F.col('typeFlat.coding.code').alias('encTypeCode'),
+          F.col('period.start').alias('first'),
+          F.col('period.end').alias('last'),
+      )
+    # Any filters can be applied here too.
+    return self._flat_enc.groupBy(
+        ['patientId', 'locationId', 'displayName', 'encTypeSystem',
+         'encTypeCode']).agg(
+        F.count('*').alias('numEncounters'),
+        F.min('first').alias('firstDate'),
+        F.max('last').alias('lastDate')
+    ).toPandas()
+
   @staticmethod
   def _flatten_obs(obs: DataFrame, code_system: str = None) -> DataFrame:
     """Creates a flat version of Observation FHIR resources.
@@ -294,7 +365,6 @@ class _SparkPatientQuery(PatientQuery):
     value_sys_str = '(valueCoding IS NULL OR {})'.format(value_sys_str_base)
     merge_udf = F.UserDefinedFunction(
         lambda d, v: merge_date_and_value(d, v), T.StringType())
-    #df.withColumn('merged', merge_udf(df['col3'], df['col4']))
     return obs.withColumn('coding', F.explode('code.coding')).where(
         sys_str).withColumn('valueCoding', # Note valueCoding can be null.
         F.explode_outer('value.codeableConcept.coding')).where(

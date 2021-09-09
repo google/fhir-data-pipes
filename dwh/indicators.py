@@ -127,10 +127,10 @@ if __name__ == '__main__':
       min_time=quarterly_start_str, max_time=end_date)
 
   # Fetch aggregated obs
-  current_month_df = monthly_query.find_patient_aggregates(args.base_patient_url)
-  prev_month_df = prev_month_query.find_patient_aggregates(args.base_patient_url)
-  annual_df = semi_annual_query.find_patient_aggregates(args.base_patient_url)
-  quarterly_df = quarterly_query.find_patient_aggregates(args.base_patient_url)
+  current_month_df = monthly_query.get_patient_obs_view(args.base_patient_url)
+  prev_month_df = prev_month_query.get_patient_obs_view(args.base_patient_url)
+  annual_df = semi_annual_query.get_patient_obs_view(args.base_patient_url)
+  quarterly_df = quarterly_query.get_patient_obs_view(args.base_patient_url)
 
   VL_df = indicator_lib.calc_TX_PVLS(
       current_month_df, VL_code=_VL_CODE,
