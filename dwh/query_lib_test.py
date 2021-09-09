@@ -37,15 +37,15 @@ class PatientQueryTest(unittest.TestCase):
     patient_query.include_obs_values_in_time_range(
         'TEST_CODE', ['VAL1', 'VAL2'], '2021-06-01', '2021-07-10')
     patient_query.encounter_constraints(
-        locationId='LOC', typeCode='TYPE_CODE', typeSystem='TYPE_SYS')
+        locationId=['L1', 'L2'], typeCode=['TC1', 'TC2'], typeSystem='TS')
     sql_constraint = patient_query.all_constraints_sql()
     self.assertEqual(sql_constraint, (
         '((dateTime >= "2021-06-01" AND dateTime <= "2021-07-10" AND '
         'coding.code="TEST_CODE" AND '
         'value.codeableConcept.coding IN ("VAL1","VAL2") AND '
         'value.codeableConcept.system IS NULL)) '
-        'AND locationId="LOC" AND encTypeCode="TYPE_CODE" AND '
-        'encTypeSystem="TYPE_SYS"'
+        'AND locationId IN ("L1","L2") AND encTypeCode IN ("TC1","TC2") AND '
+        'encTypeSystem="TS"'
     ))
 
   def test_two_codes_with_values_and_range(self):

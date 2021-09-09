@@ -126,8 +126,8 @@ class _EncounterContraints():
   on an already flattened encounter view.
   """
 
-  def __init__(self, locationId: str = None,
-      typeSystem: str = None, typeCode: str = None):
+  def __init__(self, locationId: List[str] = None,
+      typeSystem: str = None, typeCode: List[str] = None):
     self._location_id = locationId
     self._type_system = typeSystem
     self._type_code = typeCode
@@ -140,10 +140,14 @@ class _EncounterContraints():
 
   def sql(self) -> str:
     """This creates a constraint string with WHERE syntax in SQL."""
-    loc_str = 'locationId="{}"'.format(
-        self._location_id) if self._location_id else 'TRUE'
-    type_code_str = 'encTypeCode="{}"'.format(
-        self._type_code) if self._type_code else 'TRUE'
+    loc_str = 'TRUE'
+    if self._location_id:
+      temp_str = ','.join(['"{}"'.format(v) for v in self._location_id])
+      loc_str = 'locationId IN ({})'.format(temp_str)
+    type_code_str = 'TRUE'
+    if self._type_code:
+      temp_str = ','.join(['"{}"'.format(v) for v in self._type_code])
+      type_code_str = 'encTypeCode IN ({})'.format(temp_str)
     type_sys_str = 'encTypeSystem="{}"'.format(
         self._type_system) if self._type_system else 'TRUE'
     return '{} AND {} AND {}'.format(loc_str, type_code_str, type_sys_str)
@@ -197,12 +201,19 @@ class PatientQuery():
     self._all_codes_max_time = max_time
     return self
 
-  def encounter_constraints(self, locationId: str = None,
-      typeSystem: str = None, typeCode: str = None):
+  def encounter_constraints(self, locationId: List[str] = None,
+      typeSystem: str = None, typeCode: List[str] = None):
     """Specifies constraints on encounters to be included.
 
     Note calling this erases previous encounter constraints. Any constraint
     that is None is ignored.
+
+    Args:
+      locationId: The list of locations that should be kept or None if there are
+        no location constraints.
+      typeSystem: An string representing the type system or None.
+      typeCode: A list of encounter type codes that should be kept or None if
+        there are no type constraints.
     """
     self._enc_constraint = _EncounterContraints(
         locationId, typeSystem, typeCode)
@@ -278,7 +289,7 @@ class PatientQuery():
         - `locationId` the location ID of where the encounters took place; this
           and the next one are provided only if there is a location constraint
           or `force_location_type_columns` is `True`.
-        - `displayName` the human readable name of the location
+        - `locationDisplay` the human readable name of the location
         - `encTypeSystem` the encounter type system this and the next one are
           provided only if there is a type constraint or
           `force_location_type_columns` is `True`.
@@ -391,7 +402,7 @@ class _SparkPatientQuery(PatientQuery):
                                        force_location_type_columns)
     column_list = ['encPatientId']
     if self._enc_constraint.has_location() or force_location_type_columns:
-      column_list += ['locationId', 'displayName']
+      column_list += ['locationId', 'locationDisplay']
     if self._enc_constraint.has_type() or force_location_type_columns:
       column_list += ['encTypeSystem', 'encTypeCode']
     return flat_enc.groupBy(column_list).agg(
@@ -419,7 +430,7 @@ class _SparkPatientQuery(PatientQuery):
       flat_df = flat_df.withColumn('locationFlat', F.explode_outer('location'))
       column_list += [
           F.col('locationFlat.location.LocationId').alias('locationId'),
-          F.col('locationFlat.location.display').alias('displayName')]
+          F.col('locationFlat.location.display').alias('locationDisplay')]
     if self._enc_constraint.has_type() or force_location_type_columns:
       flat_df = flat_df.withColumn('typeFlat', F.explode_outer('type'))
       column_list += [
