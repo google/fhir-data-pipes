@@ -1,7 +1,7 @@
 {
   "debeziumConfigurations": {
     "databaseServerName" : "MyDbName",
-    "databaseHostName" : "localhost",
+    "databaseHostName" : "openmrs-fhir-mysql",
     "databaseServerId" : "223344",
     "databasePort" : "3306",
     "databaseUser" : "root",
