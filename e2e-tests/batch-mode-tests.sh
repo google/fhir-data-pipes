@@ -1,7 +1,6 @@
 #!/usr/bin/env bash
 
-# TODO add
-# set -e
+set -e
 
 #######################################
 # Function that prints messages
@@ -13,65 +12,30 @@ function print_message() {
   echo "${print_prefix} $*"
 }
 
-
 #######################################
-# Function that sets up testing env
+# Function that sets up e2e test
+# Arguments:
+#   Path where e2e-tests directory is. 
+#     Directory contains parquet tools jar
+#     as well as subdirectory of parquet file output
+#   Subdirectory to search for parquet files. 
+#      NON_JDBC or JDBC
+#   Optional: Flag to specify whether test is being 
+#      done on docker network.
 #######################################
 function setup() {
-  if [[ -z "${ROOT_PATH}" ]]; then
-    echo "ERROR: environment variable ROOT_PATH not set!"
-    exit 1
+  HOME_PATH=$1
+  rm -rf ${HOME_PATH}/fhir
+  rm -rf ${HOME_PATH}/$2/*.json
+  
+  OPENMRS_URL='http://localhost:8099'
+  SINK_SERVER='http://localhost:8098'
+
+  if [[ $3 = "--use_docker_network" ]]; then
+    OPENMRS_URL='http://openmrs:8080'
+    SINK_SERVER='http://sink-server:8080'
   fi
-  cd ${ROOT_PATH}/pipelines
-  HOME_PATH=$(pwd)
-
-  print_message "BUILDING THE ANALYTICS PROJECT"
-  mvn compile
-
-  print_message "STARTING SERVERs"
-  docker-compose -f ${ROOT_PATH}/docker/openmrs-compose.yaml up -d --remove-orphans
-  openmrs_start_wait_time=0
-  contenttype=$(curl -o /dev/null --head -w "%{content_type}\n" -X GET -u admin:Admin123 \
-     --connect-timeout 5 --max-time 20 http://localhost:8099/openmrs/ws/fhir2/R4/Patient \
-     2>/dev/null | cut -d ";" -f 1)
-  until [[ ${contenttype} == "application/fhir+json" ]]; do
-    sleep 60s
-    print_message "WAITING FOR OPENMRS SERVER TO START"
-    contenttype=$(curl -o /dev/null --head -w "%{content_type}\n" -X GET -u admin:Admin123 \
-      --connect-timeout 5 --max-time 20 http://localhost:8099/openmrs/ws/fhir2/R4/Patient \
-      2>/dev/null | cut -d ";" -f 1)
-    ((openmrs_start_wait_time += 1))
-    if [[ ${openmrs_start_wait_time} == 20 ]]; then
-      print_message "TERMINATING TEST AS OPENMRS TOOK TOO LONG TO START"
-      exit 1
-    fi
-  done
-  print_message "OPENMRS SERVER STARTED SUCCESSFULLY"
-
-  docker-compose -f ${ROOT_PATH}/docker/sink-compose.yml up -d
-  fhir_server_start_wait_time=0
-  fhir_server_status_code=$(curl -o /dev/null --head -w "%{http_code}" -L -X GET \
-    -u hapi:hapi --connect-timeout 5 --max-time 20 \
-    http://localhost:8098/fhir/Observation 2>/dev/null)
-  until [[ ${fhir_server_status_code} -eq 200 ]]; do
-    sleep 1s
-    print_message "WAITING FOR FHIR SERVER TO START"
-    fhir_server_status_code=$(curl -o /dev/null --head -w "%{http_code}" -L -X GET \
-      -u hapi:hapi --connect-timeout 5 --max-time 20 \
-      http://localhost:8098/fhir/Observation 2>/dev/null)
-    ((fhir_server_start_wait_time += 1))
-    if [[ fhir_server_start_wait_time == 10 ]]; then
-      print_message "TERMINATING AS FHIR SERVER TOOK TOO LONG TO START"
-      exit 1
-    fi
-  done
-  print_message "FHIR SERVER STARTED SUCCESSFULLY"
-
-  TEST_DIR_FHIR=$(mktemp -d -t analytics_tests__XXXXXX_FHIRSEARCH)
-  TEST_DIR_JDBC=$(mktemp -d -t analytics_tests__XXXXXX_JDBC)
-  JDBC_SETTINGS="--jdbcModeEnabled=true"
 }
-
 
 #######################################
 # Function to use count resources in openmrs server
@@ -83,19 +47,18 @@ function setup() {
 #   directory to sink files to
 #######################################
 function openmrs_query() {
-  mkdir $1
 
   curl -L -X GET -u admin:Admin123 --connect-timeout 5 --max-time 20 \
-    http://localhost:8099/openmrs/ws/fhir2/R4/Patient/ 2>/dev/null >>./$1/patients.json
-  TOTAL_TEST_PATIENTS=$(jq '.total' ./$1/patients.json)
+    ${OPENMRS_URL}/openmrs/ws/fhir2/R4/Patient/ 2>/dev/null >>${HOME_PATH}/$1/patients.json
+  TOTAL_TEST_PATIENTS=$(jq '.total' ${HOME_PATH}/$1/patients.json)
   print_message "Total openmrs test patients ---> ${TOTAL_TEST_PATIENTS}"
   curl -L -X GET -u admin:Admin123 --connect-timeout 5 --max-time 20 \
-    http://localhost:8099/openmrs/ws/fhir2/R4/Encounter/ 2>/dev/null >>./$1/encounters.json
-  TOTAL_TEST_ENCOUNTERS=$(jq '.total' ./$1/encounters.json)
+    ${OPENMRS_URL}/openmrs/ws/fhir2/R4/Encounter/ 2>/dev/null >>${HOME_PATH}/$1/encounters.json
+  TOTAL_TEST_ENCOUNTERS=$(jq '.total' ${HOME_PATH}/$1/encounters.json)
   print_message "Total openmrs test encounters ---> ${TOTAL_TEST_ENCOUNTERS}"
   curl -L -X GET -u admin:Admin123 --connect-timeout 5 --max-time 20 \
-    http://localhost:8099/openmrs/ws/fhir2/R4/Observation/ 2>/dev/null >>./$1/obs.json
-  TOTAL_TEST_OBS=$(jq '.total' ./$1/obs.json)
+    ${OPENMRS_URL}/openmrs/ws/fhir2/R4/Observation/ 2>/dev/null >>${HOME_PATH}/$1/obs.json
+  TOTAL_TEST_OBS=$(jq '.total' ${HOME_PATH}/$1/obs.json)
   print_message "Total openmrs test obs ---> ${TOTAL_TEST_OBS}"
 }
 
@@ -104,50 +67,25 @@ function openmrs_query() {
 # Function that tests sinking to parquet files
 # and compares output to what is in openmrs server
 # Arguments:
-#   extra flags for Dexex.args
-#   file path
 #   the mode to test: FHIR Search vs JDBC
 #######################################
 function test_parquet_sink() {
-  local command=(mvn exec:java -pl batch "-Dexec.args=--openmrsUserName=admin \
-    --openmrsServerUrl=http://localhost:8099/openmrs --openmrsPassword=Admin123 \
-    --resourceList=Patient,Encounter,Observation --batchSize=20 $1")
-  local test_dir=$2
-  local mode=$3
-  print_message "PARQUET FILES WILL BE WRITTEN INTO ${test_dir} DIRECTORY"
-  print_message "RUNNING BATCH MODE WITH PARQUET SINK FOR $2 MODE"
-  print_message " ${command[*]}"
-  "${command[@]}"
-
-  if [[ -z $(ls "${test_dir}"/Patient) ]]; then
-    print_message "PARQUET FILES NOT CREATED"
-    exit 1
-  fi
-  print_message "PARQUET FILES OUTPUT DIR IS ${test_dir}"
-  print_message "COPYING PARQUET TOOLS JAR FILE TO ROOT"
-  cp ${ROOT_PATH}/e2e-tests/parquet-tools-1.11.1.jar "${test_dir}"
-  if ! [[ $(command -v jq) ]]; then
-    print_message "COULD NOT INSTALL JQ, INSTALL MANUALLY TO CONTINUE RUNNING THE TEST"
-    exit 1
-  fi
-  cd "${test_dir}"
-  print_message "Finding number of patients, encounters and obs in openmrs server"
-  openmrs_query omrs
+  local test_dir=$1
   print_message "Counting number of patients, encounters and obs sinked to parquet files"
-  total_patients_streamed=$(java -jar ./parquet-tools-1.11.1.jar rowcount ./Patient/ | awk '{print $3}')
+  
+  total_patients_streamed=$(java -jar ./parquet-tools-1.11.1.jar rowcount ${HOME_PATH}/${test_dir}/Patient/ | awk '{print $3}')
   print_message "Total patients synced to parquet ---> ${total_patients_streamed}"
-  total_encounters_streamed=$(java -jar ./parquet-tools-1.11.1.jar rowcount ./Encounter/ | awk '{print $3}')
+  total_encounters_streamed=$(java -jar ./parquet-tools-1.11.1.jar rowcount ${HOME_PATH}/${test_dir}/Encounter/ | awk '{print $3}')
   print_message "Total encounters synced to parquet ---> ${total_encounters_streamed}"
-  total_obs_streamed=$(java -jar ./parquet-tools-1.11.1.jar rowcount ./Observation/ | awk '{print $3}')
+  total_obs_streamed=$(java -jar ./parquet-tools-1.11.1.jar rowcount ${HOME_PATH}/${test_dir}/Observation/ | awk '{print $3}')
   print_message "Total obs synced to parquet ---> ${total_obs_streamed}"
 
   if [[ ${total_patients_streamed} == ${TOTAL_TEST_PATIENTS} && ${total_encounters_streamed} \
         == ${TOTAL_TEST_ENCOUNTERS} && ${total_obs_streamed} == ${TOTAL_TEST_OBS} ]] \
     ; then
-    print_message "BATCH MODE WITH PARQUET SINK EXECUTED SUCCESSFULLY USING ${mode} MODE"
-    cd "${HOME_PATH}"
+    print_message "BATCH MODE WITH PARQUET SINK EXECUTED SUCCESSFULLY USING ${test_dir} MODE"
   else
-    print_message "BATCH MODE WITH PARQUET SINK TEST FAILED USING ${mode} MODE"
+    print_message "BATCH MODE WITH PARQUET SINK TEST FAILED USING ${test_dir} MODE"
     exit 1
   fi
 }
@@ -156,62 +94,47 @@ function test_parquet_sink() {
 # Function that tests sinking to FHIR server
 # and compares output to what is in openmrs server
 # Arguments:
-#   extra flags for Dexex.args
-#   file path
 #   the mode to test: FHIR Search vs JDBC
 #######################################
 function test_fhir_sink() {
-  local command=(mvn exec:java -pl batch "-Dexec.args=--resourceList=Patient,Encounter,Observation --batchSize=20  \
-  --fhirSinkPath=http://localhost:8098/fhir  --sinkUserName=hapi --sinkPassword=hapi $1")
-  local test_dir=$2
-  local mode=$3
+  local mode=$1
 
-  print_message " ${command[*]}"
-  "${command[@]}"
+  print_message "Finding number of patients, encounters and obs in FHIR server"
 
-  cd "${test_dir}"
-  print_message "Finding number of patients, encounters and obs in openmrs server"
-  openmrs_query omrs_fhir_sink
-
-  mkdir fhir
+  mkdir ${HOME_PATH}/fhir
   curl -L -X GET -u hapi:hapi --connect-timeout 5 --max-time 20 \
-    http://localhost:8098/fhir/Patient/?_summary=count 2>/dev/null >>./fhir/patients.json
+    ${SINK_SERVER}/fhir/Patient/?_summary=count 2>/dev/null >>${HOME_PATH}/fhir/patients.json
 
   curl -L -X GET -u hapi:hapi --connect-timeout 5 --max-time 20 \
-    http://localhost:8098/fhir/Encounter/?_summary=count 2>/dev/null >>./fhir/encounters.json
+    ${SINK_SERVER}/fhir/Encounter/?_summary=count 2>/dev/null >>${HOME_PATH}/fhir/encounters.json
 
   curl -L -X GET -u hapi:hapi --connect-timeout 5 --max-time 20 \
-    http://localhost:8098/fhir/Observation/?_summary=count 2>/dev/null >>./fhir/obs.json
+    ${SINK_SERVER}/fhir/Observation/?_summary=count 2>/dev/null >>${HOME_PATH}/fhir/obs.json
 
   print_message "Counting number of patients, encounters and obs sinked to fhir files"
 
-  total_patients_sinked_fhir=$(jq '.total' ./fhir/patients.json)
+  total_patients_sinked_fhir=$(jq '.total' ${HOME_PATH}/fhir/patients.json)
   print_message "Total patients sinked to fhir ---> ${total_patients_sinked_fhir}"
 
-  total_encounters_sinked_fhir=$(jq '.total' ./fhir/encounters.json)
+  total_encounters_sinked_fhir=$(jq '.total' ${HOME_PATH}/fhir/encounters.json)
   print_message "Total encounters sinked to fhir ---> ${total_encounters_sinked_fhir}"
 
-  total_obs_sinked_fhir=$(jq '.total' ./fhir/obs.json)
+  total_obs_sinked_fhir=$(jq '.total' ${HOME_PATH}/fhir/obs.json)
   print_message "Total observations sinked to fhir ---> ${total_obs_sinked_fhir}"
 
   if [[ ${total_patients_sinked_fhir} == ${TOTAL_TEST_PATIENTS} && ${total_encounters_sinked_fhir} \
         == ${TOTAL_TEST_ENCOUNTERS} && ${total_obs_sinked_fhir} == ${TOTAL_TEST_OBS} ]] \
     ; then
     print_message "BATCH MODE WITH FHIR SERVER SINK EXECUTED SUCCESSFULLY USING ${mode} MODE"
-    cd "${HOME_PATH}"
   else
     print_message "BATCH MODE WITH FHIR SERVER SINK TEST FAILED USING ${mode} MODE"
     exit 1
   fi
 }
 
-setup
-print_message "---- STARTING PARQUET SINK TEST ----"
-test_parquet_sink "--outputParquetPath=${TEST_DIR_FHIR}/" "${TEST_DIR_FHIR}" "FHIR_SEARCH"
-test_parquet_sink "--outputParquetPath=${TEST_DIR_JDBC}/ ${JDBC_SETTINGS}" "${TEST_DIR_JDBC}" "JDBC"
-
-print_message "---- STARTING FHIR SINK TEST ----"
-test_fhir_sink "" "${TEST_DIR_FHIR}" "FHIR_SEARCH"
-test_fhir_sink "${JDBC_SETTINGS}" "${TEST_DIR_JDBC}" "JDBC"
-
+setup $1 $2 $3
+print_message "---- STARTING $2 TEST ----"
+openmrs_query $2
+test_parquet_sink $2
+test_fhir_sink $2
 print_message "END!!"

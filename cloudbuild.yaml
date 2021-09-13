@@ -1,0 +1,83 @@
+steps:
+
+- name: 'docker/compose'
+  id: Launch Webserver
+  args: ['-f', './docker/openmrs-compose.yaml', '-f', './docker/sink-compose.yml',  'up', '--force-recreate', '--remove-orphan', '-d']
+
+- name: 'gcr.io/cloud-builders/docker'
+  id: Wait for Servers Start
+  entrypoint: /bin/bash
+  args:
+  - -c
+  - e2e-tests/wait-for-start.sh --use_docker_network
+
+- name: 'adoptopenjdk/maven-openjdk8'
+  id: Compile Bunsen and Pipeline
+  entrypoint: /bin/bash
+  args:
+  - -c
+  - mvn --no-transfer-progress -f bunsen install; mvn --no-transfer-progress -f pipelines install
+  waitFor: ['-'] 
+
+
+- name: 'gcr.io/cloud-builders/docker'
+  id: Build Batch Pipeline Image 
+  entrypoint: /bin/bash
+  args:
+  - -c
+  - cd pipelines/batch;  docker build -t gcr.io/${_PROJECT_ID}/batch-pipleine:${_TAG} .
+
+
+- name: 'gcr.io/${_PROJECT_ID}/batch-pipleine:${_TAG}'
+  id: Run Batch Pipeline 
+  env:
+    - PARQUET_PATH=/workspace/e2e-tests/NON_JDBC
+    - SINK_PATH=http://sink-server:8080/fhir
+    - SINK_USERNAME=hapi
+    - SINK_PASSWORD=hapi
+
+
+- name: 'gcr.io/cloud-builders/docker'
+  id: Build E2E Image 
+  entrypoint: /bin/bash
+  args:
+  - -c
+  - cd e2e-tests;  docker build -t gcr.io/${_PROJECT_ID}/e2e-tests:${_TAG} .
+  
+- name: 'gcr.io/${_PROJECT_ID}/e2e-tests:${_TAG}'
+  id: Run E2E Test
+  env:
+    - TEST_TYPE=NON_JDBC
+    - DOCKER_NETWORK=--use_docker_network
+
+
+- name: 'gcr.io/${_PROJECT_ID}/batch-pipleine:${_TAG}'
+  id: Run Batch Pipeline JDBC
+  env:
+    - JDBC_MODE_ENABLED=true
+    - PARQUET_PATH=/workspace/e2e-tests/JDBC
+    - SINK_PATH=http://sink-server:8080/fhir
+    - SINK_USERNAME=hapi
+    - SINK_PASSWORD=hapi
+    - FHIR_DEBEZIUM_CONFIG_PATH=/workspace/utils/dbz_event_to_fhir_config.json
+
+- name: 'gcr.io/${_PROJECT_ID}/e2e-tests:${_TAG}'
+  id: Run E2E Test JDBC
+  env:
+    - TEST_TYPE=JDBC
+    - DOCKER_NETWORK=--use_docker_network
+
+
+- name: 'gcr.io/${_PROJECT_ID}/e2e-tests:${_TAG}'
+  id: Test Indicators
+  entrypoint: /bin/bash
+  args:
+  - -c
+  - 'cd dwh; ./validate_indicators.sh'
+
+substitutions:
+  _TAG: local
+  _PROJECT_ID: local
+timeout: '2h'
+options:
+ machineType: 'N1_HIGHCPU_32'

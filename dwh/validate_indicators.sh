@@ -25,7 +25,7 @@ set -e  # Make sure that we exit after the very first error.
 
 declare -r has_virtualenv=$(which virtualenv)
 if [[ -z ${has_virtualenv} ]]; then
-  echo "ERROR: 'virtualnv' not found; make sure it is installed and is in PATH."
+  echo "ERROR: 'virtualenv' not found; make sure it is installed and is in PATH."
   exit 1
 fi
 virtualenv -p python3 venv_test
