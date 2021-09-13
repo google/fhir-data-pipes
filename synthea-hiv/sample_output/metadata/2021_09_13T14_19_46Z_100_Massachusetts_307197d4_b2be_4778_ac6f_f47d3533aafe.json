@@ -1,0 +1,16 @@
+{
+  "runID": "307197d4-b2be-4778-ac6f-f47d3533aafe",
+  "seed": 123,
+  "clinicianSeed": 1631542786835,
+  "referenceTime": "20210913",
+  "version": "440c0a4\n",
+  "patientCount": 100,
+  "providerCount": 9360,
+  "payerCount": 9,
+  "javaVersion": "16-ea",
+  "runStartTime": "2021-09-13T14:19:46Z",
+  "runTimeInSeconds": 24,
+  "exporter.years_of_history": "0",
+  "state": "Massachusetts",
+  "modules": "hiv_simple"
+}

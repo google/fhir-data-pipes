@@ -92,3 +92,10 @@ nb-configuration.xml
 /dwh/venv*
 .ipynb_checkpoints/
 /dwh/__pycache__
+
+##############################
+## Synthea
+##############################
+/synthea-hiv/output**/*
+/synthea-hiv/output_ig/
+/synthea-hiv/output_ig_fix/

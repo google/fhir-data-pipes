@@ -1,0 +1,114 @@
+{
+    "resourceType": "Bundle",
+    "type": "transaction",
+    "entry": [
+        {
+            "fullUrl": "urn:uuid:2a76c0e3-1e73-2109-3d5e-8a8871fe35d7",
+            "resource": {
+                "resourceType": "Patient",
+                "id": "2a76c0e3-1e73-2109-3d5e-8a8871fe35d7",
+                "identifier": [],
+                "name": [
+                    {
+                        "use": "official",
+                        "family": "Newton",
+                        "given": [
+                            "Isaac"
+                        ],
+                        "prefix": [
+                            "Mr."
+                        ]
+                    }
+                ]
+            },
+            "request": {
+                "method": "POST",
+                "url": "Patient"
+            }
+        },
+        {
+            "fullUrl": "urn:uuid:e0f03934-1b25-6f93-e437-b554af10675e",
+            "resource": {
+                "resourceType": "Observation",
+                "id": "e0f03934-1b25-6f93-e437-b554af10675e",
+                "code": {
+                    "coding": [
+                        {
+                            "system": "http://loinc.org",
+                            "code": "159800AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+                            "display": "REVIEW OF TUBERCULOSIS SCREENING QUESTIONS"
+                        }
+                    ],
+                    "text": "REVIEW OF TUBERCULOSIS SCREENING QUESTIONS"
+                },
+                "subject": {
+                    "reference": "urn:uuid:2a76c0e3-1e73-2109-3d5e-8a8871fe35d7"
+                },
+                "encounter": {
+                    "reference": "urn:uuid:e1846945-43bb-3cfe-1faf-66cf99935c7c"
+                },
+                "valueCodeableConcept": {
+                    "coding": [
+                        {
+                            "system": "http://snomed.info/sct",
+                            "code": "159799AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+                            "display": "cough lasting more than 2 weeks"
+                        }
+                    ],
+                    "text": "cough lasting more than 2 weeks"
+                }
+            },
+            "request": {
+                "method": "POST",
+                "url": "Observation"
+            }
+        },
+        {
+            "fullUrl": "urn:uuid:e1846945-43bb-3cfe-1faf-66cf99935c7c",
+            "resource": {
+                "resourceType": "Encounter",
+                "id": "e1846945-43bb-3cfe-1faf-66cf99935c7c",
+                "identifier": [
+                    {
+                        "use": "official",
+                        "system": "https://github.com/synthetichealth/synthea",
+                        "value": "e1846945-43bb-3cfe-1faf-66cf99935c7c"
+                    }
+                ],
+                "status": "finished",
+                "class": {
+                    "system": "http://terminology.hl7.org/CodeSystem/v3-ActCode",
+                    "code": "AMB"
+                },
+                "type": [
+                    {
+                        "coding": [
+                            {
+                                "system": "http://snomed.info/sct",
+                                "code": "162673000",
+                                "display": "General examination of patient (procedure)"
+                            }
+                        ],
+                        "text": "General examination of patient (procedure)"
+                    }
+                ],
+                "subject": {
+                    "reference": "urn:uuid:2a76c0e3-1e73-2109-3d5e-8a8871fe35d7",
+                    "display": "Mr. Aaron697 Grimes165"
+                },
+                "location": [
+                    {
+                        "location": {
+                            "reference": "Location?identifier=https://github.com/synthetichealth/synthea|10d5cac8-1316-336d-8146-4e8870f8eb21",
+                            "display": "PCP63830"
+                        }
+                    }
+                ]
+            },
+            "request": {
+                "method": "POST",
+                "url": "Encounter"
+            }
+        }
+    ]
+}

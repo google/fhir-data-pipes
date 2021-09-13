@@ -1,0 +1,211 @@
+{
+    "name": "tuberculosis_treatment_started",
+    "remarks": [
+      "An HIV Submodule"
+    ],
+    "states": {
+      "Initial": {
+        "type": "Initial",
+        "name": "Initial",
+        "distributed_transition": [
+          {
+            "transition": "Ethambutol",
+            "distribution": 0.19569141251990063
+          },
+          {
+            "transition": "Streptomycin",
+            "distribution": 0.0071034938658914165
+          },
+          {
+            "transition": "Ethambutol and isoniazid",
+            "distribution": 0.0750507604183226
+          },
+          {
+            "transition": "Isoniazid / pyrazinamide / rifampin",
+            "distribution": 0.12116357718638698
+          },
+          {
+            "transition": "Pyrazinamide",
+            "distribution": 0.2628468041608701
+          },
+          {
+            "transition": "Isoniazid",
+            "distribution": 0.14098782300837098
+          },
+          {
+            "transition": "Rifampicin and isoniazid",
+            "distribution": 0.03781850687192991
+          },
+          {
+            "transition": "Rifampicin isoniazid pyrazinamide and ethambutol",
+            "distribution": 0.15933762196832743
+          }
+        ]
+      },
+      "Terminal": {
+        "type": "Terminal",
+        "name": "Terminal"
+      },
+      "Ethambutol": {
+        "type": "Observation",
+        "category": "survey",
+        "unit": "",
+        "codes": [
+          {
+            "system": "LOINC",
+            "code": "1270AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+            "display": "TUBERCULOSIS TREATMENT STARTED",
+            "value_set": ""
+          }
+        ],
+        "direct_transition": "Terminal",
+        "name": "Ethambutol",
+        "value_code": {
+          "system": "SNOMED-CT",
+          "code": "75948AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+          "display": "Ethambutol"
+        }
+      },
+      "Streptomycin": {
+        "type": "Observation",
+        "category": "survey",
+        "unit": "",
+        "codes": [
+          {
+            "system": "LOINC",
+            "code": "1270AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+            "display": "TUBERCULOSIS TREATMENT STARTED",
+            "value_set": ""
+          }
+        ],
+        "direct_transition": "Terminal",
+        "name": "Streptomycin",
+        "value_code": {
+          "system": "SNOMED-CT",
+          "code": "84360AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+          "display": "Streptomycin"
+        }
+      },
+      "Ethambutol and isoniazid": {
+        "type": "Observation",
+        "category": "survey",
+        "unit": "",
+        "codes": [
+          {
+            "system": "LOINC",
+            "code": "1270AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+            "display": "TUBERCULOSIS TREATMENT STARTED",
+            "value_set": ""
+          }
+        ],
+        "direct_transition": "Terminal",
+        "name": "Ethambutol and isoniazid",
+        "value_code": {
+          "system": "SNOMED-CT",
+          "code": "1108AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+          "display": "Ethambutol and isoniazid"
+        }
+      },
+      "Isoniazid / pyrazinamide / rifampin": {
+        "type": "Observation",
+        "category": "survey",
+        "unit": "",
+        "codes": [
+          {
+            "system": "LOINC",
+            "code": "1270AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+            "display": "TUBERCULOSIS TREATMENT STARTED",
+            "value_set": ""
+          }
+        ],
+        "direct_transition": "Terminal",
+        "name": "Isoniazid / pyrazinamide / rifampin",
+        "value_code": {
+          "system": "SNOMED-CT",
+          "code": "768AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+          "display": "Isoniazid / pyrazinamide / rifampin"
+        }
+      },
+      "Pyrazinamide": {
+        "type": "Observation",
+        "category": "survey",
+        "unit": "",
+        "codes": [
+          {
+            "system": "LOINC",
+            "code": "1270AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+            "display": "TUBERCULOSIS TREATMENT STARTED",
+            "value_set": ""
+          }
+        ],
+        "direct_transition": "Terminal",
+        "name": "Pyrazinamide",
+        "value_code": {
+          "system": "SNOMED-CT",
+          "code": "82900AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+          "display": "Pyrazinamide"
+        }
+      },
+      "Isoniazid": {
+        "type": "Observation",
+        "category": "survey",
+        "unit": "",
+        "codes": [
+          {
+            "system": "LOINC",
+            "code": "1270AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+            "display": "TUBERCULOSIS TREATMENT STARTED",
+            "value_set": ""
+          }
+        ],
+        "direct_transition": "Terminal",
+        "name": "Isoniazid",
+        "value_code": {
+          "system": "SNOMED-CT",
+          "code": "78280AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+          "display": "Isoniazid"
+        }
+      },
+      "Rifampicin and isoniazid": {
+        "type": "Observation",
+        "category": "survey",
+        "unit": "",
+        "codes": [
+          {
+            "system": "LOINC",
+            "code": "1270AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+            "display": "TUBERCULOSIS TREATMENT STARTED",
+            "value_set": ""
+          }
+        ],
+        "direct_transition": "Terminal",
+        "name": "Rifampicin and isoniazid",
+        "value_code": {
+          "system": "SNOMED-CT",
+          "code": "1194AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+          "display": "Rifampicin and isoniazid"
+        }
+      },
+      "Rifampicin isoniazid pyrazinamide and ethambutol": {
+        "type": "Observation",
+        "category": "survey",
+        "unit": "",
+        "codes": [
+          {
+            "system": "LOINC",
+            "code": "1270AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+            "display": "TUBERCULOSIS TREATMENT STARTED",
+            "value_set": ""
+          }
+        ],
+        "direct_transition": "Terminal",
+        "name": "Rifampicin isoniazid pyrazinamide and ethambutol",
+        "value_code": {
+          "system": "SNOMED-CT",
+          "code": "1131AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+          "display": "Rifampicin isoniazid pyrazinamide and ethambutol"
+        }
+      }
+    },
+    "gmf_version": 2
+  }
