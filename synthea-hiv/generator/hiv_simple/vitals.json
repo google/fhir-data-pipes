@@ -1,0 +1,133 @@
+{
+  "name": "vitals",
+  "remarks": [
+    "A blank module"
+  ],
+  "states": {
+    "Initial": {
+      "type": "Initial",
+      "direct_transition": "TEMPERATURE",
+      "name": "Initial"
+    },
+    "Terminal": {
+      "type": "Terminal",
+      "name": "Terminal"
+    },
+    "TEMPERATURE": {
+      "type": "Observation",
+      "category": "survey",
+      "unit": "C",
+      "codes": [
+        {
+          "system": "LOINC",
+          "code": "5088AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+          "display": "TEMPERATURE",
+          "value_set": ""
+        }
+      ],
+      "distribution": {
+        "kind": "GAUSSIAN",
+        "round": false,
+        "parameters": {
+          "mean": 37,
+          "standardDeviation": 1
+        }
+      },
+      "direct_transition": "BLOOD OXYGEN SATURATION",
+      "name": "TEMPERATURE"
+    },
+    "BLOOD OXYGEN SATURATION": {
+      "type": "Observation",
+      "category": "survey",
+      "unit": "%",
+      "codes": [
+        {
+          "system": "LOINC",
+          "code": "5092AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+          "display": "BLOOD OXYGEN SATURATION",
+          "value_set": ""
+        }
+      ],
+      "distribution": {
+        "kind": "UNIFORM",
+        "round": false,
+        "parameters": {
+          "high": 99,
+          "low": 70
+        }
+      },
+      "direct_transition": "SYSTOLIC BLOOD PRESSURE ",
+      "name": "BLOOD OXYGEN SATURATION"
+    },
+    "SYSTOLIC BLOOD PRESSURE ": {
+      "type": "Observation",
+      "category": "survey",
+      "unit": "mmHg",
+      "codes": [
+        {
+          "system": "LOINC",
+          "code": "5085AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+          "display": "LOINC Code",
+          "value_set": ""
+        }
+      ],
+      "distribution": {
+        "kind": "UNIFORM",
+        "round": false,
+        "parameters": {
+          "high": 250,
+          "low": 100
+        }
+      },
+      "direct_transition": " DIASTOLIC BLOOD PRESSURE",
+      "name": "SYSTOLIC BLOOD PRESSURE "
+    },
+    " DIASTOLIC BLOOD PRESSURE": {
+      "type": "Observation",
+      "category": "survey",
+      "unit": "mmHg",
+      "codes": [
+        {
+          "system": "LOINC",
+          "code": "5085AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+          "display": "LOINC Code",
+          "value_set": ""
+        }
+      ],
+      "distribution": {
+        "kind": "UNIFORM",
+        "round": false,
+        "parameters": {
+          "high": 250,
+          "low": 50
+        }
+      },
+      "name": " DIASTOLIC BLOOD PRESSURE",
+      "direct_transition": "PULSE"
+    },
+    "PULSE": {
+      "type": "Observation",
+      "category": "survey",
+      "unit": "beats/minute",
+      "codes": [
+        {
+          "system": "LOINC",
+          "code": "5087AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+          "display": "PULSE",
+          "value_set": ""
+        }
+      ],
+      "distribution": {
+        "kind": "UNIFORM",
+        "round": false,
+        "parameters": {
+          "high": 200,
+          "low": 50
+        }
+      },
+      "direct_transition": "Terminal",
+      "name": "PULSE"
+    }
+  },
+  "gmf_version": 2
+}

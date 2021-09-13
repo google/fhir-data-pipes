@@ -1,0 +1,183 @@
+{
+  "name": "review_of_tuberculosis_screening_questions",
+  "remarks": [
+    "An HIV Submodule"
+  ],
+  "states": {
+    "Initial": {
+      "type": "Initial",
+      "name": "Initial",
+      "distributed_transition": [
+        {
+          "transition": "Fever lasting more than three weeks",
+          "distribution": 0.08086316202698962
+        },
+        {
+          "transition": "Simple_1",
+          "distribution": 0.9191368379730104
+        }
+      ]
+    },
+    "Fever lasting more than three weeks": {
+      "type": "Observation",
+      "category": "survey",
+      "unit": "",
+      "codes": [
+        {
+          "system": "LOINC",
+          "code": "159800AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+          "display": "REVIEW OF TUBERCULOSIS SCREENING QUESTIONS",
+          "value_set": ""
+        }
+      ],
+      "direct_transition": "Simple_1",
+      "name": "Fever lasting more than three weeks",
+      "value_code": {
+        "system": "SNOMED-CT",
+        "code": "1494AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+        "display": "Fever lasting more than three weeks"
+      }
+    },
+    "Simple_1": {
+      "type": "Simple",
+      "name": "Simple_1",
+      "distributed_transition": [
+        {
+          "transition": "cough lasting more than 2 weeks",
+          "distribution": 0.7915836615778541
+        },
+        {
+          "transition": "Simple_2",
+          "distribution": 0.2084163384221459
+        }
+      ]
+    },
+    "cough lasting more than 2 weeks": {
+      "type": "Observation",
+      "category": "survey",
+      "unit": "",
+      "codes": [
+        {
+          "system": "LOINC",
+          "code": "159800AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+          "display": "REVIEW OF TUBERCULOSIS SCREENING QUESTIONS",
+          "value_set": ""
+        }
+      ],
+      "direct_transition": "Simple_2",
+      "name": "cough lasting more than 2 weeks",
+      "value_code": {
+        "system": "SNOMED-CT",
+        "code": "159799AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+        "display": "cough lasting more than 2 weeks"
+      }
+    },
+    "Simple_2": {
+      "type": "Simple",
+      "name": "Simple_2",
+      "distributed_transition": [
+        {
+          "transition": "Night sweats",
+          "distribution": 0.2642643979765048
+        },
+        {
+          "transition": "Simple_3",
+          "distribution": 0.7357356020234952
+        }
+      ]
+    },
+    "Night sweats": {
+      "type": "Observation",
+      "category": "survey",
+      "unit": "",
+      "codes": [
+        {
+          "system": "LOINC",
+          "code": "159800AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+          "display": "REVIEW OF TUBERCULOSIS SCREENING QUESTIONS",
+          "value_set": ""
+        }
+      ],
+      "direct_transition": "Simple_3",
+      "name": "Night sweats",
+      "value_code": {
+        "system": "SNOMED-CT",
+        "code": "133027AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+        "display": "Night sweats"
+      }
+    },
+    "Simple_3": {
+      "type": "Simple",
+      "name": "Simple_3",
+      "distributed_transition": [
+        {
+          "transition": "Hemoptysis",
+          "distribution": 0.6118516676097222
+        },
+        {
+          "transition": "Simple_4",
+          "distribution": 0.3881483323902778
+        }
+      ]
+    },
+    "Hemoptysis": {
+      "type": "Observation",
+      "category": "survey",
+      "unit": "",
+      "codes": [
+        {
+          "system": "LOINC",
+          "code": "159800AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+          "display": "REVIEW OF TUBERCULOSIS SCREENING QUESTIONS",
+          "value_set": ""
+        }
+      ],
+      "direct_transition": "Simple_4",
+      "name": "Hemoptysis",
+      "value_code": {
+        "system": "SNOMED-CT",
+        "code": "138905AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+        "display": "Hemoptysis"
+      }
+    },
+    "Simple_4": {
+      "type": "Simple",
+      "name": "Simple_4",
+      "distributed_transition": [
+        {
+          "transition": "Fever",
+          "distribution": 0.9709413479634047
+        },
+        {
+          "transition": "Simple_5",
+          "distribution": 0.0290586520365953
+        }
+      ]
+    },
+    "Fever": {
+      "type": "Observation",
+      "category": "survey",
+      "unit": "",
+      "codes": [
+        {
+          "system": "LOINC",
+          "code": "159800AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+          "display": "REVIEW OF TUBERCULOSIS SCREENING QUESTIONS",
+          "value_set": ""
+        }
+      ],
+      "direct_transition": "Simple_5",
+      "name": "Fever",
+      "value_code": {
+        "system": "SNOMED-CT",
+        "code": "140238AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+        "display": "Fever"
+      }
+    },
+    "Simple_5": {
+      "type": "Terminal",
+      "name": "Simple_5"
+    }
+  },
+  "gmf_version": 2
+}

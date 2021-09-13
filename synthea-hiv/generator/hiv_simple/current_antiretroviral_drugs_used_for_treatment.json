@@ -1,0 +1,489 @@
+{
+  "name": "current_antiretroviral_drugs_used_for_treatment",
+  "remarks": [
+    "An HIV Submodule"
+  ],
+  "states": {
+    "Initial": {
+      "type": "Initial",
+      "name": "Initial",
+      "distributed_transition": [
+        {
+          "transition": "Didanosine",
+          "distribution": 0.778542771301166
+        },
+        {
+          "transition": "Simple_1",
+          "distribution": 0.221457228698834
+        }
+      ]
+    },
+    "Didanosine": {
+      "type": "Observation",
+      "category": "survey",
+      "unit": "",
+      "codes": [
+        {
+          "system": "LOINC",
+          "code": "1088AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+          "display": "CURRENT ANTIRETROVIRAL DRUGS USED FOR TREATMENT",
+          "value_set": ""
+        }
+      ],
+      "direct_transition": "Simple_1",
+      "name": "Didanosine",
+      "value_code": {
+        "system": "SNOMED-CT",
+        "code": "74807AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+        "display": "Didanosine"
+      }
+    },
+    "Simple_1": {
+      "type": "Simple",
+      "name": "Simple_1",
+      "distributed_transition": [
+        {
+          "transition": "Lamivudine",
+          "distribution": 0.15388545542101728
+        },
+        {
+          "transition": "Simple_2",
+          "distribution": 0.8461145445789827
+        }
+      ]
+    },
+    "Lamivudine": {
+      "type": "Observation",
+      "category": "survey",
+      "unit": "",
+      "codes": [
+        {
+          "system": "LOINC",
+          "code": "1088AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+          "display": "CURRENT ANTIRETROVIRAL DRUGS USED FOR TREATMENT",
+          "value_set": ""
+        }
+      ],
+      "direct_transition": "Simple_2",
+      "name": "Lamivudine",
+      "value_code": {
+        "system": "SNOMED-CT",
+        "code": "78643AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+        "display": "Lamivudine"
+      }
+    },
+    "Simple_2": {
+      "type": "Simple",
+      "name": "Simple_2",
+      "distributed_transition": [
+        {
+          "transition": "Efavirenz / emtricitabine / tenofovir disoproxil",
+          "distribution": 0.548707523804049
+        },
+        {
+          "transition": "Simple_3",
+          "distribution": 0.45129247619595103
+        }
+      ]
+    },
+    "Efavirenz / emtricitabine / tenofovir disoproxil": {
+      "type": "Observation",
+      "category": "survey",
+      "unit": "",
+      "codes": [
+        {
+          "system": "LOINC",
+          "code": "1088AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+          "display": "CURRENT ANTIRETROVIRAL DRUGS USED FOR TREATMENT",
+          "value_set": ""
+        }
+      ],
+      "direct_transition": "Simple_3",
+      "name": "Efavirenz / emtricitabine / tenofovir disoproxil",
+      "value_code": {
+        "system": "SNOMED-CT",
+        "code": "104565AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+        "display": "Efavirenz / emtricitabine / tenofovir disoproxil"
+      }
+    },
+    "Simple_3": {
+      "type": "Simple",
+      "name": "Simple_3",
+      "distributed_transition": [
+        {
+          "transition": "Lamivudine / zidovudine",
+          "distribution": 0.8030893047279324
+        },
+        {
+          "transition": "Simple_4",
+          "distribution": 0.19691069527206762
+        }
+      ]
+    },
+    "Lamivudine / zidovudine": {
+      "type": "Observation",
+      "category": "survey",
+      "unit": "",
+      "codes": [
+        {
+          "system": "LOINC",
+          "code": "1088AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+          "display": "CURRENT ANTIRETROVIRAL DRUGS USED FOR TREATMENT",
+          "value_set": ""
+        }
+      ],
+      "direct_transition": "Simple_4",
+      "name": "Lamivudine / zidovudine",
+      "value_code": {
+        "system": "SNOMED-CT",
+        "code": "630AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+        "display": "Lamivudine / zidovudine"
+      }
+    },
+    "Simple_4": {
+      "type": "Simple",
+      "name": "Simple_4",
+      "distributed_transition": [
+        {
+          "transition": "Nevirapine",
+          "distribution": 0.8408433160797063
+        },
+        {
+          "transition": "Simple_5",
+          "distribution": 0.1591566839202937
+        }
+      ]
+    },
+    "Nevirapine": {
+      "type": "Observation",
+      "category": "survey",
+      "unit": "",
+      "codes": [
+        {
+          "system": "LOINC",
+          "code": "1088AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+          "display": "CURRENT ANTIRETROVIRAL DRUGS USED FOR TREATMENT",
+          "value_set": ""
+        }
+      ],
+      "direct_transition": "Simple_5",
+      "name": "Nevirapine",
+      "value_code": {
+        "system": "SNOMED-CT",
+        "code": "80586AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+        "display": "Nevirapine"
+      }
+    },
+    "Simple_5": {
+      "type": "Simple",
+      "name": "Simple_5",
+      "distributed_transition": [
+        {
+          "transition": "Lamivudine / nevirapine / zidovudine",
+          "distribution": 0.36732783385143686
+        },
+        {
+          "transition": "Simple_6",
+          "distribution": 0.6326721661485631
+        }
+      ]
+    },
+    "Lamivudine / nevirapine / zidovudine": {
+      "type": "Observation",
+      "category": "survey",
+      "unit": "",
+      "codes": [
+        {
+          "system": "LOINC",
+          "code": "1088AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+          "display": "CURRENT ANTIRETROVIRAL DRUGS USED FOR TREATMENT",
+          "value_set": ""
+        }
+      ],
+      "direct_transition": "Simple_6",
+      "name": "Lamivudine / nevirapine / zidovudine",
+      "value_code": {
+        "system": "SNOMED-CT",
+        "code": "1652AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+        "display": "Lamivudine / nevirapine / zidovudine"
+      }
+    },
+    "Simple_6": {
+      "type": "Simple",
+      "name": "Simple_6",
+      "distributed_transition": [
+        {
+          "transition": "Tenofovir",
+          "distribution": 0.9449588105981853
+        },
+        {
+          "transition": "Simple_7",
+          "distribution": 0.05504118940181468
+        }
+      ]
+    },
+    "Tenofovir": {
+      "type": "Observation",
+      "category": "survey",
+      "unit": "",
+      "codes": [
+        {
+          "system": "LOINC",
+          "code": "1088AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+          "display": "CURRENT ANTIRETROVIRAL DRUGS USED FOR TREATMENT",
+          "value_set": ""
+        }
+      ],
+      "direct_transition": "Simple_7",
+      "name": "Tenofovir",
+      "value_code": {
+        "system": "SNOMED-CT",
+        "code": "84795AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+        "display": "Tenofovir"
+      }
+    },
+    "Simple_7": {
+      "type": "Simple",
+      "name": "Simple_7",
+      "distributed_transition": [
+        {
+          "transition": "Other antiretroviral drug",
+          "distribution": 0.5186895051350292
+        },
+        {
+          "transition": "Simple_8",
+          "distribution": 0.4813104948649708
+        }
+      ]
+    },
+    "Other antiretroviral drug": {
+      "type": "Observation",
+      "category": "survey",
+      "unit": "",
+      "codes": [
+        {
+          "system": "LOINC",
+          "code": "1088AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+          "display": "CURRENT ANTIRETROVIRAL DRUGS USED FOR TREATMENT",
+          "value_set": ""
+        }
+      ],
+      "direct_transition": "Simple_8",
+      "name": "Other antiretroviral drug",
+      "value_code": {
+        "system": "SNOMED-CT",
+        "code": "5424AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+        "display": "Other antiretroviral drug"
+      }
+    },
+    "Simple_8": {
+      "type": "Simple",
+      "name": "Simple_8",
+      "distributed_transition": [
+        {
+          "transition": "Zidovudine",
+          "distribution": 0.0015573730478787295
+        },
+        {
+          "transition": "Simple_9",
+          "distribution": 0.9984426269521213
+        }
+      ]
+    },
+    "Zidovudine": {
+      "type": "Observation",
+      "category": "survey",
+      "unit": "",
+      "codes": [
+        {
+          "system": "LOINC",
+          "code": "1088AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+          "display": "CURRENT ANTIRETROVIRAL DRUGS USED FOR TREATMENT",
+          "value_set": ""
+        }
+      ],
+      "direct_transition": "Simple_9",
+      "name": "Zidovudine",
+      "value_code": {
+        "system": "SNOMED-CT",
+        "code": "86663AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+        "display": "Zidovudine"
+      }
+    },
+    "Simple_9": {
+      "type": "Simple",
+      "name": "Simple_9",
+      "distributed_transition": [
+        {
+          "transition": "Emtricitabine / tenofovir disoproxil",
+          "distribution": 0.8211729100996459
+        },
+        {
+          "transition": "Simple_10",
+          "distribution": 0.17882708990035412
+        }
+      ]
+    },
+    "Emtricitabine / tenofovir disoproxil": {
+      "type": "Observation",
+      "category": "survey",
+      "unit": "",
+      "codes": [
+        {
+          "system": "LOINC",
+          "code": "1088AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+          "display": "CURRENT ANTIRETROVIRAL DRUGS USED FOR TREATMENT",
+          "value_set": ""
+        }
+      ],
+      "direct_transition": "Simple_10",
+      "name": "Emtricitabine / tenofovir disoproxil",
+      "value_code": {
+        "system": "SNOMED-CT",
+        "code": "104567AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+        "display": "Emtricitabine / tenofovir disoproxil"
+      }
+    },
+    "Simple_10": {
+      "type": "Simple",
+      "name": "Simple_10",
+      "distributed_transition": [
+        {
+          "transition": "Efavirenz",
+          "distribution": 0.36993362405647134
+        },
+        {
+          "transition": "Simple_11",
+          "distribution": 0.6300663759435287
+        }
+      ]
+    },
+    "Efavirenz": {
+      "type": "Observation",
+      "category": "survey",
+      "unit": "",
+      "codes": [
+        {
+          "system": "LOINC",
+          "code": "1088AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+          "display": "CURRENT ANTIRETROVIRAL DRUGS USED FOR TREATMENT",
+          "value_set": ""
+        }
+      ],
+      "direct_transition": "Simple_11",
+      "name": "Efavirenz",
+      "value_code": {
+        "system": "SNOMED-CT",
+        "code": "75523AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+        "display": "Efavirenz"
+      }
+    },
+    "Simple_11": {
+      "type": "Simple",
+      "name": "Simple_11",
+      "distributed_transition": [
+        {
+          "transition": "Abacavir",
+          "distribution": 0.364109594799076
+        },
+        {
+          "transition": "Simple_12",
+          "distribution": 0.635890405200924
+        }
+      ]
+    },
+    "Abacavir": {
+      "type": "Observation",
+      "category": "survey",
+      "unit": "",
+      "codes": [
+        {
+          "system": "LOINC",
+          "code": "1088AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+          "display": "CURRENT ANTIRETROVIRAL DRUGS USED FOR TREATMENT",
+          "value_set": ""
+        }
+      ],
+      "direct_transition": "Simple_12",
+      "name": "Abacavir",
+      "value_code": {
+        "system": "SNOMED-CT",
+        "code": "70056AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+        "display": "Abacavir"
+      }
+    },
+    "Simple_12": {
+      "type": "Simple",
+      "name": "Simple_12",
+      "distributed_transition": [
+        {
+          "transition": "Stavudine",
+          "distribution": 0.3472888813234364
+        },
+        {
+          "transition": "Simple_13",
+          "distribution": 0.6527111186765636
+        }
+      ]
+    },
+    "Stavudine": {
+      "type": "Observation",
+      "category": "survey",
+      "unit": "",
+      "codes": [
+        {
+          "system": "LOINC",
+          "code": "1088AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+          "display": "CURRENT ANTIRETROVIRAL DRUGS USED FOR TREATMENT",
+          "value_set": ""
+        }
+      ],
+      "direct_transition": "Simple_13",
+      "name": "Stavudine",
+      "value_code": {
+        "system": "SNOMED-CT",
+        "code": "84309AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+        "display": "Stavudine"
+      }
+    },
+    "Simple_13": {
+      "type": "Simple",
+      "name": "Simple_13",
+      "distributed_transition": [
+        {
+          "transition": "Lopinavir / ritonavir",
+          "distribution": 0.11210190205893689
+        },
+        {
+          "transition": "Simple_14",
+          "distribution": 0.8878980979410631
+        }
+      ]
+    },
+    "Lopinavir / ritonavir": {
+      "type": "Observation",
+      "category": "survey",
+      "unit": "",
+      "codes": [
+        {
+          "system": "LOINC",
+          "code": "1088AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+          "display": "CURRENT ANTIRETROVIRAL DRUGS USED FOR TREATMENT",
+          "value_set": ""
+        }
+      ],
+      "direct_transition": "Simple_14",
+      "name": "Lopinavir / ritonavir",
+      "value_code": {
+        "system": "SNOMED-CT",
+        "code": "794AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+        "display": "Lopinavir / ritonavir"
+      }
+    },
+    "Simple_14": {
+      "type": "Terminal",
+      "name": "Simple_14"
+    }
+  },
+  "gmf_version": 2
+}

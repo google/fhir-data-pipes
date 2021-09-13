@@ -1,0 +1,115 @@
+{
+  "name": "hiv_dna_polymerase_chain_reaction_qualitative",
+  "remarks": [
+    "An HIV Submodule"
+  ],
+  "states": {
+    "Initial": {
+      "type": "Initial",
+      "name": "Initial",
+      "distributed_transition": [
+        {
+          "transition": "Poor sample quality",
+          "distribution": 0.12969722995640234
+        },
+        {
+          "transition": "Negative",
+          "distribution": 0.15659586064516756
+        },
+        {
+          "transition": "Positive",
+          "distribution": 0.2569342498804202
+        },
+        {
+          "transition": "Indeterminate",
+          "distribution": 0.4567726595180099
+        }
+      ]
+    },
+    "Terminal": {
+      "type": "Terminal",
+      "name": "Terminal"
+    },
+    "Poor sample quality": {
+      "type": "Observation",
+      "category": "survey",
+      "unit": "",
+      "codes": [
+        {
+          "system": "LOINC",
+          "code": "1030AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+          "display": "HIV DNA POLYMERASE CHAIN REACTION, QUALITATIVE",
+          "value_set": ""
+        }
+      ],
+      "direct_transition": "Terminal",
+      "name": "Poor sample quality",
+      "value_code": {
+        "system": "SNOMED-CT",
+        "code": "1304AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+        "display": "Poor sample quality"
+      }
+    },
+    "Negative": {
+      "type": "Observation",
+      "category": "survey",
+      "unit": "",
+      "codes": [
+        {
+          "system": "LOINC",
+          "code": "1030AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+          "display": "HIV DNA POLYMERASE CHAIN REACTION, QUALITATIVE",
+          "value_set": ""
+        }
+      ],
+      "direct_transition": "Terminal",
+      "name": "Negative",
+      "value_code": {
+        "system": "SNOMED-CT",
+        "code": "664AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+        "display": "Negative"
+      }
+    },
+    "Positive": {
+      "type": "Observation",
+      "category": "survey",
+      "unit": "",
+      "codes": [
+        {
+          "system": "LOINC",
+          "code": "1030AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+          "display": "HIV DNA POLYMERASE CHAIN REACTION, QUALITATIVE",
+          "value_set": ""
+        }
+      ],
+      "direct_transition": "Terminal",
+      "name": "Positive",
+      "value_code": {
+        "system": "SNOMED-CT",
+        "code": "703AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+        "display": "Positive"
+      }
+    },
+    "Indeterminate": {
+      "type": "Observation",
+      "category": "survey",
+      "unit": "",
+      "codes": [
+        {
+          "system": "LOINC",
+          "code": "1030AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+          "display": "HIV DNA POLYMERASE CHAIN REACTION, QUALITATIVE",
+          "value_set": ""
+        }
+      ],
+      "direct_transition": "Terminal",
+      "name": "Indeterminate",
+      "value_code": {
+        "system": "SNOMED-CT",
+        "code": "1138AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+        "display": "Indeterminate"
+      }
+    }
+  },
+  "gmf_version": 2
+}

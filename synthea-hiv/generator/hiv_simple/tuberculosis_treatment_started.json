@@ -1,0 +1,285 @@
+{
+  "name": "tuberculosis_treatment_started",
+  "remarks": [
+    "An HIV Submodule"
+  ],
+  "states": {
+    "Initial": {
+      "type": "Initial",
+      "name": "Initial",
+      "distributed_transition": [
+        {
+          "transition": "Rifampicin isoniazid pyrazinamide and ethambutol",
+          "distribution": 0.13842129537352754
+        },
+        {
+          "transition": "Simple_1",
+          "distribution": 0.8615787046264725
+        }
+      ]
+    },
+    "Rifampicin isoniazid pyrazinamide and ethambutol": {
+      "type": "Observation",
+      "category": "survey",
+      "unit": "",
+      "codes": [
+        {
+          "system": "LOINC",
+          "code": "1270AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+          "display": "TUBERCULOSIS TREATMENT STARTED",
+          "value_set": ""
+        }
+      ],
+      "direct_transition": "Simple_1",
+      "name": "Rifampicin isoniazid pyrazinamide and ethambutol",
+      "value_code": {
+        "system": "SNOMED-CT",
+        "code": "1131AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+        "display": "Rifampicin isoniazid pyrazinamide and ethambutol"
+      }
+    },
+    "Simple_1": {
+      "type": "Simple",
+      "name": "Simple_1",
+      "distributed_transition": [
+        {
+          "transition": "Rifampicin and isoniazid",
+          "distribution": 0.41007814404533127
+        },
+        {
+          "transition": "Simple_2",
+          "distribution": 0.5899218559546687
+        }
+      ]
+    },
+    "Rifampicin and isoniazid": {
+      "type": "Observation",
+      "category": "survey",
+      "unit": "",
+      "codes": [
+        {
+          "system": "LOINC",
+          "code": "1270AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+          "display": "TUBERCULOSIS TREATMENT STARTED",
+          "value_set": ""
+        }
+      ],
+      "direct_transition": "Simple_2",
+      "name": "Rifampicin and isoniazid",
+      "value_code": {
+        "system": "SNOMED-CT",
+        "code": "1194AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+        "display": "Rifampicin and isoniazid"
+      }
+    },
+    "Simple_2": {
+      "type": "Simple",
+      "name": "Simple_2",
+      "distributed_transition": [
+        {
+          "transition": "Isoniazid",
+          "distribution": 0.21585787943231194
+        },
+        {
+          "transition": "Simple_3",
+          "distribution": 0.7841421205676881
+        }
+      ]
+    },
+    "Isoniazid": {
+      "type": "Observation",
+      "category": "survey",
+      "unit": "",
+      "codes": [
+        {
+          "system": "LOINC",
+          "code": "1270AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+          "display": "TUBERCULOSIS TREATMENT STARTED",
+          "value_set": ""
+        }
+      ],
+      "direct_transition": "Simple_3",
+      "name": "Isoniazid",
+      "value_code": {
+        "system": "SNOMED-CT",
+        "code": "78280AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+        "display": "Isoniazid"
+      }
+    },
+    "Simple_3": {
+      "type": "Simple",
+      "name": "Simple_3",
+      "distributed_transition": [
+        {
+          "transition": "Pyrazinamide",
+          "distribution": 0.8752633190446796
+        },
+        {
+          "transition": "Simple_4",
+          "distribution": 0.12473668095532042
+        }
+      ]
+    },
+    "Pyrazinamide": {
+      "type": "Observation",
+      "category": "survey",
+      "unit": "",
+      "codes": [
+        {
+          "system": "LOINC",
+          "code": "1270AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+          "display": "TUBERCULOSIS TREATMENT STARTED",
+          "value_set": ""
+        }
+      ],
+      "direct_transition": "Simple_4",
+      "name": "Pyrazinamide",
+      "value_code": {
+        "system": "SNOMED-CT",
+        "code": "82900AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+        "display": "Pyrazinamide"
+      }
+    },
+    "Simple_4": {
+      "type": "Simple",
+      "name": "Simple_4",
+      "distributed_transition": [
+        {
+          "transition": "Isoniazid / pyrazinamide / rifampin",
+          "distribution": 0.7466293204731503
+        },
+        {
+          "transition": "Simple_5",
+          "distribution": 0.25337067952684966
+        }
+      ]
+    },
+    "Isoniazid / pyrazinamide / rifampin": {
+      "type": "Observation",
+      "category": "survey",
+      "unit": "",
+      "codes": [
+        {
+          "system": "LOINC",
+          "code": "1270AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+          "display": "TUBERCULOSIS TREATMENT STARTED",
+          "value_set": ""
+        }
+      ],
+      "direct_transition": "Simple_5",
+      "name": "Isoniazid / pyrazinamide / rifampin",
+      "value_code": {
+        "system": "SNOMED-CT",
+        "code": "768AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+        "display": "Isoniazid / pyrazinamide / rifampin"
+      }
+    },
+    "Simple_5": {
+      "type": "Simple",
+      "name": "Simple_5",
+      "distributed_transition": [
+        {
+          "transition": "Ethambutol and isoniazid",
+          "distribution": 0.5760540393881843
+        },
+        {
+          "transition": "Simple_6",
+          "distribution": 0.42394596061181566
+        }
+      ]
+    },
+    "Ethambutol and isoniazid": {
+      "type": "Observation",
+      "category": "survey",
+      "unit": "",
+      "codes": [
+        {
+          "system": "LOINC",
+          "code": "1270AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+          "display": "TUBERCULOSIS TREATMENT STARTED",
+          "value_set": ""
+        }
+      ],
+      "direct_transition": "Simple_6",
+      "name": "Ethambutol and isoniazid",
+      "value_code": {
+        "system": "SNOMED-CT",
+        "code": "1108AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+        "display": "Ethambutol and isoniazid"
+      }
+    },
+    "Simple_6": {
+      "type": "Simple",
+      "name": "Simple_6",
+      "distributed_transition": [
+        {
+          "transition": "Streptomycin",
+          "distribution": 0.3712762718704463
+        },
+        {
+          "transition": "Simple_7",
+          "distribution": 0.6287237281295537
+        }
+      ]
+    },
+    "Streptomycin": {
+      "type": "Observation",
+      "category": "survey",
+      "unit": "",
+      "codes": [
+        {
+          "system": "LOINC",
+          "code": "1270AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+          "display": "TUBERCULOSIS TREATMENT STARTED",
+          "value_set": ""
+        }
+      ],
+      "direct_transition": "Simple_7",
+      "name": "Streptomycin",
+      "value_code": {
+        "system": "SNOMED-CT",
+        "code": "84360AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+        "display": "Streptomycin"
+      }
+    },
+    "Simple_7": {
+      "type": "Simple",
+      "name": "Simple_7",
+      "distributed_transition": [
+        {
+          "transition": "Ethambutol",
+          "distribution": 0.00706650885696003
+        },
+        {
+          "transition": "Simple_8",
+          "distribution": 0.99293349114304
+        }
+      ]
+    },
+    "Ethambutol": {
+      "type": "Observation",
+      "category": "survey",
+      "unit": "",
+      "codes": [
+        {
+          "system": "LOINC",
+          "code": "1270AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+          "display": "TUBERCULOSIS TREATMENT STARTED",
+          "value_set": ""
+        }
+      ],
+      "direct_transition": "Simple_8",
+      "name": "Ethambutol",
+      "value_code": {
+        "system": "SNOMED-CT",
+        "code": "75948AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+        "display": "Ethambutol"
+      }
+    },
+    "Simple_8": {
+      "type": "Terminal",
+      "name": "Simple_8"
+    }
+  },
+  "gmf_version": 2
+}

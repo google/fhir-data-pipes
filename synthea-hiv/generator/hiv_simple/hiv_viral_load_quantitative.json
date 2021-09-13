@@ -1,0 +1,115 @@
+{
+  "name": "hiv_viral_load_quantitative",
+  "remarks": [
+    "An HIV Submodule"
+  ],
+  "states": {
+    "Initial": {
+      "type": "Initial",
+      "name": "Initial",
+      "distributed_transition": [
+        {
+          "transition": "Not detected",
+          "distribution": 0.04951800184018144
+        },
+        {
+          "transition": "Poor sample quality",
+          "distribution": 0.6542706961766322
+        },
+        {
+          "transition": "Detected",
+          "distribution": 0.03295244233326681
+        },
+        {
+          "transition": "Beyond detectable limit",
+          "distribution": 0.26325885964991946
+        }
+      ]
+    },
+    "Terminal": {
+      "type": "Terminal",
+      "name": "Terminal"
+    },
+    "Not detected": {
+      "type": "Observation",
+      "category": "survey",
+      "unit": "",
+      "codes": [
+        {
+          "system": "LOINC",
+          "code": "856AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+          "display": "HIV VIRAL LOAD, QUANTITATIVE",
+          "value_set": ""
+        }
+      ],
+      "direct_transition": "Terminal",
+      "name": "Not detected",
+      "value_code": {
+        "system": "SNOMED-CT",
+        "code": "1302AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+        "display": "Not detected"
+      }
+    },
+    "Poor sample quality": {
+      "type": "Observation",
+      "category": "survey",
+      "unit": "",
+      "codes": [
+        {
+          "system": "LOINC",
+          "code": "856AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+          "display": "HIV VIRAL LOAD, QUANTITATIVE",
+          "value_set": ""
+        }
+      ],
+      "direct_transition": "Terminal",
+      "name": "Poor sample quality",
+      "value_code": {
+        "system": "SNOMED-CT",
+        "code": "1304AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+        "display": "Poor sample quality"
+      }
+    },
+    "Detected": {
+      "type": "Observation",
+      "category": "survey",
+      "unit": "",
+      "codes": [
+        {
+          "system": "LOINC",
+          "code": "856AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+          "display": "HIV VIRAL LOAD, QUANTITATIVE",
+          "value_set": ""
+        }
+      ],
+      "direct_transition": "Terminal",
+      "name": "Detected",
+      "value_code": {
+        "system": "SNOMED-CT",
+        "code": "1301AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+        "display": "Detected"
+      }
+    },
+    "Beyond detectable limit": {
+      "type": "Observation",
+      "category": "survey",
+      "unit": "",
+      "codes": [
+        {
+          "system": "LOINC",
+          "code": "856AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+          "display": "HIV VIRAL LOAD, QUANTITATIVE",
+          "value_set": ""
+        }
+      ],
+      "direct_transition": "Terminal",
+      "name": "Beyond detectable limit",
+      "value_code": {
+        "system": "SNOMED-CT",
+        "code": "1306AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+        "display": "Beyond detectable limit"
+      }
+    }
+  },
+  "gmf_version": 2
+}
