@@ -89,6 +89,8 @@ nb-configuration.xml
 ##############################
 ## Python
 ##############################
-/dwh/venv*
+**venv*
 .ipynb_checkpoints/
-/dwh/__pycache__
+__pycache__
+**.pyc
+**__pycache__**
