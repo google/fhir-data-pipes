@@ -50,24 +50,16 @@ replay the new events with no more interactions with OpenMRS.
 
 ## Running end-to-end tests
 
-Parquet tools library is used to inspect parquet files. The jar file has been
-included in the project under `/e2e-tests/parquet-tools-1.11.1.jar`
+When a Pull Request is submitted, it triggers a request to Google-owned project running [Cloud Build](https://cloud.google.com/build) to run the build config file defined in [`cloudbuild.yaml`](../cloudbuild.yaml). The CI pipeline can also be run locally, using the Cloud Build local builder. To setup the local builder, follow the instructions [here](https://cloud.google.com/build/docs/build-debug-locally); you will need Docker, and the Google Cloud SDK to install the local builder. Once the local builder is installed, do the following:
 
-To regenerate this jar file:
+1. Stop any running `openmrs`, `openmrs-fhir-mysql`, and `sink-server` containers by running:
 
-1.  Clone [parquet-mr](https://github.com/apache/parquet-mr)
-2.  Checkout last released version `git checkout apache-parquet-1.11.1`
-3.  [Install](https://github.com/apache/parquet-mr#install-thrift) thrift
-    compiler v0.12.0
-4.  To build the jar file run `mvn -pl parquet-tools -am clean install -Plocal
-    -DskipTests`
-    You should be able to see `parquet-tools-1.11.1.jar` inside parquet-tools
-    module.
-5.  Command usage for parquet tools `java -jar ./parquet-tools-<VERSION>.jar
-    <command> my_parquet_file`
+    ```bash
+    docker stop sink-server openmrs openmrs-fhir-mysql
+    ```
 
-    NOTE: Parquet tools will be replaced with parquet cli in the next release
-    `apache-parquet-1.12.0`
+2. Run the e2e-test using the local builder:
 
-To run the e2e tests, execute ```sh /e2e-tests/run.sh```
-
+    ```bash
+    cloud-build-local  --dryrun=false .
+    ```

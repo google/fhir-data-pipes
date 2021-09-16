@@ -1,4 +1,4 @@
-# Copyright 2020 Google LLC
+# Copyright 2021 Google LLC
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -12,13 +12,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# If you are running locally, make sure to specify the --network=cloudbuild flag
-# and mount the openmrs-fhir-analytics directory to /workspace 
-# Example (run from the openmrs-fhir-analytics directory, not pipelines/batch):
-#  docker run -it -v "$(pwd):/workspace" --network=cloudbuild  \
-#  -e JDBC_MODE_ENABLED=true \
-#  -e FHIR_DEBEZIUM_CONFIG_PATH=/workspace/utils/dbz_event_to_fhir_config.json \   
-#  gobbledegook/batch-pipleine
+# If you are running locally, overwrite any of the ENV vars you see here in the 
+# run-batch-local.sh script, before running the script. The script will build
+# and run the docker image for you.  
 
 # TODO  (omarismail@): merge this with streaming pipeline. See start_pipelines.sh
 
@@ -44,7 +40,7 @@ ENV JDBC_FETCH_SIZE=10000
 ENV JDBC_MAX_POOL_SIZE=50
 ENV JDBC_INITIAL_POOL_SIZE=10
 ENV NUM_FILE_SHARDS=3
-ENV FHIR_DEBEZIUM_CONFIG_PATH="../../utils/dbz_event_to_fhir_config.json"
+ENV FHIR_DEBEZIUM_CONFIG_PATH="/workspace/utils/dbz_event_to_fhir_config.json"
 
 
 ENTRYPOINT java -jar /usr/src/Main/app.jar  \
