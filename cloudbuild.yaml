@@ -63,7 +63,7 @@ steps:
 - name: 'gcr.io/${PROJECT_ID}/e2e-tests:${_TAG}'
   id: 'Run E2E Test'
   env:
-    - TEST_TYPE=NON_JDBC
+    - PARQUET_SUBDIR=NON_JDBC
     - DOCKER_NETWORK=--use_docker_network
 
 - name: 'gcr.io/${PROJECT_ID}/batch-pipeline:${_TAG}'
@@ -78,7 +78,7 @@ steps:
 - name: 'gcr.io/${PROJECT_ID}/e2e-tests:${_TAG}'
   id: 'Run E2E Test JDBC'
   env:
-    - TEST_TYPE=JDBC
+    - PARQUET_SUBDIR=JDBC
     - DOCKER_NETWORK=--use_docker_network
 
 - name: 'gcr.io/${PROJECT_ID}/e2e-tests:${_TAG}'
@@ -94,6 +94,7 @@ steps:
 
 substitutions:
   _TAG: local
+logsBucket: "gs://cloud-build-gh-logs"
 timeout: '2h'
 options:
   machineType: 'N1_HIGHCPU_32'
