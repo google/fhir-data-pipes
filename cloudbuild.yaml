@@ -28,7 +28,7 @@ steps:
   entrypoint: /bin/bash
   args:
   - -c
-  - e2e-tests/wait-for-start.sh --use_docker_network
+  - e2e-tests/wait_for_start.sh --use_docker_network
 
 - name: 'adoptopenjdk/maven-openjdk8'
   id: 'Compile Bunsen and Pipeline'
