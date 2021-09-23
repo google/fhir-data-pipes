@@ -16,17 +16,19 @@
 version: '2.4'
 services:
   mysql:
-    image: gobbledegook/openmrs-fhir-mysql:ocl-${DATABASE_DUMP_MODE:-small}  # for big data dump set 'big', for small data dump set 'small' (default mode)
+    image: us-central1-docker.pkg.dev/cloud-build-fhir/openmrs/openmrs-fhir-mysql-ocl:latest
     restart: always
     ports:
       - "3306:3306"
     container_name: openmrs-fhir-mysql
     healthcheck:
       test: "exit 0"
+    volumes:
+      - ./mysql-build/mysqld.cnf:/etc/mysql/mysql.conf.d/mysqld.cnf  # mysql config preconfigured to allow binlog/debezium
 
   openmrs:
     restart: "always"
-    image: gobbledegook/openmrs-reference-application-distro:empty 
+    image: us-central1-docker.pkg.dev/cloud-build-fhir/openmrs/openmrs-reference-application-distro:latest
     container_name: openmrs
     depends_on:
       - mysql

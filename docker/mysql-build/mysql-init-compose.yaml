@@ -1,5 +1,5 @@
 
-# Copyright 2020 Google LLC
+# Copyright 2021 Google LLC
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -16,8 +16,7 @@
 version: '2.4'
 services:
   mysql:
-    image: gobbledegook/openmrs-fhir-mysql:empty
-    command: "mysqld --character-set-server=utf8 --collation-server=utf8_general_ci --datadir=/var/lib/mysql-no-volume"
+    image: mysql:5.7
     restart: always
     ports:
       - "3306:3306"
@@ -30,10 +29,14 @@ services:
       - MYSQL_USER=mysqluser
       - MYSQL_PASSWORD=mysqlpw
       - MYSQL_ROOT_HOST=%    # Allow docker containers to connect to mysql
+    volumes:
+      - ./mysqld.cnf:/etc/mysql/mysql.conf.d/mysqld.cnf  # mysql config preconfigured to allow binlog/debezium
+      - ./dbdump:/docker-entrypoint-initdb.d # executes sql files in alphabetical order
+
 
   openmrs:
     restart: "always"
-    image:  gobbledegook/openmrs-reference-application-distro:ocl-load
+    image:  us-central1-docker.pkg.dev/cloud-build-fhir/openmrs/openmrs-reference-application-distro:latest
     container_name: openmrs-ocl-load
     depends_on:
       - mysql
@@ -49,4 +52,5 @@ services:
       DB_CREATE_TABLES: 'false'
       DB_AUTO_UPDATE: 'false'
       MODULE_WEB_ADMIN: 'true'
-      #_JAVA_OPTIONS: -Xmx1g -Xms1g # change this depending on the server config
+    volumes:
+      - ./extras/20210827_140605.zip:/usr/local/tomcat/.OpenMRS/ocl/configuration/loadAtStartup/20210827_140605.zip
