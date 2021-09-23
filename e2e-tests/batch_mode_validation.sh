@@ -14,7 +14,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-
+# Example usage:
+#   ./batch_mode_validation.sh ./ JDBC
+#   ./batch_mode_validation.sh ./ NON-JDBC --use_docker_network
 
 set -e
 
@@ -22,14 +24,19 @@ set -e
 # Prints the usage
 #################################################
 function usage() {
-  echo "This script validates if number of resources sunk in parquet files and FHIR Server match what is stored in the OpenMRS server"
+  echo "This script validates if number of resources sunk in parquet files and" 
+  echo "FHIR Server match what is stored in the OpenMRS server"
   echo 
   echo " usage: ./batch_mode_validation.sh  HOME_DIR  PARQUET_SUBDIR  [OPTIONS] "
-  echo "    HOME_DIR          Path where e2e-tests directory is. Directory MUST contain the parquet tools jar as well as subdirectory of parquet file output "
-  echo "    PARQUET_SUBDIR    Subdirectory name under HOME_DIR containing parquet files  "
+  echo "    HOME_DIR          Path where e2e-tests directory is. Directory MUST"
+  echo "                      contain the parquet tools jar as well as subdirectory"
+  echo "                      of parquet file output"
+  echo "    PARQUET_SUBDIR    Subdirectory name under HOME_DIR containing"
+  echo "                      parquet files  "
   echo 
   echo " Options:  "
-  echo "     --use_docker_network     Flag to specify whether to use docker or host network URLs"
+  echo "     --use_docker_network     Flag to specify whether to use docker"  
+  echo "                              or host network URLs" 
 }
 
 #################################################
@@ -77,7 +84,8 @@ function print_message() {
 #   OPENMRS_URL
 #   SINK_SERVER
 # Arguments:
-#   Path where e2e-tests directory is. Directory contains parquet tools jar as #      well as subdirectory of parquet file output
+#   Path where e2e-tests directory is. Directory contains parquet tools jar as 
+#      well as subdirectory of parquet file output
 #   Subdirectory name under HOME_DIR containing parquet files. 
 #      Example: NON_JDBC or JDBC
 #   Optional: Flag to specify whether to use docker or host network URLs.
@@ -124,7 +132,8 @@ function openmrs_query() {
 
 
 #################################################
-# Function that counts resources in parquet files and compares output to what #  is in openmrs server
+# Function that counts resources in parquet files and compares output to what 
+#  is in openmrs server
 # Globals:
 #   HOME_PATH
 #   PARQUET_SUBDIR
@@ -153,7 +162,8 @@ function test_parquet_sink() {
 }
 
 #################################################
-# Function that counts resources in  FHIR server and compares output to what is #  in openmrs server
+# Function that counts resources in  FHIR server and compares output to what is 
+#  in openmrs server
 # Globals:
 #   HOME_PATH
 #   PARQUET_SUBDIR

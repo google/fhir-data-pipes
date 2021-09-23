@@ -79,7 +79,7 @@ In the example above, the URL for the logs for that build would be:
 >**NOTE**: Clicking on the `View more details on Google Cloud Build` link will
 redirect you to a Google Cloud page which you do not have permissions to view.
 
-## Running end-to-end tests on locally
+## Running end-to-end tests locally
 
 The CI pipeline can also be run locally, using the Cloud Build local builder. To
 setup the local builder, follow the instructions
@@ -119,7 +119,3 @@ To regenerate this jar file:
 
     NOTE: Parquet tools will be replaced with parquet cli in the next release
     `apache-parquet-1.12.0`
-
-
-
-

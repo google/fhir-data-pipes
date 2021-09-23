@@ -1,7 +1,3 @@
-[![Build
-Status](https://badger-zpct3epzcq-ue.a.run.app/build/status?project=cloud-build-fhir&id=4b13d289-3b1e-4a45-aa86-8166d5a5f481)](https://storage.googleapis.com/cloud-build-gh-logs/README.html)
-[![codecov](https://codecov.io/gh/GoogleCloudPlatform/openmrs-fhir-analytics/branch/master/graph/badge.svg)](https://codecov.io/gh/GoogleCloudPlatform/openmrs-fhir-analytics)
-
 # Batch and streaming transformation of FHIR resources
 
 This directory contains pipelines code for batch and streaming transformation of
