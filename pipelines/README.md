@@ -1,17 +1,14 @@
-[![Build Status](https://travis-ci.org/GoogleCloudPlatform/openmrs-fhir-analytics.svg?branch=master)](https://travis-ci.org/GoogleCloudPlatform/openmrs-fhir-analytics)
-[![codecov](https://codecov.io/gh/GoogleCloudPlatform/openmrs-fhir-analytics/branch/master/graph/badge.svg)](https://codecov.io/gh/GoogleCloudPlatform/openmrs-fhir-analytics)
-
 # Batch and streaming transformation of FHIR resources
 
 This directory contains pipelines code for batch and streaming transformation of
 data from a FHIR based EHR system to a data warehouse (for analytics) or another
 FHIR store (for data integration). These pipelines are tested with
-[OpenMRS](https://openmrs.org) instances as the source using the
-[OpenMRS FHIR2 Module](https://addons.openmrs.org/show/org.openmrs.module.openmrs-fhir2-module).
-The data warehouse can be a collection of
-[Apache Parquet files](https://parquet.apache.org), or it can be another FHIR
-server (e.g., a HAPI FHIR server or Google Cloud FHIR store) or eventually a
-cloud based data warehouse (like [BigQuery](https://cloud.google.com/bigquery)).
+[OpenMRS](https://openmrs.org) instances as the source using the [OpenMRS FHIR2
+Module](https://addons.openmrs.org/show/org.openmrs.module.openmrs-fhir2-module).
+The data warehouse can be a collection of [Apache Parquet
+files](https://parquet.apache.org), or it can be another FHIR server (e.g., a
+HAPI FHIR server or Google Cloud FHIR store) or eventually a cloud based data
+warehouse (like [BigQuery](https://cloud.google.com/bigquery)).
 
 There are four modes of transfer:
 
@@ -27,25 +24,29 @@ There are four modes of transfer:
     [Debezium](https://debezium.io/documentation/reference/1.2/connectors/mysql.html).
 -   **[Streaming mode (Atom Feed) [DEPRECATED]](#streaming-mode-atom-feed)**:
     This mode continuously listens for changes reported by the OpenMRS API using
-    the [Atom Feed module of OpenMRS](https://wiki.openmrs.org/display/docs/Atom+Feed+Module).
+    the [Atom Feed module of
+    OpenMRS](https://wiki.openmrs.org/display/docs/Atom+Feed+Module).
 
 There is also a query module built on top of the generated data warehouse.
 
 ## Prerequisites
 
 -   An [OpenMRS](https://openmrs.org) instance with the latest version of the
-    [FHIR2 Module](https://addons.openmrs.org/show/org.openmrs.module.openmrs-fhir2-module)
+    [FHIR2
+    Module](https://addons.openmrs.org/show/org.openmrs.module.openmrs-fhir2-module)
     installed.
     -   There is an [OpenMRS Reference Application](#run-openmrs-using-docker)
         image with these prerequisites and demo data you can use to try things
         out.
 -   A target output for the data. Supported options are Apache Parquet files
     (not supported by Atom Feed mode) or a FHIR server such as HAPI FHIR or
-    [Google Cloud Platform FHIR stores](https://cloud.google.com/healthcare/docs/how-tos/fhir).
+    [Google Cloud Platform FHIR
+    stores](https://cloud.google.com/healthcare/docs/how-tos/fhir).
     -   You can use our [HAPI FHIR server](#run-hapi-fhir-server-using-docker)
         image for testing FHIR API targets.
-    -   [Learn how to create a compatible GCP FHIR store](#create-a-google-cloud-fhir-store-and-bigquery-dataset),
-        if you want to use this option.
+    -   [Learn how to create a compatible GCP FHIR
+        store](#create-a-google-cloud-fhir-store-and-bigquery-dataset), if you
+        want to use this option.
 - Build the [local version of Bunsen](bunsen/)        
 
 ### Installing the FHIR2 Module
@@ -54,20 +55,21 @@ There is also a query module built on top of the generated data warehouse.
 Administration > Manage Modules > Search from Addons**, search for the `fhir2`
 module, and install. Make sure to install the `fhir2` module, not `fhir`.
 
-**To install via .omod file**: Go to
-[FHIR2 Module](https://addons.openmrs.org/show/org.openmrs.module.openmrs-fhir2-module)
+**To install via .omod file**: Go to [FHIR2
+Module](https://addons.openmrs.org/show/org.openmrs.module.openmrs-fhir2-module)
 and download the .omod file. Go to **Advanced Administration > Module
 Properties** and find the modules folder. Move the .omod file to the modules
 folder then restart OpenMRS.
 
-[Learn more about OpenMRS modules](https://guide.openmrs.org/en/Configuration/customizing-openmrs-with-plug-in-modules.html).
+[Learn more about OpenMRS
+modules](https://guide.openmrs.org/en/Configuration/customizing-openmrs-with-plug-in-modules.html).
 
 ## Setup
 
 1.  [Install the FHIR2 Module](#installing-the-fhir2-module) if necessary.
 2.  [Clone](https://docs.github.com/en/github/creating-cloning-and-archiving-repositories/cloning-a-repository)
-    the
-    [OpenMRS FHIR Analytics](https://github.com/GoogleCloudPlatform/openmrs-fhir-analytics)
+    the [OpenMRS FHIR
+    Analytics](https://github.com/GoogleCloudPlatform/openmrs-fhir-analytics)
     project to your machine.
 3.  Set the `utils` directory to world-readable: `chmod -r 755 ./utils`.
 4.  Build binaries with `mvn clean install`.
@@ -99,16 +101,15 @@ parameters which are documented here.
 Batch mode can use two different methods to query the source database. By
 default it uses [FHIR Search](https://www.hl7.org/fhir/search.html) API calls to
 find the resources to copy. Alternatively, it can use
-[JDBC](https://en.wikipedia.org/wiki/Java_Database_Connectivity) to query
-the OpenMRS MySQL database directly.
+[JDBC](https://en.wikipedia.org/wiki/Java_Database_Connectivity) to query the
+OpenMRS MySQL database directly.
 
 ### Using Batch mode
 
 First, complete the [Setup](#setup) instructions.
 
-The next sections describe parameters specific to Batch mode. See
-[Common Parameters](#common-parameters) for information about the other
-parameters.
+The next sections describe parameters specific to Batch mode. See [Common
+Parameters](#common-parameters) for information about the other parameters.
 
 ### Batch mode using FHIR Search
 
@@ -127,12 +128,12 @@ $ java -cp batch/target/fhir-batch-etl-bundled-0.1.0-SNAPSHOT.jar \
 
 Parameters:
 
--   `resourceList` - A comma-separated list of
-    [FHIR resources](https://www.hl7.org/fhir/resourcelist.html) URLs. For example,
+-   `resourceList` - A comma-separated list of [FHIR
+    resources](https://www.hl7.org/fhir/resourcelist.html) URLs. For example,
     `Patient?given=Susan` will extract only Patient resources that meet the
     `given=Susan` criteria. Default: `Patient,Encounter,Observation`
--   `batchSize` - The number of resources to fetch in each API call.
-    Default: `100`
+-   `batchSize` - The number of resources to fetch in each API call. Default:
+    `100`
 -   `openmrsFhirBaseEndpoint` - The OpenMRS server base path for its FHIR API
     endpoints. Using all default values, you would find Patient resources at
     `http://localhost:8099/openmrs/ws/fhir2/R4/Patient`. This generally should
@@ -186,18 +187,19 @@ resume from the last processed offset.
 
 ### Getting Started
 
-1.  Complete the Debezium
-    [MySQL Setup](https://debezium.io/documentation/reference/1.4/connectors/mysql.html#setting-up-mysql).
-    At a minimum,
-    [create a user](https://debezium.io/documentation/reference/1.4/connectors/mysql.html#mysql-creating-user)
-    and
-    [enable the binlog](https://debezium.io/documentation/reference/1.4/connectors/mysql.html#enable-mysql-binlog).
+1.  Complete the Debezium [MySQL
+    Setup](https://debezium.io/documentation/reference/1.4/connectors/mysql.html#setting-up-mysql).
+    At a minimum, [create a
+    user](https://debezium.io/documentation/reference/1.4/connectors/mysql.html#mysql-creating-user)
+    and [enable the
+    binlog](https://debezium.io/documentation/reference/1.4/connectors/mysql.html#enable-mysql-binlog).
     (The test [Docker image](#run-openmrs-and-mysql-using-docker) has already
     done these steps.)
 2.  Edit `../utils/dbz_event_to_fhir_config.json`. Find the
     `debeziumConfigurations` section at the top of the file and edit the values
-    to match your environment. See the documentation on
-    [Debezium MySQL Connector properties](https://debezium.io/documentation/reference/connectors/mysql.html#mysql-property-name)
+    to match your environment. See the documentation on [Debezium MySQL
+    Connector
+    properties](https://debezium.io/documentation/reference/connectors/mysql.html#mysql-property-name)
     for more information.
 3.  Build binaries with `mvn clean install`.
 4.  Run the pipeline to a FHIR server and Parquet files:
@@ -255,10 +257,10 @@ If `outputParquetPath` is set, there are additional parameters:
     entire database and will include all historical data.
 
 *   **How do I stop Debezium from taking a snapshot of the entire database?**
-    Set `snapshotMode` in the config file to `schema_only` i.e,
-    `"snapshotMode" : "initial"`. Other options include: `when_needed`,
-    `schema_only`, `initial` (default), `never`, e.t.c. See the
-    [`debezium documentation`](https://camel.apache.org/components/latest/debezium-mysql-component.html)
+    Set `snapshotMode` in the config file to `schema_only` i.e, `"snapshotMode"
+    : "initial"`. Other options include: `when_needed`, `schema_only`, `initial`
+    (default), `never`, e.t.c. See the [`debezium
+    documentation`](https://camel.apache.org/components/latest/debezium-mysql-component.html)
     for more details.
 
 ## Streaming mode (Atom Feed)
@@ -283,8 +285,8 @@ $ docker-compose -f docker/openmrs-compose.yaml up
 
 Once running you can access OpenMRS at <http://localhost:8099/openmrs/> using
 username "admin" and password "Admin123". The Docker image includes the required
-FHIR2 module and demo data. Edit `docker/openmrs-compose.yaml` to change the default
-port.
+FHIR2 module and demo data. Edit `docker/openmrs-compose.yaml` to change the
+default port.
 
 If `docker-compose` fails, you may need to adjust file permissions.
 
