@@ -1,32 +1,39 @@
-import json
+# Copyright 2021 Google LLC
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
 import unittest
 
 import bundle
+import test_util
 
 
 class BundleTest(unittest.TestCase):
 
-  def _read_file(self, resource):
-    with open(f'test_files/test_{resource}.json') as f:
-      return json.loads(f.read())
-
   def setUp(self):
     super().setUp()
-    content = self._read_file('bundle')
+    content = test_util.read_file('bundle')
     self.each_bundle = bundle.Bundle('anything', content)
 
   def test_extract_resources(self):
     self.each_bundle.extract_resources()
-
-    self.assertEqual(self.each_bundle.openmrs_patient.original_id,
-                     '2a76c0e3-1e73-2109-3d5e-8a8871fe35d7')
-
-    self.assertEqual(len(self.each_bundle.openmrs_encounters), 1)
+    self.assertEqual(self.each_bundle.openmrs_patient.base.original_id,
+                     '495b7301-3b1b-9283-0334-8b574c3f9424')
+    self.assertEqual(len(self.each_bundle.openmrs_encounters), 65)
     encounter = self.each_bundle.openmrs_encounters[0]
-    self.assertEqual(encounter.original_id,
-                     'e1846945-43bb-3cfe-1faf-66cf99935c7c')
-
-    self.assertEqual(len(self.each_bundle.openmrs_observations), 1)
+    self.assertEqual(encounter.base.original_id,
+                     '5f670aae-c503-52a5-6c06-4fdd70f11d2b')
+    self.assertEqual(len(self.each_bundle.openmrs_observations), 12)
     observation = self.each_bundle.openmrs_observations[0]
-    self.assertEqual(observation.original_id,
-                     'e0f03934-1b25-6f93-e437-b554af10675e')
+    self.assertEqual(observation.base.original_id,
+                     '7f714e6d-954e-d209-4586-fe3ae1b2e88a')

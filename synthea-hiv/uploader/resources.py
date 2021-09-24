@@ -1,6 +1,18 @@
+# Copyright 2021 Google LLC
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
 """Resources that OpenMRS can upload. This class is only used for OpenMRS."""
 
-import random
 from typing import Dict, List
 import uuid
 
@@ -15,9 +27,6 @@ class BaseResource:
     self.original_id = self.json['id']
     self.new_id = None
 
-  def openmrs_convert(self, *args):
-    raise NotImplementedError
-
   def inject_id(self):
     """OpenMRS requires each key to have an id field with a random UUID.
 
@@ -30,7 +39,7 @@ class BaseResource:
             element['id'] = str(uuid.uuid4())
 
   def extract_id(self, key: str) -> str:
-    """Helper function to get original ids refereneced.
+    """Helper function to get original ids referenced.
 
     Some resources contain reference to other resources. For example, the
     Encounter resource references the ID of the Patient. This function extracts
@@ -51,16 +60,19 @@ class BaseResource:
     return self.__repr__()
 
 
-class Patient(BaseResource):
+class Patient:
   """Patient resource to upload to OpenMRS."""
+
+  def __init__(self, json: Dict[str, str]):
+    self.base = BaseResource(json)
 
   def openmrs_convert(self):
     """Add fields to make Patient uploadable to OpenMRS."""
 
     openmrs_id = idgen.luhn_id_generator(
-        idgen.convert_to_int(self.original_id))    
+        idgen.convert_to_int(self.base.original_id))
 
-    self.json['identifier'].append({
+    self.base.json['identifier'].append({
         'extension': [{
             'url': 'http://fhir.openmrs.org/ext/patient/identifier#location',
             'valueReference': {
@@ -74,14 +86,17 @@ class Patient(BaseResource):
             'text': 'OpenMRS ID'
         },
         'value': openmrs_id,
-        'id': self.original_id
+        'id': self.base.original_id
     })
 
-    self.inject_id()
+    self.base.inject_id()
 
 
-class Encounter(BaseResource):
+class Encounter:
   """Encounter resource to upload to OpenMRS."""
+
+  def __init__(self, json: Dict[str, str]):
+    self.base = BaseResource(json)
 
   def openmrs_convert(self, new_patient_id: str):
     """Change fields to make Encounter uploadable to OpenMRS.
@@ -91,8 +106,8 @@ class Encounter(BaseResource):
         uploaded to OpenMRS.
     """
 
-    self.json['subject']['reference'] = 'Patient/' + new_patient_id
-    self.json['type'] = [{
+    self.base.json['subject']['reference'] = 'Patient/' + new_patient_id
+    self.base.json['type'] = [{
         'coding': [{
             'system': 'http://fhir.openmrs.org/code-system/encounter-type',
             'code': '5021b1a1-e7f6-44b4-ba02-da2f2bcf8718',
@@ -100,12 +115,15 @@ class Encounter(BaseResource):
         }]
     }]
 
-    self.json.pop('identifier', None)
-    self.json.pop('participant', None)
+    self.base.json.pop('identifier', None)
+    self.base.json.pop('participant', None)
 
 
-class Observation(BaseResource):
+class Observation:
   """Observation resource to upload to OpenMRS."""
+
+  def __init__(self, json: Dict[str, str]):
+    self.base = BaseResource(json)
 
   def openmrs_convert(self, new_patient_id: str,
                       encounter_list: List[Encounter]):
@@ -116,16 +134,17 @@ class Observation(BaseResource):
         uploaded to OpenMRS.
       encounter_list:  list of encounters to update the encounter reference id
     """
-    self.json['subject']['reference'] = 'Patient/' + new_patient_id
-
+    self.base.json['subject']['reference'] = 'Patient/' + new_patient_id
+    base_id = self.base.extract_id('encounter')
     for encounter in encounter_list:
-      if encounter.original_id == self.extract_id('encounter'):
-        self.json['encounter']['reference'] = 'Encounter/' + encounter.new_id
+      if encounter.base.original_id == base_id:
+        self.base.json['encounter'][
+            'reference'] = 'Encounter/' + encounter.base.new_id
         break
 
-    self.json['code']['coding'][0].pop('system')
-    if 'valueCodeableConcept' in self.json:
-      self.json['valueCodeableConcept']['coding'][0].pop('system')
-    if 'valueQuantity' in self.json:
-      self.json['valueQuantity']['value'] = int(
-          self.json['valueQuantity']['value'])
+    self.base.json['code']['coding'][0].pop('system')
+    if 'valueCodeableConcept' in self.base.json:
+      self.base.json['valueCodeableConcept']['coding'][0].pop('system')
+    if 'valueQuantity' in self.base.json:
+      self.base.json['valueQuantity']['value'] = int(
+          self.base.json['valueQuantity']['value'])

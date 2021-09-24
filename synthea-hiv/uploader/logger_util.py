@@ -12,3 +12,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+"""Util class."""
+
+import logging
+
+def create_logger(module_name: str, class_name: str):
+    name = module_name + '.' + class_name
+    return logging.getLogger(name)

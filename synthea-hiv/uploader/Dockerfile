@@ -4,7 +4,7 @@ WORKDIR /workspace
 COPY  ./ ./
 
 RUN pip install -r requirements.txt
-ENV INPUT_DIR="../output/fhir"
+ENV INPUT_DIR="/workspace/test_files"
 ENV CONVERT=""
 ENV FHIR_ENDPOINT="http://localhost:8099/openmrs/ws/fhir2/R4"
 

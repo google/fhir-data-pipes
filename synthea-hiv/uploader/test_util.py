@@ -11,4 +11,13 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+"""Common methods used in  test modules."""
 
+
+import json
+from typing import Dict
+
+
+def read_file(resource: str) -> Dict[str, str]:
+  with open(f'test_files/test_{resource}.json') as f:
+    return json.loads(f.read())
