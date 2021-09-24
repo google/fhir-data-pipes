@@ -1,4 +1,4 @@
-# Copyright 2020 Google LLC
+# Copyright 2021 Google LLC
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -12,13 +12,19 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-FROM openjdk:8
+# If you are running locally, overwrite any of the ENV vars you see here in the 
+# run-batch-local.sh script, before running the script. The script will build
+# and run the docker image for you.  
+
+# TODO  (omarismail@): merge this with streaming pipeline. See start_pipelines.sh
+
+FROM adoptopenjdk/maven-openjdk8
 
 ARG WORK_DIR="/usr/src/Main"
 COPY target/fhir-batch-etl-bundled-0.1.0-SNAPSHOT.jar ${WORK_DIR}/app.jar
 WORKDIR ${WORK_DIR}
 
-ENV OPENMRS_URL="http://localhost:8099/openmrs"
+ENV OPENMRS_URL="http://openmrs:8080/openmrs"
 ENV OPENMRS_USERNAME="admin"
 ENV OPENMRS_PASSWORD="Admin123"
 ENV SINK_PATH=""
@@ -34,12 +40,10 @@ ENV JDBC_FETCH_SIZE=10000
 ENV JDBC_MAX_POOL_SIZE=50
 ENV JDBC_INITIAL_POOL_SIZE=10
 ENV NUM_FILE_SHARDS=3
-ENV FHIR_DEBEZIUM_CONFIG_PATH="../utils/dbz_event_to_fhir_config.json"
+ENV FHIR_DEBEZIUM_CONFIG_PATH="/workspace/utils/dbz_event_to_fhir_config.json"
 
-RUN echo 'Batch Job started'
-VOLUME [ "${WORK_DIR}" ]
 
-ENTRYPOINT java -cp app.jar org.openmrs.analytics.FhirEtl \
+ENTRYPOINT java -jar /usr/src/Main/app.jar  \
            --openmrsServerUrl=${OPENMRS_URL} --openmrsUserName=${OPENMRS_USERNAME} --openmrsPassword=${OPENMRS_PASSWORD} \
            --resourceList=${RESOURCE_LIST} --batchSize=${BATCH_SIZE} --targetParallelism=${TARGET_PARALLELISM} \
            --fhirSinkPath=${SINK_PATH}  --sinkUserName=${SINK_USERNAME} --sinkPassword=${SINK_PASSWORD} \

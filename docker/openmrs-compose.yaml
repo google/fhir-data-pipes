@@ -45,3 +45,8 @@ services:
       DB_AUTO_UPDATE: 'false'
       MODULE_WEB_ADMIN: 'true'
       _JAVA_OPTIONS: -Xmx15g -Xms10g # change this depending on the server config
+
+networks:
+  default:
+    external:
+      name: cloudbuild # Needed for Continuous integration
