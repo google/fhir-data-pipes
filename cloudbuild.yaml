@@ -1,0 +1,109 @@
+# Copyright 2021 Google LLC
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+
+# This is a config file used by Cloud Build and the Cloud Build local runner to 
+# run a CI pipeline to check if any changes done pass tests.
+
+
+steps:
+
+- name: 'docker/compose'
+  id: 'Launch Webserver and HAPI Server'
+  args: ['-f', './docker/openmrs-compose.yaml', '-f', './docker/sink-compose.yml',  'up', '--force-recreate', '--remove-orphan', '-d']
+
+- name: 'gcr.io/cloud-builders/docker'
+  id: 'Wait for Servers Start'
+  entrypoint: /bin/bash
+  args:
+  - -c
+  - e2e-tests/wait_for_start.sh --use_docker_network
+
+- name: 'adoptopenjdk/maven-openjdk8'
+  id: 'Compile Bunsen and Pipeline'
+  entrypoint: /bin/bash
+  args:
+  - -c
+  - mvn --no-transfer-progress -e -f bunsen install; mvn --no-transfer-progress -e -f pipelines install
+  waitFor: ['-'] 
+
+- name: 'gcr.io/cloud-builders/docker'
+  id: 'Build Batch Pipeline Image'
+  entrypoint: /bin/bash
+  args:
+  - -c
+  - cd pipelines/batch; docker build -t us-docker.pkg.dev/${PROJECT_ID}/openmrs/batch-pipeline:${_TAG} .
+
+- name: 'us-docker.pkg.dev/${PROJECT_ID}/openmrs/batch-pipeline:${_TAG}'
+  id: 'Run Batch Pipeline'
+  env:
+    - PARQUET_PATH=/workspace/e2e-tests/NON_JDBC
+    - SINK_PATH=http://sink-server:8080/fhir
+    - SINK_USERNAME=hapi
+    - SINK_PASSWORD=hapi
+
+- name: 'gcr.io/cloud-builders/docker'
+  id: 'Build E2E Image'
+  entrypoint: /bin/bash
+  args:
+  - -c
+  - cd e2e-tests; docker build -t us-docker.pkg.dev/${PROJECT_ID}/openmrs/e2e-tests:${_TAG} .
+
+- name: 'us-docker.pkg.dev/${PROJECT_ID}/openmrs/e2e-tests:${_TAG}'
+  id: 'Run E2E Test'
+  env:
+    - PARQUET_SUBDIR=NON_JDBC
+    - DOCKER_NETWORK=--use_docker_network
+
+- name: 'us-docker.pkg.dev/${PROJECT_ID}/openmrs/batch-pipeline:${_TAG}'
+  id: 'Run Batch Pipeline JDBC'
+  env:
+    - JDBC_MODE_ENABLED=true
+    - PARQUET_PATH=/workspace/e2e-tests/JDBC
+    - SINK_PATH=http://sink-server:8080/fhir
+    - SINK_USERNAME=hapi
+    - SINK_PASSWORD=hapi
+
+- name: 'us-docker.pkg.dev/${PROJECT_ID}/openmrs/e2e-tests:${_TAG}'
+  id: 'Run E2E Test JDBC'
+  env:
+    - PARQUET_SUBDIR=JDBC
+    - DOCKER_NETWORK=--use_docker_network
+
+- name: 'us-docker.pkg.dev/${PROJECT_ID}/openmrs/e2e-tests:${_TAG}'
+  id: 'Test Indicators'
+  entrypoint: /bin/bash
+  args:
+  - -c
+  - 'cd dwh; ./validate_indicators.sh'
+
+- name: 'docker/compose'
+  id: 'Turn down Webserver and HAPI Server'
+  args: ['-f', './docker/openmrs-compose.yaml', '-f', './docker/sink-compose.yml', 'down']
+
+substitutions:
+  # To use substitutions in your local build, use the flag --substitutions 
+  # along with the key=value pair that you want to substitute
+  # More details here: https://cloud.google.com/build/docs/build-debug-locally
+  _TAG: local # Cloud Build replaces this with the Commit SHA
+         
+images: 
+  # If run locally, images are available on your local machine through Docker
+  # You can then re-tag images and push to your own Docker repo
+  - 'us-docker.pkg.dev/${PROJECT_ID}/openmrs/batch-pipeline:${_TAG}'
+  - 'us-docker.pkg.dev/${PROJECT_ID}/openmrs/e2e-tests:${_TAG}'
+logsBucket: "gs://cloud-build-gh-logs"
+timeout: '2h'
+options:
+  machineType: 'N1_HIGHCPU_32'

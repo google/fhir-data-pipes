@@ -28,3 +28,9 @@ services:
 
 volumes:
   hapi-data:
+
+
+networks:
+  default:
+    external:
+      name: cloudbuild # Needed for Continuous integration
