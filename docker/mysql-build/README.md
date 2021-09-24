@@ -1,4 +1,6 @@
-# MySQL Setup
+# OCL-Loaded MySQL Image Setup
+
+>**Note**: The need to create an OCL-loaded MySQL image are infrequent
 
 The official MySQL image stores data in a Docker volume. This means that if we
 load the OCL Dictionary, it is stored in a volume, and not the image; this means

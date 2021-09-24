@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# Build for us-central1-docker.pkg.dev/cloud-build-fhir/openmrs/openmrs-reference-application-distro:latest image
+# Build for us-docker.pkg.dev/cloud-build-fhir/openmrs/openmrs-reference-application-distro:latest image
 
 FROM openmrs/openmrs-reference-application-distro:nightly
 
