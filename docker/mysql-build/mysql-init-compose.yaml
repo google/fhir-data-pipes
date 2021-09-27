@@ -1,4 +1,3 @@
-
 # Copyright 2021 Google LLC
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -30,13 +29,13 @@ services:
       - MYSQL_PASSWORD=mysqlpw
       - MYSQL_ROOT_HOST=%    # Allow docker containers to connect to mysql
     volumes:
-      - ./mysqld.cnf:/etc/mysql/mysql.conf.d/mysqld.cnf  # mysql config preconfigured to allow binlog/debezium
+      - .:/etc/mysql/mysql.conf.d  # mysql config preconfigured to allow binlog/debezium
       - ./dbdump:/docker-entrypoint-initdb.d # executes sql files in alphabetical order
 
 
   openmrs:
     restart: "always"
-    image:  us-docker.pkg.dev/cloud-build-fhir/openmrs/openmrs-reference-application-distro:latest
+    image:  us-docker.pkg.dev/cloud-build-fhir/fhir-analytics/openmrs-reference-application-extended:latest
     container_name: openmrs-ocl-load
     depends_on:
       - mysql
@@ -53,4 +52,5 @@ services:
       DB_AUTO_UPDATE: 'false'
       MODULE_WEB_ADMIN: 'true'
     volumes:
+      # OpenMRS loads dictionary mounted at this location on startup
       - ./extras/20210827_140605.zip:/usr/local/tomcat/.OpenMRS/ocl/configuration/loadAtStartup/20210827_140605.zip

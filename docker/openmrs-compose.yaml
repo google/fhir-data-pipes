@@ -1,4 +1,3 @@
-
 # Copyright 2020 Google LLC
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,7 +15,7 @@
 version: '2.4'
 services:
   mysql:
-    image: us-docker.pkg.dev/cloud-build-fhir/openmrs/openmrs-fhir-mysql-ocl:latest
+    image: us-docker.pkg.dev/cloud-build-fhir/fhir-analytics/openmrs-fhir-mysql-ocl:latest
     restart: always
     ports:
       - "3306:3306"
@@ -28,7 +27,7 @@ services:
 
   openmrs:
     restart: "always"
-    image: us-docker.pkg.dev/cloud-build-fhir/openmrs/openmrs-reference-application-distro:latest
+    image: us-docker.pkg.dev/cloud-build-fhir/fhir-analytics/openmrs-reference-application-extended:latest
     container_name: openmrs
     depends_on:
       - mysql

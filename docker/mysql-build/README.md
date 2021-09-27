@@ -1,11 +1,12 @@
 # OCL-Loaded MySQL Image Setup
 
->**Note**: The need to create an OCL-loaded MySQL image are infrequent
+>**Note**: The need to create an OCL-loaded MySQL image is infrequent; this is
+    only needed for updating OpenMRS release or the OCL dictionary.
 
 The official MySQL image stores data in a Docker volume. This means that if we
-load the OCL Dictionary, it is stored in a volume, and not the image; this means
-that every time we spin up the MySQL image, we would need to wait 45 minutes for
-the OCL Dictionary to load.  
+load the OCL Dictionary, it is stored in a volume, and not the container, which
+means that every time we spin up the MySQL image, we would need to wait 45
+minutes for the OCL Dictionary to load.  
 
 We can avoid this long wait time by creating a custom MySQL image that stores
 data in the container itself. Once we load the OCL dictionary, we can save the
@@ -18,12 +19,12 @@ files needed to create that image.
 
 The OpenMRS image used in [openmrs-compose.yaml](../openmrs-compose.yaml) and
 [mysql-init-compose.yaml](./mysql-init-compose.yaml),
-`us-central1-docker.pkg.dev/cloud-build-fhir/openmrs/openmrs-reference-application-distro:latest`,
-is built using the [Dockerfile](../Dockerfile) under the `docker` directory. If
-you want to use a local image, run
+`us-central1-docker.pkg.dev/cloud-build-fhir/fhir-analytics/openmrs-reference-application-extended:latest`,
+is built using [Dockerfile_openmrs_extended](../Dockerfile_openmrs_extended)
+under the `docker` directory. If you want to use a local image, run
 
 ```bash
-docker build -t openmrs-reference-application-distro:latest ../.
+docker build -t fhir-analytics/openmrs-reference-application-extended:latest ../.
 ```
 
 and replace the image references in the YAML files to the local image.
@@ -43,7 +44,7 @@ loads.
 Once the login page loads, commit the MySQL docker image, and tag it. Example:
 
 ```bash
-docker commit openmrs-fhir-mysql-empty us-central1-docker.pkg.dev/cloud-build-fhir/openmrs/openmrs-fhir-mysql-ocl:latest
+docker commit openmrs-fhir-mysql-empty us-docker.pkg.dev/cloud-build-fhir/fhir-analytics/openmrs-fhir-mysql-ocl:latest
 ```
 
 This will generate a MySQL image with the dictionary data loaded into it. You
