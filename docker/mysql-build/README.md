@@ -24,7 +24,8 @@ is built using [Dockerfile_openmrs_extended](../Dockerfile_openmrs_extended)
 under the `docker` directory. If you want to use a local image, run
 
 ```bash
-docker build -t fhir-analytics/openmrs-reference-application-extended:latest ../.
+docker build -t fhir-analytics/openmrs-reference-application-extended:latest \
+    -f ../Dockerfile_openmrs_extended .
 ```
 
 and replace the image references in the YAML files to the local image.

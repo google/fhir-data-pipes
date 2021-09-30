@@ -14,13 +14,20 @@
 
 # Build for fhir-analytics/openmrs-reference-application-extended:latest image
 
+
+# The nightly version has the FHIR 1.2.2 and OCL modules and is based on 
+# Reference-app v2.14-SNAPSHOT. latest` tag does not as its based on v2.13
+# TODO: Change to `latest` once 2.14 is released. 
 FROM openmrs/openmrs-reference-application-distro:nightly
 
 RUN apt-get clean && apt-get update && apt-get install -y dialog apt-utils
 
 RUN apt-get install -y locales
 
-RUN locale-gen
+# Added to avoid intermittent error:
+# “Theme ‘green’: No message found under code ‘favicon’ for locale ‘en’.”
+# See: https://talk.openmrs.org/t/theme-green-no-message-found-under-code-favicon-for-locale-en-gb/30836
+RUN locale-gen 
 
 RUN curl https://addons.openmrs.org/api/v1/addon/org.openmrs.module.atomfeed/1.0.13/download --create-dirs -o /usr/local/tomcat/.OpenMRS/modules/atomfeed-1.0.13.omod
 
