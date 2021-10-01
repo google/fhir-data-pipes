@@ -1,0 +1,187 @@
+{
+  "name": "antiretroviral_plan",
+  "remarks": [
+    "An HIV Submodule"
+  ],
+  "states": {
+    "Initial": {
+      "type": "Initial",
+      "name": "Initial",
+      "distributed_transition": [
+        {
+          "transition": "Change formulation",
+          "distribution": 0.1984190187253207
+        },
+        {
+          "transition": "Change regimen",
+          "distribution": 0.038840959531042725
+        },
+        {
+          "transition": "Start drugs",
+          "distribution": 0.16995201546676508
+        },
+        {
+          "transition": "Continue regimen",
+          "distribution": 0.03721641181918148
+        },
+        {
+          "transition": "Dosing change",
+          "distribution": 0.09150238997075148
+        },
+        {
+          "transition": "Stop all",
+          "distribution": 0.07019454580285689
+        },
+        {
+          "transition": "None",
+          "distribution": 0.39387465868408167
+        }
+      ]
+    },
+    "Terminal": {
+      "type": "Terminal",
+      "name": "Terminal"
+    },
+    "Change formulation": {
+      "type": "Observation",
+      "category": "survey",
+      "unit": "",
+      "codes": [
+        {
+          "system": "LOINC",
+          "code": "1255AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+          "display": "ANTIRETROVIRAL PLAN",
+          "value_set": ""
+        }
+      ],
+      "direct_transition": "Terminal",
+      "name": "Change formulation",
+      "value_code": {
+        "system": "SNOMED-CT",
+        "code": "1258AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+        "display": "Change formulation"
+      }
+    },
+    "Change regimen": {
+      "type": "Observation",
+      "category": "survey",
+      "unit": "",
+      "codes": [
+        {
+          "system": "LOINC",
+          "code": "1255AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+          "display": "ANTIRETROVIRAL PLAN",
+          "value_set": ""
+        }
+      ],
+      "direct_transition": "Terminal",
+      "name": "Change regimen",
+      "value_code": {
+        "system": "SNOMED-CT",
+        "code": "1259AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+        "display": "Change regimen"
+      }
+    },
+    "Start drugs": {
+      "type": "Observation",
+      "category": "survey",
+      "unit": "",
+      "codes": [
+        {
+          "system": "LOINC",
+          "code": "1255AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+          "display": "ANTIRETROVIRAL PLAN",
+          "value_set": ""
+        }
+      ],
+      "direct_transition": "Terminal",
+      "name": "Start drugs",
+      "value_code": {
+        "system": "SNOMED-CT",
+        "code": "1256AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+        "display": "Start drugs"
+      }
+    },
+    "Continue regimen": {
+      "type": "Observation",
+      "category": "survey",
+      "unit": "",
+      "codes": [
+        {
+          "system": "LOINC",
+          "code": "1255AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+          "display": "ANTIRETROVIRAL PLAN",
+          "value_set": ""
+        }
+      ],
+      "direct_transition": "Terminal",
+      "name": "Continue regimen",
+      "value_code": {
+        "system": "SNOMED-CT",
+        "code": "1257AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+        "display": "Continue regimen"
+      }
+    },
+    "Dosing change": {
+      "type": "Observation",
+      "category": "survey",
+      "unit": "",
+      "codes": [
+        {
+          "system": "LOINC",
+          "code": "1255AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+          "display": "ANTIRETROVIRAL PLAN",
+          "value_set": ""
+        }
+      ],
+      "direct_transition": "Terminal",
+      "name": "Dosing change",
+      "value_code": {
+        "system": "SNOMED-CT",
+        "code": "981AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+        "display": "Dosing change"
+      }
+    },
+    "Stop all": {
+      "type": "Observation",
+      "category": "survey",
+      "unit": "",
+      "codes": [
+        {
+          "system": "LOINC",
+          "code": "1255AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+          "display": "ANTIRETROVIRAL PLAN",
+          "value_set": ""
+        }
+      ],
+      "direct_transition": "Terminal",
+      "name": "Stop all",
+      "value_code": {
+        "system": "SNOMED-CT",
+        "code": "1260AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+        "display": "Stop all"
+      }
+    },
+    "None": {
+      "type": "Observation",
+      "category": "survey",
+      "unit": "",
+      "codes": [
+        {
+          "system": "LOINC",
+          "code": "1255AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+          "display": "ANTIRETROVIRAL PLAN",
+          "value_set": ""
+        }
+      ],
+      "direct_transition": "Terminal",
+      "name": "None",
+      "value_code": {
+        "system": "SNOMED-CT",
+        "code": "1107AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+        "display": "None"
+      }
+    }
+  },
+  "gmf_version": 2
+}

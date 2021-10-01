@@ -1,0 +1,1271 @@
+{
+  "name": "tests_ordered",
+  "remarks": [
+    "An HIV Submodule"
+  ],
+  "states": {
+    "Initial": {
+      "type": "Initial",
+      "name": "Initial",
+      "distributed_transition": [
+        {
+          "transition": "Haemoglobin",
+          "distribution": 0.3558968090575606
+        },
+        {
+          "transition": "Simple_1",
+          "distribution": 0.6441031909424394
+        }
+      ]
+    },
+    "Haemoglobin": {
+      "type": "Observation",
+      "category": "survey",
+      "unit": "",
+      "codes": [
+        {
+          "system": "LOINC",
+          "code": "1271AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+          "display": "TESTS ORDERED",
+          "value_set": ""
+        }
+      ],
+      "direct_transition": "Simple_1",
+      "name": "Haemoglobin",
+      "value_code": {
+        "system": "SNOMED-CT",
+        "code": "21AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+        "display": "Haemoglobin"
+      }
+    },
+    "Simple_1": {
+      "type": "Simple",
+      "name": "Simple_1",
+      "distributed_transition": [
+        {
+          "transition": "CD4 panel",
+          "distribution": 0.6601990573650529
+        },
+        {
+          "transition": "Simple_2",
+          "distribution": 0.3398009426349471
+        }
+      ]
+    },
+    "CD4 panel": {
+      "type": "Observation",
+      "category": "survey",
+      "unit": "",
+      "codes": [
+        {
+          "system": "LOINC",
+          "code": "1271AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+          "display": "TESTS ORDERED",
+          "value_set": ""
+        }
+      ],
+      "direct_transition": "Simple_2",
+      "name": "CD4 panel",
+      "value_code": {
+        "system": "SNOMED-CT",
+        "code": "657AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+        "display": "CD4 panel"
+      }
+    },
+    "Simple_2": {
+      "type": "Simple",
+      "name": "Simple_2",
+      "distributed_transition": [
+        {
+          "transition": "HIV enzyme immunoassay, qualitative",
+          "distribution": 0.7480212620956498
+        },
+        {
+          "transition": "Simple_3",
+          "distribution": 0.2519787379043502
+        }
+      ]
+    },
+    "HIV enzyme immunoassay, qualitative": {
+      "type": "Observation",
+      "category": "survey",
+      "unit": "",
+      "codes": [
+        {
+          "system": "LOINC",
+          "code": "1271AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+          "display": "TESTS ORDERED",
+          "value_set": ""
+        }
+      ],
+      "direct_transition": "Simple_3",
+      "name": "HIV enzyme immunoassay, qualitative",
+      "value_code": {
+        "system": "SNOMED-CT",
+        "code": "1042AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+        "display": "HIV enzyme immunoassay, qualitative"
+      }
+    },
+    "Simple_3": {
+      "type": "Simple",
+      "name": "Simple_3",
+      "distributed_transition": [
+        {
+          "transition": "Serum creatinine ((umol/L)",
+          "distribution": 0.9293684286206347
+        },
+        {
+          "transition": "Simple_4",
+          "distribution": 0.07063157137936527
+        }
+      ]
+    },
+    "Serum creatinine ((umol/L)": {
+      "type": "Observation",
+      "category": "survey",
+      "unit": "",
+      "codes": [
+        {
+          "system": "LOINC",
+          "code": "1271AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+          "display": "TESTS ORDERED",
+          "value_set": ""
+        }
+      ],
+      "direct_transition": "Simple_4",
+      "name": "Serum creatinine ((umol/L)",
+      "value_code": {
+        "system": "SNOMED-CT",
+        "code": "790AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+        "display": "Serum creatinine ((umol/L)"
+      }
+    },
+    "Simple_4": {
+      "type": "Simple",
+      "name": "Simple_4",
+      "distributed_transition": [
+        {
+          "transition": "Other",
+          "distribution": 0.9194314197262313
+        },
+        {
+          "transition": "Simple_5",
+          "distribution": 0.08056858027376868
+        }
+      ]
+    },
+    "Other": {
+      "type": "Observation",
+      "category": "survey",
+      "unit": "",
+      "codes": [
+        {
+          "system": "LOINC",
+          "code": "1271AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+          "display": "TESTS ORDERED",
+          "value_set": ""
+        }
+      ],
+      "direct_transition": "Simple_5",
+      "name": "Other",
+      "value_code": {
+        "system": "SNOMED-CT",
+        "code": "5622AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+        "display": "Other"
+      }
+    },
+    "Simple_5": {
+      "type": "Simple",
+      "name": "Simple_5",
+      "distributed_transition": [
+        {
+          "transition": "Serum electrolytes",
+          "distribution": 0.28263208026006115
+        },
+        {
+          "transition": "Simple_6",
+          "distribution": 0.7173679197399389
+        }
+      ]
+    },
+    "Serum electrolytes": {
+      "type": "Observation",
+      "category": "survey",
+      "unit": "",
+      "codes": [
+        {
+          "system": "LOINC",
+          "code": "1271AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+          "display": "TESTS ORDERED",
+          "value_set": ""
+        }
+      ],
+      "direct_transition": "Simple_6",
+      "name": "Serum electrolytes",
+      "value_code": {
+        "system": "SNOMED-CT",
+        "code": "5473AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+        "display": "Serum electrolytes"
+      }
+    },
+    "Simple_6": {
+      "type": "Simple",
+      "name": "Simple_6",
+      "distributed_transition": [
+        {
+          "transition": "Sputum for acid fast bacilli",
+          "distribution": 0.054121511999248084
+        },
+        {
+          "transition": "Simple_7",
+          "distribution": 0.9458784880007519
+        }
+      ]
+    },
+    "Sputum for acid fast bacilli": {
+      "type": "Observation",
+      "category": "survey",
+      "unit": "",
+      "codes": [
+        {
+          "system": "LOINC",
+          "code": "1271AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+          "display": "TESTS ORDERED",
+          "value_set": ""
+        }
+      ],
+      "direct_transition": "Simple_7",
+      "name": "Sputum for acid fast bacilli",
+      "value_code": {
+        "system": "SNOMED-CT",
+        "code": "307AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+        "display": "Sputum for acid fast bacilli"
+      }
+    },
+    "Simple_7": {
+      "type": "Simple",
+      "name": "Simple_7",
+      "distributed_transition": [
+        {
+          "transition": "None",
+          "distribution": 0.8437493764301666
+        },
+        {
+          "transition": "Simple_8",
+          "distribution": 0.15625062356983344
+        }
+      ]
+    },
+    "None": {
+      "type": "Observation",
+      "category": "survey",
+      "unit": "",
+      "codes": [
+        {
+          "system": "LOINC",
+          "code": "1271AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+          "display": "TESTS ORDERED",
+          "value_set": ""
+        }
+      ],
+      "direct_transition": "Simple_8",
+      "name": "None",
+      "value_code": {
+        "system": "SNOMED-CT",
+        "code": "1107AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+        "display": "None"
+      }
+    },
+    "Simple_8": {
+      "type": "Simple",
+      "name": "Simple_8",
+      "distributed_transition": [
+        {
+          "transition": "Stool for ova and cysts, qualitative",
+          "distribution": 0.3734006906123676
+        },
+        {
+          "transition": "Simple_9",
+          "distribution": 0.6265993093876324
+        }
+      ]
+    },
+    "Stool for ova and cysts, qualitative": {
+      "type": "Observation",
+      "category": "survey",
+      "unit": "",
+      "codes": [
+        {
+          "system": "LOINC",
+          "code": "1271AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+          "display": "TESTS ORDERED",
+          "value_set": ""
+        }
+      ],
+      "direct_transition": "Simple_9",
+      "name": "Stool for ova and cysts, qualitative",
+      "value_code": {
+        "system": "SNOMED-CT",
+        "code": "1368AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+        "display": "Stool for ova and cysts, qualitative"
+      }
+    },
+    "Simple_9": {
+      "type": "Simple",
+      "name": "Simple_9",
+      "distributed_transition": [
+        {
+          "transition": "Blood typing",
+          "distribution": 0.8283015117652235
+        },
+        {
+          "transition": "Simple_10",
+          "distribution": 0.17169848823477651
+        }
+      ]
+    },
+    "Blood typing": {
+      "type": "Observation",
+      "category": "survey",
+      "unit": "",
+      "codes": [
+        {
+          "system": "LOINC",
+          "code": "1271AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+          "display": "TESTS ORDERED",
+          "value_set": ""
+        }
+      ],
+      "direct_transition": "Simple_10",
+      "name": "Blood typing",
+      "value_code": {
+        "system": "SNOMED-CT",
+        "code": "300AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+        "display": "Blood typing"
+      }
+    },
+    "Simple_10": {
+      "type": "Simple",
+      "name": "Simple_10",
+      "distributed_transition": [
+        {
+          "transition": "Malarial smear",
+          "distribution": 0.5595624552897851
+        },
+        {
+          "transition": "Simple_11",
+          "distribution": 0.4404375447102149
+        }
+      ]
+    },
+    "Malarial smear": {
+      "type": "Observation",
+      "category": "survey",
+      "unit": "",
+      "codes": [
+        {
+          "system": "LOINC",
+          "code": "1271AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+          "display": "TESTS ORDERED",
+          "value_set": ""
+        }
+      ],
+      "direct_transition": "Simple_11",
+      "name": "Malarial smear",
+      "value_code": {
+        "system": "SNOMED-CT",
+        "code": "32AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+        "display": "Malarial smear"
+      }
+    },
+    "Simple_11": {
+      "type": "Simple",
+      "name": "Simple_11",
+      "distributed_transition": [
+        {
+          "transition": "Order for three sputums for AFB",
+          "distribution": 0.5486691807822972
+        },
+        {
+          "transition": "Simple_12",
+          "distribution": 0.4513308192177028
+        }
+      ]
+    },
+    "Order for three sputums for AFB": {
+      "type": "Observation",
+      "category": "survey",
+      "unit": "",
+      "codes": [
+        {
+          "system": "LOINC",
+          "code": "1271AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+          "display": "TESTS ORDERED",
+          "value_set": ""
+        }
+      ],
+      "direct_transition": "Simple_12",
+      "name": "Order for three sputums for AFB",
+      "value_code": {
+        "system": "SNOMED-CT",
+        "code": "1495AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+        "display": "Order for three sputums for AFB"
+      }
+    },
+    "Simple_12": {
+      "type": "Simple",
+      "name": "Simple_12",
+      "distributed_transition": [
+        {
+          "transition": "Widal test",
+          "distribution": 0.27367025972496073
+        },
+        {
+          "transition": "Simple_13",
+          "distribution": 0.7263297402750393
+        }
+      ]
+    },
+    "Widal test": {
+      "type": "Observation",
+      "category": "survey",
+      "unit": "",
+      "codes": [
+        {
+          "system": "LOINC",
+          "code": "1271AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+          "display": "TESTS ORDERED",
+          "value_set": ""
+        }
+      ],
+      "direct_transition": "Simple_13",
+      "name": "Widal test",
+      "value_code": {
+        "system": "SNOMED-CT",
+        "code": "306AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+        "display": "Widal test"
+      }
+    },
+    "Simple_13": {
+      "type": "Simple",
+      "name": "Simple_13",
+      "distributed_transition": [
+        {
+          "transition": "Treponema pallidum hemagglutination assay, qualitative",
+          "distribution": 0.4700436608849614
+        },
+        {
+          "transition": "Simple_14",
+          "distribution": 0.5299563391150386
+        }
+      ]
+    },
+    "Treponema pallidum hemagglutination assay, qualitative": {
+      "type": "Observation",
+      "category": "survey",
+      "unit": "",
+      "codes": [
+        {
+          "system": "LOINC",
+          "code": "1271AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+          "display": "TESTS ORDERED",
+          "value_set": ""
+        }
+      ],
+      "direct_transition": "Simple_14",
+      "name": "Treponema pallidum hemagglutination assay, qualitative",
+      "value_code": {
+        "system": "SNOMED-CT",
+        "code": "1032AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+        "display": "Treponema pallidum hemagglutination assay, qualitative"
+      }
+    },
+    "Simple_14": {
+      "type": "Simple",
+      "name": "Simple_14",
+      "distributed_transition": [
+        {
+          "transition": "Rapid test for malaria",
+          "distribution": 0.7204213658967071
+        },
+        {
+          "transition": "Simple_15",
+          "distribution": 0.27957863410329287
+        }
+      ]
+    },
+    "Rapid test for malaria": {
+      "type": "Observation",
+      "category": "survey",
+      "unit": "",
+      "codes": [
+        {
+          "system": "LOINC",
+          "code": "1271AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+          "display": "TESTS ORDERED",
+          "value_set": ""
+        }
+      ],
+      "direct_transition": "Simple_15",
+      "name": "Rapid test for malaria",
+      "value_code": {
+        "system": "SNOMED-CT",
+        "code": "1643AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+        "display": "Rapid test for malaria"
+      }
+    },
+    "Simple_15": {
+      "type": "Simple",
+      "name": "Simple_15",
+      "distributed_transition": [
+        {
+          "transition": "Urinary albumin",
+          "distribution": 0.5564178830861202
+        },
+        {
+          "transition": "Simple_16",
+          "distribution": 0.44358211691387983
+        }
+      ]
+    },
+    "Urinary albumin": {
+      "type": "Observation",
+      "category": "survey",
+      "unit": "",
+      "codes": [
+        {
+          "system": "LOINC",
+          "code": "1271AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+          "display": "TESTS ORDERED",
+          "value_set": ""
+        }
+      ],
+      "direct_transition": "Simple_16",
+      "name": "Urinary albumin",
+      "value_code": {
+        "system": "SNOMED-CT",
+        "code": "849AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+        "display": "Urinary albumin"
+      }
+    },
+    "Simple_16": {
+      "type": "Simple",
+      "name": "Simple_16",
+      "distributed_transition": [
+        {
+          "transition": "Computed tomography scan, head",
+          "distribution": 0.37493957824382396
+        },
+        {
+          "transition": "Simple_17",
+          "distribution": 0.625060421756176
+        }
+      ]
+    },
+    "Computed tomography scan, head": {
+      "type": "Observation",
+      "category": "survey",
+      "unit": "",
+      "codes": [
+        {
+          "system": "LOINC",
+          "code": "1271AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+          "display": "TESTS ORDERED",
+          "value_set": ""
+        }
+      ],
+      "direct_transition": "Simple_17",
+      "name": "Computed tomography scan, head",
+      "value_code": {
+        "system": "SNOMED-CT",
+        "code": "846AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+        "display": "Computed tomography scan, head"
+      }
+    },
+    "Simple_17": {
+      "type": "Simple",
+      "name": "Simple_17",
+      "distributed_transition": [
+        {
+          "transition": "Erythrocyte sedimentation rate",
+          "distribution": 0.6435364805809055
+        },
+        {
+          "transition": "Simple_18",
+          "distribution": 0.3564635194190945
+        }
+      ]
+    },
+    "Erythrocyte sedimentation rate": {
+      "type": "Observation",
+      "category": "survey",
+      "unit": "",
+      "codes": [
+        {
+          "system": "LOINC",
+          "code": "1271AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+          "display": "TESTS ORDERED",
+          "value_set": ""
+        }
+      ],
+      "direct_transition": "Simple_18",
+      "name": "Erythrocyte sedimentation rate",
+      "value_code": {
+        "system": "SNOMED-CT",
+        "code": "855AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+        "display": "Erythrocyte sedimentation rate"
+      }
+    },
+    "Simple_18": {
+      "type": "Simple",
+      "name": "Simple_18",
+      "distributed_transition": [
+        {
+          "transition": "Complete blood count",
+          "distribution": 0.025786040350107453
+        },
+        {
+          "transition": "Simple_19",
+          "distribution": 0.9742139596498925
+        }
+      ]
+    },
+    "Complete blood count": {
+      "type": "Observation",
+      "category": "survey",
+      "unit": "",
+      "codes": [
+        {
+          "system": "LOINC",
+          "code": "1271AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+          "display": "TESTS ORDERED",
+          "value_set": ""
+        }
+      ],
+      "direct_transition": "Simple_19",
+      "name": "Complete blood count",
+      "value_code": {
+        "system": "SNOMED-CT",
+        "code": "1019AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+        "display": "Complete blood count"
+      }
+    },
+    "Simple_19": {
+      "type": "Simple",
+      "name": "Simple_19",
+      "distributed_transition": [
+        {
+          "transition": "Serum glutamic-pyruvic transaminase",
+          "distribution": 0.2726406802101974
+        },
+        {
+          "transition": "Simple_20",
+          "distribution": 0.7273593197898026
+        }
+      ]
+    },
+    "Serum glutamic-pyruvic transaminase": {
+      "type": "Observation",
+      "category": "survey",
+      "unit": "",
+      "codes": [
+        {
+          "system": "LOINC",
+          "code": "1271AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+          "display": "TESTS ORDERED",
+          "value_set": ""
+        }
+      ],
+      "direct_transition": "Simple_20",
+      "name": "Serum glutamic-pyruvic transaminase",
+      "value_code": {
+        "system": "SNOMED-CT",
+        "code": "654AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+        "display": "Serum glutamic-pyruvic transaminase"
+      }
+    },
+    "Simple_20": {
+      "type": "Simple",
+      "name": "Simple_20",
+      "distributed_transition": [
+        {
+          "transition": "HIV viral load",
+          "distribution": 0.7122940884415336
+        },
+        {
+          "transition": "Simple_21",
+          "distribution": 0.28770591155846637
+        }
+      ]
+    },
+    "HIV viral load": {
+      "type": "Observation",
+      "category": "survey",
+      "unit": "",
+      "codes": [
+        {
+          "system": "LOINC",
+          "code": "1271AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+          "display": "TESTS ORDERED",
+          "value_set": ""
+        }
+      ],
+      "direct_transition": "Simple_21",
+      "name": "HIV viral load",
+      "value_code": {
+        "system": "SNOMED-CT",
+        "code": "856AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+        "display": "HIV viral load"
+      }
+    },
+    "Simple_21": {
+      "type": "Simple",
+      "name": "Simple_21",
+      "distributed_transition": [
+        {
+          "transition": "HIV DNA polymerase chain reaction, qualitative",
+          "distribution": 0.18929479920031655
+        },
+        {
+          "transition": "Simple_22",
+          "distribution": 0.8107052007996834
+        }
+      ]
+    },
+    "HIV DNA polymerase chain reaction, qualitative": {
+      "type": "Observation",
+      "category": "survey",
+      "unit": "",
+      "codes": [
+        {
+          "system": "LOINC",
+          "code": "1271AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+          "display": "TESTS ORDERED",
+          "value_set": ""
+        }
+      ],
+      "direct_transition": "Simple_22",
+      "name": "HIV DNA polymerase chain reaction, qualitative",
+      "value_code": {
+        "system": "SNOMED-CT",
+        "code": "1030AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+        "display": "HIV DNA polymerase chain reaction, qualitative"
+      }
+    },
+    "Simple_22": {
+      "type": "Simple",
+      "name": "Simple_22",
+      "distributed_transition": [
+        {
+          "transition": "X-ray, chest",
+          "distribution": 0.48523157739492717
+        },
+        {
+          "transition": "Simple_23",
+          "distribution": 0.5147684226050728
+        }
+      ]
+    },
+    "X-ray, chest": {
+      "type": "Observation",
+      "category": "survey",
+      "unit": "",
+      "codes": [
+        {
+          "system": "LOINC",
+          "code": "1271AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+          "display": "TESTS ORDERED",
+          "value_set": ""
+        }
+      ],
+      "direct_transition": "Simple_23",
+      "name": "X-ray, chest",
+      "value_code": {
+        "system": "SNOMED-CT",
+        "code": "12AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+        "display": "X-ray, chest"
+      }
+    },
+    "Simple_23": {
+      "type": "Simple",
+      "name": "Simple_23",
+      "distributed_transition": [
+        {
+          "transition": "Serum glutamic-oxaloacetic transaminase",
+          "distribution": 0.7519398621841177
+        },
+        {
+          "transition": "Simple_24",
+          "distribution": 0.24806013781588232
+        }
+      ]
+    },
+    "Serum glutamic-oxaloacetic transaminase": {
+      "type": "Observation",
+      "category": "survey",
+      "unit": "",
+      "codes": [
+        {
+          "system": "LOINC",
+          "code": "1271AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+          "display": "TESTS ORDERED",
+          "value_set": ""
+        }
+      ],
+      "direct_transition": "Simple_24",
+      "name": "Serum glutamic-oxaloacetic transaminase",
+      "value_code": {
+        "system": "SNOMED-CT",
+        "code": "653AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+        "display": "Serum glutamic-oxaloacetic transaminase"
+      }
+    },
+    "Simple_24": {
+      "type": "Simple",
+      "name": "Simple_24",
+      "distributed_transition": [
+        {
+          "transition": "Tuberculin Skin Test",
+          "distribution": 0.1869173588516172
+        },
+        {
+          "transition": "Simple_25",
+          "distribution": 0.8130826411483828
+        }
+      ]
+    },
+    "Tuberculin Skin Test": {
+      "type": "Observation",
+      "category": "survey",
+      "unit": "",
+      "codes": [
+        {
+          "system": "LOINC",
+          "code": "1271AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+          "display": "TESTS ORDERED",
+          "value_set": ""
+        }
+      ],
+      "direct_transition": "Simple_25",
+      "name": "Tuberculin Skin Test",
+      "value_code": {
+        "system": "SNOMED-CT",
+        "code": "5475AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+        "display": "Tuberculin Skin Test"
+      }
+    },
+    "Simple_25": {
+      "type": "Simple",
+      "name": "Simple_25",
+      "distributed_transition": [
+        {
+          "transition": "Urine pregnancy test",
+          "distribution": 0.3523571824025261
+        },
+        {
+          "transition": "Simple_26",
+          "distribution": 0.6476428175974739
+        }
+      ]
+    },
+    "Urine pregnancy test": {
+      "type": "Observation",
+      "category": "survey",
+      "unit": "",
+      "codes": [
+        {
+          "system": "LOINC",
+          "code": "1271AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+          "display": "TESTS ORDERED",
+          "value_set": ""
+        }
+      ],
+      "direct_transition": "Simple_26",
+      "name": "Urine pregnancy test",
+      "value_code": {
+        "system": "SNOMED-CT",
+        "code": "45AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+        "display": "Urine pregnancy test"
+      }
+    },
+    "Simple_26": {
+      "type": "Simple",
+      "name": "Simple_26",
+      "distributed_transition": [
+        {
+          "transition": "VDRL",
+          "distribution": 0.7132622779651805
+        },
+        {
+          "transition": "Simple_27",
+          "distribution": 0.2867377220348195
+        }
+      ]
+    },
+    "VDRL": {
+      "type": "Observation",
+      "category": "survey",
+      "unit": "",
+      "codes": [
+        {
+          "system": "LOINC",
+          "code": "1271AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+          "display": "TESTS ORDERED",
+          "value_set": ""
+        }
+      ],
+      "direct_transition": "Simple_27",
+      "name": "VDRL",
+      "value_code": {
+        "system": "SNOMED-CT",
+        "code": "299AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+        "display": "VDRL"
+      }
+    },
+    "Simple_27": {
+      "type": "Simple",
+      "name": "Simple_27",
+      "distributed_transition": [
+        {
+          "transition": "Urinalysis order",
+          "distribution": 0.7514346334876698
+        },
+        {
+          "transition": "Simple_28",
+          "distribution": 0.2485653665123302
+        }
+      ]
+    },
+    "Urinalysis order": {
+      "type": "Observation",
+      "category": "survey",
+      "unit": "",
+      "codes": [
+        {
+          "system": "LOINC",
+          "code": "1271AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+          "display": "TESTS ORDERED",
+          "value_set": ""
+        }
+      ],
+      "direct_transition": "Simple_28",
+      "name": "Urinalysis order",
+      "value_code": {
+        "system": "SNOMED-CT",
+        "code": "302AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+        "display": "Urinalysis order"
+      }
+    },
+    "Simple_28": {
+      "type": "Simple",
+      "name": "Simple_28",
+      "distributed_transition": [
+        {
+          "transition": "Hematocrit",
+          "distribution": 0.07357963061640227
+        },
+        {
+          "transition": "Simple_29",
+          "distribution": 0.9264203693835977
+        }
+      ]
+    },
+    "Hematocrit": {
+      "type": "Observation",
+      "category": "survey",
+      "unit": "",
+      "codes": [
+        {
+          "system": "LOINC",
+          "code": "1271AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+          "display": "TESTS ORDERED",
+          "value_set": ""
+        }
+      ],
+      "direct_transition": "Simple_29",
+      "name": "Hematocrit",
+      "value_code": {
+        "system": "SNOMED-CT",
+        "code": "1015AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+        "display": "Hematocrit"
+      }
+    },
+    "Simple_29": {
+      "type": "Simple",
+      "name": "Simple_29",
+      "distributed_transition": [
+        {
+          "transition": "Malaria smear, qualitative",
+          "distribution": 0.5723495512062136
+        },
+        {
+          "transition": "Simple_30",
+          "distribution": 0.42765044879378644
+        }
+      ]
+    },
+    "Malaria smear, qualitative": {
+      "type": "Observation",
+      "category": "survey",
+      "unit": "",
+      "codes": [
+        {
+          "system": "LOINC",
+          "code": "1271AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+          "display": "TESTS ORDERED",
+          "value_set": ""
+        }
+      ],
+      "direct_transition": "Simple_30",
+      "name": "Malaria smear, qualitative",
+      "value_code": {
+        "system": "SNOMED-CT",
+        "code": "1366AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+        "display": "Malaria smear, qualitative"
+      }
+    },
+    "Simple_30": {
+      "type": "Simple",
+      "name": "Simple_30",
+      "distributed_transition": [
+        {
+          "transition": "Sputum gram stain",
+          "distribution": 0.052176965805416864
+        },
+        {
+          "transition": "Simple_31",
+          "distribution": 0.9478230341945831
+        }
+      ]
+    },
+    "Sputum gram stain": {
+      "type": "Observation",
+      "category": "survey",
+      "unit": "",
+      "codes": [
+        {
+          "system": "LOINC",
+          "code": "1271AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+          "display": "TESTS ORDERED",
+          "value_set": ""
+        }
+      ],
+      "direct_transition": "Simple_31",
+      "name": "Sputum gram stain",
+      "value_code": {
+        "system": "SNOMED-CT",
+        "code": "1367AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+        "display": "Sputum gram stain"
+      }
+    },
+    "Simple_31": {
+      "type": "Simple",
+      "name": "Simple_31",
+      "distributed_transition": [
+        {
+          "transition": "Brucella test",
+          "distribution": 0.9461480241037582
+        },
+        {
+          "transition": "Simple_32",
+          "distribution": 0.0538519758962418
+        }
+      ]
+    },
+    "Brucella test": {
+      "type": "Observation",
+      "category": "survey",
+      "unit": "",
+      "codes": [
+        {
+          "system": "LOINC",
+          "code": "1271AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+          "display": "TESTS ORDERED",
+          "value_set": ""
+        }
+      ],
+      "direct_transition": "Simple_32",
+      "name": "Brucella test",
+      "value_code": {
+        "system": "SNOMED-CT",
+        "code": "305AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+        "display": "Brucella test"
+      }
+    },
+    "Simple_32": {
+      "type": "Simple",
+      "name": "Simple_32",
+      "distributed_transition": [
+        {
+          "transition": "Urine dipstick",
+          "distribution": 0.37794737871746986
+        },
+        {
+          "transition": "Simple_33",
+          "distribution": 0.6220526212825301
+        }
+      ]
+    },
+    "Urine dipstick": {
+      "type": "Observation",
+      "category": "survey",
+      "unit": "",
+      "codes": [
+        {
+          "system": "LOINC",
+          "code": "1271AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+          "display": "TESTS ORDERED",
+          "value_set": ""
+        }
+      ],
+      "direct_transition": "Simple_33",
+      "name": "Urine dipstick",
+      "value_code": {
+        "system": "SNOMED-CT",
+        "code": "1618AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+        "display": "Urine dipstick"
+      }
+    },
+    "Simple_33": {
+      "type": "Simple",
+      "name": "Simple_33",
+      "distributed_transition": [
+        {
+          "transition": "Rapid plasma reagin",
+          "distribution": 0.39969387574354787
+        },
+        {
+          "transition": "Simple_34",
+          "distribution": 0.6003061242564521
+        }
+      ]
+    },
+    "Rapid plasma reagin": {
+      "type": "Observation",
+      "category": "survey",
+      "unit": "",
+      "codes": [
+        {
+          "system": "LOINC",
+          "code": "1271AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+          "display": "TESTS ORDERED",
+          "value_set": ""
+        }
+      ],
+      "direct_transition": "Simple_34",
+      "name": "Rapid plasma reagin",
+      "value_code": {
+        "system": "SNOMED-CT",
+        "code": "1619AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+        "display": "Rapid plasma reagin"
+      }
+    },
+    "Simple_34": {
+      "type": "Simple",
+      "name": "Simple_34",
+      "distributed_transition": [
+        {
+          "transition": "White blood cells",
+          "distribution": 0.27630577787928634
+        },
+        {
+          "transition": "Simple_35",
+          "distribution": 0.7236942221207137
+        }
+      ]
+    },
+    "White blood cells": {
+      "type": "Observation",
+      "category": "survey",
+      "unit": "",
+      "codes": [
+        {
+          "system": "LOINC",
+          "code": "1271AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+          "display": "TESTS ORDERED",
+          "value_set": ""
+        }
+      ],
+      "direct_transition": "Simple_35",
+      "name": "White blood cells",
+      "value_code": {
+        "system": "SNOMED-CT",
+        "code": "678AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+        "display": "White blood cells"
+      }
+    },
+    "Simple_35": {
+      "type": "Simple",
+      "name": "Simple_35",
+      "distributed_transition": [
+        {
+          "transition": "Electroencephalogram",
+          "distribution": 0.7139163628821358
+        },
+        {
+          "transition": "Simple_36",
+          "distribution": 0.2860836371178642
+        }
+      ]
+    },
+    "Electroencephalogram": {
+      "type": "Observation",
+      "category": "survey",
+      "unit": "",
+      "codes": [
+        {
+          "system": "LOINC",
+          "code": "1271AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+          "display": "TESTS ORDERED",
+          "value_set": ""
+        }
+      ],
+      "direct_transition": "Simple_36",
+      "name": "Electroencephalogram",
+      "value_code": {
+        "system": "SNOMED-CT",
+        "code": "159541AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+        "display": "Electroencephalogram"
+      }
+    },
+    "Simple_36": {
+      "type": "Simple",
+      "name": "Simple_36",
+      "distributed_transition": [
+        {
+          "transition": "Platelets",
+          "distribution": 0.703506512503841
+        },
+        {
+          "transition": "Simple_37",
+          "distribution": 0.296493487496159
+        }
+      ]
+    },
+    "Platelets": {
+      "type": "Observation",
+      "category": "survey",
+      "unit": "",
+      "codes": [
+        {
+          "system": "LOINC",
+          "code": "1271AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+          "display": "TESTS ORDERED",
+          "value_set": ""
+        }
+      ],
+      "direct_transition": "Simple_37",
+      "name": "Platelets",
+      "value_code": {
+        "system": "SNOMED-CT",
+        "code": "729AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+        "display": "Platelets"
+      }
+    },
+    "Simple_37": {
+      "type": "Terminal",
+      "name": "Simple_37"
+    }
+  },
+  "gmf_version": 2
+}

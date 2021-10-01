@@ -1,0 +1,81 @@
+{
+  "name": "patient_reported_current_antiretroviral_treatment",
+  "remarks": [
+    "An HIV Submodule"
+  ],
+  "states": {
+    "Initial": {
+      "type": "Initial",
+      "name": "Initial",
+      "distributed_transition": [
+        {
+          "transition": "Abacavir / lamivudine / zidovudine",
+          "distribution": 0.25399595335675984
+        },
+        {
+          "transition": "Simple_1",
+          "distribution": 0.7460040466432402
+        }
+      ]
+    },
+    "Abacavir / lamivudine / zidovudine": {
+      "type": "Observation",
+      "category": "survey",
+      "unit": "",
+      "codes": [
+        {
+          "system": "LOINC",
+          "code": "159911AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+          "display": "PATIENT REPORTED CURRENT ANTIRETROVIRAL TREATMENT",
+          "value_set": ""
+        }
+      ],
+      "direct_transition": "Simple_1",
+      "name": "Abacavir / lamivudine / zidovudine",
+      "value_code": {
+        "system": "SNOMED-CT",
+        "code": "817AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+        "display": "Abacavir / lamivudine / zidovudine"
+      }
+    },
+    "Simple_1": {
+      "type": "Simple",
+      "name": "Simple_1",
+      "distributed_transition": [
+        {
+          "transition": "Lamivudine / nevirapine / zidovudine",
+          "distribution": 0.9994933016386911
+        },
+        {
+          "transition": "Simple_2",
+          "distribution": 0.0005066983613088993
+        }
+      ]
+    },
+    "Lamivudine / nevirapine / zidovudine": {
+      "type": "Observation",
+      "category": "survey",
+      "unit": "",
+      "codes": [
+        {
+          "system": "LOINC",
+          "code": "159911AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+          "display": "PATIENT REPORTED CURRENT ANTIRETROVIRAL TREATMENT",
+          "value_set": ""
+        }
+      ],
+      "direct_transition": "Simple_2",
+      "name": "Lamivudine / nevirapine / zidovudine",
+      "value_code": {
+        "system": "SNOMED-CT",
+        "code": "1652AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+        "display": "Lamivudine / nevirapine / zidovudine"
+      }
+    },
+    "Simple_2": {
+      "type": "Terminal",
+      "name": "Simple_2"
+    }
+  },
+  "gmf_version": 2
+}
