@@ -1,0 +1,163 @@
+{
+  "name": "tuberculosis_treatment_plan",
+  "remarks": [
+    "An HIV Submodule"
+  ],
+  "states": {
+    "Initial": {
+      "type": "Initial",
+      "name": "Initial",
+      "distributed_transition": [
+        {
+          "transition": "Dosing change",
+          "distribution": 0.0977916031221587
+        },
+        {
+          "transition": "Stop all",
+          "distribution": 0.15013219922250748
+        },
+        {
+          "transition": "None",
+          "distribution": 0.15406089835687486
+        },
+        {
+          "transition": "Change regimen",
+          "distribution": 0.2081610985631555
+        },
+        {
+          "transition": "Start drugs",
+          "distribution": 0.17872102721106284
+        },
+        {
+          "transition": "Continue regimen",
+          "distribution": 0.21113317352424057
+        }
+      ]
+    },
+    "Terminal": {
+      "type": "Terminal",
+      "name": "Terminal"
+    },
+    "Dosing change": {
+      "type": "Observation",
+      "category": "survey",
+      "unit": "",
+      "codes": [
+        {
+          "system": "LOINC",
+          "code": "1268AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+          "display": "TUBERCULOSIS TREATMENT PLAN",
+          "value_set": ""
+        }
+      ],
+      "direct_transition": "Terminal",
+      "name": "Dosing change",
+      "value_code": {
+        "system": "SNOMED-CT",
+        "code": "981AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+        "display": "Dosing change"
+      }
+    },
+    "Stop all": {
+      "type": "Observation",
+      "category": "survey",
+      "unit": "",
+      "codes": [
+        {
+          "system": "LOINC",
+          "code": "1268AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+          "display": "TUBERCULOSIS TREATMENT PLAN",
+          "value_set": ""
+        }
+      ],
+      "direct_transition": "Terminal",
+      "name": "Stop all",
+      "value_code": {
+        "system": "SNOMED-CT",
+        "code": "1260AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+        "display": "Stop all"
+      }
+    },
+    "None": {
+      "type": "Observation",
+      "category": "survey",
+      "unit": "",
+      "codes": [
+        {
+          "system": "LOINC",
+          "code": "1268AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+          "display": "TUBERCULOSIS TREATMENT PLAN",
+          "value_set": ""
+        }
+      ],
+      "direct_transition": "Terminal",
+      "name": "None",
+      "value_code": {
+        "system": "SNOMED-CT",
+        "code": "1107AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+        "display": "None"
+      }
+    },
+    "Change regimen": {
+      "type": "Observation",
+      "category": "survey",
+      "unit": "",
+      "codes": [
+        {
+          "system": "LOINC",
+          "code": "1268AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+          "display": "TUBERCULOSIS TREATMENT PLAN",
+          "value_set": ""
+        }
+      ],
+      "direct_transition": "Terminal",
+      "name": "Change regimen",
+      "value_code": {
+        "system": "SNOMED-CT",
+        "code": "1259AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+        "display": "Change regimen"
+      }
+    },
+    "Start drugs": {
+      "type": "Observation",
+      "category": "survey",
+      "unit": "",
+      "codes": [
+        {
+          "system": "LOINC",
+          "code": "1268AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+          "display": "TUBERCULOSIS TREATMENT PLAN",
+          "value_set": ""
+        }
+      ],
+      "direct_transition": "Terminal",
+      "name": "Start drugs",
+      "value_code": {
+        "system": "SNOMED-CT",
+        "code": "1256AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+        "display": "Start drugs"
+      }
+    },
+    "Continue regimen": {
+      "type": "Observation",
+      "category": "survey",
+      "unit": "",
+      "codes": [
+        {
+          "system": "LOINC",
+          "code": "1268AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+          "display": "TUBERCULOSIS TREATMENT PLAN",
+          "value_set": ""
+        }
+      ],
+      "direct_transition": "Terminal",
+      "name": "Continue regimen",
+      "value_code": {
+        "system": "SNOMED-CT",
+        "code": "1257AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+        "display": "Continue regimen"
+      }
+    }
+  },
+  "gmf_version": 2
+}

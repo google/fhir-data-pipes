@@ -1,0 +1,163 @@
+{
+  "name": "pcp_prophylaxis_plan",
+  "remarks": [
+    "An HIV Submodule"
+  ],
+  "states": {
+    "Initial": {
+      "type": "Initial",
+      "name": "Initial",
+      "distributed_transition": [
+        {
+          "transition": "Change regimen",
+          "distribution": 0.04113743967146799
+        },
+        {
+          "transition": "Start drugs",
+          "distribution": 0.4550775472069048
+        },
+        {
+          "transition": "Continue regimen",
+          "distribution": 0.023363142364601165
+        },
+        {
+          "transition": "Dosing change",
+          "distribution": 0.06954071371542575
+        },
+        {
+          "transition": "Stop all",
+          "distribution": 0.2018040782342773
+        },
+        {
+          "transition": "None",
+          "distribution": 0.20907707880732285
+        }
+      ]
+    },
+    "Terminal": {
+      "type": "Terminal",
+      "name": "Terminal"
+    },
+    "Change regimen": {
+      "type": "Observation",
+      "category": "survey",
+      "unit": "",
+      "codes": [
+        {
+          "system": "LOINC",
+          "code": "1261AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+          "display": "PCP PROPHYLAXIS PLAN",
+          "value_set": ""
+        }
+      ],
+      "direct_transition": "Terminal",
+      "name": "Change regimen",
+      "value_code": {
+        "system": "SNOMED-CT",
+        "code": "1259AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+        "display": "Change regimen"
+      }
+    },
+    "Start drugs": {
+      "type": "Observation",
+      "category": "survey",
+      "unit": "",
+      "codes": [
+        {
+          "system": "LOINC",
+          "code": "1261AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+          "display": "PCP PROPHYLAXIS PLAN",
+          "value_set": ""
+        }
+      ],
+      "direct_transition": "Terminal",
+      "name": "Start drugs",
+      "value_code": {
+        "system": "SNOMED-CT",
+        "code": "1256AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+        "display": "Start drugs"
+      }
+    },
+    "Continue regimen": {
+      "type": "Observation",
+      "category": "survey",
+      "unit": "",
+      "codes": [
+        {
+          "system": "LOINC",
+          "code": "1261AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+          "display": "PCP PROPHYLAXIS PLAN",
+          "value_set": ""
+        }
+      ],
+      "direct_transition": "Terminal",
+      "name": "Continue regimen",
+      "value_code": {
+        "system": "SNOMED-CT",
+        "code": "1257AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+        "display": "Continue regimen"
+      }
+    },
+    "Dosing change": {
+      "type": "Observation",
+      "category": "survey",
+      "unit": "",
+      "codes": [
+        {
+          "system": "LOINC",
+          "code": "1261AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+          "display": "PCP PROPHYLAXIS PLAN",
+          "value_set": ""
+        }
+      ],
+      "direct_transition": "Terminal",
+      "name": "Dosing change",
+      "value_code": {
+        "system": "SNOMED-CT",
+        "code": "981AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+        "display": "Dosing change"
+      }
+    },
+    "Stop all": {
+      "type": "Observation",
+      "category": "survey",
+      "unit": "",
+      "codes": [
+        {
+          "system": "LOINC",
+          "code": "1261AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+          "display": "PCP PROPHYLAXIS PLAN",
+          "value_set": ""
+        }
+      ],
+      "direct_transition": "Terminal",
+      "name": "Stop all",
+      "value_code": {
+        "system": "SNOMED-CT",
+        "code": "1260AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+        "display": "Stop all"
+      }
+    },
+    "None": {
+      "type": "Observation",
+      "category": "survey",
+      "unit": "",
+      "codes": [
+        {
+          "system": "LOINC",
+          "code": "1261AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+          "display": "PCP PROPHYLAXIS PLAN",
+          "value_set": ""
+        }
+      ],
+      "direct_transition": "Terminal",
+      "name": "None",
+      "value_code": {
+        "system": "SNOMED-CT",
+        "code": "1107AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+        "display": "None"
+      }
+    }
+  },
+  "gmf_version": 2
+}

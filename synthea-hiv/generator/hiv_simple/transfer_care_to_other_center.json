@@ -1,0 +1,67 @@
+{
+  "name": "transfer_care_to_other_center",
+  "remarks": [
+    "An HIV Submodule"
+  ],
+  "states": {
+    "Initial": {
+      "type": "Initial",
+      "name": "Initial",
+      "distributed_transition": [
+        {
+          "transition": "AMPATH",
+          "distribution": 0.555219851662918
+        },
+        {
+          "transition": "Non-AMPATH",
+          "distribution": 0.4447801483370821
+        }
+      ]
+    },
+    "Terminal": {
+      "type": "Terminal",
+      "name": "Terminal"
+    },
+    "AMPATH": {
+      "type": "Observation",
+      "category": "survey",
+      "unit": "",
+      "codes": [
+        {
+          "system": "LOINC",
+          "code": "1285AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+          "display": "TRANSFER CARE TO OTHER CENTER",
+          "value_set": ""
+        }
+      ],
+      "direct_transition": "Terminal",
+      "name": "AMPATH",
+      "value_code": {
+        "system": "SNOMED-CT",
+        "code": "1286AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+        "display": "AMPATH"
+      }
+    },
+    "Non-AMPATH": {
+      "type": "Observation",
+      "category": "survey",
+      "unit": "",
+      "codes": [
+        {
+          "system": "LOINC",
+          "code": "1285AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+          "display": "TRANSFER CARE TO OTHER CENTER",
+          "value_set": ""
+        }
+      ],
+      "direct_transition": "Terminal",
+      "name": "Non-AMPATH",
+      "value_code": {
+        "system": "SNOMED-CT",
+        "code": "1287AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+        "display": "Non-AMPATH"
+      }
+    }
+  },
+  "gmf_version": 2
+}

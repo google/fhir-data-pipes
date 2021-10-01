@@ -1,0 +1,139 @@
+{
+  "name": "tuberculosis_prophylaxis_plan",
+  "remarks": [
+    "An HIV Submodule"
+  ],
+  "states": {
+    "Initial": {
+      "type": "Initial",
+      "name": "Initial",
+      "distributed_transition": [
+        {
+          "transition": "None",
+          "distribution": 0.3532575631939605
+        },
+        {
+          "transition": "Stop all",
+          "distribution": 0.04619193640662997
+        },
+        {
+          "transition": "Dosing change",
+          "distribution": 0.13008224087365242
+        },
+        {
+          "transition": "Start drugs",
+          "distribution": 0.17420356820012672
+        },
+        {
+          "transition": "Continue regimen",
+          "distribution": 0.2962646913256304
+        }
+      ]
+    },
+    "Terminal": {
+      "type": "Terminal",
+      "name": "Terminal"
+    },
+    "None": {
+      "type": "Observation",
+      "category": "survey",
+      "unit": "",
+      "codes": [
+        {
+          "system": "LOINC",
+          "code": "1265AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+          "display": "TUBERCULOSIS PROPHYLAXIS PLAN",
+          "value_set": ""
+        }
+      ],
+      "direct_transition": "Terminal",
+      "name": "None",
+      "value_code": {
+        "system": "SNOMED-CT",
+        "code": "1107AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+        "display": "None"
+      }
+    },
+    "Stop all": {
+      "type": "Observation",
+      "category": "survey",
+      "unit": "",
+      "codes": [
+        {
+          "system": "LOINC",
+          "code": "1265AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+          "display": "TUBERCULOSIS PROPHYLAXIS PLAN",
+          "value_set": ""
+        }
+      ],
+      "direct_transition": "Terminal",
+      "name": "Stop all",
+      "value_code": {
+        "system": "SNOMED-CT",
+        "code": "1260AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+        "display": "Stop all"
+      }
+    },
+    "Dosing change": {
+      "type": "Observation",
+      "category": "survey",
+      "unit": "",
+      "codes": [
+        {
+          "system": "LOINC",
+          "code": "1265AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+          "display": "TUBERCULOSIS PROPHYLAXIS PLAN",
+          "value_set": ""
+        }
+      ],
+      "direct_transition": "Terminal",
+      "name": "Dosing change",
+      "value_code": {
+        "system": "SNOMED-CT",
+        "code": "981AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+        "display": "Dosing change"
+      }
+    },
+    "Start drugs": {
+      "type": "Observation",
+      "category": "survey",
+      "unit": "",
+      "codes": [
+        {
+          "system": "LOINC",
+          "code": "1265AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+          "display": "TUBERCULOSIS PROPHYLAXIS PLAN",
+          "value_set": ""
+        }
+      ],
+      "direct_transition": "Terminal",
+      "name": "Start drugs",
+      "value_code": {
+        "system": "SNOMED-CT",
+        "code": "1256AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+        "display": "Start drugs"
+      }
+    },
+    "Continue regimen": {
+      "type": "Observation",
+      "category": "survey",
+      "unit": "",
+      "codes": [
+        {
+          "system": "LOINC",
+          "code": "1265AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+          "display": "TUBERCULOSIS PROPHYLAXIS PLAN",
+          "value_set": ""
+        }
+      ],
+      "direct_transition": "Terminal",
+      "name": "Continue regimen",
+      "value_code": {
+        "system": "SNOMED-CT",
+        "code": "1257AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+        "display": "Continue regimen"
+      }
+    }
+  },
+  "gmf_version": 2
+}

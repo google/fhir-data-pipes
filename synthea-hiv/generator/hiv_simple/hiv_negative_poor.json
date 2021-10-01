@@ -1,0 +1,67 @@
+{
+  "name": "hiv_negative_poor",
+  "remarks": [
+    "An HIV Submodule"
+  ],
+  "states": {
+    "Initial": {
+      "type": "Initial",
+      "name": "Initial",
+      "distributed_transition": [
+        {
+          "transition": "Poor sample quality",
+          "distribution": 0.2
+        },
+        {
+          "transition": "Negative",
+          "distribution": 0.8
+        }
+      ]
+    },
+    "Terminal": {
+      "type": "Terminal",
+      "name": "Terminal"
+    },
+    "Poor sample quality": {
+      "type": "Observation",
+      "category": "survey",
+      "unit": "",
+      "codes": [
+        {
+          "system": "LOINC",
+          "code": "1040AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+          "display": "HIV RAPID TEST, QUALITATIVE",
+          "value_set": ""
+        }
+      ],
+      "direct_transition": "Terminal",
+      "name": "Poor sample quality",
+      "value_code": {
+        "system": "SNOMED-CT",
+        "code": "1304AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+        "display": "Poor sample quality"
+      }
+    },
+    "Negative": {
+      "type": "Observation",
+      "category": "survey",
+      "unit": "",
+      "codes": [
+        {
+          "system": "LOINC",
+          "code": "1040AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+          "display": "HIV RAPID TEST, QUALITATIVE",
+          "value_set": ""
+        }
+      ],
+      "direct_transition": "Terminal",
+      "name": "Negative",
+      "value_code": {
+        "system": "SNOMED-CT",
+        "code": "664AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+        "display": "Negative"
+      }
+    }
+  },
+  "gmf_version": 2
+}

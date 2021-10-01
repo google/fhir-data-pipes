@@ -1,0 +1,591 @@
+{
+  "name": "patient_reported_current_tb_treatment",
+  "remarks": [
+    "An HIV Submodule"
+  ],
+  "states": {
+    "Initial": {
+      "type": "Initial",
+      "name": "Initial",
+      "distributed_transition": [
+        {
+          "transition": "Rifampicin isoniazid pyrazinamide and ethambutol",
+          "distribution": 0.6930023794831773
+        },
+        {
+          "transition": "Simple_1",
+          "distribution": 0.30699762051682267
+        }
+      ]
+    },
+    "Rifampicin isoniazid pyrazinamide and ethambutol": {
+      "type": "Observation",
+      "category": "survey",
+      "unit": "",
+      "codes": [
+        {
+          "system": "LOINC",
+          "code": "1111AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+          "display": "PATIENT REPORTED CURRENT TB TREATMENT",
+          "value_set": ""
+        }
+      ],
+      "direct_transition": "Simple_1",
+      "name": "Rifampicin isoniazid pyrazinamide and ethambutol",
+      "value_code": {
+        "system": "SNOMED-CT",
+        "code": "1131AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+        "display": "Rifampicin isoniazid pyrazinamide and ethambutol"
+      }
+    },
+    "Simple_1": {
+      "type": "Simple",
+      "name": "Simple_1",
+      "distributed_transition": [
+        {
+          "transition": "Isoniazid / pyrazinamide / rifampin",
+          "distribution": 0.2271631997330541
+        },
+        {
+          "transition": "Simple_2",
+          "distribution": 0.7728368002669459
+        }
+      ]
+    },
+    "Isoniazid / pyrazinamide / rifampin": {
+      "type": "Observation",
+      "category": "survey",
+      "unit": "",
+      "codes": [
+        {
+          "system": "LOINC",
+          "code": "1111AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+          "display": "PATIENT REPORTED CURRENT TB TREATMENT",
+          "value_set": ""
+        }
+      ],
+      "direct_transition": "Simple_2",
+      "name": "Isoniazid / pyrazinamide / rifampin",
+      "value_code": {
+        "system": "SNOMED-CT",
+        "code": "768AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+        "display": "Isoniazid / pyrazinamide / rifampin"
+      }
+    },
+    "Simple_2": {
+      "type": "Simple",
+      "name": "Simple_2",
+      "distributed_transition": [
+        {
+          "transition": "Rifampicin",
+          "distribution": 0.1586713359697075
+        },
+        {
+          "transition": "Simple_3",
+          "distribution": 0.8413286640302925
+        }
+      ]
+    },
+    "Rifampicin": {
+      "type": "Observation",
+      "category": "survey",
+      "unit": "",
+      "codes": [
+        {
+          "system": "LOINC",
+          "code": "1111AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+          "display": "PATIENT REPORTED CURRENT TB TREATMENT",
+          "value_set": ""
+        }
+      ],
+      "direct_transition": "Simple_3",
+      "name": "Rifampicin",
+      "value_code": {
+        "system": "SNOMED-CT",
+        "code": "767AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+        "display": "Rifampicin"
+      }
+    },
+    "Simple_3": {
+      "type": "Simple",
+      "name": "Simple_3",
+      "distributed_transition": [
+        {
+          "transition": "Pyrazinamide",
+          "distribution": 0.14448270127572715
+        },
+        {
+          "transition": "Simple_4",
+          "distribution": 0.8555172987242728
+        }
+      ]
+    },
+    "Pyrazinamide": {
+      "type": "Observation",
+      "category": "survey",
+      "unit": "",
+      "codes": [
+        {
+          "system": "LOINC",
+          "code": "1111AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+          "display": "PATIENT REPORTED CURRENT TB TREATMENT",
+          "value_set": ""
+        }
+      ],
+      "direct_transition": "Simple_4",
+      "name": "Pyrazinamide",
+      "value_code": {
+        "system": "SNOMED-CT",
+        "code": "82900AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+        "display": "Pyrazinamide"
+      }
+    },
+    "Simple_4": {
+      "type": "Simple",
+      "name": "Simple_4",
+      "distributed_transition": [
+        {
+          "transition": "Isoniazid",
+          "distribution": 0.595372760029223
+        },
+        {
+          "transition": "Simple_5",
+          "distribution": 0.404627239970777
+        }
+      ]
+    },
+    "Isoniazid": {
+      "type": "Observation",
+      "category": "survey",
+      "unit": "",
+      "codes": [
+        {
+          "system": "LOINC",
+          "code": "1111AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+          "display": "PATIENT REPORTED CURRENT TB TREATMENT",
+          "value_set": ""
+        }
+      ],
+      "direct_transition": "Simple_5",
+      "name": "Isoniazid",
+      "value_code": {
+        "system": "SNOMED-CT",
+        "code": "78280AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+        "display": "Isoniazid"
+      }
+    },
+    "Simple_5": {
+      "type": "Simple",
+      "name": "Simple_5",
+      "distributed_transition": [
+        {
+          "transition": "2HRZ",
+          "distribution": 0.07027224322570236
+        },
+        {
+          "transition": "Simple_6",
+          "distribution": 0.9297277567742976
+        }
+      ]
+    },
+    "2HRZ": {
+      "type": "Observation",
+      "category": "survey",
+      "unit": "",
+      "codes": [
+        {
+          "system": "LOINC",
+          "code": "1111AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+          "display": "PATIENT REPORTED CURRENT TB TREATMENT",
+          "value_set": ""
+        }
+      ],
+      "direct_transition": "Simple_6",
+      "name": "2HRZ",
+      "value_code": {
+        "system": "SNOMED-CT",
+        "code": "160097AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+        "display": "2HRZ"
+      }
+    },
+    "Simple_6": {
+      "type": "Simple",
+      "name": "Simple_6",
+      "distributed_transition": [
+        {
+          "transition": "1HRZE",
+          "distribution": 0.6371681450860073
+        },
+        {
+          "transition": "Simple_7",
+          "distribution": 0.3628318549139927
+        }
+      ]
+    },
+    "1HRZE": {
+      "type": "Observation",
+      "category": "survey",
+      "unit": "",
+      "codes": [
+        {
+          "system": "LOINC",
+          "code": "1111AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+          "display": "PATIENT REPORTED CURRENT TB TREATMENT",
+          "value_set": ""
+        }
+      ],
+      "direct_transition": "Simple_7",
+      "name": "1HRZE",
+      "value_code": {
+        "system": "SNOMED-CT",
+        "code": "160095AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+        "display": "1HRZE"
+      }
+    },
+    "Simple_7": {
+      "type": "Simple",
+      "name": "Simple_7",
+      "distributed_transition": [
+        {
+          "transition": "Isoniazid/Rifampin prophylaxis for 4 months",
+          "distribution": 0.8991259654928339
+        },
+        {
+          "transition": "Simple_8",
+          "distribution": 0.10087403450716614
+        }
+      ]
+    },
+    "Isoniazid/Rifampin prophylaxis for 4 months": {
+      "type": "Observation",
+      "category": "survey",
+      "unit": "",
+      "codes": [
+        {
+          "system": "LOINC",
+          "code": "1111AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+          "display": "PATIENT REPORTED CURRENT TB TREATMENT",
+          "value_set": ""
+        }
+      ],
+      "direct_transition": "Simple_8",
+      "name": "Isoniazid/Rifampin prophylaxis for 4 months",
+      "value_code": {
+        "system": "SNOMED-CT",
+        "code": "160093AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+        "display": "Isoniazid/Rifampin prophylaxis for 4 months"
+      }
+    },
+    "Simple_8": {
+      "type": "Simple",
+      "name": "Simple_8",
+      "distributed_transition": [
+        {
+          "transition": "Streptomycin for 2 months",
+          "distribution": 0.03996101515308004
+        },
+        {
+          "transition": "Simple_9",
+          "distribution": 0.96003898484692
+        }
+      ]
+    },
+    "Streptomycin for 2 months": {
+      "type": "Observation",
+      "category": "survey",
+      "unit": "",
+      "codes": [
+        {
+          "system": "LOINC",
+          "code": "1111AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+          "display": "PATIENT REPORTED CURRENT TB TREATMENT",
+          "value_set": ""
+        }
+      ],
+      "direct_transition": "Simple_9",
+      "name": "Streptomycin for 2 months",
+      "value_code": {
+        "system": "SNOMED-CT",
+        "code": "163753AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+        "display": "Streptomycin for 2 months"
+      }
+    },
+    "Simple_9": {
+      "type": "Simple",
+      "name": "Simple_9",
+      "distributed_transition": [
+        {
+          "transition": "None",
+          "distribution": 0.8218913674689915
+        },
+        {
+          "transition": "Simple_10",
+          "distribution": 0.1781086325310085
+        }
+      ]
+    },
+    "None": {
+      "type": "Observation",
+      "category": "survey",
+      "unit": "",
+      "codes": [
+        {
+          "system": "LOINC",
+          "code": "1111AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+          "display": "PATIENT REPORTED CURRENT TB TREATMENT",
+          "value_set": ""
+        }
+      ],
+      "direct_transition": "Simple_10",
+      "name": "None",
+      "value_code": {
+        "system": "SNOMED-CT",
+        "code": "1107AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+        "display": "None"
+      }
+    },
+    "Simple_10": {
+      "type": "Simple",
+      "name": "Simple_10",
+      "distributed_transition": [
+        {
+          "transition": "Rifampicin and isoniazid",
+          "distribution": 0.09342331282566152
+        },
+        {
+          "transition": "Simple_11",
+          "distribution": 0.9065766871743385
+        }
+      ]
+    },
+    "Rifampicin and isoniazid": {
+      "type": "Observation",
+      "category": "survey",
+      "unit": "",
+      "codes": [
+        {
+          "system": "LOINC",
+          "code": "1111AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+          "display": "PATIENT REPORTED CURRENT TB TREATMENT",
+          "value_set": ""
+        }
+      ],
+      "direct_transition": "Simple_11",
+      "name": "Rifampicin and isoniazid",
+      "value_code": {
+        "system": "SNOMED-CT",
+        "code": "1194AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+        "display": "Rifampicin and isoniazid"
+      }
+    },
+    "Simple_11": {
+      "type": "Simple",
+      "name": "Simple_11",
+      "distributed_transition": [
+        {
+          "transition": "Ethambutol and isoniazid",
+          "distribution": 0.1218536690188996
+        },
+        {
+          "transition": "Simple_12",
+          "distribution": 0.8781463309811004
+        }
+      ]
+    },
+    "Ethambutol and isoniazid": {
+      "type": "Observation",
+      "category": "survey",
+      "unit": "",
+      "codes": [
+        {
+          "system": "LOINC",
+          "code": "1111AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+          "display": "PATIENT REPORTED CURRENT TB TREATMENT",
+          "value_set": ""
+        }
+      ],
+      "direct_transition": "Simple_12",
+      "name": "Ethambutol and isoniazid",
+      "value_code": {
+        "system": "SNOMED-CT",
+        "code": "1108AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+        "display": "Ethambutol and isoniazid"
+      }
+    },
+    "Simple_12": {
+      "type": "Simple",
+      "name": "Simple_12",
+      "distributed_transition": [
+        {
+          "transition": "Ethambutol",
+          "distribution": 0.400851026180581
+        },
+        {
+          "transition": "Simple_13",
+          "distribution": 0.599148973819419
+        }
+      ]
+    },
+    "Ethambutol": {
+      "type": "Observation",
+      "category": "survey",
+      "unit": "",
+      "codes": [
+        {
+          "system": "LOINC",
+          "code": "1111AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+          "display": "PATIENT REPORTED CURRENT TB TREATMENT",
+          "value_set": ""
+        }
+      ],
+      "direct_transition": "Simple_13",
+      "name": "Ethambutol",
+      "value_code": {
+        "system": "SNOMED-CT",
+        "code": "75948AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+        "display": "Ethambutol"
+      }
+    },
+    "Simple_13": {
+      "type": "Simple",
+      "name": "Simple_13",
+      "distributed_transition": [
+        {
+          "transition": "Streptomycin",
+          "distribution": 0.045514955994939155
+        },
+        {
+          "transition": "Simple_14",
+          "distribution": 0.9544850440050608
+        }
+      ]
+    },
+    "Streptomycin": {
+      "type": "Observation",
+      "category": "survey",
+      "unit": "",
+      "codes": [
+        {
+          "system": "LOINC",
+          "code": "1111AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+          "display": "PATIENT REPORTED CURRENT TB TREATMENT",
+          "value_set": ""
+        }
+      ],
+      "direct_transition": "Simple_14",
+      "name": "Streptomycin",
+      "value_code": {
+        "system": "SNOMED-CT",
+        "code": "84360AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+        "display": "Streptomycin"
+      }
+    },
+    "Simple_14": {
+      "type": "Simple",
+      "name": "Simple_14",
+      "distributed_transition": [
+        {
+          "transition": "5HR + E",
+          "distribution": 0.6039150791595586
+        },
+        {
+          "transition": "Simple_15",
+          "distribution": 0.39608492084044145
+        }
+      ]
+    },
+    "5HR + E": {
+      "type": "Observation",
+      "category": "survey",
+      "unit": "",
+      "codes": [
+        {
+          "system": "LOINC",
+          "code": "1111AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+          "display": "PATIENT REPORTED CURRENT TB TREATMENT",
+          "value_set": ""
+        }
+      ],
+      "direct_transition": "Simple_15",
+      "name": "5HR + E",
+      "value_code": {
+        "system": "SNOMED-CT",
+        "code": "160096AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+        "display": "5HR + E"
+      }
+    },
+    "Simple_15": {
+      "type": "Simple",
+      "name": "Simple_15",
+      "distributed_transition": [
+        {
+          "transition": "2S + HRZE",
+          "distribution": 0.381787024555885
+        },
+        {
+          "transition": "Simple_16",
+          "distribution": 0.618212975444115
+        }
+      ]
+    },
+    "2S + HRZE": {
+      "type": "Observation",
+      "category": "survey",
+      "unit": "",
+      "codes": [
+        {
+          "system": "LOINC",
+          "code": "1111AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+          "display": "PATIENT REPORTED CURRENT TB TREATMENT",
+          "value_set": ""
+        }
+      ],
+      "direct_transition": "Simple_16",
+      "name": "2S + HRZE",
+      "value_code": {
+        "system": "SNOMED-CT",
+        "code": "160094AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+        "display": "2S + HRZE"
+      }
+    },
+    "Simple_16": {
+      "type": "Simple",
+      "name": "Simple_16",
+      "distributed_transition": [
+        {
+          "transition": "Isoniazid/Rifampin/Pyrazinamide/Ethambutol prophylaxis for 2 months",
+          "distribution": 0.11401597691600796
+        },
+        {
+          "transition": "Simple_17",
+          "distribution": 0.885984023083992
+        }
+      ]
+    },
+    "Isoniazid/Rifampin/Pyrazinamide/Ethambutol prophylaxis for 2 months": {
+      "type": "Observation",
+      "category": "survey",
+      "unit": "",
+      "codes": [
+        {
+          "system": "LOINC",
+          "code": "1111AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+          "display": "PATIENT REPORTED CURRENT TB TREATMENT",
+          "value_set": ""
+        }
+      ],
+      "direct_transition": "Simple_17",
+      "name": "Isoniazid/Rifampin/Pyrazinamide/Ethambutol prophylaxis for 2 months",
+      "value_code": {
+        "system": "SNOMED-CT",
+        "code": "160092AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+        "display": "Isoniazid/Rifampin/Pyrazinamide/Ethambutol prophylaxis for 2 months"
+      }
+    },
+    "Simple_17": {
+      "type": "Terminal",
+      "name": "Simple_17"
+    }
+  },
+  "gmf_version": 2
+}

@@ -1,0 +1,319 @@
+{
+  "name": "antiretrovirals_started",
+  "remarks": [
+    "An HIV Submodule"
+  ],
+  "states": {
+    "Initial": {
+      "type": "Initial",
+      "name": "Initial",
+      "distributed_transition": [
+        {
+          "transition": "Lopinavir / ritonavir",
+          "distribution": 0.9196657757002838
+        },
+        {
+          "transition": "Simple_1",
+          "distribution": 0.08033422429971615
+        }
+      ]
+    },
+    "Lopinavir / ritonavir": {
+      "type": "Observation",
+      "category": "survey",
+      "unit": "",
+      "codes": [
+        {
+          "system": "LOINC",
+          "code": "1250AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+          "display": "ANTIRETROVIRALS STARTED",
+          "value_set": ""
+        }
+      ],
+      "direct_transition": "Simple_1",
+      "name": "Lopinavir / ritonavir",
+      "value_code": {
+        "system": "SNOMED-CT",
+        "code": "794AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+        "display": "Lopinavir / ritonavir"
+      }
+    },
+    "Simple_1": {
+      "type": "Simple",
+      "name": "Simple_1",
+      "distributed_transition": [
+        {
+          "transition": "Lamivudine / zidovudine",
+          "distribution": 0.47907339179533914
+        },
+        {
+          "transition": "Simple_2",
+          "distribution": 0.5209266082046609
+        }
+      ]
+    },
+    "Lamivudine / zidovudine": {
+      "type": "Observation",
+      "category": "survey",
+      "unit": "",
+      "codes": [
+        {
+          "system": "LOINC",
+          "code": "1250AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+          "display": "ANTIRETROVIRALS STARTED",
+          "value_set": ""
+        }
+      ],
+      "direct_transition": "Simple_2",
+      "name": "Lamivudine / zidovudine",
+      "value_code": {
+        "system": "SNOMED-CT",
+        "code": "630AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+        "display": "Lamivudine / zidovudine"
+      }
+    },
+    "Simple_2": {
+      "type": "Simple",
+      "name": "Simple_2",
+      "distributed_transition": [
+        {
+          "transition": "Nevirapine",
+          "distribution": 0.3171509239488981
+        },
+        {
+          "transition": "Simple_3",
+          "distribution": 0.6828490760511019
+        }
+      ]
+    },
+    "Nevirapine": {
+      "type": "Observation",
+      "category": "survey",
+      "unit": "",
+      "codes": [
+        {
+          "system": "LOINC",
+          "code": "1250AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+          "display": "ANTIRETROVIRALS STARTED",
+          "value_set": ""
+        }
+      ],
+      "direct_transition": "Simple_3",
+      "name": "Nevirapine",
+      "value_code": {
+        "system": "SNOMED-CT",
+        "code": "80586AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+        "display": "Nevirapine"
+      }
+    },
+    "Simple_3": {
+      "type": "Simple",
+      "name": "Simple_3",
+      "distributed_transition": [
+        {
+          "transition": "Nelfinavir",
+          "distribution": 0.5920003804169371
+        },
+        {
+          "transition": "Simple_4",
+          "distribution": 0.40799961958306286
+        }
+      ]
+    },
+    "Nelfinavir": {
+      "type": "Observation",
+      "category": "survey",
+      "unit": "",
+      "codes": [
+        {
+          "system": "LOINC",
+          "code": "1250AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+          "display": "ANTIRETROVIRALS STARTED",
+          "value_set": ""
+        }
+      ],
+      "direct_transition": "Simple_4",
+      "name": "Nelfinavir",
+      "value_code": {
+        "system": "SNOMED-CT",
+        "code": "80487AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+        "display": "Nelfinavir"
+      }
+    },
+    "Simple_4": {
+      "type": "Simple",
+      "name": "Simple_4",
+      "distributed_transition": [
+        {
+          "transition": "Abacavir",
+          "distribution": 0.28501119808046205
+        },
+        {
+          "transition": "Simple_5",
+          "distribution": 0.714988801919538
+        }
+      ]
+    },
+    "Abacavir": {
+      "type": "Observation",
+      "category": "survey",
+      "unit": "",
+      "codes": [
+        {
+          "system": "LOINC",
+          "code": "1250AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+          "display": "ANTIRETROVIRALS STARTED",
+          "value_set": ""
+        }
+      ],
+      "direct_transition": "Simple_5",
+      "name": "Abacavir",
+      "value_code": {
+        "system": "SNOMED-CT",
+        "code": "70056AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+        "display": "Abacavir"
+      }
+    },
+    "Simple_5": {
+      "type": "Simple",
+      "name": "Simple_5",
+      "distributed_transition": [
+        {
+          "transition": "Lamivudine",
+          "distribution": 0.6856927092159144
+        },
+        {
+          "transition": "Simple_6",
+          "distribution": 0.3143072907840856
+        }
+      ]
+    },
+    "Lamivudine": {
+      "type": "Observation",
+      "category": "survey",
+      "unit": "",
+      "codes": [
+        {
+          "system": "LOINC",
+          "code": "1250AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+          "display": "ANTIRETROVIRALS STARTED",
+          "value_set": ""
+        }
+      ],
+      "direct_transition": "Simple_6",
+      "name": "Lamivudine",
+      "value_code": {
+        "system": "SNOMED-CT",
+        "code": "78643AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+        "display": "Lamivudine"
+      }
+    },
+    "Simple_6": {
+      "type": "Simple",
+      "name": "Simple_6",
+      "distributed_transition": [
+        {
+          "transition": "Efavirenz",
+          "distribution": 0.3019150542736728
+        },
+        {
+          "transition": "Simple_7",
+          "distribution": 0.6980849457263272
+        }
+      ]
+    },
+    "Efavirenz": {
+      "type": "Observation",
+      "category": "survey",
+      "unit": "",
+      "codes": [
+        {
+          "system": "LOINC",
+          "code": "1250AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+          "display": "ANTIRETROVIRALS STARTED",
+          "value_set": ""
+        }
+      ],
+      "direct_transition": "Simple_7",
+      "name": "Efavirenz",
+      "value_code": {
+        "system": "SNOMED-CT",
+        "code": "75523AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+        "display": "Efavirenz"
+      }
+    },
+    "Simple_7": {
+      "type": "Simple",
+      "name": "Simple_7",
+      "distributed_transition": [
+        {
+          "transition": "Tenofovir",
+          "distribution": 0.9104345740880274
+        },
+        {
+          "transition": "Simple_8",
+          "distribution": 0.08956542591197258
+        }
+      ]
+    },
+    "Tenofovir": {
+      "type": "Observation",
+      "category": "survey",
+      "unit": "",
+      "codes": [
+        {
+          "system": "LOINC",
+          "code": "1250AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+          "display": "ANTIRETROVIRALS STARTED",
+          "value_set": ""
+        }
+      ],
+      "direct_transition": "Simple_8",
+      "name": "Tenofovir",
+      "value_code": {
+        "system": "SNOMED-CT",
+        "code": "84795AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+        "display": "Tenofovir"
+      }
+    },
+    "Simple_8": {
+      "type": "Simple",
+      "name": "Simple_8",
+      "distributed_transition": [
+        {
+          "transition": "Zidovudine",
+          "distribution": 0.7778116847289053
+        },
+        {
+          "transition": "Simple_9",
+          "distribution": 0.22218831527109473
+        }
+      ]
+    },
+    "Zidovudine": {
+      "type": "Observation",
+      "category": "survey",
+      "unit": "",
+      "codes": [
+        {
+          "system": "LOINC",
+          "code": "1250AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+          "display": "ANTIRETROVIRALS STARTED",
+          "value_set": ""
+        }
+      ],
+      "direct_transition": "Simple_9",
+      "name": "Zidovudine",
+      "value_code": {
+        "system": "SNOMED-CT",
+        "code": "86663AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+        "display": "Zidovudine"
+      }
+    },
+    "Simple_9": {
+      "type": "Terminal",
+      "name": "Simple_9"
+    }
+  },
+  "gmf_version": 2
+}

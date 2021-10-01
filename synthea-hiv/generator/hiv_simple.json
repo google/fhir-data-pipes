@@ -1,0 +1,318 @@
+{
+  "name": "HIV Simple",
+  "remarks": [
+    "This module simulates an HIV patient based on AMPATH Codes."
+  ],
+  "states": {
+    "Initial": {
+      "type": "Initial",
+      "direct_transition": "Years Before Infection",
+      "name": "Initial"
+    },
+    "Delay": {
+      "type": "Delay",
+      "range": {
+        "low": 1,
+        "high": 2,
+        "unit": "years"
+      },
+      "name": "Delay",
+      "distributed_transition": [
+        {
+          "transition": "Keep",
+          "distribution": 0.25
+        },
+        {
+          "transition": "Encounter",
+          "distribution": 0.75
+        }
+      ]
+    },
+    "Years Before Infection": {
+      "type": "Delay",
+      "range": {
+        "low": 15,
+        "high": 65,
+        "unit": "years"
+      },
+      "name": "Years Before Infection",
+      "direct_transition": "Weight"
+    },
+    "Viral Load": {
+      "type": "Observation",
+      "category": "exam",
+      "unit": "",
+      "codes": [
+        {
+          "system": "LOINC",
+          "code": "856AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+          "display": "HIV viral load",
+          "value_set": ""
+        }
+      ],
+      "distribution": {
+        "kind": "UNIFORM",
+        "round": false,
+        "parameters": {
+          "high": 1000000,
+          "low": 200
+        }
+      },
+      "name": "Viral Load",
+      "conditional_transition": [
+        {
+          "transition": "HIV Negative or Poor Sample Quality",
+          "condition": {
+            "condition_type": "Observation",
+            "codes": [
+              {
+                "system": "LOINC",
+                "code": "856AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+                "display": "HIV viral load"
+              }
+            ],
+            "operator": "<=",
+            "value": 1000
+          }
+        },
+        {
+          "transition": "HIV Positive or Poor Sample Quality"
+        }
+      ]
+    },
+    "Has_TB": {
+      "type": "ConditionOnset",
+      "assign_to_attribute": "",
+      "codes": [
+        {
+          "system": "SNOMED-CT",
+          "code": "112141AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+          "display": "Tuberculosis",
+          "value_set": ""
+        }
+      ],
+      "distributed_transition": [
+        {
+          "transition": "End Encounter",
+          "distribution": 0.25
+        },
+        {
+          "transition": "PATIENT REPORTED CURRENT TB TREATMENT",
+          "distribution": 0.75
+        }
+      ],
+      "name": "Has_TB"
+    },
+    "TESTS ORDERED": {
+      "type": "CallSubmodule",
+      "submodule": "hiv_simple/tests_ordered",
+      "direct_transition": "HIV DNA POLYMERASE CHAIN REACTION, QUALITATIVE",
+      "name": "TESTS ORDERED"
+    },
+    "HIV DNA POLYMERASE CHAIN REACTION, QUALITATIVE": {
+      "type": "CallSubmodule",
+      "submodule": "hiv_simple/hiv_dna_polymerase_chain_reaction_qualitative",
+      "direct_transition": "Viral Load",
+      "name": "HIV DNA POLYMERASE CHAIN REACTION, QUALITATIVE"
+    },
+    "PATIENT REPORTED CURRENT TB TREATMENT": {
+      "type": "CallSubmodule",
+      "submodule": "hiv_simple/patient_reported_current_tb_treatment",
+      "direct_transition": "PATIENT REPORTED CURRENT ANTIRETROVIRAL TREATMENT",
+      "name": "PATIENT REPORTED CURRENT TB TREATMENT"
+    },
+    "TUBERCULOSIS_TREATMENT_PLAN": {
+      "type": "CallSubmodule",
+      "submodule": "hiv_simple/tuberculosis_treatment_plan",
+      "direct_transition": "ANTIRETROVIRAL PLAN",
+      "name": "TUBERCULOSIS_TREATMENT_PLAN"
+    },
+    "ANTIRETROVIRAL PLAN": {
+      "type": "CallSubmodule",
+      "submodule": "hiv_simple/antiretroviral_plan",
+      "direct_transition": "TUBERCULOSIS PROPHYLAXIS PLAN",
+      "name": "ANTIRETROVIRAL PLAN"
+    },
+    "PCP PROPHYLAXIS PLAN": {
+      "type": "CallSubmodule",
+      "submodule": "hiv_simple/pcp_prophylaxis_plan",
+      "direct_transition": "TUBERCULOSIS TREATMENT STARTED",
+      "name": "PCP PROPHYLAXIS PLAN"
+    },
+    "REVIEW OF TUBERCULOSIS SCREENING QUESTIONS": {
+      "type": "CallSubmodule",
+      "submodule": "hiv_simple/review_of_tuberculosis_screening_questions",
+      "direct_transition": "TESTS ORDERED",
+      "name": "REVIEW OF TUBERCULOSIS SCREENING QUESTIONS"
+    },
+    "TUBERCULOSIS TREATMENT STARTED": {
+      "type": "CallSubmodule",
+      "submodule": "hiv_simple/tuberculosis_treatment_started",
+      "direct_transition": "ANTIRETROVIRALS STARTED",
+      "name": "TUBERCULOSIS TREATMENT STARTED"
+    },
+    "ANTIRETROVIRALS STARTED": {
+      "type": "CallSubmodule",
+      "submodule": "hiv_simple/antiretrovirals_started",
+      "direct_transition": "End Visit",
+      "name": "ANTIRETROVIRALS STARTED"
+    },
+    "TUBERCULOSIS PROPHYLAXIS PLAN": {
+      "type": "CallSubmodule",
+      "submodule": "hiv_simple/tuberculosis_prophylaxis_plan",
+      "direct_transition": "PCP PROPHYLAXIS PLAN",
+      "name": "TUBERCULOSIS PROPHYLAXIS PLAN"
+    },
+    "CURRENT ANTIRETROVIRAL DRUGS USED FOR TREATMENT": {
+      "type": "CallSubmodule",
+      "submodule": "hiv_simple/current_antiretroviral_drugs_used_for_treatment",
+      "direct_transition": "TUBERCULOSIS_TREATMENT_PLAN",
+      "name": "CURRENT ANTIRETROVIRAL DRUGS USED FOR TREATMENT"
+    },
+    "PATIENT REPORTED CURRENT ANTIRETROVIRAL TREATMENT": {
+      "type": "CallSubmodule",
+      "submodule": "hiv_simple/patient_reported_current_antiretroviral_treatment",
+      "direct_transition": "CURRENT ANTIRETROVIRAL DRUGS USED FOR TREATMENT",
+      "name": "PATIENT REPORTED CURRENT ANTIRETROVIRAL TREATMENT"
+    },
+    "Check Up": {
+      "type": "Delay",
+      "distribution": {
+        "kind": "UNIFORM",
+        "parameters": {
+          "high": 3,
+          "low": 1
+        }
+      },
+      "unit": "months",
+      "name": "Check Up",
+      "direct_transition": "RETURN VISIT DATE"
+    },
+    "Encounter": {
+      "type": "Encounter",
+      "encounter_class": "inpatient",
+      "codes": [
+        {
+          "system": "SNOMED-CT",
+          "code": "1597AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+          "display": "Encounter",
+          "value_set": ""
+        }
+      ],
+      "direct_transition": "Vitals",
+      "name": "Encounter"
+    },
+    "End Encounter": {
+      "type": "EncounterEnd",
+      "direct_transition": "Delay",
+      "name": "End Encounter"
+    },
+    "Vitals": {
+      "type": "CallSubmodule",
+      "submodule": "hiv_simple/vitals",
+      "direct_transition": "REVIEW OF TUBERCULOSIS SCREENING QUESTIONS",
+      "name": "Vitals"
+    },
+    "Height": {
+      "type": "Observation",
+      "category": "survey",
+      "unit": "cm",
+      "codes": [
+        {
+          "system": "LOINC",
+          "code": "5090AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+          "display": "Height",
+          "value_set": ""
+        }
+      ],
+      "distribution": {
+        "kind": "GAUSSIAN",
+        "round": false,
+        "parameters": {
+          "mean": 170,
+          "standardDeviation": 1
+        }
+      },
+      "direct_transition": "Encounter",
+      "name": "Height"
+    },
+    "Weight": {
+      "type": "Observation",
+      "category": "survey",
+      "unit": "kg",
+      "codes": [
+        {
+          "system": "LOINC",
+          "code": "5089AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+          "display": "Weight",
+          "value_set": ""
+        }
+      ],
+      "distribution": {
+        "kind": "GAUSSIAN",
+        "round": false,
+        "parameters": {
+          "mean": 64,
+          "standardDeviation": 1
+        }
+      },
+      "direct_transition": "Height",
+      "name": "Weight"
+    },
+    "HIV Negative or Poor Sample Quality": {
+      "type": "CallSubmodule",
+      "submodule": "hiv_simple/hiv_negative_poor",
+      "direct_transition": "End Encounter",
+      "name": "HIV Negative or Poor Sample Quality"
+    },
+    "HIV Positive or Poor Sample Quality": {
+      "type": "CallSubmodule",
+      "submodule": "hiv_simple/hiv_positive_poor",
+      "distributed_transition": [
+        {
+          "transition": "Has_TB",
+          "distribution": 0.8
+        },
+        {
+          "transition": "End Encounter",
+          "distribution": 0.2
+        }
+      ],
+      "name": "HIV Positive or Poor Sample Quality"
+    },
+    "End Visit": {
+      "type": "EncounterEnd",
+      "name": "End Visit",
+      "distributed_transition": [
+        {
+          "transition": "Delay",
+          "distribution": 0.4
+        },
+        {
+          "transition": "Check Up",
+          "distribution": 0.6
+        }
+      ]
+    },
+    "RETURN VISIT DATE": {
+      "type": "Encounter",
+      "encounter_class": "inpatient",
+      "reason": "RETURN VISIT DATE",
+      "codes": [
+        {
+          "system": "SNOMED-CT",
+          "code": "5096AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+          "display": "RETURN VISIT DATE",
+          "value_set": ""
+        }
+      ],
+      "direct_transition": "PATIENT REPORTED CURRENT TB TREATMENT",
+      "name": "RETURN VISIT DATE"
+    },
+    "Keep": {
+      "type": "Terminal",
+      "name": "Keep"
+    }
+  },
+  "gmf_version": 2
+}
