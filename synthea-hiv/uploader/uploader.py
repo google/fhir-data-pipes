@@ -24,14 +24,14 @@ import logger_util
 class Uploader:
   """Uploads FHIR resources to either OpenMRS or any other FHIR Server."""
 
-  def __init__(self, client: fhir_client.BaseClient):
+  def __init__(self, client: fhir_client.FhirClient):
     self.fhir_client = client
     self.logger = logger_util.create_logger(self.__class__.__module__,
                                             self.__class__.__name__)
 
   def _upload_resource(self, resource: str, data: Dict[str, str]):
     """Used to POST when OpenMRS is the target sink."""
-    self.fhir_client.post_data(resource, data)
+    self.fhir_client.post_single_resource(resource, data)
     return self.fhir_client.response['id']
 
   def upload_openmrs_bundle(self, each_bundle: bundle.Bundle):
@@ -86,7 +86,7 @@ class Uploader:
     """Upload bundle to a FHIR Server via a POST request."""
     try:
       self.logger.info('Uploading %s' % each_bundle.file_name)
-      self.fhir_client.post_data(data=each_bundle.bundle_dict)
+      self.fhir_client.post_bundle(data=each_bundle.bundle_dict)
       self.logger.info('Successfully uploaded %s' % each_bundle.file_name)
 
     except ValueError:

@@ -31,27 +31,11 @@ class Bundle:
   def __init__(self, file_name: pathlib.PosixPath, bundle_dict: Dict[str, str]):
     self.bundle_dict = bundle_dict
     self.file_name = file_name
-    self._openmrs_patient = None
-    self._openmrs_encounters = []
-    self._openmrs_observations = []
+    self.openmrs_patient = None
+    self.openmrs_encounters = []
+    self.openmrs_observations = []
     self.logger = logger_util.create_logger(self.__class__.__module__,
                                             self.__class__.__name__)
-
-  @property
-  def openmrs_patient(self):
-    return self._openmrs_patient
-
-  @property
-  def openmrs_encounters(self):
-    return self._openmrs_encounters
-
-  @property
-  def openmrs_observations(self):
-    return self._openmrs_observations
-
-  @openmrs_patient.setter
-  def openmrs_patient(self, patient: resources.Patient):
-    self._openmrs_patient = patient
 
   def add_encounter(self, encounter: resources.Encounter):
     self.openmrs_encounters.append(encounter)

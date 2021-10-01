@@ -15,7 +15,7 @@
 import unittest
 from unittest import mock
 import fhir_client
-import logger_util
+
 
 def mock_requests_post(**kwargs):
 
@@ -25,10 +25,6 @@ def mock_requests_post(**kwargs):
       self.text = text
       self.status_code = status_code
       self.url = url
-
-      if status_code >= 400:
-        self.request = mock.MagicMock()
-        self.request.body  = "this happened"
 
   if 'localhost/Patient' in kwargs['url']:
     return MockResponse('{"resourceType":"Local"}', 200, kwargs['url'])
@@ -51,17 +47,15 @@ class FhirClientTest(unittest.TestCase):
 
   def test_post_data_local(self):
     client = fhir_client.OpenMrsClient('http://localhost')
-    client.post_data(resource='Patient', data={'hi': 'bob'})
+    client.post_single_resource(resource='Patient', data={'hi': 'bob'})
     self.assertEqual(client.response, {'resourceType': 'Local'})
 
-  def test_post_data_gcp(self):
+  def test_post_bundle_gcp(self):
     client = fhir_client.GcpClient('http://googleapis')
-    client.post_data(data={'hi': 'bob'})
+    client.post_bundle(data={'hi': 'bob'})
     self.assertEqual(client.response, {'resourceType': 'Google'})
 
-  @mock.patch.object(logger_util, 'create_logger')
-  def test_post_data_error(self, _):
+  def test_post_resource_error(self):
     client = fhir_client.OpenMrsClient('http://random')
     with self.assertRaises(ValueError):
-      client.post_data(resource='Patient', data={'hi': 'mom'})
-    client.logger.debug.assert_called_with('this happened')
+      client.post_single_resource(resource='Patient', data={'hi': 'mom'})

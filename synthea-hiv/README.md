@@ -26,27 +26,21 @@ the generator.
 
 ## Uploader
 
-Run the following command in your terminal (Docker is needed):
+Run the following commands in your terminal (Python3 is needed):
 
 ```bash
 gcloud auth application-default login
 cd ./uploader
-docker build -t synthea-uploader .
-docker run -it --network=host \
-  -e FHIR_ENDPOINT=$FHIR_ENDPOINT \
-  -e CONVERT="--convert_to_openmrs" \
-  -v ~/.config/:/root/.config \
-  -v /absolute/path/to/fhir/bundles:/workspace/output/fhir \
-  synthea-uploader
+python3 main.py $FHIR_ENDPOINT \
+  --input_dir /absolute/path/to/fhir/bundles
+  --convert_to_openmrs
 ```
 
-If you are not uploading to Google Cloud FHIR Store, the command:
+If you are not uploading to Google Cloud FHIR Store, you can omit the command:
 
   ```bash
   gcloud auth application-default login
   ```
-
-can be omitted, as well as mounting the `.config` directory.
 
 The `$FHIR_ENDPOINT` is the endpoint to upload to.
 
@@ -62,8 +56,23 @@ The `$FHIR_ENDPOINT` is the endpoint to upload to.
   https://healthcare.googleapis.com/v1beta1/projects/$PROJECT_ID/locations/$LOCATION/datasets/$DATASET/fhirStores/$FHIR_STORE/fhir
   ```
 
-If the `FHIR_ENDPOINT` env variable is not set, the localhost URL is used by
-default.
+When uploading to an OpenMRS Server, you _must_ specify the
+`--convert_to_openmrs` flag. This flag is not needed when uploading to GCP FHIR
+Store.
+
+If you prefer using Docker, you can do the following:
+
+```bash
+gcloud auth application-default login
+cd ./uploader
+docker build -t synthea-uploader .
+docker run -it --network=host \
+  -e FHIR_ENDPOINT=$FHIR_ENDPOINT \
+  -e CONVERT="--convert_to_openmrs" \
+  -v ~/.config/:/root/.config \
+  -v /absolute/path/to/fhir/bundles:/workspace/output/fhir \
+  synthea-uploader
+```
 
 The `CONVERT` variable is optional, but if you want to upload to an OpenMRS
 server, you _must_ add it and set its value to `--convert_to_openmrs` flag. See
@@ -93,10 +102,6 @@ example of how a Submodule looks:
   coded value of each question and answer is actually from CIEL. This is
   regardless of whether the flag `convert_to_openmrs` is specified or not when
   uploading.
-
-* Some of the questions asked by AMPATH can have multiple answers in real life;
-  in the model, each of the questions can have one answer. Each answer is
-  assigned a random probability of being chosen.
 
 * Due to [this](https://github.com/moby/moby/issues/2259) issue in Docker, the
   outputted directories and files generated will be owned by `root`, not your

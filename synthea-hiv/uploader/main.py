@@ -104,7 +104,7 @@ def convert_to_bundle(json_file: pathlib.PosixPath) -> bundle.Bundle:
     return bundle.Bundle(json_file, data)
 
 
-def upload_openmrs(sink: fhir_client.BaseClient, patient_bundle: bundle.Bundle):
+def upload_openmrs(sink: fhir_client.FhirClient, patient_bundle: bundle.Bundle):
   """Upload Patient history bundles to OpenMRS.
 
   For each bundle, we have to know the individual Patient, Encounters, and
@@ -123,7 +123,7 @@ def upload_openmrs(sink: fhir_client.BaseClient, patient_bundle: bundle.Bundle):
   patient_bundle.save_mapping()
 
 
-def upload(sink: fhir_client.BaseClient, each_bundle: bundle.Bundle):
+def upload(sink: fhir_client.FhirClient, each_bundle: bundle.Bundle):
   """Upload bundles to a FHIR endpoint.
 
   Server must be able to handle Bundle transactions.
@@ -137,7 +137,7 @@ def upload(sink: fhir_client.BaseClient, each_bundle: bundle.Bundle):
   upload_handler.upload_bundle(each_bundle)
 
 
-def create_sink(url: str) -> fhir_client.BaseClient:
+def create_sink(url: str) -> fhir_client.FhirClient:
   if url.startswith('https://healthcare.googleapis.com'):
     return fhir_client.GcpClient(url)
   else:

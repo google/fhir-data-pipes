@@ -14,43 +14,33 @@
 """Connections to a FHIR Server."""
 
 import json
-from typing import Dict
+from typing import Dict, Union
 import google.auth
 import google.auth.transport.requests
-import logger_util
 import requests
 
+FhirClient = Union['GcpClient', 'OpenMrsClient']
 
-class BaseClient:
+
+def process_response(response: requests.Response) -> Dict[str, str]:
+  if response.status_code >= 400:
+    raise ValueError('POST to %s failed with code %s and response:\n %s' %
+                     (response.url, response.status_code, response.text))
+  return json.loads(response.text)
+
+
+class OpenMrsClient:
+  """Client to connect to an OpenMRS Server."""
 
   def __init__(self, base_url: str):
     self._base_url = base_url
     self._headers = {'Content-Type': 'application/fhir+json;charset=utf-8'}
-    self.response = None
-    self.logger = logger_util.create_logger(self.__class__.__module__,
-                                            self.__class__.__name__)
-
-  def post_data(self, **kwargs):
-    raise NotImplementedError
-
-  def _process_response(self, response: requests.Response):
-    if response.status_code >= 400:
-      self.logger.debug(response.request.body)
-      raise ValueError('POST to %s failed with code %s and response:\n %s' %
-                       (response.url, response.status_code, response.text))
-    self.response = json.loads(response.text)
-
-
-class OpenMrsClient(BaseClient):
-  """Client to connect to an OpenMRS Server."""
-
-  def __init__(self, base_url: str):
-    super().__init__(base_url)
     self._auth = ('admin', 'Admin123')
+    self.response = None
 
-  def post_data(self, resource: str, data: Dict[str, str]):
+  def post_single_resource(self, resource: str, data: Dict[str, str]):
     url = f'{self._base_url}/{resource}'
-    self._process_response(
+    self.response = process_response(
         requests.post(
             url=url,
             data=json.dumps(data),
@@ -58,18 +48,26 @@ class OpenMrsClient(BaseClient):
             headers=self._headers))
 
 
-class GcpClient(BaseClient):
+class GcpClient:
   """Client to connect to GCP FHIR Store."""
 
   def __init__(self, base_url: str):
-    super().__init__(base_url)
+    self._base_url = base_url
+    self._headers = {'Content-Type': 'application/fhir+json;charset=utf-8'}
     self._auth_req = google.auth.transport.requests.Request()
     self._creds, _ = google.auth.default()
-    self._auth = None
+    self.response = None
 
-  def post_data(self, data: Dict[str, str]):
+  def post_bundle(self, data: Dict[str, str]):
     self._creds.refresh(self._auth_req)
     self._headers['Authorization'] = f'Bearer {self._creds.token}'
-    self._process_response(
+    self.response = process_response(
         requests.post(
             url=self._base_url, data=json.dumps(data), headers=self._headers))
+
+  def post_single_resource(self, resource: str, data: Dict[str, str]):
+    self._creds.refresh(self._auth_req)
+    self._headers['Authorization'] = f'Bearer {self._creds.token}'
+    url = f'{self._base_url}/{resource}'
+    self.response = process_response(
+        requests.post(url=url, data=json.dumps(data), headers=self._headers))

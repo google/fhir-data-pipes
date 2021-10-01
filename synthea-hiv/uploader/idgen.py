@@ -13,26 +13,26 @@
 # limitations under the License.
 """Helper functions to generate Checksum for OpenMRS uploads."""
 
+_BASE_CHARS = '0123456789ACDEFGHJKLMNPRTUVWXY'  # based on what OpenMRS uses:
+# https://github.com/openmrs/openmrs-module-idgen/blob/master/api/src/main/java/org/openmrs/module/idgen/validator/LuhnMod30IdentifierValidator.java
 
-def luhn_id_generator(
-    num: int, base_chars: str = '0123456789ACDEFGHJKLMNPRTUVWXY') -> str:
+
+def luhn_id_generator(num: int) -> str:
   """Takes in a number and returns the number with the checksum.
 
   Args:
     num: number to add checksum to end of
-    base_chars: default based on what OpenMRS uses:
-      https://github.com/openmrs/openmrs-module-idgen/blob/master/api/src/main/java/org/openmrs/module/idgen/validator/LuhnMod30IdentifierValidator.java
 
   Returns:
     String with appended checksum
   """
   num = str(num)
-  base_length = len(base_chars)
+  base_length = len(_BASE_CHARS)
   factor = 2
   summation = 0
 
   for i in range(len(num) - 1, -1, -1):
-    code_point = base_chars.index(num[i])
+    code_point = _BASE_CHARS.index(num[i])
     addend = factor * code_point
     factor = 1 if (factor == 2) else 2
     addend = (addend // base_length) + (addend % base_length)
@@ -40,12 +40,12 @@ def luhn_id_generator(
 
   remainder = summation % base_length
   check_code_point = (base_length - remainder) % base_length
-  num += base_chars[check_code_point]
+  num += _BASE_CHARS[check_code_point]
   return num
 
 
 def convert_to_int(original_id: str) -> str:
-  """Converts the input alphanumeric  string to a string of numbers only."""
+  """Converts the input alphanumeric string to a string of numbers only."""
   original_id = original_id.replace('-', '')
   temp_list = []
   for char in original_id.lower():
