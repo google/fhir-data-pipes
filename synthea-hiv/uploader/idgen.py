@@ -13,6 +13,7 @@
 # limitations under the License.
 """Helper functions to generate Checksum for OpenMRS uploads."""
 
+_ASCII_OFFSET = 96
 _BASE_CHARS = '0123456789ACDEFGHJKLMNPRTUVWXY'  # based on what OpenMRS uses:
 # https://github.com/openmrs/openmrs-module-idgen/blob/master/api/src/main/java/org/openmrs/module/idgen/validator/LuhnMod30IdentifierValidator.java
 
@@ -50,7 +51,7 @@ def convert_to_int(original_id: str) -> str:
   temp_list = []
   for char in original_id.lower():
     if char.isalpha():
-      number = ord(char) - 96
+      number = ord(char) - _ASCII_OFFSET
       temp_list.append(str(number))
     else:
       temp_list.append(char)

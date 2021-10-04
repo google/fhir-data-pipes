@@ -91,6 +91,5 @@ nb-configuration.xml
 ##############################
 **venv*
 .ipynb_checkpoints/
-__pycache__
 **.pyc
 **__pycache__**

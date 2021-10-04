@@ -18,11 +18,11 @@ Synthea and uploads them to a FHIR server you specify.
 
 Example usage:
   python3 main.py \
-    https://healthcare.googleapis.com/v1beta1/projects/terrafhir/locations/us-central1/datasets/example-dataset/fhirStores/hundred/fhir
-    \
+    https://healthcare.googleapis.com/v1beta1/projects/terrafhir/locations/us-central1/datasets/example-dataset/fhirStores/hundred/fhir \
     --input_dir  sample_data/fhir
 
-  python3 main.py --input_dir  sample_data/fhir --convert_to_openmrs
+  python3 main.py http://localhost:8099/openmrs/ws/fhir2/R4 \
+    --input_dir  sample_data/fhir --convert_to_openmrs
 """
 
 import argparse
