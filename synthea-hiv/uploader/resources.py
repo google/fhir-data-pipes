@@ -27,32 +27,6 @@ class BaseResource:
     self.original_id = self.json['id']
     self.new_id = None
 
-  def inject_id(self):
-    """OpenMRS requires each key to have an id field with a random UUID.
-
-    This function injects random UUID.
-    """
-    for _, item in self.json.items():
-      if isinstance(item, list):
-        for element in item:
-          if 'id' not in element:
-            element['id'] = str(uuid.uuid4())
-
-  def extract_id(self, key: str) -> str:
-    """Helper function to get original ids referenced.
-
-    Some resources contain reference to other resources. For example, the
-    Encounter resource references the ID of the Patient. This function extracts
-    this ID.
-
-    Args:
-      key: resource which is being referenced
-
-    Returns:
-      ID of resource
-    """
-    return self.json[key]['reference'].split(':')[-1]
-
   def __repr__(self):
     return str({'original_id': self.original_id, 'new_id': self.new_id})
 
@@ -88,8 +62,19 @@ class Patient:
         'value': openmrs_id,
         'id': self.base.original_id
     })
+  
+    self._inject_id()
 
-    self.base.inject_id()
+  def _inject_id(self):
+    """OpenMRS requires each key to have an id field with a random UUID.
+
+    This function injects random UUID.
+    """
+    for _, item in self.base.json.items():
+      if isinstance(item, list):
+        for element in item:
+          if 'id' not in element:
+            element['id'] = str(uuid.uuid4())
 
 
 class Encounter:
@@ -135,7 +120,7 @@ class Observation:
       encounter_list:  list of encounters to update the encounter reference id
     """
     self.base.json['subject']['reference'] = 'Patient/' + new_patient_id
-    base_id = self.base.extract_id('encounter')
+    base_id = self.base.json['encounter']['reference'].split(':')[-1]
     for encounter in encounter_list:
       if encounter.base.original_id == base_id:
         self.base.json['encounter'][
