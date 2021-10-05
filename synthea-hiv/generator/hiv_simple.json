@@ -297,7 +297,6 @@
     "RETURN VISIT DATE": {
       "type": "Encounter",
       "encounter_class": "inpatient",
-      "reason": "RETURN VISIT DATE",
       "codes": [
         {
           "system": "SNOMED-CT",
@@ -306,12 +305,33 @@
           "value_set": ""
         }
       ],
-      "direct_transition": "PATIENT REPORTED CURRENT TB TREATMENT",
+      "direct_transition": "RETURN_VISIT_DATE",
       "name": "RETURN VISIT DATE"
     },
     "Keep": {
       "type": "Terminal",
       "name": "Keep"
+    },
+    "RETURN_VISIT_DATE": {
+      "type": "Observation",
+      "category": "survey",
+      "unit": "",
+      "codes": [
+        {
+          "system": "LOINC",
+          "code": "5096AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+          "display": "Return visit date",
+          "value_set": ""
+        }
+      ],
+      "direct_transition": "PATIENT REPORTED CURRENT TB TREATMENT",
+      "name": "RETURN_VISIT_DATE",
+      "value_code": {
+        "system": "SNOMED-CT",
+        "code": "1234",
+        "display": "SNOMED Code"
+      },
+      "attribute": "text"
     }
   },
   "gmf_version": 2

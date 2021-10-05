@@ -133,3 +133,6 @@ class Observation:
     if 'valueQuantity' in self.base.json:
       self.base.json['valueQuantity']['value'] = int(
           self.base.json['valueQuantity']['value'])
+    if self.base.json['code']['coding'][0][
+        'code'] == '5096AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA':
+      self.base.json['valueDateTime'] = self.base.json['effectiveDateTime']
