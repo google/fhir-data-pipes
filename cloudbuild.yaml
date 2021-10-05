@@ -39,6 +39,28 @@ steps:
   waitFor: ['-'] 
 
 - name: 'gcr.io/cloud-builders/docker'
+  id: 'Build Uploader Image'
+  entrypoint: /bin/bash
+  args:
+  - -c
+  - cd synthea-hiv/uploader; docker build -t ${_REPOSITORY}/synthea-uploader:${_TAG} .
+
+- name: '${_REPOSITORY}/synthea-uploader:${_TAG}'
+  id: 'Run Uploader Unit Tests'
+  entrypoint: /bin/bash
+  args:
+  - -c
+  - cd /uploader; python -m unittest discover  -p '*_test.py' 
+
+- name: '${_REPOSITORY}/synthea-uploader:${_TAG}'
+  id: 'Upload to OpenMRS'
+  env:
+    - CONVERT=--convert_to_openmrs
+    - INPUT_DIR=/workspace/synthea-hiv/sample_data/fhir
+    - WORKDIR=/uploader
+    - FHIR_ENDPOINT=http://openmrs:8080/openmrs/ws/fhir2/R4
+
+- name: 'gcr.io/cloud-builders/docker'
   id: 'Build Batch Pipeline Image'
   entrypoint: /bin/bash
   args:
@@ -105,6 +127,7 @@ images:
   # You can then re-tag images and push to your own Docker repo
   - '${_REPOSITORY}/batch-pipeline:${_TAG}'
   - '${_REPOSITORY}/e2e-tests:${_TAG}'
+  - '${_REPOSITORY}/synthea-uploader:${_TAG}'
 logsBucket: "gs://cloud-build-gh-logs"
 timeout: '2h'
 options:
