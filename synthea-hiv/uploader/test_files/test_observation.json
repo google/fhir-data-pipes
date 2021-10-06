@@ -1,0 +1,30 @@
+{
+    "resourceType": "Observation",
+    "id": "e0f03934-1b25-6f93-e437-b554af10675e",
+    "code": {
+        "coding": [
+            {
+                "system": "http://loinc.org",
+                "code": "159800AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+                "display": "REVIEW OF TUBERCULOSIS SCREENING QUESTIONS"
+            }
+        ],
+        "text": "REVIEW OF TUBERCULOSIS SCREENING QUESTIONS"
+    },
+    "subject": {
+        "reference": "urn:uuid:2a76c0e3-1e73-2109-3d5e-8a8871fe35d7"
+    },
+    "encounter": {
+        "reference": "urn:uuid:e1846945-43bb-3cfe-1faf-66cf99935c7c"
+    },
+    "valueCodeableConcept": {
+        "coding": [
+            {
+                "system": "http://snomed.info/sct",
+                "code": "159799AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+                "display": "cough lasting more than 2 weeks"
+            }
+        ],
+        "text": "cough lasting more than 2 weeks"
+    }
+}
