@@ -22,7 +22,7 @@ import requests
 FhirClient = Union['GcpClient', 'OpenMrsClient']
 
 
-def process_response(response: requests.Response) -> Dict[str, str]:
+def _process_response(response: requests.Response) -> Dict[str, str]:
   if response.status_code >= 400:
     raise ValueError('POST to %s failed with code %s and response:\n %s' %
                      (response.url, response.status_code, response.text))
@@ -40,7 +40,7 @@ class OpenMrsClient:
 
   def post_single_resource(self, resource: str, data: Dict[str, str]):
     url = f'{self._base_url}/{resource}'
-    self.response = process_response(
+    self.response = _process_response(
         requests.post(
             url=url,
             data=json.dumps(data),
@@ -61,7 +61,7 @@ class GcpClient:
   def post_bundle(self, data: Dict[str, str]):
     self._creds.refresh(self._auth_req)
     self._headers['Authorization'] = f'Bearer {self._creds.token}'
-    self.response = process_response(
+    self.response = _process_response(
         requests.post(
             url=self._base_url, data=json.dumps(data), headers=self._headers))
 
@@ -69,5 +69,5 @@ class GcpClient:
     self._creds.refresh(self._auth_req)
     self._headers['Authorization'] = f'Bearer {self._creds.token}'
     url = f'{self._base_url}/{resource}'
-    self.response = process_response(
+    self.response = _process_response(
         requests.post(url=url, data=json.dumps(data), headers=self._headers))

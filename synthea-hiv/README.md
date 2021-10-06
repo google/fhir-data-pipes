@@ -26,35 +26,31 @@ the generator.
 
 ## Uploader
 
-Run the following commands in your terminal (Python3 is needed):
+To upload to  a GCP FHIR Store, run the following commands in your terminal
+(Python3 is needed):
 
 ```bash
+PROJECT_ID=my-project-id
+LOCATION=location-of-dataset
+DATASET=dataset-name
+FHIR_STORE=fhir-store-name
+FHIR_ENDPOINT=https://healthcare.googleapis.com/v1beta1/projects/$PROJECT_ID/locations/$LOCATION/datasets/$DATASET/fhirStores/$FHIR_STORE/fhir
+
 gcloud auth application-default login
+cd ./uploader
+python3 main.py $FHIR_ENDPOINT \
+  --input_dir /absolute/path/to/fhir/bundles
+```
+
+To upload to a OpenMRS Server, run the following:
+
+```bash
+FHIR_ENDPOINT=http://localhost:8099/openmrs/ws/fhir2/R4
 cd ./uploader
 python3 main.py $FHIR_ENDPOINT \
   --input_dir /absolute/path/to/fhir/bundles
   --convert_to_openmrs
 ```
-
-If you are not uploading to Google Cloud FHIR Store, you can omit the command:
-
-  ```bash
-  gcloud auth application-default login
-  ```
-
-The `$FHIR_ENDPOINT` is the endpoint to upload to.
-
-* For a local OpenMRS endpoint, it is:
-
-    ```bash
-    http://localhost:8099/openmrs/ws/fhir2/R4
-    ```
-
-* For GCP FHIR Store, the format is:
-
-  ```bash
-  https://healthcare.googleapis.com/v1beta1/projects/$PROJECT_ID/locations/$LOCATION/datasets/$DATASET/fhirStores/$FHIR_STORE/fhir
-  ```
 
 When uploading to an OpenMRS Server, you _must_ specify the
 `--convert_to_openmrs` flag. This flag is not needed when uploading to GCP FHIR
