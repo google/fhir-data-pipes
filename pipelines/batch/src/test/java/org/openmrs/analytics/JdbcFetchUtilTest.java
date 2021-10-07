@@ -106,9 +106,10 @@ public class JdbcFetchUtilTest extends TestCase {
 	@Test
 	public void testCreateIdRanges() {
 		int batchSize = 100;
-		int maxId = 200;
+		int maxId = 201;
 		Map<Integer, Integer> idRanges = jdbcFetchUtil.createIdRanges(maxId, batchSize);
 		Map<Integer, Integer> expectedMap = new HashMap<Integer, Integer>();
+		expectedMap.put(201, 201);
 		expectedMap.put(101, 200);
 		expectedMap.put(1, 100);
 		assertEquals(idRanges, expectedMap);
