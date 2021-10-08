@@ -213,7 +213,7 @@ public class JdbcFetchUtil {
 			rangeMap.put(rangeFrom, rangeTo);
 		}
 		if (maxId > ranges * rangeSize) {
-			int rangeFrom = ranges * rangeSize;
+			int rangeFrom = (ranges * rangeSize) + 1;
 			int rangeTo = ranges * rangeSize + maxId % rangeSize;
 			rangeMap.put(rangeFrom, rangeTo);
 		}
