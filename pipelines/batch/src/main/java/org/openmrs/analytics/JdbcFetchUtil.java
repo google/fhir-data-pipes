@@ -207,10 +207,6 @@ public class JdbcFetchUtil {
 	Map<Integer, Integer> createIdRanges(int maxId, int rangeSize) {
 		Map<Integer, Integer> rangeMap = new HashMap<Integer, Integer>();
 		int ranges = maxId / rangeSize;
-		if (ranges == 0) {
-			rangeMap.put(1, maxId);
-			return rangeMap;
-		}
 		for (int i = 0; i < ranges; i++) {
 			int rangeFrom = (i * rangeSize) + 1;
 			int rangeTo = (i + 1) * rangeSize;
