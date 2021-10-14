@@ -56,7 +56,7 @@ steps:
   id: 'Upload to OpenMRS'
   env:
     - CONVERT=--convert_to_openmrs
-    - INPUT_DIR=/workspace/synthea-hiv/sample_data/fhir
+    - INPUT_DIR=/workspace/synthea-hiv/sample_data
     - WORKDIR=/uploader
     - FHIR_ENDPOINT=http://openmrs:8080/openmrs/ws/fhir2/R4
 
