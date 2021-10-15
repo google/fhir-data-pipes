@@ -16,12 +16,12 @@ FROM adoptopenjdk/maven-openjdk8
 
 RUN apt-get update && apt-get install -y jq  python3.7 python3-pip 
 RUN update-alternatives --install /usr/bin/python3 python3 /usr/bin/python3.7 1
-RUN pip3 install virtualenv
+RUN pip3 install virtualenv google-auth requests
 
-COPY batch_mode_validation.sh batch_mode_validation.sh
+COPY pipeline_validation.sh pipeline_validation.sh
 COPY parquet-tools-1.11.1.jar  parquet-tools-1.11.1.jar
 ENV PARQUET_SUBDIR="NON_JDBC"
 ENV DOCKER_NETWORK="--use_docker_network"
 ENV HOME_DIR="/workspace/e2e-tests"
 
-ENTRYPOINT cd ${HOME_DIR}; ./batch_mode_validation.sh ${HOME_DIR} ${PARQUET_SUBDIR} ${DOCKER_NETWORK}
+ENTRYPOINT cd ${HOME_DIR}; ./pipeline_validation.sh ${HOME_DIR} ${PARQUET_SUBDIR} ${DOCKER_NETWORK}

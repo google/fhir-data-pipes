@@ -101,6 +101,9 @@ function check_next_arg() {
 #   STREAMING_LOG the log file for the streaming pipeline
 #   BATCH_LOG the log file for the batch pipeline
 #   SKIP_CONF non-empty if the confirmation step should be skipped
+#   SINK_PATH the FHIR Server URL
+#   SINK_USERNAME the FHIR Server username
+#   SINK_PASSWORD the FHIR Server password
 # Arguments:
 #   The command line arguments passed to the main script.
 #######################################
@@ -109,7 +112,7 @@ function process_options() {
   STREAMING_JAR=""
   BATCH_JAR=""
   SOURCE_URL="http://localhost:8099/openmrs"
-  CONFIG_FILE="./utils/dbz_event_to_fhir_config.json"
+  CONFIG_FILE="../utils/dbz_event_to_fhir_config.json"
   FLUSH_STREAMING=3600
   FLUSH_BATCH=600
   ENABLE_BATCH=""
@@ -117,6 +120,9 @@ function process_options() {
   BATCH_LOG="tmp/batch.log"
   SKIP_CONF=""
   PERIOD_START=""
+  SINK_PATH=""
+  SINK_USERNAME=""
+  SINK_PASSWORD=""
 
   while [[ $# -gt 0 ]]; do
     local opt="$1"
@@ -183,6 +189,24 @@ function process_options() {
       -batchLog)
         check_next_arg "${opt}" "$@"
         BATCH_LOG=$1
+        shift
+        ;;
+      
+      -sinkPath)
+        check_next_arg "${opt}" "$@"
+        SINK_PATH=$1
+        shift
+        ;;
+
+      -sinkUsername)
+        check_next_arg "${opt}" "$@"
+        SINK_USERNAME=$1
+        shift
+        ;;
+
+      -sinkPassword)
+        check_next_arg "${opt}" "$@"
+        SINK_PASSWORD=$1
         shift
         ;;
 
@@ -269,6 +293,9 @@ common_params="\
   --fhirDebeziumConfigPath=${CONFIG_FILE} \
   --openmrsServerUrl=${SOURCE_URL} \
   --outputParquetPath=${OUTPUT_DIR} \
+  --fhirSinkPath=${SINK_PATH} \
+  --sinkUserName=${SINK_USERNAME} \
+  --sinkPassword=${SINK_PASSWORD}
 "
 streaming_command="java -cp ${STREAMING_JAR} org.openmrs.analytics.Runner \
   ${common_params} --secondsToFlushParquetFiles=${FLUSH_STREAMING}"

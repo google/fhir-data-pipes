@@ -16,7 +16,6 @@
 # run-batch-local.sh script, before running the script. The script will build
 # and run the docker image for you.  
 
-# TODO  (omarismail@): merge this with streaming pipeline. See start_pipelines.sh
 
 FROM adoptopenjdk/maven-openjdk8
 
@@ -49,4 +48,5 @@ ENTRYPOINT java -jar /usr/src/Main/app.jar  \
            --fhirSinkPath=${SINK_PATH}  --sinkUserName=${SINK_USERNAME} --sinkPassword=${SINK_PASSWORD} \
            --outputParquetPath=${PARQUET_PATH} --jdbcModeEnabled=${JDBC_MODE_ENABLED} --jdbcDriverClass=${JDBC_DRIVER_CLASS} \
            --jdbcMaxPoolSize=${JDBC_MAX_POOL_SIZE} --fhirDebeziumConfigPath=${FHIR_DEBEZIUM_CONFIG_PATH} \
-           --jdbcInitialPoolSize=${JDBC_INITIAL_POOL_SIZE} --jdbcFetchSize=${JDBC_FETCH_SIZE}
+           --jdbcInitialPoolSize=${JDBC_INITIAL_POOL_SIZE} \
+           --jdbcFetchSize=${JDBC_FETCH_SIZE}
