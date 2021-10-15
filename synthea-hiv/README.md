@@ -21,7 +21,7 @@ docker run  -it   -v "$(pwd)"/output:/output \
 
 Setting `POPULATION` to the number of patients you want to generate.
 
-The [`sample_output`](sample_output) folder contains sample data from running
+The [`sample_data`](sample_data) folder contains sample data from running
 the generator.
 
 ## Uploader
