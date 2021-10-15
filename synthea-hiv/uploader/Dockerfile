@@ -21,6 +21,6 @@ RUN pip install -r requirements.txt
 ENV INPUT_DIR="/uploader/test_files"
 ENV CONVERT=""
 ENV FHIR_ENDPOINT="http://localhost:8099/openmrs/ws/fhir2/R4"
-ENV WORKDIR=${WORKDIR}
+ENV MAIN_DIR=${WORKDIR}
 
-CMD cd ${WORKDIR}; python main.py ${FHIR_ENDPOINT} --input_dir ${INPUT_DIR} ${CONVERT}
+CMD cd ${MAIN_DIR}; python main.py ${FHIR_ENDPOINT} --input_dir ${INPUT_DIR} ${CONVERT}

@@ -57,7 +57,7 @@ steps:
   env:
     - CONVERT=--convert_to_openmrs
     - INPUT_DIR=/workspace/synthea-hiv/sample_data
-    - WORKDIR=/uploader
+    - MAIN_DIR=/uploader
     - FHIR_ENDPOINT=http://openmrs:8080/openmrs/ws/fhir2/R4
 
 - name: 'gcr.io/cloud-builders/docker'
