@@ -45,7 +45,6 @@ import org.apache.commons.dbcp2.PoolingDataSource;
 import org.apache.commons.io.FileUtils;
 import org.hl7.fhir.dstu3.model.Encounter;
 import org.hl7.fhir.dstu3.model.Resource;
-import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -96,14 +95,6 @@ public class JdbcFetchUtilTest extends TestCase {
 		File file = new File(basePath);
 		if (file.exists())
 			FileUtils.cleanDirectory(file);
-	}
-	
-	@Test
-	public void testSetIncorrectJdbcPoolSize() {
-		PropertyVetoException thrown = Assert.assertThrows(PropertyVetoException.class,
-		    () -> new JdbcConnectionUtil("random", "random", "omar", "123", 4, 2));
-		
-		assertTrue(thrown.getMessage().contains("initialPoolSize cannot be larger than dbcMaxPoolSize"));
 	}
 	
 	@Test
