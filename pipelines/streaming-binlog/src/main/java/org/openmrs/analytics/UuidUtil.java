@@ -22,26 +22,32 @@ public class UuidUtil {
 	
 	private final JdbcConnectionUtil jdbcConnectionUtil;
 	
+	private Statement stmt;
+	
+	private ResultSet rs;
+	
 	public UuidUtil(JdbcConnectionUtil jdbcConnectionUtil) {
 		this.jdbcConnectionUtil = jdbcConnectionUtil;
 	}
 	
 	public String getUuid(String table, String keyColumn, String keyValue) throws SQLException {
-		Statement stmt = jdbcConnectionUtil.createStatement();
-		String uuidResultFromSql = null;
-		
-		String sql = String.format("SELECT uuid FROM %s WHERE %s = %s", table, keyColumn, keyValue);
-		
-		ResultSet rs = stmt.executeQuery(sql);
-		while (rs.next()) {
-			uuidResultFromSql = rs.getString("uuid");
+		try {
+			stmt = jdbcConnectionUtil.createStatement();
+			String uuidResultFromSql = null;
+			String sql = String.format("SELECT uuid FROM %s WHERE %s = %s", table, keyColumn, keyValue);
+			
+			rs = stmt.executeQuery(sql);
+			while (rs.next()) {
+				uuidResultFromSql = rs.getString("uuid");
+			}
+			if (uuidResultFromSql == null) {
+				throw new SQLException("Could not find the uuid in the DB");
+			} else {
+				return uuidResultFromSql;
+			}
 		}
-		rs.close();
-		stmt.close();
-		if (uuidResultFromSql == null) {
-			throw new SQLException("Could not find the uuid in the DB");
-		} else {
-			return uuidResultFromSql;
+		finally {
+			jdbcConnectionUtil.closeConnection(stmt);
 		}
 	}
 }

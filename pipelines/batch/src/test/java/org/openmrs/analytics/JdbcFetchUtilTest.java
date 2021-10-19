@@ -86,7 +86,7 @@ public class JdbcFetchUtilTest extends TestCase {
 		
 		JdbcConnectionUtil jdbcConnectionUtil = new JdbcConnectionUtil(options.getJdbcDriverClass(),
 		        dbConfig.makeJdbsUrlFromConfig(), dbConfig.getDbUser(), dbConfig.getDbPassword(),
-		        options.getJdbcMaxPoolSize(), options.getJdbcInitialPoolSize());
+		        options.getJdbcInitialPoolSize(), options.getJdbcMaxPoolSize());
 		// TODO jdbcConnectionUtil should be replaced by a mocked JdbcConnectionUtil which does not
 		// depend on options either, since we don't need real DB connections for unit-testing.
 		jdbcFetchUtil = new JdbcFetchUtil(jdbcConnectionUtil);

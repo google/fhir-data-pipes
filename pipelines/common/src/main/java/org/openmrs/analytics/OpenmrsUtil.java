@@ -59,9 +59,6 @@ public class OpenmrsUtil {
 	}
 	
 	public Resource fetchFhirResource(String resourceUrl) {
-		// Create client
-		IGenericClient client = getSourceClient();
-		
 		// Parse resourceUrl
 		String[] sepUrl = resourceUrl.split("/");
 		String resourceId = sepUrl[sepUrl.length - 1];

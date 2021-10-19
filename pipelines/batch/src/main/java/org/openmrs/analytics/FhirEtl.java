@@ -146,7 +146,7 @@ public class FhirEtl {
 		Pipeline pipeline = Pipeline.create(options);
 		JdbcConnectionUtil jdbcConnectionUtil = new JdbcConnectionUtil(options.getJdbcDriverClass(),
 		        dbConfig.makeJdbsUrlFromConfig(), dbConfig.getDbUser(), dbConfig.getDbPassword(),
-		        options.getJdbcMaxPoolSize(), options.getJdbcInitialPoolSize());
+		        options.getJdbcInitialPoolSize(), options.getJdbcMaxPoolSize());
 		JdbcFetchUtil jdbcUtil = new JdbcFetchUtil(jdbcConnectionUtil);
 		int batchSize = Math.min(options.getBatchSize(), 170); // batch size > 200 will result in HTTP 400 Bad Request
 		Map<String, List<String>> reverseMap = jdbcUtil.createFhirReverseMap(options.getResourceList(), dbConfig);

@@ -19,14 +19,17 @@ import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.Statement;
 
+import com.google.common.base.Preconditions;
 import com.mchange.v2.c3p0.ComboPooledDataSource;
 
 public class JdbcConnectionUtil {
 	
 	private final ComboPooledDataSource comboPooledDataSource;
 	
-	JdbcConnectionUtil(String jdbcDriverClass, String jdbcUrl, String dbUser, String dbPassword, int dbcMaxPoolSize,
-	    int initialPoolSize) throws PropertyVetoException {
+	JdbcConnectionUtil(String jdbcDriverClass, String jdbcUrl, String dbUser, String dbPassword, int initialPoolSize,
+	    int dbcMaxPoolSize) throws PropertyVetoException {
+		Preconditions.checkArgument(initialPoolSize <= dbcMaxPoolSize,
+		    "initialPoolSize cannot be larger than dbcMaxPoolSize");
 		comboPooledDataSource = new ComboPooledDataSource();
 		comboPooledDataSource.setDriverClass(jdbcDriverClass);
 		comboPooledDataSource.setJdbcUrl(jdbcUrl);
@@ -39,6 +42,14 @@ public class JdbcConnectionUtil {
 	public Statement createStatement() throws SQLException {
 		Connection con = getConnectionObject().getConnection();
 		return con.createStatement();
+	}
+	
+	public void closeConnection(Statement stmt) throws SQLException {
+		if (stmt != null) {
+			Connection con = stmt.getConnection();
+			stmt.close();
+			con.close();
+		}
 	}
 	
 	public ComboPooledDataSource getConnectionObject() {
