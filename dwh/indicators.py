@@ -26,21 +26,21 @@ import indicator_lib
 import query_lib
 
 
-_CODE_SYSTEM = 'http://snomed.info/sct'
+_CODE_SYSTEM = 'https://openconceptlab.org/orgs/CIEL/sources/CIEL'
 # Fake codes for SNOMED-CT that matches our test data.
-_VL_CODE = '50373000'  # Height
-_ARV_PLAN = '106230009'  # Diagnosis certainty
+_VL_CODE = '856'  # VL COUNT
+_ARV_PLAN = '1255'  # CURRENT ANTIRETROVIRAL DRUGS USED FOR TREATMENT (
 _DRUG1 = '410596003'  # Likely outcome
 _DRUG2 = '395098000'  # Disorder confirmed
-_TX_TB_PLAN = '106230009'  # Diagnosis certainty
-_TB_TEST_STATUS = '106230009'  # Diagnosis certainty
+_TX_TB_PLAN = '1268'  # TUBERCULOSIS TREATMENT PLAN (1268),
+_TB_TEST_STATUS = '2022'  # Diagnosis certainty
 # TODO: Generate representable dataset corresponding to snomed
-_YES_CODE = '410596003'  # dummy code for yes
-_CONTINUE_REGIMEN = '410596003'  # Likely outcome
-_START_DRUG = '410596003'  # Likely outcome
-_COMPLETE_REGIMEN = '410596003'  # Likely outcome
-_TB_PREV_plan = '106230009'  # Diagnosis certainty
-_TB_screening = '106230009'
+_YES_CODE = '1066'  # YES (1065)
+_CONTINUE_REGIMEN = '1257'  # CONTINUE REGIMEN (1257)
+_START_DRUG = '1256'  # START DRUGS (1256)
+_COMPLETE_REGIMEN = '1267'  # COMPLETED 1267
+_TB_PREV_plan = '1268'  # Diagnosis certainty
+_TB_screening = '6174'  # REVIEW OF TUBERCULOSIS SCREENING QUESTIONS (6174)
 
 
 def valid_date(date_str: str) -> datetime:
@@ -67,8 +67,8 @@ def create_args(parser: argparse.ArgumentParser):
   parser.add_argument(
       '--base_patient_url',
       help='This is the base url to be added to patient IDs, e.g., ' +
-           'http://localhost:8099/openmrs/ws/fhir2/R4/',
-      default='http://localhost:8099/openmrs/ws/fhir2/R4/',
+           'http://xxxx:8080/amrs/ws/fhir2/R4/',
+      default='http://xxxx:8080/amrs/ws/fhir2/R4/',
       type=str
   )
   parser.add_argument(

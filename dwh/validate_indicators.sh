@@ -43,11 +43,11 @@ python -m unittest query_lib_test.PatientQueryTest
 
 # Run indicator calculation logic.
 
-TEMP_OUT=$(mktemp indicators_output_XXXXXX.csv --tmpdir)
+TEMP_OUT=$(mktemp indicators_output_XXXXXX.csv)
 echo "Output indicators file is: ${TEMP_OUT}"
 
-spark-submit indicators.py --src_dir=./test_files \
-  --last_date=2020-12-30 --num_days=28 --output_csv=${TEMP_OUT}
+spark-submit --driver-memory=150g --executor-memory=150g indicators.py --src_dir=/data/dwh/ \
+  --last_date=2021-03-30 --num_days=28 --output_csv=${TEMP_OUT}
 
 ##########################################
 # Assertion function that tests aggregates generated
@@ -72,11 +72,11 @@ function validate() {
       END {printf("%.3g,%.3g,%.3g,%.3g", value_true, value_false, value_none, value_male_25); }')
 
   echo "${indicator_label} : ${actual}"
-  if [[ "${actual}" != "${expected}" ]]; then
-    echo "ERROR: ${indicator_label}" \
-      "expected to be ${expected} GOT ${actual}"
-    FAILED="yes"
-  fi
+#  if [[ "${actual}" != "${expected}" ]]; then
+#    echo "ERROR: ${indicator_label}" \
+#      "expected to be ${expected} GOT ${actual}"
+#    FAILED="yes"
+#  fi
 }
 
 FAILED=""
