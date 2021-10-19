@@ -21,7 +21,6 @@ import static org.mockito.Mockito.when;
 
 import java.beans.PropertyVetoException;
 import java.sql.Connection;
-import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 
@@ -36,25 +35,21 @@ public class JdbcConnectionUtilTest {
 	
 	private Connection mockConnection;
 	
-	private ResultSet mockResultSet;
-	
 	private Statement mockStatement;
 	
 	private JdbcConnectionUtil jdbcConnectionUtil;
 	
 	@Before
 	public void setup() throws PropertyVetoException, SQLException {
-		mockResultSet = mock(ResultSet.class);
 		mockStatement = mock(Statement.class);
 		mockConnection = mock(Connection.class);
 		when(mockStatement.getConnection()).thenReturn(mockConnection);
 		jdbcConnectionUtil = new JdbcConnectionUtil("random", "random", "omar", "123", 3, 60);
-		
 	}
 	
 	@Test
-	public void testSetIncorrectJdbcPoolSize() throws PropertyVetoException {
-		PropertyVetoException thrown = Assert.assertThrows(PropertyVetoException.class,
+	public void testSetIncorrectJdbcPoolSize() throws IllegalArgumentException {
+		IllegalArgumentException thrown = Assert.assertThrows(IllegalArgumentException.class,
 		    () -> new JdbcConnectionUtil("random", "random", "omar", "123", 4, 2));
 		
 		assertTrue(thrown.getMessage().contains("initialPoolSize cannot be larger than dbcMaxPoolSize"));
@@ -62,33 +57,13 @@ public class JdbcConnectionUtilTest {
 	
 	@Test
 	public void testCloseConnection() throws PropertyVetoException, SQLException {
-		
-		jdbcConnectionUtil.closeConnection(mockResultSet, mockStatement);
-		verify(mockResultSet, times(1)).close();
+		jdbcConnectionUtil.closeConnection(mockStatement);
 		verify(mockStatement, times(1)).close();
-		verify(mockConnection, times(1)).close();
-	}
-	
-	@Test
-	public void testCloseConnectionNullResult() throws PropertyVetoException, SQLException {
-		jdbcConnectionUtil.closeConnection(null, mockStatement);
-		verify(mockResultSet, times(0)).close();
-		verify(mockStatement, times(1)).close();
-		verify(mockConnection, times(1)).close();
 	}
 	
 	@Test
 	public void testCloseConnectionNullStatement() throws PropertyVetoException, SQLException {
-		jdbcConnectionUtil.closeConnection(mockResultSet, null);
-		verify(mockResultSet, times(1)).close();
-		verify(mockStatement, times(0)).close();
-		verify(mockConnection, times(0)).close();
-	}
-	
-	@Test
-	public void testCloseConnectionNullBoth() throws PropertyVetoException, SQLException {
-		jdbcConnectionUtil.closeConnection(null, null);
-		verify(mockResultSet, times(0)).close();
+		jdbcConnectionUtil.closeConnection(null);
 		verify(mockStatement, times(0)).close();
 		verify(mockConnection, times(0)).close();
 	}

@@ -47,7 +47,7 @@ public class UuidUtil {
 			}
 		}
 		finally {
-			jdbcConnectionUtil.closeConnection(rs, stmt);
+			jdbcConnectionUtil.closeConnection(stmt);
 		}
 	}
 }

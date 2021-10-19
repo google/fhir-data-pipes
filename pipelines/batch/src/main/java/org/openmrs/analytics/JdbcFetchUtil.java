@@ -169,7 +169,7 @@ public class JdbcFetchUtil {
 		while (resultSet.next()) {
 			uuids.add(resultSet.getString("uuid"));
 		}
-		jdbcConnectionUtil.closeConnection(resultSet, statement);
+		jdbcConnectionUtil.closeConnection(statement);
 		log.info(String.format("Will fetch %d rows matching activePeriod in table %s", uuids.size(), tableName));
 		// We need to specify the coder in case `uuids` is empty.
 		return pipeline.apply(Create.of(uuids).withCoder(pipeline.getCoderRegistry().getCoder(String.class)));
@@ -192,7 +192,7 @@ public class JdbcFetchUtil {
 		        .executeQuery(String.format("SELECT MAX(`%s`) as max_id FROM %s", tableId, tableName));
 		resultSet.first();
 		int maxId = resultSet.getInt("max_id");
-		jdbcConnectionUtil.closeConnection(resultSet, statement);
+		jdbcConnectionUtil.closeConnection(statement);
 		return maxId;
 	}
 	

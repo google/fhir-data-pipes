@@ -16,10 +16,10 @@ package org.openmrs.analytics;
 
 import java.beans.PropertyVetoException;
 import java.sql.Connection;
-import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 
+import com.google.common.base.Preconditions;
 import com.mchange.v2.c3p0.ComboPooledDataSource;
 
 public class JdbcConnectionUtil {
@@ -28,9 +28,8 @@ public class JdbcConnectionUtil {
 	
 	JdbcConnectionUtil(String jdbcDriverClass, String jdbcUrl, String dbUser, String dbPassword, int initialPoolSize,
 	    int dbcMaxPoolSize) throws PropertyVetoException {
-		if (initialPoolSize > dbcMaxPoolSize) {
-			throw new PropertyVetoException("initialPoolSize cannot be larger than dbcMaxPoolSize", null);
-		}
+		Preconditions.checkArgument(initialPoolSize <= dbcMaxPoolSize,
+		    "initialPoolSize cannot be larger than dbcMaxPoolSize");
 		comboPooledDataSource = new ComboPooledDataSource();
 		comboPooledDataSource.setDriverClass(jdbcDriverClass);
 		comboPooledDataSource.setJdbcUrl(jdbcUrl);
@@ -45,10 +44,7 @@ public class JdbcConnectionUtil {
 		return con.createStatement();
 	}
 	
-	public void closeConnection(ResultSet rs, Statement stmt) throws SQLException {
-		if (rs != null) {
-			rs.close();
-		}
+	public void closeConnection(Statement stmt) throws SQLException {
 		if (stmt != null) {
 			Connection con = stmt.getConnection();
 			stmt.close();
