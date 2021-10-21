@@ -14,7 +14,7 @@ image.
 To generate data, run the following command in your terminal (Docker is needed):
 
 ```bash
-docker run  -it   -v "$(pwd)"/output:/output \
+docker run  -it   -v "$(pwd)"/output:/synthea-hiv/output \
   -e POPULATION=100 \
   us-docker.pkg.dev/cloud-build-fhir/fhir-analytics/synthea-generator:latest
 ```

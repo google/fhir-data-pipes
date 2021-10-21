@@ -15,7 +15,8 @@
 version: '2.4'
 services:
   mysql:
-    image: us-docker.pkg.dev/cloud-build-fhir/fhir-analytics/openmrs-fhir-mysql-ocl:latest
+    image: us-docker.pkg.dev/cloud-build-fhir/fhir-analytics/openmrs-fhir-mysql-ocl-${DATABASE_DUMP_MODE:-small}:latest
+    # for big data dump set the DATABASE_DUMP_MODE variable in .env to 'big'
     restart: always
     ports:
       - "3306:3306"
