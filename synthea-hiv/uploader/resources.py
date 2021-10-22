@@ -99,10 +99,15 @@ class Encounter:
             'display': 'Attachment Upload'
         }]
     }]
-
+    self.base.json['location'] = [{
+        "location": {
+            "reference": "Location/8d6c993e-c2cc-11de-8d13-0010c6dffd0f",
+            "display": "Unknown Location"
+         }
+        }]
     self.base.json.pop('identifier', None)
     self.base.json.pop('participant', None)
-
+    self.base.json.pop('serviceProvider', None)
 
 class Observation:
   """Observation resource to upload to OpenMRS."""

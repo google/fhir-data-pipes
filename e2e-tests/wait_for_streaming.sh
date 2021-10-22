@@ -60,7 +60,7 @@ function start_pipeline() {
 function wait_for_sink() {
     local count=0
     cd /workspace
-    python3 synthea-hiv/uploader/main.py \
+    python3 synthea-hiv/uploader/main.py OpenMRS \
     ${OPENMRS_URL}/openmrs/ws/fhir2/R4  \
     --input_dir e2e-tests/streaming_test_patient --convert_to_openmrs
     until [[ ${count} -ne 0 ]]; do

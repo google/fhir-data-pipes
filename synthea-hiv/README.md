@@ -38,23 +38,32 @@ FHIR_ENDPOINT=https://healthcare.googleapis.com/v1beta1/projects/$PROJECT_ID/loc
 
 gcloud auth application-default login
 cd ./uploader
-python3 main.py $FHIR_ENDPOINT \
+python3 main.py GCP $FHIR_ENDPOINT \
   --input_dir /absolute/path/to/fhir/bundles
 ```
 
-To upload to a OpenMRS Server, run the following:
+To upload to a HAPI Server, run the following:
+
+```bash
+FHIR_ENDPOINT=http://localhost:8098/fhir
+cd ./uploader
+python3 main.py HAPI $FHIR_ENDPOINT \
+  --input_dir /absolute/path/to/fhir/bundles
+```
+
+To upload to an OpenMRS Server, run the following:
 
 ```bash
 FHIR_ENDPOINT=http://localhost:8099/openmrs/ws/fhir2/R4
 cd ./uploader
-python3 main.py $FHIR_ENDPOINT \
+python3 main.py OpenMRS $FHIR_ENDPOINT \
   --input_dir /absolute/path/to/fhir/bundles
   --convert_to_openmrs
 ```
 
 When uploading to an OpenMRS Server, you _must_ specify the
-`--convert_to_openmrs` flag. This flag is not needed when uploading to GCP FHIR
-Store.
+`--convert_to_openmrs` flag. This flag is optional when uploading to GCP FHIR
+Store or HAPI.
 
 If you prefer using Docker, you can do the following:
 
@@ -63,6 +72,7 @@ gcloud auth application-default login
 cd ./uploader
 docker build -t synthea-uploader .
 docker run -it --network=host \
+  -e SINK_TYPE="GCP" \
   -e FHIR_ENDPOINT=$FHIR_ENDPOINT \
   -e CONVERT="--convert_to_openmrs" \
   -v ~/.config/:/root/.config \

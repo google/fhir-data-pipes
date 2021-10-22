@@ -17,7 +17,7 @@ from unittest import mock
 import fhir_client
 
 
-def mock_requests_post(**kwargs):
+def mock_requests_post(url, _):
 
   class MockResponse:
 
@@ -26,24 +26,25 @@ def mock_requests_post(**kwargs):
       self.status_code = status_code
       self.url = url
 
-  if 'localhost/Patient' in kwargs['url']:
-    return MockResponse('{"resourceType":"Local"}', 200, kwargs['url'])
-  elif 'google' in kwargs['url']:
-    return MockResponse('{"resourceType":"Google"}', 201, kwargs['url'])
-
-  return MockResponse(None, 404, kwargs['url'])
+  if 'localhost/Patient' in url:
+    return MockResponse('{"resourceType":"Local"}', 200, url)
+  elif 'google' in url:
+    return MockResponse('{"resourceType":"Google"}', 201, url)
+  return MockResponse(None, 404, url)
 
 
 class FhirClientTest(unittest.TestCase):
 
   def setUp(self):
     super().setUp()
+    mock_session = mock.MagicMock()
+    mock_session.post.side_effect = mock_requests_post
+    mock.patch('fhir_client._setup_session', return_value=mock_session).start()
     mock.patch(
         'google.auth.transport.requests.Request',
         return_value=mock.MagicMock()).start()
     mock.patch(
         'google.auth.default', return_value=(mock.MagicMock(), '_')).start()
-    mock.patch('requests.post', side_effect=mock_requests_post).start()
 
   def test_post_data_local(self):
     client = fhir_client.OpenMrsClient('http://localhost')
@@ -56,6 +57,6 @@ class FhirClientTest(unittest.TestCase):
     self.assertEqual(client.response, {'resourceType': 'Google'})
 
   def test_post_resource_error(self):
-    client = fhir_client.OpenMrsClient('http://random')
+    client = fhir_client.HapiClient('http://random')
     with self.assertRaises(ValueError):
       client.post_single_resource(resource='Patient', data={'hi': 'mom'})
