@@ -38,13 +38,15 @@ function usage() {
   echo " Options:  "
   echo "     --use_docker_network     Flag to specify whether to use docker"  
   echo "                              or host network URLs" 
+  echo "     --streaming              Flag to specify whether we are testing a"
+  echo "                              streaming pipeline" 
 }
 
 #################################################
 # Makes sure args passed are correct
 #################################################
 function validate_args() {
-  if [[ $# -lt 2 || $# -gt 3  ]]; then
+  if [[ $# -lt 2 || $# -gt 4  ]]; then
     echo "Invalid number of args passed."
     usage
     exit 1
@@ -84,12 +86,14 @@ function print_message() {
 #   PARQUET_SUBDIR
 #   OPENMRS_URL
 #   SINK_SERVER
+#   STREAMING
 # Arguments:
 #   Path where e2e-tests directory is. Directory contains parquet tools jar as 
 #      well as subdirectory of parquet file output
 #   Subdirectory name under HOME_DIR containing parquet files. 
 #      Example: NON_JDBC or JDBC
 #   Optional: Flag to specify whether to use docker or host network URLs.
+#   Optional: Flag to specify streaming pipeline test.
 #################################################
 function setup() {
   HOME_PATH=$1
@@ -100,9 +104,13 @@ function setup() {
   OPENMRS_URL='http://localhost:8099'
   SINK_SERVER='http://localhost:8098'
 
-  if [[ $3 = "--use_docker_network" ]]; then
+  if [[ $3 = "--use_docker_network" || $4 = "--use_docker_network" ]]; then
     OPENMRS_URL='http://openmrs:8080'
     SINK_SERVER='http://sink-server:8080'
+  fi
+
+  if [[ $3 = "--streaming" || $4 = "--streaming" ]]; then
+    STREAMING="on"
   fi
 }
 
@@ -115,12 +123,13 @@ function setup() {
 #   TOTAL_TEST_PATIENTS
 #   TOTAL_TEST_ENCOUNTERS
 #   TOTAL_TEST_OBS
+#   STREAMING
 #################################################
 function openmrs_query() {
   local patient_query_param=""
   local enc_obs_query_param=""
 
-  if [[ ${PARQUET_SUBDIR} == "STREAMING" ]]; then 
+  if [[ -n ${STREAMING} ]]; then 
       patient_query_param="?given=Alberta625"
       enc_obs_query_param="?subject.given=Alberta625"
   fi
@@ -181,12 +190,13 @@ function test_parquet_sink() {
 #   TOTAL_TEST_PATIENTS
 #   TOTAL_TEST_ENCOUNTERS
 #   TOTAL_TEST_OBS
+#   STREAMING
 #################################################
 function test_fhir_sink() {
   local patient_query_param="?_summary=count"
   local enc_obs_query_param="?_summary=count"
 
-  if [[ ${PARQUET_SUBDIR} == "STREAMING" ]]; then 
+  if [[ -n ${STREAMING} ]]; then 
       patient_query_param="?given=Alberta625"
       enc_obs_query_param="?subject.given=Alberta625"
   fi

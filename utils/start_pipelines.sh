@@ -192,7 +192,7 @@ function process_options() {
         shift
         ;;
       
-      -sinkPath)
+      -fhirSinkPath)
         check_next_arg "${opt}" "$@"
         SINK_PATH=$1
         shift

@@ -68,7 +68,7 @@ steps:
       cd /workspace/pipelines; 
       ../utils/start_pipelines.sh -s -streamingLog /workspace/e2e-tests/log.log\
         -u http://openmrs:8080/openmrs  -o /workspace/e2e-tests/STREAMING \
-        -secondsToFlushStreaming 15 -sinkPath http://sink-server:8080/fhir \
+        -secondsToFlushStreaming 15 -fhirSinkPath http://sink-server:8080/fhir \
         -sinkUsername hapi -sinkPassword hapi; 
       cd /workspace;  
       python3 synthea-hiv/uploader/main.py \
@@ -81,6 +81,8 @@ steps:
   env:
     - PARQUET_SUBDIR=STREAMING
     - DOCKER_NETWORK=--use_docker_network
+    - STREAMING_TEST=--streaming
+
 
 - name: '${_REPOSITORY}/synthea-uploader:${_TAG}'
   id: 'Upload to OpenMRS'
