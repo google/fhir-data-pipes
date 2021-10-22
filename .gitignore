@@ -80,8 +80,8 @@ nb-configuration.xml
 ## OS X
 ##############################
 .DS_Store
-/data/
 
+/data/
 **dbz
 **offset.dat
 **dbhistory.dat
