@@ -74,7 +74,7 @@ class GcpClient:
   def _add_auth_token(self):
     self._creds.refresh(self._auth_req)
     auth_dict = {'Authorization': f'Bearer {self._creds.token}'}
-    self.session.headers.update(auth_dict) 
+    self.session.headers.update(auth_dict)
 
   def post_bundle(self, data: Dict[str, str]):
     self._add_auth_token()
@@ -94,12 +94,13 @@ class GcpClient:
     self.response = _process_response(response_)
     return self.response
 
+
 class HapiClient(OpenMrsClient):
   """Client to connect to HAPI FHIR Server."""
 
   def __init__(self, base_url: str):
-      super().__init__(base_url)
-      self.session.auth = ('hapi', 'hapi')
+    super().__init__(base_url)
+    self.session.auth = ('hapi', 'hapi')
 
   def post_bundle(self, data: Dict[str, str]):
     response_ = self.session.post(self.base_url, json.dumps(data))

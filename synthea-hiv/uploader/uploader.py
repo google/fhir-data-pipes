@@ -20,6 +20,7 @@ import bundle
 import fhir_client
 import logger_util
 
+import random
 
 class Uploader:
   """Uploads FHIR resources to either OpenMRS or any other FHIR Server."""
@@ -34,7 +35,7 @@ class Uploader:
     self.fhir_client.post_single_resource(resource, data)
     return self.fhir_client.response['id']
 
-  def upload_openmrs_bundle(self, each_bundle: bundle.Bundle):
+  def upload_openmrs_bundle(self, each_bundle: bundle.Bundle, locations: Dict[str, str]):
     """Uploads FHIR Bundle to OpenMRS via Patients, Encounters, Observations.
 
     As the OpenMRS FHIR Module does not support uploading Bundle transactions,
@@ -64,8 +65,9 @@ class Uploader:
                         each_bundle.openmrs_patient.base.new_id)
 
       for openmrs_encounter in each_bundle.openmrs_encounters:
+        location = random.choice(list(locations.items()))
         openmrs_encounter.openmrs_convert(
-            each_bundle.openmrs_patient.base.new_id)
+            each_bundle.openmrs_patient.base.new_id, location)
         openmrs_encounter.base.new_id = self._upload_resource(
             resource='Encounter', data=openmrs_encounter.base.json)
 
