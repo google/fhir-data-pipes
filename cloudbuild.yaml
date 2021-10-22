@@ -89,7 +89,6 @@ steps:
     - DOCKER_NETWORK=--use_docker_network
     - STREAMING_TEST=--streaming
 
-
 - name: '${_REPOSITORY}/synthea-uploader:${_TAG}'
   id: 'Upload to OpenMRS'
   env:
