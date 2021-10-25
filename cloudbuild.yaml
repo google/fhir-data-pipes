@@ -35,7 +35,7 @@ steps:
   entrypoint: /bin/bash
   args:
   - -c
-  - mvn --no-transfer-progress -e -f bunsen install; mvn --no-transfer-progress -e -f pipelines install
+  - mvn --no-transfer-progress -e install
   waitFor: ['-'] 
 
 - name: 'gcr.io/cloud-builders/docker'

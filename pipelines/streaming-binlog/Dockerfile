@@ -15,7 +15,7 @@
 FROM adoptopenjdk/maven-openjdk8
 
 ARG WORK_DIR="/usr/src/Main"
-COPY target/fhir-binlog-streaming-etl-bundled-0.1.0-SNAPSHOT.jar ${WORK_DIR}/app.jar
+COPY target/streaming-binlog-bundled-0.1.0-SNAPSHOT.jar ${WORK_DIR}/app.jar
 WORKDIR ${WORK_DIR}
 ENV OPENMRS_URL="http://openmrs:8080/openmrs"
 ENV OPENMRS_USERNAME="admin"
