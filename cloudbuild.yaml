@@ -64,23 +64,7 @@ steps:
   entrypoint: /bin/bash
   args: 
     - -c
-    -  | 
-      cd /workspace/pipelines; 
-      ../utils/start_pipelines.sh -s -streamingLog /workspace/e2e-tests/log.log\
-        -u http://openmrs:8080/openmrs  -o /workspace/e2e-tests/STREAMING \
-        -secondsToFlushStreaming 15 -fhirSinkPath http://sink-server:8080/fhir \
-        -sinkUsername hapi -sinkPassword hapi; 
-      cd /workspace;  
-      python3 synthea-hiv/uploader/main.py \
-        http://openmrs:8080/openmrs/ws/fhir2/R4  \
-        --input_dir e2e-tests/streaming_test_patient --convert_to_openmrs; \
-      count=0;
-      until [[ $${count} -ne 0 ]]; do
-        sleep 30s;
-        count=$$(curl -u hapi:hapi -s \
-          http://sink-server:8080/fhir/Patient?_summary=count \
-          | grep "total" | awk '{print $$NF}');
-      done
+    -  e2e-tests/wait_for_streaming.sh --use_docker_network
 
 - name: '${_REPOSITORY}/e2e-tests:${_TAG}'
   id: 'Run E2E Test for STREAMING'

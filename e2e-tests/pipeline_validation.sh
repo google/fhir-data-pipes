@@ -103,6 +103,7 @@ function setup() {
   find ${HOME_PATH}/${PARQUET_SUBDIR} -size 0 -delete
   OPENMRS_URL='http://localhost:8099'
   SINK_SERVER='http://localhost:8098'
+  STREAMING=""
 
   if [[ $3 = "--use_docker_network" || $4 = "--use_docker_network" ]]; then
     OPENMRS_URL='http://openmrs:8080'
