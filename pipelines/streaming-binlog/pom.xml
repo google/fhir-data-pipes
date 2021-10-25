@@ -19,16 +19,14 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
   xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
-  <artifactId>fhir-binlog-streaming-etl</artifactId>
-  <name>fhir-binlog-streaming-etl</name>
-  <version>0.1.0-SNAPSHOT</version>
 
   <parent>
     <groupId>org.openmrs.analytics</groupId>
-    <artifactId>fhir</artifactId>
+    <artifactId>pipelines</artifactId>
     <version>0.1.0-SNAPSHOT</version>
   </parent>
 
+  <artifactId>streaming-binlog</artifactId>
 
   <properties>
     <mysql.init.timeout>30000</mysql.init.timeout>
@@ -63,7 +61,7 @@
   <dependencies>
     <dependency>
       <groupId>${project.parent.groupId}</groupId>
-      <artifactId>fhir-common</artifactId>
+      <artifactId>common</artifactId>
       <version>${project.parent.version}</version>
     </dependency>
     <dependency>

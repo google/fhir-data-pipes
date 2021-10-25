@@ -14,7 +14,7 @@
 
 FROM openjdk:8
 
-COPY target/fhir-binlog-streaming-etl-bundled-0.1.0-SNAPSHOT.jar /deployments/app.jar
+COPY target/streaming-binlog-bundled-0.1.0-SNAPSHOT.jar /deployments/app.jar
 WORKDIR /deployments
 ENV OPENMRS_URL="http://localhost:8099/openmrs"
 ENV OPENMRS_USERNAME="admin"
