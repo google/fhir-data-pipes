@@ -27,7 +27,7 @@ function usage() {
   echo "Usage: ${0} [options]"
   echo "Options:"
   echo "-batchJar JAR_FILE, the bundled jar file for the batch pipeline."
-  echo "  default: ./batch/target/fhir-batch-etl-bundled-[*].jar"
+  echo "  default: ./batch/target/batch-bundled[*].jar"
   echo ""
   echo "-batchLog FILE, the file to capture batch pipeline logs."
   echo "  default: tmp/streaming.log"
@@ -63,7 +63,7 @@ function usage() {
   echo "  default: tmp/streaming.log"
   echo ""
   echo "-streamingJar JAR_FILE, the bundled jar file for the streaming pipeline."
-  echo "  default: ./streaming-binlog/target/fhir-binlog-streaming-etl-bundled-[*].jar."
+  echo "  default: ./streaming-binlog/target/streaming-binlog-bundled*.jar."
   echo ""
   # TODO: Add the feature for passing extra options directly to the pipelines.
   # echo "If there are any other options remaining at the end (extra-options), they are passed to "
@@ -227,7 +227,7 @@ function process_options() {
 # Globals:
 #   FOUND_FILE the unique file that is found.
 # Arguments:
-#   The search pattern, e.g, ./streaming-binlog/target/fhir-binlog-streaming-etl-bundled*.jar
+#   The search pattern, e.g ./streaming-binlog/target/streaming-binlog-bundled*.jar
 #######################################
 function find_unique_file() {
   local file_count
@@ -280,12 +280,12 @@ fi
 mkdir ${OUTPUT_DIR}
 
 if [[ -z ${STREAMING_JAR} ]]; then
-  find_unique_file "./streaming-binlog/target/fhir-binlog-streaming-etl-bundled*.jar"
+  find_unique_file "./streaming-binlog/target/streaming-binlog-bundled*.jar"
   STREAMING_JAR="${FOUND_FILE}"
 fi
 
 if [[ -z ${BATCH_JAR} && -n ${ENABLE_BATCH} ]]; then
-  find_unique_file "./batch/target/fhir-batch-etl-bundled-*.jar"
+  find_unique_file "./batch/target/batch-bundled*.jar"
   BATCH_JAR="${FOUND_FILE}"
 fi
 
