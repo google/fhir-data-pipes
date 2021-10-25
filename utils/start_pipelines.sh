@@ -27,7 +27,7 @@ function usage() {
   echo "Usage: ${0} [options]"
   echo "Options:"
   echo "-batchJar JAR_FILE, the bundled jar file for the batch pipeline."
-  echo "  default: ./batch/target/fhir-batch-etl-bundled-[*].jar"
+  echo "  default: ./batch/target/batch-bundled[*].jar"
   echo ""
   echo "-batchLog FILE, the file to capture batch pipeline logs."
   echo "  default: tmp/streaming.log"
@@ -63,7 +63,7 @@ function usage() {
   echo "  default: tmp/streaming.log"
   echo ""
   echo "-streamingJar JAR_FILE, the bundled jar file for the streaming pipeline."
-  echo "  default: ./streaming-binlog/target/fhir-binlog-streaming-etl-bundled-[*].jar."
+  echo "  default: ./streaming-binlog/target/streaming-binlog-bundled*.jar."
   echo ""
   # TODO: Add the feature for passing extra options directly to the pipelines.
   # echo "If there are any other options remaining at the end (extra-options), they are passed to "
@@ -101,6 +101,9 @@ function check_next_arg() {
 #   STREAMING_LOG the log file for the streaming pipeline
 #   BATCH_LOG the log file for the batch pipeline
 #   SKIP_CONF non-empty if the confirmation step should be skipped
+#   SINK_PATH the FHIR Server URL
+#   SINK_USERNAME the FHIR Server username
+#   SINK_PASSWORD the FHIR Server password
 # Arguments:
 #   The command line arguments passed to the main script.
 #######################################
@@ -109,7 +112,7 @@ function process_options() {
   STREAMING_JAR=""
   BATCH_JAR=""
   SOURCE_URL="http://localhost:8099/openmrs"
-  CONFIG_FILE="./utils/dbz_event_to_fhir_config.json"
+  CONFIG_FILE="../utils/dbz_event_to_fhir_config.json"
   FLUSH_STREAMING=3600
   FLUSH_BATCH=600
   ENABLE_BATCH=""
@@ -117,6 +120,9 @@ function process_options() {
   BATCH_LOG="tmp/batch.log"
   SKIP_CONF=""
   PERIOD_START=""
+  SINK_PATH=""
+  SINK_USERNAME=""
+  SINK_PASSWORD=""
 
   while [[ $# -gt 0 ]]; do
     local opt="$1"
@@ -185,6 +191,24 @@ function process_options() {
         BATCH_LOG=$1
         shift
         ;;
+      
+      -fhirSinkPath)
+        check_next_arg "${opt}" "$@"
+        SINK_PATH=$1
+        shift
+        ;;
+
+      -sinkUsername)
+        check_next_arg "${opt}" "$@"
+        SINK_USERNAME=$1
+        shift
+        ;;
+
+      -sinkPassword)
+        check_next_arg "${opt}" "$@"
+        SINK_PASSWORD=$1
+        shift
+        ;;
 
       -s|-skipConfirmation)
         SKIP_CONF="enabled"
@@ -203,7 +227,7 @@ function process_options() {
 # Globals:
 #   FOUND_FILE the unique file that is found.
 # Arguments:
-#   The search pattern, e.g, ./streaming-binlog/target/fhir-binlog-streaming-etl-bundled*.jar
+#   The search pattern, e.g ./streaming-binlog/target/streaming-binlog-bundled*.jar
 #######################################
 function find_unique_file() {
   local file_count
@@ -256,12 +280,12 @@ fi
 mkdir ${OUTPUT_DIR}
 
 if [[ -z ${STREAMING_JAR} ]]; then
-  find_unique_file "./streaming-binlog/target/fhir-binlog-streaming-etl-bundled*.jar"
+  find_unique_file "./streaming-binlog/target/streaming-binlog-bundled*.jar"
   STREAMING_JAR="${FOUND_FILE}"
 fi
 
 if [[ -z ${BATCH_JAR} && -n ${ENABLE_BATCH} ]]; then
-  find_unique_file "./batch/target/fhir-batch-etl-bundled-*.jar"
+  find_unique_file "./batch/target/batch-bundled*.jar"
   BATCH_JAR="${FOUND_FILE}"
 fi
 
@@ -269,6 +293,9 @@ common_params="\
   --fhirDebeziumConfigPath=${CONFIG_FILE} \
   --openmrsServerUrl=${SOURCE_URL} \
   --outputParquetPath=${OUTPUT_DIR} \
+  --fhirSinkPath=${SINK_PATH} \
+  --sinkUserName=${SINK_USERNAME} \
+  --sinkPassword=${SINK_PASSWORD}
 "
 streaming_command="java -cp ${STREAMING_JAR} org.openmrs.analytics.Runner \
   ${common_params} --secondsToFlushParquetFiles=${FLUSH_STREAMING}"

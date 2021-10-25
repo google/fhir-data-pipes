@@ -12,26 +12,26 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-FROM openjdk:8
+FROM adoptopenjdk/maven-openjdk8
 
-COPY target/streaming-binlog-bundled-0.1.0-SNAPSHOT.jar /deployments/app.jar
-WORKDIR /deployments
-ENV OPENMRS_URL="http://localhost:8099/openmrs"
+ARG WORK_DIR="/usr/src/Main"
+COPY target/streaming-binlog-bundled-0.1.0-SNAPSHOT.jar ${WORK_DIR}/app.jar
+WORKDIR ${WORK_DIR}
+ENV OPENMRS_URL="http://openmrs:8080/openmrs"
 ENV OPENMRS_USERNAME="admin"
 ENV OPENMRS_PASSWORD="Admin123"
 ENV SINK_URL=""
 ENV SINK_USERNAME=""
 ENV SINK_PASSWORD=""
 ENV PARQUET_PATH="/tmp/"
-ENV FHIR_DEBEZIUM_CONFIG_PATH="/deployments/dbz_event_to_fhir_config.json"
+ENV FHIR_DEBEZIUM_CONFIG_PATH="/workspace/utils/dbz_event_to_fhir_config.json"
 ENV JDBC_FETCH_SIZE=10000
 ENV JDBC_MAX_POOL_SIZE=50
 ENV JDBC_INITIAL_POOL_SIZE=10
 ENV JDBC_DRIVER_CLASS="com.mysql.cj.jdbc.Driver"
+ENV SECONDS_TO_FLUSH_PARQUET_FILES=3600
 
-RUN echo "Debezium Streaming Job started"
-
-ENTRYPOINT java -cp app.jar org.openmrs.analytics.Runner \
+ENTRYPOINT java -jar /usr/src/Main/app.jar \
            --openmrsServerUrl=${OPENMRS_URL}  \
            --openmrsUserName=${OPENMRS_USERNAME}  \
            --openmrsPassword=${OPENMRS_PASSWORD} \
@@ -42,4 +42,5 @@ ENTRYPOINT java -cp app.jar org.openmrs.analytics.Runner \
            --fhirDebeziumConfigPath=${FHIR_DEBEZIUM_CONFIG_PATH} \
            --jdbcDriverClass=${JDBC_DRIVER_CLASS} \
            --jdbcMaxPoolSize=${JDBC_MAX_POOL_SIZE} \
-           --jdbcInitialPoolSize=${JDBC_INITIAL_POOL_SIZE}
+           --jdbcInitialPoolSize=${JDBC_INITIAL_POOL_SIZE} \
+           --secondsToFlushParquetFiles=${SECONDS_TO_FLUSH_PARQUET_FILES}

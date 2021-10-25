@@ -82,10 +82,9 @@ nb-configuration.xml
 .DS_Store
 
 /data/
-/dbz/
-/offset.dat
-/dbhistory.dat
-
+**dbz
+**offset.dat
+**dbhistory.dat
 ##############################
 ## Python
 ##############################

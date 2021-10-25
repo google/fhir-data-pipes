@@ -5,8 +5,8 @@ This directory contains sample data from running the Synthea
 medical history; the Bundle contains FHIR resources such as Patients,
 Encounters, and Observations.
 
-In total, there are 80 patients, 4042 Encounters, and 17314 Observations. The
-sample data in this folder is 110MB in size.
+In total, there are 79 patients, 4006 Encounters, and 17279 Observations. The
+sample data in this folder is 100MB in size.
 
 
 ### Useful Command

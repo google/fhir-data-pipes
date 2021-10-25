@@ -52,6 +52,27 @@ steps:
   - -c
   - cd /uploader; python -m unittest discover  -p '*_test.py' 
 
+- name: 'gcr.io/cloud-builders/docker'
+  id: 'Build E2E Image'
+  entrypoint: /bin/bash
+  args:
+  - -c
+  - cd e2e-tests; docker build -t ${_REPOSITORY}/e2e-tests:${_TAG} .
+
+- name: '${_REPOSITORY}/e2e-tests:${_TAG}'
+  id: 'Launch Streaming Pipeline'
+  entrypoint: /bin/bash
+  args: 
+    - -c
+    -  e2e-tests/wait_for_streaming.sh --use_docker_network
+
+- name: '${_REPOSITORY}/e2e-tests:${_TAG}'
+  id: 'Run E2E Test for STREAMING'
+  env:
+    - PARQUET_SUBDIR=STREAMING
+    - DOCKER_NETWORK=--use_docker_network
+    - STREAMING_TEST=--streaming
+
 - name: '${_REPOSITORY}/synthea-uploader:${_TAG}'
   id: 'Upload to OpenMRS'
   env:
@@ -61,29 +82,25 @@ steps:
     - FHIR_ENDPOINT=http://openmrs:8080/openmrs/ws/fhir2/R4
 
 - name: 'gcr.io/cloud-builders/docker'
-  id: 'Build Batch Pipeline Image'
+  id: 'Build Pipeline Images'
   entrypoint: /bin/bash
   args:
   - -c
-  - cd pipelines/batch; docker build -t ${_REPOSITORY}/batch-pipeline:${_TAG} .
+  - cd pipelines/batch; 
+    docker build -t ${_REPOSITORY}/batch-pipeline:${_TAG} .;
+    cd ../streaming-binlog; 
+    docker build -t ${_REPOSITORY}/streaming-pipeline:${_TAG} .;
 
 - name: '${_REPOSITORY}/batch-pipeline:${_TAG}'
-  id: 'Run Batch Pipeline'
+  id: 'Run Batch Pipeline NON_JDBC'
   env:
     - PARQUET_PATH=/workspace/e2e-tests/NON_JDBC
     - SINK_PATH=http://sink-server:8080/fhir
     - SINK_USERNAME=hapi
     - SINK_PASSWORD=hapi
 
-- name: 'gcr.io/cloud-builders/docker'
-  id: 'Build E2E Image'
-  entrypoint: /bin/bash
-  args:
-  - -c
-  - cd e2e-tests; docker build -t ${_REPOSITORY}/e2e-tests:${_TAG} .
-
 - name: '${_REPOSITORY}/e2e-tests:${_TAG}'
-  id: 'Run E2E Test'
+  id: 'Run E2E Test for NON_JDBC'
   env:
     - PARQUET_SUBDIR=NON_JDBC
     - DOCKER_NETWORK=--use_docker_network
@@ -121,10 +138,11 @@ substitutions:
   _TAG: local # Cloud Build replaces this with the Commit SHA
   _REPOSITORY: fhir-analytics # Cloud Build replaces this with 
                               # us-docker.pkg.dev/${PROJECT_ID}/fhir-analytics
-         
+
 images: 
   # If run locally, images are available on your local machine through Docker
   # You can then re-tag images and push to your own Docker repo
+  - '${_REPOSITORY}/streaming-pipeline:${_TAG}'
   - '${_REPOSITORY}/batch-pipeline:${_TAG}'
   - '${_REPOSITORY}/e2e-tests:${_TAG}'
   - '${_REPOSITORY}/synthea-uploader:${_TAG}'

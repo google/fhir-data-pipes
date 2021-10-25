@@ -15,8 +15,9 @@
 # limitations under the License.
 
 # Example usage:
-#   ./batch_mode_validation.sh ./ JDBC
-#   ./batch_mode_validation.sh ./ NON-JDBC --use_docker_network
+#   ./pipeline_validation.sh ./ JDBC
+#   ./pipeline_validation.sh ./ NON-JDBC --use_docker_network
+#   ./pipeline_validation.sh ./ STREAMING --use_docker_network
 
 set -e
 
@@ -27,7 +28,7 @@ function usage() {
   echo "This script validates if number of resources sunk in parquet files and" 
   echo "FHIR Server match what is stored in the OpenMRS server"
   echo 
-  echo " usage: ./batch_mode_validation.sh  HOME_DIR  PARQUET_SUBDIR  [OPTIONS] "
+  echo " usage: ./pipeline_validation.sh  HOME_DIR  PARQUET_SUBDIR  [OPTIONS] "
   echo "    HOME_DIR          Path where e2e-tests directory is. Directory MUST"
   echo "                      contain the parquet tools jar as well as subdirectory"
   echo "                      of parquet file output"
@@ -37,13 +38,15 @@ function usage() {
   echo " Options:  "
   echo "     --use_docker_network     Flag to specify whether to use docker"  
   echo "                              or host network URLs" 
+  echo "     --streaming              Flag to specify whether we are testing a"
+  echo "                              streaming pipeline" 
 }
 
 #################################################
 # Makes sure args passed are correct
 #################################################
 function validate_args() {
-  if [[ $# -lt 2 || $# -gt 3  ]]; then
+  if [[ $# -lt 2 || $# -gt 4  ]]; then
     echo "Invalid number of args passed."
     usage
     exit 1
@@ -72,7 +75,7 @@ function validate_args() {
 #   anything that needs printing
 #################################################
 function print_message() {
-  local print_prefix="E2E: BATCH MODE TEST:"
+  local print_prefix="E2E TEST:"
   echo "${print_prefix} $*"
 }
 
@@ -83,25 +86,32 @@ function print_message() {
 #   PARQUET_SUBDIR
 #   OPENMRS_URL
 #   SINK_SERVER
+#   STREAMING
 # Arguments:
 #   Path where e2e-tests directory is. Directory contains parquet tools jar as 
 #      well as subdirectory of parquet file output
 #   Subdirectory name under HOME_DIR containing parquet files. 
 #      Example: NON_JDBC or JDBC
 #   Optional: Flag to specify whether to use docker or host network URLs.
+#   Optional: Flag to specify streaming pipeline test.
 #################################################
 function setup() {
   HOME_PATH=$1
   PARQUET_SUBDIR=$2
   rm -rf ${HOME_PATH}/fhir
   rm -rf ${HOME_PATH}/${PARQUET_SUBDIR}/*.json
-  
+  find ${HOME_PATH}/${PARQUET_SUBDIR} -size 0 -delete
   OPENMRS_URL='http://localhost:8099'
   SINK_SERVER='http://localhost:8098'
+  STREAMING=""
 
-  if [[ $3 = "--use_docker_network" ]]; then
+  if [[ $3 = "--use_docker_network" || $4 = "--use_docker_network" ]]; then
     OPENMRS_URL='http://openmrs:8080'
     SINK_SERVER='http://sink-server:8080'
+  fi
+
+  if [[ $3 = "--streaming" || $4 = "--streaming" ]]; then
+    STREAMING="on"
   fi
 }
 
@@ -114,18 +124,29 @@ function setup() {
 #   TOTAL_TEST_PATIENTS
 #   TOTAL_TEST_ENCOUNTERS
 #   TOTAL_TEST_OBS
+#   STREAMING
 #################################################
 function openmrs_query() {
+  local patient_query_param=""
+  local enc_obs_query_param=""
+
+  if [[ -n ${STREAMING} ]]; then 
+      patient_query_param="?given=Alberta625"
+      enc_obs_query_param="?subject.given=Alberta625"
+  fi
+  
   curl -L -X GET -u admin:Admin123 --connect-timeout 5 --max-time 20 \
-    ${OPENMRS_URL}/openmrs/ws/fhir2/R4/Patient/ 2>/dev/null >>${HOME_PATH}/${PARQUET_SUBDIR}/patients.json
+    ${OPENMRS_URL}/openmrs/ws/fhir2/R4/Patient/${patient_query_param} 2>/dev/null >>${HOME_PATH}/${PARQUET_SUBDIR}/patients.json
   TOTAL_TEST_PATIENTS=$(jq '.total' ${HOME_PATH}/${PARQUET_SUBDIR}/patients.json)
   print_message "Total openmrs test patients ---> ${TOTAL_TEST_PATIENTS}"
   curl -L -X GET -u admin:Admin123 --connect-timeout 5 --max-time 20 \
-    ${OPENMRS_URL}/openmrs/ws/fhir2/R4/Encounter/ 2>/dev/null >>${HOME_PATH}/${PARQUET_SUBDIR}/encounters.json
+    ${OPENMRS_URL}/openmrs/ws/fhir2/R4/Encounter/${enc_obs_query_param} \
+    2>/dev/null >>${HOME_PATH}/${PARQUET_SUBDIR}/encounters.json
   TOTAL_TEST_ENCOUNTERS=$(jq '.total' ${HOME_PATH}/${PARQUET_SUBDIR}/encounters.json)
   print_message "Total openmrs test encounters ---> ${TOTAL_TEST_ENCOUNTERS}"
   curl -L -X GET -u admin:Admin123 --connect-timeout 5 --max-time 20 \
-    ${OPENMRS_URL}/openmrs/ws/fhir2/R4/Observation/ 2>/dev/null >>${HOME_PATH}/${PARQUET_SUBDIR}/obs.json
+    ${OPENMRS_URL}/openmrs/ws/fhir2/R4/Observation/${enc_obs_query_param} \
+    2>/dev/null >>${HOME_PATH}/${PARQUET_SUBDIR}/obs.json
   TOTAL_TEST_OBS=$(jq '.total' ${HOME_PATH}/${PARQUET_SUBDIR}/obs.json)
   print_message "Total openmrs test obs ---> ${TOTAL_TEST_OBS}"
 }
@@ -143,7 +164,6 @@ function openmrs_query() {
 #################################################
 function test_parquet_sink() {
   print_message "Counting number of patients, encounters and obs sinked to parquet files"
-  
   total_patients_streamed=$(java -jar ./parquet-tools-1.11.1.jar rowcount ${HOME_PATH}/${PARQUET_SUBDIR}/Patient/ | awk '{print $3}')
   print_message "Total patients synced to parquet ---> ${total_patients_streamed}"
   total_encounters_streamed=$(java -jar ./parquet-tools-1.11.1.jar rowcount ${HOME_PATH}/${PARQUET_SUBDIR}/Encounter/ | awk '{print $3}')
@@ -154,9 +174,9 @@ function test_parquet_sink() {
   if [[ ${total_patients_streamed} == ${TOTAL_TEST_PATIENTS} && ${total_encounters_streamed} \
         == ${TOTAL_TEST_ENCOUNTERS} && ${total_obs_streamed} == ${TOTAL_TEST_OBS} ]] \
     ; then
-    print_message "BATCH MODE WITH PARQUET SINK EXECUTED SUCCESSFULLY USING ${PARQUET_SUBDIR} MODE"
+    print_message "PARQUET SINK EXECUTED SUCCESSFULLY USING ${PARQUET_SUBDIR} MODE"
   else
-    print_message "BATCH MODE WITH PARQUET SINK TEST FAILED USING ${PARQUET_SUBDIR} MODE"
+    print_message "PARQUET SINK TEST FAILED USING ${PARQUET_SUBDIR} MODE"
     exit 1
   fi
 }
@@ -171,19 +191,27 @@ function test_parquet_sink() {
 #   TOTAL_TEST_PATIENTS
 #   TOTAL_TEST_ENCOUNTERS
 #   TOTAL_TEST_OBS
+#   STREAMING
 #################################################
 function test_fhir_sink() {
+  local patient_query_param="?_summary=count"
+  local enc_obs_query_param="?_summary=count"
+
+  if [[ -n ${STREAMING} ]]; then 
+      patient_query_param="?given=Alberta625"
+      enc_obs_query_param="?subject.given=Alberta625"
+  fi
   print_message "Finding number of patients, encounters and obs in FHIR server"
 
   mkdir ${HOME_PATH}/fhir
   curl -L -X GET -u hapi:hapi --connect-timeout 5 --max-time 20 \
-    ${SINK_SERVER}/fhir/Patient/?_summary=count 2>/dev/null >>${HOME_PATH}/fhir/patients.json
+    ${SINK_SERVER}/fhir/Patient/${patient_query_param} 2>/dev/null >>${HOME_PATH}/fhir/patients.json
 
   curl -L -X GET -u hapi:hapi --connect-timeout 5 --max-time 20 \
-    ${SINK_SERVER}/fhir/Encounter/?_summary=count 2>/dev/null >>${HOME_PATH}/fhir/encounters.json
+    ${SINK_SERVER}/fhir/Encounter/${enc_obs_query_param} 2>/dev/null >>${HOME_PATH}/fhir/encounters.json
 
   curl -L -X GET -u hapi:hapi --connect-timeout 5 --max-time 20 \
-    ${SINK_SERVER}/fhir/Observation/?_summary=count 2>/dev/null >>${HOME_PATH}/fhir/obs.json
+    ${SINK_SERVER}/fhir/Observation/${enc_obs_query_param} 2>/dev/null >>${HOME_PATH}/fhir/obs.json
 
   print_message "Counting number of patients, encounters and obs sinked to fhir files"
 
@@ -199,9 +227,9 @@ function test_fhir_sink() {
   if [[ ${total_patients_sinked_fhir} == ${TOTAL_TEST_PATIENTS} && ${total_encounters_sinked_fhir} \
         == ${TOTAL_TEST_ENCOUNTERS} && ${total_obs_sinked_fhir} == ${TOTAL_TEST_OBS} ]] \
     ; then
-    print_message "BATCH MODE WITH FHIR SERVER SINK EXECUTED SUCCESSFULLY USING ${PARQUET_SUBDIR} MODE"
+    print_message "FHIR SERVER SINK EXECUTED SUCCESSFULLY USING ${PARQUET_SUBDIR} MODE"
   else
-    print_message "BATCH MODE WITH FHIR SERVER SINK TEST FAILED USING ${PARQUET_SUBDIR} MODE"
+    print_message "FHIR SERVER SINK TEST FAILED USING ${PARQUET_SUBDIR} MODE"
     exit 1
   fi
 }
