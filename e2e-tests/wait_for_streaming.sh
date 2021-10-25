@@ -44,11 +44,11 @@ function setup() {
 #################################################
 function start_pipeline() {
     echo "STARTING STREAMING PIPELINE"
-    cd /workspace/pipelines; 
+    cd /workspace/pipelines
     ../utils/start_pipelines.sh -s -streamingLog /workspace/e2e-tests/log.log \
     -u ${OPENMRS_URL}/openmrs  -o /workspace/e2e-tests/STREAMING \
     -secondsToFlushStreaming 15 -fhirSinkPath ${SINK_SERVER}/fhir \
-    -sinkUsername hapi -sinkPassword hapi;
+    -sinkUsername hapi -sinkPassword hapi
 }
 
 #################################################
@@ -58,17 +58,16 @@ function start_pipeline() {
 #   SINK_SERVER
 #################################################
 function wait_for_sink() {
-    cd /workspace;  
+    local count=0
+    cd /workspace
     python3 synthea-hiv/uploader/main.py \
     ${OPENMRS_URL}/openmrs/ws/fhir2/R4  \
-    --input_dir e2e-tests/streaming_test_patient --convert_to_openmrs; \
-    count=0;
+    --input_dir e2e-tests/streaming_test_patient --convert_to_openmrs
     until [[ ${count} -ne 0 ]]; do
-    sleep 30s;
-    count=$(curl -u hapi:hapi -s \
-        ${SINK_SERVER}/fhir/Patient?_summary=count \
-        | grep "total" | awk '{print $$NF}');
-    echo "WAITING FOR RESOURCES TO SINK"
+      sleep 30s
+      count=$(curl -u hapi:hapi -s ${SINK_SERVER}/fhir/Patient?_summary=count \
+          | grep 'total' | awk '{print $NF}')
+      echo "WAITING FOR RESOURCES TO SINK"
     done
     echo "RESOURCES IN FHIR SERVER"
 
