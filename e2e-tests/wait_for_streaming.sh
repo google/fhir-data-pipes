@@ -63,9 +63,9 @@ function wait_for_sink() {
     ${OPENMRS_URL}/openmrs/ws/fhir2/R4  \
     --input_dir e2e-tests/streaming_test_patient --convert_to_openmrs; \
     count=0;
-    until [[ $${count} -ne 0 ]]; do
+    until [[ ${count} -ne 0 ]]; do
     sleep 30s;
-    count=$$(curl -u hapi:hapi -s \
+    count=$(curl -u hapi:hapi -s \
         ${SINK_SERVER}/fhir/Patient?_summary=count \
         | grep "total" | awk '{print $$NF}');
     echo "WAITING FOR RESOURCES TO SINK"
