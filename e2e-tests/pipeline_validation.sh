@@ -37,9 +37,9 @@ function usage() {
   echo 
   echo " Options:  "
   echo "     --use_docker_network     Flag to specify whether to use docker"  
-  echo "                              or host network URLs" 
+  echo "                              or host network URLs"
   echo "     --streaming              Flag to specify whether we are testing a"
-  echo "                              streaming pipeline" 
+  echo "                              streaming pipeline"
 }
 
 #################################################
@@ -98,9 +98,9 @@ function print_message() {
 function setup() {
   HOME_PATH=$1
   PARQUET_SUBDIR=$2
-  rm -rf ${HOME_PATH}/fhir
-  rm -rf ${HOME_PATH}/${PARQUET_SUBDIR}/*.json
-  find ${HOME_PATH}/${PARQUET_SUBDIR} -size 0 -delete
+  rm -rf "${HOME_PATH}/fhir"
+  rm -rf "${HOME_PATH}/${PARQUET_SUBDIR}/*.json"
+  find "${HOME_PATH}/${PARQUET_SUBDIR}" -size 0 -delete
   OPENMRS_URL='http://localhost:8099'
   SINK_SERVER='http://localhost:8098'
   STREAMING=""
@@ -136,18 +136,18 @@ function openmrs_query() {
   fi
   
   curl -L -X GET -u admin:Admin123 --connect-timeout 5 --max-time 20 \
-    ${OPENMRS_URL}/openmrs/ws/fhir2/R4/Patient/${patient_query_param} 2>/dev/null >>${HOME_PATH}/${PARQUET_SUBDIR}/patients.json
-  TOTAL_TEST_PATIENTS=$(jq '.total' ${HOME_PATH}/${PARQUET_SUBDIR}/patients.json)
+    "${OPENMRS_URL}/openmrs/ws/fhir2/R4/Patient/${patient_query_param}" 2>/dev/null >>"${HOME_PATH}/${PARQUET_SUBDIR}/patients.json"
+  TOTAL_TEST_PATIENTS=$(jq '.total' "${HOME_PATH}/${PARQUET_SUBDIR}/patients.json")
   print_message "Total openmrs test patients ---> ${TOTAL_TEST_PATIENTS}"
   curl -L -X GET -u admin:Admin123 --connect-timeout 5 --max-time 20 \
-    ${OPENMRS_URL}/openmrs/ws/fhir2/R4/Encounter/${enc_obs_query_param} \
-    2>/dev/null >>${HOME_PATH}/${PARQUET_SUBDIR}/encounters.json
-  TOTAL_TEST_ENCOUNTERS=$(jq '.total' ${HOME_PATH}/${PARQUET_SUBDIR}/encounters.json)
+    "${OPENMRS_URL}/openmrs/ws/fhir2/R4/Encounter/${enc_obs_query_param}" \
+    2>/dev/null >>"${HOME_PATH}/${PARQUET_SUBDIR}/encounters.json"
+  TOTAL_TEST_ENCOUNTERS=$(jq '.total' "${HOME_PATH}/${PARQUET_SUBDIR}/encounters.json")
   print_message "Total openmrs test encounters ---> ${TOTAL_TEST_ENCOUNTERS}"
   curl -L -X GET -u admin:Admin123 --connect-timeout 5 --max-time 20 \
-    ${OPENMRS_URL}/openmrs/ws/fhir2/R4/Observation/${enc_obs_query_param} \
-    2>/dev/null >>${HOME_PATH}/${PARQUET_SUBDIR}/obs.json
-  TOTAL_TEST_OBS=$(jq '.total' ${HOME_PATH}/${PARQUET_SUBDIR}/obs.json)
+    "${OPENMRS_URL}/openmrs/ws/fhir2/R4/Observation/${enc_obs_query_param}" \
+    2>/dev/null >>"${HOME_PATH}/${PARQUET_SUBDIR}/obs.json"
+  TOTAL_TEST_OBS=$(jq '.total' "${HOME_PATH}/${PARQUET_SUBDIR}/obs.json")
   print_message "Total openmrs test obs ---> ${TOTAL_TEST_OBS}"
 }
 
@@ -164,15 +164,15 @@ function openmrs_query() {
 #################################################
 function test_parquet_sink() {
   print_message "Counting number of patients, encounters and obs sinked to parquet files"
-  total_patients_streamed=$(java -jar ./parquet-tools-1.11.1.jar rowcount ${HOME_PATH}/${PARQUET_SUBDIR}/Patient/ | awk '{print $3}')
+  total_patients_streamed=$(java -jar ./parquet-tools-1.11.1.jar rowcount "${HOME_PATH}/${PARQUET_SUBDIR}/Patient/" | awk '{print $3}')
   print_message "Total patients synced to parquet ---> ${total_patients_streamed}"
-  total_encounters_streamed=$(java -jar ./parquet-tools-1.11.1.jar rowcount ${HOME_PATH}/${PARQUET_SUBDIR}/Encounter/ | awk '{print $3}')
+  total_encounters_streamed=$(java -jar ./parquet-tools-1.11.1.jar rowcount "${HOME_PATH}/${PARQUET_SUBDIR}/Encounter/" | awk '{print $3}')
   print_message "Total encounters synced to parquet ---> ${total_encounters_streamed}"
-  total_obs_streamed=$(java -jar ./parquet-tools-1.11.1.jar rowcount ${HOME_PATH}/${PARQUET_SUBDIR}/Observation/ | awk '{print $3}')
+  total_obs_streamed=$(java -jar ./parquet-tools-1.11.1.jar rowcount "${HOME_PATH}/${PARQUET_SUBDIR}/Observation/" | awk '{print $3}')
   print_message "Total obs synced to parquet ---> ${total_obs_streamed}"
 
-  if [[ ${total_patients_streamed} == ${TOTAL_TEST_PATIENTS} && ${total_encounters_streamed} \
-        == ${TOTAL_TEST_ENCOUNTERS} && ${total_obs_streamed} == ${TOTAL_TEST_OBS} ]] \
+  if [[ "${total_patients_streamed}" == "${TOTAL_TEST_PATIENTS}" && "${total_encounters_streamed}" \
+        == "${TOTAL_TEST_ENCOUNTERS}" && "${total_obs_streamed}" == "${TOTAL_TEST_OBS}" ]] \
     ; then
     print_message "PARQUET SINK EXECUTED SUCCESSFULLY USING ${PARQUET_SUBDIR} MODE"
   else
@@ -203,29 +203,29 @@ function test_fhir_sink() {
   fi
   print_message "Finding number of patients, encounters and obs in FHIR server"
 
-  mkdir ${HOME_PATH}/fhir
+  mkdir "${HOME_PATH}/fhir"
   curl -L -X GET -u hapi:hapi --connect-timeout 5 --max-time 20 \
-    ${SINK_SERVER}/fhir/Patient/${patient_query_param} 2>/dev/null >>${HOME_PATH}/fhir/patients.json
+    "${SINK_SERVER}/fhir/Patient/${patient_query_param}" 2>/dev/null >>"${HOME_PATH}/fhir/patients.json"
 
   curl -L -X GET -u hapi:hapi --connect-timeout 5 --max-time 20 \
-    ${SINK_SERVER}/fhir/Encounter/${enc_obs_query_param} 2>/dev/null >>${HOME_PATH}/fhir/encounters.json
+    "${SINK_SERVER}/fhir/Encounter/${enc_obs_query_param}" 2>/dev/null >>"${HOME_PATH}/fhir/encounters.json"
 
   curl -L -X GET -u hapi:hapi --connect-timeout 5 --max-time 20 \
-    ${SINK_SERVER}/fhir/Observation/${enc_obs_query_param} 2>/dev/null >>${HOME_PATH}/fhir/obs.json
+    "${SINK_SERVER}/fhir/Observation/${enc_obs_query_param}" 2>/dev/null >>"${HOME_PATH}/fhir/obs.json"
 
   print_message "Counting number of patients, encounters and obs sinked to fhir files"
 
-  total_patients_sinked_fhir=$(jq '.total' ${HOME_PATH}/fhir/patients.json)
+  total_patients_sinked_fhir=$(jq '.total' "${HOME_PATH}/fhir/patients.json")
   print_message "Total patients sinked to fhir ---> ${total_patients_sinked_fhir}"
 
-  total_encounters_sinked_fhir=$(jq '.total' ${HOME_PATH}/fhir/encounters.json)
+  total_encounters_sinked_fhir=$(jq '.total' "${HOME_PATH}/fhir/encounters.json")
   print_message "Total encounters sinked to fhir ---> ${total_encounters_sinked_fhir}"
 
-  total_obs_sinked_fhir=$(jq '.total' ${HOME_PATH}/fhir/obs.json)
+  total_obs_sinked_fhir=$(jq '.total' "${HOME_PATH}/fhir/obs.json")
   print_message "Total observations sinked to fhir ---> ${total_obs_sinked_fhir}"
 
-  if [[ ${total_patients_sinked_fhir} == ${TOTAL_TEST_PATIENTS} && ${total_encounters_sinked_fhir} \
-        == ${TOTAL_TEST_ENCOUNTERS} && ${total_obs_sinked_fhir} == ${TOTAL_TEST_OBS} ]] \
+  if [[ "${total_patients_sinked_fhir}" == "${TOTAL_TEST_PATIENTS}" && "${total_encounters_sinked_fhir}" \
+        == "${TOTAL_TEST_ENCOUNTERS}" && "${total_obs_sinked_fhir}" == "${TOTAL_TEST_OBS}" ]] \
     ; then
     print_message "FHIR SERVER SINK EXECUTED SUCCESSFULLY USING ${PARQUET_SUBDIR} MODE"
   else
@@ -234,8 +234,8 @@ function test_fhir_sink() {
   fi
 }
 
-validate_args  $@
-setup $@
+validate_args  "$@"
+setup "$@"
 print_message "---- STARTING ${PARQUET_SUBDIR} TEST ----"
 openmrs_query 
 test_parquet_sink 
