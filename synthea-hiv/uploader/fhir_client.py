@@ -18,8 +18,9 @@ from typing import Dict, Union
 import google.auth
 import google.auth.transport.requests
 import requests
+import requests.adapters
 
-FhirClient = Union['GcpClient', 'OpenMrsClient']
+FhirClient = Union['GcpClient', 'OpenMrsClient', 'HapiClient']
 
 
 def _process_response(response: requests.Response) -> Dict[str, str]:
@@ -29,45 +30,77 @@ def _process_response(response: requests.Response) -> Dict[str, str]:
   return json.loads(response.text)
 
 
+def _setup_session(base_url: str):
+  session = requests.Session()
+  retry = requests.adapters.Retry()
+  adapter = requests.adapters.HTTPAdapter(max_retries=retry)
+  session.mount(base_url, adapter)
+  session.headers.update(
+      {'Content-Type': 'application/fhir+json;charset=utf-8'})
+  return session
+
+
 class OpenMrsClient:
   """Client to connect to an OpenMRS Server."""
 
   def __init__(self, base_url: str):
-    self._base_url = base_url
-    self._headers = {'Content-Type': 'application/fhir+json;charset=utf-8'}
-    self._auth = ('admin', 'Admin123')
+    self.base_url = base_url
+    self.session = _setup_session(self.base_url)
+    self.session.auth = ('admin', 'Admin123')
     self.response = None
 
   def post_single_resource(self, resource: str, data: Dict[str, str]):
-    url = f'{self._base_url}/{resource}'
-    self.response = _process_response(
-        requests.post(
-            url=url,
-            data=json.dumps(data),
-            auth=self._auth,
-            headers=self._headers))
+    url = f'{self.base_url}/{resource}'
+    response_ = self.session.post(url, json.dumps(data))
+    self.response = _process_response(response_)
+
+  def get_resource(self, resource: str):
+    url = f'{self.base_url}/{resource}'
+    response_ = self.session.get(url)
+    self.response = _process_response(response_)
+    return self.response
 
 
 class GcpClient:
   """Client to connect to GCP FHIR Store."""
 
   def __init__(self, base_url: str):
-    self._base_url = base_url
-    self._headers = {'Content-Type': 'application/fhir+json;charset=utf-8'}
+    self.base_url = base_url
+    self.session = _setup_session(base_url)
     self._auth_req = google.auth.transport.requests.Request()
     self._creds, _ = google.auth.default()
     self.response = None
 
-  def post_bundle(self, data: Dict[str, str]):
+  def _add_auth_token(self):
     self._creds.refresh(self._auth_req)
-    self._headers['Authorization'] = f'Bearer {self._creds.token}'
-    self.response = _process_response(
-        requests.post(
-            url=self._base_url, data=json.dumps(data), headers=self._headers))
+    auth_dict = {'Authorization': f'Bearer {self._creds.token}'}
+    self.session.headers.update(auth_dict) 
+
+  def post_bundle(self, data: Dict[str, str]):
+    self._add_auth_token()
+    response_ = self.session.post(self.base_url, json.dumps(data))
+    self.response = _process_response(response_)
 
   def post_single_resource(self, resource: str, data: Dict[str, str]):
-    self._creds.refresh(self._auth_req)
-    self._headers['Authorization'] = f'Bearer {self._creds.token}'
-    url = f'{self._base_url}/{resource}'
-    self.response = _process_response(
-        requests.post(url=url, data=json.dumps(data), headers=self._headers))
+    self._add_auth_token()
+    url = f'{self.base_url}/{resource}'
+    response_ = self.session.post(url, json.dumps(data))
+    self.response = _process_response(response_)
+
+  def get_resource(self, resource: str):
+    self._add_auth_token()
+    url = f'{self.base_url}/{resource}'
+    response_ = self.session.get(url)
+    self.response = _process_response(response_)
+    return self.response
+
+class HapiClient(OpenMrsClient):
+  """Client to connect to HAPI FHIR Server."""
+
+  def __init__(self, base_url: str):
+      super().__init__(base_url)
+      self.session.auth = ('hapi', 'hapi')
+
+  def post_bundle(self, data: Dict[str, str]):
+    response_ = self.session.post(self.base_url, json.dumps(data))
+    self.response = _process_response(response_)
