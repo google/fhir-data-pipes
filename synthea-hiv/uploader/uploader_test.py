@@ -29,8 +29,9 @@ class UploaderTest(unittest.TestCase):
 
   def test_upload_bundle(self):
     self.mock_bundle.openmrs_patient = mock.MagicMock()
+    mock_location = mock.MagicMock()
     upload_handler = uploader.Uploader(self.mock_client)
-    upload_handler.upload_openmrs_bundle(self.mock_bundle)
+    upload_handler.upload_openmrs_bundle(self.mock_bundle, mock_location)
     self.assertTrue(self._upload_resource.called)
     self.assertEqual(self.mock_bundle.openmrs_patient.base.new_id, '123')
 

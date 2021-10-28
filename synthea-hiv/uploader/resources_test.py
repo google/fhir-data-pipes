@@ -53,14 +53,21 @@ class ResourcesTest(unittest.TestCase):
     test_encounter = resources.Encounter(self.encounter_data)
     self.assertEqual(test_encounter.base.original_id,
                      'e1846945-43bb-3cfe-1faf-66cf99935c7c')
-
-    test_encounter.openmrs_convert('123')
+    location = ('456', 'World')
+    test_encounter.openmrs_convert('123', location)
     self.assertEqual(test_encounter.base.json['type'], [{
         'coding': [{
             'system': 'http://fhir.openmrs.org/code-system/encounter-type',
             'code': '5021b1a1-e7f6-44b4-ba02-da2f2bcf8718',
             'display': 'Attachment Upload'
         }]
+    }])
+
+    self.assertEqual(test_encounter.base.json['location'], [{
+        'location': {
+            'reference': 'Location/456',
+            'display': 'World'
+        }
     }])
     self.assertEqual(test_encounter.base.json['subject']['reference'],
                      'Patient/123')

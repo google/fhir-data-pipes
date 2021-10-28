@@ -133,7 +133,9 @@ def fetch_location(sink: fhir_client.FhirClient) -> Dict[str, str]:
   try:
     entries = sink.get_resource('Location')['entry']
     for entry in entries:
-      location_map[entry['resource']['id']] = entry['resource']['name']
+      location_id = entry['resource']['id']
+      location_name = entry['resource']['name']
+      location_map[location_id] = location_name 
     return location_map
 
   except KeyError:
