@@ -41,7 +41,11 @@ import bundle
 import fhir_client
 import uploader
 
-_MAP = {'GCP': 'GcpClient', 'OpenMRS': 'OpenMrsClient', 'HAPI': 'HapiClient'}
+_CLIENT_MAP = {
+    'GCP': 'GcpClient',
+    'OpenMRS': 'OpenMrsClient',
+    'HAPI': 'HapiClient'
+}
 
 parser = argparse.ArgumentParser(
     description='Upload FHIR Bundles.',
@@ -50,7 +54,7 @@ parser = argparse.ArgumentParser(
 parser.add_argument(
     'sink_type',
     help='FHIR Server which data will be sent to',
-    choices=_MAP.keys())
+    choices=_CLIENT_MAP.keys())
 
 parser.add_argument(
     'fhir_endpoint',
@@ -59,7 +63,7 @@ parser.add_argument(
         'https://healthcare.googleapis.com/v1beta1/projects/PROJECT_ID/'
         'locations/LOCATION/datasets/DATASET/fhirStores/FHIR_STORE/fhir'
         '\n\nFor a local OpenMRS endpoint, it is http://localhost:8099/openmrs/'
-        'ws/fhir2/R4\n\nFor a local HAPI enpoint, it is http://localhost:8098/fhir'
+        'ws/fhir2/R4\n\nFor a local HAPI endpoint, it is http://localhost:8098/fhir'
     ))
 
 parser.add_argument(
@@ -150,7 +154,7 @@ def upload(sink: fhir_client.FhirClient, each_bundle: bundle.Bundle):
 
 
 def create_sink(sink_type: str, url: str) -> fhir_client.FhirClient:
-  client_ = getattr(fhir_client, _MAP[sink_type])
+  client_ = getattr(fhir_client, _CLIENT_MAP[sink_type])
   return client_(url)
 
 
