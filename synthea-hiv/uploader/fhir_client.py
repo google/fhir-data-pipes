@@ -32,8 +32,8 @@ def _process_response(response: requests.Response) -> Dict[str, str]:
 
 def _setup_session(base_url: str):
   session = requests.Session()
-  retry_ = requests.adapters.Retry()
-  adapter = requests.adapters.HTTPAdapter(max_retries=retry_)
+  retry = requests.adapters.Retry()
+  adapter = requests.adapters.HTTPAdapter(max_retries=retry)
   session.mount(base_url, adapter)
   session.headers.update(
       {'Content-Type': 'application/fhir+json;charset=utf-8'})
