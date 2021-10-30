@@ -288,11 +288,15 @@ username "admin" and password "Admin123". The Docker image includes the required
 FHIR2 module and demo data. Edit `docker/openmrs-compose.yaml` to change the
 default port.
 
-If `docker-compose` fails, you may need to adjust file permissions.
+**Note:** If `docker-compose` fails, you may need to adjust file permissions.
+In particular if the permissions on `mysqld.cnf` is not right, the `datadir`
+set in this file will not be read by MySQL and it will cause OpenMRS to
+require its `initialsetup` (which is not needed since the MySQL image already
+has all the data and tables needed):
 
 ```
 $ docker-compose -f docker/openmrs-compose.yaml down -v
-$ chmod a+rx ./utils ./utils/dbdump
+$ chmod a+r docker/mysql-build/mysqld.cnf
 $ chmod -R a+r ./utils
 $ docker-compose -f docker/openmrs-compose.yaml up
 ```

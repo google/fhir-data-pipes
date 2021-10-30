@@ -48,8 +48,8 @@ function openmrs_check() {
       --connect-timeout 5 --max-time 20 ${OPENMRS_URL}/openmrs/ws/fhir2/R4/Patient \
       2>/dev/null | cut -d ";" -f 1)
   until [[ ${contenttype} == "application/fhir+json" ]]; do
-    sleep 60s
     echo "WAITING FOR OPENMRS SERVER TO START"
+    sleep 60s
     contenttype=$(curl -o /dev/null --head -w "%{content_type}\n" -X GET -u admin:Admin123 \
       --connect-timeout 5 --max-time 20 ${OPENMRS_URL}/openmrs/ws/fhir2/R4/Patient \
       2>/dev/null | cut -d ";" -f 1)

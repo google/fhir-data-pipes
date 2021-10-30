@@ -27,6 +27,9 @@ from datetime import datetime
 from dateutil import parser as date_parser
 import pandas as pd
 
+import common
+
+
 def _find_age_band(birth_date: str, end_date: datetime) -> str:
   """Given the birth date, finds the age_band for PEPFAR disaggregation."""
   birth = date_parser.parse(birth_date)
@@ -302,6 +305,8 @@ def calc_TX_TB(patient_agg_obs: pd.DataFrame, TX_TB_plan: str, ARV_plan: str,
   # evaluate
   temp_df['TX_TB'] = ((temp_df['ART_TX'] == True) & (temp_df['TX_TB_status'] == True) &
                       (temp_df['TB_screening'] == True))
+  common.custom_log('Number of rows in TX_TB temp_df= {}'.format(
+      temp_df.index.size))
   temp_df = _gen_counts_and_ratio(temp_df, end_date, 'TX_TB')
   return temp_df
 
