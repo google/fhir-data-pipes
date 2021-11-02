@@ -134,6 +134,7 @@ public class ParquetUtilTest {
 		Bundle bundle = parser.parseResource(Bundle.class, patientBundle);
 		GenericRecord record = parquetUtil.convertToAvro(bundle.getEntry().get(0).getResource());
 		Collection<Object> addressList = (Collection<Object>) record.get("address");
+		assertThat(record.get("id"), equalTo("471be3bc-08c7-4d78-a4ab-1b3d044dae67"));
 		assertThat(addressList.size(), equalTo(1));
 		Record address = (Record) addressList.iterator().next();
 		assertThat((String) address.get("city"), equalTo("Waterloo"));
