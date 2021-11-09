@@ -15,15 +15,18 @@ package org.openmrs.analytics;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import ca.uhn.fhir.rest.api.SummaryEnum;
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.collect.Maps;
 import org.apache.beam.sdk.transforms.DoFn.Element;
 import org.apache.beam.sdk.transforms.DoFn.ProcessElement;
 import org.apache.beam.sdk.transforms.PTransform;
 import org.apache.beam.sdk.transforms.ParDo;
+import org.apache.beam.sdk.transforms.windowing.GlobalWindow;
 import org.apache.beam.sdk.values.KV;
 import org.apache.beam.sdk.values.PCollection;
 import org.hl7.fhir.r4.model.Base;
@@ -32,6 +35,7 @@ import org.hl7.fhir.r4.model.Bundle.BundleEntryComponent;
 import org.hl7.fhir.r4.model.Property;
 import org.hl7.fhir.r4.model.Reference;
 import org.hl7.fhir.r4.model.Resource;
+import org.joda.time.Instant;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -89,8 +93,31 @@ public class FetchResources extends PTransform<PCollection<SearchSegmentDescript
 	
 	static class SearchFn extends FetchSearchPageFn<SearchSegmentDescriptor> {
 		
+		// This is to optimize counting number of patient resources. This will be initialized in
+		// StartBundle; we don't need to `synchronized` access of it because each instance of the DoFn
+		// class is accessed by a single thread.
+		// https://beam.apache.org/documentation/programming-guide/#user-code-thread-compatibility
+		private Map<String, Integer> patientCount = null;
+		
 		SearchFn(FhirEtlOptions options, String stageIdentifier) {
 			super(options, stageIdentifier);
+		}
+		
+		@StartBundle
+		public void startBundle(StartBundleContext context) {
+			patientCount = Maps.newHashMap();
+		}
+		
+		private void incrementPatientResources(String patientId) {
+			int current = patientCount.getOrDefault(patientId, 0);
+			patientCount.put(patientId, current + 1);
+		}
+		
+		@FinishBundle
+		public void finishBundle(FinishBundleContext context) {
+			for (Map.Entry<String, Integer> entry : patientCount.entrySet()) {
+				context.output(KV.of(entry.getKey(), entry.getValue()), Instant.now(), GlobalWindow.INSTANCE);
+			}
 		}
 		
 		@ProcessElement
@@ -107,7 +134,7 @@ public class FetchResources extends PTransform<PCollection<SearchSegmentDescript
 				for (BundleEntryComponent entry : pageBundle.getEntry()) {
 					String patientId = getSubjectPatientIdOrNull(entry.getResource());
 					if (patientId != null) {
-						out.output(KV.of(patientId, 1));
+						incrementPatientResources(patientId);
 					}
 				}
 			}
