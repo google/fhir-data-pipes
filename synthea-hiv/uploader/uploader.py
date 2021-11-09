@@ -52,6 +52,7 @@ class Uploader:
 
     Args:
       each_bundle: a Bundle object
+      locations: dictionary of location_id/location_name
     """
 
     try:

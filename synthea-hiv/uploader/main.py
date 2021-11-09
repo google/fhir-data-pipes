@@ -124,10 +124,10 @@ def fetch_location(sink: fhir_client.FhirClient) -> Dict[str, str]:
   """Get map of all location_id/location_name stored in sink.
 
   Args:
-   sink: FHIR endpoint to pull from
+    sink: FHIR endpoint to pull from
 
   Returns:
-   Dictionary of location_id/location_name
+    Dictionary of location_id/location_name
   """
   location_map = {}
   try:
