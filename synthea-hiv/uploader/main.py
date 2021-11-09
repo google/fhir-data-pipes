@@ -120,7 +120,31 @@ def convert_to_bundle(json_file: pathlib.PosixPath) -> bundle.Bundle:
     return bundle.Bundle(json_file, data)
 
 
-def upload_openmrs(sink: fhir_client.FhirClient, patient_bundle: bundle.Bundle):
+def fetch_location(sink: fhir_client.FhirClient) -> Dict[str, str]:
+  """Get map of all location_id/location_name stored in sink.
+
+  Args:
+    sink: FHIR endpoint to pull from
+
+  Returns:
+    Dictionary of location_id/location_name
+  """
+  location_map = {}
+  try:
+    entries = sink.get_resource('Location')['entry']
+    for entry in entries:
+      location_id = entry['resource']['id']
+      location_name = entry['resource']['name']
+      location_map[location_id] = location_name 
+    return location_map
+
+  except KeyError:
+    logging.warning('No locations found in sink. Using Unknown Location.')
+    return {'8d6c993e-c2cc-11de-8d13-0010c6dffd0f': 'Unknown Location'}
+
+
+def upload_openmrs(sink: fhir_client.FhirClient, patient_bundle: bundle.Bundle,
+                   locations: Dict[str, str]):
   """Upload Patient history bundles to OpenMRS.
 
   For each bundle, we have to know the individual Patient, Encounters, and
@@ -132,10 +156,11 @@ def upload_openmrs(sink: fhir_client.FhirClient, patient_bundle: bundle.Bundle):
   Args:
     sink: OpenMRS FHIR endpoint to talk with
     patient_bundle: list of all the Bundles that need to be uploaded
+    locations: dictionary of location_id/location_name
   """
   upload_handler = uploader.Uploader(sink)
   patient_bundle.extract_resources()
-  upload_handler.upload_openmrs_bundle(patient_bundle)
+  upload_handler.upload_openmrs_bundle(patient_bundle, locations)
   patient_bundle.save_mapping()
 
 
@@ -165,12 +190,16 @@ if __name__ == '__main__':
   fhir_sink = create_sink(args.sink_type, args.fhir_endpoint)
 
   if args.convert_to_openmrs:
+    locations_in_store = fetch_location(fhir_sink)
     with multiprocessing.Pool() as pool:
       logging.info('Loading patient_history JSON files into memory')
       bundle_list = pool.map(convert_to_bundle,
                              json_file_dict['patient_history'])
-      pool.starmap(upload_openmrs,
-                   zip(itertools.repeat(fhir_sink), bundle_list))
+      pool.starmap(
+          upload_openmrs,
+          zip(
+              itertools.repeat(fhir_sink), bundle_list,
+              itertools.repeat(locations_in_store)))
 
   else:
     # To post the files to GCP FHIR Store, they require a certain order because

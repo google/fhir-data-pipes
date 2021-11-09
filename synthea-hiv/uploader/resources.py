@@ -13,7 +13,7 @@
 # limitations under the License.
 """Resources that OpenMRS can upload. This class is only used for OpenMRS."""
 
-from typing import Dict, List
+from typing import Dict, List, Tuple
 import uuid
 
 import idgen
@@ -62,7 +62,7 @@ class Patient:
         'value': openmrs_id,
         'id': self.base.original_id
     })
-  
+
     self._inject_id()
 
   def _inject_id(self):
@@ -83,12 +83,13 @@ class Encounter:
   def __init__(self, json: Dict[str, str]):
     self.base = BaseResource(json)
 
-  def openmrs_convert(self, new_patient_id: str):
+  def openmrs_convert(self, new_patient_id: str, location: Tuple[str, str]):
     """Change fields to make Encounter uploadable to OpenMRS.
 
     Args:
       new_patient_id: new ID of the Patient after the Patient resource has been
         uploaded to OpenMRS.
+      location: tuple of the form: (location_id, location_name)
     """
 
     self.base.json['subject']['reference'] = 'Patient/' + new_patient_id
@@ -99,15 +100,17 @@ class Encounter:
             'display': 'Attachment Upload'
         }]
     }]
+
     self.base.json['location'] = [{
-        "location": {
-            "reference": "Location/8d6c993e-c2cc-11de-8d13-0010c6dffd0f",
-            "display": "Unknown Location"
-         }
-        }]
+        'location': {
+            'reference': f'Location/{location[0]}',
+            'display': location[1]
+        }
+    }]
     self.base.json.pop('identifier', None)
     self.base.json.pop('participant', None)
     self.base.json.pop('serviceProvider', None)
+
 
 class Observation:
   """Observation resource to upload to OpenMRS."""
