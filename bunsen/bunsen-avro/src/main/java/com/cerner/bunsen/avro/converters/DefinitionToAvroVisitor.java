@@ -13,6 +13,7 @@ import com.cerner.bunsen.definitions.HapiConverter;
 import com.cerner.bunsen.definitions.HapiConverter.HapiFieldSetter;
 import com.cerner.bunsen.definitions.HapiConverter.HapiObjectConverter;
 import com.cerner.bunsen.definitions.HapiConverter.MultiValueConverter;
+import com.cerner.bunsen.definitions.IdConverter;
 import com.cerner.bunsen.definitions.LeafExtensionConverter;
 import com.cerner.bunsen.definitions.PrimitiveConverter;
 import com.cerner.bunsen.definitions.StringConverter;
@@ -42,18 +43,22 @@ public class DefinitionToAvroVisitor implements DefinitionVisitor<HapiConverter<
 
   private final Map<String, HapiConverter<Schema>> visitedConverters;
 
-  private static final HapiConverter STRING_CONVERTER =
-      new StringConverter(Schema.create(Type.STRING));
+  private static final HapiConverter<Schema> STRING_CONVERTER =
+      new StringConverter<>(Schema.create(Type.STRING));
 
-  private static final HapiConverter ENUM_CONVERTER =
-      new EnumConverter(Schema.create(Type.STRING));
+  private static final HapiConverter<Schema> ID_CONVERTER =
+      new IdConverter<>(Schema.create(Type.STRING));
 
-  private static final HapiConverter DATE_CONVERTER =
-      new StringConverter(Schema.create(Type.STRING));
+  private static final HapiConverter<Schema> ENUM_CONVERTER =
+      new EnumConverter<>(Schema.create(Type.STRING));
+
+  private static final HapiConverter<Schema> DATE_CONVERTER =
+      new StringConverter<>(Schema.create(Type.STRING));
 
   private static final Schema BOOLEAN_SCHEMA = Schema.create(Type.BOOLEAN);
 
-  private static final HapiConverter BOOLEAN_CONVERTER = new PrimitiveConverter<Schema>("Boolean") {
+  private static final HapiConverter<Schema> BOOLEAN_CONVERTER = new PrimitiveConverter<Schema>(
+      "Boolean") {
 
     @Override
     public Schema getDataType() {
@@ -63,7 +68,8 @@ public class DefinitionToAvroVisitor implements DefinitionVisitor<HapiConverter<
 
   private static final Schema INTEGER_SCHEMA = Schema.create(Type.INT);
 
-  private static final HapiConverter INTEGER_CONVERTER = new PrimitiveConverter<Schema>("Integer") {
+  private static final HapiConverter<Schema> INTEGER_CONVERTER = new PrimitiveConverter<Schema>(
+      "Integer") {
 
     @Override
     public Schema getDataType() {
@@ -77,7 +83,8 @@ public class DefinitionToAvroVisitor implements DefinitionVisitor<HapiConverter<
   // Avro `decimal` type  has a fixed scale and a maximum precision but with a fixed scale we have
   // no guarantees on the precision of the FHIR `decimal` type. See this for more details:
   // https://github.com/GoogleCloudPlatform/openmrs-fhir-analytics/issues/156#issuecomment-880964207
-  private static final HapiConverter DOUBLE_CONVERTER = new PrimitiveConverter<Schema>("Double") {
+  private static final HapiConverter<Schema> DOUBLE_CONVERTER = new PrimitiveConverter<Schema>(
+      "Double") {
 
     @Override
     public Schema getDataType() {
@@ -85,9 +92,9 @@ public class DefinitionToAvroVisitor implements DefinitionVisitor<HapiConverter<
     }
   };
 
-  static final Map<String,HapiConverter> TYPE_TO_CONVERTER =
-      ImmutableMap.<String,HapiConverter>builder()
-          .put("id", STRING_CONVERTER)
+  static final Map<String, HapiConverter<Schema>> TYPE_TO_CONVERTER =
+      ImmutableMap.<String, HapiConverter<Schema>>builder()
+          .put("id", ID_CONVERTER)
           .put("boolean", BOOLEAN_CONVERTER)
           .put("code", ENUM_CONVERTER)
           .put("markdown", STRING_CONVERTER)

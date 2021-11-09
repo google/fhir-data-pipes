@@ -20,6 +20,7 @@ public class EnumConverter<T> extends StringConverter<T> {
     primitive.setValueAsString((String) input);
   }
 
+  @Override
   protected Object fromHapi(IPrimitiveType primitive) {
 
     return "?".equals(primitive.getValueAsString())

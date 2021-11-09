@@ -16,6 +16,7 @@ public class StringConverter<T> extends PrimitiveConverter<T> {
     primitive.setValueAsString((String) input);
   }
 
+  @Override
   protected Object fromHapi(IPrimitiveType primitive) {
     return primitive.getValueAsString();
   }
