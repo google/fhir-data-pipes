@@ -108,11 +108,10 @@ validate "TB_PREV, non-TB_PREV, none, male_25 numbers are" "35,3.19e+03,0,0" 18
 # TB_PREV ratio
 validate "TB_PREV, non-TB_PREV, none, male_25 ratios are" "0.0109,0.989,0,0" 19
 
-# TODO update after fixing TX_TB
 # TX_TB counts
-#validate "TX_TB, non-TX_TB, none, male_25 numbers are" "568,345,0,79" 21
+validate "TX_TB, non-TX_TB, none, male_25 numbers are" "0,3.22e+03,0,0" 21
 # TX_TB ratio
-#validate "TX_TB, non-TX_TB, none, male_25 ratios are" "0.622,0.378,0,0.0865" 22
+validate "TX_TB, non-TX_TB, none, male_25 ratios are" "0,1,0,0" 22
 
 if [[ -n "${FAILED}" ]]; then
   echo "FAILED!"

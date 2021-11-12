@@ -38,7 +38,7 @@ _ARV_PLAN = '1255'  # ANTIRETROVIRAL PLAN
 _TX_TB_PLAN = '1268'  # TUBERCULOSIS TREATMENT PLAN
 # TODO: Add TB prevention plans in the synthetic data; seems currently missing.
 _TB_PREV_plan = '1268'  # TUBERCULOSIS TREATMENT PLAN
-_TB_screening = '2022'  # TUBERCULOSIS DIAGNOSED THIS VISIT
+_TB_screening = '6174'  # REVIEW OF TUBERCULOSIS SCREENING QUESTIONS
 
 # Answer codes:
 _YES_CODE = '1065'
@@ -167,14 +167,12 @@ if __name__ == '__main__':
       ART_plan_answer=[_CONTINUE_REGIMEN, _START_DRUGS],
       end_date_str=end_date)
 
-  # TODO fix this; currently it seems no patient satisfies both constraints in
-  #  the synthetic data set! In general, gracefully handle empty result cases.
-  #TX_TB_df = indicator_lib.calc_TX_TB(
-  #    annual_df, TX_TB_plan=_TX_TB_PLAN, ARV_plan=_ARV_PLAN,
-  #    TB_screening=_TB_screening, YES_CODE=_YES_CODE,
-  #    TX_TB_plan_answer=[_CONTINUE_REGIMEN, _START_DRUGS],
-  #    ART_plan_answer=[_CONTINUE_REGIMEN, _START_DRUGS],
-  #    end_date_str=end_date)
+  TX_TB_df = indicator_lib.calc_TX_TB(
+      annual_df, TX_TB_plan=_TX_TB_PLAN, ARV_plan=_ARV_PLAN,
+      TB_screening=_TB_screening, YES_CODE=_YES_CODE,
+      TX_TB_plan_answer=[_CONTINUE_REGIMEN, _START_DRUGS],
+      ART_plan_answer=[_CONTINUE_REGIMEN, _START_DRUGS],
+      end_date_str=end_date)
 
   # TODO the logic behind this merge is not clear, especially for null keys.
   VL_df.merge(TX_NEW_df, how='outer', left_on=['buckets', 'sup_VL'],
@@ -186,7 +184,7 @@ if __name__ == '__main__':
       TB_ART_df, how='outer', left_on=['buckets', 'sup_VL'],
       right_on=['buckets', 'TB_ART']).merge(
       TB_PREV_df, how='outer', left_on=['buckets', 'sup_VL'],
-      right_on=['buckets', 'TB_PREV']#).merge(
-      #TX_TB_df, how='outer', left_on=['buckets', 'sup_VL'],
-      #right_on=['buckets', 'TX_TB']
+      right_on=['buckets', 'TB_PREV']).merge(
+      TX_TB_df, how='outer', left_on=['buckets', 'sup_VL'],
+      right_on=['buckets', 'TX_TB']
   ).to_csv(args.output_csv, index=False)
