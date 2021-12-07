@@ -84,6 +84,22 @@ def create_args(parser: argparse.ArgumentParser):
       type=str
   )
 
+  parser.add_argument(
+      '--location_ids',
+      help='A list of location Ids that should be kept',
+      nargs='+',
+      type=str,
+      default=[],
+  )
+
+  parser.add_argument(
+      '--enc_type_codes',
+      help='A list of encounter type codes that should be kept',
+      nargs='+',
+      type=str,
+      default=[],
+  )
+
 
 def find_date_range(args: argparse.Namespace) -> Tuple[str, str, str, str, str]:
   end_date_str = args.last_date.strftime('%Y-%m-%d')
@@ -107,6 +123,8 @@ if __name__ == '__main__':
       quarterly_start_str) = find_date_range(args)
   print('Source directory: {0}'.format(args.src_dir))
   print('Date range:  {0} - {1}'.format(start_date, end_date))
+  print('Location Id: {0}'.format(args.location_ids))
+  print('Encounter type: {0}'.format(args.enc_type_codes))
   # TODO check why without this constraint, `validate_indicators.sh` fails.
   # Monthly query
   monthly_query = query_lib.patient_query_factory(
@@ -125,6 +143,12 @@ if __name__ == '__main__':
   quarterly_query = query_lib.patient_query_factory(
       query_lib.Runner.SPARK, args.src_dir, _CODE_SYSTEM).include_all_other_codes(
       min_time=quarterly_start_str, max_time=end_date)
+
+  # add encounter constraints
+  monthly_query.encounter_constraints(locationId=args.location_ids, typeCode=args.enc_type_codes)
+  prev_month_query.encounter_constraints(locationId=args.location_ids, typeCode=args.enc_type_codes)
+  semi_annual_query.encounter_constraints(locationId=args.location_ids, typeCode=args.enc_type_codes)
+  quarterly_query.encounter_constraints(locationId=args.location_ids, typeCode=args.enc_type_codes)
 
   # Fetch aggregated obs
   current_month_df = monthly_query.get_patient_obs_view(args.base_patient_url)

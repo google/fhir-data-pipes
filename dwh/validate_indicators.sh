@@ -47,7 +47,10 @@ TEMP_OUT=$(mktemp indicators_output_XXXXXX.csv --tmpdir)
 echo "Output indicators file is: ${TEMP_OUT}"
 
 spark-submit indicators.py --src_dir=./test_files \
-  --last_date=2020-12-30 --num_days=28 --output_csv=${TEMP_OUT}
+  --last_date=2020-12-30 --num_days=28 --output_csv=${TEMP_OUT} \
+  --location_ids "58c57d25-8d39-41ab-8422-108a0c277d98"\
+      "b1a8b05e-3542-4037-bbd3-998ee9c40574" "8d6c993e-c2cc-11de-8d13-0010c6dffd0f"\
+  #--enc_type_codes  "one" "two" "three" TODO: no encouter type in test data, please add
 
 ##########################################
 # Assertion function that tests aggregates generated
