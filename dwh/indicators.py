@@ -123,7 +123,7 @@ if __name__ == '__main__':
       quarterly_start_str) = find_date_range(args)
   print('Source directory: {0}'.format(args.src_dir))
   print('Date range:  {0} - {1}'.format(start_date, end_date))
-  print('Location Id: {0}'.format(args.location_ids))
+  print('Location Ids: {0}'.format(args.location_ids))
   print('Encounter type: {0}'.format(args.enc_type_codes))
   # TODO check why without this constraint, `validate_indicators.sh` fails.
   # Monthly query
