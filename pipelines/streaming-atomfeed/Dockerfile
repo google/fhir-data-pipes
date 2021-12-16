@@ -1,3 +1,4 @@
+# docker build -f pipelines/streaming-atomfeed/Dockerfile ./ -t ghcr.io/i-tech-uw/openmrs-fhir-analytics-streaming-atomfeed:latest
 FROM adoptopenjdk/maven-openjdk8 as build
 
 WORKDIR /app
@@ -21,7 +22,7 @@ RUN /bin/bash -l -c 'echo echo "$(mvn -q help:evaluate -Dexpression=project.vers
 
 RUN chmod u+x /etc/profile.d/pom_version.sh
 
-RUN POM_VERSION=`/etc/profile.d/pom_version.sh` && cp /app/pipelines/streaming-binlog/target/streaming-binlog-bundled-$POM_VERSION.jar /app/app.jar
+RUN POM_VERSION=`/etc/profile.d/pom_version.sh` && cp /app/pipelines/streaming-binlog/target/streaming-atomfeed-bundled-$POM_VERSION.jar /app/app.jar
 
 FROM adoptopenjdk/maven-openjdk8 as run
 
