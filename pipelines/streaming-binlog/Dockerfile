@@ -12,8 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# docker build -f pipelines/streaming-binlog/Dockerfile ./ -t ghcr.io/i-tech-uw/openmrs-fhir-analytics-streaming-binlog:latest
-
 # BUILD STAGE
 FROM adoptopenjdk/maven-openjdk8 as build
 WORKDIR "/usr/src"
@@ -39,6 +37,8 @@ RUN POM_VERSION=`/etc/profile.d/pom_version.sh` && cp /usr/src/pipelines/streami
 
 # RUN STAGE
 FROM adoptopenjdk/maven-openjdk8 as run
+
+LABEL org.opencontainers.image.source https://github.com/i-tech-uw/openmrs-fhir-analytics
 
 WORKDIR /usr/src
 
