@@ -32,7 +32,7 @@
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <junit.version>4.13.1</junit.version>
     <slf4j.version>1.7.30</slf4j.version>
-    <log4j2.version>2.15.0</log4j2.version>
+    <log4j2.version>2.16.0</log4j2.version>
     <hapifhirVersion>4.2.0</hapifhirVersion>
     <hamcrest.version>2.2</hamcrest.version>
     <openmrsPlatformVersion>2.5.0-SNAPSHOT</openmrsPlatformVersion>
