@@ -24,8 +24,6 @@ ADD ../pipelines/batch/pom.xml ./pipelines/batch/pom.xml
 ADD ../pipelines/streaming-atomfeed/pom.xml ./pipelines/streaming-atomfeed/pom.xml
 ADD ../pipelines/batch/pom.xml ./pipelines/batch/pom.xml
 ADD ../pipelines/pom.xml ./pipelines/pom.xml
-ADD ../pipelines/license-format.xml ./pipelines/license-format.xml
-ADD ../pipelines/license-header.txt ./pipelines/license-header.txt
 ADD ../bunsen ./bunsen
 ADD ../pom.xml ./
 
