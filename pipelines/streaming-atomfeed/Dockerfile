@@ -4,19 +4,18 @@ WORKDIR /app
 
 # Selective Adds to Speed Up Build
 ADD ../pipelines/common ./pipelines/common
+ADD ../pipelines/streaming-atomfeed/pom.xml ./pipelines/streaming-atomfeed/pom.xml 
 ADD ../pipelines/streaming-binlog/pom.xml ./pipelines/streaming-binlog/pom.xml 
-ADD ../pipelines/batch/pom.xml ./pipelines/batch/pom.xml
-ADD ../pipelines/streaming-atomfeed/pom.xml ./pipelines/streaming-atomfeed/pom.xml
 ADD ../pipelines/batch/pom.xml ./pipelines/batch/pom.xml
 ADD ../pipelines/pom.xml ./pipelines/pom.xml
 ADD ../bunsen ./bunsen
+ADD ../pom.xml ./
 
 RUN mvn -B -pl streaming-atomfeed -am verify --fail-never
 
 ADD ../pipelines/streaming-atomfeed/src ./pipelines/streaming-atomfeed/src
 
-
-RUN mvn -B install -DskipTests -Dlicense.skip=true -pl streaming-atomfeed -am
+RUN mvn -B install -DskipTests -Dlicense.skip=true -pl pipelines/streaming-atomfeed -am -B
 
 FROM adoptopenjdk/maven-openjdk8 as run
 

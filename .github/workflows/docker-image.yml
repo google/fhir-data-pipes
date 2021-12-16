@@ -47,7 +47,7 @@ jobs:
         cache-to: type=gha,mode=max
 
     - name: Extract metadata (tags, labels) for Docker
-      id: meta
+      id: meta2
       uses: docker/metadata-action@v3
       with:
         images: ${{ env.REGISTRY }}/openmrs-fhir-analytics-streaming-atomfeed
@@ -64,7 +64,7 @@ jobs:
       with:
         file: pipelines/streaming-atomfeed/Dockerfile
         push: true
-        tags: ${{ steps.meta.outputs.tags }}
-        labels: ${{ steps.meta.outputs.labels }}
+        tags: ${{ steps.meta2.outputs.tags }}
+        labels: ${{ steps.meta2.outputs.labels }}
         cache-from: type=gha
         cache-to: type=gha,mode=max
