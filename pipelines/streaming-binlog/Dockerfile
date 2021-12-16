@@ -12,11 +12,40 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-FROM adoptopenjdk/maven-openjdk8
+# BUILD STAGE
+FROM adoptopenjdk/maven-openjdk8 as build
+WORKDIR "/usr/src"
 
-ARG WORK_DIR="/usr/src/Main"
-COPY target/streaming-binlog-bundled-0.1.0-SNAPSHOT.jar ${WORK_DIR}/app.jar
-WORKDIR ${WORK_DIR}
+# Selective Adds to Speed Up Build
+ADD ../pipelines/common ./pipelines/common
+ADD ../pipelines/streaming-binlog/src ./pipelines/streaming-binlog/src 
+ADD ../pipelines/streaming-binlog/pom.xml ./pipelines/streaming-binlog/pom.xml 
+ADD ../pipelines/batch/pom.xml ./pipelines/batch/pom.xml
+ADD ../pipelines/streaming-atomfeed/pom.xml ./pipelines/streaming-atomfeed/pom.xml
+ADD ../pipelines/batch/pom.xml ./pipelines/batch/pom.xml
+ADD ../pipelines/pom.xml ./pipelines/pom.xml
+ADD ../pipelines/license-format.xml ./pipelines/license-format.xml
+ADD ../pipelines/license-header.txt ./pipelines/license-header.txt
+ADD ../bunsen ./bunsen
+ADD ../pom.xml ./
+
+RUN mvn clean package -DskipTests -Dlicense.skip=true -pl pipelines/streaming-binlog -am -B -q
+
+RUN /bin/bash -l -c 'echo echo "$(mvn -q help:evaluate -Dexpression=project.version -DforceStdout=true)" > /etc/profile.d/pom_version.sh'
+
+RUN chmod u+x /etc/profile.d/pom_version.sh
+
+RUN POM_VERSION=`/etc/profile.d/pom_version.sh` && cp /usr/src/pipelines/streaming-binlog/target/streaming-binlog-bundled-$POM_VERSION.jar /usr/src/app.jar
+
+# RUN STAGE
+FROM adoptopenjdk/maven-openjdk8 as run
+
+WORKDIR /usr/src
+
+# Copy over JAR file
+COPY --from=build /usr/src/app.jar app.jar
+
+# Default ENV settings
 ENV OPENMRS_URL="http://openmrs:8080/openmrs"
 ENV OPENMRS_USERNAME="admin"
 ENV OPENMRS_PASSWORD="Admin123"

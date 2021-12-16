@@ -48,7 +48,7 @@ services:
 
   streaming-binlog: # To run independently: docker-compose up --build streaming-binlog
     build:
-      context: ../streaming-binlog
+      context: ../pipelines/streaming-binlog
     image: openmrs-fhir-analytics/streaming-binlog:latest
     container_name: streaming-pipeline
     network_mode: host

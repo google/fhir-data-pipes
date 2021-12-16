@@ -1,21 +1,32 @@
-FROM maven:3.6.3-openjdk-8
+FROM adoptopenjdk/maven-openjdk8 as build
 
-WORKDIR /app/openmrs-fhir-analytics
+WORKDIR /app
 
-COPY ./pom.xml /app/openmrs-fhir-analytics/pom.xml
-COPY ./streaming-atomfeed/pom.xml /app/openmrs-fhir-analytics/streaming-atomfeed/pom.xml
-COPY ./streaming-binlog/pom.xml /app/openmrs-fhir-analytics/streaming-binlog/pom.xml
-COPY ./common/pom.xml /app/openmrs-fhir-analytics/common/pom.xml
-COPY ./batch/pom.xml /app/openmrs-fhir-analytics/batch/pom.xml
+# Selective Adds to Speed Up Build
+ADD ../pipelines/common ./pipelines/common
+ADD ../pipelines/streaming-binlog/pom.xml ./pipelines/streaming-binlog/pom.xml 
+ADD ../pipelines/batch/pom.xml ./pipelines/batch/pom.xml
+ADD ../pipelines/streaming-atomfeed/pom.xml ./pipelines/streaming-atomfeed/pom.xml
+ADD ../pipelines/batch/pom.xml ./pipelines/batch/pom.xml
+ADD ../pipelines/pom.xml ./pipelines/pom.xml
+ADD ../bunsen ./bunsen
 
 RUN mvn -B -pl streaming-atomfeed -am verify --fail-never
 
-COPY ./common /app/openmrs-fhir-analytics/common
-COPY ./streaming-atomfeed /app/openmrs-fhir-analytics/streaming-atomfeed
-COPY ./batch /app/openmrs-fhir-analytics/batch
-COPY ./streaming-binlog /app/openmrs-fhir-analytics/streaming-binlog
+ADD ../pipelines/streaming-atomfeed/src ./pipelines/streaming-atomfeed/src
+
 
 RUN mvn -B install -DskipTests -Dlicense.skip=true -pl streaming-atomfeed -am
+
+FROM adoptopenjdk/maven-openjdk8 as run
+
+WORKDIR /app/openmrs-fhir-analytics
+
+COPY --from=build /app/openmrs-fhir-analytics/pom.xml ${WORK_DIR}/pom.xml
+
+RUN /bin/bash -l -c 'echo export POM_VERSION="$(mvn -q help:evaluate -Dexpression=project.version -DforceStdout=true)" > /etc/profile.d/docker_init.sh'
+
+COPY --from=build /app/openmrs-fhir-analytics/pipelines/streaming-atomfeed/target/streaming-atomfeed-bundled-${POM_VERSION}.jar /app.jar
 
 ENV OPENMRS_URL=""
 ENV OPENMRS_USERNAME=""
