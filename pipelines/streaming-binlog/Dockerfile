@@ -60,7 +60,7 @@ ENV JDBC_INITIAL_POOL_SIZE=10
 ENV JDBC_DRIVER_CLASS="com.mysql.cj.jdbc.Driver"
 ENV SECONDS_TO_FLUSH_PARQUET_FILES=3600
 
-ENTRYPOINT java -jar /usr/src/Main/app.jar \
+ENTRYPOINT java -jar /usr/src/app.jar \
            --openmrsServerUrl=${OPENMRS_URL}  \
            --openmrsUserName=${OPENMRS_USERNAME}  \
            --openmrsPassword=${OPENMRS_PASSWORD} \
