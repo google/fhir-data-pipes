@@ -17,15 +17,17 @@ ADD ../pipelines/streaming-atomfeed/src ./pipelines/streaming-atomfeed/src
 
 RUN mvn -B install -DskipTests -Dlicense.skip=true -pl pipelines/streaming-atomfeed -am -B
 
+RUN /bin/bash -l -c 'echo echo "$(mvn -q help:evaluate -Dexpression=project.version -DforceStdout=true)" > /etc/profile.d/pom_version.sh'
+
+RUN chmod u+x /etc/profile.d/pom_version.sh
+
+RUN POM_VERSION=`/etc/profile.d/pom_version.sh` && cp /app/pipelines/streaming-binlog/target/streaming-binlog-bundled-$POM_VERSION.jar /app/app.jar
+
 FROM adoptopenjdk/maven-openjdk8 as run
 
 WORKDIR /app/openmrs-fhir-analytics
 
-COPY --from=build /app/openmrs-fhir-analytics/pom.xml ${WORK_DIR}/pom.xml
-
-RUN /bin/bash -l -c 'echo export POM_VERSION="$(mvn -q help:evaluate -Dexpression=project.version -DforceStdout=true)" > /etc/profile.d/docker_init.sh'
-
-COPY --from=build /app/openmrs-fhir-analytics/pipelines/streaming-atomfeed/target/streaming-atomfeed-bundled-${POM_VERSION}.jar /app.jar
+COPY --from=build /app/app.jar /app.jar
 
 ENV OPENMRS_URL=""
 ENV OPENMRS_USERNAME=""
