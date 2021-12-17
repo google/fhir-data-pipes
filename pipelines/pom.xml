@@ -35,7 +35,7 @@
     <log4j2.version>2.16.0</log4j2.version>
     <hapifhirVersion>4.2.0</hapifhirVersion>
     <hamcrest.version>2.2</hamcrest.version>
-    <openmrsPlatformVersion>2.5.0-SNAPSHOT</openmrsPlatformVersion>
+    <openmrsPlatformVersion>2.6.0-SNAPSHOT</openmrsPlatformVersion>
     <mockito.version>3.5.10</mockito.version>
     <jcommander.version>1.78</jcommander.version>
   </properties>
