@@ -40,3 +40,64 @@ class UploaderTest(unittest.TestCase):
     upload_handler = uploader.Uploader(self.mock_client)
     upload_handler.upload_bundle(self.mock_bundle)
     self.assertFalse(self._upload_resource.called)
+
+  def test_fetch_location(self):
+    upload_handler = uploader.Uploader(self.mock_client)
+    self.mock_client.get_resource.return_value = {
+        'entry': [{
+            'not_location': 'location'
+        }]
+    }
+    location = upload_handler.fetch_location()
+    self.assertEqual(
+        location, {'8d6c993e-c2cc-11de-8d13-0010c6dffd0f': 'Unknown Location'})
+
+    self.mock_client.get_resource.return_value = {
+        'entry': [{
+            'resource': {
+                'resourceType': 'Location',
+                'id': '8d6c993e-c2cc-11de-8d13-0010c6dffd0f',
+                'text': {
+                    'status': 'generated',
+                    'div':
+                        '<div xmlns="http://www.w3.org/1999/xhtml"><h2>Unknown '
+                        'Location</h2><h2/></div>'
+                },
+                'status': 'active',
+                'name': 'Unknown Location'
+            }
+        }, {
+            'resource': {
+                'resourceType': 'Location',
+                'id': '7f65d926-57d6-4402-ae10-a5b3bcbf7986',
+                'text': {
+                    'status': 'generated',
+                    'div':
+                        '<div '
+                        'xmlns="http://www.w3.org/1999/xhtml"><h2>Pharmacy</h2></div>'
+                },
+                'status': 'active',
+                'name': 'Pharmacy'
+            }
+        }, {
+            'resource': {
+                'resourceType': 'Location',
+                'id': '7fdfa2cb-bc95-405a-88c6-32b7673c0453',
+                'text': {
+                    'status': 'generated',
+                    'div':
+                        '<div '
+                        'xmlns="http://www.w3.org/1999/xhtml"><h2>Laboratory</h2></div>'
+                },
+                'status': 'active',
+                'name': 'Laboratory'
+            }
+        }]
+    }
+    location = upload_handler.fetch_location()
+    self.assertEqual(
+        location, {
+            '8d6c993e-c2cc-11de-8d13-0010c6dffd0f': 'Unknown Location',
+            '7f65d926-57d6-4402-ae10-a5b3bcbf7986': 'Pharmacy',
+            '7fdfa2cb-bc95-405a-88c6-32b7673c0453': 'Laboratory'
+        })
