@@ -45,7 +45,7 @@ loads.
 Once the login page loads, commit the MySQL docker image, and tag it. Example:
 
 ```bash
-docker commit openmrs-fhir-mysql-empty us-docker.pkg.dev/cloud-build-fhir/fhir-analytics/openmrs-fhir-mysql-ocl:latest
+docker commit openmrs-fhir-mysql-empty us-docker.pkg.dev/cloud-build-fhir/fhir-analytics/openmrs-fhir-mysql-ocl-small:latest
 ```
 
 This will generate a MySQL image with the dictionary data loaded into it. You

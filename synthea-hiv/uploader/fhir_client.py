@@ -51,7 +51,10 @@ class OpenMrsClient:
 
   def post_single_resource(self, resource: str, data: Dict[str, str]):
     url = f'{self.base_url}/{resource}'
-    response_ = self.session.post(url, json.dumps(data))
+    s = requests.Session()
+    s.auth = self.session.auth
+    s.headers = self.session.headers
+    response_ = s.post(url, json.dumps(data))
     self.response = _process_response(response_)
 
   def get_resource(self, resource: str):
