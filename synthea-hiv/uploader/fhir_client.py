@@ -50,6 +50,9 @@ class OpenMrsClient:
     self.response = None
 
   def post_single_resource(self, resource: str, data: Dict[str, str]):
+    # TODO: revert to using self.session once:
+    #  https://talk.openmrs.org/t/cannot-persist-session-in-openmrs-nightly-image-has-new-log4j/35438
+    # is resolved
     url = f'{self.base_url}/{resource}'
     s = requests.Session()
     s.auth = self.session.auth

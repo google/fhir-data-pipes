@@ -30,24 +30,6 @@ class Uploader:
     self.logger = logger_util.create_logger(self.__class__.__module__,
                                             self.__class__.__name__)
 
-  def fetch_location(self) -> Dict[str, str]:
-    """Get map of all location_id/location_name stored in sink.
-
-    Returns:
-      Dictionary of location_id/location_name
-    """
-    location_map = {}
-    try:
-      entries = self.fhir_client.get_resource('Location')['entry']
-      for entry in entries:
-        location_id = entry['resource']['id']
-        location_name = entry['resource']['name']
-        location_map[location_id] = location_name 
-      return location_map
-    except KeyError:
-      self.logger.warning('No locations found in sink. Using Unknown Location.')
-      return {'8d6c993e-c2cc-11de-8d13-0010c6dffd0f': 'Unknown Location'}
-
   def _upload_resource(self, resource: str, data: Dict[str, str]):
     """Used to POST when OpenMRS is the target sink."""
     self.fhir_client.post_single_resource(resource, data)
@@ -74,7 +56,6 @@ class Uploader:
     """
 
     try:
-      each_bundle.extract_resources()
       self.logger.info('Uploading %s' % each_bundle.file_name)
 
       each_bundle.openmrs_patient.openmrs_convert()
@@ -99,7 +80,6 @@ class Uploader:
             resource='Observation', data=openmrs_observation.base.json)
 
       self.logger.info('Successfully uploaded %s' % each_bundle.file_name)
-      each_bundle.save_mapping()
 
     except ValueError:
       self.logger.error('Error uploading %s.\n%s' %
