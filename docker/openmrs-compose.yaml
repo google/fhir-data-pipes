@@ -28,7 +28,7 @@ services:
 
   openmrs:
     restart: "always"
-    image: us-docker.pkg.dev/cloud-build-fhir/fhir-analytics/openmrs-reference-application-extended:latest
+    image: openmrs/openmrs-reference-application-distro:latest
     container_name: openmrs
     depends_on:
       - mysql
