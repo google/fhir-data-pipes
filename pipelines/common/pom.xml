@@ -34,12 +34,6 @@
 
   <dependencies>
     <dependency>
-      <groupId>org.apache.logging.log4j</groupId>
-      <artifactId>log4j-slf4j-impl</artifactId>
-      <version>${log4j2.version}</version>
-      <scope>runtime</scope>
-    </dependency>
-    <dependency>
       <!--JDBC connection pool will make concurrent JDBC connections more efficient-->
       <groupId>com.mchange</groupId>
       <artifactId>c3p0</artifactId>

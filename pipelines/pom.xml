@@ -32,10 +32,10 @@
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <junit.version>4.13.1</junit.version>
     <slf4j.version>1.7.30</slf4j.version>
-    <log4j2.version>2.13.3</log4j2.version>
+    <log4j2.version>2.16.0</log4j2.version>
     <hapifhirVersion>4.2.0</hapifhirVersion>
     <hamcrest.version>2.2</hamcrest.version>
-    <openmrsPlatformVersion>2.4.0-SNAPSHOT</openmrsPlatformVersion>
+    <openmrsPlatformVersion>2.6.0-SNAPSHOT</openmrsPlatformVersion>
     <mockito.version>3.5.10</mockito.version>
     <jcommander.version>1.78</jcommander.version>
   </properties>
@@ -116,6 +116,14 @@
       <groupId>org.slf4j</groupId>
       <artifactId>slf4j-api</artifactId>
       <version>${slf4j.version}</version>
+    </dependency>
+
+    <!-- Use log4j2 as the logging framework. -->
+    <dependency>
+      <groupId>org.apache.logging.log4j</groupId>
+      <artifactId>log4j-slf4j-impl</artifactId>
+      <version>${log4j2.version}</version>
+      <scope>runtime</scope>
     </dependency>
 
     <!-- Test deps -->

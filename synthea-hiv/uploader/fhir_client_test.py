@@ -39,7 +39,7 @@ class FhirClientTest(unittest.TestCase):
     super().setUp()
     mock_session = mock.MagicMock()
     mock_session.post.side_effect = mock_requests_post
-    mock.patch('fhir_client._setup_session', return_value=mock_session).start()
+    mock.patch('requests.Session', return_value=mock_session).start()
     mock.patch(
         'google.auth.transport.requests.Request',
         return_value=mock.MagicMock()).start()

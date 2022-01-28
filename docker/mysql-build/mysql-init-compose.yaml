@@ -29,13 +29,13 @@ services:
       - MYSQL_PASSWORD=mysqlpw
       - MYSQL_ROOT_HOST=%    # Allow docker containers to connect to mysql
     volumes:
-      - .:/etc/mysql/mysql.conf.d  # mysql config preconfigured to allow binlog/debezium
+      - ./mysqld.cnf:/etc/mysql/mysql.conf.d/mysqld.cnf  # mysql config preconfigured to allow binlog/debezium
       - ./dbdump:/docker-entrypoint-initdb.d # executes sql files in alphabetical order
 
 
   openmrs:
     restart: "always"
-    image:  us-docker.pkg.dev/cloud-build-fhir/fhir-analytics/openmrs-reference-application-extended:latest
+    image:  openmrs/openmrs-reference-application-distro:latest
     container_name: openmrs-ocl-load
     depends_on:
       - mysql

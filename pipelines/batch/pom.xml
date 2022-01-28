@@ -344,14 +344,6 @@
       <version>${joda.version}</version>
     </dependency>
 
-    <!-- Switching to log4j2 as the logging framework. -->
-    <dependency>
-      <groupId>org.apache.logging.log4j</groupId>
-      <artifactId>log4j-slf4j-impl</artifactId>
-      <version>${log4j2.version}</version>
-      <scope>runtime</scope>
-    </dependency>
-
     <!-- Using AutoValue for POJOs used in PCollections. -->
     <dependency>
       <groupId>com.google.auto.value</groupId>
