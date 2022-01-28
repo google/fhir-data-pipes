@@ -20,6 +20,7 @@ import bundle
 import fhir_client
 import logger_util
 
+import random
 
 class Uploader:
   """Uploads FHIR resources to either OpenMRS or any other FHIR Server."""
@@ -29,12 +30,30 @@ class Uploader:
     self.logger = logger_util.create_logger(self.__class__.__module__,
                                             self.__class__.__name__)
 
+  def fetch_location(self) -> Dict[str, str]:
+    """Get map of all location_id/location_name stored in sink.
+
+    Returns:
+      Dictionary of location_id/location_name
+    """
+    location_map = {}
+    try:
+      entries = self.fhir_client.get_resource('Location')['entry']
+      for entry in entries:
+        location_id = entry['resource']['id']
+        location_name = entry['resource']['name']
+        location_map[location_id] = location_name 
+      return location_map
+    except KeyError:
+      self.logger.warning('No locations found in sink. Using Unknown Location.')
+      return {'8d6c993e-c2cc-11de-8d13-0010c6dffd0f': 'Unknown Location'}
+
   def _upload_resource(self, resource: str, data: Dict[str, str]):
     """Used to POST when OpenMRS is the target sink."""
     self.fhir_client.post_single_resource(resource, data)
     return self.fhir_client.response['id']
 
-  def upload_openmrs_bundle(self, each_bundle: bundle.Bundle):
+  def upload_openmrs_bundle(self, each_bundle: bundle.Bundle, locations: Dict[str, str]):
     """Uploads FHIR Bundle to OpenMRS via Patients, Encounters, Observations.
 
     As the OpenMRS FHIR Module does not support uploading Bundle transactions,
@@ -51,9 +70,11 @@ class Uploader:
 
     Args:
       each_bundle: a Bundle object
+      locations: dictionary of location_id/location_name
     """
 
     try:
+      each_bundle.extract_resources()
       self.logger.info('Uploading %s' % each_bundle.file_name)
 
       each_bundle.openmrs_patient.openmrs_convert()
@@ -64,8 +85,9 @@ class Uploader:
                         each_bundle.openmrs_patient.base.new_id)
 
       for openmrs_encounter in each_bundle.openmrs_encounters:
+        location = random.choice(list(locations.items()))
         openmrs_encounter.openmrs_convert(
-            each_bundle.openmrs_patient.base.new_id)
+            each_bundle.openmrs_patient.base.new_id, location)
         openmrs_encounter.base.new_id = self._upload_resource(
             resource='Encounter', data=openmrs_encounter.base.json)
 
@@ -77,6 +99,7 @@ class Uploader:
             resource='Observation', data=openmrs_observation.base.json)
 
       self.logger.info('Successfully uploaded %s' % each_bundle.file_name)
+      each_bundle.save_mapping()
 
     except ValueError:
       self.logger.error('Error uploading %s.\n%s' %

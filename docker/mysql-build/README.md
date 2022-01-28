@@ -15,21 +15,6 @@ state of the container using `docker commit`, and tag the newly created image as
 [openmrs-compose.yaml](../openmrs-compose.yaml), and this directory has the
 files needed to create that image.
 
-## [Optional] Create Local OpenMRS image
-
-The OpenMRS image used in [openmrs-compose.yaml](../openmrs-compose.yaml) and
-[mysql-init-compose.yaml](./mysql-init-compose.yaml),
-`us-central1-docker.pkg.dev/cloud-build-fhir/fhir-analytics/openmrs-reference-application-extended:latest`,
-is built using [Dockerfile_openmrs_extended](../Dockerfile_openmrs_extended)
-under the `docker` directory. If you want to use a local image, run
-
-```bash
-docker build -t fhir-analytics/openmrs-reference-application-extended:latest \
-    -f ../Dockerfile_openmrs_extended .
-```
-
-and replace the image references in the YAML files to the local image.
-
 ## Creating OCL Loaded MySQL
 
 Bring up the [`mysql-init-compose.yaml`](./mysql-init-compose.yaml) file:
@@ -45,7 +30,7 @@ loads.
 Once the login page loads, commit the MySQL docker image, and tag it. Example:
 
 ```bash
-docker commit openmrs-fhir-mysql-empty us-docker.pkg.dev/cloud-build-fhir/fhir-analytics/openmrs-fhir-mysql-ocl:latest
+docker commit openmrs-fhir-mysql-empty us-docker.pkg.dev/cloud-build-fhir/fhir-analytics/openmrs-fhir-mysql-ocl-small:latest
 ```
 
 This will generate a MySQL image with the dictionary data loaded into it. You
