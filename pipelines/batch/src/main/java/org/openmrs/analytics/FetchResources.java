@@ -22,8 +22,6 @@ import java.util.regex.Pattern;
 import ca.uhn.fhir.rest.api.SummaryEnum;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.Maps;
-import org.apache.beam.sdk.transforms.DoFn.Element;
-import org.apache.beam.sdk.transforms.DoFn.ProcessElement;
 import org.apache.beam.sdk.transforms.PTransform;
 import org.apache.beam.sdk.transforms.ParDo;
 import org.apache.beam.sdk.transforms.windowing.GlobalWindow;
@@ -43,7 +41,7 @@ import org.slf4j.LoggerFactory;
  * This function object fetches all input segments from the FHIR source and writes each resource to
  * a Parquet file. If a FHIR sink address is provided, those resources are passed to that FHIR sink
  * too. The output PCollection contains, as keys, patient-ids extracted from the fetched resources,
- * with 1s as the value to make it easy to count in downstream functors.
+ * with the value being the number of resources for that patient.
  */
 public class FetchResources extends PTransform<PCollection<SearchSegmentDescriptor>, PCollection<KV<String, Integer>>> {
 	
