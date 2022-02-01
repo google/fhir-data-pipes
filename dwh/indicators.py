@@ -26,21 +26,26 @@ import indicator_lib
 import query_lib
 
 
-_CODE_SYSTEM = 'http://snomed.info/sct'
-# Fake codes for SNOMED-CT that matches our test data.
-_VL_CODE = '50373000'  # Height
-_ARV_PLAN = '106230009'  # Diagnosis certainty
-_DRUG1 = '410596003'  # Likely outcome
-_DRUG2 = '395098000'  # Disorder confirmed
-_TX_TB_PLAN = '106230009'  # Diagnosis certainty
-_TB_TEST_STATUS = '106230009'  # Diagnosis certainty
-# TODO: Generate representable dataset corresponding to snomed
-_YES_CODE = '410596003'  # dummy code for yes
-_CONTINUE_REGIMEN = '410596003'  # Likely outcome
-_START_DRUG = '410596003'  # Likely outcome
-_COMPLETE_REGIMEN = '410596003'  # Likely outcome
-_TB_PREV_plan = '106230009'  # Diagnosis certainty
-_TB_screening = '106230009'
+_CODE_SYSTEM='http://www.ampathkenya.org'
+
+# For information about the following codes see:
+# https://github.com/GoogleCloudPlatform/openmrs-fhir-analytics/issues/179#issuecomment-895040775
+# and also `synthea` models in this repo.
+
+# Question codes:
+_VL_CODE = '856'  # HIV VIRAL LOAD
+_ARV_PLAN = '1255'  # ANTIRETROVIRAL PLAN
+_TX_TB_PLAN = '1268'  # TUBERCULOSIS TREATMENT PLAN
+# TODO: Add TB prevention plans in the synthetic data; seems currently missing.
+_TB_PREV_plan = '1268'  # TUBERCULOSIS TREATMENT PLAN
+_TB_screening = '6174'  # REVIEW OF TUBERCULOSIS SCREENING QUESTIONS
+
+# Answer codes:
+_YES_CODE = '1065'
+_CONTINUE_REGIMEN = '1257'  # CONTINUE REGIMEN
+_START_DRUGS = '1256'  # START DRUGS
+_COMPLETE_REGIMEN = '1260'  # STOP ALL MEDICATIONS
+_STOP_ALL_MED = '1260'  # STOP ALL MEDICATIONS
 
 
 def valid_date(date_str: str) -> datetime:
@@ -134,40 +139,39 @@ if __name__ == '__main__':
 
   VL_df = indicator_lib.calc_TX_PVLS(
       current_month_df, VL_code=_VL_CODE,
-      failure_threshold=150, end_date_str=end_date)
+      failure_threshold=10000, end_date_str=end_date)
   # TX_NEW
-  # TODO add _DRUG2, right now all observations are either _DRUG1 or _DRUG2.
   TX_NEW_df = indicator_lib.calc_TX_NEW(
       current_month_df, ARV_plan=_ARV_PLAN,
-      start_drug=[_DRUG1], end_date_str=end_date)
+      start_drug=[_START_DRUGS], end_date_str=end_date)
 
   TB_STAT_df = indicator_lib.calc_TB_STAT(
       current_month_df, TB_TX_plan=_TX_TB_PLAN, ARV_plan=_ARV_PLAN,
-      TB_plan_answer=[_START_DRUG], end_date_str=end_date)
+      TB_plan_answer=[_START_DRUGS], end_date_str=end_date)
 
   TX_CURR_df = indicator_lib.calc_TX_CURR(
       current_month_df, ARV_plan=_ARV_PLAN,
-      ARV_plan_answer=[_CONTINUE_REGIMEN, _START_DRUG],
+      ARV_plan_answer=[_CONTINUE_REGIMEN, _START_DRUGS],
       end_date_str=end_date)
 
   TB_ART_df = indicator_lib.calc_TB_ART(
       current_month_df, TB_TX_plan=_TX_TB_PLAN, ARV_plan=_ARV_PLAN,
-      TB_plan_answer=[_CONTINUE_REGIMEN, _START_DRUG],
-      ARV_plan_answer=[_CONTINUE_REGIMEN, _START_DRUG],
+      TB_plan_answer=[_CONTINUE_REGIMEN, _START_DRUGS],
+      ARV_plan_answer=[_CONTINUE_REGIMEN, _START_DRUGS],
       end_date_str=end_date)
 
   TB_PREV_df = indicator_lib.calc_TB_PREV(
       prev_month_df, TB_PREV_plan=_TB_PREV_plan, ARV_plan=_ARV_PLAN,
-      TB_PREV_plan_answer=[_CONTINUE_REGIMEN, _START_DRUG],
+      TB_PREV_plan_answer=[_CONTINUE_REGIMEN, _START_DRUGS],
       TB_CURR_plan_answer=[_COMPLETE_REGIMEN],
-      ART_plan_answer=[_CONTINUE_REGIMEN, _START_DRUG],
+      ART_plan_answer=[_CONTINUE_REGIMEN, _START_DRUGS],
       end_date_str=end_date)
 
   TX_TB_df = indicator_lib.calc_TX_TB(
       annual_df, TX_TB_plan=_TX_TB_PLAN, ARV_plan=_ARV_PLAN,
       TB_screening=_TB_screening, YES_CODE=_YES_CODE,
-      TX_TB_plan_answer=[_CONTINUE_REGIMEN, _START_DRUG],
-      ART_plan_answer=[_CONTINUE_REGIMEN, _START_DRUG],
+      TX_TB_plan_answer=[_CONTINUE_REGIMEN, _START_DRUGS],
+      ART_plan_answer=[_CONTINUE_REGIMEN, _START_DRUGS],
       end_date_str=end_date)
 
   # TODO the logic behind this merge is not clear, especially for null keys.

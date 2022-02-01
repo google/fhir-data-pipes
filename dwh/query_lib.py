@@ -317,10 +317,10 @@ class _SparkPatientQuery(PatientQuery):
     if not self._spark:
       # TODO add the option for using a running Spark cluster.
       conf = (SparkConf()
-              .setMaster('local[20]')
+              .setMaster('local[10]')
               .setAppName('IndicatorsApp')
               .set('spark.driver.memory', '10g')
-              .set('spark.executor.memory', '2g')
+              .set('spark.executor.memory', '4g')
               # See: https://spark.apache.org/docs/latest/security.html
               .set('spark.authenticate', 'true')
               )
