@@ -49,18 +49,21 @@
 
   <repositories>
     <repository>
-      <id>openmrs-repo</id>
-      <name>OpenMRS Nexus Repository</name>
-      <url>https://mavenrepo.openmrs.org/nexus/content/repositories/public</url>
-    </repository>
-    <repository>
       <id>central</id>
       <name>Maven Repository Switchboard</name>
       <layout>default</layout>
       <url>https://repo1.maven.org/maven2</url>
     </repository>
+    <!-- TODO remove this repository once the atomfeed pipeline is removed. -->
+    <repository>
+      <id>openmrs-repo</id>
+      <name>OpenMRS Nexus Repository</name>
+      <url>https://mavenrepo.openmrs.org/nexus/content/repositories/public</url>
+    </repository>
   </repositories>
   <pluginRepositories>
+    <!-- TODO switch formatter to Spotless with google-java-formatter and remove
+    the following repository -->
     <pluginRepository>
       <id>openmrs-repo</id>
       <name>OpenMRS Nexus Repository</name>
