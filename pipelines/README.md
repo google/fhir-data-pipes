@@ -173,6 +173,14 @@ Parameters:
 -   `jdbcDriverClass` - The fully qualified class name of the JDBC driver. This
     generally should not be changed. Default: `com.mysql.cj.jdbc.Driver`
 
+### A note about Beam runners
+If the pipeline is run on a single machine (i.e., not on a distributed cluster),
+for large datasets consider using a production grade runner like Flink.
+This can be done by adding `--runner=FlinkRunner` to the above command lines
+(use `--maxParallelism` and `--parallelism` to control parallelism).
+For our particular case, this should not give a significant run time
+improvement but may avoid some of the memory issues of Direct runner.
+
 ## Streaming mode (Debezium)
 
 The Debezium-based streaming mode provides real-time downstream consumption of
