@@ -527,10 +527,107 @@ class _SparkPatientQuery(PatientQuery):
         'max_date_value_code')
 
 
+class _BigQueryEncounterConstraints:
+  '''
+  Encounter constraints helper class that will be set up for querying BigQuery
+  '''
+  pass
+
+class _BigQueryObsConstraints:
+  '''
+  Observation constraints helper class for querying Big Query
+  '''
+
 class _BigQueryPatientQuery(PatientQuery):
-  # TODO implement this!
+  '''
+  Concrete implementation of PatientQuery class that serves data stored in BigQuery
+  '''
 
   def __init__(self, bq_dataset: str, code_system: str):
     super().__init__(code_system)
-    raise ValueError('BigQuery query engine is not implemented yet!')
 
+    #TODO(gdevanla): All the below statements can likely go to base class
+    self._code_constraint = {}
+    self._enc_constraint = _BigQueryEncounterContraints()
+    self._include_all_codes = False
+    self._all_codes_min_time = None
+    self._all_codes_max_time = None
+    self._code_system = code_system
+
+  #TODO(gdevanla): This can be moved to base class just by injecting ObservationConstraints class
+  def include_obs_in_value_and_time_range(self, code: str,
+      min_val: float = None, max_val: float = None, min_time: str = None,
+      max_time: str = None) -> PatientQuery:
+    if code in self._code_constraint:
+      raise ValueError('Duplicate constraints for code {}'.format(code))
+    self._code_constraint[code] = _BigQueryObsConstraints(
+        code, value_sys=self._code_system, min_value=min_val,
+        max_value=max_val, min_time=min_time, max_time=max_time)
+    return self
+
+  #TODO(gdevanla): This can be moved to base class just by injecting ObservationConstraints class
+  def include_obs_values_in_time_range(self, code: str,
+      values: List[str] = None, min_time: str = None,
+      max_time: str = None) -> PatientQuery:
+    if code in self._code_constraint:
+      raise ValueError('Duplicate constraints for code {}'.format(code))
+    self._code_constraint[code] = _BigQueryObsConstraints(
+        code, values=values, value_sys=self._code_system, min_time=min_time,
+        max_time=max_time)
+    return self
+
+  #TODO(gdevanla): This can be moved to base class
+  def include_all_other_codes(self, include: bool = True, min_time: str = None,
+      max_time: str = None) -> PatientQuery:
+    self._include_all_codes = include
+    self._all_codes_min_time = min_time
+    self._all_codes_max_time = max_time
+    return self
+
+  #TODO(gdevanla): This can be moved to base class just by injecting EncounterConstraints class
+  def encounter_constraints(self, locationId: List[str] = None,
+      typeSystem: str = None, typeCode: List[str] = None):
+    """Specifies constraints on encounters to be included.
+
+    Note calling this erases previous encounter constraints. Any constraint
+    that is None is ignored.
+
+    Args:
+      locationId: The list of locations that should be kept or None if there are
+        no location constraints.
+      typeSystem: An string representing the type system or None.
+      typeCode: A list of encounter type codes that should be kept or None if
+        there are no type constraints.
+    """
+    self._enc_constraint = _BiqQueryEncounterContraints(
+        locationId, typeSystem, typeCode)
+
+  def get_patient_encounter_view(self, base_url: str,
+      force_location_type_columns: bool = True) -> pandas.DataFrame:
+    """Aggregates encounters for each patient based on location, type, etc.
+
+    For each patient and encounter attributes (e.g., location, type, etc.) finds
+    aggregate values. Loads the data if that is necessary.
+
+    Args:
+      base_url: See issue #55!
+      force_location_type_columns: whehter to include location and type related
+        columns regardless of the constraints. Note this can duplicate a single
+        encounter to many rows if that row has multiple locations and types.
+
+    Returns:
+      A Pandas DataFrame with the following columns:
+        - `patientId` the patient for whom the aggregation is done
+        - `locationId` the location ID of where the encounters took place; this
+          and the next one are provided only if there is a location constraint
+          or `force_location_type_columns` is `True`.
+        - `locationDisplay` the human readable name of the location
+        - `encTypeSystem` the encounter type system this and the next one are
+          provided only if there is a type constraint or
+          `force_location_type_columns` is `True`.
+        - `encTypeCode` the encounter type code
+        - `numEncounters` number of encounters with that type and location
+        - `firstDate` the first date such an encounter happened
+        - `lastDate` the last date such an encounter happened
+    """
+    raise NotImplementedError('This should be implemented by sub-classes!')
