@@ -24,6 +24,7 @@ function that defines the source of the data.
 from __future__ import annotations
 from enum import Enum
 from typing import List, Any
+import typing as tp
 import pandas
 from pyspark import SparkConf
 from pyspark.sql import SparkSession, DataFrame
@@ -39,6 +40,10 @@ DATE_VALUE_SEPARATOR = '_SeP_'
 
 def merge_date_and_value(d: str, v: Any) -> str:
   return '{}{}{}'.format(d, DATE_VALUE_SEPARATOR, v)
+
+
+def _build_in_list_with_quotes(values: tp.Iterable[tp.Any]):
+  return ",".join(map(values, lambda x: '\"{}\"'.format(x)))
 
 
 class Runner(Enum):
@@ -531,7 +536,32 @@ class _BigQueryEncounterConstraints:
   '''
   Encounter constraints helper class that will be set up for querying BigQuery
   '''
-  pass
+  def __init__(self, location_ids: tp.Optional[tp.Iterable[str]] = None,
+      type_system: tp.Optional[str] = None, type_codes: tp.Optional[tp.Iterable[str]] = None):
+    self.location_ids = location_ids
+    self.type_system = type_system
+    self.type_codes = type_codes
+
+  def has_location(self) -> bool:
+    return self._location_id != None
+
+  def has_type(self) -> bool:
+    return (self._type_code != None) or (self._type_system != None)
+
+  def sql(self) -> str:
+    """This creates a constraint string with WHERE syntax in SQL."""
+    loc_str = 'TRUE'
+    if self._location_id:
+      temp_str = ','.join(['"{}"'.format(v) for v in self._location_id])
+      loc_str = 'locationId IN ({})'.format(temp_str)
+    type_code_str = 'TRUE'
+    if self._type_code:
+      temp_str = ','.join(['"{}"'.format(v) for v in self._type_code])
+      type_code_str = 'encTypeCode IN ({})'.format(temp_str)
+    type_sys_str = 'encTypeSystem="{}"'.format(
+        self._type_system) if self._type_system else 'TRUE'
+    return '{} AND {} AND {}'.format(loc_str, type_code_str, type_sys_str)
+
 
 class _BigQueryObsConstraints:
   '''
@@ -546,9 +576,11 @@ class _BigQueryPatientQuery(PatientQuery):
   def __init__(self, bq_dataset: str, code_system: str):
     super().__init__(code_system)
 
+    self._bq_dataset = bq_dataset
+
     #TODO(gdevanla): All the below statements can likely go to base class
     self._code_constraint = {}
-    self._enc_constraint = _BigQueryEncounterContraints()
+    self._enc_constraint = _BigQueryEncounterConstraints()
     self._include_all_codes = False
     self._all_codes_min_time = None
     self._all_codes_max_time = None
@@ -599,35 +631,82 @@ class _BigQueryPatientQuery(PatientQuery):
       typeCode: A list of encounter type codes that should be kept or None if
         there are no type constraints.
     """
-    self._enc_constraint = _BiqQueryEncounterContraints(
+    self._enc_constraint = _BiqQueryEncounterConstraints(
         locationId, typeSystem, typeCode)
+
+  @classmethod
+  def _build_encounter_query(cls, *, bq_dataset: str,
+                             base_url: str, table_name: str,
+                             location_ids: tp.Optional[tp.Iterable[str]],
+                             type_system: tp.Optional[str] = None,
+                             type_codes: tp.Optional[tp.Iterable[str]] = None,
+                             force_location_type_columns: bool = True):
+    '''
+    Helper function to build the sql query which will only query the Encounter table
+    Sample Query:
+        WITH S AS (
+        select * from `learnbq-345320.fhir_sample.encounter`
+        )
+        select S.id as encounterId,
+        S.subject.PatientId as encPatientId,
+        S.period.start as first,
+        S.period.end as last,
+        C.system, C.code,
+        L.location.LocationId, L.location.display
+        from S, unnest(s.type) as T, unnest(T.coding) as C left join unnest(s.location) as L
+        where C.system = 'system3000' and C.code = 'code3000'
+        and L.location.locationId in ('test')
+    '''
+
+    sql_template = '''
+    WITH S AS (
+          select * from {data_set}.{table_name}
+          )
+          select replace(S.id, '{base_url}', '') as encounterId,
+          S.subject.PatientId as encPatientId,
+          S.period.start as first,
+          S.period.end as last,
+          C.system, C.code,
+          L.location.LocationId, L.location.display
+          from S, unnest(s.type) as T, unnest(T.coding) as C left join unnest(s.location) as L
+          --C.system = 'system3000' and C.code = 'code3000'
+          --and L.location.locationId in ('test')
+    '''.format(table_name=table_name, base_url=base_url, data_set=bq_dataset)
+
+    clause_location_id = None
+    if location_ids:
+      clause_location_id = 'L.location.locationId in ({})'.format(_build_in_list_with_quotes(locations_ids))
+    clause_type_system = None
+    if type_system:
+      clause_type_system = 'C.system = {}'.format(type_system)
+    clause_type_codes = None
+    if type_codes:
+      clause_type_codes = 'C.code in ({})'.format(_build_in_list_with_quotes(type_codes))
+
+    where_clause = " and ".join(x for x in [clause_location_id, clause_type_system, clause_type_codes]
+                                if x)
+    if where_clause:
+      return sql_template + " " + where_clause
+    return sql_template
+
 
   def get_patient_encounter_view(self, base_url: str,
       force_location_type_columns: bool = True) -> pandas.DataFrame:
-    """Aggregates encounters for each patient based on location, type, etc.
 
-    For each patient and encounter attributes (e.g., location, type, etc.) finds
-    aggregate values. Loads the data if that is necessary.
+    sql = self._build_encounter_query(
+      bq_dataset=self._bq_dataset,
+      table_name='encounter',
+      base_url=base_url,
+      location_ids=self._enc_constraint.location_ids if self._enc_constraint else None,
+      type_system=self._enc_constraint.type_system if self._enc_constraint else None,
+      type_codes=self._enc_constraint.type_codes if self._enc_constraint else None,
+      force_location_type_columns=force_location_type_columns
+    )
 
-    Args:
-      base_url: See issue #55!
-      force_location_type_columns: whehter to include location and type related
-        columns regardless of the constraints. Note this can duplicate a single
-        encounter to many rows if that row has multiple locations and types.
+    from google.cloud import bigquery
+    client = bigquery.Client()
 
-    Returns:
-      A Pandas DataFrame with the following columns:
-        - `patientId` the patient for whom the aggregation is done
-        - `locationId` the location ID of where the encounters took place; this
-          and the next one are provided only if there is a location constraint
-          or `force_location_type_columns` is `True`.
-        - `locationDisplay` the human readable name of the location
-        - `encTypeSystem` the encounter type system this and the next one are
-          provided only if there is a type constraint or
-          `force_location_type_columns` is `True`.
-        - `encTypeCode` the encounter type code
-        - `numEncounters` number of encounters with that type and location
-        - `firstDate` the first date such an encounter happened
-        - `lastDate` the last date such an encounter happened
-    """
-    raise NotImplementedError('This should be implemented by sub-classes!')
+    print(sql)
+
+    patient_enc = client.query(sql).to_dataframe()
+    return patient_enc
