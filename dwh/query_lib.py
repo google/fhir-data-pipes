@@ -11,8 +11,6 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
-
 """This is the main higher level library to query FHIR resources.
 
 The public interface of this library is intended to be independent of the actual
@@ -33,28 +31,28 @@ import pyspark.sql.types as T
 
 import common
 
-
 # This separator is used to merge date and values into one string.
 DATE_VALUE_SEPARATOR = '_SeP_'
 
 
 def merge_date_and_value(d: str, v: Any) -> str:
-  return '{}{}{}'.format(d, DATE_VALUE_SEPARATOR, v)
+    return '{}{}{}'.format(d, DATE_VALUE_SEPARATOR, v)
 
 
 def _build_in_list_with_quotes(values: tp.Iterable[tp.Any]):
-  return ",".join(map(lambda x: '\"{}\"'.format(x), values))
+    return ",".join(map(lambda x: '\"{}\"'.format(x), values))
 
 
 class Runner(Enum):
-  SPARK = 1
-  BIG_QUERY = 2
-  #FHIR_SERVER = 3
+    SPARK = 1
+    BIG_QUERY = 2
+    #FHIR_SERVER = 3
 
 
-def patient_query_factory(runner: Runner, data_source: str,
-    code_system: str = None) -> PatientQuery:
-  """Returns the right instance of `PatientQuery` based on `data_source`.
+def patient_query_factory(runner: Runner,
+                          data_source: str,
+                          code_system: str = None) -> PatientQuery:
+    """Returns the right instance of `PatientQuery` based on `data_source`.
 
   Args:
     runner: The runner to use for making data queries
