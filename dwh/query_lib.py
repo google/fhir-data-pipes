@@ -29,6 +29,12 @@ from pyspark.sql import SparkSession, DataFrame
 import pyspark.sql.functions as F
 import pyspark.sql.types as T
 
+try:
+  from google.cloud import bigquery
+except ImportError:
+  pass # not all set up need to have bigquery libraries installed
+
+
 import common
 
 # This separator is used to merge date and values into one string.
@@ -706,10 +712,6 @@ class _BigQueryPatientQuery(PatientQuery):
       force_location_type_columns=force_location_type_columns
     )
 
-    from google.cloud import bigquery
     client = bigquery.Client()
-
-    print(sql)
-
     patient_enc = client.query(sql).to_dataframe()
     return patient_enc
