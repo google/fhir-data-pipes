@@ -43,7 +43,7 @@ def merge_date_and_value(d: str, v: Any) -> str:
 
 
 def _build_in_list_with_quotes(values: tp.Iterable[tp.Any]):
-  return ",".join(map(values, lambda x: '\"{}\"'.format(x)))
+  return ",".join(map(lambda x: '\"{}\"'.format(x), values))
 
 
 class Runner(Enum):
@@ -617,8 +617,10 @@ class _BigQueryPatientQuery(PatientQuery):
     return self
 
   #TODO(gdevanla): This can be moved to base class just by injecting EncounterConstraints class
-  def encounter_constraints(self, locationId: List[str] = None,
-      typeSystem: str = None, typeCode: List[str] = None):
+  def encounter_constraints(self,
+                            location_ids: tp.Optional[tp.Iterable[str]] = None,
+      type_system: tp.Optional[str] = None,
+                            type_codes: tp.Optional[tp.Iterable[str]] = None):
     """Specifies constraints on encounters to be included.
 
     Note calling this erases previous encounter constraints. Any constraint
@@ -631,8 +633,11 @@ class _BigQueryPatientQuery(PatientQuery):
       typeCode: A list of encounter type codes that should be kept or None if
         there are no type constraints.
     """
-    self._enc_constraint = _BiqQueryEncounterConstraints(
-        locationId, typeSystem, typeCode)
+    self._enc_constraint = _BigQueryEncounterConstraints(
+      location_ids=location_ids,
+      type_system=type_system,
+      type_codes=type_codes)
+
 
   @classmethod
   def _build_encounter_query(cls, *, bq_dataset: str,
@@ -675,10 +680,10 @@ class _BigQueryPatientQuery(PatientQuery):
 
     clause_location_id = None
     if location_ids:
-      clause_location_id = 'L.location.locationId in ({})'.format(_build_in_list_with_quotes(locations_ids))
+      clause_location_id = 'L.location.locationId in ({})'.format(_build_in_list_with_quotes(location_ids))
     clause_type_system = None
     if type_system:
-      clause_type_system = 'C.system = {}'.format(type_system)
+      clause_type_system = "C.system = \'{}\'".format(type_system)
     clause_type_codes = None
     if type_codes:
       clause_type_codes = 'C.code in ({})'.format(_build_in_list_with_quotes(type_codes))
@@ -686,7 +691,7 @@ class _BigQueryPatientQuery(PatientQuery):
     where_clause = " and ".join(x for x in [clause_location_id, clause_type_system, clause_type_codes]
                                 if x)
     if where_clause:
-      return sql_template + " " + where_clause
+      return sql_template + " where " + where_clause
     return sql_template
 
 

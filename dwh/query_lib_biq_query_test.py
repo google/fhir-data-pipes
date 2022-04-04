@@ -27,5 +27,25 @@ class BiqQueryPatientQueryTest(unittest.TestCase):
     actual_df = pq.get_patient_encounter_view(base_url='', force_location_type_columns=False)
     print(actual_df)
 
+  def test_basic_query_with_system(self):
+
+    pq = ql._BigQueryPatientQuery(bq_dataset=_BIGQUERY_DATASET, code_system='dummy_code_system')
+    pq.encounter_constraints(type_system='system1001')
+    actual_df = pq.get_patient_encounter_view(base_url='', force_location_type_columns=False)
+    print(actual_df)
+
+  def test_basic_query_with_codes(self):
+    pq = ql._BigQueryPatientQuery(bq_dataset=_BIGQUERY_DATASET, code_system='dummy_code_system')
+    pq.encounter_constraints(type_codes=['code1000', 'code3000'])
+    actual_df = pq.get_patient_encounter_view(base_url='', force_location_type_columns=False)
+    print(actual_df)
+
+  def test_basic_query_with_location_ids(self):
+    pq = ql._BigQueryPatientQuery(bq_dataset=_BIGQUERY_DATASET, code_system='dummy_code_system')
+    pq.encounter_constraints(location_ids=['loc6', 'loc5'])
+    actual_df = pq.get_patient_encounter_view(base_url='', force_location_type_columns=False)
+    print(actual_df)
+
+
 if __name__ == '__main__':
   unittest.main()
