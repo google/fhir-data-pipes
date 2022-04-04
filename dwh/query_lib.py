@@ -71,11 +71,11 @@ def patient_query_factory(runner: Runner,
   Raises:
     ValueError: When the input `data_source` is malformed or not implemented.
   """
-  if runner == Runner.SPARK:
-    return _SparkPatientQuery(data_source, code_system)
-  if runner == Runner.BIG_QUERY:
-    return _BigQueryPatientQuery(data_source, code_system)
-  raise ValueError('Query engine {} is not supported yet.'.format(runner))
+    if runner == Runner.SPARK:
+      return _SparkPatientQuery(data_source, code_system)
+    if runner == Runner.BIG_QUERY:
+      return _BigQueryPatientQuery(data_source, code_system)
+    raise ValueError('Query engine {} is not supported yet.'.format(runner))
 
 
 class _ObsConstraints():
@@ -673,14 +673,17 @@ class _BigQueryPatientQuery(PatientQuery):
           )
           select replace(S.id, '{base_url}', '') as encounterId,
           S.subject.PatientId as encPatientId,
-          S.period.start as first,
-          S.period.end as last,
           C.system, C.code,
-          L.location.LocationId, L.location.display
+          L.location.LocationId, L.location.display,
+          MIN(S.period.start) as first,
+          MAX(S.period.end) as last,
+          COUNT(*) as num_encounters
           from S, unnest(s.type) as T, unnest(T.coding) as C left join unnest(s.location) as L
           --C.system = 'system3000' and C.code = 'code3000'
           --and L.location.locationId in ('test')
-    '''.format(table_name=table_name, base_url=base_url, data_set=bq_dataset)
+          {where}
+          group by S.id, S.subject.PatientId, C.system, C.code, L.location.LocationId, L.location.display
+    '''
 
     clause_location_id = None
     if location_ids:
@@ -695,8 +698,13 @@ class _BigQueryPatientQuery(PatientQuery):
     where_clause = " and ".join(x for x in [clause_location_id, clause_type_system, clause_type_codes]
                                 if x)
     if where_clause:
-      return sql_template + " where " + where_clause
-    return sql_template
+      where_clause = " where "  + where_clause
+    sql = sql_template.format(
+      table_name=table_name,
+      base_url=base_url,
+      data_set=bq_dataset,
+      where=where_clause)
+    return sql
 
 
   def get_patient_encounter_view(self, base_url: str,
@@ -712,6 +720,6 @@ class _BigQueryPatientQuery(PatientQuery):
       force_location_type_columns=force_location_type_columns
     )
 
-    client = bigquery.Client()
-    patient_enc = client.query(sql).to_dataframe()
-    return patient_enc
+    with bigquery.Client() as client:
+      patient_enc = client.query(sql).to_dataframe()
+      return patient_enc
