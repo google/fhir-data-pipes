@@ -32,8 +32,7 @@ import pyspark.sql.types as T
 try:
   from google.cloud import bigquery
 except ImportError:
-  pass # not all set up need to have bigquery libraries installed
-
+  pass  # not all set up need to have bigquery libraries installed
 
 import common
 
@@ -42,23 +41,23 @@ DATE_VALUE_SEPARATOR = '_SeP_'
 
 
 def merge_date_and_value(d: str, v: Any) -> str:
-    return '{}{}{}'.format(d, DATE_VALUE_SEPARATOR, v)
+  return '{}{}{}'.format(d, DATE_VALUE_SEPARATOR, v)
 
 
 def _build_in_list_with_quotes(values: tp.Iterable[tp.Any]):
-    return ",".join(map(lambda x: '\"{}\"'.format(x), values))
+  return ",".join(map(lambda x: '\"{}\"'.format(x), values))
 
 
 class Runner(Enum):
-    SPARK = 1
-    BIG_QUERY = 2
-    #FHIR_SERVER = 3
+  SPARK = 1
+  BIG_QUERY = 2
+  #FHIR_SERVER = 3
 
 
-def patient_query_factory(runner: Runner,
-                          data_source: str,
-                          code_system: str = None) -> PatientQuery:
-    """Returns the right instance of `PatientQuery` based on `data_source`.
+def patient_query_factory(
+    runner: Runner, data_source: str, code_system: str = None
+) -> PatientQuery:
+  """Returns the right instance of `PatientQuery` based on `data_source`.
 
   Args:
     runner: The runner to use for making data queries
@@ -71,11 +70,11 @@ def patient_query_factory(runner: Runner,
   Raises:
     ValueError: When the input `data_source` is malformed or not implemented.
   """
-    if runner == Runner.SPARK:
-      return _SparkPatientQuery(data_source, code_system)
-    if runner == Runner.BIG_QUERY:
-      return _BigQueryPatientQuery(data_source, code_system)
-    raise ValueError('Query engine {} is not supported yet.'.format(runner))
+  if runner == Runner.SPARK:
+    return _SparkPatientQuery(data_source, code_system)
+  if runner == Runner.BIG_QUERY:
+    return _BigQueryPatientQuery(data_source, code_system)
+  raise ValueError('Query engine {} is not supported yet.'.format(runner))
 
 
 class _ObsConstraints():
@@ -85,9 +84,16 @@ class _ObsConstraints():
   on an already flattened observation view.
   """
 
-  def __init__(self, code: str, values: List[str] = None, value_sys: str = None,
-      min_value: float = None, max_value: float = None,
-      min_time: str = None, max_time: str = None) -> None:
+  def __init__(
+      self,
+      code: str,
+      values: List[str] = None,
+      value_sys: str = None,
+      min_value: float = None,
+      max_value: float = None,
+      min_time: str = None,
+      max_time: str = None
+  ) -> None:
     self._code = code
     self._sys_str = '="{}"'.format(value_sys) if value_sys else 'IS NULL'
     self._values = values
@@ -135,8 +141,12 @@ class _EncounterContraints():
   on an already flattened encounter view.
   """
 
-  def __init__(self, locationId: List[str] = None,
-      typeSystem: str = None, typeCode: List[str] = None):
+  def __init__(
+      self,
+      locationId: List[str] = None,
+      typeSystem: str = None,
+      typeCode: List[str] = None
+  ):
     self._location_id = locationId
     self._type_system = typeSystem
     self._type_code = typeCode
@@ -158,7 +168,8 @@ class _EncounterContraints():
       temp_str = ','.join(['"{}"'.format(v) for v in self._type_code])
       type_code_str = 'encTypeCode IN ({})'.format(temp_str)
     type_sys_str = 'encTypeSystem="{}"'.format(
-        self._type_system) if self._type_system else 'TRUE'
+        self._type_system
+    ) if self._type_system else 'TRUE'
     return '{} AND {} AND {}'.format(loc_str, type_code_str, type_sys_str)
 
 
@@ -183,24 +194,42 @@ class PatientQuery():
     self._all_codes_max_time = None
     self._code_system = code_system
 
-  def include_obs_in_value_and_time_range(self, code: str,
-      min_val: float = None, max_val: float = None, min_time: str = None,
-      max_time: str = None) -> PatientQuery:
+  def include_obs_in_value_and_time_range(
+      self,
+      code: str,
+      min_val: float = None,
+      max_val: float = None,
+      min_time: str = None,
+      max_time: str = None
+  ) -> PatientQuery:
     if code in self._code_constraint:
       raise ValueError('Duplicate constraints for code {}'.format(code))
     self._code_constraint[code] = _ObsConstraints(
-        code, value_sys=self._code_system, min_value=min_val,
-        max_value=max_val, min_time=min_time, max_time=max_time)
+        code,
+        value_sys=self._code_system,
+        min_value=min_val,
+        max_value=max_val,
+        min_time=min_time,
+        max_time=max_time
+    )
     return self
 
-  def include_obs_values_in_time_range(self, code: str,
-      values: List[str] = None, min_time: str = None,
-      max_time: str = None) -> PatientQuery:
+  def include_obs_values_in_time_range(
+      self,
+      code: str,
+      values: List[str] = None,
+      min_time: str = None,
+      max_time: str = None
+  ) -> PatientQuery:
     if code in self._code_constraint:
       raise ValueError('Duplicate constraints for code {}'.format(code))
     self._code_constraint[code] = _ObsConstraints(
-        code, values=values, value_sys=self._code_system, min_time=min_time,
-        max_time=max_time)
+        code,
+        values=values,
+        value_sys=self._code_system,
+        min_time=min_time,
+        max_time=max_time
+    )
     return self
 
   def include_all_other_codes(self, include: bool = True, min_time: str = None,
@@ -649,7 +678,8 @@ class _BigQueryPatientQuery(PatientQuery):
                              location_ids: tp.Optional[tp.Iterable[str]],
                              type_system: tp.Optional[str] = None,
                              type_codes: tp.Optional[tp.Iterable[str]] = None,
-                             force_location_type_columns: bool = True):
+                             force_location_type_columns: bool = True,
+                             sample_count: tp.Optional[int] = None):
     '''
     Helper function to build the sql query which will only query the Encounter table
     Sample Query:
@@ -678,11 +708,12 @@ class _BigQueryPatientQuery(PatientQuery):
           MIN(S.period.start) as first,
           MAX(S.period.end) as last,
           COUNT(*) as num_encounters
-          from S, unnest(s.type) as T, unnest(T.coding) as C left join unnest(s.location) as L
+          from S, unnest(s.type.array) as T, unnest(T.coding.array) as C left join unnest(s.location.array) as L
           --C.system = 'system3000' and C.code = 'code3000'
           --and L.location.locationId in ('test')
           {where}
           group by S.id, S.subject.PatientId, C.system, C.code, L.location.LocationId, L.location.display
+          {sample_count}
     '''
 
     clause_location_id = None
@@ -695,29 +726,33 @@ class _BigQueryPatientQuery(PatientQuery):
     if type_codes:
       clause_type_codes = 'C.code in ({})'.format(_build_in_list_with_quotes(type_codes))
 
-    where_clause = " and ".join(x for x in [clause_location_id, clause_type_system, clause_type_codes]
-                                if x)
+    where_clause = " and ".join(
+        x for x in [clause_location_id, clause_type_system, clause_type_codes]
+        if x)
     if where_clause:
       where_clause = " where "  + where_clause
     sql = sql_template.format(
-      table_name=table_name,
-      base_url=base_url,
-      data_set=bq_dataset,
-      where=where_clause)
+        table_name=table_name,
+        base_url=base_url,
+        data_set=bq_dataset,
+        where=where_clause,
+        sample_count="" if sample_count is None else "LIMIT " + str(sample_count))
     return sql
 
 
   def get_patient_encounter_view(self, base_url: str,
-      force_location_type_columns: bool = True) -> pandas.DataFrame:
+                                 force_location_type_columns: bool = True,
+                                 sample_count: tp.Optional[int] = None) -> pandas.DataFrame:
 
     sql = self._build_encounter_query(
-      bq_dataset=self._bq_dataset,
-      table_name='encounter',
-      base_url=base_url,
-      location_ids=self._enc_constraint.location_ids if self._enc_constraint else None,
-      type_system=self._enc_constraint.type_system if self._enc_constraint else None,
-      type_codes=self._enc_constraint.type_codes if self._enc_constraint else None,
-      force_location_type_columns=force_location_type_columns
+        bq_dataset=self._bq_dataset,
+        table_name='Encounter',
+        base_url=base_url,
+        location_ids=self._enc_constraint.location_ids if self._enc_constraint else None,
+        type_system=self._enc_constraint.type_system if self._enc_constraint else None,
+        type_codes=self._enc_constraint.type_codes if self._enc_constraint else None,
+        force_location_type_columns=force_location_type_columns,
+        sample_count=sample_count
     )
 
     with bigquery.Client() as client:
