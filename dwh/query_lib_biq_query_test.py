@@ -15,13 +15,20 @@
 import unittest
 import query_lib as ql
 
-# NOTE: For these test to run the GOOGLE_APPLICATION_CREDENTIALS have to be st
-# and the credentials should have access to below dataset
-# TODO(gdevanla): Update this to integration database
-_BIGQUERY_DATASET = 'learnbq-345320.fhir_sample'
+"""
+For these tests to run the Google Auth settings have to be run on the machine running these tests:
 
+Follow instructions here https://cloud.google.com/sdk/gcloud/reference/auth to
 
-class BiqQueryPatientQueryTest(unittest.TestCase):
+a. gcloud auth login
+b. gcloud config set project <project_name>
+  (project_name here is the project that has the dataset 'synthea_big'
+   that is used by tests)
+"""
+
+_BIGQUERY_DATASET = 'synthea_big'
+
+class BigQueryPatientQueryTest(unittest.TestCase):
 
   def test_basic_query(self):
 
@@ -38,7 +45,8 @@ class BiqQueryPatientQueryTest(unittest.TestCase):
     pq = ql._BigQueryPatientQuery(
         bq_dataset=_BIGQUERY_DATASET, code_system='dummy_code_system'
     )
-    pq.encounter_constraints(type_system='system1001')
+    pq.encounter_constraints(
+        type_system='http://fhir.openmrs.org/code-system/encounter-type')
     actual_df = pq.get_patient_encounter_view(
         base_url='', force_location_type_columns=False
     )
@@ -48,7 +56,8 @@ class BiqQueryPatientQueryTest(unittest.TestCase):
     pq = ql._BigQueryPatientQuery(
         bq_dataset=_BIGQUERY_DATASET, code_system='dummy_code_system'
     )
-    pq.encounter_constraints(type_codes=['code1000', 'code3000'])
+    pq.encounter_constraints(
+        type_codes=['5021b1a1-e7f6-44b4-ba02-da2f2bcf8718'])
     actual_df = pq.get_patient_encounter_view(
         base_url='', force_location_type_columns=False
     )
@@ -58,9 +67,11 @@ class BiqQueryPatientQueryTest(unittest.TestCase):
     pq = ql._BigQueryPatientQuery(
         bq_dataset=_BIGQUERY_DATASET, code_system='dummy_code_system'
     )
-    pq.encounter_constraints(location_ids=['loc6', 'loc5'])
+    pq.encounter_constraints(
+        location_ids=['2131aff8-2e2a-480a-b7ab-4ac53250262b'])
     actual_df = pq.get_patient_encounter_view(
-        base_url='', force_location_type_columns=False
+        base_url='', force_location_type_columns=False,
+        sample_count=10,
     )
     print(actual_df)
 
