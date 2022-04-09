@@ -42,8 +42,7 @@
 
   <modules>
     <module>batch</module>
-    <module>streaming-atomfeed</module>
-    <module>streaming-binlog</module>
+    <module>streaming</module>
     <module>common</module>
   </modules>
 
@@ -53,12 +52,6 @@
       <name>Maven Repository Switchboard</name>
       <layout>default</layout>
       <url>https://repo1.maven.org/maven2</url>
-    </repository>
-    <!-- TODO remove this repository once the atomfeed pipeline is removed. -->
-    <repository>
-      <id>openmrs-repo</id>
-      <name>OpenMRS Nexus Repository</name>
-      <url>https://mavenrepo.openmrs.org/nexus/content/repositories/public</url>
     </repository>
   </repositories>
   <pluginRepositories>

@@ -47,7 +47,7 @@ function start_pipeline() {
     cd /workspace/pipelines
     ../utils/start_pipelines.sh -s -streamingLog /workspace/e2e-tests/log.log \
     -u ${OPENMRS_URL}/openmrs  -o /workspace/e2e-tests/STREAMING \
-    -secondsToFlushStreaming 15 -fhirSinkPath ${SINK_SERVER}/fhir \
+    -secondsToFlushStreaming 5 -fhirSinkPath ${SINK_SERVER}/fhir \
     -sinkUsername hapi -sinkPassword hapi
 }
 
@@ -64,6 +64,9 @@ function wait_for_sink() {
     ${OPENMRS_URL}/openmrs/ws/fhir2/R4  \
     --input_dir e2e-tests/streaming_test_patient --convert_to_openmrs
     until [[ ${count} -ne 0 ]]; do
+      # TODO: There seems to be a race condition here: we wait for results
+      # to be ready in the sink FHIR store but by that time we also expect
+      # the parquet output to be flushed (which is not necessarily the case).
       sleep 30s
       count=$(curl -u hapi:hapi -s ${SINK_SERVER}/fhir/Patient?_summary=count \
           | grep 'total' | awk '{print $NF}')
