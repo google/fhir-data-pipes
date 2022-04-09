@@ -6,6 +6,8 @@ from query_lib import _EncounterContraints
 from query_lib import _ObsConstraints
 from query_lib import PatientQuery
 
+_DATE_VALUE_SEPARATOR = ','
+
 try:
   from google.cloud import bigquery
 except ImportError:
@@ -173,7 +175,7 @@ class _BigQueryPatientQuery(PatientQuery):
           O.context.encounterId obs_context_encounter_id,
           FORMAT('%s,%s', cast(O.effective.dateTime as string) , cast(O.value.quantity.value as string)) as date_and_value,
           FORMAT('%s,%s', cast(O.effective.dateTime as string), OVC.code) as date_and_value_code,
-          from O, unnest(O.code.coding.array) as OC, unnest(O.value.codeableConcept.coding.array) as OVC
+          from O left join unnest(O.code.coding.array) as OC LEFT JOIN unnest(O.value.codeableConcept.coding.array) as OVC
           where TRUE and {code_coding_system} and {value_codeable_coding_system}
           and {all_obs_constraints}
           --OC.system = 'http://www.ampathkenya.org'
@@ -185,7 +187,7 @@ class _BigQueryPatientQuery(PatientQuery):
       E1 AS (
           select replace(E.id, '{base_url}', '') as encounterId, C.system, C.code,
             L.location.LocationId, L.location.display,
-            from E, unnest(E.type.array) as T, unnest(T.coding.array) as C left join unnest(E.location.array) as L
+            from E left join unnest(E.type.array) as T left join unnest(T.coding.array) as C left join unnest(E.location.array) as L
             {encounter_where_clause}
             ),
       G as (select
@@ -216,7 +218,7 @@ class _BigQueryPatientQuery(PatientQuery):
         ' OC.system is null ' if not self._code_system else
         ' OC.system = "{}" '.format(self._code_system)
     )
-    value_codeable_coding_system_str = (
+    value_codeable_coding_system_str = ' O.value is null or ' + (
         ' OVC.system is null ' if not self._code_system else
         ' OVC.system = "{}" '.format(self._code_system)
     )
@@ -291,4 +293,16 @@ class _BigQueryPatientQuery(PatientQuery):
 
     with bigquery.Client() as client:
       patient_obs_enc = client.query(sql).to_dataframe()
+      print(patient_obs_enc[['max_date_value', 'min_date_value', 'max_date_value_code', 'min_date_value_code']])
+
+
+      # patient_obs_enc['last_value'] = patient_obs_enc.max_date_value.str.split(
+      #   _DATE_VALUE_SEPARATOR, expand=True)[1]
+      # patient_obs_enc['first_value'] = patient_obs_enc.min_date_value.str.split(
+      #   _DATE_VALUE_SEPARATOR, expand=True)[1]
+      # patient_obs_enc['last_value_code'] = patient_obs_enc.max_date_value_code.str.split(
+      #   _DATE_VALUE_SEPARATOR, expand=True)[1]
+      # patient_obs_enc['first_value_code'] = patient_obs_enc.min_date_value_code.str.split(
+      #   _DATE_VALUE_SEPARATOR, expand=True)[1]
+
       return patient_obs_enc

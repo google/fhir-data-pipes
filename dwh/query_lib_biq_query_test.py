@@ -111,11 +111,11 @@ class BigQueryPatientQueryTest(unittest.TestCase):
     #     _ARV_PLAN, min_time=start_date, max_time=end_date)
     patient_query.include_all_other_codes(min_time=start_date, max_time=end_date)
 
-    patient_query.encounter_constraints(
-        locationId=['2131aff8-2e2a-480a-b7ab-4ac53250262b'])
-    #patient_query.include_all_other_codes(min_time=start_date, max_time=end_date)
-    patient_query.include_obs_values_in_time_range('1271')
-    patient_query.include_obs_values_in_time_range('1265', max_time='2010-07-10')
+    # patient_query.encounter_constraints(
+    #     locationId=['2131aff8-2e2a-480a-b7ab-4ac53250262b'])
+    # #patient_query.include_all_other_codes(min_time=start_qdate, max_time=end_date)
+    # patient_query.include_obs_values_in_time_range('1271')
+    # patient_query.include_obs_values_in_time_range('1265', max_time='2010-07-10')
     # 2131aff8-2e2a-480a-b7ab-4ac53250262b
 
     # Note the first call to `find_patient_aggregates` starts a local Spark
