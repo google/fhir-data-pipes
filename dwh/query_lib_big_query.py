@@ -226,6 +226,7 @@ class _BigQueryPatientQuery(PatientQuery):
         ' OVC.system is null ' if not self._code_system else
         ' OVC.system = "{}" '.format(self._code_system)
     )
+    value_codeable_coding_system = '({})'.format(value_codeable_coding_system_str)
 
     all_obs_constraints = self._all_obs_constraints()
 
@@ -308,5 +309,5 @@ class _BigQueryPatientQuery(PatientQuery):
         for dest_col, source_col in col_map:
             patient_obs_enc[dest_col] = patient_obs_enc[source_col].apply(
                 lambda x: None if x is None else x.split(',')[1])
-        patient_obs_enc = patient_obs_enc.drop(columns=[col[1] for col in col_map])
+        patient_obs_enc.drop(columns=[col[1] for col in col_map], inplace=True)
         return patient_obs_enc

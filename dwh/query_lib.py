@@ -216,6 +216,7 @@ class PatientQuery():
     )
     return self
 
+  # TODO(gdevanla): Should be called include_obs_codes_in_time_range
   def include_obs_values_in_time_range(
       self,
       code: str,
@@ -236,6 +237,8 @@ class PatientQuery():
 
   def include_all_other_codes(self, include: bool = True, min_time: str = None,
       max_time: str = None) -> PatientQuery:
+
+    # TODO(gdevanla):  Should be called include_all_other_codes
     self._include_all_codes = include
     self._all_codes_min_time = min_time
     self._all_codes_max_time = max_time
@@ -326,6 +329,7 @@ class PatientQuery():
     raise NotImplementedError('This should be implemented by sub-classes!')
 
   def get_patient_encounter_view(self, base_url: str,
+                                 # TODO(gdevanla) : the force_location_type_columns should be dropped
       force_location_type_columns: bool = True) -> pandas.DataFrame:
     """Aggregates encounters for each patient based on location, type, etc.
 
