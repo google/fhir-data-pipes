@@ -13,7 +13,7 @@
 # limitations under the License.
 
 import unittest
-import query_lib as ql
+import query_lib_big_query as ql
 
 """
 For these tests to run the Google Auth settings have to be run on the machine running these tests:
@@ -27,6 +27,7 @@ b. gcloud config set project <project_name>
 """
 
 _BIGQUERY_DATASET = 'synthea_big'
+_CODE_SYSTEM = 'http://www.ampathkenya.org'
 
 class BigQueryPatientQueryTest(unittest.TestCase):
 
@@ -78,11 +79,19 @@ class BigQueryPatientQueryTest(unittest.TestCase):
   def test_obs_basic_query(self):
 
     pq = ql._BigQueryPatientQuery(
-        bq_dataset=_BIGQUERY_DATASET, code_system='dummy_code_system'
+        bq_dataset=_BIGQUERY_DATASET, code_system=_CODE_SYSTEM,
+
     )
+
+    #pq.include_all_other_codes(True, '2011-01-01')
+    pq.include_obs_in_value_and_time_range('844', max_time='2011-01-01', max_val=10)
+    #pq.include_obs_values_in_time_range('1284', values=['130'])
+    pq.include_obs_values_in_time_range('1284', values=['130'])
     actual_df = pq.get_patient_obs_view(
-        base_url='', force_location_type_columns=False
+        base_url='', force_location_type_columns=False,
+        sample_count=10
     )
+    print(actual_df.iloc[:2].T)
     print(actual_df)
 
 

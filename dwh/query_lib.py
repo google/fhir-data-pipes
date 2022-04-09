@@ -29,10 +29,6 @@ from pyspark.sql import SparkSession, DataFrame
 import pyspark.sql.functions as F
 import pyspark.sql.types as T
 
-try:
-  from google.cloud import bigquery
-except ImportError:
-  pass  # not all set up need to have bigquery libraries installed
 
 import common
 
@@ -123,8 +119,9 @@ class _ObsConstraints():
     together into an `AND` clause.
     """
     cl = [self.time_constraint(self._min_time, self._max_time)]
+    # TODO(gdevanla): This is already done in flattenning.
     cl.append('coding.code="{}"'.format(self._code))
-    # We don't need to filter coding.system as it is already done in flattening.
+    # TODO(gdevanla): We don't need to filter coding.system as it is already done in flattening.
     if self._values:
       codes_str = ','.join(['"{}"'.format(v) for v in self._values])
       cl.append('value.codeableConcept.coding IN ({})'.format(codes_str))
@@ -206,7 +203,7 @@ class PatientQuery():
 
   def include_obs_in_value_and_time_range(
       self,
-      code: str,
+      code: str, # Obs.coding.code
       min_val: float = None,
       max_val: float = None,
       min_time: str = None,
@@ -227,7 +224,7 @@ class PatientQuery():
   def include_obs_values_in_time_range(
       self,
       code: str,
-      values: List[str] = None,
+      values: List[str] = None,  #TODO(gdevanla): rename this to values_codeableconcept_coding
       min_time: str = None,
       max_time: str = None
   ) -> PatientQuery:
@@ -281,6 +278,13 @@ class PatientQuery():
     if not self._include_all_codes:
       return '({})'.format(constraints_str)
     # TODO(gdevanla): Why is this coding.code!= if the flag is _include_all_codes
+      ##################################################
+      # C       I                                      #
+      # F        T   return True                       #
+      # F        F   return False                      #
+      # T        T   coding != codes and apply dates   #
+      # T        F   just apply constraint_str         #
+      ##################################################
     others_str = ' AND '.join(
         ['coding.code!="{}"'.format(code) for code in self._code_constraint] + [
             _ObsConstraints.time_constraint(self._all_codes_min_time,
