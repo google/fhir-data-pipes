@@ -96,6 +96,9 @@ class _ObsConstraints():
   ) -> None:
     self._code = code
     self._sys_str = '="{}"'.format(value_sys) if value_sys else 'IS NULL'
+
+    #TODO(gdevanla): Add check to make sure either self._values is set or self._min_value and self._max_value is set,
+    #because that is the assumption being made in the query builder
     self._values = values
     self._min_time = min_time
     self._max_time = max_time
@@ -125,6 +128,7 @@ class _ObsConstraints():
     if self._values:
       codes_str = ','.join(['"{}"'.format(v) for v in self._values])
       cl.append('value.codeableConcept.coding IN ({})'.format(codes_str))
+      # TODO(gdevanla): Check this. The same field is also compared against patient.code_system (in _flatten_obs)
       cl.append('value.codeableConcept.system {}'.format(self._sys_str))
     elif self._min_value or self._max_value:
       if self._min_value:
@@ -186,13 +190,19 @@ class PatientQuery():
   - The DataFrame is fetched or more manipulation is done on it by the library.
   """
 
-  def __init__(self, code_system: str = None):
+  def __init__(self,
+               code_system: str = None,
+               encounter_constraint_class: tp.Type[_EncounterContraints]=_EncounterContraints,
+               obs_constraint_class: tp.Type[_ObsConstraints]=_ObsConstraints):
     self._code_constraint = {}
-    self._enc_constraint = _EncounterContraints()
+    self._enc_constraint = encounter_constraint_class()
     self._include_all_codes = False
     self._all_codes_min_time = None
     self._all_codes_max_time = None
     self._code_system = code_system
+
+    self._encounter_constaint_class = encounter_constraint_class
+    self._obs_constraint_class = obs_constraint_class
 
   def include_obs_in_value_and_time_range(
       self,
@@ -204,7 +214,7 @@ class PatientQuery():
   ) -> PatientQuery:
     if code in self._code_constraint:
       raise ValueError('Duplicate constraints for code {}'.format(code))
-    self._code_constraint[code] = _ObsConstraints(
+    self._code_constraint[code] = self._obs_constraint_class(
         code,
         value_sys=self._code_system,
         min_value=min_val,
@@ -223,7 +233,7 @@ class PatientQuery():
   ) -> PatientQuery:
     if code in self._code_constraint:
       raise ValueError('Duplicate constraints for code {}'.format(code))
-    self._code_constraint[code] = _ObsConstraints(
+    self._code_constraint[code] = self._obs_constraint_class(
         code,
         values=values,
         value_sys=self._code_system,
@@ -253,10 +263,14 @@ class PatientQuery():
       typeCode: A list of encounter type codes that should be kept or None if
         there are no type constraints.
     """
-    self._enc_constraint = _EncounterContraints(
+    self._enc_constraint = self._encounter_constaint_class(
         locationId, typeSystem, typeCode)
 
   def _all_obs_constraints(self) -> str:
+
+    # TODO(gdevanla): I think we need to raise an error here. Or else the user will not see
+    # any record if both self._code_constraint and self._include_all_codes are not set
+    # Plus, this function is specific to Spark, should be defined in derived class
     if not self._code_constraint:
       if self._include_all_codes:
         return 'TRUE'
@@ -266,12 +280,15 @@ class PatientQuery():
         [self._code_constraint[code].sql() for code in self._code_constraint])
     if not self._include_all_codes:
       return '({})'.format(constraints_str)
+    # TODO(gdevanla): Why is this coding.code!= if the flag is _include_all_codes
     others_str = ' AND '.join(
         ['coding.code!="{}"'.format(code) for code in self._code_constraint] + [
             _ObsConstraints.time_constraint(self._all_codes_min_time,
                                             self._all_codes_max_time)])
     return '({} OR ({}))'.format(constraints_str, others_str)
 
+  # TODO(gdevanla): This function is specific to derived class since it is
+  # dependent on all_obs_constraints
   def all_constraints_sql(self) -> str:
     obs_str = self._all_obs_constraints()
     enc_str = '{}'.format(
@@ -596,10 +613,41 @@ class _BigQueryEncounterConstraints:
     return '{} AND {} AND {}'.format(loc_str, type_code_str, type_sys_str)
 
 
-class _BigQueryObsConstraints:
-  '''
+class _BigQueryObsConstraints(_ObsConstraints):
+  """
   Observation constraints helper class for querying Big Query
-  '''
+  """
+
+  @staticmethod
+  def time_constraint(min_time: str = None, max_time: str = None):
+    if not min_time and not max_time:
+      return 'TRUE'
+    cl = []
+    if min_time:
+      cl.append('obs_effecitve_datetime >= "{}"'.format(min_time))
+    if max_time:
+      cl.append('obs_effective_datetime <= "{}"'.format(max_time))
+    return ' AND '.join(cl)
+
+  def _build_critera(self):
+    """
+    Build obs criteria
+    """
+    cl = [self.time_constraint(self._min_time, self._max_time)]
+    cl.append('obs_code_coding_code="{}"'.format(self._code))
+    # We don't need to filter coding.system as it is already done in flattening.
+    if self._values:
+      codes_str = ','.join(['"{}"'.format(v) for v in self._values])
+      cl.append('OC.code IN ({})'.format(codes_str))
+      # TODO(gdevanla): This is already applied as part of patient._code_system
+      # cl.append('OVC.system {}'.format(self._sys_str))
+    elif self._min_value or self._max_value:
+      if self._min_value:
+        cl.append(' obs_value_quantity >= {} '.format(self._min_value))
+      if self._max_value:
+        cl.append(' obs_value_quantity <= {} '.format(self._max_value))
+    return '({})'.format(' AND '.join(cl))
+
 
 class _BigQueryPatientQuery(PatientQuery):
   '''
@@ -607,70 +655,8 @@ class _BigQueryPatientQuery(PatientQuery):
   '''
 
   def __init__(self, bq_dataset: str, code_system: str):
-    super().__init__(code_system)
-
+    super().__init__(code_system, _BigQueryEncounterConstraints, _BigQueryObsConstraints)
     self._bq_dataset = bq_dataset
-
-    #TODO(gdevanla): All the below statements can likely go to base class
-    self._code_constraint = {}
-    self._enc_constraint = _BigQueryEncounterConstraints()
-    self._include_all_codes = False
-    self._all_codes_min_time = None
-    self._all_codes_max_time = None
-    self._code_system = code_system
-
-  #TODO(gdevanla): This can be moved to base class just by injecting ObservationConstraints class
-  def include_obs_in_value_and_time_range(self, code: str,
-      min_val: float = None, max_val: float = None, min_time: str = None,
-      max_time: str = None) -> PatientQuery:
-    if code in self._code_constraint:
-      raise ValueError('Duplicate constraints for code {}'.format(code))
-    self._code_constraint[code] = _BigQueryObsConstraints(
-        code, value_sys=self._code_system, min_value=min_val,
-        max_value=max_val, min_time=min_time, max_time=max_time)
-    return self
-
-  #TODO(gdevanla): This can be moved to base class just by injecting ObservationConstraints class
-  def include_obs_values_in_time_range(self, code: str,
-      values: List[str] = None, min_time: str = None,
-      max_time: str = None) -> PatientQuery:
-    if code in self._code_constraint:
-      raise ValueError('Duplicate constraints for code {}'.format(code))
-    self._code_constraint[code] = _BigQueryObsConstraints(
-        code, values=values, value_sys=self._code_system, min_time=min_time,
-        max_time=max_time)
-    return self
-
-  #TODO(gdevanla): This can be moved to base class
-  def include_all_other_codes(self, include: bool = True, min_time: str = None,
-      max_time: str = None) -> PatientQuery:
-    self._include_all_codes = include
-    self._all_codes_min_time = min_time
-    self._all_codes_max_time = max_time
-    return self
-
-  #TODO(gdevanla): This can be moved to base class just by injecting EncounterConstraints class
-  def encounter_constraints(self,
-                            location_ids: tp.Optional[tp.Iterable[str]] = None,
-      type_system: tp.Optional[str] = None,
-                            type_codes: tp.Optional[tp.Iterable[str]] = None):
-    """Specifies constraints on encounters to be included.
-
-    Note calling this erases previous encounter constraints. Any constraint
-    that is None is ignored.
-
-    Args:
-      locationId: The list of locations that should be kept or None if there are
-        no location constraints.
-      typeSystem: An string representing the type system or None.
-      typeCode: A list of encounter type codes that should be kept or None if
-        there are no type constraints.
-    """
-    self._enc_constraint = _BigQueryEncounterConstraints(
-      location_ids=location_ids,
-      type_system=type_system,
-      type_codes=type_codes)
-
 
   @classmethod
   def _build_encounter_query(cls, *, bq_dataset: str,
@@ -739,14 +725,18 @@ class _BigQueryPatientQuery(PatientQuery):
         sample_count="" if sample_count is None else "LIMIT " + str(sample_count))
     return sql
 
-  @classmethod
   def _build_obs_encounter_query(
-      cls,
+      self,
       dataset: str,
-      sample_count: tp.Optional[int] = None):
-    '''
+      sample_count: tp.Optional[int] = None) -> str:
+
+    """
     Helper functions that builds the query to get patient_observation data
-    '''
+    Args:
+    dataset:
+    sample_count:
+    """
+
     sql = '''
     with O as
     (select * from `{dataset}.Observation`),
@@ -762,8 +752,11 @@ class _BigQueryPatientQuery(PatientQuery):
           FORMAT('%s,%s', cast(O.effective.dateTime as string) , cast(O.value.quantity.value as string)) as date_and_value,
           FORMAT('%s,%s', cast(O.effective.dateTime as string), OVC.code) as date_and_value_code,
           from O, unnest(O.code.coding.array) as OC, unnest(O.value.codeableConcept.coding.array) as OVC
-          where OC.system = 'http://www.ampathkenya.org'
-          and OVC.system is not null),
+          where TRUE and {code_coding_sytem_str} and {value_codeable_coding_system}
+          and {all_obs_constraints}
+          --OC.system = 'http://www.ampathkenya.org'
+          --and OVC.system is not null
+          ),
       E  AS (
             select * from `{dataset}.Encounter`
             ),
@@ -792,10 +785,39 @@ class _BigQueryPatientQuery(PatientQuery):
       from G inner join `{dataset}.Patient` P on G.patient_id = P.id
     '''
 
+    # TODO(gdevanla): Yet to add encounter constraints
+
+    code_coding_system_str = (' OC.system is null ' if not self._code_system
+                              else ' OC.system = {} '.format(self._code_system))
+    value_codeable_coding_system_str = (' OVC.system is null ' if not self._code_system
+                                        else ' OVC.system = {} '.format(self._code_system))
+
+    all_obs_constraints = self._all_obs_constraints()
+
     sql = sql.format(
         dataset=dataset,
+        code_coding_system_str=code_coding_system_str,
+        value_codeable_coding_system_str=value_codeable_coding_system_str,
+        all_obs_constraints=all_obs_constraints,
         sample_count="" if sample_count is None else "LIMIT " + str(sample_count))
     return sql
+
+  def _all_obs_constraints(self) -> str:
+
+    if not self._code_constraint and not self._include_all_codes:
+      raise ValueError('Either obs constraints need to be set of include_all_codes need to be set')
+
+    if self._include_all_codes and not self._code_constraints:
+        return ' TRUE '
+    constraints_str = ' OR '.join(
+        [obs_constraint.sql() for obs_constraint in self._code_constraint.values()])
+    if not self._include_all_codes:
+      return '({})'.format(constraints_str)
+    others_str = ' AND '.join(
+        ['OVC.code != "{}"'.format(code) for code in self._code_constraint] + [
+            _ObsConstraints.time_constraint(self._all_codes_min_time,
+                                            self._all_codes_max_time)])
+    return ' ({} OR ({})) '.format(constraints_str, others_str)
 
 
   def get_patient_encounter_view(self, base_url: str,
