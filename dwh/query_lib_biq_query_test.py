@@ -39,7 +39,7 @@ class BigQueryPatientQueryTest(unittest.TestCase):
     actual_df = pq.get_patient_encounter_view(
         base_url='', force_location_type_columns=False
     )
-    print(actual_df)
+    print(actual_df.head(2).T)
 
   def test_encounter_basic_query_with_system(self):
 
@@ -79,9 +79,7 @@ class BigQueryPatientQueryTest(unittest.TestCase):
   def test_obs_basic_query(self):
 
     pq = ql._BigQueryPatientQuery(
-        bq_dataset=_BIGQUERY_DATASET, code_system=_CODE_SYSTEM,
-
-    )
+        bq_dataset=_BIGQUERY_DATASET, code_system=_CODE_SYSTEM)
 
     #pq.include_all_other_codes(True, '2011-01-01')
     pq.include_obs_in_value_and_time_range('844', max_time='2011-01-01', max_val=10)
@@ -94,7 +92,40 @@ class BigQueryPatientQueryTest(unittest.TestCase):
     print(actual_df.iloc[:2].T)
     print(actual_df)
 
+  def test_obs_query_1(self):
+    _VL_CODE = '856'  # HIV VIRAL LOAD
+    _ARV_PLAN = '1255'  # ANTIRETROVIRAL PLAN
+    end_date='2018-01-01'
+    start_date='1998-01-01'
+    old_start_date='1978-01-01'
+    _BASE_URL = ''
 
+    # Creating a new `patient_query` to drop all previous constraints
+    # and recreate flat views.
+    patient_query = ql._BigQueryPatientQuery(
+        bq_dataset=_BIGQUERY_DATASET, code_system=_CODE_SYSTEM)
+
+    # patient_query.include_obs_values_in_time_range(
+    #     _VL_CODE, min_time=start_date, max_time=end_date)
+    # patient_query.include_obs_values_in_time_range(
+    #     _ARV_PLAN, min_time=start_date, max_time=end_date)
+    patient_query.include_all_other_codes(min_time=start_date, max_time=end_date)
+
+    patient_query.encounter_constraints(
+        locationId=['2131aff8-2e2a-480a-b7ab-4ac53250262b'])
+    #patient_query.include_all_other_codes(min_time=start_date, max_time=end_date)
+    patient_query.include_obs_values_in_time_range('1271')
+    patient_query.include_obs_values_in_time_range('1265', max_time='2010-07-10')
+    # 2131aff8-2e2a-480a-b7ab-4ac53250262b
+
+    # Note the first call to `find_patient_aggregates` starts a local Spark
+    # cluster, load input files, and flattens observations. These won't be
+    # done in subsequent calls of this function on the same instance.
+    # Also same cluster will be reused for other instances of `PatientQuery`.
+    agg_df = patient_query.get_patient_obs_view(_BASE_URL)
+    print(agg_df.head(10))
+    print(agg_df[agg_df['patientId'] == '00c1426f-ca04-414a-8db7-043bb41b64d2'].head())
+    print(agg_df[agg_df['patientId'] == '4553cb1b-d318-404d-86cb-595e91d39f46'].head())
 
 if __name__ == '__main__':
   unittest.main()

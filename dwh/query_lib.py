@@ -39,11 +39,6 @@ DATE_VALUE_SEPARATOR = '_SeP_'
 def merge_date_and_value(d: str, v: Any) -> str:
   return '{}{}{}'.format(d, DATE_VALUE_SEPARATOR, v)
 
-
-def _build_in_list_with_quotes(values: tp.Iterable[tp.Any]):
-  return ",".join(map(lambda x: '\"{}\"'.format(x), values))
-
-
 class Runner(Enum):
   SPARK = 1
   BIG_QUERY = 2
@@ -289,6 +284,7 @@ class PatientQuery():
         ['coding.code!="{}"'.format(code) for code in self._code_constraint] + [
             _ObsConstraints.time_constraint(self._all_codes_min_time,
                                             self._all_codes_max_time)])
+    # TODO(gdevanlaa) : Needs (({}))
     return '({} OR ({}))'.format(constraints_str, others_str)
 
   # TODO(gdevanla): This function is specific to derived class since it is

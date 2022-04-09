@@ -2,9 +2,9 @@
 import typing as tp
 import pandas as pd
 
-from query_lib import PatientQuery
-from query_lib import _ObsConstraints
 from query_lib import _EncounterContraints
+from query_lib import _ObsConstraints
+from query_lib import PatientQuery
 
 try:
   from google.cloud import bigquery
@@ -12,9 +12,38 @@ except ImportError:
   pass  # not all set up need to have bigquery libraries installed
 
 
-class _BigQueryEncounterConstraints:
-  """Encounter constraints helper class that will be set up for querying
-    BigQuery."""
+def _build_in_list_with_quotes(values: tp.Iterable[tp.Any]):
+  return ",".join(map(lambda x: '\"{}\"'.format(x), values))
+
+
+class _BigQueryEncounterConstraints(_EncounterContraints):
+  """Encounter constraints helper class that will be set up for querying BigQuery.
+  """
+
+  def sql(self):
+    """
+    Builds Encounter criteria
+    """
+    clause_location_id = None
+    if self._location_id:
+      clause_location_id = 'L.location.locationId in ({})'.format(
+          _build_in_list_with_quotes(self._location_id)
+      )
+    clause_type_system = None
+    if self._type_system:
+      clause_type_system = "C.system = '{}'".format(self._type_system)
+    clause_type_codes = None
+    if self._type_code:
+      clause_type_codes = 'C.code in ({})'.format(
+          _build_in_list_with_quotes(self._type_code)
+      )
+    where_clause = ' and '.join(
+        x for x in [clause_location_id, clause_type_system, clause_type_codes]
+        if x
+    )
+    if where_clause:
+      return ' where {} '.format(where_clause)
+    return ''
 
 
 class _BigQueryObsConstraints(_ObsConstraints):
@@ -51,8 +80,9 @@ class _BigQueryObsConstraints(_ObsConstraints):
 
 
 class _BigQueryPatientQuery(PatientQuery):
-  """Concrete implementation of PatientQuery class that serves data stored in
-    BigQuery."""
+  """
+  Concrete implementation of PatientQuery class that serves data stored in BigQuery.
+  """
 
   def __init__(self, bq_dataset: str, code_system: str):
     super().__init__(
@@ -60,20 +90,17 @@ class _BigQueryPatientQuery(PatientQuery):
     )
     self._bq_dataset = bq_dataset
 
-  @classmethod
   def _build_encounter_query(
-      cls,
+      self,
       *,
       bq_dataset: str,
       base_url: str,
       table_name: str,
-      location_ids: tp.Optional[tp.Iterable[str]],
-      type_system: tp.Optional[str] = None,
-      type_codes: tp.Optional[tp.Iterable[str]] = None,
       force_location_type_columns: bool = True,
       sample_count: tp.Optional[int] = None
   ):
-    """Helper function to build the sql query which will only query the
+    """
+    Helper function to build the sql query which will only query the
         Encounter table Sample Query: WITH S AS (
 
         select * from `learnbq-345320.fhir_sample.encounter`
@@ -108,26 +135,7 @@ class _BigQueryPatientQuery(PatientQuery):
           {sample_count}
     """
 
-    clause_location_id = None
-    if location_ids:
-      clause_location_id = 'L.location.locationId in ({})'.format(
-          _build_in_list_with_quotes(location_ids)
-      )
-    clause_type_system = None
-    if type_system:
-      clause_type_system = "C.system = '{}'".format(type_system)
-    clause_type_codes = None
-    if type_codes:
-      clause_type_codes = 'C.code in ({})'.format(
-          _build_in_list_with_quotes(type_codes)
-      )
-
-    where_clause = ' and '.join(
-        x for x in [clause_location_id, clause_type_system, clause_type_codes]
-        if x
-    )
-    if where_clause:
-      where_clause = ' where ' + where_clause
+    where_clause = self._enc_constraint.sql()
     sql = sql_template.format(
         table_name=table_name,
         base_url=base_url,
@@ -139,7 +147,10 @@ class _BigQueryPatientQuery(PatientQuery):
     return sql
 
   def _build_obs_encounter_query(
-      self, dataset: str, sample_count: tp.Optional[int] = None
+      self,
+      dataset: str,
+      base_url: str,
+      sample_count: tp.Optional[int] = None
   ) -> str:
     """
         Helper functions that builds the query to get patient_observation data
@@ -172,9 +183,11 @@ class _BigQueryPatientQuery(PatientQuery):
             select * from `{dataset}.Encounter`
             ),
       E1 AS (
-          select E.id as encounterId, C.system, C.code,
+          select replace(E.id, '{base_url}', '') as encounterId, C.system, C.code,
             L.location.LocationId, L.location.display,
-            from E, unnest(E.type.array) as T, unnest(T.coding.array) as C left join unnest(E.location.array) as L),
+            from E, unnest(E.type.array) as T, unnest(T.coding.array) as C left join unnest(E.location.array) as L
+            {encounter_where_clause}
+            ),
       G as (select
           obs_subject_patient_id patient_id,
           obs_code_coding_code as coding_code, -- TODO: Should this be coding.code
@@ -217,6 +230,8 @@ class _BigQueryPatientQuery(PatientQuery):
         all_obs_constraints=all_obs_constraints,
         sample_count='' if sample_count is None else ' LIMIT ' +
         str(sample_count),
+        base_url=base_url,
+        encounter_where_clause=self._enc_constraint.sql()
     )
     return sql
 
@@ -228,20 +243,20 @@ class _BigQueryPatientQuery(PatientQuery):
       else:
         return 'FALSE'
 
-    if self._code_constraint and not self._include_all_codes:
-        constraints_str = ' OR '.join([
-            obs_constraint._build_critera()
-            for obs_constraint in self._code_constraint.values()
-        ])
-        return " ({}) ".format(constraints_str)
+    constraints_str = ' OR '.join([
+        obs_constraint._build_critera()
+        for obs_constraint in self._code_constraint.values()
+    ])
+    if not self._include_all_codes:
+      return " ({}) ".format(constraints_str)
 
     others_str = ' AND '.join(
         ['OC.code != "{}"'.format(code) for code in self._code_constraint] + [
-            self._obs_constraint_class.time_constraint(
-                self._all_codes_min_time, self._all_codes_max_time)
+            self._obs_constraint_class.
+            time_constraint(self._all_codes_min_time, self._all_codes_max_time)
         ]
     )
-    return ' ({}) '.format(others_str)
+    return ' (({}) OR ({})) '.format(constraints_str, others_str)
 
   def get_patient_encounter_view(
       self,
@@ -254,12 +269,6 @@ class _BigQueryPatientQuery(PatientQuery):
         bq_dataset=self._bq_dataset,
         table_name='Encounter',
         base_url=base_url,
-        location_ids=self._enc_constraint.location_ids
-        if self._enc_constraint else None,
-        type_system=self._enc_constraint.type_system
-        if self._enc_constraint else None,
-        type_codes=self._enc_constraint.type_codes
-        if self._enc_constraint else None,
         force_location_type_columns=force_location_type_columns,
         sample_count=sample_count,
     )
@@ -271,12 +280,11 @@ class _BigQueryPatientQuery(PatientQuery):
   def get_patient_obs_view(
       self,
       base_url: str,
-      force_location_type_columns: bool = True,
       sample_count: tp.Optional[int] = None,
   ) -> pd.DataFrame:
 
     sql = self._build_obs_encounter_query(
-        dataset=self._bq_dataset, sample_count=sample_count
+        dataset=self._bq_dataset, sample_count=sample_count, base_url=base_url
     )
 
     print(sql)
