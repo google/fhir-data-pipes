@@ -350,7 +350,9 @@ class PatientQuery():
           `force_location_type_columns` is `True`.
         - `encTypeCode` the encounter type code
         - `numEncounters` number of encounters with that type and location
+        # TODO(gdevanla): Should the type of this be pandas datatype?
         - `firstDate` the first date such an encounter happened
+        # TODO(gdevanla): Should the type of this be pandas datatype?
         - `lastDate` the last date such an encounter happened
     """
     raise NotImplementedError('This should be implemented by sub-classes!')

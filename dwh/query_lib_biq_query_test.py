@@ -39,7 +39,11 @@ class BigQueryPatientQueryTest(unittest.TestCase):
     actual_df = pq.get_patient_encounter_view(
         base_url='', force_location_type_columns=False
     )
-    print(actual_df.head(2).T)
+    self.assertEqual(396650, len(actual_df))
+    expected_cols = sorted(['encPatientId', 'locationId', 'encTypeSystem', 'encTypeCode', 'locationDisplay', 'num_encounters', 'firstDate', 'lastDate'])
+    actual_cols = sorted(actual_df.columns.to_list())
+    self.assertListEqual(expected_cols, actual_cols)
+
 
   def test_encounter_basic_query_with_system(self):
 
@@ -47,34 +51,69 @@ class BigQueryPatientQueryTest(unittest.TestCase):
         bq_dataset=_BIGQUERY_DATASET, code_system='dummy_code_system'
     )
     pq.encounter_constraints(
-        type_system='http://fhir.openmrs.org/code-system/encounter-type')
+        typeSystem='http://fhir.openmrs.org/code-system/encounter-type')
     actual_df = pq.get_patient_encounter_view(
         base_url='', force_location_type_columns=False
     )
-    print(actual_df)
+    print(set(actual_df['encTypeCode']))
+    self.assertSetEqual(
+        set(actual_df['encTypeSystem']),
+        {'http://fhir.openmrs.org/code-system/encounter-type'})
 
   def test_encounter_basic_query_with_codes(self):
     pq = ql._BigQueryPatientQuery(
         bq_dataset=_BIGQUERY_DATASET, code_system='dummy_code_system'
     )
-    pq.encounter_constraints(
-        type_codes=['5021b1a1-e7f6-44b4-ba02-da2f2bcf8718'])
+    test_codes = [
+        "e22e39fd-7db2-45e7-80f1-60fa0d5a4378",
+        "181820aa-88c9-479b-9077-af92f5364329",
+    ]
+
+    pq.encounter_constraints(typeCode=test_codes)
+
     actual_df = pq.get_patient_encounter_view(
         base_url='', force_location_type_columns=False
     )
-    print(actual_df)
+    self.assertSetEqual(set(actual_df['encTypeCode']), set(test_codes))
 
   def test_encounter_basic_query_with_location_ids(self):
     pq = ql._BigQueryPatientQuery(
         bq_dataset=_BIGQUERY_DATASET, code_system='dummy_code_system'
     )
+    test_locations = ['2131aff8-2e2a-480a-b7ab-4ac53250262b']
     pq.encounter_constraints(
-        location_ids=['2131aff8-2e2a-480a-b7ab-4ac53250262b'])
+        locationId=test_locations)
     actual_df = pq.get_patient_encounter_view(
         base_url='', force_location_type_columns=False,
         sample_count=10,
     )
-    print(actual_df)
+    self.assertSetEqual(set(actual_df['locationId']), set(test_locations))
+
+  def test_encounter_compound_query_params(self):
+    test_locations = ['b1a8b05e-3542-4037-bbd3-998ee9c40574']
+    test_codes = [
+        "e22e39fd-7db2-45e7-80f1-60fa0d5a4378",
+        "181820aa-88c9-479b-9077-af92f5364329",
+    ]
+    test_type_system = 'http://fhir.openmrs.org/code-system/encounter-type'
+
+    pq = ql._BigQueryPatientQuery(
+        bq_dataset=_BIGQUERY_DATASET, code_system='dummy_code_system'
+    )
+    pq.encounter_constraints(
+        typeSystem=test_type_system,
+        locationId=test_locations,
+        typeCode=test_codes)
+    actual_df = pq.get_patient_encounter_view(
+        base_url='', force_location_type_columns=False,
+        sample_count=10,
+    )
+
+
+    self.assertSetEqual(set(actual_df['locationId']), set(test_locations))
+    self.assertSetEqual(set(actual_df['encTypeSystem']), {test_type_system})
+    self.assertSetEqual(set(actual_df['encTypeCode']), set(test_codes))
+
 
   def test_obs_basic_query(self):
 

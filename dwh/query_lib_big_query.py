@@ -24,7 +24,8 @@ class _BigQueryEncounterConstraints(_EncounterContraints):
 
   def sql(self):
     """
-    Builds Encounter criteria
+    Builds Encounter criteria. Assumes, the query set will be as follows:
+    `from S, unnest(s.type.array) as T, unnest(T.coding.array) as C left join unnest(s.location.array) as L`
     """
     clause_location_id = None
     if self._location_id:
@@ -122,13 +123,16 @@ class _BigQueryPatientQuery(PatientQuery):
     WITH S AS (
           select * from {data_set}.{table_name}
           )
-          select replace(S.id, '{base_url}', '') as encounterId,
+          select
+          --replace(S.id, '{base_url}', '') as encounterId,
           S.subject.PatientId as encPatientId,
-          C.system, C.code,
-          L.location.LocationId, L.location.display,
-          MIN(S.period.start) as first,
-          MAX(S.period.end) as last,
-          COUNT(*) as num_encounters
+          L.location.LocationId as locationId,
+          C.system as encTypeSystem,
+          C.code as encTypeCode,
+          L.location.display as locationDisplay,
+          COUNT(*) as num_encounters,
+          MIN(S.period.start) as firstDate,
+          MAX(S.period.end) as lastDate
           from S, unnest(s.type.array) as T, unnest(T.coding.array) as C left join unnest(s.location.array) as L
           --C.system = 'system3000' and C.code = 'code3000'
           --and L.location.locationId in ('test')
