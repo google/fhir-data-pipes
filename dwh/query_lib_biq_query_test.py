@@ -30,7 +30,7 @@ _BIGQUERY_DATASET = 'synthea_big'
 
 class BigQueryPatientQueryTest(unittest.TestCase):
 
-  def test_basic_query(self):
+  def test_encounter_basic_query(self):
 
     pq = ql._BigQueryPatientQuery(
         bq_dataset=_BIGQUERY_DATASET, code_system='dummy_code_system'
@@ -40,7 +40,7 @@ class BigQueryPatientQueryTest(unittest.TestCase):
     )
     print(actual_df)
 
-  def test_basic_query_with_system(self):
+  def test_encounter_basic_query_with_system(self):
 
     pq = ql._BigQueryPatientQuery(
         bq_dataset=_BIGQUERY_DATASET, code_system='dummy_code_system'
@@ -52,7 +52,7 @@ class BigQueryPatientQueryTest(unittest.TestCase):
     )
     print(actual_df)
 
-  def test_basic_query_with_codes(self):
+  def test_encounter_basic_query_with_codes(self):
     pq = ql._BigQueryPatientQuery(
         bq_dataset=_BIGQUERY_DATASET, code_system='dummy_code_system'
     )
@@ -63,7 +63,7 @@ class BigQueryPatientQueryTest(unittest.TestCase):
     )
     print(actual_df)
 
-  def test_basic_query_with_location_ids(self):
+  def test_encounter_basic_query_with_location_ids(self):
     pq = ql._BigQueryPatientQuery(
         bq_dataset=_BIGQUERY_DATASET, code_system='dummy_code_system'
     )
@@ -74,6 +74,17 @@ class BigQueryPatientQueryTest(unittest.TestCase):
         sample_count=10,
     )
     print(actual_df)
+
+  def test_obs_basic_query(self):
+
+    pq = ql._BigQueryPatientQuery(
+        bq_dataset=_BIGQUERY_DATASET, code_system='dummy_code_system'
+    )
+    actual_df = pq.get_patient_obs_view(
+        base_url='', force_location_type_columns=False
+    )
+    print(actual_df)
+
 
 
 if __name__ == '__main__':

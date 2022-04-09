@@ -739,6 +739,64 @@ class _BigQueryPatientQuery(PatientQuery):
         sample_count="" if sample_count is None else "LIMIT " + str(sample_count))
     return sql
 
+  @classmethod
+  def _build_obs_encounter_query(
+      cls,
+      dataset: str,
+      sample_count: tp.Optional[int] = None):
+    '''
+    Helper functions that builds the query to get patient_observation data
+    '''
+    sql = '''
+    with O as
+    (select * from `{dataset}.Observation`),
+      O1 as
+      (select
+          OC.system obs_system,
+          OC.code as obs_code_coding_code,
+          OVC.code obs_value_code,
+          O.effective.dateTime obs_effective_datetime,
+          O.value.quantity.value as obs_value_quantity,
+          O.subject.PatientId obs_subject_patient_id,
+          O.context.encounterId obs_context_encounter_id,
+          FORMAT('%s,%s', cast(O.effective.dateTime as string) , cast(O.value.quantity.value as string)) as date_and_value,
+          FORMAT('%s,%s', cast(O.effective.dateTime as string), OVC.code) as date_and_value_code,
+          from O, unnest(O.code.coding.array) as OC, unnest(O.value.codeableConcept.coding.array) as OVC
+          where OC.system = 'http://www.ampathkenya.org'
+          and OVC.system is not null),
+      E  AS (
+            select * from `{dataset}.Encounter`
+            ),
+      E1 AS (
+          select E.id as encounterId, C.system, C.code,
+            L.location.LocationId, L.location.display,
+            from E, unnest(E.type.array) as T, unnest(T.coding.array) as C left join unnest(E.location.array) as L),
+      G as (select
+          obs_subject_patient_id patient_id,
+          obs_code_coding_code as coding_code, -- TODO: Should this be coding.code
+          count(*) as num_obs,
+          min(obs_value_quantity) as min_value,
+          max(obs_value_quantity) as max_value,
+          min(obs_effective_datetime) as min_date,
+          max(obs_effective_datetime) as max_date,
+          min(date_and_value) as min_date_value,
+          max(date_and_value) as max_date_value,
+          min(date_and_value_code) as min_date_value_code,
+          max(date_and_value_code) as max_date_value_code,
+        from O1 inner join E1 on E1.encounterId = O1.obs_context_encounter_id
+        group by patient_id, coding_code)
+      select patient_id as patientId, coding_code,
+      P.birthDate as birthDate,
+      P.gender as gender,
+      num_obs, min_value, max_value, min_date, max_date, min_date_value, max_date_value, min_date_value_code, max_date_value_code
+      from G inner join `{dataset}.Patient` P on G.patient_id = P.id
+    '''
+
+    sql = sql.format(
+        dataset=dataset,
+        sample_count="" if sample_count is None else "LIMIT " + str(sample_count))
+    return sql
+
 
   def get_patient_encounter_view(self, base_url: str,
                                  force_location_type_columns: bool = True,
@@ -758,3 +816,18 @@ class _BigQueryPatientQuery(PatientQuery):
     with bigquery.Client() as client:
       patient_enc = client.query(sql).to_dataframe()
       return patient_enc
+
+
+  def get_patient_obs_view(
+      self,
+      base_url: str,
+      force_location_type_columns: bool = True,
+      sample_count: tp.Optional[int] = None) -> pandas.DataFrame:
+
+    sql = self._build_obs_encounter_query(
+        dataset=self._bq_dataset,
+        sample_count=sample_count)
+
+    with bigquery.Client() as client:
+      patient_obs_enc = client.query(sql).to_dataframe()
+      return patient_obs_enc
