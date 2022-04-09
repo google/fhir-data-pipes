@@ -204,7 +204,7 @@ class _BigQueryPatientQuery(PatientQuery):
           max(date_and_value_code) as max_date_value_code,
         from O1 inner join E1 on E1.encounterId = O1.obs_context_encounter_id
         group by patient_id, coding_code)
-      select patient_id as patientId, coding_code,
+      select patient_id as patientId, coding_code as code,
       P.birthDate as birthDate,
       P.gender as gender,
       num_obs, min_value, max_value, min_date, max_date, min_date_value, max_date_value, min_date_value_code, max_date_value_code
@@ -292,17 +292,17 @@ class _BigQueryPatientQuery(PatientQuery):
     print(sql)
 
     with bigquery.Client() as client:
-      patient_obs_enc = client.query(sql).to_dataframe()
-      print(patient_obs_enc[['max_date_value', 'min_date_value', 'max_date_value_code', 'min_date_value_code']])
+        patient_obs_enc = client.query(sql).to_dataframe()
+        print(patient_obs_enc[['max_date_value', 'min_date_value', 'max_date_value_code', 'min_date_value_code']])
 
 
-      # patient_obs_enc['last_value'] = patient_obs_enc.max_date_value.str.split(
-      #   _DATE_VALUE_SEPARATOR, expand=True)[1]
-      # patient_obs_enc['first_value'] = patient_obs_enc.min_date_value.str.split(
-      #   _DATE_VALUE_SEPARATOR, expand=True)[1]
-      # patient_obs_enc['last_value_code'] = patient_obs_enc.max_date_value_code.str.split(
-      #   _DATE_VALUE_SEPARATOR, expand=True)[1]
-      # patient_obs_enc['first_value_code'] = patient_obs_enc.min_date_value_code.str.split(
-      #   _DATE_VALUE_SEPARATOR, expand=True)[1]
+        col_map = (('last_value', 'max_date_value'),
+                   ('first_value', 'min_date_value'),
+                   ('last_value_code', 'max_date_value_code'),
+                   ('first_value_code', 'min_date_value_code'))
 
-      return patient_obs_enc
+        for dest_col, source_col in col_map:
+            patient_obs_enc[dest_col] = patient_obs_enc[source_col].apply(
+                lambda x: None if x is None else x.split(',')[1])
+        patient_obs_enc = patient_obs_enc.drop(columns=[col[1] for col in col_map])
+        return patient_obs_enc
