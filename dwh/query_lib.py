@@ -23,7 +23,7 @@ function that defines the source of the data.
 # See https://stackoverflow.com/questions/33533148 why this is needed.
 from __future__ import annotations
 from enum import Enum
-from typing import List, Any
+from typing import List, Any, Type
 import pandas
 from pyspark import SparkConf
 from pyspark.sql import SparkSession, DataFrame
@@ -65,6 +65,8 @@ def patient_query_factory(runner: Runner, data_source: str,
   if runner == Runner.SPARK:
     return _SparkPatientQuery(data_source, code_system)
   if runner == Runner.BIG_QUERY:
+    # NOTE: Temporary until classes in this module are reorganized
+    from query_lib_big_query import _BigQueryPatientQuery
     return _BigQueryPatientQuery(data_source, code_system)
   raise ValueError('Query engine {} is not supported yet.'.format(runner))
 
@@ -166,20 +168,28 @@ class PatientQuery():
   - The DataFrame is fetched or more manipulation is done on it by the library.
   """
 
-  def __init__(self, code_system: str = None):
+  def __init__(
+          self,
+          code_system: str = None,
+          encounter_constraints_class: Type[_EncounterContraints]=_EncounterContraints,
+          obs_constraints_class: Type[_ObsConstraints]=_ObsConstraints):
+
     self._code_constraint = {}
-    self._enc_constraint = _EncounterContraints()
+    self._enc_constraint = encounter_constraints_class()
     self._include_all_codes = False
     self._all_codes_min_time = None
     self._all_codes_max_time = None
     self._code_system = code_system
+
+    self._enc_constraints_class = encounter_constraints_class
+    self._obs_constraints_class = obs_constraints_class
 
   def include_obs_in_value_and_time_range(self, code: str,
       min_val: float = None, max_val: float = None, min_time: str = None,
       max_time: str = None) -> PatientQuery:
     if code in self._code_constraint:
       raise ValueError('Duplicate constraints for code {}'.format(code))
-    self._code_constraint[code] = _ObsConstraints(
+    self._code_constraint[code] = self._obs_constraints_class(
         code, value_sys=self._code_system, min_value=min_val,
         max_value=max_val, min_time=min_time, max_time=max_time)
     return self
@@ -189,7 +199,7 @@ class PatientQuery():
       max_time: str = None) -> PatientQuery:
     if code in self._code_constraint:
       raise ValueError('Duplicate constraints for code {}'.format(code))
-    self._code_constraint[code] = _ObsConstraints(
+    self._code_constraint[code] = self._obs_constraints_class(
         code, values=values, value_sys=self._code_system, min_time=min_time,
         max_time=max_time)
     return self
@@ -215,7 +225,7 @@ class PatientQuery():
       typeCode: A list of encounter type codes that should be kept or None if
         there are no type constraints.
     """
-    self._enc_constraint = _EncounterContraints(
+    self._enc_constraint = self._enc_constraints_class(
         locationId, typeSystem, typeCode)
 
   def _all_obs_constraints(self) -> str:
@@ -230,7 +240,7 @@ class PatientQuery():
       return '({})'.format(constraints_str)
     others_str = ' AND '.join(
         ['coding.code!="{}"'.format(code) for code in self._code_constraint] + [
-            _ObsConstraints.time_constraint(self._all_codes_min_time,
+            self._obs_constraints_class.time_constraint(self._all_codes_min_time,
                                             self._all_codes_max_time)])
     return '({} OR ({}))'.format(constraints_str, others_str)
 
@@ -525,12 +535,3 @@ class _SparkPatientQuery(PatientQuery):
         'num_obs', 'min_value', 'max_value', 'min_date', 'max_date',
         'min_date_value', 'max_date_value', 'min_date_value_code',
         'max_date_value_code')
-
-
-class _BigQueryPatientQuery(PatientQuery):
-  # TODO implement this!
-
-  def __init__(self, bq_dataset: str, code_system: str):
-    super().__init__(code_system)
-    raise ValueError('BigQuery query engine is not implemented yet!')
-
