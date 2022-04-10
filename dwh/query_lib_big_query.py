@@ -263,7 +263,7 @@ class _BigQueryPatientQuery(PatientQuery):
         others_str = " AND ".join(
             ['OC.code != "{}"'.format(code) for code in self._code_constraint]
             + [
-                self._obs_constraint_class.time_constraint(
+                self._obs_constraints_class.time_constraint(
                     self._all_codes_min_time, self._all_codes_max_time
                 )
             ]

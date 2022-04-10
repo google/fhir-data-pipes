@@ -11,6 +11,8 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+
+
 """This is the main higher level library to query FHIR resources.
 
 The public interface of this library is intended to be independent of the actual
@@ -21,16 +23,15 @@ function that defines the source of the data.
 # See https://stackoverflow.com/questions/33533148 why this is needed.
 from __future__ import annotations
 from enum import Enum
-from typing import List, Any
-import typing as tp
+from typing import List, Any, Type
 import pandas
 from pyspark import SparkConf
 from pyspark.sql import SparkSession, DataFrame
 import pyspark.sql.functions as F
 import pyspark.sql.types as T
 
-
 import common
+
 
 # This separator is used to merge date and values into one string.
 DATE_VALUE_SEPARATOR = '_SeP_'
@@ -39,15 +40,15 @@ DATE_VALUE_SEPARATOR = '_SeP_'
 def merge_date_and_value(d: str, v: Any) -> str:
   return '{}{}{}'.format(d, DATE_VALUE_SEPARATOR, v)
 
+
 class Runner(Enum):
   SPARK = 1
   BIG_QUERY = 2
   #FHIR_SERVER = 3
 
 
-def patient_query_factory(
-    runner: Runner, data_source: str, code_system: str = None
-) -> PatientQuery:
+def patient_query_factory(runner: Runner, data_source: str,
+    code_system: str = None) -> PatientQuery:
   """Returns the right instance of `PatientQuery` based on `data_source`.
 
   Args:
@@ -64,6 +65,8 @@ def patient_query_factory(
   if runner == Runner.SPARK:
     return _SparkPatientQuery(data_source, code_system)
   if runner == Runner.BIG_QUERY:
+    # NOTE: Temporary until classes in this module are reorganized
+    from query_lib_big_query import _BigQueryPatientQuery
     return _BigQueryPatientQuery(data_source, code_system)
   raise ValueError('Query engine {} is not supported yet.'.format(runner))
 
@@ -75,21 +78,11 @@ class _ObsConstraints():
   on an already flattened observation view.
   """
 
-  def __init__(
-      self,
-      code: str,
-      values: List[str] = None,
-      value_sys: str = None,
-      min_value: float = None,
-      max_value: float = None,
-      min_time: str = None,
-      max_time: str = None
-  ) -> None:
+  def __init__(self, code: str, values: List[str] = None, value_sys: str = None,
+      min_value: float = None, max_value: float = None,
+      min_time: str = None, max_time: str = None) -> None:
     self._code = code
     self._sys_str = '="{}"'.format(value_sys) if value_sys else 'IS NULL'
-
-    #TODO(gdevanla): Add check to make sure either self._values is set or self._min_value and self._max_value is set,
-    #because that is the assumption being made in the query builder
     self._values = values
     self._min_time = min_time
     self._max_time = max_time
@@ -114,13 +107,11 @@ class _ObsConstraints():
     together into an `AND` clause.
     """
     cl = [self.time_constraint(self._min_time, self._max_time)]
-    # TODO(gdevanla): This is already done in flattenning.
     cl.append('coding.code="{}"'.format(self._code))
-    # TODO(gdevanla): We don't need to filter coding.system as it is already done in flattening.
+    # We don't need to filter coding.system as it is already done in flattening.
     if self._values:
       codes_str = ','.join(['"{}"'.format(v) for v in self._values])
       cl.append('value.codeableConcept.coding IN ({})'.format(codes_str))
-      # TODO(gdevanla): Check this. The same field is also compared against patient.code_system (in _flatten_obs)
       cl.append('value.codeableConcept.system {}'.format(self._sys_str))
     elif self._min_value or self._max_value:
       if self._min_value:
@@ -137,12 +128,8 @@ class _EncounterContraints():
   on an already flattened encounter view.
   """
 
-  def __init__(
-      self,
-      locationId: List[str] = None,
-      typeSystem: str = None,
-      typeCode: List[str] = None
-  ):
+  def __init__(self, locationId: List[str] = None,
+      typeSystem: str = None, typeCode: List[str] = None):
     self._location_id = locationId
     self._type_system = typeSystem
     self._type_code = typeCode
@@ -164,8 +151,7 @@ class _EncounterContraints():
       temp_str = ','.join(['"{}"'.format(v) for v in self._type_code])
       type_code_str = 'encTypeCode IN ({})'.format(temp_str)
     type_sys_str = 'encTypeSystem="{}"'.format(
-        self._type_system
-    ) if self._type_system else 'TRUE'
+        self._type_system) if self._type_system else 'TRUE'
     return '{} AND {} AND {}'.format(loc_str, type_code_str, type_sys_str)
 
 
@@ -182,63 +168,44 @@ class PatientQuery():
   - The DataFrame is fetched or more manipulation is done on it by the library.
   """
 
-  def __init__(self,
-               code_system: str = None,
-               encounter_constraint_class: tp.Type[_EncounterContraints]=_EncounterContraints,
-               obs_constraint_class: tp.Type[_ObsConstraints]=_ObsConstraints):
+  def __init__(
+          self,
+          code_system: str = None,
+          encounter_constraints_class: Type[_EncounterContraints]=_EncounterContraints,
+          obs_constraints_class: Type[_ObsConstraints]=_ObsConstraints):
+
     self._code_constraint = {}
-    self._enc_constraint = encounter_constraint_class()
+    self._enc_constraint = encounter_constraints_class()
     self._include_all_codes = False
     self._all_codes_min_time = None
     self._all_codes_max_time = None
     self._code_system = code_system
 
-    self._encounter_constaint_class = encounter_constraint_class
-    self._obs_constraint_class = obs_constraint_class
+    self._enc_constraints_class = encounter_constraints_class
+    self._obs_constraints_class = obs_constraints_class
 
-  def include_obs_in_value_and_time_range(
-      self,
-      code: str, # Obs.coding.code
-      min_val: float = None,
-      max_val: float = None,
-      min_time: str = None,
-      max_time: str = None
-  ) -> PatientQuery:
+  def include_obs_in_value_and_time_range(self, code: str,
+      min_val: float = None, max_val: float = None, min_time: str = None,
+      max_time: str = None) -> PatientQuery:
     if code in self._code_constraint:
       raise ValueError('Duplicate constraints for code {}'.format(code))
-    self._code_constraint[code] = self._obs_constraint_class(
-        code,
-        value_sys=self._code_system,
-        min_value=min_val,
-        max_value=max_val,
-        min_time=min_time,
-        max_time=max_time
-    )
+    self._code_constraint[code] = self._obs_constraints_class(
+        code, value_sys=self._code_system, min_value=min_val,
+        max_value=max_val, min_time=min_time, max_time=max_time)
     return self
 
-  # TODO(gdevanla): Should be called include_obs_codes_in_time_range
-  def include_obs_values_in_time_range(
-      self,
-      code: str,
-      values: List[str] = None,  #TODO(gdevanla): rename this to values_codeableconcept_coding
-      min_time: str = None,
-      max_time: str = None
-  ) -> PatientQuery:
+  def include_obs_values_in_time_range(self, code: str,
+      values: List[str] = None, min_time: str = None,
+      max_time: str = None) -> PatientQuery:
     if code in self._code_constraint:
       raise ValueError('Duplicate constraints for code {}'.format(code))
-    self._code_constraint[code] = self._obs_constraint_class(
-        code,
-        values=values,
-        value_sys=self._code_system,
-        min_time=min_time,
-        max_time=max_time
-    )
+    self._code_constraint[code] = self._obs_constraints_class(
+        code, values=values, value_sys=self._code_system, min_time=min_time,
+        max_time=max_time)
     return self
 
   def include_all_other_codes(self, include: bool = True, min_time: str = None,
       max_time: str = None) -> PatientQuery:
-
-    # TODO(gdevanla):  Should be called include_all_other_codes
     self._include_all_codes = include
     self._all_codes_min_time = min_time
     self._all_codes_max_time = max_time
@@ -258,14 +225,10 @@ class PatientQuery():
       typeCode: A list of encounter type codes that should be kept or None if
         there are no type constraints.
     """
-    self._enc_constraint = self._encounter_constaint_class(
+    self._enc_constraint = self._enc_constraints_class(
         locationId, typeSystem, typeCode)
 
   def _all_obs_constraints(self) -> str:
-
-    # TODO(gdevanla): I think we need to raise an error here. Or else the user will not see
-    # any record if both self._code_constraint and self._include_all_codes are not set
-    # Plus, this function is specific to Spark, should be defined in derived class
     if not self._code_constraint:
       if self._include_all_codes:
         return 'TRUE'
@@ -275,23 +238,12 @@ class PatientQuery():
         [self._code_constraint[code].sql() for code in self._code_constraint])
     if not self._include_all_codes:
       return '({})'.format(constraints_str)
-    # TODO(gdevanla): Why is this coding.code!= if the flag is _include_all_codes
-      ##################################################
-      # C       I                                      #
-      # F        T   return True                       #
-      # F        F   return False                      #
-      # T        T   coding != codes and apply dates   #
-      # T        F   just apply constraint_str         #
-      ##################################################
     others_str = ' AND '.join(
         ['coding.code!="{}"'.format(code) for code in self._code_constraint] + [
-            _ObsConstraints.time_constraint(self._all_codes_min_time,
+            self._obs_constraints_class.time_constraint(self._all_codes_min_time,
                                             self._all_codes_max_time)])
-    # TODO(gdevanlaa) : Needs (({}))
     return '({} OR ({}))'.format(constraints_str, others_str)
 
-  # TODO(gdevanla): This function is specific to derived class since it is
-  # dependent on all_obs_constraints
   def all_constraints_sql(self) -> str:
     obs_str = self._all_obs_constraints()
     enc_str = '{}'.format(
@@ -329,7 +281,6 @@ class PatientQuery():
     raise NotImplementedError('This should be implemented by sub-classes!')
 
   def get_patient_encounter_view(self, base_url: str,
-                                 # TODO(gdevanla) : the force_location_type_columns should be dropped
       force_location_type_columns: bool = True) -> pandas.DataFrame:
     """Aggregates encounters for each patient based on location, type, etc.
 
@@ -354,9 +305,7 @@ class PatientQuery():
           `force_location_type_columns` is `True`.
         - `encTypeCode` the encounter type code
         - `numEncounters` number of encounters with that type and location
-        # TODO(gdevanla): Should the type of this be pandas datatype?
         - `firstDate` the first date such an encounter happened
-        # TODO(gdevanla): Should the type of this be pandas datatype?
         - `lastDate` the last date such an encounter happened
     """
     raise NotImplementedError('This should be implemented by sub-classes!')
