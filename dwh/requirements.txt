@@ -1,4 +1,4 @@
 pyspark
-pandas>=1.4.2
+pandas
 matplotlib
 google-cloud-bigquery>=3.0.1
