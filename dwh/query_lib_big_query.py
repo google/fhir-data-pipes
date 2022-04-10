@@ -15,6 +15,9 @@ except ImportError:
 
 
 def _build_in_list_with_quotes(values: tp.Iterable[tp.Any]):
+    """
+    Builds the `in` operand for a where clause
+    """
     return ",".join(('"{}"'.format(x) for x in values))
 
 
@@ -55,6 +58,9 @@ class _BigQueryObsConstraints(_ObsConstraints):
 
     @staticmethod
     def time_constraint(min_time: str = None, max_time: str = None):
+        '''
+        Build time constraints for Observation queries
+        '''
         if not min_time and not max_time:
             return " TRUE "
         conditions = []
