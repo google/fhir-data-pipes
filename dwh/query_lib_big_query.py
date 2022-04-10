@@ -19,13 +19,15 @@ def _build_in_list_with_quotes(values: tp.Iterable[tp.Any]):
 
 
 class _BigQueryEncounterConstraints(_EncounterContraints):
-    """Encounter constraints helper class that will be set up for querying BigQuery."""
+    """Encounter constraints helper class that will be set up for querying
+    BigQuery."""
 
-    def sql(self):
-        """
-        Builds Encounter criteria. Assumes, the query set will be as follows:
-        from S, unnest(s.type.array) as T,
-        unnest(T.coding.array) as C left join unnest(s.location.array) as L
+    def where_clause(self):
+        """Builds Encounter criteria.
+
+        Assumes, the query set will be as follows: from S,
+        unnest(s.type.array) as T, unnest(T.coding.array) as C left join
+        unnest(s.location.array) as L
         """
         clause_location_id = None
         if self._location_id:
@@ -55,37 +57,35 @@ class _BigQueryObsConstraints(_ObsConstraints):
     def time_constraint(min_time: str = None, max_time: str = None):
         if not min_time and not max_time:
             return " TRUE "
-        cl = []
+        conditions = []
         if min_time:
-            cl.append('O.effective.dateTime >= "{}"'.format(min_time))
+            conditions.append('O.effective.dateTime >= "{}"'.format(min_time))
         if max_time:
-            cl.append('O.effective.dateTime <= "{}"'.format(max_time))
-        return " AND ".join(cl)
+            conditions.append('O.effective.dateTime <= "{}"'.format(max_time))
+        return " AND ".join(conditions)
 
-    def _build_critera(self):
+    def where_clause(self):
         """Build obs criteria."""
-        cl = [self.time_constraint(self._min_time, self._max_time)]
-        cl.append(' OC.code = "{}" '.format(self._code))
+        conditions = [self.time_constraint(self._min_time, self._max_time)]
+        conditions.append(' OC.code = "{}" '.format(self._code))
         # We don't need to filter coding.system as it is already done in
         # flattening.
         if self._values:
             codes_str = ",".join(['"{}"'.format(v) for v in self._values])
-            cl.append("OVC.code IN ({})".format(codes_str))
+            conditions.append("OVC.code IN ({})".format(codes_str))
             # TODO(gdevanla): This is already applied as part of patient._code_system
-            # cl.append('OVC.system {}'.format(self._sys_str))
+            # conditions.append('OVC.system {}'.format(self._sys_str))
         elif self._min_value or self._max_value:
             if self._min_value:
-                cl.append(" O.value.quantity.value >= {} ".format(self._min_value))
+                conditions.append(" O.value.quantity.value >= {} ".format(self._min_value))
             if self._max_value:
-                cl.append(" O.value.quantity.value <= {} ".format(self._max_value))
-        return "({})".format(" AND ".join(cl))
+                conditions.append(" O.value.quantity.value <= {} ".format(self._max_value))
+        return "({})".format(" AND ".join(conditions))
 
 
 class _BigQueryPatientQuery(PatientQuery):
-    """
-    Concrete implementation of PatientQuery class that serves data
-    stored in BigQuery.
-    """
+    """Concrete implementation of PatientQuery class that serves data stored in
+    BigQuery."""
 
     def __init__(self, bq_dataset: str, code_system: str):
         super().__init__(
@@ -102,8 +102,7 @@ class _BigQueryPatientQuery(PatientQuery):
         force_location_type_columns: bool = True,
         sample_count: tp.Optional[int] = None
     ) -> str:
-        """
-        Helper function to build the sql query which will only query the
+        """Helper function to build the sql query which will only query the
         Encounter table Sample Query: WITH S AS (
 
         select * from `learnbq-345320.fhir_sample.encounter`
@@ -141,7 +140,7 @@ class _BigQueryPatientQuery(PatientQuery):
           {sample_count}
     """
 
-        where_clause = self._enc_constraint.sql()
+        where_clause = self._enc_constraint.where_clause()
         sql = sql_template.format(
             table_name=table_name,
             base_url=base_url,
@@ -224,7 +223,7 @@ class _BigQueryPatientQuery(PatientQuery):
             if not self._code_system
             else ' OVC.system = "{}" '.format(self._code_system)
         )
-        value_codeable_coding_system = "({})".format(value_codeable_coding_system_str)
+        value_codeable_coding_system_str = " ({}) ".format(value_codeable_coding_system_str)
 
         all_obs_constraints = self._all_obs_constraints()
 
@@ -235,7 +234,7 @@ class _BigQueryPatientQuery(PatientQuery):
             all_obs_constraints=all_obs_constraints,
             sample_count="" if sample_count is None else " LIMIT " + str(sample_count),
             base_url=base_url,
-            encounter_where_clause=self._enc_constraint.sql(),
+            encounter_where_clause=self._enc_constraint.where_clause(),
         )
         return sql
 
@@ -244,12 +243,11 @@ class _BigQueryPatientQuery(PatientQuery):
         if not self._code_constraint:
             if self._include_all_codes:
                 return "TRUE"
-            else:
-                return "FALSE"
+            return "FALSE"
 
         constraints_str = " OR ".join(
             [
-                obs_constraint._build_critera()
+                obs_constraint.where_clause()
                 for obs_constraint in self._code_constraint.values()
             ]
         )
