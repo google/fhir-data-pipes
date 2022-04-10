@@ -301,17 +301,6 @@ class _BigQueryPatientQuery(PatientQuery):
 
         with bigquery.Client() as client:
             patient_obs_enc = client.query(sql).to_dataframe()
-            print(
-                patient_obs_enc[
-                    [
-                        "max_date_value",
-                        "min_date_value",
-                        "max_date_value_code",
-                        "min_date_value_code",
-                    ]
-                ]
-            )
-
             col_map = (
                 ("last_value", "max_date_value"),
                 ("first_value", "min_date_value"),
