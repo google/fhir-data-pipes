@@ -299,8 +299,6 @@ class _BigQueryPatientQuery(PatientQuery):
             dataset=self._bq_dataset, sample_count=sample_count, base_url=base_url
         )
 
-        print(sql)
-
         with bigquery.Client() as client:
             patient_obs_enc = client.query(sql).to_dataframe()
             print(

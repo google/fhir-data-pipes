@@ -64,7 +64,6 @@ class BigQueryPatientQueryTest(unittest.TestCase):
     actual_df = pq.get_patient_encounter_view(
         base_url="", force_location_type_columns=False
     )
-    print(set(actual_df["encTypeCode"]))
     self.assertSetEqual(
         set(actual_df["encTypeSystem"]),
         {"http://fhir.openmrs.org/code-system/encounter-type"},
