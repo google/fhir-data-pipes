@@ -138,9 +138,6 @@ function openmrs_query() {
   curl -L -X GET -u admin:Admin123 --connect-timeout 5 --max-time 20 \
     "${OPENMRS_URL}/openmrs/ws/fhir2/R4/Patient${patient_query_param}" 2>/dev/null >>"${HOME_PATH}/${PARQUET_SUBDIR}/patients.json"
 
-  # TODO remove (just for debug!)
-  cat ${HOME_PATH}/${PARQUET_SUBDIR}/patients.json
-
   TOTAL_TEST_PATIENTS=$(jq '.total' "${HOME_PATH}/${PARQUET_SUBDIR}/patients.json")
   print_message "Total openmrs test patients ---> ${TOTAL_TEST_PATIENTS}"
   curl -L -X GET -u admin:Admin123 --connect-timeout 5 --max-time 20 \
@@ -210,9 +207,6 @@ function test_fhir_sink() {
   mkdir "${HOME_PATH}/fhir"
   curl -L -X GET -u hapi:hapi --connect-timeout 5 --max-time 20 \
     "${SINK_SERVER}/fhir/Patient${patient_query_param}" 2>/dev/null >>"${HOME_PATH}/fhir/patients.json"
-
-  # TODO remove (just for debug!)
-  cat ${HOME_PATH}/fhir/patients.json
 
   curl -L -X GET -u hapi:hapi --connect-timeout 5 --max-time 20 \
     "${SINK_SERVER}/fhir/Encounter${enc_obs_query_param}" 2>/dev/null >>"${HOME_PATH}/fhir/encounters.json"
