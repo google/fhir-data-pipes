@@ -18,11 +18,11 @@ WORKDIR /uploader
 COPY  ./ ./
 
 RUN pip install -r requirements.txt
-ENV INPUT_DIR="/uploader/test_files"
+ENV INPUT_DIR="./test_files"
+ENV CORES=""
 ENV CONVERT=""
 ENV SINK_TYPE="HAPI"
 ENV FHIR_ENDPOINT="http://localhost:8098/fhir"
-ENV MAIN_DIR=${WORKDIR}
 
-CMD cd ${MAIN_DIR}; python main.py ${SINK_TYPE} \
-    ${FHIR_ENDPOINT} --input_dir ${INPUT_DIR} ${CONVERT}
+CMD cd /uploader; python main.py ${SINK_TYPE} \
+    ${FHIR_ENDPOINT} --input_dir ${INPUT_DIR} ${CORES} ${CONVERT}

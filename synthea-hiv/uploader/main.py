@@ -75,7 +75,13 @@ parser.add_argument(
     '--convert_to_openmrs',
     action='store_true',
     help=('specify if uploading to OpenMRS. Splits bundle to resources before '
-          'uploading '))
+          'uploading'))
+
+parser.add_argument(
+    '--cores',
+    type=int,
+    default=multiprocessing.cpu_count(),
+    help='specify number of cores to use . Default is CPU count on machine')
 
 
 def list_all_files(directory: str) -> Dict[str, Set[pathlib.PosixPath]]:
@@ -128,8 +134,10 @@ if __name__ == '__main__':
   args = parser.parse_args()
   json_file_dict = list_all_files(args.input_dir)
   upload_handler = create_sink(args.sink_type, args.fhir_endpoint)
+
+  logging.info("Using %s cores to uplaod", args.cores)
   if args.convert_to_openmrs:
-    with multiprocessing.Pool() as pool:
+    with multiprocessing.Pool(processes=args.cores) as pool:
       locations_in_store = upload_handler.fetch_location()
       logging.info('Loading patient_history JSON files into memory')
       bundle_list = pool.map(convert_to_bundle,
@@ -143,7 +151,7 @@ if __name__ == '__main__':
     # Synthea only creates bundles of type transaction and POST. The order is:
     # hospital, practitioner, patient history
     for file_type in ['hospital', 'practitioner', 'patient_history']:
-      with multiprocessing.Pool() as pool:
+      with multiprocessing.Pool(processes=args.cores) as pool:
         logging.info('Loading %s JSON files into memory', file_type)
         bundle_list = pool.map(convert_to_bundle, json_file_dict[file_type])
         pool.map(upload_handler.upload_bundle, bundle_list)

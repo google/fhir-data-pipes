@@ -78,7 +78,6 @@ steps:
   env:
     - CONVERT=--convert_to_openmrs
     - INPUT_DIR=/workspace/synthea-hiv/sample_data
-    - MAIN_DIR=/uploader
     - SINK_TYPE=OpenMRS
     - FHIR_ENDPOINT=http://openmrs:8080/openmrs/ws/fhir2/R4
 
