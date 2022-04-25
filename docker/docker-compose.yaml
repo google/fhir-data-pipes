@@ -46,10 +46,10 @@ services:
      - PARQUET_PATH=/tmp/
      - FHIR_DEBEZIUM_CONFIG_PATH=/usr/src/Main/dbz_event_to_fhir_config.json
 
-  streaming-binlog: # To run independently: docker-compose up --build streaming-binlog
+  streaming: # To run independently: docker-compose up --build streaming
     build:
-      context: ../streaming-binlog
-    image: openmrs-fhir-analytics/streaming-binlog:latest
+      context: ../streaming
+    image: openmrs-fhir-analytics/streaming:latest
     container_name: streaming-pipeline
     network_mode: host
     healthcheck:
@@ -72,32 +72,3 @@ services:
       # the 2 variable below should be same as volume mappings above
       - PARQUET_PATH=/tmp/
       - FHIR_DEBEZIUM_CONFIG_PATH=/deployments/dbz_event_to_fhir_config.json
-
-  streaming-atomfeed:
-    container_name: streaming-atomfeed
-    hostname: streaming-atomfeed
-    build:
-      context: ..
-      dockerfile: ../streaming-atomfeed/Dockerfile
-    healthcheck:
-      test: "exit 0"
-    environment:
-      - OPENMRS_URL=http://localhost:8099/openmrs
-      - SINK_URL=http://localhost:8098/fhir
-
-  streaming-atomfeed-db:
-    container_name: streaming-atomfeed-db
-    hostname: streaming-atomfeed-db
-    image: mysql:5.7
-    command: "mysqld --character-set-server=utf8 --collation-server=utf8_general_ci"
-    healthcheck:
-      test: "exit 0"
-    environment:
-      - MYSQL_ROOT_PASSWORD=root
-      - MYSQL_USER=fhir
-      - MYSQL_PASSWORD=fhiranalytics
-      - MYSQL_DATABASE=atomfeed_client
-      - MYSQL_ROOT_HOST=%
-    volumes:
-      - ../utils/dbdump/atomfeed_db_sql:/docker-entrypoint-initdb.d/dump.sql
-

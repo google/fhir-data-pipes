@@ -26,7 +26,7 @@
     <version>0.1.0-SNAPSHOT</version>
   </parent>
 
-  <artifactId>streaming-binlog</artifactId>
+  <artifactId>streaming</artifactId>
 
   <properties>
     <mysql.init.timeout>30000</mysql.init.timeout>
@@ -162,7 +162,7 @@
         </executions>
       </plugin>
 
-      <!-- Allows the example to be run via IDE or 'mvn compile exec:java -pl streaming-binlog/' -->
+      <!-- Allows the example to be run via IDE or 'mvn compile exec:java -pl streaming' -->
       <plugin>
         <groupId>org.codehaus.mojo</groupId>
         <artifactId>exec-maven-plugin</artifactId>

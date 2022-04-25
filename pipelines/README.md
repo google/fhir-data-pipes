@@ -22,10 +22,6 @@ There are four modes of transfer:
     continuously listens for changes to the underlying OpenMRS MySQL database
     using
     [Debezium](https://debezium.io/documentation/reference/1.2/connectors/mysql.html).
--   **[Streaming mode (Atom Feed) [DEPRECATED]](#streaming-mode-atom-feed)**:
-    This mode continuously listens for changes reported by the OpenMRS API using
-    the [Atom Feed module of
-    OpenMRS](https://wiki.openmrs.org/display/docs/Atom+Feed+Module).
 
 There is also a query module built on top of the generated data warehouse.
 
@@ -39,8 +35,7 @@ There is also a query module built on top of the generated data warehouse.
         image with these prerequisites and demo data you can use to try things
         out.
 -   A target output for the data. Supported options are Apache Parquet files
-    (not supported by Atom Feed mode) or a FHIR server such as HAPI FHIR or
-    [Google Cloud Platform FHIR
+    or a FHIR server such as HAPI FHIR or [Google Cloud Platform FHIR
     stores](https://cloud.google.com/healthcare/docs/how-tos/fhir).
     -   You can use our [HAPI FHIR server](#run-hapi-fhir-server-using-docker)
         image for testing FHIR API targets.
@@ -213,7 +208,7 @@ resume from the last processed offset.
 4.  Run the pipeline to a FHIR server and Parquet files:
 
     ```shell
-    $ mvn compile exec:java -pl streaming-binlog \
+    $ mvn compile exec:java -pl streaming \
         -Dexec.args="--openmrsServerUrl=http://localhost:8099/openmrs \
         --openmrsUserName=admin --openmrsPassword=Admin123 \
         --fhirSinkPath=http://localhost:8098/fhir \
@@ -226,7 +221,7 @@ resume from the last processed offset.
     Or to a GCP FHIR store:
 
     ```shell
-    $ mvn compile exec:java -pl streaming-binlog \
+    $ mvn compile exec:java -pl streaming \
         -Dexec.args="--openmrsServerUrl=http://localhost:8099/openmrs \
         --openmrsUserName=admin --openmrsPassword=Admin123 \
         --fhirSinkPath=projects/PROJECT/locations/LOCATION/datasets/DATASET/fhirStores/FHIRSTORENAME \
@@ -270,15 +265,6 @@ If `outputParquetPath` is set, there are additional parameters:
     (default), `never`, e.t.c. See the [`debezium
     documentation`](https://camel.apache.org/components/latest/debezium-mysql-component.html)
     for more details.
-
-## Streaming mode (Atom Feed)
-
-**NOTE:** The Atom Feed mode is deprecated and may be removed in a future
-version. We strongly recommend using one of the other modes instead.
-
-**NOTE:** The Atom Feed mode does not support Parquet files.
-
-[See here](doc/atom-feed.md) for more information.
 
 ## Using Docker compose
 
@@ -346,14 +332,7 @@ $ docker-compose -f docker/docker-compose.yaml up --build batch
 
 ```
 $ mvn clean install
-$ docker-compose -f docker/docker-compose.yaml up --build streaming-binlog
-```
-
-##### Streaming Pipeline (Atomfeed)
-
-```
- $ mvn clean install -pl streaming-atomfeed -am
- $ docker-compose -f docker/docker-compose.yaml up -d --build streaming-atomfeed-db streaming-atomfeed
+$ docker-compose -f docker/docker-compose.yaml up --build streaming
 ```
 
 ## How to query the data warehouse

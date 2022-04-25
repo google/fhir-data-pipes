@@ -136,16 +136,17 @@ function openmrs_query() {
   fi
   
   curl -L -X GET -u admin:Admin123 --connect-timeout 5 --max-time 20 \
-    "${OPENMRS_URL}/openmrs/ws/fhir2/R4/Patient/${patient_query_param}" 2>/dev/null >>"${HOME_PATH}/${PARQUET_SUBDIR}/patients.json"
+    "${OPENMRS_URL}/openmrs/ws/fhir2/R4/Patient${patient_query_param}" 2>/dev/null >>"${HOME_PATH}/${PARQUET_SUBDIR}/patients.json"
+
   TOTAL_TEST_PATIENTS=$(jq '.total' "${HOME_PATH}/${PARQUET_SUBDIR}/patients.json")
   print_message "Total openmrs test patients ---> ${TOTAL_TEST_PATIENTS}"
   curl -L -X GET -u admin:Admin123 --connect-timeout 5 --max-time 20 \
-    "${OPENMRS_URL}/openmrs/ws/fhir2/R4/Encounter/${enc_obs_query_param}" \
+    "${OPENMRS_URL}/openmrs/ws/fhir2/R4/Encounter${enc_obs_query_param}" \
     2>/dev/null >>"${HOME_PATH}/${PARQUET_SUBDIR}/encounters.json"
   TOTAL_TEST_ENCOUNTERS=$(jq '.total' "${HOME_PATH}/${PARQUET_SUBDIR}/encounters.json")
   print_message "Total openmrs test encounters ---> ${TOTAL_TEST_ENCOUNTERS}"
   curl -L -X GET -u admin:Admin123 --connect-timeout 5 --max-time 20 \
-    "${OPENMRS_URL}/openmrs/ws/fhir2/R4/Observation/${enc_obs_query_param}" \
+    "${OPENMRS_URL}/openmrs/ws/fhir2/R4/Observation${enc_obs_query_param}" \
     2>/dev/null >>"${HOME_PATH}/${PARQUET_SUBDIR}/obs.json"
   TOTAL_TEST_OBS=$(jq '.total' "${HOME_PATH}/${PARQUET_SUBDIR}/obs.json")
   print_message "Total openmrs test obs ---> ${TOTAL_TEST_OBS}"
@@ -205,13 +206,13 @@ function test_fhir_sink() {
 
   mkdir "${HOME_PATH}/fhir"
   curl -L -X GET -u hapi:hapi --connect-timeout 5 --max-time 20 \
-    "${SINK_SERVER}/fhir/Patient/${patient_query_param}" 2>/dev/null >>"${HOME_PATH}/fhir/patients.json"
+    "${SINK_SERVER}/fhir/Patient${patient_query_param}" 2>/dev/null >>"${HOME_PATH}/fhir/patients.json"
 
   curl -L -X GET -u hapi:hapi --connect-timeout 5 --max-time 20 \
-    "${SINK_SERVER}/fhir/Encounter/${enc_obs_query_param}" 2>/dev/null >>"${HOME_PATH}/fhir/encounters.json"
+    "${SINK_SERVER}/fhir/Encounter${enc_obs_query_param}" 2>/dev/null >>"${HOME_PATH}/fhir/encounters.json"
 
   curl -L -X GET -u hapi:hapi --connect-timeout 5 --max-time 20 \
-    "${SINK_SERVER}/fhir/Observation/${enc_obs_query_param}" 2>/dev/null >>"${HOME_PATH}/fhir/obs.json"
+    "${SINK_SERVER}/fhir/Observation${enc_obs_query_param}" 2>/dev/null >>"${HOME_PATH}/fhir/obs.json"
 
   print_message "Counting number of patients, encounters and obs sinked to fhir files"
 

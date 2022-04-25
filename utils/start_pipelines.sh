@@ -63,7 +63,8 @@ function usage() {
   echo "  default: tmp/streaming.log"
   echo ""
   echo "-streamingJar JAR_FILE, the bundled jar file for the streaming pipeline."
-  echo "  default: ./streaming-binlog/target/streaming-binlog-bundled*.jar."
+  echo "  default: ./streaming/target/streaming-bundled*.jar."
+  # TODO: The above default does not seem to be right; fix and test!
   echo ""
   # TODO: Add the feature for passing extra options directly to the pipelines.
   # echo "If there are any other options remaining at the end (extra-options), they are passed to "
@@ -227,7 +228,7 @@ function process_options() {
 # Globals:
 #   FOUND_FILE the unique file that is found.
 # Arguments:
-#   The search pattern, e.g ./streaming-binlog/target/streaming-binlog-bundled*.jar
+#   The search pattern, e.g ./streaming/target/streaming-bundled*.jar
 #######################################
 function find_unique_file() {
   local file_count
@@ -280,7 +281,7 @@ fi
 mkdir ${OUTPUT_DIR}
 
 if [[ -z ${STREAMING_JAR} ]]; then
-  find_unique_file "./streaming-binlog/target/streaming-binlog-bundled*.jar"
+  find_unique_file "./streaming/target/streaming-bundled*.jar"
   STREAMING_JAR="${FOUND_FILE}"
 fi
 

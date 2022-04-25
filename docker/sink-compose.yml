@@ -15,7 +15,10 @@
 version: '2.4'
 services:
   sink-server:
-    image: "hapiproject/hapi:latest"
+    # TODO: This is a temporary fix to rollback the newest version of
+    # HAPI which causes the e2e test to fail; uncomment when root cause fixed.
+    #image: "hapiproject/hapi:latest"
+    image: "hapiproject/hapi:latest-distroless"
     container_name: sink-server
     environment:
       - hapi.fhir.enforce_referential_integrity_on_delete=false
