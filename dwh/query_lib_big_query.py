@@ -228,7 +228,7 @@ class _BigQueryPatientQuery(PatientQuery):
         value_codeable_coding_system_str = ' O.value is null or ' + (
             ' OVC.system is null '
             if not self._code_system
-            else ' OVC.system = "{}" '.format(self._code_system)
+            else ' (OVC.system is null or  OVC.system = "{}") '.format(self._code_system)
         )
         value_codeable_coding_system_str = " ({}) ".format(value_codeable_coding_system_str)
 
