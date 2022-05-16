@@ -39,7 +39,8 @@ fi
 pip3 install -r requirements.txt
 
 # Run unit-tests first:
-python -m unittest query_lib_test.PatientQueryTest
+python -m unittest query_lib_test.PatientQueryTest query_lib_biq_query_test.BigQueryPatientQueryTest
+
 
 # Run indicator calculation logic.
 
