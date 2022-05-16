@@ -23,7 +23,7 @@ function that defines the source of the data.
 # See https://stackoverflow.com/questions/33533148 why this is needed.
 from __future__ import annotations
 from enum import Enum
-from typing import List, Any, Type
+from typing import List, Any, Type, Optional
 import pandas
 from pyspark import SparkConf
 from pyspark.sql import SparkSession, DataFrame
@@ -149,9 +149,11 @@ class _EncounterContraints():
     type_code_str = 'TRUE'
     if self._type_code:
       temp_str = ','.join(['"{}"'.format(v) for v in self._type_code])
-      type_code_str = 'encTypeCode IN ({})'.format(temp_str)
-    type_sys_str = 'encTypeSystem="{}"'.format(
-        self._type_system) if self._type_system else 'TRUE'
+      #type_code_str = 'encTypeCode IN ({})'.format(temp_str)
+      type_code_str = ' arrays_overlap(encTypeCode, array({})) '.format(temp_str)
+    type_sys_str = 'TRUE'
+    if self._type_system:
+        type_sys_str = ' array_contains(encTypeSystem,  "{}") '.format(self._type_system)
     return '{} AND {} AND {}'.format(loc_str, type_code_str, type_sys_str)
 
 
@@ -361,7 +363,8 @@ class _SparkPatientQuery(PatientQuery):
       common.custom_log(
           'Number of Encounter resources= {}'.format(self._enc_df.count()))
 
-  def get_patient_obs_view(self, base_url: str) -> pandas.DataFrame:
+  def get_patient_obs_view(self, base_url: str,
+                           sample_count: tp.Optional[int] = None) -> pandas.DataFrame:
     """See super-class doc."""
     self._make_sure_spark()
     self._make_sure_patient()
@@ -403,7 +406,8 @@ class _SparkPatientQuery(PatientQuery):
         'first_value_code', 'last_value_code']]
 
   def get_patient_encounter_view(self, base_url: str,
-      force_location_type_columns: bool = True) -> pandas.DataFrame:
+                                 force_location_type_columns: bool = True,
+                                 sample_count: Optional[int] = None) -> pandas.DataFrame:
     """See super-class doc."""
     self._make_sure_spark()
     self._make_sure_patient()

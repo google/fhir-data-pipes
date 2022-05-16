@@ -16,7 +16,6 @@ import unittest
 
 import query_lib
 
-
 class PatientQueryTest(unittest.TestCase):
 
   def test_single_code_with_values(self):
