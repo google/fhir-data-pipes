@@ -2,8 +2,6 @@
 import typing as tp
 import pandas as pd
 
-from query_lib import _EncounterContraints
-from query_lib import _ObsConstraints
 from query_lib import PatientQuery
 
 _DATE_VALUE_SEPARATOR = ','
@@ -20,10 +18,21 @@ def _build_in_list_with_quotes(values: tp.Iterable[tp.Any]):
     """
     return ','.join(('"{}"'.format(x) for x in values))
 
-
-class _BigQueryEncounterConstraints(_EncounterContraints):
+class _BigQueryEncounterConstraints:
     """Encounter constraints helper class that will be set up for querying
     BigQuery."""
+
+    def __init__(self, locationId: tp.List[str] = None,
+      typeSystem: str = None, typeCode: tp.List[str] = None):
+        self._location_id = locationId
+        self._type_system = typeSystem
+        self._type_code = typeCode
+
+    def has_location(self) -> bool:
+        return self._location_id != None
+
+    def has_type(self) -> bool:
+        return (self._type_code != None) or (self._type_system != None)
 
     def where_clause(self):
         """Builds Encounter criteria.
@@ -53,8 +62,20 @@ class _BigQueryEncounterConstraints(_EncounterContraints):
         return ''
 
 
-class _BigQueryObsConstraints(_ObsConstraints):
+class _BigQueryObsConstraints:
     """Observation constraints helper class for querying Big Query."""
+
+    def __init__(self, code: str, values: tp.List[str] = None, value_sys: str = None,
+      min_value: float = None, max_value: float = None,
+      min_time: str = None, max_time: str = None) -> None:
+
+        self._code = code
+        self._sys_str = '="{}"'.format(value_sys) if value_sys else 'IS NULL'
+        self._values = values
+        self._min_time = min_time
+        self._max_time = max_time
+        self._min_value = min_value
+        self._max_value = max_value
 
     @staticmethod
     def time_constraint(min_time: str = None, max_time: str = None):
