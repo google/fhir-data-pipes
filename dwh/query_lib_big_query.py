@@ -160,7 +160,7 @@ class _BigQueryPatientQuery(PatientQuery):
           MAX(S.period.end) as lastDate
           from S, unnest(s.type.array) as T, unnest(T.coding.array) as C left join unnest(s.location.array) as L
           {where}
-          group by S.id, S.subject.PatientId, C.system, C.code, L.location.LocationId, L.location.display
+          group by S.subject.PatientId, L.location.LocationId, L.location.display, C.system, C.code
           {sample_count}
     """
 
