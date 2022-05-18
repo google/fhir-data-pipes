@@ -146,37 +146,24 @@ class _BigQueryPatientQuery(PatientQuery):
         sample_count: tp.Optional[int] = None
     ) -> str:
         """Helper function to build the sql query which will only query the
-        Encounter table Sample Query: WITH S AS (
-
-        select * from `learnbq-345320.fhir_sample.encounter`
-        )
-        select S.id as encounterId,
-        S.subject.PatientId as encPatientId,
-        S.period.start as first,
-        S.period.end as last,
-        C.system, C.code,
-        L.location.LocationId, L.location.display
-        from S, unnest(s.type) as T, unnest(T.coding) as C left join unnest(s.location) as L
-        where C.system = 'system3000' and C.code = 'code3000'
-        and L.location.locationId in ('test')
         """
 
         sql_template = """
     WITH S AS (
-          select * from {data_set}.{table_name}
+          SELECT * FROM {data_set}.{table_name}
           )
-          select
-          S.subject.PatientId as encPatientId,
-          L.location.LocationId as locationId,
-          C.system as encTypeSystem,
-          C.code as encTypeCode,
-          L.location.display as locationDisplay,
-          COUNT(*) as num_encounters,
-          MIN(S.period.start) as firstDate,
-          MAX(S.period.end) as lastDate
-          from S, unnest(s.type.array) as T, unnest(T.coding.array) as C left join unnest(s.location.array) as L
+          SELECT
+          S.subject.PatientId AS encPatientId,
+          L.location.LocationId AS locationId,
+          C.system AS encTypeSystem,
+          C.code AS encTypeCode,
+          L.location.display AS locationDisplay,
+          COUNT(*) AS num_encounters,
+          MIN(S.period.start) AS firstDate,
+          MAX(S.period.end) AS lastDate
+          from S, UNNEST(s.type.array) AS T, UNNEST(T.coding.array) AS C LEFT JOIN UNNEST(s.location.array) AS L
           {where}
-          group by S.subject.PatientId, L.location.LocationId, L.location.display, C.system, C.code
+          GROUP BY S.subject.PatientId, L.location.LocationId, L.location.display, C.system, C.code
           {sample_count}
     """
 
@@ -202,56 +189,53 @@ class _BigQueryPatientQuery(PatientQuery):
         """
 
         sql_template = """
-    with O as
-    (select * from `{dataset}.Observation`),
+    with O AS
+    (SELECT * FROM `{dataset}.Observation`),
       O1 as
-      (select
+      (SELECT
           OC.system obs_system,
-          OC.code as obs_code_coding_code,
+          OC.code AS obs_code_coding_code,
           OVC.code obs_value_code,
           O.effective.dateTime obs_effective_datetime,
-          O.value.quantity.value as obs_value_quantity,
+          O.value.quantity.value AS obs_value_quantity,
           O.subject.PatientId obs_subject_patient_id,
           O.context.encounterId obs_context_encounter_id,
-          FORMAT('%s,%s', cast(O.effective.dateTime as string),
-                 cast(O.value.quantity.value as string)) as date_and_value,
-          FORMAT('%s,%s', cast(O.effective.dateTime as string), OVC.code)
-                 as date_and_value_code,
-          from O left join unnest(O.code.coding.array) as OC LEFT JOIN
-          unnest(O.value.codeableConcept.coding.array) as OVC
+          FORMAT('%s,%s', cast(O.effective.dateTime AS string),
+                 cast(O.value.quantity.value AS string)) AS date_and_value,
+          FORMAT('%s,%s', cast(O.effective.dateTime AS string), OVC.code)
+                 AS date_and_value_code,
+          FROM O LEFT JOIN UNNEST(O.code.coding.array) AS OC LEFT JOIN
+          UNNEST(O.value.codeableConcept.coding.array) AS OVC
           where {code_coding_system} and {value_codeable_coding_system}
           and {all_obs_constraints}
           ),
-      E  AS (
-            select * from `{dataset}.Encounter`
-            ),
       E1 AS (
-          select replace(E.id, '{base_url}', '') as encounterId, C.system, C.code,
+          SELECT replace(E.id, '{base_url}', '') AS encounterId, C.system, C.code,
             L.location.LocationId, L.location.display,
-            from E left join unnest(E.type.array) as T left join
-            unnest(T.coding.array) as C left join unnest(E.location.array) as L
+            FROM `{dataset}.Encounter` AS E LEFT JOIN UNNEST(E.type.array) AS T LEFT JOIN
+            UNNEST(T.coding.array) AS C LEFT JOIN UNNEST(E.location.array) AS L
             {encounter_where_clause}
             ),
-      G as (select
+      G AS (SELECT
           obs_subject_patient_id patient_id,
-          obs_code_coding_code as coding_code, -- TODO: Should this be coding.code
-          count(*) as num_obs,
-          min(obs_value_quantity) as min_value,
-          max(obs_value_quantity) as max_value,
-          min(obs_effective_datetime) as min_date,
-          max(obs_effective_datetime) as max_date,
-          min(date_and_value) as min_date_value,
-          max(date_and_value) as max_date_value,
-          min(date_and_value_code) as min_date_value_code,
-          max(date_and_value_code) as max_date_value_code,
-        from O1 inner join E1 on E1.encounterId = O1.obs_context_encounter_id
+          obs_code_coding_code AS coding_code, -- TODO: Should this be coding.code
+          count(*) AS num_obs,
+          min(obs_value_quantity) AS min_value,
+          max(obs_value_quantity) AS max_value,
+          min(obs_effective_datetime) AS min_date,
+          max(obs_effective_datetime) AS max_date,
+          min(date_and_value) AS min_date_value,
+          max(date_and_value) AS max_date_value,
+          min(date_and_value_code) AS min_date_value_code,
+          max(date_and_value_code) AS max_date_value_code,
+        FROM O1 inner JOIN E1 on E1.encounterId = O1.obs_context_encounter_id
         group by patient_id, coding_code)
-      select patient_id as patientId, coding_code as code,
-      P.birthDate as birthDate,
-      P.gender as gender,
+      SELECT patient_id AS patientId, coding_code AS code,
+      P.birthDate AS birthDate,
+      P.gender AS gender,
       num_obs, min_value, max_value, min_date, max_date, min_date_value,
       max_date_value, min_date_value_code, max_date_value_code
-      from G inner join `{dataset}.Patient` P on G.patient_id = P.id
+      FROM G inner JOIN `{dataset}.Patient` P on G.patient_id = P.id
       {sample_count}
     """
 
