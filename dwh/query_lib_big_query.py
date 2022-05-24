@@ -130,11 +130,12 @@ class _BigQueryPatientQuery(PatientQuery):
     """Concrete implementation of PatientQuery class that serves data stored in
     BigQuery."""
 
-    def __init__(self, bq_dataset: str, code_system: str):
+    def __init__(self, project_name: str, bq_dataset: str, code_system: str):
         super().__init__(
             code_system, _BigQueryEncounterConstraints, _BigQueryObsConstraints
         )
         self._bq_dataset = bq_dataset
+        self._project_name = project_name
 
     def _build_encounter_query(
         self,
@@ -311,7 +312,7 @@ class _BigQueryPatientQuery(PatientQuery):
             sample_count=sample_count,
         )
 
-        with bigquery.Client() as client:
+        with bigquery.Client(project=self._project_name) as client:
             patient_enc = client.query(sql).to_dataframe()
             return patient_enc
 
@@ -325,7 +326,7 @@ class _BigQueryPatientQuery(PatientQuery):
             dataset=self._bq_dataset, sample_count=sample_count, base_url=base_url
         )
 
-        with bigquery.Client() as client:
+        with bigquery.Client(project=self._project_name) as client:
             patient_obs_enc = client.query(sql).to_dataframe()
             col_map = (
                 ("last_value", "max_date_value"),
