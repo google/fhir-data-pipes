@@ -25,7 +25,7 @@ _SPARK_BASE_DIR = "./test_files/parquet_big_db"
 
 class _PatientQueryTest:
     """
-    Base class that holds all actual tests that generic to all query lib implementations
+    Base class that holds all actual tests that generic to all query lib implementations.
     """
     def test_encounter_basic_query(self):
 
@@ -75,7 +75,7 @@ class _PatientQueryTest:
         actual_df = pq.get_patient_encounter_view(
             base_url="", force_location_type_columns=False
         )
-        print(actual_df)
+
         self.assertSetEqual(set(actual_df["encTypeCode"]), set(test_codes))
 
     def test_encounter_basic_query_with_location_ids(self):
