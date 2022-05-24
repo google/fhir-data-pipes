@@ -48,13 +48,15 @@ class Runner(Enum):
 
 
 def patient_query_factory(runner: Runner, data_source: str,
-    code_system: str = None) -> PatientQuery:
+                          code_system: Optional[str] = None, project_name: Optional[str]=None) -> PatientQuery:
   """Returns the right instance of `PatientQuery` based on `data_source`.
 
   Args:
     runner: The runner to use for making data queries
     data_source: The definition of the source, e.g., directory containing
       Parquet files or a BigQuery dataset.
+    project_name: The GoogleCloud project name. This field is required if
+      is used as data source.
 
   Returns:
     The created instance.
@@ -67,7 +69,7 @@ def patient_query_factory(runner: Runner, data_source: str,
   if runner == Runner.BIG_QUERY:
     # NOTE: Temporary until classes in this module are reorganized
     from query_lib_big_query import _BigQueryPatientQuery
-    return _BigQueryPatientQuery(data_source, code_system)
+    return _BigQueryPatientQuery(project_name, data_source, code_system)
   raise ValueError('Query engine {} is not supported yet.'.format(runner))
 
 

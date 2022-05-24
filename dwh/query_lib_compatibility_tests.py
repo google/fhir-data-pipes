@@ -18,6 +18,7 @@ import query_lib_big_query as ql
 import query_lib as ql_spark
 
 _BIGQUERY_DATASET = "synthea_big"
+_PROJECT_NAME = "fhir-analytics-test"
 _CODE_SYSTEM = "http://www.ampathkenya.org"
 
 _SPARK_BASE_DIR = "./test_files/parquet_big_db"
@@ -221,6 +222,7 @@ class PatientQueryTestBigQuery(unittest.TestCase, _PatientQueryTest):
         ql_spark.Runner.BIG_QUERY,
         _BIGQUERY_DATASET,
         _CODE_SYSTEM,
+        _PROJECT_NAME,
     )
 
 
