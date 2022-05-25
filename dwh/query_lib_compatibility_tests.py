@@ -115,15 +115,13 @@ class _PatientQueryTest:
         self.assertSetEqual(set(actual_df["encTypeSystem"]), {test_type_system})
         self.assertSetEqual(set(actual_df["encTypeCode"]), set(test_codes))
 
-    def test_obs_basic_query(self):
+    def test_obs_basic_query_simple(self):
 
         pq = self._PatientQueryClass()
 
-        # pq.include_all_other_codes(True, '2011-01-01')
         pq.include_obs_in_value_and_time_range(
-            "844", max_time="2011-01-01", max_val=10
+            "1111", max_time="2011-01-01"
         )
-        # pq.include_obs_values_in_time_range('1284', values=['130'])
         pq.include_obs_values_in_time_range("1284", values=["130"])
         actual_df = pq.get_patient_obs_view(base_url="", sample_count=10)
 
