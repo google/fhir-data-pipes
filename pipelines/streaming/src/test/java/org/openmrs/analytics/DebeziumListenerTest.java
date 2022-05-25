@@ -42,7 +42,7 @@ public class DebeziumListenerTest extends CamelTestSupport {
 	@Override
 	protected RoutesBuilder createRouteBuilder() throws Exception {
 		// mock properties
-		String[] args = { "--openmrsUserName=user",
+		String[] args = { "--fhirServerUserName=user",
 		        "--fhirSinkPath=projects/PROJECT/locations/LOCATION/datasets/DATASET/fhirStores/FHIRSTORENAME ",
 		        "--fhirDebeziumConfigPath=../../utils/dbz_event_to_fhir_config.json" };
 		

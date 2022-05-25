@@ -80,9 +80,9 @@ abstract class FetchSearchPageFn<T> extends DoFn<T, KV<String, Integer>> {
 		this.sinkPath = options.getFhirSinkPath();
 		this.sinkUsername = options.getSinkUserName();
 		this.sinkPassword = options.getSinkPassword();
-		this.sourceUrl = options.getOpenmrsServerUrl() + options.getOpenmrsFhirBaseEndpoint();
-		this.sourceUser = options.getOpenmrsUserName();
-		this.sourcePw = options.getOpenmrsPassword();
+		this.sourceUrl = options.getFhirServerUrl();
+		this.sourceUser = options.getFhirServerUserName();
+		this.sourcePw = options.getFhirServerPassword();
 		this.stageIdentifier = stageIdentifier;
 		this.parquetFile = options.getOutputParquetPath();
 		this.secondsToFlush = options.getSecondsToFlushParquetFiles();

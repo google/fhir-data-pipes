@@ -74,11 +74,11 @@ modules](https://guide.openmrs.org/en/Configuration/customizing-openmrs-with-plu
 Although each mode of transfer uses a different binary, they use some common
 parameters which are documented here.
 
--   `openmrsServerUrl` - The base URL of the source OpenMRS instance. Default:
-    `http://localhost:8099/openmrs`
--   `openmrsUserName` - The HTTP Basic Auth username to access the OpenMRS APIs.
+-   `fhirServerUrl` - The base URL of the source fhir store instance. Default:
+    `http://localhost:8099/openmrs/ws/fhir2/R4`
+-   `fhirServerUserName` - The HTTP Basic Auth username to access the OpenMRS APIs.
     Default: `admin`
--   `openmrsPassword` - The HTTP Basic Auth password to access the OpenMRS APIs.
+-   `fhirServerPassword` - The HTTP Basic Auth password to access the OpenMRS APIs.
     Default: `Admin123`
 -   `fhirSinkPath` - A base URL to a target FHIR server, or the relative path of
     a GCP FHIR store, e.g. `http://localhost:8098/fhir` for a FHIR server or
@@ -113,8 +113,8 @@ To start Batch Mode using FHIR Search, run:
 ```shell
 $ java -cp batch/target/fhir-batch-etl-bundled-0.1.0-SNAPSHOT.jar \
     org.openmrs.analytics.FhirEtl \
-    --openmrsServerUrl=http://localhost:8099/openmrs \
-    --openmrsUserName=admin --openmrsPassword=Admin123 \
+    --fhirServerUrl=http://localhost:8099/openmrs/ws/fhir2/R4 \
+    --fhirServerUserName=admin --fhirServerPassword=Admin123 \
     --fhirSinkPath=http://localhost:8098/fhir \
     --sinkUserName=hapi --sinkPassword=hapi \
     --outputParquetPath=/tmp/TEST/ \
@@ -129,10 +129,6 @@ Parameters:
     `given=Susan` criteria. Default: `Patient,Encounter,Observation`
 -   `batchSize` - The number of resources to fetch in each API call. Default:
     `100`
--   `openmrsFhirBaseEndpoint` - The OpenMRS server base path for its FHIR API
-    endpoints. Using all default values, you would find Patient resources at
-    `http://localhost:8099/openmrs/ws/fhir2/R4/Patient`. This generally should
-    not be changed. Default: `/ws/fhir2/R4`
 
 ### Batch mode using JDBC
 
@@ -141,8 +137,8 @@ To start Batch Mode using JDBC, run:
 ```shell
 $ java -cp batch/target/fhir-batch-etl-bundled-0.1.0-SNAPSHOT.jar \
     org.openmrs.analytics.FhirEtl \
-    --openmrsServerUrl=http://localhost:8099/openmrs \
-    --openmrsUserName=admin --openmrsPassword=Admin123 \
+    --fhirServerUrl=http://localhost:8099/openmrs/ws/fhir2/R4 \
+    --fhirServerUserName=admin --fhirServerPassword=Admin123 \
     --fhirSinkPath=http://localhost:8098/fhir \
     --sinkUserName=hapi --sinkPassword=hapi \
     --outputParquetPath=/tmp/TEST/ \
@@ -158,10 +154,6 @@ Parameters:
     OpenMRS. Default: `Patient,Encounter,Observation`
 -   `batchSize` - The number of resources to fetch in each API call. Default:
     `100`
--   `openmrsFhirBaseEndpoint` - The OpenMRS server base path for its FHIR API
-    endpoints. Using all default values, you would find Patient resources at
-    `http://localhost:8099/openmrs/ws/fhir2/R4/Patient`. This generally should
-    not be changed. Default: `/ws/fhir2/R4`
 -   `jdbcModeEnabled` - If true, uses JDBC mode. Default: `false`
 -   `jdbcMaxPoolSize` - The maximum number of database connections. Default:
     `50`
@@ -209,24 +201,22 @@ resume from the last processed offset.
 
     ```shell
     $ mvn compile exec:java -pl streaming \
-        -Dexec.args="--openmrsServerUrl=http://localhost:8099/openmrs \
-        --openmrsUserName=admin --openmrsPassword=Admin123 \
+        -Dexec.args="--fhirServerUrl=http://localhost:8099/openmrs/ws/fhir2/R4 \
+        --fhirServerUserName=admin --fhirServerPassword=Admin123 \
         --fhirSinkPath=http://localhost:8098/fhir \
         --sinkUserName=hapi --sinkPassword=hapi \
         --outputParquetPath=/tmp/TEST/ \
-        --fhirDebeziumConfigPath=../utils/dbz_event_to_fhir_config.json \
-        --openmrsFhirBaseEndpoint=/ws/fhir2/R4"
+        --fhirDebeziumConfigPath=../utils/dbz_event_to_fhir_config.json"
     ```
 
     Or to a GCP FHIR store:
 
     ```shell
     $ mvn compile exec:java -pl streaming \
-        -Dexec.args="--openmrsServerUrl=http://localhost:8099/openmrs \
-        --openmrsUserName=admin --openmrsPassword=Admin123 \
+        -Dexec.args="--fhirServerUrl=http://localhost:8099/openmrs/ws/fhir2/R4 \
+        --fhirServerUserName=admin --fhirServerPassword=Admin123 \
         --fhirSinkPath=projects/PROJECT/locations/LOCATION/datasets/DATASET/fhirStores/FHIRSTORENAME \
-        --fhirDebeziumConfigPath=../utils/dbz_event_to_fhir_config.json \
-        --openmrsFhirBaseEndpoint=/ws/fhir2/R4"
+        --fhirDebeziumConfigPath=../utils/dbz_event_to_fhir_config.json"
     ```
 
 The next sections describe parameters specific to Debezium Streaming mode. See
@@ -238,10 +228,6 @@ Parameters:
 -   `fhirDebeziumConfigPath` - The path to the configuration file containing
     MySQL parameters and FHIR mappings. This generally should not be changed.
     Default: `../utils/dbz_event_to_fhir_config.json`
--   `openmrsFhirBaseEndpoint` - The OpenMRS server base path for its FHIR API
-    endpoints. Using all default values, you would find Patient resources at
-    `http://localhost:8099/openmrs/ws/fhir2/R4/Patient`. This generally should
-    not be changed. Default: `/ws/fhir2/R4`
 
 If `outputParquetPath` is set, there are additional parameters:
 

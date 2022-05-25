@@ -32,9 +32,9 @@ ENV JDBC_DRIVER_CLASS="com.mysql.cj.jdbc.Driver"
 ENV SECONDS_TO_FLUSH_PARQUET_FILES=3600
 
 ENTRYPOINT java -jar /usr/src/Main/app.jar \
-           --openmrsServerUrl=${OPENMRS_URL}  \
-           --openmrsUserName=${OPENMRS_USERNAME}  \
-           --openmrsPassword=${OPENMRS_PASSWORD} \
+           --fhirServerUrl=${OPENMRS_URL}  \
+           --fhirServerUserName=${OPENMRS_USERNAME}  \
+           --fhirServerPassword=${OPENMRS_PASSWORD} \
            --fhirSinkPath=${SINK_URL}  \
            --sinkUserName=${SINK_USERNAME} \
            --sinkPassword=${SINK_PASSWORD} \

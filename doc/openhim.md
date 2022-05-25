@@ -71,11 +71,11 @@ for batch
 
 ```
 mvn compile exec:java -pl batch \
-    "-Dexec.args=--openmrsServerUrl=http://localhost:8099/openmrs  --resourceList=Patient \
+    "-Dexec.args=--fhirServerUrl=http://localhost:8099/openmrs/ws/fhir2/R4  --resourceList=Patient \
     --batchSize=20 --targetParallelism=20  \
     --fhirSinkPath=http://localhost:5001/fhir \
     --sinkUserName=hapi --sinkPassword=Admin123 \
-    --openmrsUserName=admin --openmrsPassword=Admin123 "
+    --fhirServerUserName=admin --fhirServerPassword=Admin123 "
 ```
 
 for streaming
@@ -85,8 +85,8 @@ mvn compile exec:java -pl streaming-binlog \
   -Dexec.args="--databaseHostName=localhost \
   --databasePort=3306 --databaseUser=root --databasePassword=debezium\
   --databaseServerName=mysql --databaseSchema=openmrs --databaseServerId=77 \
-  --openmrsUserName=admin --openmrsPassword=Admin123 \
-  --openmrsServerUrl=http://localhost:8099/openmrs \
+  --fhirServerUserName=admin --fhirServerPassword=Admin123 \
+  --fhirServerUrl=http://localhost:8099/openmrs/ws/fhir2/R4 \
   --fhirSinkPath=http://localhost:5001/fhir \
   --sinkUserName=hapi --sinkPassword=Admin123 \
   --outputParquetPath=/tmp/"

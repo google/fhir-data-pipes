@@ -68,8 +68,8 @@ public class FhirEtl {
 	}
 	
 	static OpenmrsUtil createOpenmrsUtil(FhirEtlOptions options, FhirContext fhirContext) {
-		return new OpenmrsUtil(options.getOpenmrsServerUrl() + options.getOpenmrsFhirBaseEndpoint(),
-		        options.getOpenmrsUserName(), options.getOpenmrsPassword(), fhirContext);
+		return new OpenmrsUtil(options.getFhirServerUrl(),
+		        options.getFhirServerUserName(), options.getFhirServerPassword(), fhirContext);
 	}
 	
 	private static Schema getSchema(String resourceType) {
@@ -168,7 +168,7 @@ public class FhirEtl {
 			}
 			for (String resourceType : entry.getValue()) {
 				resourceTypes.add(resourceType);
-				String baseBundleUrl = options.getOpenmrsServerUrl() + options.getOpenmrsFhirBaseEndpoint() + "/"
+				String baseBundleUrl = options.getFhirServerUrl() + "/"
 				        + resourceType;
 				PCollection<SearchSegmentDescriptor> inputSegments = uuids.apply(
 				    String.format("CreateSearchSegments_%s_table_%s", resourceType, tableName),
