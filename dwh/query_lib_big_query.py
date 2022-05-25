@@ -1,8 +1,10 @@
 """Module that implements Query Engine for BigQuery."""
 import typing as tp
+
 import pandas as pd
 
-from base import PatientQuery, EncounterContraints, ObsConstraints
+from base import EncounterConstraints, ObsConstraints, PatientQuery
+
 
 _DATE_VALUE_SEPARATOR = ","
 
@@ -19,15 +21,12 @@ def _build_in_list_with_quotes(values: tp.Iterable[tp.Any]):
     return ",".join(('"{}"'.format(x) for x in values))
 
 
-
 class _BigQueryPatientQuery(PatientQuery):
     """Concrete implementation of PatientQuery class that serves data stored in
     BigQuery."""
 
     def __init__(self, project_name: str, bq_dataset: str, code_system: str):
-        super().__init__(
-            code_system
-        )
+        super().__init__(code_system)
         self._bq_dataset = bq_dataset
         self._project_name = project_name
 
@@ -40,8 +39,7 @@ class _BigQueryPatientQuery(PatientQuery):
         force_location_type_columns: bool = True,
         sample_count: tp.Optional[int] = None
     ) -> str:
-        """Helper function to build the sql query which will only query the
-        """
+        """Helper function to build the sql query which will only query the"""
 
         sql_template = """
     WITH S AS (
@@ -56,19 +54,25 @@ class _BigQueryPatientQuery(PatientQuery):
           COUNT(*) AS num_encounters,
           MIN(S.period.start) AS firstDate,
           MAX(S.period.end) AS lastDate
-          from S, UNNEST(s.type.array) AS T, UNNEST(T.coding.array) AS C LEFT JOIN UNNEST(s.location.array) AS L
+          from S, UNNEST(s.type.array) AS T, UNNEST(T.coding.array) AS C
+          LEFT JOIN UNNEST(s.location.array) AS L
           {where}
-          GROUP BY S.subject.PatientId, L.location.LocationId, L.location.display, C.system, C.code
+          GROUP BY S.subject.PatientId, L.location.LocationId,
+          L.location.display, C.system, C.code
           {sample_count}
     """
 
-        where_clause = self._construct_encounter_constraint(self._enc_constraint)
+        where_clause = self._construct_encounter_constraint(
+            self._enc_constraint
+        )
         sql = sql_template.format(
             table_name=table_name,
             base_url=base_url,
             data_set=bq_dataset,
             where=where_clause,
-            sample_count="" if sample_count is None else "LIMIT " + str(sample_count),
+            sample_count=""
+            if sample_count is None
+            else "LIMIT " + str(sample_count),
         )
         return sql
 
@@ -159,9 +163,13 @@ class _BigQueryPatientQuery(PatientQuery):
             code_coding_system=code_coding_system_str,
             value_codeable_coding_system=value_codeable_coding_system_str,
             all_obs_constraints=all_obs_constraints,
-            sample_count="" if sample_count is None else " LIMIT " + str(sample_count),
+            sample_count=""
+            if sample_count is None
+            else " LIMIT " + str(sample_count),
             base_url=base_url,
-            encounter_where_clause=self._construct_encounter_constraint(self._enc_constraint)
+            encounter_where_clause=self._construct_encounter_constraint(
+                self._enc_constraint
+            ),
         )
         return sql
 
@@ -217,7 +225,9 @@ class _BigQueryPatientQuery(PatientQuery):
     ) -> pd.DataFrame:
 
         sql = self._build_obs_encounter_query(
-            dataset=self._bq_dataset, sample_count=sample_count, base_url=base_url
+            dataset=self._bq_dataset,
+            sample_count=sample_count,
+            base_url=base_url,
         )
 
         with bigquery.Client(project=self._project_name) as client:
@@ -233,10 +243,13 @@ class _BigQueryPatientQuery(PatientQuery):
                 patient_obs_enc[dest_col] = patient_obs_enc[source_col].apply(
                     lambda x: None if x is None else x.split(",")[1]
                 )
-            patient_obs_enc.drop(columns=[col[1] for col in col_map], inplace=True)
+            patient_obs_enc.drop(
+                columns=[col[1] for col in col_map], inplace=True
+            )
             return patient_obs_enc
 
-    def _construct_encounter_constraint(self, enc_constraint: EncounterContraints):
+    @staticmethod
+    def _construct_encounter_constraint(enc_constraint: EncounterConstraints):
         """Builds Encounter criteria.
 
         Assumes, the query set will be as follows: from S,
@@ -250,14 +263,18 @@ class _BigQueryPatientQuery(PatientQuery):
             )
         clause_type_system = None
         if enc_constraint.type_system:
-            clause_type_system = "C.system = '{}'".format(enc_constraint.type_system)
+            clause_type_system = "C.system = '{}'".format(
+                enc_constraint.type_system
+            )
         clause_type_codes = None
         if enc_constraint.type_code:
             clause_type_codes = "C.code in ({})".format(
                 _build_in_list_with_quotes(enc_constraint.type_code)
             )
         where_clause = " and ".join(
-            x for x in [clause_location_id, clause_type_system, clause_type_codes] if x
+            x
+            for x in [clause_location_id, clause_type_system, clause_type_codes]
+            if x
         )
         if where_clause:
             return " where {} ".format(where_clause)
@@ -279,22 +296,30 @@ class _BigQueryPatientQuery(PatientQuery):
 
     def _construct_obs_constraint(self, obs_constraint: ObsConstraints):
         """Build obs criteria."""
-        conditions = [self._time_constraint(obs_constraint.min_time, obs_constraint.max_time)]
+        conditions = [
+            self._time_constraint(
+                obs_constraint.min_time, obs_constraint.max_time
+            )
+        ]
         conditions.append(' OC.code = "{}" '.format(obs_constraint.code))
         # We don't need to filter coding.system as it is already done in
         # flattening.
         if obs_constraint.values:
-            codes_str = ",".join(['"{}"'.format(v) for v in obs_constraint.values])
+            codes_str = ",".join(
+                ['"{}"'.format(v) for v in obs_constraint.values]
+            )
             conditions.append("OVC.code IN ({})".format(codes_str))
-            # TODO(gdevanla): This is already applied as part of patient._code_system
-            # conditions.append('OVC.system {}'.format(obs_constraint.sys_str))
         elif obs_constraint.min_value or obs_constraint.max_value:
             if obs_constraint.min_value:
                 conditions.append(
-                    " O.value.quantity.value >= {} ".format(obs_constraint.min_value)
+                    " O.value.quantity.value >= {} ".format(
+                        obs_constraint.min_value
+                    )
                 )
             if obs_constraint.max_value:
                 conditions.append(
-                    " O.value.quantity.value <= {} ".format(obs_constraint.max_value)
+                    " O.value.quantity.value <= {} ".format(
+                        obs_constraint.max_value
+                    )
                 )
         return "({})".format(" AND ".join(conditions))

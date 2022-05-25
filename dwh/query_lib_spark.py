@@ -22,14 +22,14 @@ function that defines the source of the data.
 
 # See https://stackoverflow.com/questions/33533148 why this is needed.
 from __future__ import annotations
-from enum import Enum
-from typing import List, Any, Type, Optional
+
+from typing import Any, Optional
 import pandas
 from pyspark import SparkConf
 from pyspark.sql import SparkSession, DataFrame
 import pyspark.sql.functions as F
 import pyspark.sql.types as T
-from base import PatientQuery, EncounterContraints, ObsConstraints
+from base import PatientQuery, EncounterConstraints, ObsConstraints
 import common
 
 
@@ -37,7 +37,7 @@ import common
 DATE_VALUE_SEPARATOR = "_SeP_"
 
 
-def merge_date_and_value(d: str, v: Any) -> str:
+def _merge_date_and_value(d: str, v: Any) -> str:
     return "{}{}{}".format(d, DATE_VALUE_SEPARATOR, v)
 
 
@@ -69,35 +69,47 @@ class _SparkPatientQuery(PatientQuery):
     def _make_sure_patient(self):
         if not self._patient_df:
             # Loading Parquet files and flattening only happens once.
-            self._patient_df = self._spark.read.parquet(self._file_root + "/Patient")
+            self._patient_df = self._spark.read.parquet(
+                self._file_root + "/Patient"
+            )
             # TODO create inspection functions
             common.custom_log(
-                "Number of Patient resources= {}".format(self._patient_df.count())
+                "Number of Patient resources= {}".format(
+                    self._patient_df.count()
+                )
             )
 
     def _make_sure_obs(self):
         if not self._obs_df:
-            self._obs_df = self._spark.read.parquet(self._file_root + "/Observation")
+            self._obs_df = self._spark.read.parquet(
+                self._file_root + "/Observation"
+            )
             common.custom_log(
-                "Number of Observation resources= {}".format(self._obs_df.count())
+                "Number of Observation resources= {}".format(
+                    self._obs_df.count()
+                )
             )
         if not self._flat_obs:
             self._flat_obs = _SparkPatientQuery._flatten_obs(
                 self._obs_df, self._code_system
             )
             common.custom_log(
-                "Number of flattened obs rows = {}".format(self._flat_obs.count())
+                "Number of flattened obs rows = {}".format(
+                    self._flat_obs.count()
+                )
             )
 
     def _make_sure_encounter(self):
         if not self._enc_df:
-            self._enc_df = self._spark.read.parquet(self._file_root + "/Encounter")
+            self._enc_df = self._spark.read.parquet(
+                self._file_root + "/Encounter"
+            )
             common.custom_log(
                 "Number of Encounter resources= {}".format(self._enc_df.count())
             )
 
     def get_patient_obs_view(
-        self, base_url: str, sample_count: tp.Optional[int] = None
+        self, base_url: str, sample_count: Optional[int] = None
     ) -> pandas.DataFrame:
         """See super-class doc."""
         self._make_sure_spark()
@@ -112,9 +124,11 @@ class _SparkPatientQuery(PatientQuery):
         # TODO figure where `context` comes from and why.
         join_df = self._flat_obs.join(
             flat_enc, flat_enc.encounterId == self._flat_obs.encounterId
-        ).where(self.all_obs_constraints_sql())
+        ).where(self._all_obs_constraints_sql())
         agg_obs_df = _SparkPatientQuery._aggregate_patient_codes(join_df)
-        common.custom_log("Number of aggregated obs= {}".format(agg_obs_df.count()))
+        common.custom_log(
+            "Number of aggregated obs= {}".format(agg_obs_df.count())
+        )
         self._patient_agg_obs_df = _SparkPatientQuery._join_patients_agg_obs(
             self._patient_df, agg_obs_df, base_patient_url
         )
@@ -127,19 +141,29 @@ class _SparkPatientQuery(PatientQuery):
         # this is not happening!
         self._patient_agg_obs_df.cache()
         temp_pd_df = self._patient_agg_obs_df.toPandas()
-        common.custom_log("patient_obs_view size= {}".format(temp_pd_df.index.size))
+        common.custom_log(
+            "patient_obs_view size= {}".format(temp_pd_df.index.size)
+        )
         temp_pd_df["last_value"] = temp_pd_df.max_date_value.str.split(
             DATE_VALUE_SEPARATOR, expand=True
         )[1]
         temp_pd_df["first_value"] = temp_pd_df.min_date_value.str.split(
             DATE_VALUE_SEPARATOR, expand=True
         )[1]
-        temp_pd_df["last_value_code"] = temp_pd_df.max_date_value_code.str.split(
+        temp_pd_df[
+            "last_value_code"
+        ] = temp_pd_df.max_date_value_code.str.split(
             DATE_VALUE_SEPARATOR, expand=True
-        )[1]
-        temp_pd_df["first_value_code"] = temp_pd_df.min_date_value_code.str.split(
+        )[
+            1
+        ]
+        temp_pd_df[
+            "first_value_code"
+        ] = temp_pd_df.min_date_value_code.str.split(
             DATE_VALUE_SEPARATOR, expand=True
-        )[1]
+        )[
+            1
+        ]
         # This is good for debug!
         # return temp_pd_df
         return temp_pd_df[
@@ -198,7 +222,9 @@ class _SparkPatientQuery(PatientQuery):
         # single observation repeated multiple times in the view.
         flat_df = self._enc_df.select(
             "subject", "id", "location", "type", "period"
-        ).withColumn("encounterId", F.regexp_replace("id", base_encounter_url, ""))
+        ).withColumn(
+            "encounterId", F.regexp_replace("id", base_encounter_url, "")
+        )
         column_list = [
             F.col("encounterId"),
             F.col("subject.patientId").alias("encPatientId"),
@@ -206,7 +232,9 @@ class _SparkPatientQuery(PatientQuery):
             F.col("period.end").alias("last"),
         ]
         if self._enc_constraint.has_location() or force_location_type_columns:
-            flat_df = flat_df.withColumn("locationFlat", F.explode_outer("location"))
+            flat_df = flat_df.withColumn(
+                "locationFlat", F.explode_outer("location")
+            )
             column_list += [
                 F.col("locationFlat.location.LocationId").alias("locationId"),
                 F.col("locationFlat.location.display").alias("locationDisplay"),
@@ -251,9 +279,7 @@ class _SparkPatientQuery(PatientQuery):
             else "valueCoding.system IS NULL"
         )
         value_sys_str = "(valueCoding IS NULL OR {})".format(value_sys_str_base)
-        merge_udf = F.UserDefinedFunction(
-            lambda d, v: merge_date_and_value(d, v), T.StringType()
-        )
+        merge_udf = F.UserDefinedFunction(_merge_date_and_value, T.StringType())
         return (
             obs.withColumn("coding", F.explode("code.coding"))
             .where(sys_str)
@@ -264,11 +290,15 @@ class _SparkPatientQuery(PatientQuery):
             .where(value_sys_str)
             .withColumn(
                 "dateAndValue",
-                merge_udf(F.col("effective.dateTime"), F.col("value.quantity.value")),
+                merge_udf(
+                    F.col("effective.dateTime"), F.col("value.quantity.value")
+                ),
             )
             .withColumn(
                 "dateAndValueCode",
-                merge_udf(F.col("effective.dateTime"), F.col("valueCoding.code")),
+                merge_udf(
+                    F.col("effective.dateTime"), F.col("valueCoding.code")
+                ),
             )
             .select(
                 F.col("coding"),
@@ -317,7 +347,9 @@ class _SparkPatientQuery(PatientQuery):
         """
         flat_patients = (
             patients.select(patients.id, patients.birthDate, patients.gender)
-            .withColumn("actual_id", F.regexp_replace("id", base_patient_url, ""))
+            .withColumn(
+                "actual_id", F.regexp_replace("id", base_patient_url, "")
+            )
             .select("actual_id", "birthDate", "gender")
         )
         return flat_patients.join(
@@ -349,7 +381,7 @@ class _SparkPatientQuery(PatientQuery):
             cl.append('dateTime <= "{}"'.format(max_time))
         return " AND ".join(cl)
 
-    def _construct_obs_constraint(self, obs_constraint: _ObsConstraints) -> str:
+    def _construct_obs_constraint(self, obs_constraint: ObsConstraints) -> str:
         """This creates a constraint string with WHERE syntax in SQL.
 
         All of the observation constraints specified by this instance are joined
@@ -363,17 +395,25 @@ class _SparkPatientQuery(PatientQuery):
         cl.append('coding.code="{}"'.format(obs_constraint.code))
         # We don't need to filter coding.system as it is already done in flattening.
         if obs_constraint.values:
-            codes_str = ",".join(['"{}"'.format(v) for v in obs_constraint.values])
+            codes_str = ",".join(
+                ['"{}"'.format(v) for v in obs_constraint.values]
+            )
             cl.append("value.codeableConcept.coding IN ({})".format(codes_str))
-            cl.append("value.codeableConcept.system {}".format(obs_constraint.sys_str))
+            cl.append(
+                "value.codeableConcept.system {}".format(obs_constraint.sys_str)
+            )
         elif obs_constraint.min_value or obs_constraint.max_value:
             if obs_constraint.min_value:
                 cl.append(
-                    " value.quantity.value >= {} ".format(obs_constraint.min_value)
+                    " value.quantity.value >= {} ".format(
+                        obs_constraint.min_value
+                    )
                 )
             if obs_constraint.max_value:
                 cl.append(
-                    " value.quantity.value <= {} ".format(obs_constraint.max_value)
+                    " value.quantity.value <= {} ".format(
+                        obs_constraint.max_value
+                    )
                 )
         return "({})".format(" AND ".join(cl))
 
@@ -381,8 +421,7 @@ class _SparkPatientQuery(PatientQuery):
         if not self._code_constraint:
             if self._include_all_codes:
                 return "TRUE"
-            else:
-                return "FALSE"
+            return "FALSE"
         constraints_str = " OR ".join(
             [
                 self._construct_obs_constraint(constraint)
@@ -402,24 +441,37 @@ class _SparkPatientQuery(PatientQuery):
         )
         return "({} OR ({}))".format(constraints_str, others_str)
 
-    def all_obs_constraints_sql(self) -> str:
+    def _all_obs_constraints_sql(self) -> str:
         obs_str = self._all_obs_constraints()
         enc_str = (
-            "{}".format(self._construct_encounter_constraint(self._enc_constraint)) if self._enc_constraint else "TRUE"
+            "{}".format(
+                self._construct_encounter_constraint(self._enc_constraint)
+            )
+            if self._enc_constraint
+            else "TRUE"
         )
         return "{} AND {}".format(obs_str, enc_str)
 
-    def _construct_encounter_constraint(self, enc_constraint: _EncounterContraints) -> str:
+    @staticmethod
+    def _construct_encounter_constraint(
+        enc_constraint: EncounterConstraints,
+    ) -> str:
         """This creates a constraint string with WHERE syntax in SQL."""
         loc_str = "TRUE"
         if enc_constraint.location_id:
-            temp_str = ",".join(['"{}"'.format(v) for v in enc_constraint.location_id])
+            temp_str = ",".join(
+                ['"{}"'.format(v) for v in enc_constraint.location_id]
+            )
             loc_str = "locationId IN ({})".format(temp_str)
         type_code_str = "TRUE"
         if enc_constraint.type_code:
-            temp_str = ",".join(['"{}"'.format(v) for v in enc_constraint.type_code])
+            temp_str = ",".join(
+                ['"{}"'.format(v) for v in enc_constraint.type_code]
+            )
             # type_code_str = 'encTypeCode IN ({})'.format(temp_str)
-            type_code_str = " arrays_overlap(encTypeCode, array({})) ".format(temp_str)
+            type_code_str = " arrays_overlap(encTypeCode, array({})) ".format(
+                temp_str
+            )
         type_sys_str = "TRUE"
         if enc_constraint.type_system:
             type_sys_str = ' array_contains(encTypeSystem,  "{}") '.format(
