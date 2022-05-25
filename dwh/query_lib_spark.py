@@ -404,9 +404,9 @@ class _SparkPatientQuery(PatientQuery):
             codes_str = ",".join(
                 ['"{}"'.format(v) for v in obs_constraint.values]
             )
-            cl.append("value.codeableConcept.coding IN ({})".format(codes_str))
+            cl.append("valueCoding.code IN ({})".format(codes_str))
             cl.append(
-                "value.codeableConcept.system {}".format(obs_constraint.sys_str)
+                "valueCoding.system {}".format(obs_constraint.sys_str)
             )
         elif obs_constraint.min_value or obs_constraint.max_value:
             if obs_constraint.min_value:
