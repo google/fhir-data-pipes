@@ -202,15 +202,21 @@ class _SparkPatientQuery(PatientQuery):
             column_list += ["locationId", "locationDisplay"]
         if self._enc_constraint.has_type() or force_location_type_columns:
             column_list += ["encTypeSystem", "encTypeCode"]
-        return (
+        spark_frame = (
             flat_enc.groupBy(column_list)
             .agg(
                 F.count("*").alias("num_encounters"),
                 F.min("first").alias("firstDate"),
                 F.max("last").alias("lastDate"),
             )
-            .toPandas()
         )
+
+        # unpack one element list at this point
+        frame = spark_frame.toPandas()
+        for col in ['encTypeSystem', 'encTypeCode']:
+            if col in frame.columns:
+                frame[col] = frame[col].apply(lambda x: x[0] if x else x)
+        return frame
 
     def _flatten_encounter(
         self, base_encounter_url: str, force_location_type_columns: bool = True
