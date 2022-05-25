@@ -14,8 +14,8 @@
 
 import unittest
 from functools import partial
-import query_lib_big_query as ql
-import query_lib as ql_spark
+import base as ql_base
+import query_lib as ql
 
 _BIGQUERY_DATASET = "synthea_big"
 _PROJECT_NAME = "fhir-analytics-test"
@@ -218,8 +218,8 @@ class PatientQueryTestBigQuery(unittest.TestCase, _PatientQueryTest):
     """
 
     _PatientQueryClass = partial(
-        ql_spark.patient_query_factory,
-        ql_spark.Runner.BIG_QUERY,
+        ql.patient_query_factory,
+        ql.Runner.BIG_QUERY,
         _BIGQUERY_DATASET,
         _CODE_SYSTEM,
         _PROJECT_NAME,
@@ -232,8 +232,8 @@ class PatientQueryTestSpark(unittest.TestCase, _PatientQueryTest):
     """
 
     _PatientQueryClass = partial(
-        ql_spark.patient_query_factory,
-        ql_spark.Runner.SPARK,
+        ql.patient_query_factory,
+        ql.Runner.SPARK,
         _SPARK_BASE_DIR,
         _CODE_SYSTEM,
     )

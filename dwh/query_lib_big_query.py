@@ -2,7 +2,7 @@
 import typing as tp
 import pandas as pd
 
-from query_lib import PatientQuery
+from base import PatientQuery
 
 _DATE_VALUE_SEPARATOR = ","
 
