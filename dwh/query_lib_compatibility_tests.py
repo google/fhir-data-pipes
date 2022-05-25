@@ -28,6 +28,7 @@ class _PatientQueryTest:
     """
     Base class that holds all actual tests that generic to all query lib implementations.
     """
+
     def test_encounter_basic_query(self):
 
         pq = self._PatientQueryClass()
@@ -100,7 +101,9 @@ class _PatientQueryTest:
 
         pq = self._PatientQueryClass()
         pq.encounter_constraints(
-            typeSystem=test_type_system, locationId=test_locations, typeCode=test_codes
+            typeSystem=test_type_system,
+            locationId=test_locations,
+            typeCode=test_codes,
         )
         actual_df = pq.get_patient_encounter_view(
             base_url="",
@@ -117,7 +120,9 @@ class _PatientQueryTest:
         pq = self._PatientQueryClass()
 
         # pq.include_all_other_codes(True, '2011-01-01')
-        pq.include_obs_in_value_and_time_range("844", max_time="2011-01-01", max_val=10)
+        pq.include_obs_in_value_and_time_range(
+            "844", max_time="2011-01-01", max_val=10
+        )
         # pq.include_obs_values_in_time_range('1284', values=['130'])
         pq.include_obs_values_in_time_range("1284", values=["130"])
         actual_df = pq.get_patient_obs_view(base_url="", sample_count=10)
@@ -149,15 +154,23 @@ class _PatientQueryTest:
         # Creating a new `patient_query` to drop all previous constraints
         # and recreate flat views.
         patient_query = self._PatientQueryClass()
-        patient_query.include_all_other_codes(min_time=start_date, max_time=end_date)
-        patient_query.include_obs_in_value_and_time_range("1111", max_time="2011-01-01")
+        patient_query.include_all_other_codes(
+            min_time=start_date, max_time=end_date
+        )
+        patient_query.include_obs_in_value_and_time_range(
+            "1111", max_time="2011-01-01"
+        )
 
         agg_df = patient_query.get_patient_obs_view(_BASE_URL)
         self.assertTrue(
             agg_df[agg_df["code"] == "1111"]["max_date"].max() < "2011-01-01",
         )
-        self.assertTrue(agg_df[agg_df["code"] != "1111"]["max_date"].max() < end_date)
-        self.assertTrue(agg_df[agg_df["code"] != "1111"]["min_date"].min() > start_date)
+        self.assertTrue(
+            agg_df[agg_df["code"] != "1111"]["max_date"].max() < end_date
+        )
+        self.assertTrue(
+            agg_df[agg_df["code"] != "1111"]["min_date"].min() > start_date
+        )
 
     def test_obs_query_type_codes(self):
         _VL_CODE = "856"  # HIV VIRAL LOAD
@@ -196,10 +209,12 @@ class _PatientQueryTest:
         )
 
         self.assertTrue(
-            agg_df[agg_df["code"] != _ARV_PLAN]["max_date"].max() < other_end_date
+            agg_df[agg_df["code"] != _ARV_PLAN]["max_date"].max()
+            < other_end_date
         )
         self.assertTrue(
-            agg_df[agg_df["code"] != _ARV_PLAN]["min_date"].min() > other_start_date
+            agg_df[agg_df["code"] != _ARV_PLAN]["min_date"].min()
+            > other_start_date
         )
 
 
