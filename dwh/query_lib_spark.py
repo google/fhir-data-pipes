@@ -218,7 +218,7 @@ class _SparkPatientQuery(PatientQuery):
                 F.col("typeFlat.coding.code").alias("encTypeCode"),
             ]
         return flat_df.select(column_list).where(
-            self._construct_enc_constraint(self._enc_constraint)
+            self._construct_encounter_constraint(self._enc_constraint)
         )
 
     @staticmethod
@@ -339,7 +339,7 @@ class _SparkPatientQuery(PatientQuery):
         )
 
     @staticmethod
-    def time_constraint(min_time: str = None, max_time: str = None):
+    def _time_constraint(min_time: str = None, max_time: str = None):
         if not min_time and not max_time:
             return "TRUE"
         cl = []
@@ -356,16 +356,16 @@ class _SparkPatientQuery(PatientQuery):
         together into an `AND` clause.
         """
         cl = [
-            obs_constraint.time_constraint(
+            self._time_constraint(
                 obs_constraint.min_time, obs_constraint.max_time
             )
         ]
         cl.append('coding.code="{}"'.format(obs_constraint.code))
         # We don't need to filter coding.system as it is already done in flattening.
-        if obs_constraint._values:
+        if obs_constraint.values:
             codes_str = ",".join(['"{}"'.format(v) for v in obs_constraint.values])
             cl.append("value.codeableConcept.coding IN ({})".format(codes_str))
-            cl.append("value.codeableConcept.system {}".format(obs_constraint._sys_str))
+            cl.append("value.codeableConcept.system {}".format(obs_constraint.sys_str))
         elif obs_constraint.min_value or obs_constraint.max_value:
             if obs_constraint.min_value:
                 cl.append(
@@ -385,8 +385,8 @@ class _SparkPatientQuery(PatientQuery):
                 return "FALSE"
         constraints_str = " OR ".join(
             [
-                self._construct_obs_constraint(_code_constraint[code])
-                for code in self._code_constraint
+                self._construct_obs_constraint(constraint)
+                for constraint in self._code_constraint.values()
             ]
         )
         if not self._include_all_codes:
@@ -395,7 +395,7 @@ class _SparkPatientQuery(PatientQuery):
         others_str = " AND ".join(
             ['coding.code!="{}"'.format(code) for code in self._code_constraint]
             + [
-                self._obs_constraints_class.time_constraint(
+                self._time_constraint(
                     self._all_codes_min_time, self._all_codes_max_time
                 )
             ]
@@ -405,11 +405,11 @@ class _SparkPatientQuery(PatientQuery):
     def all_obs_constraints_sql(self) -> str:
         obs_str = self._all_obs_constraints()
         enc_str = (
-            "{}".format(self._enc_constraint.sql()) if self._enc_constraint else "TRUE"
+            "{}".format(self._construct_encounter_constraint(self._enc_constraint)) if self._enc_constraint else "TRUE"
         )
         return "{} AND {}".format(obs_str, enc_str)
 
-    def _construct_enc_constraint(self, enc_constraint: _EncounterContraints) -> str:
+    def _construct_encounter_constraint(self, enc_constraint: _EncounterContraints) -> str:
         """This creates a constraint string with WHERE syntax in SQL."""
         loc_str = "TRUE"
         if enc_constraint.location_id:

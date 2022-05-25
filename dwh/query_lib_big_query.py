@@ -2,7 +2,7 @@
 import typing as tp
 import pandas as pd
 
-from base import PatientQuery
+from base import PatientQuery, EncounterContraints, ObsConstraints
 
 _DATE_VALUE_SEPARATOR = ","
 
@@ -19,112 +19,6 @@ def _build_in_list_with_quotes(values: tp.Iterable[tp.Any]):
     return ",".join(('"{}"'.format(x) for x in values))
 
 
-class _BigQueryEncounterConstraints:
-    """Encounter constraints helper class that will be set up for querying
-    BigQuery."""
-
-    def __init__(
-        self,
-        locationId: tp.List[str] = None,
-        typeSystem: str = None,
-        typeCode: tp.List[str] = None,
-    ):
-        self._location_id = locationId
-        self._type_system = typeSystem
-        self._type_code = typeCode
-
-    def has_location(self) -> bool:
-        return self._location_id != None
-
-    def has_type(self) -> bool:
-        return (self._type_code != None) or (self._type_system != None)
-
-    def where_clause(self):
-        """Builds Encounter criteria.
-
-        Assumes, the query set will be as follows: from S,
-        unnest(s.type.array) as T, unnest(T.coding.array) as C left join
-        unnest(s.location.array) as L
-        """
-        clause_location_id = None
-        if self._location_id:
-            clause_location_id = "L.location.locationId in ({})".format(
-                _build_in_list_with_quotes(self._location_id)
-            )
-        clause_type_system = None
-        if self._type_system:
-            clause_type_system = "C.system = '{}'".format(self._type_system)
-        clause_type_codes = None
-        if self._type_code:
-            clause_type_codes = "C.code in ({})".format(
-                _build_in_list_with_quotes(self._type_code)
-            )
-        where_clause = " and ".join(
-            x for x in [clause_location_id, clause_type_system, clause_type_codes] if x
-        )
-        if where_clause:
-            return " where {} ".format(where_clause)
-        return ""
-
-
-class _BigQueryObsConstraints:
-    """Observation constraints helper class for querying Big Query."""
-
-    def __init__(
-        self,
-        code: str,
-        values: tp.List[str] = None,
-        value_sys: str = None,
-        min_value: float = None,
-        max_value: float = None,
-        min_time: str = None,
-        max_time: str = None,
-    ) -> None:
-
-        self._code = code
-        self._sys_str = '="{}"'.format(value_sys) if value_sys else "IS NULL"
-        self._values = values
-        self._min_time = min_time
-        self._max_time = max_time
-        self._min_value = min_value
-        self._max_value = max_value
-
-    @staticmethod
-    def time_constraint(min_time: str = None, max_time: str = None):
-        """
-        Build time constraints for Observation queries
-        """
-        if not min_time and not max_time:
-            return " TRUE "
-        conditions = []
-        if min_time:
-            conditions.append('O.effective.dateTime >= "{}"'.format(min_time))
-        if max_time:
-            conditions.append('O.effective.dateTime <= "{}"'.format(max_time))
-        return " AND ".join(conditions)
-
-    def where_clause(self):
-        """Build obs criteria."""
-        conditions = [self.time_constraint(self._min_time, self._max_time)]
-        conditions.append(' OC.code = "{}" '.format(self._code))
-        # We don't need to filter coding.system as it is already done in
-        # flattening.
-        if self._values:
-            codes_str = ",".join(['"{}"'.format(v) for v in self._values])
-            conditions.append("OVC.code IN ({})".format(codes_str))
-            # TODO(gdevanla): This is already applied as part of patient._code_system
-            # conditions.append('OVC.system {}'.format(self._sys_str))
-        elif self._min_value or self._max_value:
-            if self._min_value:
-                conditions.append(
-                    " O.value.quantity.value >= {} ".format(self._min_value)
-                )
-            if self._max_value:
-                conditions.append(
-                    " O.value.quantity.value <= {} ".format(self._max_value)
-                )
-        return "({})".format(" AND ".join(conditions))
-
 
 class _BigQueryPatientQuery(PatientQuery):
     """Concrete implementation of PatientQuery class that serves data stored in
@@ -132,7 +26,7 @@ class _BigQueryPatientQuery(PatientQuery):
 
     def __init__(self, project_name: str, bq_dataset: str, code_system: str):
         super().__init__(
-            code_system, _BigQueryEncounterConstraints, _BigQueryObsConstraints
+            code_system
         )
         self._bq_dataset = bq_dataset
         self._project_name = project_name
@@ -168,7 +62,7 @@ class _BigQueryPatientQuery(PatientQuery):
           {sample_count}
     """
 
-        where_clause = self._enc_constraint.where_clause()
+        where_clause = self._construct_encounter_constraint(self._enc_constraint)
         sql = sql_template.format(
             table_name=table_name,
             base_url=base_url,
@@ -267,7 +161,7 @@ class _BigQueryPatientQuery(PatientQuery):
             all_obs_constraints=all_obs_constraints,
             sample_count="" if sample_count is None else " LIMIT " + str(sample_count),
             base_url=base_url,
-            encounter_where_clause=self._enc_constraint.where_clause(),
+            encounter_where_clause=self._construct_encounter_constraint(self._enc_constraint)
         )
         return sql
 
@@ -280,7 +174,7 @@ class _BigQueryPatientQuery(PatientQuery):
 
         constraints_str = " OR ".join(
             [
-                obs_constraint.where_clause()
+                self._construct_obs_constraint(obs_constraint)
                 for obs_constraint in self._code_constraint.values()
             ]
         )
@@ -290,7 +184,7 @@ class _BigQueryPatientQuery(PatientQuery):
         others_str = " AND ".join(
             ['OC.code != "{}"'.format(code) for code in self._code_constraint]
             + [
-                self._obs_constraints_class.time_constraint(
+                self._time_constraint(
                     self._all_codes_min_time, self._all_codes_max_time
                 )
             ]
@@ -341,3 +235,66 @@ class _BigQueryPatientQuery(PatientQuery):
                 )
             patient_obs_enc.drop(columns=[col[1] for col in col_map], inplace=True)
             return patient_obs_enc
+
+    def _construct_encounter_constraint(self, enc_constraint: EncounterContraints):
+        """Builds Encounter criteria.
+
+        Assumes, the query set will be as follows: from S,
+        unnest(s.type.array) as T, unnest(T.coding.array) as C left join
+        unnest(s.location.array) as L
+        """
+        clause_location_id = None
+        if enc_constraint.location_id:
+            clause_location_id = "L.location.locationId in ({})".format(
+                _build_in_list_with_quotes(enc_constraint.location_id)
+            )
+        clause_type_system = None
+        if enc_constraint.type_system:
+            clause_type_system = "C.system = '{}'".format(enc_constraint.type_system)
+        clause_type_codes = None
+        if enc_constraint.type_code:
+            clause_type_codes = "C.code in ({})".format(
+                _build_in_list_with_quotes(enc_constraint.type_code)
+            )
+        where_clause = " and ".join(
+            x for x in [clause_location_id, clause_type_system, clause_type_codes] if x
+        )
+        if where_clause:
+            return " where {} ".format(where_clause)
+        return ""
+
+    @staticmethod
+    def _time_constraint(min_time: str = None, max_time: str = None):
+        """
+        Build time constraints for Observation queries
+        """
+        if not min_time and not max_time:
+            return " TRUE "
+        conditions = []
+        if min_time:
+            conditions.append('O.effective.dateTime >= "{}"'.format(min_time))
+        if max_time:
+            conditions.append('O.effective.dateTime <= "{}"'.format(max_time))
+        return " AND ".join(conditions)
+
+    def _construct_obs_constraint(self, obs_constraint: ObsConstraints):
+        """Build obs criteria."""
+        conditions = [self._time_constraint(obs_constraint.min_time, obs_constraint.max_time)]
+        conditions.append(' OC.code = "{}" '.format(obs_constraint.code))
+        # We don't need to filter coding.system as it is already done in
+        # flattening.
+        if obs_constraint.values:
+            codes_str = ",".join(['"{}"'.format(v) for v in obs_constraint.values])
+            conditions.append("OVC.code IN ({})".format(codes_str))
+            # TODO(gdevanla): This is already applied as part of patient._code_system
+            # conditions.append('OVC.system {}'.format(obs_constraint.sys_str))
+        elif obs_constraint.min_value or obs_constraint.max_value:
+            if obs_constraint.min_value:
+                conditions.append(
+                    " O.value.quantity.value >= {} ".format(obs_constraint.min_value)
+                )
+            if obs_constraint.max_value:
+                conditions.append(
+                    " O.value.quantity.value <= {} ".format(obs_constraint.max_value)
+                )
+        return "({})".format(" AND ".join(conditions))
