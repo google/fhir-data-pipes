@@ -43,7 +43,7 @@ ENV FHIR_DEBEZIUM_CONFIG_PATH="/workspace/utils/dbz_event_to_fhir_config.json"
 
 
 ENTRYPOINT java -jar /usr/src/Main/app.jar  \
-           --fhirServerUrl=${OPENMRS_URL} --fhirServerUserName=${OPENMRS_USERNAME} --fhirServerPassword=${OPENMRS_PASSWORD} \
+           --fhirServerUrl=${OPENMRS_URL}/ws/fhir2/R4 --fhirServerUserName=${OPENMRS_USERNAME} --fhirServerPassword=${OPENMRS_PASSWORD} \
            --resourceList=${RESOURCE_LIST} --batchSize=${BATCH_SIZE} --targetParallelism=${TARGET_PARALLELISM} \
            --fhirSinkPath=${SINK_PATH}  --sinkUserName=${SINK_USERNAME} --sinkPassword=${SINK_PASSWORD} \
            --outputParquetPath=${PARQUET_PATH} --jdbcModeEnabled=${JDBC_MODE_ENABLED} --jdbcDriverClass=${JDBC_DRIVER_CLASS} \

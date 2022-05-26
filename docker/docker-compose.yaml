@@ -28,7 +28,7 @@ services:
       # data is the directory which you want to persist the generated parquet files
       - ../data:/tmp
     environment:
-     - OPENMRS_URL=http://localhost:8099/openmrs/ws/fhir2/R4
+     - OPENMRS_URL=http://localhost:8099/openmrs
      - RESOURCE_LIST=Patient,Encounter,Observation
      - OPENMRS_USERNAME=admin
      - OPENMRS_PASSWORD=Admin123
@@ -59,7 +59,7 @@ services:
       # data is the directory which you want to persist the generated parquet files
       - ../data:/tmp
     environment:
-      - OPENMRS_URL=http://localhost:8099/openmrs/ws/fhir2/R4
+      - OPENMRS_URL=http://localhost:8099/openmrs
       - OPENMRS_USERNAME=admin
       - OPENMRS_PASSWORD=Admin123
       - SINK_URL=

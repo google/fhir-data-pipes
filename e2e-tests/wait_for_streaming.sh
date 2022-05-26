@@ -46,7 +46,7 @@ function start_pipeline() {
     echo "STARTING STREAMING PIPELINE"
     cd /workspace/pipelines
     ../utils/start_pipelines.sh -s -streamingLog /workspace/e2e-tests/log.log \
-    -u ${OPENMRS_URL}/openmrs  -o /workspace/e2e-tests/STREAMING \
+    -u ${OPENMRS_URL}/openmrs/ws/fhir2/R4  -o /workspace/e2e-tests/STREAMING \
     -secondsToFlushStreaming 5 -fhirSinkPath ${SINK_SERVER}/fhir \
     -sinkUsername hapi -sinkPassword hapi
 }
