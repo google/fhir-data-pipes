@@ -74,11 +74,11 @@ modules](https://guide.openmrs.org/en/Configuration/customizing-openmrs-with-plu
 Although each mode of transfer uses a different binary, they use some common
 parameters which are documented here.
 
--   `fhirServerUrl` - The base URL of the source fhir store instance. Default:
+-   `fhirServerUrl` - The base URL of the source fhir server instance. Default:
     `http://localhost:8099/openmrs/ws/fhir2/R4`
--   `fhirServerUserName` - The HTTP Basic Auth username to access the OpenMRS APIs.
+-   `fhirServerUserName` - The HTTP Basic Auth username to access the fhir server APIs.
     Default: `admin`
--   `fhirServerPassword` - The HTTP Basic Auth password to access the OpenMRS APIs.
+-   `fhirServerPassword` - The HTTP Basic Auth password to access the fhir server APIs.
     Default: `Admin123`
 -   `fhirSinkPath` - A base URL to a target FHIR server, or the relative path of
     a GCP FHIR store, e.g. `http://localhost:8098/fhir` for a FHIR server or
@@ -106,7 +106,7 @@ First, complete the [Setup](#setup) instructions.
 The next sections describe parameters specific to Batch mode. See [Common
 Parameters](#common-parameters) for information about the other parameters.
 
-### Batch mode using FHIR Search
+### Batch mode using FHIR Search for OpenMRS source
 
 To start Batch Mode using FHIR Search, run:
 
@@ -129,8 +129,21 @@ Parameters:
     `given=Susan` criteria. Default: `Patient,Encounter,Observation`
 -   `batchSize` - The number of resources to fetch in each API call. Default:
     `100`
+    
+### Batch mode using FHIR Search for HAPI source
 
-### Batch mode using JDBC
+To start Batch Mode using FHIR Search, run:
+
+```shell
+$ java -cp batch/target/fhir-batch-etl-bundled-0.1.0-SNAPSHOT.jar \
+    org.openmrs.analytics.FhirEtl \
+    --fhirServerUrl=http://localhost:8098/fhir \
+    --fhirServerUserName=hapi --fhirServerPassword=hapi \
+    --outputParquetPath=/tmp/TEST/ \
+    --resourceList=Patient,Encounter,Observation --batchSize=20
+```
+
+### Batch mode using JDBC for OpenMRS source
 
 To start Batch Mode using JDBC, run:
 
