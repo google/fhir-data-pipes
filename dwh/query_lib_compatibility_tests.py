@@ -219,15 +219,6 @@ class _PatientQueryTest:
 class PatientQueryTestBigQuery(unittest.TestCase, _PatientQueryTest):
     """
     Test PatientQuery API using the concreate implemenation for BigQuery
-
-    For these tests to run the Google Auth settings have to be run on the machine running these tests:
-
-    Follow instructions here https://cloud.google.com/sdk/gcloud/reference/auth to
-
-    a. gcloud auth login
-    b. gcloud config set project <project_name>
-      (project_name here is the project that has the dataset 'synthea_big'
-       that is used by tests)
     """
 
     _PatientQueryClass = partial(
