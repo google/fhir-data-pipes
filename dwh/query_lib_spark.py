@@ -124,7 +124,7 @@ class _SparkPatientQuery(PatientQuery):
         # TODO figure where `context` comes from and why.
         join_df = self._flat_obs.join(
             flat_enc, flat_enc.encounterId == self._flat_obs.encounterId
-        ).where(self._all_obs_constraints_sql())
+        ).where(self._all_constraints_sql())
         agg_obs_df = _SparkPatientQuery._aggregate_patient_codes(join_df)
         common.custom_log(
             "Number of aggregated obs= {}".format(agg_obs_df.count())
@@ -447,7 +447,7 @@ class _SparkPatientQuery(PatientQuery):
         )
         return "({} OR ({}))".format(constraints_str, others_str)
 
-    def _all_obs_constraints_sql(self) -> str:
+    def _all_constraints_sql(self) -> str:
         obs_str = self._all_obs_constraints()
         enc_str = (
             "{}".format(

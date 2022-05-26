@@ -14,69 +14,70 @@
 
 import unittest
 
-import query_lib
+import query_lib_spark as query_lib
 
 class PatientQueryTest(unittest.TestCase):
 
   def test_single_code_with_values(self):
-    patient_query = query_lib.PatientQuery()
+    patient_query = query_lib._SparkPatientQuery("", "")
     patient_query.include_obs_values_in_time_range(
         'TEST_CODE', ['VAL1', 'VAL2'], '2021-06-01', '2021-07-10')
-    sql_constraint = patient_query.all_constraints_sql()
+    sql_constraint = patient_query._all_constraints_sql()
     self.assertEqual(sql_constraint, (
         '((dateTime >= "2021-06-01" AND dateTime <= "2021-07-10" AND '
         'coding.code="TEST_CODE" AND '
-        'value.codeableConcept.coding IN ("VAL1","VAL2") AND '
-        'value.codeableConcept.system IS NULL))'
+        'valueCoding.code IN ("VAL1","VAL2") AND '
+        'valueCoding.system IS NULL))'
         ' AND TRUE AND TRUE AND TRUE'
     ))
 
   def test_single_code_with_values_and_encounter(self):
-    patient_query = query_lib.PatientQuery()
+    patient_query = query_lib._SparkPatientQuery("", "")
     patient_query.include_obs_values_in_time_range(
         'TEST_CODE', ['VAL1', 'VAL2'], '2021-06-01', '2021-07-10')
     patient_query.encounter_constraints(
         locationId=['L1', 'L2'], typeCode=['TC1', 'TC2'], typeSystem='TS')
-    sql_constraint = patient_query.all_constraints_sql()
+    sql_constraint = patient_query._all_constraints_sql().strip()
     self.assertEqual(sql_constraint, (
         '((dateTime >= "2021-06-01" AND dateTime <= "2021-07-10" AND '
         'coding.code="TEST_CODE" AND '
-        'value.codeableConcept.coding IN ("VAL1","VAL2") AND '
-        'value.codeableConcept.system IS NULL)) '
-        'AND locationId IN ("L1","L2") AND encTypeCode IN ("TC1","TC2") AND '
-        'encTypeSystem="TS"'
+        'valueCoding.code IN ("VAL1","VAL2") AND '
+        'valueCoding.system IS NULL)) '
+        'AND locationId IN ("L1","L2") AND  '
+        'arrays_overlap(encTypeCode, array("TC1","TC2"))  AND  '
+        'array_contains(encTypeSystem,  "TS")'
     ))
 
   def test_two_codes_with_values_and_range(self):
-    patient_query = query_lib.PatientQuery()
+    patient_query = query_lib._SparkPatientQuery("", "")
     patient_query.include_obs_values_in_time_range(
         'TEST_CODE1', ['VAL1', 'VAL2'], '2021-06-01', '2021-07-10')
     patient_query.include_obs_in_value_and_time_range(
         'TEST_CODE2', 0.1, None, '2021-07-09', '2021-07-10')
-    sql_constraint = patient_query.all_constraints_sql()
+    sql_constraint = patient_query._all_constraints_sql()
     self.assertEqual(sql_constraint, (
         '((dateTime >= "2021-06-01" AND dateTime <= "2021-07-10" AND '
         'coding.code="TEST_CODE1" AND '
-        'value.codeableConcept.coding IN ("VAL1","VAL2") AND '
-        'value.codeableConcept.system IS NULL) '
+        'valueCoding.code IN ("VAL1","VAL2") AND '
+        'valueCoding.system IS NULL) '
         'OR (dateTime >= "2021-07-09" AND dateTime <= "2021-07-10" AND '
         'coding.code="TEST_CODE2" AND  value.quantity.value >= 0.1 ))'
         ' AND TRUE AND TRUE AND TRUE'
     ))
 
   def test_two_codes_with_values_and_range_and_other_codes(self):
-    patient_query = query_lib.PatientQuery()
+    patient_query = query_lib._SparkPatientQuery("", "")
     patient_query.include_obs_values_in_time_range(
         'TEST_CODE1', ['VAL1', 'VAL2'], '2021-06-01', '2021-07-10')
     patient_query.include_obs_in_value_and_time_range(
         'TEST_CODE2', 0.1, None, '2021-07-09', '2021-07-10')
     patient_query.include_all_other_codes()
-    sql_constraint = patient_query.all_constraints_sql()
+    sql_constraint = patient_query._all_constraints_sql()
     self.assertEqual(sql_constraint, (
         '((dateTime >= "2021-06-01" AND dateTime <= "2021-07-10" AND '
         'coding.code="TEST_CODE1" AND '
-        'value.codeableConcept.coding IN ("VAL1","VAL2") AND '
-        'value.codeableConcept.system IS NULL) '
+        'valueCoding.code IN ("VAL1","VAL2") AND '
+        'valueCoding.system IS NULL) '
         'OR (dateTime >= "2021-07-09" AND dateTime <= "2021-07-10" AND '
         'coding.code="TEST_CODE2" AND  value.quantity.value >= 0.1 ) '
         'OR (coding.code!="TEST_CODE1" AND coding.code!="TEST_CODE2" AND TRUE))'
@@ -84,19 +85,19 @@ class PatientQueryTest(unittest.TestCase):
     ))
 
   def test_two_codes_with_values_and_range_and_other_codes_with_date(self):
-    patient_query = query_lib.PatientQuery()
+    patient_query = query_lib._SparkPatientQuery("", "")
     patient_query.include_obs_values_in_time_range(
         'TEST_CODE1', ['VAL1', 'VAL2'], '2021-06-01', '2021-07-10')
     patient_query.include_obs_in_value_and_time_range(
         'TEST_CODE2', 0.1, None, '2021-07-09', '2021-07-10')
     patient_query.include_all_other_codes(
         min_time='2020-05-01', max_time='2020-07-10')
-    sql_constraint = patient_query.all_constraints_sql()
+    sql_constraint = patient_query._all_constraints_sql()
     self.assertEqual(sql_constraint, (
         '((dateTime >= "2021-06-01" AND dateTime <= "2021-07-10" AND '
         'coding.code="TEST_CODE1" AND '
-        'value.codeableConcept.coding IN ("VAL1","VAL2") AND '
-        'value.codeableConcept.system IS NULL) '
+        'valueCoding.code IN ("VAL1","VAL2") AND '
+        'valueCoding.system IS NULL) '
         'OR (dateTime >= "2021-07-09" AND dateTime <= "2021-07-10" AND '
         'coding.code="TEST_CODE2" AND  value.quantity.value >= 0.1 ) '
         'OR (coding.code!="TEST_CODE1" AND coding.code!="TEST_CODE2" AND '
