@@ -84,7 +84,7 @@ function print_message() {
 # Globals:
 #   HOME_PATH
 #   PARQUET_SUBDIR
-#   OPENMRS_URL
+#   FHIR_SERVER_URL
 #   SINK_SERVER
 #   STREAMING
 # Arguments:
@@ -101,12 +101,12 @@ function setup() {
   rm -rf "${HOME_PATH}/fhir"
   rm -rf "${HOME_PATH}/${PARQUET_SUBDIR}/*.json"
   find "${HOME_PATH}/${PARQUET_SUBDIR}" -size 0 -delete
-  OPENMRS_URL='http://localhost:8099'
+  FHIR_SERVER_URL='http://localhost:8099/openmrs/ws/fhir2/R4'
   SINK_SERVER='http://localhost:8098'
   STREAMING=""
 
   if [[ $3 = "--use_docker_network" || $4 = "--use_docker_network" ]]; then
-    OPENMRS_URL='http://openmrs:8080'
+    FHIR_SERVER_URL='http://openmrs:8080/openmrs/ws/fhir2/R4'
     SINK_SERVER='http://sink-server:8080'
   fi
 
@@ -116,17 +116,17 @@ function setup() {
 }
 
 #################################################
-# Function to count resources in openmrs server
+# Function to count resources in fhir server
 # Globals:
 #   HOME_PATH
 #   PARQUET_SUBDIR
-#   OPENMRS_URL
+#   FHIR_SERVER_URL
 #   TOTAL_TEST_PATIENTS
 #   TOTAL_TEST_ENCOUNTERS
 #   TOTAL_TEST_OBS
 #   STREAMING
 #################################################
-function openmrs_query() {
+function fhir_source_query() {
   local patient_query_param=""
   local enc_obs_query_param=""
 
@@ -136,17 +136,17 @@ function openmrs_query() {
   fi
   
   curl -L -X GET -u admin:Admin123 --connect-timeout 5 --max-time 20 \
-    "${OPENMRS_URL}/openmrs/ws/fhir2/R4/Patient${patient_query_param}" 2>/dev/null >>"${HOME_PATH}/${PARQUET_SUBDIR}/patients.json"
+    "${FHIR_SERVER_URL}/Patient${patient_query_param}" 2>/dev/null >>"${HOME_PATH}/${PARQUET_SUBDIR}/patients.json"
 
   TOTAL_TEST_PATIENTS=$(jq '.total' "${HOME_PATH}/${PARQUET_SUBDIR}/patients.json")
   print_message "Total openmrs test patients ---> ${TOTAL_TEST_PATIENTS}"
   curl -L -X GET -u admin:Admin123 --connect-timeout 5 --max-time 20 \
-    "${OPENMRS_URL}/openmrs/ws/fhir2/R4/Encounter${enc_obs_query_param}" \
+    "${FHIR_SERVER_URL}/Encounter${enc_obs_query_param}" \
     2>/dev/null >>"${HOME_PATH}/${PARQUET_SUBDIR}/encounters.json"
   TOTAL_TEST_ENCOUNTERS=$(jq '.total' "${HOME_PATH}/${PARQUET_SUBDIR}/encounters.json")
   print_message "Total openmrs test encounters ---> ${TOTAL_TEST_ENCOUNTERS}"
   curl -L -X GET -u admin:Admin123 --connect-timeout 5 --max-time 20 \
-    "${OPENMRS_URL}/openmrs/ws/fhir2/R4/Observation${enc_obs_query_param}" \
+    "${FHIR_SERVER_URL}/Observation${enc_obs_query_param}" \
     2>/dev/null >>"${HOME_PATH}/${PARQUET_SUBDIR}/obs.json"
   TOTAL_TEST_OBS=$(jq '.total' "${HOME_PATH}/${PARQUET_SUBDIR}/obs.json")
   print_message "Total openmrs test obs ---> ${TOTAL_TEST_OBS}"
@@ -238,7 +238,7 @@ function test_fhir_sink() {
 validate_args  "$@"
 setup "$@"
 print_message "---- STARTING ${PARQUET_SUBDIR} TEST ----"
-openmrs_query 
+fhir_source_query 
 test_parquet_sink 
 test_fhir_sink 
 print_message "END!!"

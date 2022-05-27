@@ -22,36 +22,36 @@ set -e
 #################################################
 # Function that defines the endpoints
 # Globals:
-#   OPENMRS_URL
+#   FHIR_SERVER_URL
 #   SINK_SERVER
 # Arguments:
 #   Flag whether to use docker network. By default, host URL is  used. 
 #################################################
 function setup() {  
-  OPENMRS_URL='http://localhost:8099'
+  FHIR_SERVER_URL='http://localhost:8099/openmrs/ws/fhir2/R4'
   SINK_SERVER='http://localhost:8098'
 
   if [[ $1 = "--use_docker_network" ]]; then
-    OPENMRS_URL='http://openmrs:8080'
+    FHIR_SERVER_URL='http://openmrs:8080/openmrs/ws/fhir2/R4'
     SINK_SERVER='http://sink-server:8080'
   fi
 }
 
 #################################################
-# Function to check if OpenMRS server  completed initialization 
+# Function to check if fhir server completed initialization 
 # Globals:
-#   OPENMRS_URL
+#   FHIR_SERVER_URL
 #################################################
-function openmrs_check() {
+function fhir_source_check() {
   openmrs_start_wait_time=0
   contenttype=$(curl -o /dev/null --head -w "%{content_type}\n" -X GET -u admin:Admin123 \
-      --connect-timeout 5 --max-time 20 ${OPENMRS_URL}/openmrs/ws/fhir2/R4/Patient \
+      --connect-timeout 5 --max-time 20 ${FHIR_SERVER_URL}/Patient \
       2>/dev/null | cut -d ";" -f 1)
   until [[ ${contenttype} == "application/fhir+json" ]]; do
     echo "WAITING FOR OPENMRS SERVER TO START"
     sleep 60s
     contenttype=$(curl -o /dev/null --head -w "%{content_type}\n" -X GET -u admin:Admin123 \
-      --connect-timeout 5 --max-time 20 ${OPENMRS_URL}/openmrs/ws/fhir2/R4/Patient \
+      --connect-timeout 5 --max-time 20 ${FHIR_SERVER_URL}/Patient \
       2>/dev/null | cut -d ";" -f 1)
     ((openmrs_start_wait_time += 1))
     if [[ ${openmrs_start_wait_time} == 20 ]]; then
@@ -67,7 +67,7 @@ function openmrs_check() {
 # Globals:
 #   SINK_SERVER
 #################################################
-function fhir_check() {
+function fhir_sink_check() {
   fhir_server_start_wait_time=0
   fhir_server_status_code=$(curl -o /dev/null --head -w "%{http_code}" -L -X GET \
   -u hapi:hapi --connect-timeout 5 --max-time 20 \
@@ -88,5 +88,5 @@ function fhir_check() {
 }
 
 setup $1
-openmrs_check
-fhir_check
+fhir_source_check
+fhir_sink_check

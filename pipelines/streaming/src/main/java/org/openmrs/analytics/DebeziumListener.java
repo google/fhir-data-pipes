@@ -64,8 +64,8 @@ public class DebeziumListener extends RouteBuilder {
 	@VisibleForTesting
 	FhirConverter createFhirConverter(CamelContext camelContext) throws Exception {
 		FhirContext fhirContext = FhirContext.forR4();
-		String fhirBaseUrl = params.openmrsServerUrl + params.openmrsFhirBaseEndpoint;
-		OpenmrsUtil openmrsUtil = new OpenmrsUtil(fhirBaseUrl, params.openmrUserName, params.openmrsPassword, fhirContext);
+		String fhirBaseUrl = params.fhirServerUrl;
+		OpenmrsUtil openmrsUtil = new OpenmrsUtil(fhirBaseUrl, params.fhirServerUserName, params.fhirServerPassword, fhirContext);
 		FhirStoreUtil fhirStoreUtil = FhirStoreUtil.createFhirStoreUtil(params.fhirSinkPath, params.sinkUserName,
 		    params.sinkPassword, fhirContext.getRestfulClientFactory());
 		ParquetUtil parquetUtil = new ParquetUtil(params.outputParquetPath, params.secondsToFlushParquetFiles,
@@ -137,10 +137,6 @@ public class DebeziumListener extends RouteBuilder {
 		
 		public DebeziumArgs() {
 		};
-		
-		// TODO merge this with `openmrsServerUrl` flag to `fhirBaseUrl`.
-		@Parameter(names = { "--openmrsFhirBaseEndpoint" }, description = "Fhir base endpoint")
-		public String openmrsFhirBaseEndpoint = "/ws/fhir2/R4";
 		
 		@Parameter(names = { "--fhirDebeziumConfigPath" }, description = "Google cloud FHIR store")
 		public String fhirDebeziumConfigPath = "../utils/dbz_event_to_fhir_config.json";

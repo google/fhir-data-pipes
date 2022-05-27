@@ -17,9 +17,9 @@ FROM adoptopenjdk/maven-openjdk8
 ARG WORK_DIR="/usr/src/Main"
 COPY target/streaming-binlog-bundled-0.1.0-SNAPSHOT.jar ${WORK_DIR}/app.jar
 WORKDIR ${WORK_DIR}
-ENV OPENMRS_URL="http://openmrs:8080/openmrs"
-ENV OPENMRS_USERNAME="admin"
-ENV OPENMRS_PASSWORD="Admin123"
+ENV FHIR_SERVER_URL="http://openmrs:8080/openmrs/ws/fhir2/R4"
+ENV FHIR_SERVER_USERNAME="admin"
+ENV FHIR_SERVER_PASSWORD="Admin123"
 ENV SINK_URL=""
 ENV SINK_USERNAME=""
 ENV SINK_PASSWORD=""
@@ -32,9 +32,9 @@ ENV JDBC_DRIVER_CLASS="com.mysql.cj.jdbc.Driver"
 ENV SECONDS_TO_FLUSH_PARQUET_FILES=3600
 
 ENTRYPOINT java -jar /usr/src/Main/app.jar \
-           --openmrsServerUrl=${OPENMRS_URL}  \
-           --openmrsUserName=${OPENMRS_USERNAME}  \
-           --openmrsPassword=${OPENMRS_PASSWORD} \
+           --fhirServerUrl=${FHIR_SERVER_URL} \
+           --fhirServerUserName=${FHIR_SERVER_USERNAME}  \
+           --fhirServerPassword=${FHIR_SERVER_PASSWORD} \
            --fhirSinkPath=${SINK_URL}  \
            --sinkUserName=${SINK_USERNAME} \
            --sinkPassword=${SINK_PASSWORD} \

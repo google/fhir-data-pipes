@@ -26,19 +26,12 @@ public interface FhirEtlOptions extends PipelineOptions {
 	/**
 	 * By default, this reads from the OpenMRS instance `openmrs` at the default port on localhost.
 	 */
-	@Description("OpenMRS server URL")
+	@Description("Fhir source server URL")
 	@Required
-	@Default.String("http://localhost:8099/openmrs")
-	String getOpenmrsServerUrl();
+	@Default.String("http://localhost:8099/openmrs/ws/fhir2/R4")
+	String getFhirServerUrl();
 	
-	void setOpenmrsServerUrl(String value);
-	
-	// TODO merge this with `openmrsServerUrl` after deprecating the atom-feed mode.
-	@Description("OpenMRS server fhir endpoint")
-	@Default.String("/ws/fhir2/R4")
-	String getOpenmrsFhirBaseEndpoint();
-	
-	void setOpenmrsFhirBaseEndpoint(String value);
+	void setFhirServerUrl(String value);
 	
 	@Description("Comma separated list of resource to fetch, e.g., 'Patient,Encounter,Observation'.")
 	@Default.String("Patient,Encounter,Observation")
@@ -61,17 +54,17 @@ public interface FhirEtlOptions extends PipelineOptions {
 	
 	void setJdbcFetchSize(int value);
 	
-	@Description("Openmrs BasicAuth Username")
+	@Description("Fhir source server BasicAuth Username")
 	@Default.String("admin")
-	String getOpenmrsUserName();
+	String getFhirServerUserName();
 	
-	void setOpenmrsUserName(String value);
+	void setFhirServerUserName(String value);
 	
-	@Description("Openmrs BasicAuth Password")
+	@Description("Fhir source server BasicAuth Password")
 	@Default.String("Admin123")
-	String getOpenmrsPassword();
+	String getFhirServerPassword();
 	
-	void setOpenmrsPassword(String value);
+	void setFhirServerPassword(String value);
 	
 	@Description("The path to the target generic fhir store, or a GCP fhir store with the format: "
 	        + "`projects/[\\w-]+/locations/[\\w-]+/datasets/[\\w-]+/fhirStores/[\\w-]+`, e.g., "
