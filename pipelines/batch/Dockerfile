@@ -23,9 +23,9 @@ ARG WORK_DIR="/usr/src/Main"
 COPY target/batch-bundled-0.1.0-SNAPSHOT.jar ${WORK_DIR}/app.jar
 WORKDIR ${WORK_DIR}
 
-ENV OPENMRS_URL="http://openmrs:8080/openmrs"
-ENV OPENMRS_USERNAME="admin"
-ENV OPENMRS_PASSWORD="Admin123"
+ENV FHIR_SERVER_URL="http://openmrs:8080/openmrs/ws/fhir2/R4"
+ENV FHIR_SERVER_USERNAME="admin"
+ENV FHIR_SERVER_PASSWORD="Admin123"
 ENV SINK_PATH=""
 ENV SINK_USERNAME=""
 ENV SINK_PASSWORD=""
@@ -43,7 +43,7 @@ ENV FHIR_DEBEZIUM_CONFIG_PATH="/workspace/utils/dbz_event_to_fhir_config.json"
 
 
 ENTRYPOINT java -jar /usr/src/Main/app.jar  \
-           --fhirServerUrl=${OPENMRS_URL}/ws/fhir2/R4 --fhirServerUserName=${OPENMRS_USERNAME} --fhirServerPassword=${OPENMRS_PASSWORD} \
+           --fhirServerUrl=${FHIR_SERVER_URL} --fhirServerUserName=${FHIR_SERVER_USERNAME} --fhirServerPassword=${FHIR_SERVER_PASSWORD} \
            --resourceList=${RESOURCE_LIST} --batchSize=${BATCH_SIZE} --targetParallelism=${TARGET_PARALLELISM} \
            --fhirSinkPath=${SINK_PATH}  --sinkUserName=${SINK_USERNAME} --sinkPassword=${SINK_PASSWORD} \
            --outputParquetPath=${PARQUET_PATH} --jdbcModeEnabled=${JDBC_MODE_ENABLED} --jdbcDriverClass=${JDBC_DRIVER_CLASS} \

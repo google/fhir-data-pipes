@@ -106,7 +106,7 @@ First, complete the [Setup](#setup) instructions.
 The next sections describe parameters specific to Batch mode. See [Common
 Parameters](#common-parameters) for information about the other parameters.
 
-### Batch mode using FHIR Search for OpenMRS source
+### Batch mode using FHIR Search with OpenMRS as the source
 
 To start Batch Mode using FHIR Search, run:
 
@@ -130,7 +130,7 @@ Parameters:
 -   `batchSize` - The number of resources to fetch in each API call. Default:
     `100`
     
-### Batch mode using FHIR Search for HAPI source
+### Batch mode using FHIR Search with HAPI as the source
 
 To start Batch Mode using FHIR Search, run:
 
@@ -138,7 +138,6 @@ To start Batch Mode using FHIR Search, run:
 $ java -cp batch/target/fhir-batch-etl-bundled-0.1.0-SNAPSHOT.jar \
     org.openmrs.analytics.FhirEtl \
     --fhirServerUrl=http://localhost:8098/fhir \
-    --fhirServerUserName=hapi --fhirServerPassword=hapi \
     --outputParquetPath=/tmp/TEST/ \
     --resourceList=Patient,Encounter,Observation --batchSize=20
 ```

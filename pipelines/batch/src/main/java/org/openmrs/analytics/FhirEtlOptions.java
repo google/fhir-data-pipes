@@ -54,13 +54,13 @@ public interface FhirEtlOptions extends PipelineOptions {
 	
 	void setJdbcFetchSize(int value);
 	
-	@Description("Fhir Source Server BasicAuth Username")
+	@Description("Fhir source server BasicAuth Username")
 	@Default.String("admin")
 	String getFhirServerUserName();
 	
 	void setFhirServerUserName(String value);
 	
-	@Description("Fhir Source Server BasicAuth Password")
+	@Description("Fhir source server BasicAuth Password")
 	@Default.String("Admin123")
 	String getFhirServerPassword();
 	
