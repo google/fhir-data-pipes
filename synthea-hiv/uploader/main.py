@@ -61,7 +61,7 @@ parser.add_argument(
         'endpoint to upload to.\n\nFor GCP FHIR Store, the format is '
         'https://healthcare.googleapis.com/v1beta1/projects/PROJECT_ID/'
         'locations/LOCATION/datasets/DATASET/fhirStores/FHIR_STORE/fhir'
-        '\n\nFor a local OpenMRS endpoint, it is http://localhost:8099/openmrs/'
+        '\n\nFor a local OpenMRS endpoint, it is http://localhost:8099/openmrs/ws/fhir2/R4'
         'ws/fhir2/R4\n\nFor a local HAPI endpoint, it is http://localhost:8098/fhir'
     ))
 

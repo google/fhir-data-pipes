@@ -17,14 +17,14 @@ import com.beust.jcommander.Parameter;
 
 public class BaseArgs {
 	
-	@Parameter(names = { "--openmrsUserName" }, description = "User name for openmrs server")
-	public String openmrUserName = "admin";
+	@Parameter(names = { "--fhirServerUserName" }, description = "User name for fhir source server")
+	public String fhirServerUserName = "admin";
 	
-	@Parameter(names = { "--openmrsPassword" }, description = "Password for openmrs User")
-	public String openmrsPassword = "Admin123";
+	@Parameter(names = { "--fhirServerPassword" }, description = "Password for openmrs User")
+	public String fhirServerPassword = "Admin123";
 	
-	@Parameter(names = { "--openmrsServerUrl" }, description = "Openmrs Server Base Url")
-	public String openmrsServerUrl = "http://localhost:8099/openmrs";
+	@Parameter(names = { "--fhirServerUrl" }, description = "Fhir source server base Url")
+	public String fhirServerUrl = "http://localhost:8099/openmrs/ws/fhir2/R4";
 	
 	@Parameter(names = { "--fhirSinkPath" }, description = "Google cloud FHIR store or target generic fhir store")
 	public String fhirSinkPath = "";

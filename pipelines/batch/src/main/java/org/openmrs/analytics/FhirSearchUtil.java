@@ -22,6 +22,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import ca.uhn.fhir.rest.api.SearchTotalModeEnum;
 import ca.uhn.fhir.rest.api.SummaryEnum;
 import ca.uhn.fhir.rest.client.api.IGenericClient;
 import ca.uhn.fhir.rest.gclient.DateClientParam;
@@ -109,8 +110,8 @@ public class FhirSearchUtil {
 	
 	private IQuery<Bundle> makeQueryForResource(String resourceType, int count) {
 		IGenericClient client = openmrsUtil.getSourceClient(true);
-		return client.search().forResource(resourceType).count(count).summaryMode(SummaryEnum.DATA)
-		        .returnBundle(Bundle.class);
+		return client.search().forResource(resourceType).totalMode(SearchTotalModeEnum.ACCURATE).count(count)
+		        .summaryMode(SummaryEnum.DATA).returnBundle(Bundle.class);
 	}
 	
 	static List<String> getDateRange(String activePeriod) {

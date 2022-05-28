@@ -80,7 +80,7 @@ public class JdbcFetchUtilTest extends TestCase {
 		IParser parser = fhirContext.newJsonParser();
 		resource = parser.parseResource(Encounter.class, resourceStr);
 		
-		String[] args = { "--fhirSinkPath=", "--openmrsServerUrl=http://localhost:8099/openmrs" };
+		String[] args = { "--fhirSinkPath=", "--fhirServerUrl=http://localhost:8099/openmrs/ws/fhir2/R4" };
 		FhirEtlOptions options = PipelineOptionsFactory.fromArgs(args).withValidation().as(FhirEtlOptions.class);
 		dbConfig = DatabaseConfiguration.createConfigFromFile("../../utils/dbz_event_to_fhir_config.json");
 		
