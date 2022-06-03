@@ -1,31 +1,48 @@
+# Copyright 2022 Google LLC
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
 """Module that implements Query Engine for BigQuery."""
 import typing as tp
 
 import pandas as pd
+from google.cloud import bigquery
 
-from base import EncounterConstraints, ObsConstraints, PatientQuery
-
+import base
 
 _DATE_VALUE_SEPARATOR = ","
 
-try:
-    from google.cloud import bigquery
-except ImportError:
-    pass  # not all set up need to have bigquery libraries installed
 
-
-def _build_in_list_with_quotes(values: tp.Iterable[tp.Any]):
+def _build_in_list_with_quotes(values: tp.List[tp.Any]) -> str:
     """
     Builds the `in` operand for a where clause
     """
     return ",".join(('"{}"'.format(x) for x in values))
 
 
-class _BigQueryPatientQuery(PatientQuery):
+class _BigQueryPatientQuery(base.PatientQuery):
     """Concrete implementation of PatientQuery class that serves data stored in
     BigQuery."""
 
     def __init__(self, project_name: str, bq_dataset: str, code_system: str):
+        """
+        Args:
+            project_name: The GoogleCloud project name. This field is required if
+                is used as data source.
+            bq_dataset: The name of BigQuery dataset.
+            code_system: The code system that needs to be used as extra filter
+               while querying data.
+        """
         super().__init__(code_system)
         self._bq_dataset = bq_dataset
         self._project_name = project_name
@@ -34,40 +51,36 @@ class _BigQueryPatientQuery(PatientQuery):
         self,
         *,
         bq_dataset: str,
-        base_url: str,
-        table_name: str,
         force_location_type_columns: bool = True,
         sample_count: tp.Optional[int] = None
     ) -> str:
-        """Helper function to build the sql query which will only query the"""
+        """Helper function to build the sql query."""
 
         sql_template = """
-    WITH S AS (
-          SELECT * FROM {data_set}.{table_name}
+        WITH E AS (
+          SELECT * FROM {data_set}.Encounter
           )
-          SELECT
-          S.subject.PatientId AS encPatientId,
-          L.location.LocationId AS locationId,
-          C.system AS encTypeSystem,
-          C.code AS encTypeCode,
-          L.location.display AS locationDisplay,
-          COUNT(*) AS num_encounters,
-          MIN(S.period.start) AS firstDate,
-          MAX(S.period.end) AS lastDate
-          from S, UNNEST(s.type.array) AS T, UNNEST(T.coding.array) AS C
-          LEFT JOIN UNNEST(s.location.array) AS L
-          {where}
-          GROUP BY S.subject.PatientId, L.location.LocationId,
-          L.location.display, C.system, C.code
-          {sample_count}
+        SELECT
+        E.subject.PatientId AS encPatientId,
+        L.location.LocationId AS locationId,
+        C.system AS encTypeSystem,
+        C.code AS encTypeCode,
+        L.location.display AS locationDisplay,
+        COUNT(*) AS num_encounters,
+        MIN(E.period.start) AS firstDate,
+        MAX(E.period.end) AS lastDate
+        FROM E, UNNEST(E.type.array) AS T, UNNEST(T.coding.array) AS C
+        LEFT JOIN UNNEST(E.location.array) AS L
+        {where}
+        GROUP BY E.subject.PatientId, L.location.LocationId,
+        L.location.display, C.system, C.code
+        {sample_count}
     """
 
         where_clause = self._construct_encounter_constraint(
             self._enc_constraint
         )
         sql = sql_template.format(
-            table_name=table_name,
-            base_url=base_url,
             data_set=bq_dataset,
             where=where_clause,
             sample_count=""
@@ -77,7 +90,7 @@ class _BigQueryPatientQuery(PatientQuery):
         return sql
 
     def _build_obs_encounter_query(
-        self, dataset: str, base_url: str, sample_count: tp.Optional[int] = None
+        self, dataset: str, sample_count: tp.Optional[int] = None
     ) -> str:
         """
         Helper functions that builds the query to get patient_observation data
@@ -88,54 +101,55 @@ class _BigQueryPatientQuery(PatientQuery):
         """
 
         sql_template = """
-    with O AS
-    (SELECT * FROM `{dataset}.Observation`),
-      O1 as
-      (SELECT
-          OC.system obs_system,
-          OC.code AS obs_code_coding_code,
-          OVC.code obs_value_code,
-          O.effective.dateTime obs_effective_datetime,
-          O.value.quantity.value AS obs_value_quantity,
-          O.subject.PatientId obs_subject_patient_id,
-          O.context.encounterId obs_context_encounter_id,
-          FORMAT('%s,%s', cast(O.effective.dateTime AS string),
-                 cast(O.value.quantity.value AS string)) AS date_and_value,
-          FORMAT('%s,%s', cast(O.effective.dateTime AS string), OVC.code)
-                 AS date_and_value_code,
-          FROM O LEFT JOIN UNNEST(O.code.coding.array) AS OC LEFT JOIN
-          UNNEST(O.value.codeableConcept.coding.array) AS OVC
-          where {code_coding_system} and {value_codeable_coding_system}
-          and {all_obs_constraints}
-          ),
-      E1 AS (
-          SELECT replace(E.id, '{base_url}', '') AS encounterId, C.system, C.code,
+        WITH O AS
+            (SELECT * FROM `{dataset}.Observation`),
+        O1 as
+            (SELECT
+             OC.system obs_system,
+             OC.code AS obs_code_coding_code,
+             OVC.code obs_value_code,
+             O.effective.dateTime obs_effective_datetime,
+             O.value.quantity.value AS obs_value_quantity,
+             O.subject.PatientId obs_subject_patient_id,
+             O.context.encounterId obs_context_encounter_id,
+             FORMAT('%s,%s', cast(O.effective.dateTime AS string),
+                    cast(O.value.quantity.value AS string)) AS date_and_value,
+             FORMAT('%s,%s', cast(O.effective.dateTime AS string), OVC.code)
+                    AS date_and_value_code,
+             FROM O LEFT JOIN UNNEST(O.code.coding.array) AS OC LEFT JOIN
+             UNNEST(O.value.codeableConcept.coding.array) AS OVC
+             WHERE {code_coding_system} AND {value_codeable_coding_system}
+             AND {all_obs_constraints}
+         ),
+        E1 AS
+            (SELECT E.id AS encounterId, C.system, C.code,
             L.location.LocationId, L.location.display,
             FROM `{dataset}.Encounter` AS E LEFT JOIN UNNEST(E.type.array) AS T LEFT JOIN
             UNNEST(T.coding.array) AS C LEFT JOIN UNNEST(E.location.array) AS L
             {encounter_where_clause}
             ),
-      G AS (SELECT
-          obs_subject_patient_id patient_id,
-          obs_code_coding_code AS coding_code, -- TODO: Should this be coding.code
-          count(*) AS num_obs,
-          min(obs_value_quantity) AS min_value,
-          max(obs_value_quantity) AS max_value,
-          min(obs_effective_datetime) AS min_date,
-          max(obs_effective_datetime) AS max_date,
-          min(date_and_value) AS min_date_value,
-          max(date_and_value) AS max_date_value,
-          min(date_and_value_code) AS min_date_value_code,
-          max(date_and_value_code) AS max_date_value_code,
-        FROM O1 inner JOIN E1 on E1.encounterId = O1.obs_context_encounter_id
-        group by patient_id, coding_code)
-      SELECT patient_id AS patientId, coding_code AS code,
-      P.birthDate AS birthDate,
-      P.gender AS gender,
-      num_obs, min_value, max_value, min_date, max_date, min_date_value,
-      max_date_value, min_date_value_code, max_date_value_code
-      FROM G inner JOIN `{dataset}.Patient` P on G.patient_id = P.id
-      {sample_count}
+        G AS
+            (SELECT
+             obs_subject_patient_id patient_id,
+             obs_code_coding_code AS coding_code, -- TODO: Should this be coding.code
+             COUNT(*) AS num_obs,
+             MIN(obs_value_quantity) AS min_value,
+             MAX(obs_value_quantity) AS max_value,
+             MIN(obs_effective_datetime) AS min_date,
+             MAX(obs_effective_datetime) AS max_date,
+             MIN(date_and_value) AS min_date_value,
+             MAX(date_and_value) AS max_date_value,
+             MIN(date_and_value_code) AS min_date_value_code,
+             MAX(date_and_value_code) AS max_date_value_code,
+             FROM O1 INNER JOIN E1 ON E1.encounterId = O1.obs_context_encounter_id
+             GROUP BY patient_id, coding_code)
+         SELECT patient_id AS patientId, coding_code AS code,
+         P.birthDate AS birthDate,
+         P.gender AS gender,
+         num_obs, min_value, max_value, min_date, max_date, min_date_value,
+         max_date_value, min_date_value_code, max_date_value_code
+         FROM G inner JOIN `{dataset}.Patient` P ON G.patient_id = P.id
+         {sample_count}
     """
 
         # TODO(gdevanla): Yet to add encounter constraints
@@ -166,7 +180,6 @@ class _BigQueryPatientQuery(PatientQuery):
             sample_count=""
             if sample_count is None
             else " LIMIT " + str(sample_count),
-            base_url=base_url,
             encounter_where_clause=self._construct_encounter_constraint(
                 self._enc_constraint
             ),
@@ -174,7 +187,6 @@ class _BigQueryPatientQuery(PatientQuery):
         return sql
 
     def _all_obs_constraints(self) -> str:
-
         if not self._code_constraint:
             if self._include_all_codes:
                 return "TRUE"
@@ -201,15 +213,11 @@ class _BigQueryPatientQuery(PatientQuery):
 
     def get_patient_encounter_view(
         self,
-        base_url: str,
         force_location_type_columns: bool = True,
         sample_count: tp.Optional[int] = None,
     ) -> pd.DataFrame:
-
         sql = self._build_encounter_query(
             bq_dataset=self._bq_dataset,
-            table_name="Encounter",
-            base_url=base_url,
             force_location_type_columns=force_location_type_columns,
             sample_count=sample_count,
         )
@@ -220,14 +228,11 @@ class _BigQueryPatientQuery(PatientQuery):
 
     def get_patient_obs_view(
         self,
-        base_url: str,
         sample_count: tp.Optional[int] = None,
     ) -> pd.DataFrame:
-
         sql = self._build_obs_encounter_query(
             dataset=self._bq_dataset,
             sample_count=sample_count,
-            base_url=base_url,
         )
 
         with bigquery.Client(project=self._project_name) as client:
@@ -249,7 +254,9 @@ class _BigQueryPatientQuery(PatientQuery):
             return patient_obs_enc
 
     @staticmethod
-    def _construct_encounter_constraint(enc_constraint: EncounterConstraints):
+    def _construct_encounter_constraint(
+        enc_constraint: base.EncounterConstraints,
+    ):
         """Builds Encounter criteria.
 
         Assumes, the query set will be as follows: from S,
@@ -294,7 +301,7 @@ class _BigQueryPatientQuery(PatientQuery):
             conditions.append('O.effective.dateTime <= "{}"'.format(max_time))
         return " AND ".join(conditions)
 
-    def _construct_obs_constraint(self, obs_constraint: ObsConstraints):
+    def _construct_obs_constraint(self, obs_constraint: base.ObsConstraints):
         """Build obs criteria."""
         conditions = [
             self._time_constraint(

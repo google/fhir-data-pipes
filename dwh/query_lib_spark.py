@@ -23,13 +23,15 @@ function that defines the source of the data.
 # See https://stackoverflow.com/questions/33533148 why this is needed.
 from __future__ import annotations
 
-from typing import Any, Optional
+import typing as tp
+
 import pandas
-from pyspark import SparkConf
-from pyspark.sql import SparkSession, DataFrame
+import pyspark
+import pyspark.sql as pyspark_sql
 import pyspark.sql.functions as F
 import pyspark.sql.types as T
-from base import PatientQuery, EncounterConstraints, ObsConstraints
+
+import base
 import common
 
 
@@ -37,11 +39,11 @@ import common
 DATE_VALUE_SEPARATOR = "_SeP_"
 
 
-def _merge_date_and_value(d: str, v: Any) -> str:
+def _merge_date_and_value(d: str, v: tp.Any) -> str:
     return "{}{}{}".format(d, DATE_VALUE_SEPARATOR, v)
 
 
-class _SparkPatientQuery(PatientQuery):
+class _SparkPatientQuery(base.PatientQuery):
     def __init__(self, file_root: str, code_system: str):
         super().__init__(code_system)
         self._file_root = file_root
@@ -56,7 +58,7 @@ class _SparkPatientQuery(PatientQuery):
         if not self._spark:
             # TODO add the option for using a running Spark cluster.
             conf = (
-                SparkConf()
+                pyspark.SparkConf()
                 .setMaster("local[10]")
                 .setAppName("IndicatorsApp")
                 .set("spark.driver.memory", "10g")
@@ -64,7 +66,9 @@ class _SparkPatientQuery(PatientQuery):
                 # See: https://spark.apache.org/docs/latest/security.html
                 .set("spark.authenticate", "true")
             )
-            self._spark = SparkSession.builder.config(conf=conf).getOrCreate()
+            self._spark = pyspark_sql.SparkSession.builder.config(
+                conf=conf
+            ).getOrCreate()
 
     def _make_sure_patient(self):
         if not self._patient_df:
@@ -109,7 +113,7 @@ class _SparkPatientQuery(PatientQuery):
             )
 
     def get_patient_obs_view(
-        self, base_url: str, sample_count: Optional[int] = None
+        self, base_url: str = '', sample_count: tp.Optional[int] = None
     ) -> pandas.DataFrame:
         """See super-class doc."""
         self._make_sure_spark()
@@ -186,9 +190,9 @@ class _SparkPatientQuery(PatientQuery):
 
     def get_patient_encounter_view(
         self,
-        base_url: str,
+        base_url: str = '',
         force_location_type_columns: bool = True,
-        sample_count: Optional[int] = None,
+        sample_count: tp.Optional[int] = None,
     ) -> pandas.DataFrame:
         """See super-class doc."""
         self._make_sure_spark()
@@ -202,18 +206,15 @@ class _SparkPatientQuery(PatientQuery):
             column_list += ["locationId", "locationDisplay"]
         if self._enc_constraint.has_type() or force_location_type_columns:
             column_list += ["encTypeSystem", "encTypeCode"]
-        spark_frame = (
-            flat_enc.groupBy(column_list)
-            .agg(
-                F.count("*").alias("num_encounters"),
-                F.min("first").alias("firstDate"),
-                F.max("last").alias("lastDate"),
-            )
+        spark_frame = flat_enc.groupBy(column_list).agg(
+            F.count("*").alias("num_encounters"),
+            F.min("first").alias("firstDate"),
+            F.max("last").alias("lastDate"),
         )
 
         # unpack one element list at this point
         frame = spark_frame.toPandas()
-        for col in ['encTypeSystem', 'encTypeCode']:
+        for col in ["encTypeSystem", "encTypeCode"]:
             if col in frame.columns:
                 frame[col] = frame[col].apply(lambda x: x[0] if x else x)
         return frame
@@ -256,7 +257,9 @@ class _SparkPatientQuery(PatientQuery):
         )
 
     @staticmethod
-    def _flatten_obs(obs: DataFrame, code_system: str = None) -> DataFrame:
+    def _flatten_obs(
+        obs: pyspark_sql.DataFrame, code_system: str = None
+    ) -> pyspark_sql.DataFrame:
         """Creates a flat version of Observation FHIR resources.
 
         Note `code_system` is only applied on `code.coding` which is a required
@@ -319,7 +322,9 @@ class _SparkPatientQuery(PatientQuery):
         )
 
     @staticmethod
-    def _aggregate_patient_codes(flat_obs: DataFrame) -> DataFrame:
+    def _aggregate_patient_codes(
+        flat_obs: pyspark_sql.DataFrame,
+    ) -> pyspark_sql.DataFrame:
         """Find aggregates for each patientId, conceptCode, and codedValue.
 
         Args:
@@ -341,8 +346,10 @@ class _SparkPatientQuery(PatientQuery):
 
     @staticmethod
     def _join_patients_agg_obs(
-        patients: DataFrame, agg_obs: DataFrame, base_patient_url: str
-    ) -> DataFrame:
+        patients: pyspark_sql.DataFrame,
+        agg_obs: pyspark_sql.DataFrame,
+        base_patient_url: str,
+    ) -> pyspark_sql.DataFrame:
         """Joins a collection of Patient FHIR resources with an aggregated obs set.
 
         Args:
@@ -387,7 +394,9 @@ class _SparkPatientQuery(PatientQuery):
             cl.append('dateTime <= "{}"'.format(max_time))
         return " AND ".join(cl)
 
-    def _construct_obs_constraint(self, obs_constraint: ObsConstraints) -> str:
+    def _construct_obs_constraint(
+        self, obs_constraint: base.ObsConstraints
+    ) -> str:
         """This creates a constraint string with WHERE syntax in SQL.
 
         All of the observation constraints specified by this instance are joined
@@ -405,9 +414,7 @@ class _SparkPatientQuery(PatientQuery):
                 ['"{}"'.format(v) for v in obs_constraint.values]
             )
             cl.append("valueCoding.code IN ({})".format(codes_str))
-            cl.append(
-                "valueCoding.system {}".format(obs_constraint.sys_str)
-            )
+            cl.append("valueCoding.system {}".format(obs_constraint.sys_str))
         elif obs_constraint.min_value or obs_constraint.max_value:
             if obs_constraint.min_value:
                 cl.append(
@@ -460,7 +467,7 @@ class _SparkPatientQuery(PatientQuery):
 
     @staticmethod
     def _construct_encounter_constraint(
-        enc_constraint: EncounterConstraints,
+        enc_constraint: base.EncounterConstraints,
     ) -> str:
         """This creates a constraint string with WHERE syntax in SQL."""
         loc_str = "TRUE"

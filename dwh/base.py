@@ -23,7 +23,7 @@ function that defines the source of the data.
 # See https://stackoverflow.com/questions/33533148 why this is needed.
 from __future__ import annotations
 
-from typing import List
+import typing as tp
 import pandas
 
 class ObsConstraints:
@@ -36,7 +36,7 @@ class ObsConstraints:
     def __init__(
         self,
         code: str,
-        values: List[str] = None,
+        values: tp.List[str] = None,
         value_sys: str = None,
         min_value: float = None,
         max_value: float = None,
@@ -61,9 +61,9 @@ class EncounterConstraints:
 
     def __init__(
         self,
-        locationId: List[str] = None,
+        locationId: tp.List[str] = None,
         typeSystem: str = None,
-        typeCode: List[str] = None,
+        typeCode: tp.List[str] = None,
     ):
         self.location_id = locationId
         self.type_system = typeSystem
@@ -123,7 +123,7 @@ class PatientQuery:
     def include_obs_values_in_time_range(
         self,
         code: str,
-        values: List[str] = None,
+        values: tp.List[str] = None,
         min_time: str = None,
         max_time: str = None,
     ) -> PatientQuery:
@@ -148,9 +148,9 @@ class PatientQuery:
 
     def encounter_constraints(
         self,
-        locationId: List[str] = None,
+        locationId: tp.List[str] = None,
         typeSystem: str = None,
-        typeCode: List[str] = None,
+        typeCode: tp.List[str] = None,
     ):
         """Specifies constraints on encounters to be included.
 
