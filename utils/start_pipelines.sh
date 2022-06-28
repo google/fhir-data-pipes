@@ -57,7 +57,7 @@ function usage() {
   echo "  default: does not skip, i.e., it asks for explicit confirmation."
   echo ""
   echo "-u|-sourceUrl URL, the URL for the source FHIR store."
-  echo "  default: http://localhost:8099/openmrs"
+  echo "  default: http://localhost:8099/openmrs/ws/fhir2/R4"
   echo ""
   echo "-streamingLog FILE, the file to capture streaming pipeline logs."
   echo "  default: tmp/streaming.log"
@@ -112,7 +112,7 @@ function process_options() {
   OUTPUT_DIR=""
   STREAMING_JAR=""
   BATCH_JAR=""
-  SOURCE_URL="http://localhost:8099/openmrs"
+  SOURCE_URL="http://localhost:8099/openmrs/ws/fhir2/R4"
   CONFIG_FILE="../utils/dbz_event_to_fhir_config.json"
   FLUSH_STREAMING=3600
   FLUSH_BATCH=600
@@ -292,7 +292,7 @@ fi
 
 common_params="\
   --fhirDebeziumConfigPath=${CONFIG_FILE} \
-  --openmrsServerUrl=${SOURCE_URL} \
+  --fhirServerUrl=${SOURCE_URL} \
   --outputParquetPath=${OUTPUT_DIR} \
   --fhirSinkPath=${SINK_PATH} \
   --sinkUserName=${SINK_USERNAME} \
