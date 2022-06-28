@@ -1,3 +1,5 @@
 pyspark
 pandas
 matplotlib
+google-cloud-bigquery>=3.0.1
+db-dtypes>=1.0.0
