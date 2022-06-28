@@ -113,17 +113,17 @@ class _SparkPatientQuery(base.PatientQuery):
             )
 
     def get_patient_obs_view(
-        self, base_url: str = '', sample_count: tp.Optional[int] = None
+        self, sample_count: tp.Optional[int] = None
     ) -> pandas.DataFrame:
         """See super-class doc."""
         self._make_sure_spark()
         self._make_sure_patient()
         self._make_sure_obs()
         self._make_sure_encounter()
-        base_patient_url = base_url + "Patient/"
+        base_patient_url = "Patient/"
         # Recalculating the rest is needed since the constraints can be updated.
         flat_enc = self._flatten_encounter(
-            base_url + "Encounter/", force_location_type_columns=False
+            "Encounter/", force_location_type_columns=False
         )
         # TODO figure where `context` comes from and why.
         join_df = self._flat_obs.join(
@@ -190,7 +190,6 @@ class _SparkPatientQuery(base.PatientQuery):
 
     def get_patient_encounter_view(
         self,
-        base_url: str = '',
         force_location_type_columns: bool = True,
         sample_count: tp.Optional[int] = None,
     ) -> pandas.DataFrame:
@@ -199,7 +198,7 @@ class _SparkPatientQuery(base.PatientQuery):
         self._make_sure_patient()
         self._make_sure_encounter()
         flat_enc = self._flatten_encounter(
-            base_url + "Encounter/", force_location_type_columns
+            "Encounter/", force_location_type_columns
         )
         column_list = ["encPatientId"]
         if self._enc_constraint.has_location() or force_location_type_columns:

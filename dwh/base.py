@@ -26,6 +26,7 @@ from __future__ import annotations
 import typing as tp
 import pandas
 
+
 class ObsConstraints:
     """An abstraction layer around observation constraints for a single code.
 
@@ -168,39 +169,42 @@ class PatientQuery:
             locationId, typeSystem, typeCode
         )
 
-    # TODO remove `base_url` parameter once issue #55 is fixed.
-    def get_patient_obs_view(self, base_url: str) -> pandas.DataFrame:
+    def get_patient_obs_view(
+        self, sample_count: tp.Optional[Int] = None
+    ) -> pandas.DataFrame:
         """Creates a patient * observation code aggregated view.
 
-        For each patient and observation code, group all such observation and
-        returns some aggregated values. Loads the data if that is necessary.
+         For each patient and observation code, group all such observation and
+         returns some aggregated values. Loads the data if that is necessary.
 
         Args:
-          base_url: See issue #55!
+            sample_count: Count of records to return. Used for quick discovery.
 
-        Returns:
-          A Pandas DataFrame with the following columns:
-            - `patientId` the patient for whom the aggregation is done
-            - `birthDate` the patient's birth date
-            - `gender` the patient's gender
-            - `code` the code of the observation in the `code_system`
-            - `num_obs` number of observations with above spec
-            - `min_value` the minimum obs value in the specified period
-               or `None` if this observation does not have a numeric value.
-            - `max_value` the maximum obs value in the specified period
-               or `None`
-            - `min_date` the first time that an observation with the given code
-               was observed in the specified period.
-            - `max_date` ditto for last time
-            - `first_value` the value corresponding to `min_date`
-            - `last_value` the value corresponding to `max_date`
-            - `first_value_code` the coded value corresponding to `min_date`
-            - `last_value_code` the coded value corresponding to `max_date`
+         Returns:
+           A Pandas DataFrame with the following columns:
+             - `patientId` the patient for whom the aggregation is done
+             - `birthDate` the patient's birth date
+             - `gender` the patient's gender
+             - `code` the code of the observation in the `code_system`
+             - `num_obs` number of observations with above spec
+             - `min_value` the minimum obs value in the specified period
+                or `None` if this observation does not have a numeric value.
+             - `max_value` the maximum obs value in the specified period
+                or `None`
+             - `min_date` the first time that an observation with the given code
+                was observed in the specified period.
+             - `max_date` ditto for last time
+             - `first_value` the value corresponding to `min_date`
+             - `last_value` the value corresponding to `max_date`
+             - `first_value_code` the coded value corresponding to `min_date`
+             - `last_value_code` the coded value corresponding to `max_date`
         """
         raise NotImplementedError("This should be implemented by sub-classes!")
 
     def get_patient_encounter_view(
-        self, base_url: str, force_location_type_columns: bool = True
+        self,
+        force_location_type_columns: bool = True,
+        sample_count: tp.Optional[int] = None,
     ) -> pandas.DataFrame:
         """Aggregates encounters for each patient based on location, type, etc.
 
@@ -208,11 +212,11 @@ class PatientQuery:
         finds aggregate values. Loads the data if that is necessary.
 
         Args:
-          base_url: See issue #55!
           force_location_type_columns: whether to include location and type
           related columns regardless of the constraints. Note this can
           duplicate a singleencounter to many rows if that row has multiple
           locations and types.
+          sample_count: Count of records to return. Used for quick discovery.
 
         Returns:
           A Pandas DataFrame with the following columns:
