@@ -12,11 +12,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import unittest
-from functools import partial
-import base as ql_base
-import query_lib as ql
 import abc
+import unittest
+import query_lib as ql
+
 
 _BIGQUERY_DATASET = "synthea_big"
 _PROJECT_NAME = "fhir-analytics-test"
