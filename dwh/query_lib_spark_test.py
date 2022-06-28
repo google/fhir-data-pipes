@@ -19,7 +19,7 @@ import query_lib_spark
 class SparkPatientQueryTest(unittest.TestCase):
 
   def test_single_code_with_values(self):
-    patient_query = query_lib_spark._SparkPatientQuery("", "")
+    patient_query = query_lib_spark.SparkPatientQuery("", "")
     patient_query.include_obs_values_in_time_range(
         'TEST_CODE', ['VAL1', 'VAL2'], '2021-06-01', '2021-07-10')
     sql_constraint = patient_query._all_constraints_sql()
@@ -32,7 +32,7 @@ class SparkPatientQueryTest(unittest.TestCase):
     ))
 
   def test_single_code_with_values_and_encounter(self):
-    patient_query = query_lib_spark._SparkPatientQuery("", "")
+    patient_query = query_lib_spark.SparkPatientQuery("", "")
     patient_query.include_obs_values_in_time_range(
         'TEST_CODE', ['VAL1', 'VAL2'], '2021-06-01', '2021-07-10')
     patient_query.encounter_constraints(
@@ -49,7 +49,7 @@ class SparkPatientQueryTest(unittest.TestCase):
     ))
 
   def test_two_codes_with_values_and_range(self):
-    patient_query = query_lib_spark._SparkPatientQuery("", "")
+    patient_query = query_lib_spark.SparkPatientQuery("", "")
     patient_query.include_obs_values_in_time_range(
         'TEST_CODE1', ['VAL1', 'VAL2'], '2021-06-01', '2021-07-10')
     patient_query.include_obs_in_value_and_time_range(
@@ -66,7 +66,7 @@ class SparkPatientQueryTest(unittest.TestCase):
     ))
 
   def test_two_codes_with_values_and_range_and_other_codes(self):
-    patient_query = query_lib_spark._SparkPatientQuery("", "")
+    patient_query = query_lib_spark.SparkPatientQuery("", "")
     patient_query.include_obs_values_in_time_range(
         'TEST_CODE1', ['VAL1', 'VAL2'], '2021-06-01', '2021-07-10')
     patient_query.include_obs_in_value_and_time_range(
@@ -85,7 +85,7 @@ class SparkPatientQueryTest(unittest.TestCase):
     ))
 
   def test_two_codes_with_values_and_range_and_other_codes_with_date(self):
-    patient_query = query_lib_spark._SparkPatientQuery("", "")
+    patient_query = query_lib_spark.SparkPatientQuery("", "")
     patient_query.include_obs_values_in_time_range(
         'TEST_CODE1', ['VAL1', 'VAL2'], '2021-06-01', '2021-07-10')
     patient_query.include_obs_in_value_and_time_range(

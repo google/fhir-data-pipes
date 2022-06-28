@@ -30,7 +30,7 @@ def _build_in_list_with_quotes(values: tp.List[tp.Any]) -> str:
     return ",".join(('"{}"'.format(x) for x in values))
 
 
-class _BigQueryPatientQuery(base.PatientQuery):
+class BigQueryPatientQuery(base.PatientQuery):
     """Concrete implementation of PatientQuery class that serves data stored in
     BigQuery."""
 

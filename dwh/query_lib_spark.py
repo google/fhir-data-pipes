@@ -43,7 +43,7 @@ def _merge_date_and_value(d: str, v: tp.Any) -> str:
     return "{}{}{}".format(d, DATE_VALUE_SEPARATOR, v)
 
 
-class _SparkPatientQuery(base.PatientQuery):
+class SparkPatientQuery(base.PatientQuery):
     def __init__(self, file_root: str, code_system: str):
         super().__init__(code_system)
         self._file_root = file_root
@@ -94,7 +94,7 @@ class _SparkPatientQuery(base.PatientQuery):
                 )
             )
         if not self._flat_obs:
-            self._flat_obs = _SparkPatientQuery._flatten_obs(
+            self._flat_obs = SparkPatientQuery._flatten_obs(
                 self._obs_df, self._code_system
             )
             common.custom_log(
@@ -129,11 +129,11 @@ class _SparkPatientQuery(base.PatientQuery):
         join_df = self._flat_obs.join(
             flat_enc, flat_enc.encounterId == self._flat_obs.encounterId
         ).where(self._all_constraints_sql())
-        agg_obs_df = _SparkPatientQuery._aggregate_patient_codes(join_df)
+        agg_obs_df = SparkPatientQuery._aggregate_patient_codes(join_df)
         common.custom_log(
             "Number of aggregated obs= {}".format(agg_obs_df.count())
         )
-        self._patient_agg_obs_df = _SparkPatientQuery._join_patients_agg_obs(
+        self._patient_agg_obs_df = SparkPatientQuery._join_patients_agg_obs(
             self._patient_df, agg_obs_df, base_patient_url
         )
         common.custom_log(

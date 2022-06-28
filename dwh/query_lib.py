@@ -65,14 +65,14 @@ def patient_query_factory(
       ValueError: When the input `data_source` is malformed or not implemented.
     """
     if runner == Runner.SPARK:
-        return query_lib_spark._SparkPatientQuery(data_source, code_system)
+        return query_lib_spark.SparkPatientQuery(data_source, code_system)
     if runner == Runner.BIG_QUERY:
         if "project_name" not in kwargs:
             raise ValueError(
                 "'project_name' should be provided in kwargs while using "
                 "a BigQuery data source"
             )
-        return query_lib_big_query._BigQueryPatientQuery(
+        return query_lib_big_query.BigQueryPatientQuery(
             project_name=kwargs['project_name'],
             bq_dataset=data_source,
             code_system=code_system,
