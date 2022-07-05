@@ -1,6 +1,11 @@
 # Developer Tips
 
-## Generate the OpenMRS Docker Image
+## Review process
+
+Please read the [review process doc](review_process.md) before sending your
+first PR.
+
+## Generate the OpenMRS Docker image
 
 The following steps are used to generate the openmrs docker image bundled with
 modules required for this project
