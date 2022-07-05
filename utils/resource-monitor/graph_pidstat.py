@@ -74,7 +74,7 @@ def get_machine_mem() -> int:
       None
 
     Returns:
-      Integer representation of the local machine RAM in MBs
+      Integer representation of the local machine RAM in GBs
     """
     mem_info = subprocess.run(
         ["grep", "MemTotal", "/proc/meminfo"], stdout=subprocess.PIPE

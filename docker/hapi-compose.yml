@@ -32,8 +32,6 @@ services:
     container_name: hapi-server
     environment:
       - hapi.fhir.mdm_enabled=false
-      - hapi.fhir.enforce_referential_integrity_on_delete=false
-      - hapi.fhir.enforce_referential_integrity_on_write=false
       - spring.datasource.url=jdbc:postgresql://db:5432/hapi
       - spring.datasource.username=admin
       - spring.datasource.password=admin
@@ -43,9 +41,7 @@ services:
     restart: unless-stopped
     ports:
       - 8098:8080
-    volumes:
-      - hapi-server:/data/hapi
-
+      
 volumes:
   hapi-fhir-db:
   hapi-server:

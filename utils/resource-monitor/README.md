@@ -1,8 +1,8 @@
 # Resource performance monitoring and graphing module
 
-This is a module for monitoring the resource usage of the batch pipeline with [HAPI](https://hapifhir.io/) 
+This is a module for monitoring the resource usage of the batch pipeline with [HAPI FHIR](https://hapifhir.io/) 
 as the source. The scripts in this module generate graphs and csv files of resource usage 
-(CPU, memory and I/O) of the HAPI server, postgres database and pipeline over the duration of the 
+(CPU, memory and I/O) of the HAPI server, PostgreSQL database and pipeline over the duration of the 
 batch job. The user is able to specify the number of processes/cores used in the pipeline to assess 
 the batch pipeline's performance on the local machine.
 
@@ -11,11 +11,12 @@ the batch pipeline's performance on the local machine.
 -   Ensure you are able to run the `docker` command 
 [as a non-root user](https://docs.docker.com/engine/install/linux-postinstall/). If not, run  
 `sudo chmod 666 /var/run/docker.sock`
--   A [HAPI](https://hapifhir.io/) instance with a [postgres](https://www.postgresql.org/) instance 
-as its database. For convenience, [`this`](/docker/hapi-compose.yml) .yml file in the in the 
+-   A [HAPI](https://hapifhir.io/) instance with a [PostgreSQL](https://www.postgresql.org/) instance 
+as its database. For convenience, [`hapi-compose.yml`](/docker/hapi-compose.yml) file in the in the 
 [`docker`](/docker) directory contains images of a HAPI server using postrges as its database. Start 
 the docker container with  
-`docker-compose -f hapi-compose.yml up` 
+`docker-compose -f hapi-compose.yml up`
+-   To upload sample data in the HAPI sever, please refer to this [`document`](/synthea-hiv/README.md).
 
 ## Graphing module
 
@@ -37,7 +38,7 @@ python3 graph_pidstat.py \
 
 The output graphs can be found in the output results directory specified by the user; 
 the default is `/tmp/hapi-performance/`. The graphs visualize the CPU, memory and I/O usage of the 
-HAPI server, postgres database and pipeline over the duration of the batch job.
+HAPI server, PostgreSQL database and pipeline over the duration of the batch job.
 
 ## Automating runs with different number of cores
 

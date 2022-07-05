@@ -16,7 +16,7 @@ if [[ "$#" -ne 6 ]]; then
     printf '%s\n' \
         "Error: Illegal number of arguments. " \
         "Example usage: " \
-        "sh auto.sh [data description] [output parquet path] [output results path] [num processes increment] [lower core limit] [upper core limit]"
+        "sh $0 [data description] [output parquet path] [output results path] [num processes increment] [lower core limit] [upper core limit]"
     exit 1
 fi
 
