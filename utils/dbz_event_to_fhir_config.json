@@ -1,5 +1,6 @@
 {
   "debeziumConfigurations": {
+    "databaseService" : "mysql",
     "databaseServerName" : "MyDbName",
     "databaseHostName" : "openmrs-fhir-mysql",
     "databaseServerId" : "223344",

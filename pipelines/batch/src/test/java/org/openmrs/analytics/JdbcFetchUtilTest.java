@@ -173,4 +173,37 @@ public class JdbcFetchUtilTest extends TestCase {
 		PAssert.that(uuids).empty();
 		testPipeline.run();
 	}
+	
+	@Test
+	public void testGenerateQueryParameters() throws Exception {
+		String resourceList = "Patient,Encounter,Observation";
+		HashMap<String, Integer> resourceCount = new HashMap<String, Integer>();
+		resourceCount.put("Patient", 2);
+		resourceCount.put("Encounter", 15);
+		resourceCount.put("Observation", 23);
+		
+		List<List<String>> queryParameterList = jdbcFetchUtil.generateQueryParameters(testPipeline, resourceList,
+		    resourceCount, 40);
+		
+		int patientCount = 0;
+		int encounterCount = 0;
+		int observationCount = 0;
+		for (List<String> list : queryParameterList) {
+			System.out.println(list.get(0));
+			if (list.get(0).equals("Patient")) {
+				patientCount += 1;
+			} else if (list.get(0).equals("Encounter")) {
+				encounterCount += 1;
+			} else {
+				observationCount += 1;
+			}
+		}
+		
+		//Verify the total number of query parameters is correct
+		assertEquals(queryParameterList.size(), 40);
+		//Verify the number of query parameters for each resource type is porportional to the number of resources to be fetched
+		assertEquals(patientCount, 2);
+		assertEquals(encounterCount, 15);
+		assertEquals(observationCount, 23);
+	}
 }

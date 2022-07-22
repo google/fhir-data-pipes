@@ -58,6 +58,10 @@ public class DatabaseConfiguration {
 		return debeziumConfigurations.get("databaseName");
 	}
 	
+	public String getDbService() {
+		return debeziumConfigurations.get("databaseService");
+	}
+	
 	/**
 	 * From the config parameters, this reconstructs a JDBC URL.
 	 * 
@@ -67,7 +71,7 @@ public class DatabaseConfiguration {
 		Preconditions.checkNotNull(getDbHostName());
 		Preconditions.checkNotNull(getDbPort());
 		Preconditions.checkNotNull(getDbName());
-		return String.format("jdbc:mysql://%s:%s/%s", getDbHostName(), getDbPort(), getDbName());
+		return String.format("jdbc:%s://%s:%s/%s", getDbService(), getDbHostName(), getDbPort(), getDbName());
 	}
 	
 	/**

@@ -293,6 +293,12 @@
       <version>${beam.version}</version>
     </dependency>
 
+    <dependency>
+      <groupId>org.postgresql</groupId>
+      <artifactId>postgresql</artifactId>
+      <version>42.2.10</version>
+    </dependency>
+
     <!-- Adds a dependency on the Beam Google Cloud Platform IO module. -->
     <dependency>
       <groupId>org.apache.beam</groupId>

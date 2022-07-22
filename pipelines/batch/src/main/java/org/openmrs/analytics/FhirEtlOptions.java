@@ -127,6 +127,12 @@ public interface FhirEtlOptions extends PipelineOptions {
 	
 	void setJdbcModeEnabled(Boolean value);
 	
+	@Description("Flag to use jdbc mode batch extract for a HAPI source")
+	@Default.Boolean(false)
+	Boolean isJdbcModeHapi();
+	
+	void setJdbcModeHapi(Boolean value);
+	
 	@Description("The number of seconds after which records are flushed into Parquet/text files; "
 	        + "use 0 to disable (note this may have undesired memory implications).")
 	@Default.Integer(600)
