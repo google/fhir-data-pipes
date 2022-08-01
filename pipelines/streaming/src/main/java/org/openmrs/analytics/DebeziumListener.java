@@ -1,4 +1,4 @@
-// Copyright 2020 Google LLC
+// Copyright 2020-2022 Google LLC
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -65,7 +65,8 @@ public class DebeziumListener extends RouteBuilder {
 	FhirConverter createFhirConverter(CamelContext camelContext) throws Exception {
 		FhirContext fhirContext = FhirContext.forR4();
 		String fhirBaseUrl = params.fhirServerUrl;
-		OpenmrsUtil openmrsUtil = new OpenmrsUtil(fhirBaseUrl, params.fhirServerUserName, params.fhirServerPassword, fhirContext);
+		OpenmrsUtil openmrsUtil = new OpenmrsUtil(fhirBaseUrl, params.fhirServerUserName, params.fhirServerPassword,
+		        fhirContext);
 		FhirStoreUtil fhirStoreUtil = FhirStoreUtil.createFhirStoreUtil(params.fhirSinkPath, params.sinkUserName,
 		    params.sinkPassword, fhirContext.getRestfulClientFactory());
 		ParquetUtil parquetUtil = new ParquetUtil(params.outputParquetPath, params.secondsToFlushParquetFiles,

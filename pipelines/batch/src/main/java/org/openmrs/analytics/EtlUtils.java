@@ -1,4 +1,4 @@
-// Copyright 2020 Google LLC
+// Copyright 2020-2022 Google LLC
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -12,6 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 package org.openmrs.analytics;
+
+import java.util.HashMap;
+import java.util.List;
 
 import org.apache.beam.sdk.metrics.MetricNameFilter;
 import org.apache.beam.sdk.metrics.MetricQueryResults;
@@ -32,6 +35,29 @@ class EtlUtils {
 		    MetricsFilter.builder().addNameFilter(MetricNameFilter.inNamespace(METRICS_NAMESPACE)).build());
 		for (MetricResult<Long> counter : metrics.getCounters()) {
 			log.info(String.format("Pipeline counter %s : %s", counter.getName(), counter.getCommitted()));
+		}
+	}
+	
+	static void logMultipleMetrics(List<MetricResults> metricResultsList) {
+		HashMap<String, Long> counterMap = new HashMap<String, Long>();
+		
+		for (MetricResults metricResults : metricResultsList) {
+			MetricQueryResults metrics = metricResults.queryMetrics(
+			    MetricsFilter.builder().addNameFilter(MetricNameFilter.inNamespace(METRICS_NAMESPACE)).build());
+			for (MetricResult<Long> counter : metrics.getCounters()) {
+				String name = counter.getName().toString();
+				Long committed = counter.getCommitted();
+				
+				if (!counterMap.containsKey(name)) {
+					counterMap.put(name, committed);
+				} else {
+					counterMap.put(name, counterMap.get(name) + committed);
+				}
+			}
+		}
+		
+		for (String name : counterMap.keySet()) {
+			log.info(String.format("Pipeline counter %s : %s", name, counterMap.get(name)));
 		}
 	}
 	

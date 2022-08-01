@@ -1,4 +1,4 @@
-// Copyright 2020 Google LLC
+// Copyright 2020-2022 Google LLC
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -13,12 +13,11 @@
 // limitations under the License.
 package org.openmrs.analytics;
 
-import java.io.IOException;
-import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -35,15 +34,9 @@ import ca.uhn.fhir.rest.server.exceptions.InvalidRequestException;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
-import org.apache.http.HttpResponse;
 import org.apache.http.NameValuePair;
-import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.utils.URLEncodedUtils;
-import org.apache.http.impl.client.DefaultHttpClient;
-import org.apache.http.util.EntityUtils;
 import org.hl7.fhir.r4.model.Bundle;
-import org.json.*;
-import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -71,35 +64,27 @@ public class FhirSearchUtil {
 	}
 	
 	/**
-	 * Searches for the total number of resources for each resource type and return a HashMap
+	 * Searches for the total number of resources for each resource type
+	 * 
+	 * @param resourceList the resource types to be processed
+	 * @return a HashMap storing the counts of each resource type
 	 */
-	public HashMap<String, Integer> searchResourceCounts(String searchUrl, HashSet<String> resourceTypes) {
+	public HashMap<String, Integer> searchResourceCounts(String resourceList) {
+		HashSet<String> resourceTypes = new HashSet<String>(Arrays.asList(resourceList.split(",")));
 		HashMap<String, Integer> hashMap = new HashMap<String, Integer>();
-		HttpResponse response;
-		DefaultHttpClient httpClient = new DefaultHttpClient();
-		HttpGet getConnection = new HttpGet(searchUrl);
-		
-		try {
-			response = httpClient.execute(getConnection);
-			String responseBody = EntityUtils.toString(response.getEntity(), "UTF-8");
-			
-			JSONObject jsonObject = new JSONObject(responseBody);
-			JSONArray jsonArray = jsonObject.getJSONArray("parameter");
-			for (int i = 0; i < jsonArray.length(); i++) {
-				String type = jsonArray.getJSONObject(i).getString("name");
-				
-				if (resourceTypes.contains(type)) {
-					hashMap.put(type, jsonArray.getJSONObject(i).getInt("valueInteger"));
-				}
+		for (String resourceType : resourceTypes) {
+			try {
+				String searchUrl = resourceType + "?";
+				IGenericClient client = openmrsUtil.getSourceClient();
+				Bundle result = client.search().byUrl(searchUrl).summaryMode(SummaryEnum.COUNT).returnBundle(Bundle.class)
+				        .execute();
+				hashMap.put(resourceType, result.getTotal());
 			}
-			
+			catch (Exception e) {
+				log.error("Failed to search for resource: " + resourceType + " ;  " + "Exception: " + e);
+			}
 		}
-		catch (MalformedURLException e) {
-			e.printStackTrace();
-		}
-		catch (IOException e) {
-			e.printStackTrace();
-		}
+		
 		return hashMap;
 	}
 	

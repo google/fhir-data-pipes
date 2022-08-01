@@ -1,4 +1,4 @@
-// Copyright 2020 Google LLC
+// Copyright 2020-2022 Google LLC
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -29,9 +29,9 @@ public class GZipUtil {
 			GZIPInputStream inputStream = new GZIPInputStream(byteArrayInputStream);
 			return IOUtils.toString(inputStream, "UTF-8");
 		}
-		catch (IOException e) {
-			e.printStackTrace();
-			throw new DataFormatException("Failed to decompress contents", e);
+		catch (IOException exception) {
+			exception.printStackTrace();
+			throw new DataFormatException("Failed to decompress byte array", exception);
 		}
 	}
 }

@@ -1,4 +1,4 @@
-// Copyright 2020 Google LLC
+// Copyright 2020-2022 Google LLC
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -17,7 +17,7 @@ package org.openmrs.analytics;
 import java.beans.PropertyVetoException;
 import java.io.IOException;
 import java.sql.SQLException;
-import java.util.Arrays;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -33,6 +33,8 @@ import org.apache.avro.Schema;
 import org.apache.beam.sdk.Pipeline;
 import org.apache.beam.sdk.PipelineResult;
 import org.apache.beam.sdk.coders.CannotProvideCoderException;
+import org.apache.beam.sdk.io.jdbc.JdbcIO;
+import org.apache.beam.sdk.metrics.MetricResults;
 import org.apache.beam.sdk.options.PipelineOptionsFactory;
 import org.apache.beam.sdk.transforms.Create;
 import org.apache.beam.sdk.transforms.Flatten;
@@ -71,8 +73,8 @@ public class FhirEtl {
 	}
 	
 	static OpenmrsUtil createOpenmrsUtil(FhirEtlOptions options, FhirContext fhirContext) {
-		return new OpenmrsUtil(options.getFhirServerUrl(), 
-				options.getFhirServerUserName(), options.getFhirServerPassword(), fhirContext);
+		return new OpenmrsUtil(options.getFhirServerUrl(), options.getFhirServerUserName(), options.getFhirServerPassword(),
+		        fhirContext);
 	}
 	
 	private static Schema getSchema(String resourceType) {
@@ -150,7 +152,7 @@ public class FhirEtl {
 		JdbcConnectionUtil jdbcConnectionUtil = new JdbcConnectionUtil(options.getJdbcDriverClass(),
 		        dbConfig.makeJdbsUrlFromConfig(), dbConfig.getDbUser(), dbConfig.getDbPassword(),
 		        options.getJdbcInitialPoolSize(), options.getJdbcMaxPoolSize());
-		JdbcFetchUtil jdbcUtil = new JdbcFetchUtil(jdbcConnectionUtil);
+		JdbcFetchOpenMrs jdbcUtil = new JdbcFetchOpenMrs(jdbcConnectionUtil);
 		int batchSize = Math.min(options.getBatchSize(), 170); // batch size > 200 will result in HTTP 400 Bad Request
 		Map<String, List<String>> reverseMap = jdbcUtil.createFhirReverseMap(options.getResourceList(), dbConfig);
 		// process each table-resource mappings
@@ -171,11 +173,10 @@ public class FhirEtl {
 			}
 			for (String resourceType : entry.getValue()) {
 				resourceTypes.add(resourceType);
-				String baseBundleUrl = options.getFhirServerUrl() + "/" 
-						+ resourceType;
+				String baseBundleUrl = options.getFhirServerUrl() + "/" + resourceType;
 				PCollection<SearchSegmentDescriptor> inputSegments = uuids.apply(
 				    String.format("CreateSearchSegments_%s_table_%s", resourceType, tableName),
-				    new JdbcFetchUtil.CreateSearchSegments(resourceType, baseBundleUrl, batchSize));
+				    new JdbcFetchOpenMrs.CreateSearchSegments(resourceType, baseBundleUrl, batchSize));
 				allPatientIds.add(fetchSegmentsAndReturnPatientIds(inputSegments, resourceType, options));
 			}
 		}
@@ -211,24 +212,45 @@ public class FhirEtl {
 	 */
 	static void runHapiJdbcFetch(FhirEtlOptions options, DatabaseConfiguration dbConfig, FhirContext fhirContext)
 	        throws PropertyVetoException {
-		FhirSearchUtil fhirSearchUtil = createFhirSearchUtil(options, fhirContext);
 		JdbcConnectionUtil jdbcConnectionUtil = new JdbcConnectionUtil(options.getJdbcDriverClass(),
 		        dbConfig.makeJdbsUrlFromConfig(), dbConfig.getDbUser(), dbConfig.getDbPassword(),
 		        options.getJdbcInitialPoolSize(), options.getJdbcMaxPoolSize());
-		JdbcFetchUtil jdbcFetchUtil = new JdbcFetchUtil(jdbcConnectionUtil);
-		Pipeline pipeline = Pipeline.create(options);
+		FhirSearchUtil fhirSearchUtil = createFhirSearchUtil(options, fhirContext);
 		
-		String searchUrl = options.getFhirServerUrl() + "/$get-resource-counts";
-		HashSet<String> resourceTypes = new HashSet<String>(Arrays.asList(options.getResourceList().split(",")));
-		//Get the resource count for each resource type and distribute the query workload evenly across allocated workers.
-		HashMap<String, Integer> resourceCount = fhirSearchUtil.searchResourceCounts(searchUrl, resourceTypes);
-		PCollection<List<String>> payload = jdbcFetchUtil.runJdbcIoFetch(pipeline, options.getResourceList(), resourceCount,
-		    options.getJdbcMaxPoolSize());
-		payload.apply("Convert to parquet", ParDo.of(new ConvertResourceFn(options)));
+		//Get the resource count for each resource type and distribute the query workload based on batch size.
+		HashMap<String, Integer> resourceCount = fhirSearchUtil.searchResourceCounts(options.getResourceList());
+		List<MetricResults> metricResultsList = new ArrayList<MetricResults>();
 		
-		PipelineResult result = pipeline.run();
-		result.waitUntilFinish();
-		EtlUtils.logMetrics(result.metrics());
+		//Run the ETL process for each resource specified in the pipeline options
+		for (String resourceType : options.getResourceList().split(",")) {
+			int numResources = resourceCount.get(resourceType);
+			int numBatches = numResources / options.getHapiJdbcBatchSize();
+			if (numResources % options.getHapiJdbcBatchSize() != 0) {
+				numBatches += 1;
+			}
+			//Run the ETL process for each batch in sequence
+			for (int i = 0; i < numBatches; i++) {
+				Pipeline pipeline = Pipeline.create(options);
+				
+				PCollection<List<String>> queryParameters = pipeline.apply(
+				    "Generate query parameters for " + resourceType + " batch " + Integer.toString(i),
+				    Create.of(new JdbcFetchHapi(jdbcConnectionUtil).generateQueryParameters(pipeline, options, resourceType,
+				        numResources, numBatches, i)));
+				
+				PCollection<List<String>> payload = queryParameters.apply(
+				    "JdbcIO fetch for " + resourceType + " batch " + Integer.toString(i), new JdbcFetchHapi.FetchRowsJdbcIo(
+				            JdbcIO.DataSourceConfiguration.create(jdbcConnectionUtil.getConnectionObject())));
+				
+				payload.apply("Convert to parquet for " + resourceType + " batch " + Integer.toString(i),
+				    ParDo.of(new ConvertResourceFn(options)));
+				
+				PipelineResult result = pipeline.run();
+				result.waitUntilFinish();
+				metricResultsList.add(result.metrics());
+			}
+		}
+		
+		EtlUtils.logMultipleMetrics(metricResultsList);
 	}
 	
 	public static void main(String[] args)

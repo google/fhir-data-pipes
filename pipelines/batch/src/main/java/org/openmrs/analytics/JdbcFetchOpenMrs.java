@@ -1,4 +1,4 @@
-// Copyright 2020 Google LLC
+// Copyright 2020-2022 Google LLC
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -13,24 +13,20 @@
 // limitations under the License.
 package org.openmrs.analytics;
 
-import java.sql.Blob;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 import com.google.common.annotations.VisibleForTesting;
-import com.google.common.base.Charsets;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
 import org.apache.beam.sdk.Pipeline;
 import org.apache.beam.sdk.coders.CannotProvideCoderException;
-import org.apache.beam.sdk.coders.ListCoder;
 import org.apache.beam.sdk.coders.NullableCoder;
 import org.apache.beam.sdk.coders.StringUtf8Coder;
 import org.apache.beam.sdk.io.jdbc.JdbcIO;
@@ -46,13 +42,13 @@ import org.openmrs.analytics.model.EventConfiguration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class JdbcFetchUtil {
+public class JdbcFetchOpenMrs {
 	
-	private static final Logger log = LoggerFactory.getLogger(JdbcFetchUtil.class);
+	private static final Logger log = LoggerFactory.getLogger(JdbcFetchOpenMrs.class);
 	
 	private JdbcConnectionUtil jdbcConnectionUtil;
 	
-	JdbcFetchUtil(JdbcConnectionUtil jdbcConnectionUtil) {
+	JdbcFetchOpenMrs(JdbcConnectionUtil jdbcConnectionUtil) {
 		this.jdbcConnectionUtil = jdbcConnectionUtil;
 	}
 	
@@ -141,62 +137,6 @@ public class JdbcFetchUtil {
 		}
 	}
 	
-	/**
-	 * Utilizes Beam JdbcIO to query for resources directly from FHIR (HAPI) server's database and
-	 * returns a PCollection of Lists of String objects - each corresponding to a resource's payload
-	 */
-	public static class FetchRowsJdbcIo extends PTransform<PCollection<List<String>>, PCollection<List<String>>> {
-		
-		private final JdbcIO.DataSourceConfiguration dataSourceConfig;
-		
-		public FetchRowsJdbcIo(JdbcIO.DataSourceConfiguration dataSourceConfig) {
-			this.dataSourceConfig = dataSourceConfig;
-		}
-		
-		@Override
-		public PCollection<List<String>> expand(PCollection<List<String>> queryParameters) {
-			return queryParameters.apply("JdbcIO readAll",
-			    JdbcIO.<List<String>, List<String>> readAll().withDataSourceConfiguration(dataSourceConfig)
-			            .withCoder(ListCoder.of(StringUtf8Coder.of()))
-			            .withParameterSetter(new JdbcIO.PreparedStatementSetter<List<String>>() {
-				            
-				            @Override
-				            public void setParameters(List<String> element, PreparedStatement preparedStatement)
-				                    throws Exception {
-					            preparedStatement.setString(1, element.get(0));
-					            preparedStatement.setInt(2, Integer.valueOf(element.get(1)));
-					            preparedStatement.setInt(3, Integer.valueOf(element.get(2)));
-				            }
-			            }).withOutputParallelization(true)
-			            .withQuery(
-			                "SELECT res.res_id, res.res_type, res.res_updated, res.res_ver, ver.res_encoding, ver.res_text FROM hfj_resource res, hfj_res_ver ver WHERE res.res_type=? AND res.res_id = ver.res_id AND res.res_id %? = ?")
-			            .withRowMapper((JdbcIO.RowMapper<List<String>>) resultSet -> {
-				            String jsonResource = "";
-				            
-				            switch (resultSet.getString("res_encoding")) {
-					            
-					            case "JSON":
-						            jsonResource = new String(resultSet.getBytes("res_text"), Charsets.UTF_8);
-						            break;
-					            case "JSONC":
-						            Blob blob = resultSet.getBlob("res_text");
-						            jsonResource = GZipUtil.decompress(blob.getBytes(1, (int) blob.length()));
-						            blob.free();
-						            break;
-					            case "DEL":
-						            break;
-				            }
-				            
-				            String resourceId = resultSet.getString("res_id");
-				            String resourceType = resultSet.getString("res_type");
-				            String lastUpdated = resultSet.getString("res_updated");
-				            String resourceVersion = resultSet.getString("res_ver");
-				            return Arrays.asList(resourceId, resourceType, resourceVersion, lastUpdated, jsonResource);
-			            }));
-			
-		}
-	}
-	
 	public PCollection<String> fetchUuidsByDate(Pipeline pipeline, String tableName, String dateColumn, String activePeriod)
 	        throws SQLException, CannotProvideCoderException {
 		Preconditions.checkArgument(!activePeriod.isEmpty());
@@ -242,7 +182,7 @@ public class JdbcFetchUtil {
 		}
 		log.info(String.format("Will fetch up to %d rows from table %s", maxId, tableName));
 		Map<Integer, Integer> idRanges = createIdRanges(maxId, jdbcFetchSize);
-		return pipeline.apply(Create.of(idRanges)).apply(new JdbcFetchUtil.FetchUuids(tableName, getJdbcConfig()));
+		return pipeline.apply(Create.of(idRanges)).apply(new JdbcFetchOpenMrs.FetchUuids(tableName, getJdbcConfig()));
 	}
 	
 	private Integer fetchMaxId(String tableName) throws SQLException {
@@ -312,38 +252,5 @@ public class JdbcFetchUtil {
 			log.error("Some of the passed FHIR resources are not mapped to any table, please check the config");
 		}
 		return reverseMap;
-	}
-	
-	/**
-	 * Generates the query parameters by evenly distributing the workload to each query. The number of
-	 * resources of each resource type is taken into consideration with respect to the total number of
-	 * resources to be fetched inorder to determine the porportion of JdbcIo workers allocated.
-	 */
-	@VisibleForTesting
-	List<List<String>> generateQueryParameters(Pipeline pipeline, String resourceList,
-	        HashMap<String, Integer> resourceCount, int jdbcMaxPoolSize) {
-		List<List<String>> queryParameterList = new ArrayList<List<String>>();
-		
-		int totalCount = 0;
-		for (int count : resourceCount.values()) {
-			totalCount += count;
-		}
-		
-		for (String resourceType : resourceList.split(",")) {
-			int numProcsAllocated = (int) Math.ceil((double) resourceCount.get(resourceType) / totalCount * jdbcMaxPoolSize);
-			System.out.println(resourceType);
-			System.out.println(numProcsAllocated);
-			for (int i = 0; i < numProcsAllocated; i++) {
-				queryParameterList.add(Arrays.asList(resourceType, String.valueOf(numProcsAllocated), String.valueOf(i)));
-			}
-		}
-		return queryParameterList;
-	}
-	
-	PCollection<List<String>> runJdbcIoFetch(Pipeline pipeline, String resourceList, HashMap<String, Integer> resourceCount,
-	        int jdbcMaxPoolSize) {
-		PCollection<List<String>> queryParameters = pipeline.apply("Create mod collection",
-		    Create.of(generateQueryParameters(pipeline, resourceList, resourceCount, jdbcMaxPoolSize)));
-		return queryParameters.apply(new JdbcFetchUtil.FetchRowsJdbcIo(getJdbcConfig()));
 	}
 }

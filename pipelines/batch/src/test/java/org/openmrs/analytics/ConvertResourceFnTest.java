@@ -1,4 +1,4 @@
-// Copyright 2020 Google LLC
+// Copyright 2020-2022 Google LLC
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -24,9 +24,9 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-import ca.uhn.fhir.context.FhirContext;
 import com.google.common.io.Resources;
 import org.apache.beam.sdk.options.PipelineOptionsFactory;
+import org.hl7.fhir.r4.model.Patient;
 import org.hl7.fhir.r4.model.Resource;
 import org.junit.Before;
 import org.junit.Test;
@@ -40,8 +40,6 @@ import org.mockito.junit.MockitoJUnitRunner;
 public class ConvertResourceFnTest {
 	
 	private ConvertResourceFn convertResourceFn;
-	
-	private FhirContext fhirContext;
 	
 	@Mock
 	private ParquetUtil mockParquetUtil;
@@ -61,7 +59,6 @@ public class ConvertResourceFnTest {
 				parquetUtil = mockParquetUtil;
 			}
 		};
-		this.fhirContext = FhirContext.forR4();
 		convertResourceFn.setup();
 		ParquetUtil.initializeAvroConverters();
 	}
@@ -81,6 +78,7 @@ public class ConvertResourceFnTest {
 		assertThat(capturedResource.getMeta().getLastUpdated(),
 		    equalTo(new SimpleDateFormat("yyyy-MM-dd hh:mm:ss").parse("2020-09-19 12:09:23")));
 		assertThat(capturedResource.getResourceType().toString(), equalTo("Patient"));
+		assertThat(((Patient) capturedResource).getGender().toString(), equalTo("MALE"));
 	}
 	
 }

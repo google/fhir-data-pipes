@@ -1,4 +1,4 @@
-// Copyright 2020 Google LLC
+// Copyright 2020-2022 Google LLC
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -132,6 +132,12 @@ public interface FhirEtlOptions extends PipelineOptions {
 	Boolean isJdbcModeHapi();
 	
 	void setJdbcModeHapi(Boolean value);
+	
+	@Description("The batch size for jdbc mode batch extract for a HAPI source")
+	@Default.Integer(100000)
+	Integer getHapiJdbcBatchSize();
+	
+	void setHapiJdbcBatchSize(Integer value);
 	
 	@Description("The number of seconds after which records are flushed into Parquet/text files; "
 	        + "use 0 to disable (note this may have undesired memory implications).")
