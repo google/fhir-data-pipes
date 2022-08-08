@@ -15,7 +15,8 @@
 # limitations under the License.
 
 
-################################## WAIT FOR START ############################# Script used in e2e-test that waits for OpenMRS and FHIR server to start.
+################################## WAIT FOR START ############################# 
+# Script used in e2e-test that waits for OpenMRS and FHIR server to start.
 
 set -e
 
@@ -25,33 +26,47 @@ set -e
 #   FHIR_SERVER_URL
 #   SINK_SERVER
 # Arguments:
-#   Flag whether to use docker network. By default, host URL is  used. 
+#   Flag whether to use docker network. By default, host URL is used. 
+#   Flag whether a HAPI server is used as the source. By default, an OpenMRS server is used. 
 #################################################
 function setup() {  
   FHIR_SERVER_URL='http://localhost:8099/openmrs/ws/fhir2/R4'
   SINK_SERVER='http://localhost:8098'
 
-  if [[ $1 = "--use_docker_network" ]]; then
-    FHIR_SERVER_URL='http://openmrs:8080/openmrs/ws/fhir2/R4'
-    SINK_SERVER='http://sink-server:8080'
+  if [[ $1 = "--hapi" ]] || [[ $2 = "--hapi" ]]; then
+    FHIR_SERVER_URL='http://localhost:8091'
+
+    if [[ $1 = "--use_docker_network" ]] || [[ $2 = "--use_docker_network" ]]; then
+      FHIR_SERVER_URL='http://hapi-server:8080'
+      SINK_SERVER='http://sink-server:8080'
+    fi
+
+    hapi_server_check $FHIR_SERVER_URL
+  else
+    if [[ $1 = "--use_docker_network" ]] || [[ $2 = "--use_docker_network" ]]; then
+      FHIR_SERVER_URL='http://openmrs:8080/openmrs/ws/fhir2/R4'
+      SINK_SERVER='http://sink-server:8080'
+    fi
+
+    openmrs_server_check $FHIR_SERVER_URL
   fi
+
+  hapi_server_check $SINK_SERVER
 }
 
 #################################################
 # Function to check if fhir server completed initialization 
-# Globals:
-#   FHIR_SERVER_URL
 #################################################
-function fhir_source_check() {
+function openmrs_server_check() {
   openmrs_start_wait_time=0
   contenttype=$(curl -o /dev/null --head -w "%{content_type}\n" -X GET -u admin:Admin123 \
-      --connect-timeout 5 --max-time 20 ${FHIR_SERVER_URL}/Patient \
+      --connect-timeout 5 --max-time 20 ${1}/Patient \
       2>/dev/null | cut -d ";" -f 1)
   until [[ ${contenttype} == "application/fhir+json" ]]; do
     echo "WAITING FOR OPENMRS SERVER TO START"
     sleep 60s
     contenttype=$(curl -o /dev/null --head -w "%{content_type}\n" -X GET -u admin:Admin123 \
-      --connect-timeout 5 --max-time 20 ${FHIR_SERVER_URL}/Patient \
+      --connect-timeout 5 --max-time 20 ${1}/Patient \
       2>/dev/null | cut -d ";" -f 1)
     ((openmrs_start_wait_time += 1))
     if [[ ${openmrs_start_wait_time} == 20 ]]; then
@@ -64,20 +79,18 @@ function fhir_source_check() {
 
 #################################################
 # Function to check if HAPI server completed initialization 
-# Globals:
-#   SINK_SERVER
 #################################################
-function fhir_sink_check() {
+function hapi_server_check() {
   fhir_server_start_wait_time=0
   fhir_server_status_code=$(curl -o /dev/null --head -w "%{http_code}" -L -X GET \
   -u hapi:hapi --connect-timeout 5 --max-time 20 \
-  ${SINK_SERVER}/fhir/Observation 2>/dev/null)
+  ${1}/fhir/Observation 2>/dev/null)
   until [[ ${fhir_server_status_code} -eq 200 ]]; do
     sleep 1s
     echo "WAITING FOR FHIR SERVER TO START"
     fhir_server_status_code=$(curl -o /dev/null --head -w "%{http_code}" -L -X GET \
       -u hapi:hapi --connect-timeout 5 --max-time 20 \
-      ${SINK_SERVER}/fhir/Observation 2>/dev/null)
+      ${1}/fhir/Observation 2>/dev/null)
     ((fhir_server_start_wait_time += 1))
     if [[ fhir_server_start_wait_time == 10 ]]; then
       echo "TERMINATING AS FHIR SERVER TOOK TOO LONG TO START"
@@ -87,6 +100,4 @@ function fhir_sink_check() {
   echo "FHIR SERVER STARTED SUCCESSFULLY"
 }
 
-setup $1
-fhir_source_check
-fhir_sink_check
+setup $1 $2

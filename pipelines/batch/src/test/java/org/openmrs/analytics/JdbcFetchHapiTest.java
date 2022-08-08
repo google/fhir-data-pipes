@@ -1,4 +1,4 @@
-// Copyright 2020-2022 Google LLC
+// Copyright 2020 Google LLC
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -48,7 +48,7 @@ public class JdbcFetchHapiTest extends TestCase {
 	
 	@Before
 	public void setup() throws IOException, PropertyVetoException {
-		String[] args = { "--jdbcModeHapi=true", "--jdbcMaxPoolSize=48", "--hapiJdbcBatchSize=10000" };
+		String[] args = { "--jdbcModeHapi=true", "--jdbcMaxPoolSize=48", "--jdbcFetchSize=10000" };
 		options = PipelineOptionsFactory.fromArgs(args).withValidation().as(FhirEtlOptions.class);
 		dbConfig = DatabaseConfiguration.createConfigFromFile("../../utils/hapi-postgres-config.json");
 		JdbcConnectionUtil jdbcConnectionUtil = new JdbcConnectionUtil(options.getJdbcDriverClass(),
@@ -61,16 +61,14 @@ public class JdbcFetchHapiTest extends TestCase {
 	@Test
 	public void testGenerateQueryParameters() throws Exception {
 		String resourceType = "Observation";
-		int resourceCount = 100001;
-		int batchNum = 0;
-		int numBatches = 11;
-		List<List<String>> queryParameterList = jdbcFetchHapi.generateQueryParameters(testPipeline, options, resourceType,
-		    resourceCount, numBatches, batchNum);
+		int resourceCount = 1000001;
+		List<List<String>> queryParameterList = jdbcFetchHapi.generateQueryParameters(options, resourceType, resourceCount);
 		
 		//Verify the total number of query parameters and the content of the query parameters is correct
-		assertEquals(queryParameterList.size(), 48);
+		assertEquals(queryParameterList.size(), 101);
 		assertEquals(queryParameterList.get(0).get(0), "Observation");
-		assertEquals(queryParameterList.get(0).get(1), "528");
+		assertEquals(queryParameterList.get(0).get(1), "101");
+		assertEquals(queryParameterList.get(0).get(2), "0");
 		
 	}
 	

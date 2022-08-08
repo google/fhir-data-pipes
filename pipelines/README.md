@@ -3,21 +3,23 @@
 This directory contains pipelines code for batch and streaming transformation of
 data from a FHIR based EHR system to a data warehouse (for analytics) or another
 FHIR store (for data integration). These pipelines are tested with
-[OpenMRS](https://openmrs.org) instances as the source using the [OpenMRS FHIR2
-Module](https://addons.openmrs.org/show/org.openmrs.module.openmrs-fhir2-module).
-The data warehouse can be a collection of [Apache Parquet
-files](https://parquet.apache.org), or it can be another FHIR server (e.g., a
-HAPI FHIR server or Google Cloud FHIR store) or eventually a cloud based data
-warehouse (like [BigQuery](https://cloud.google.com/bigquery)).
+[OpenMRS](https://openmrs.org) and [HAPI](https://hapifhir.io/) instances as the 
+source using the 
+[OpenMRS FHIR2 Module](https://addons.openmrs.org/show/org.openmrs.module.openmrs-fhir2-module).
+The data warehouse can be a collection of [Apache Parquet files](https://parquet.apache.org), 
+or it can be another FHIR server (e.g., a HAPI FHIR server or Google Cloud FHIR store) 
+or eventually a cloud based datawarehouse (like [BigQuery](https://cloud.google.com/bigquery)).
 
 There are four modes of transfer:
 
 -   [**Batch mode (FHIR)**](#batch-mode-using-fhir-search): This mode uses FHIR
     Search APIs to select resources to copy, retrieves them as FHIR resources,
     and transfers the data via FHIR APIs or Parquet files.
--   [**Batch mode (JDBC)**](#batch-mode-using-jdbc): This mode uses JDBC to read
-    the IDs of entities in an OpenMRS MySQL database, retrieves those entities
-    as FHIR resources, and transfers the data via FHIR APIs or Parquet files.
+-   [**Batch mode (JDBC)**](#batch-mode-using-jdbc): For an OpenMRS source, this 
+    mode uses JDBC to read the IDs of entities in an OpenMRS MySQL database, 
+    retrieves those entities as FHIR resources, and transfers the data via FHIR 
+    APIs or Parquet files. For a HAPI source, this mode uses JDBC to read FHIR 
+    resources directly from a HAPI PostgreSQL database, and transfers the data.
 -   **[Streaming mode (Debezium)](#streaming-mode-debezium)**: This mode
     continuously listens for changes to the underlying OpenMRS MySQL database
     using
@@ -30,10 +32,12 @@ There is also a query module built on top of the generated data warehouse.
 -   An [OpenMRS](https://openmrs.org) instance with the latest version of the
     [FHIR2
     Module](https://addons.openmrs.org/show/org.openmrs.module.openmrs-fhir2-module)
-    installed.
+    installed, or a [HAPI](https://hapifhir.io/) instance.
     -   There is an [OpenMRS Reference Application](#run-openmrs-using-docker)
         image with these prerequisites and demo data you can use to try things
         out.
+    -   There is a [HAPI FHIR source server and database](/docker/hapi-compose.yml) 
+        image you can use for testing.
 -   A target output for the data. Supported options are Apache Parquet files
     or a FHIR server such as HAPI FHIR or [Google Cloud Platform FHIR
     stores](https://cloud.google.com/healthcare/docs/how-tos/fhir).
@@ -97,7 +101,7 @@ Batch mode can use two different methods to query the source database. By
 default it uses [FHIR Search](https://www.hl7.org/fhir/search.html) API calls to
 find the resources to copy. Alternatively, it can use
 [JDBC](https://en.wikipedia.org/wiki/Java_Database_Connectivity) to query the
-OpenMRS MySQL database directly.
+FHIR database directly.
 
 ### Using Batch mode
 
@@ -142,7 +146,7 @@ $ java -cp batch/target/fhir-batch-etl-bundled-0.1.0-SNAPSHOT.jar \
     --resourceList=Patient,Encounter,Observation --batchSize=20
 ```
 
-### Batch mode using JDBC for OpenMRS source
+### Batch mode using JDBC with OpenMRS as the source
 
 To start Batch Mode using JDBC, run:
 
@@ -171,6 +175,35 @@ Parameters:
     `50`
 -   `jdbcDriverClass` - The fully qualified class name of the JDBC driver. This
     generally should not be changed. Default: `com.mysql.cj.jdbc.Driver`
+
+### Batch mode using JDBC with HAPI as the source
+
+To start Batch Mode using JDBC, run:
+
+```shell
+$ java -cp batch/target/fhir-batch-etl-bundled-0.1.0-SNAPSHOT.jar \
+    org.openmrs.analytics.FhirEtl \
+    --fhirServerUrl=http://localhost:8091/fhir \
+    --fhirServerUserName=hapi --fhirServerPassword=hapi \
+    --fhirDatabaseConfigPath=../utils/hapi-postgres-config.json
+    --fhirSinkPath=http://localhost:8098/fhir \
+    --sinkUserName=hapi --sinkPassword=hapi \
+    --outputParquetPath=/tmp/TEST/ \
+    --resourceList=Patient,Encounter,Observation \
+    --jdbcModeEnabled=true --jdbcModeHapi=true \
+    --jdbcMaxPoolSize=50 --jdbcFetchSize=1000 \
+    --jdbcDriverClass=org.postgresql.Driver
+
+```
+
+Parameters:
+
+-   `fhirDatabaseConfigPath` - Path to the FHIR database config for Jdbc mode.  
+    Default: `../utils/hapi-postgres-config.json`
+-   `jdbcModeHapi` - If true, uses JDBC mode for a HAPI source server. Default: 
+    `false`
+-   `jdbcFetchSize` - The fetch size of each JDBC database query. Default:
+    `10000`
 
 ### A note about Beam runners
 If the pipeline is run on a single machine (i.e., not on a distributed cluster),

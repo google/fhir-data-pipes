@@ -1,4 +1,4 @@
-// Copyright 2020-2022 Google LLC
+// Copyright 2020 Google LLC
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -65,9 +65,9 @@ public class ConvertResourceFnTest {
 	
 	@Test
 	public void testProcessPatientResource() throws IOException, java.text.ParseException {
-		String encounterResourceStr = Resources.toString(Resources.getResource("patient.json"), StandardCharsets.UTF_8);
+		String patientResourceStr = Resources.toString(Resources.getResource("patient.json"), StandardCharsets.UTF_8);
 		List<String> element = new ArrayList<>(
-		        Arrays.asList("123", "Patient", "1", "2020-09-19 12:09:23", encounterResourceStr));
+		        Arrays.asList("123", "Patient", "1", "2020-09-19 12:09:23", patientResourceStr));
 		convertResourceFn.writeResource(element);
 		
 		// Verify the resource is sent to the writer.

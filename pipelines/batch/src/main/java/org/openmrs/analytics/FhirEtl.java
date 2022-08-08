@@ -1,4 +1,4 @@
-// Copyright 2020-2022 Google LLC
+// Copyright 2020 Google LLC
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -17,7 +17,6 @@ package org.openmrs.analytics;
 import java.beans.PropertyVetoException;
 import java.io.IOException;
 import java.sql.SQLException;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -33,8 +32,9 @@ import org.apache.avro.Schema;
 import org.apache.beam.sdk.Pipeline;
 import org.apache.beam.sdk.PipelineResult;
 import org.apache.beam.sdk.coders.CannotProvideCoderException;
+import org.apache.beam.sdk.coders.ListCoder;
+import org.apache.beam.sdk.coders.StringUtf8Coder;
 import org.apache.beam.sdk.io.jdbc.JdbcIO;
-import org.apache.beam.sdk.metrics.MetricResults;
 import org.apache.beam.sdk.options.PipelineOptionsFactory;
 import org.apache.beam.sdk.transforms.Create;
 import org.apache.beam.sdk.transforms.Flatten;
@@ -212,45 +212,33 @@ public class FhirEtl {
 	 */
 	static void runHapiJdbcFetch(FhirEtlOptions options, DatabaseConfiguration dbConfig, FhirContext fhirContext)
 	        throws PropertyVetoException {
+		Pipeline pipeline = Pipeline.create(options);
 		JdbcConnectionUtil jdbcConnectionUtil = new JdbcConnectionUtil(options.getJdbcDriverClass(),
 		        dbConfig.makeJdbsUrlFromConfig(), dbConfig.getDbUser(), dbConfig.getDbPassword(),
 		        options.getJdbcInitialPoolSize(), options.getJdbcMaxPoolSize());
 		FhirSearchUtil fhirSearchUtil = createFhirSearchUtil(options, fhirContext);
 		
 		//Get the resource count for each resource type and distribute the query workload based on batch size.
-		HashMap<String, Integer> resourceCount = fhirSearchUtil.searchResourceCounts(options.getResourceList());
-		List<MetricResults> metricResultsList = new ArrayList<MetricResults>();
+		HashMap<String, Integer> resourceCount = (HashMap<String, Integer>) fhirSearchUtil
+		        .searchResourceCounts(options.getResourceList());
 		
-		//Run the ETL process for each resource specified in the pipeline options
 		for (String resourceType : options.getResourceList().split(",")) {
 			int numResources = resourceCount.get(resourceType);
-			int numBatches = numResources / options.getHapiJdbcBatchSize();
-			if (numResources % options.getHapiJdbcBatchSize() != 0) {
-				numBatches += 1;
-			}
-			//Run the ETL process for each batch in sequence
-			for (int i = 0; i < numBatches; i++) {
-				Pipeline pipeline = Pipeline.create(options);
-				
-				PCollection<List<String>> queryParameters = pipeline.apply(
-				    "Generate query parameters for " + resourceType + " batch " + Integer.toString(i),
-				    Create.of(new JdbcFetchHapi(jdbcConnectionUtil).generateQueryParameters(pipeline, options, resourceType,
-				        numResources, numBatches, i)));
-				
-				PCollection<List<String>> payload = queryParameters.apply(
-				    "JdbcIO fetch for " + resourceType + " batch " + Integer.toString(i), new JdbcFetchHapi.FetchRowsJdbcIo(
-				            JdbcIO.DataSourceConfiguration.create(jdbcConnectionUtil.getConnectionObject())));
-				
-				payload.apply("Convert to parquet for " + resourceType + " batch " + Integer.toString(i),
-				    ParDo.of(new ConvertResourceFn(options)));
-				
-				PipelineResult result = pipeline.run();
-				result.waitUntilFinish();
-				metricResultsList.add(result.metrics());
-			}
+			
+			PCollection<List<String>> queryParameters = pipeline.apply("Generate query parameters for " + resourceType,
+			    Create.of(new JdbcFetchHapi(jdbcConnectionUtil).generateQueryParameters(options, resourceType, numResources))
+			            .withCoder(ListCoder.of(StringUtf8Coder.of())));
+			
+			PCollection<List<String>> payload = queryParameters.apply("JdbcIO fetch for " + resourceType,
+			    new JdbcFetchHapi.FetchRowsJdbcIo(
+			            JdbcIO.DataSourceConfiguration.create(jdbcConnectionUtil.getConnectionObject())));
+			
+			payload.apply("Convert to parquet for " + resourceType, ParDo.of(new ConvertResourceFn(options)));
 		}
 		
-		EtlUtils.logMultipleMetrics(metricResultsList);
+		PipelineResult result = pipeline.run();
+		result.waitUntilFinish();
+		EtlUtils.logMetrics(result.metrics());
 	}
 	
 	public static void main(String[] args)
@@ -265,11 +253,14 @@ public class FhirEtl {
 		validateOptions(options);
 		
 		if (options.isJdbcModeEnabled()) {
-			DatabaseConfiguration dbConfig = DatabaseConfiguration.createConfigFromFile(options.getFhirDebeziumConfigPath());
 			
 			if (options.isJdbcModeHapi()) {
+				DatabaseConfiguration dbConfig = DatabaseConfiguration
+				        .createConfigFromFile(options.getFhirDatabaseConfigPath());
 				runHapiJdbcFetch(options, dbConfig, fhirContext);
 			} else {
+				DatabaseConfiguration dbConfig = DatabaseConfiguration
+				        .createConfigFromFile(options.getFhirDebeziumConfigPath());
 				runFhirJdbcFetch(options, dbConfig, fhirContext);
 			}
 			

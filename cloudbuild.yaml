@@ -20,8 +20,8 @@
 steps:
 
 - name: 'docker/compose'
-  id: 'Launch HAPI Server for Jdbc Batch Mode Test'
-  args: ['-f', './docker/hapi-compose.yml', 'up', '--force-recreate', '--remove-orphan', '-d']
+  id: 'Launch HAPI Source and Sink Servers for Jdbc Batch Mode Test'
+  args: ['-f', './docker/hapi-compose.yml', '-f', './docker/sink-compose.yml', 'up', '--force-recreate', '--remove-orphan', '-d']
 
 - name: 'adoptopenjdk/maven-openjdk8'
   id: 'Compile Bunsen and Pipeline'
@@ -76,22 +76,26 @@ steps:
     - JDBC_MODE_ENABLED=true
     - JDBC_MODE_HAPI=true
     - FHIR_SERVER_URL=http://hapi-server:8080/fhir
-    - FHIR_DEBEZIUM_CONFIG_PATH=/workspace/utils/hapi-postgres-config.json
+    - SINK_PATH=http://sink-server:8080/fhir
+    - SINK_USERNAME=hapi
+    - SINK_PASSWORD=hapi
+    - FHIR_DATABASE_CONFIG_PATH=/workspace/utils/hapi-postgres-config.json
     - PARQUET_PATH=/workspace/e2e-tests/JDBC_HAPI
+    - JDBC_FETCH_SIZE=1000
 
 - name: '${_REPOSITORY}/e2e-tests:${_TAG}'
   id: 'Run E2E Test JDBC with HAPI source'
   env:
     - PARQUET_SUBDIR=JDBC_HAPI
     - DOCKER_NETWORK=--use_docker_network
-    - JDBC_MODE_HAPI_TEST=--jdbc_mode_hapi
+    - HAPI_TEST=--hapi
 
 - name: 'docker/compose'
-  id: 'Turn down HAPI Server'
-  args: ['-f', './docker/hapi-compose.yml', 'down']
+  id: 'Turn down HAPI Source and Sink Servers'
+  args: ['-f', './docker/hapi-compose.yml', '-f', './docker/sink-compose.yml', 'down']
 
 - name: 'docker/compose'
-  id: 'Launch OpenMRS Server and Sink Server'
+  id: 'Launch OpenMRS Server and HAPI Sink Server'
   args: ['-f', './docker/openmrs-compose.yaml', '-f', './docker/sink-compose.yml', 'up', '--force-recreate', '--remove-orphan', '-d']
 
 - name: 'gcr.io/cloud-builders/docker'

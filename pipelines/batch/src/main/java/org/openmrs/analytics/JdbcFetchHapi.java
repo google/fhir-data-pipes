@@ -1,4 +1,4 @@
-// Copyright 2020-2022 Google LLC
+// Copyright 2020 Google LLC
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -22,14 +22,17 @@ import java.util.List;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Charsets;
-import org.apache.beam.sdk.Pipeline;
 import org.apache.beam.sdk.coders.ListCoder;
 import org.apache.beam.sdk.coders.StringUtf8Coder;
 import org.apache.beam.sdk.io.jdbc.JdbcIO;
 import org.apache.beam.sdk.transforms.PTransform;
 import org.apache.beam.sdk.values.PCollection;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class JdbcFetchHapi {
+	
+	private static final Logger log = LoggerFactory.getLogger(JdbcFetchHapi.class);
 	
 	private JdbcConnectionUtil jdbcConnectionUtil;
 	
@@ -96,7 +99,7 @@ public class JdbcFetchHapi {
 					            preparedStatement.setInt(2, Integer.valueOf(element.get(1)));
 					            preparedStatement.setInt(3, Integer.valueOf(element.get(2)));
 				            }
-			            }).withOutputParallelization(true)
+			            }).withOutputParallelization(false)
 			            .withQuery(
 			                "SELECT res.res_id, res.res_type, res.res_updated, res.res_ver, ver.res_encoding, ver.res_text "
 			                        + "FROM hfj_resource res, hfj_res_ver ver "
@@ -112,9 +115,8 @@ public class JdbcFetchHapi {
 	
 	/**
 	 * Generates the query parameters for the JdbcIO fetch. The query parameters are generated based on
-	 * the maximum Jdbc pool size and the batch size options set for the job.
+	 * the batch size option set for the job.
 	 * 
-	 * @param pipeline the pipeline object
 	 * @param options the pipeline options
 	 * @param resourceType the resource type
 	 * @param numResources total number of resources of the given type
@@ -122,15 +124,18 @@ public class JdbcFetchHapi {
 	 * @return a list of query parameters in the form of lists of strings
 	 */
 	@VisibleForTesting
-	List<List<String>> generateQueryParameters(Pipeline pipeline, FhirEtlOptions options, String resourceType,
-	        int numResources, int numBatches, int batchNum) {
-		int jdbcMaxPoolSize = options.getJdbcMaxPoolSize();
-		List<List<String>> queryParameterList = new ArrayList<List<String>>();
-		int totalParallelization = numBatches * jdbcMaxPoolSize;
+	List<List<String>> generateQueryParameters(FhirEtlOptions options, String resourceType, int numResources) {
+		log.info("Generating query parameters for " + resourceType);
 		
-		for (int i = 0; i < jdbcMaxPoolSize; i++) {
-			queryParameterList.add(Arrays.asList(resourceType, String.valueOf(totalParallelization),
-			    String.valueOf(i + batchNum * jdbcMaxPoolSize)));
+		int jdbcFetchSize = options.getJdbcFetchSize();
+		List<List<String>> queryParameterList = new ArrayList<List<String>>();
+		int numBatches = numResources / jdbcFetchSize;
+		if (numResources % jdbcFetchSize != 0) {
+			numBatches += 1;
+		}
+		
+		for (int i = 0; i < numBatches; i++) {
+			queryParameterList.add(Arrays.asList(resourceType, String.valueOf(numBatches), String.valueOf(i)));
 		}
 		
 		return queryParameterList;

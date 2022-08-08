@@ -40,7 +40,7 @@ function usage() {
   echo "                              or host network URLs"
   echo "     --streaming              Flag to specify whether we are testing a"
   echo "                              streaming pipeline"
-  echo "     --jdbc_mode_hapi         Flag to specify whether we are testing a"
+  echo "     --hapi         Flag to specify whether we are testing a"
   echo "                              batch pipeline executed with jdbc direct"
   echo "                              fetch mode with HAPI as the source server"
 }
@@ -90,7 +90,7 @@ function print_message() {
 #   FHIR_SERVER_URL
 #   SINK_SERVER
 #   STREAMING
-#   JDBC_MODE_HAPI
+#   HAPI
 # Arguments:
 #   Path where e2e-tests directory is. Directory contains parquet tools jar as 
 #      well as subdirectory of parquet file output
@@ -109,20 +109,20 @@ function setup() {
   FHIR_SERVER_URL='http://localhost:8099/openmrs/ws/fhir2/R4'
   SINK_SERVER='http://localhost:8098'
   STREAMING=""
-  JDBC_MODE_HAPI=""
+  HAPI=""
 
-  if [[ $3 = "--jdbc_mode_hapi" ]] || [[ $4 = "--jdbc_mode_hapi" ]] || [[ $5 = "--jdbc_mode_hapi" ]]; then
-    JDBC_MODE_HAPI="on"
-    FHIR_SERVER_URL='http://localhost:8098'
+  if [[ $3 = "--hapi" ]] || [[ $4 = "--hapi" ]] || [[ $5 = "--hapi" ]]; then
+    HAPI="on"
+    FHIR_SERVER_URL='http://localhost:8091'
   fi
 
   if [[ $3 = "--use_docker_network" ]] || [[ $4 = "--use_docker_network" ]] || [[ $5 = "--use_docker_network" ]]; then
-    if [[ -n ${JDBC_MODE_HAPI} ]]; then
+    if [[ -n ${HAPI} ]]; then
         FHIR_SERVER_URL='http://hapi-server:8080'
     else
         FHIR_SERVER_URL='http://openmrs:8080/openmrs/ws/fhir2/R4'
-        SINK_SERVER='http://sink-server:8080'
     fi
+    SINK_SERVER='http://sink-server:8080'
   fi
 
   if [[ $3 = "--streaming" ]] || [[ $4 = "--streaming" ]] || [[ $5 = "--streaming" ]]; then
@@ -140,41 +140,36 @@ function setup() {
 #   TOTAL_TEST_ENCOUNTERS
 #   TOTAL_TEST_OBS
 #   STREAMING
-#   JDBC_MODE_HAPI
+#   HAPI
 #################################################
 function fhir_source_query() {
-  local patient_query_param=""
-  local enc_obs_query_param=""
+  local patient_query_param="?_summary=count"
+  local enc_obs_query_param="?_summary=count"
+  local fhir_username="admin"
+  local fhir_password="Admin123"
+  local fhir_url_extension=""
 
   if [[ -n ${STREAMING} ]]; then 
       patient_query_param="?given=Alberta625"
       enc_obs_query_param="?subject.given=Alberta625"
   fi
   
-  if [[ -n ${JDBC_MODE_HAPI} ]]; then
-      patient_query_param="?_summary=count"
-      enc_obs_query_param="?_summary=count"
-
-      curl -L -X GET -u hapi:hapi --connect-timeout 5 --max-time 20 \
-        "${FHIR_SERVER_URL}/fhir/Patient${patient_query_param}" 2>/dev/null >>"${HOME_PATH}/${PARQUET_SUBDIR}/patients.json"
-
-      curl -L -X GET -u hapi:hapi --connect-timeout 5 --max-time 20 \
-        "${FHIR_SERVER_URL}/fhir/Encounter${enc_obs_query_param}" 2>/dev/null >>"${HOME_PATH}/${PARQUET_SUBDIR}/encounters.json"
-
-      curl -L -X GET -u hapi:hapi --connect-timeout 5 --max-time 20 \
-        "${FHIR_SERVER_URL}/fhir/Observation${enc_obs_query_param}" 2>/dev/null >>"${HOME_PATH}/${PARQUET_SUBDIR}/obs.json"
-  else
-      curl -L -X GET -u admin:Admin123 --connect-timeout 5 --max-time 20 \
-        "${FHIR_SERVER_URL}/Patient${patient_query_param}" 2>/dev/null >>"${HOME_PATH}/${PARQUET_SUBDIR}/patients.json"
-
-      curl -L -X GET -u admin:Admin123 --connect-timeout 5 --max-time 20 \
-        "${FHIR_SERVER_URL}/Encounter${enc_obs_query_param}" \
-        2>/dev/null >>"${HOME_PATH}/${PARQUET_SUBDIR}/encounters.json"
-      
-      curl -L -X GET -u admin:Admin123 --connect-timeout 5 --max-time 20 \
-        "${FHIR_SERVER_URL}/Observation${enc_obs_query_param}" \
-        2>/dev/null >>"${HOME_PATH}/${PARQUET_SUBDIR}/obs.json"
+  if [[ -n ${HAPI} ]]; then
+      fhir_username="hapi"
+      fhir_password="hapi"
+      fhir_url_extension="/fhir"
   fi
+
+  curl -L -X GET -u $fhir_username:$fhir_password --connect-timeout 5 --max-time 20 \
+  "${FHIR_SERVER_URL}${fhir_url_extension}/Patient${patient_query_param}" 2>/dev/null >>"${HOME_PATH}/${PARQUET_SUBDIR}/patients.json"
+
+  curl -L -X GET -u $fhir_username:$fhir_password --connect-timeout 5 --max-time 20 \
+    "${FHIR_SERVER_URL}${fhir_url_extension}/Encounter${enc_obs_query_param}" \
+    2>/dev/null >>"${HOME_PATH}/${PARQUET_SUBDIR}/encounters.json"
+
+  curl -L -X GET -u $fhir_username:$fhir_password --connect-timeout 5 --max-time 20 \
+    "${FHIR_SERVER_URL}${fhir_url_extension}/Observation${enc_obs_query_param}" \
+    2>/dev/null >>"${HOME_PATH}/${PARQUET_SUBDIR}/obs.json"
 
   TOTAL_TEST_PATIENTS=$(jq '.total' "${HOME_PATH}/${PARQUET_SUBDIR}/patients.json")
   print_message "Total FHIR source test patients ---> ${TOTAL_TEST_PATIENTS}"
@@ -194,7 +189,7 @@ function fhir_source_query() {
 #   TOTAL_TEST_PATIENTS
 #   TOTAL_TEST_ENCOUNTERS
 #   TOTAL_TEST_OBS
-#   JDBC_MODE_HAPI
+#   HAPI
 #################################################
 function test_parquet_sink() {
   print_message "Counting number of patients, encounters and obs sinked to parquet files"
@@ -226,49 +221,46 @@ function test_parquet_sink() {
 #   TOTAL_TEST_ENCOUNTERS
 #   TOTAL_TEST_OBS
 #   STREAMING
-#   JDBC_MODE_HAPI
+#   HAPI
 #################################################
 function test_fhir_sink() {
-  if ! [[ -n $JDBC_MODE_HAPI ]]; then
+  local patient_query_param="?_summary=count"
+  local enc_obs_query_param="?_summary=count"
 
-      local patient_query_param="?_summary=count"
-      local enc_obs_query_param="?_summary=count"
+  if [[ -n ${STREAMING} ]]; then 
+      patient_query_param="?given=Alberta625"
+      enc_obs_query_param="?subject.given=Alberta625"
+  fi
+  print_message "Finding number of patients, encounters and obs in FHIR server"
 
-      if [[ -n ${STREAMING} ]]; then 
-          patient_query_param="?given=Alberta625"
-          enc_obs_query_param="?subject.given=Alberta625"
-      fi
-      print_message "Finding number of patients, encounters and obs in FHIR server"
+  mkdir "${HOME_PATH}/fhir"
+  curl -L -X GET -u hapi:hapi --connect-timeout 5 --max-time 20 \
+    "${SINK_SERVER}/fhir/Patient${patient_query_param}" 2>/dev/null >>"${HOME_PATH}/fhir/patients.json"
 
-      mkdir "${HOME_PATH}/fhir"
-      curl -L -X GET -u hapi:hapi --connect-timeout 5 --max-time 20 \
-        "${SINK_SERVER}/fhir/Patient${patient_query_param}" 2>/dev/null >>"${HOME_PATH}/fhir/patients.json"
+  curl -L -X GET -u hapi:hapi --connect-timeout 5 --max-time 20 \
+    "${SINK_SERVER}/fhir/Encounter${enc_obs_query_param}" 2>/dev/null >>"${HOME_PATH}/fhir/encounters.json"
 
-      curl -L -X GET -u hapi:hapi --connect-timeout 5 --max-time 20 \
-        "${SINK_SERVER}/fhir/Encounter${enc_obs_query_param}" 2>/dev/null >>"${HOME_PATH}/fhir/encounters.json"
+  curl -L -X GET -u hapi:hapi --connect-timeout 5 --max-time 20 \
+    "${SINK_SERVER}/fhir/Observation${enc_obs_query_param}" 2>/dev/null >>"${HOME_PATH}/fhir/obs.json"
 
-      curl -L -X GET -u hapi:hapi --connect-timeout 5 --max-time 20 \
-        "${SINK_SERVER}/fhir/Observation${enc_obs_query_param}" 2>/dev/null >>"${HOME_PATH}/fhir/obs.json"
+  print_message "Counting number of patients, encounters and obs sinked to fhir files"
 
-      print_message "Counting number of patients, encounters and obs sinked to fhir files"
+  total_patients_sinked_fhir=$(jq '.total' "${HOME_PATH}/fhir/patients.json")
+  print_message "Total patients sinked to fhir ---> ${total_patients_sinked_fhir}"
 
-      total_patients_sinked_fhir=$(jq '.total' "${HOME_PATH}/fhir/patients.json")
-      print_message "Total patients sinked to fhir ---> ${total_patients_sinked_fhir}"
+  total_encounters_sinked_fhir=$(jq '.total' "${HOME_PATH}/fhir/encounters.json")
+  print_message "Total encounters sinked to fhir ---> ${total_encounters_sinked_fhir}"
 
-      total_encounters_sinked_fhir=$(jq '.total' "${HOME_PATH}/fhir/encounters.json")
-      print_message "Total encounters sinked to fhir ---> ${total_encounters_sinked_fhir}"
+  total_obs_sinked_fhir=$(jq '.total' "${HOME_PATH}/fhir/obs.json")
+  print_message "Total observations sinked to fhir ---> ${total_obs_sinked_fhir}"
 
-      total_obs_sinked_fhir=$(jq '.total' "${HOME_PATH}/fhir/obs.json")
-      print_message "Total observations sinked to fhir ---> ${total_obs_sinked_fhir}"
-
-      if [[ "${total_patients_sinked_fhir}" == "${TOTAL_TEST_PATIENTS}" && "${total_encounters_sinked_fhir}" \
-            == "${TOTAL_TEST_ENCOUNTERS}" && "${total_obs_sinked_fhir}" == "${TOTAL_TEST_OBS}" ]] \
-        ; then
-        print_message "FHIR SERVER SINK EXECUTED SUCCESSFULLY USING ${PARQUET_SUBDIR} MODE"
-      else
-        print_message "FHIR SERVER SINK TEST FAILED USING ${PARQUET_SUBDIR} MODE"
-        exit 1
-      fi
+  if [[ "${total_patients_sinked_fhir}" == "${TOTAL_TEST_PATIENTS}" && "${total_encounters_sinked_fhir}" \
+        == "${TOTAL_TEST_ENCOUNTERS}" && "${total_obs_sinked_fhir}" == "${TOTAL_TEST_OBS}" ]] \
+    ; then
+    print_message "FHIR SERVER SINK EXECUTED SUCCESSFULLY USING ${PARQUET_SUBDIR} MODE"
+  else
+    print_message "FHIR SERVER SINK TEST FAILED USING ${PARQUET_SUBDIR} MODE"
+    exit 1
   fi
 }
 

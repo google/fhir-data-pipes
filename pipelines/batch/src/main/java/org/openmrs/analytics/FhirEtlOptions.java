@@ -1,4 +1,4 @@
-// Copyright 2020-2022 Google LLC
+// Copyright 2020 Google LLC
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -47,8 +47,9 @@ public interface FhirEtlOptions extends PipelineOptions {
 	
 	void setBatchSize(int value);
 	
-	@Description("For the JDBC mode, this is the size of each ID chunk. Setting high values will yield faster query "
-	        + "execution.")
+	@Description("This flag is used in the JDBC mode. In the context of an OpenMRS source, this is the "
+	        + "size of each ID chunk. In the context of a HAPI source, this is the size of each database query. "
+	        + "Setting high values (~10000 for OpenMRS, ~1000 for HAPI) will yield faster query execution.")
 	@Default.Integer(10000)
 	int getJdbcFetchSize();
 	
@@ -121,6 +122,12 @@ public interface FhirEtlOptions extends PipelineOptions {
 	
 	void setFhirDebeziumConfigPath(String value);
 	
+	@Description("Path to FHIR database config for Jdbc mode")
+	@Default.String("../utils/hapi-postgres-config.json")
+	String getFhirDatabaseConfigPath();
+	
+	void setFhirDatabaseConfigPath(String value);
+	
 	@Description("Flag to switch between the 2 modes of batch extract")
 	@Default.Boolean(false)
 	Boolean isJdbcModeEnabled();
@@ -132,12 +139,6 @@ public interface FhirEtlOptions extends PipelineOptions {
 	Boolean isJdbcModeHapi();
 	
 	void setJdbcModeHapi(Boolean value);
-	
-	@Description("The batch size for jdbc mode batch extract for a HAPI source")
-	@Default.Integer(100000)
-	Integer getHapiJdbcBatchSize();
-	
-	void setHapiJdbcBatchSize(Integer value);
 	
 	@Description("The number of seconds after which records are flushed into Parquet/text files; "
 	        + "use 0 to disable (note this may have undesired memory implications).")

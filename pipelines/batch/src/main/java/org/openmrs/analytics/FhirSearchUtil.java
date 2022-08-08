@@ -1,4 +1,4 @@
-// Copyright 2020-2022 Google LLC
+// Copyright 2020 Google LLC
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -67,9 +67,9 @@ public class FhirSearchUtil {
 	 * Searches for the total number of resources for each resource type
 	 * 
 	 * @param resourceList the resource types to be processed
-	 * @return a HashMap storing the counts of each resource type
+	 * @return a Map storing the counts of each resource type
 	 */
-	public HashMap<String, Integer> searchResourceCounts(String resourceList) {
+	public Map<String, Integer> searchResourceCounts(String resourceList) {
 		HashSet<String> resourceTypes = new HashSet<String>(Arrays.asList(resourceList.split(",")));
 		HashMap<String, Integer> hashMap = new HashMap<String, Integer>();
 		for (String resourceType : resourceTypes) {

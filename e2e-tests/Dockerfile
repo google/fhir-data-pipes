@@ -23,7 +23,7 @@ COPY parquet-tools-1.11.1.jar  parquet-tools-1.11.1.jar
 ENV PARQUET_SUBDIR="NON_JDBC"
 ENV DOCKER_NETWORK="--use_docker_network"
 ENV STREAMING_TEST=""
-ENV JDBC_MODE_HAPI_TEST=""
+ENV HAPI_TEST=""
 ENV HOME_DIR="/workspace/e2e-tests"
 
-ENTRYPOINT cd ${HOME_DIR}; ./pipeline_validation.sh ${HOME_DIR} ${PARQUET_SUBDIR} ${DOCKER_NETWORK} ${STREAMING_TEST} ${JDBC_MODE_HAPI_TEST}
+ENTRYPOINT cd ${HOME_DIR}; ./pipeline_validation.sh ${HOME_DIR} ${PARQUET_SUBDIR} ${DOCKER_NETWORK} ${STREAMING_TEST} ${HAPI_TEST}

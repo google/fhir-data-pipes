@@ -1,4 +1,4 @@
-# Copyright 2020-2022 Google LLC
+# Copyright 2020 Google LLC
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -23,6 +23,7 @@ services:
       - hapi.fhir.mdm_enabled=false
       - hapi.fhir.enforce_referential_integrity_on_delete=false
       - hapi.fhir.enforce_referential_integrity_on_write=false
+      - hapi.fhir.client_id_strategy=ANY
     restart: unless-stopped
     ports:
       - 8098:8080
