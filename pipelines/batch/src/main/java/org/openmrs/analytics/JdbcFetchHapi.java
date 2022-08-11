@@ -22,8 +22,6 @@ import java.util.List;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Charsets;
-import org.apache.beam.sdk.coders.ListCoder;
-import org.apache.beam.sdk.coders.StringUtf8Coder;
 import org.apache.beam.sdk.io.jdbc.JdbcIO;
 import org.apache.beam.sdk.transforms.PTransform;
 import org.apache.beam.sdk.values.PCollection;
@@ -45,10 +43,10 @@ public class JdbcFetchHapi {
 	 * element in the ResultSet returned by the query maps to a List of String objects corresponding to
 	 * the column values in the query result.
 	 */
-	public static class ResultSetToList implements JdbcIO.RowMapper<List<String>> {
+	public static class ResultSetToRowDescriptor implements JdbcIO.RowMapper<JdbcHapiRowDescriptor> {
 		
 		@Override
-		public List<String> mapRow(ResultSet resultSet) throws Exception {
+		public JdbcHapiRowDescriptor mapRow(ResultSet resultSet) throws Exception {
 			String jsonResource = "";
 			
 			switch (resultSet.getString("res_encoding")) {
@@ -69,7 +67,7 @@ public class JdbcFetchHapi {
 			String resourceType = resultSet.getString("res_type");
 			String lastUpdated = resultSet.getString("res_updated");
 			String resourceVersion = resultSet.getString("res_ver");
-			return Arrays.asList(resourceId, resourceType, resourceVersion, lastUpdated, jsonResource);
+			return JdbcHapiRowDescriptor.create(resourceId, resourceType, lastUpdated, resourceVersion, jsonResource);
 		}
 	}
 	
@@ -77,7 +75,7 @@ public class JdbcFetchHapi {
 	 * Utilizes Beam JdbcIO to query for resources directly from FHIR (HAPI) server's database and
 	 * returns a PCollection of Lists of String objects - each corresponding to a resource's payload
 	 */
-	public static class FetchRowsJdbcIo extends PTransform<PCollection<List<String>>, PCollection<List<String>>> {
+	public static class FetchRowsJdbcIo extends PTransform<PCollection<List<String>>, PCollection<JdbcHapiRowDescriptor>> {
 		
 		private final JdbcIO.DataSourceConfiguration dataSourceConfig;
 		
@@ -86,10 +84,9 @@ public class JdbcFetchHapi {
 		}
 		
 		@Override
-		public PCollection<List<String>> expand(PCollection<List<String>> queryParameters) {
+		public PCollection<JdbcHapiRowDescriptor> expand(PCollection<List<String>> queryParameters) {
 			return queryParameters.apply("JdbcIO readAll",
-			    JdbcIO.<List<String>, List<String>> readAll().withDataSourceConfiguration(dataSourceConfig)
-			            .withCoder(ListCoder.of(StringUtf8Coder.of()))
+			    JdbcIO.<List<String>, JdbcHapiRowDescriptor> readAll().withDataSourceConfiguration(dataSourceConfig)
 			            .withParameterSetter(new JdbcIO.PreparedStatementSetter<List<String>>() {
 				            
 				            @Override
@@ -99,12 +96,17 @@ public class JdbcFetchHapi {
 					            preparedStatement.setInt(2, Integer.valueOf(element.get(1)));
 					            preparedStatement.setInt(3, Integer.valueOf(element.get(2)));
 				            }
-			            }).withOutputParallelization(false)
+			            })
+			            // We are disabling this parameter because by default, this parameter causes JdbcIO to add a 
+			            // reshuffle transform after reading from the database. This breaks fushion between the read 
+			            // and write operations, thus resulting in high memory overhead. Diabling the below parameter 
+			            // results in optimal performance.
+			            .withOutputParallelization(false)
 			            .withQuery(
 			                "SELECT res.res_id, res.res_type, res.res_updated, res.res_ver, ver.res_encoding, ver.res_text "
 			                        + "FROM hfj_resource res, hfj_res_ver ver "
 			                        + "WHERE res.res_type=? AND res.res_id = ver.res_id AND res.res_id %? = ?")
-			            .withRowMapper(new ResultSetToList()));
+			            .withRowMapper(new ResultSetToRowDescriptor()));
 			
 		}
 	}

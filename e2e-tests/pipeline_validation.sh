@@ -40,7 +40,7 @@ function usage() {
   echo "                              or host network URLs"
   echo "     --streaming              Flag to specify whether we are testing a"
   echo "                              streaming pipeline"
-  echo "     --hapi         Flag to specify whether we are testing a"
+  echo "     --hapi                   Flag to specify whether we are testing a"
   echo "                              batch pipeline executed with jdbc direct"
   echo "                              fetch mode with HAPI as the source server"
 }
@@ -111,6 +111,8 @@ function setup() {
   STREAMING=""
   HAPI=""
 
+  # TODO: We should refactor this code to parse the arguments by going through
+  # each one and checking which ones are turned on.
   if [[ $3 = "--hapi" ]] || [[ $4 = "--hapi" ]] || [[ $5 = "--hapi" ]]; then
     HAPI="on"
     FHIR_SERVER_URL='http://localhost:8091'
@@ -162,19 +164,18 @@ function fhir_source_query() {
 
   curl -L -X GET -u $fhir_username:$fhir_password --connect-timeout 5 --max-time 20 \
   "${FHIR_SERVER_URL}${fhir_url_extension}/Patient${patient_query_param}" 2>/dev/null >>"${HOME_PATH}/${PARQUET_SUBDIR}/patients.json"
+  TOTAL_TEST_PATIENTS=$(jq '.total' "${HOME_PATH}/${PARQUET_SUBDIR}/patients.json")
+  print_message "Total FHIR source test patients ---> ${TOTAL_TEST_PATIENTS}"
 
   curl -L -X GET -u $fhir_username:$fhir_password --connect-timeout 5 --max-time 20 \
     "${FHIR_SERVER_URL}${fhir_url_extension}/Encounter${enc_obs_query_param}" \
     2>/dev/null >>"${HOME_PATH}/${PARQUET_SUBDIR}/encounters.json"
+  TOTAL_TEST_ENCOUNTERS=$(jq '.total' "${HOME_PATH}/${PARQUET_SUBDIR}/encounters.json")
+  print_message "Total FHIR source test encounters ---> ${TOTAL_TEST_ENCOUNTERS}"
 
   curl -L -X GET -u $fhir_username:$fhir_password --connect-timeout 5 --max-time 20 \
     "${FHIR_SERVER_URL}${fhir_url_extension}/Observation${enc_obs_query_param}" \
     2>/dev/null >>"${HOME_PATH}/${PARQUET_SUBDIR}/obs.json"
-
-  TOTAL_TEST_PATIENTS=$(jq '.total' "${HOME_PATH}/${PARQUET_SUBDIR}/patients.json")
-  print_message "Total FHIR source test patients ---> ${TOTAL_TEST_PATIENTS}"
-  TOTAL_TEST_ENCOUNTERS=$(jq '.total' "${HOME_PATH}/${PARQUET_SUBDIR}/encounters.json")
-  print_message "Total FHIR source test encounters ---> ${TOTAL_TEST_ENCOUNTERS}"
   TOTAL_TEST_OBS=$(jq '.total' "${HOME_PATH}/${PARQUET_SUBDIR}/obs.json")
   print_message "Total FHIR source test obs ---> ${TOTAL_TEST_OBS}"
 }

@@ -30,7 +30,9 @@ import org.apache.beam.sdk.transforms.DoFn;
 import org.hl7.fhir.r4.model.Meta;
 import org.hl7.fhir.r4.model.Resource;
 
-public class ConvertResourceFn extends DoFn<List<String>, Integer> {
+// TODO: A good amount of functionality/setup here is shared with FetchSearchPageFn. 
+// There is room for refactoring in the future.
+public class ConvertResourceFn extends DoFn<JdbcHapiRowDescriptor, Integer> {
 	
 	private final HashMap<String, Counter> numFetchedResources;
 	
@@ -101,11 +103,12 @@ public class ConvertResourceFn extends DoFn<List<String>, Integer> {
 		parquetUtil.closeAllWriters();
 	}
 	
-	public void writeResource(List<String> element) throws IOException, ParseException {
-		String resourceId = element.get(0);
-		String resourceType = element.get(1);
-		Meta meta = new Meta().setVersionId(element.get(2)).setLastUpdated(simpleDateFormat.parse(element.get(3)));
-		String jsonResource = element.get(4);
+	public void writeResource(JdbcHapiRowDescriptor element) throws IOException, ParseException {
+		String resourceId = element.resourceId();
+		String resourceType = element.resourceType();
+		Meta meta = new Meta().setVersionId(element.resourceVersion())
+		        .setLastUpdated(simpleDateFormat.parse(element.lastUpdated()));
+		String jsonResource = element.jsonResource();
 		
 		long startTime = System.currentTimeMillis();
 		Resource resource = (Resource) parser.parseResource(jsonResource);
@@ -129,7 +132,7 @@ public class ConvertResourceFn extends DoFn<List<String>, Integer> {
 	
 	@ProcessElement
 	public void processElement(ProcessContext processContext) throws IOException, ParseException {
-		List<String> element = processContext.element();
+		JdbcHapiRowDescriptor element = processContext.element();
 		writeResource(element);
 	}
 }

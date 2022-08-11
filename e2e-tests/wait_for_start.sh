@@ -17,6 +17,16 @@
 
 ################################## WAIT FOR START ############################# 
 # Script used in e2e-test that waits for OpenMRS and FHIR server to start.
+#
+# Example usage:
+#   ./wait_for_start.sh    
+#   The above example waits for the OpenMRS source server on localhost
+#
+#   ./wait_for_start.sh --use_docker_network
+#   The above example waits for the OpenMRS source server on docker network
+#
+#   ./wait_for_start.sh --use_docker_network --hapi
+#   The above example waits for the HAPI source server on docker network
 
 set -e
 

@@ -3,9 +3,9 @@
 This directory contains pipelines code for batch and streaming transformation of
 data from a FHIR based EHR system to a data warehouse (for analytics) or another
 FHIR store (for data integration). These pipelines are tested with
-[OpenMRS](https://openmrs.org) and [HAPI](https://hapifhir.io/) instances as the 
-source using the 
+[OpenMRS](https://openmrs.org) instances as the source using the 
 [OpenMRS FHIR2 Module](https://addons.openmrs.org/show/org.openmrs.module.openmrs-fhir2-module).
+These pipelines are also tested with [HAPI](https://hapifhir.io/) instances as the source.
 The data warehouse can be a collection of [Apache Parquet files](https://parquet.apache.org), 
 or it can be another FHIR server (e.g., a HAPI FHIR server or Google Cloud FHIR store) 
 or eventually a cloud based datawarehouse (like [BigQuery](https://cloud.google.com/bigquery)).
@@ -19,7 +19,7 @@ There are four modes of transfer:
     mode uses JDBC to read the IDs of entities in an OpenMRS MySQL database, 
     retrieves those entities as FHIR resources, and transfers the data via FHIR 
     APIs or Parquet files. For a HAPI source, this mode uses JDBC to read FHIR 
-    resources directly from a HAPI PostgreSQL database, and transfers the data.
+    resources directly from a HAPI database, and transfers the data.
 -   **[Streaming mode (Debezium)](#streaming-mode-debezium)**: This mode
     continuously listens for changes to the underlying OpenMRS MySQL database
     using
@@ -87,13 +87,15 @@ parameters which are documented here.
 -   `fhirSinkPath` - A base URL to a target FHIR server, or the relative path of
     a GCP FHIR store, e.g. `http://localhost:8098/fhir` for a FHIR server or
     `projects/PROJECT/locations/LOCATION/datasets/DATASET/fhirStores/FHIR-STORE-NAME`
-    for a GCP FHIR store.
+    for a GCP FHIR store. If you don't need to push to a sink FHIR server, you can leave 
+    this flag empty which is the default.
 -   `sinkUserName` - The HTTP Basic Auth username to access the FHIR sink. Not
     used for GCP FHIR stores.
 -   `sinkPassword` - The HTTP Basic Auth password to access the FHIR sink. Not
     used for GCP FHIR stores.
 -   `outputParquetPath` - The file path to write Parquet files to, e.g.,
-    `./tmp/parquet/`.
+    `./tmp/parquet/`. If you don't need to write to Parquet, you can leave this flag empty 
+    which is the default.
 
 ## Batch mode
 

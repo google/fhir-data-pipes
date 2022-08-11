@@ -28,7 +28,6 @@ import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnitRunner;
-import org.openmrs.analytics.JdbcFetchHapi.ResultSetToList;
 import org.openmrs.analytics.model.DatabaseConfiguration;
 
 @RunWith(MockitoJUnitRunner.class)
@@ -80,14 +79,13 @@ public class JdbcFetchHapiTest extends TestCase {
 		Mockito.when(resultSet.getString("res_updated")).thenReturn("2002-03-12 10:09:20");
 		Mockito.when(resultSet.getString("res_ver")).thenReturn("1");
 		
-		List<String> list = new ResultSetToList().mapRow(resultSet);
+		JdbcHapiRowDescriptor rowDescriptor = new JdbcFetchHapi.ResultSetToRowDescriptor().mapRow(resultSet);
 		
-		assertNotNull(list);
-		assertEquals(list.size(), 5);
-		assertEquals(list.get(0), "101");
-		assertEquals(list.get(1), "Encounter");
-		assertEquals(list.get(2), "1");
-		assertEquals(list.get(3), "2002-03-12 10:09:20");
-		assertEquals(list.get(4), "");
+		assertNotNull(rowDescriptor);
+		assertEquals(rowDescriptor.resourceId(), "101");
+		assertEquals(rowDescriptor.resourceType(), "Encounter");
+		assertEquals(rowDescriptor.resourceVersion(), "1");
+		assertEquals(rowDescriptor.lastUpdated(), "2002-03-12 10:09:20");
+		assertEquals(rowDescriptor.jsonResource(), "");
 	}
 }

@@ -50,7 +50,7 @@ public interface FhirEtlOptions extends PipelineOptions {
 	@Description("This flag is used in the JDBC mode. In the context of an OpenMRS source, this is the "
 	        + "size of each ID chunk. In the context of a HAPI source, this is the size of each database query. "
 	        + "Setting high values (~10000 for OpenMRS, ~1000 for HAPI) will yield faster query execution.")
-	@Default.Integer(10000)
+	@Default.Integer(1000)
 	int getJdbcFetchSize();
 	
 	void setJdbcFetchSize(int value);
@@ -134,7 +134,8 @@ public interface FhirEtlOptions extends PipelineOptions {
 	
 	void setJdbcModeEnabled(Boolean value);
 	
-	@Description("Flag to use jdbc mode batch extract for a HAPI source")
+	@Description("Flag to use jdbc mode batch extract for a HAPI source; this only has an effect "
+	        + "if jdbc-mode is enabled.")
 	@Default.Boolean(false)
 	Boolean isJdbcModeHapi();
 	

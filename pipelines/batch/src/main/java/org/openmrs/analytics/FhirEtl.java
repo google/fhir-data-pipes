@@ -208,7 +208,8 @@ public class FhirEtl {
 	/**
 	 * Driver function for running JDBC direct fetch mode with a HAPI source server. The JDBC fetch mode
 	 * uses Beam JdbcIO to fetch FHIR resources directly from the HAPI server's database and uses the
-	 * ParquetUtil to write resources.
+	 * ParquetUtil to write resources. TODO: Implement active period feature for JDBC mode with a HAPI
+	 * source server.
 	 */
 	static void runHapiJdbcFetch(FhirEtlOptions options, DatabaseConfiguration dbConfig, FhirContext fhirContext)
 	        throws PropertyVetoException {
@@ -229,7 +230,7 @@ public class FhirEtl {
 			    Create.of(new JdbcFetchHapi(jdbcConnectionUtil).generateQueryParameters(options, resourceType, numResources))
 			            .withCoder(ListCoder.of(StringUtf8Coder.of())));
 			
-			PCollection<List<String>> payload = queryParameters.apply("JdbcIO fetch for " + resourceType,
+			PCollection<JdbcHapiRowDescriptor> payload = queryParameters.apply("JdbcIO fetch for " + resourceType,
 			    new JdbcFetchHapi.FetchRowsJdbcIo(
 			            JdbcIO.DataSourceConfiguration.create(jdbcConnectionUtil.getConnectionObject())));
 			

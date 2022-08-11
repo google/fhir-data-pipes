@@ -20,9 +20,6 @@ import static org.mockito.Mockito.verify;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
 
 import com.google.common.io.Resources;
 import org.apache.beam.sdk.options.PipelineOptionsFactory;
@@ -66,8 +63,8 @@ public class ConvertResourceFnTest {
 	@Test
 	public void testProcessPatientResource() throws IOException, java.text.ParseException {
 		String patientResourceStr = Resources.toString(Resources.getResource("patient.json"), StandardCharsets.UTF_8);
-		List<String> element = new ArrayList<>(
-		        Arrays.asList("123", "Patient", "1", "2020-09-19 12:09:23", patientResourceStr));
+		JdbcHapiRowDescriptor element = JdbcHapiRowDescriptor.create("123", "Patient", "2020-09-19 12:09:23", "1",
+		    patientResourceStr);
 		convertResourceFn.writeResource(element);
 		
 		// Verify the resource is sent to the writer.
