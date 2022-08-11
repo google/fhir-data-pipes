@@ -21,11 +21,11 @@ import org.apache.beam.sdk.coders.SerializableCoder;
 
 @DefaultCoder(SerializableCoder.class)
 @AutoValue
-abstract class JdbcHapiRowDescriptor implements Serializable {
+abstract class HapiRowDescriptor implements Serializable {
 	
-	static JdbcHapiRowDescriptor create(String resourceId, String resourceType, String lastUpdated, String resourceVersion,
+	static HapiRowDescriptor create(String resourceId, String resourceType, String lastUpdated, String resourceVersion,
 	        String jsonResource) {
-		return new AutoValue_JdbcHapiRowDescriptor(resourceId, resourceType, lastUpdated, resourceVersion, jsonResource);
+		return new AutoValue_HapiRowDescriptor(resourceId, resourceType, lastUpdated, resourceVersion, jsonResource);
 	}
 	
 	abstract String resourceId();

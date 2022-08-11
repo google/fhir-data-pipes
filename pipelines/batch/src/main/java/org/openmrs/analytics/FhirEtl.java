@@ -32,8 +32,6 @@ import org.apache.avro.Schema;
 import org.apache.beam.sdk.Pipeline;
 import org.apache.beam.sdk.PipelineResult;
 import org.apache.beam.sdk.coders.CannotProvideCoderException;
-import org.apache.beam.sdk.coders.ListCoder;
-import org.apache.beam.sdk.coders.StringUtf8Coder;
 import org.apache.beam.sdk.io.jdbc.JdbcIO;
 import org.apache.beam.sdk.options.PipelineOptionsFactory;
 import org.apache.beam.sdk.transforms.Create;
@@ -208,9 +206,9 @@ public class FhirEtl {
 	/**
 	 * Driver function for running JDBC direct fetch mode with a HAPI source server. The JDBC fetch mode
 	 * uses Beam JdbcIO to fetch FHIR resources directly from the HAPI server's database and uses the
-	 * ParquetUtil to write resources. TODO: Implement active period feature for JDBC mode with a HAPI
-	 * source server.
+	 * ParquetUtil to write resources.
 	 */
+	//TODO: Implement active period feature for JDBC mode with a HAPI source server (Github issue #278).
 	static void runHapiJdbcFetch(FhirEtlOptions options, DatabaseConfiguration dbConfig, FhirContext fhirContext)
 	        throws PropertyVetoException {
 		Pipeline pipeline = Pipeline.create(options);
@@ -226,11 +224,11 @@ public class FhirEtl {
 		for (String resourceType : options.getResourceList().split(",")) {
 			int numResources = resourceCount.get(resourceType);
 			
-			PCollection<List<String>> queryParameters = pipeline.apply("Generate query parameters for " + resourceType,
-			    Create.of(new JdbcFetchHapi(jdbcConnectionUtil).generateQueryParameters(options, resourceType, numResources))
-			            .withCoder(ListCoder.of(StringUtf8Coder.of())));
+			PCollection<QueryParameterDescriptor> queryParameters = pipeline
+			        .apply("Generate query parameters for " + resourceType, Create.of(
+			            new JdbcFetchHapi(jdbcConnectionUtil).generateQueryParameters(options, resourceType, numResources)));
 			
-			PCollection<JdbcHapiRowDescriptor> payload = queryParameters.apply("JdbcIO fetch for " + resourceType,
+			PCollection<HapiRowDescriptor> payload = queryParameters.apply("JdbcIO fetch for " + resourceType,
 			    new JdbcFetchHapi.FetchRowsJdbcIo(
 			            JdbcIO.DataSourceConfiguration.create(jdbcConnectionUtil.getConnectionObject())));
 			

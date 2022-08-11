@@ -61,13 +61,14 @@ public class JdbcFetchHapiTest extends TestCase {
 	public void testGenerateQueryParameters() throws Exception {
 		String resourceType = "Observation";
 		int resourceCount = 1000001;
-		List<List<String>> queryParameterList = jdbcFetchHapi.generateQueryParameters(options, resourceType, resourceCount);
+		List<QueryParameterDescriptor> queryParameterList = jdbcFetchHapi.generateQueryParameters(options, resourceType,
+		    resourceCount);
 		
 		//Verify the total number of query parameters and the content of the query parameters is correct
 		assertEquals(queryParameterList.size(), 101);
-		assertEquals(queryParameterList.get(0).get(0), "Observation");
-		assertEquals(queryParameterList.get(0).get(1), "101");
-		assertEquals(queryParameterList.get(0).get(2), "0");
+		assertEquals(queryParameterList.get(0).resourceType(), "Observation");
+		assertEquals(queryParameterList.get(0).numBatches(), 101);
+		assertEquals(queryParameterList.get(0).batchId(), 0);
 		
 	}
 	
@@ -79,7 +80,7 @@ public class JdbcFetchHapiTest extends TestCase {
 		Mockito.when(resultSet.getString("res_updated")).thenReturn("2002-03-12 10:09:20");
 		Mockito.when(resultSet.getString("res_ver")).thenReturn("1");
 		
-		JdbcHapiRowDescriptor rowDescriptor = new JdbcFetchHapi.ResultSetToRowDescriptor().mapRow(resultSet);
+		HapiRowDescriptor rowDescriptor = new JdbcFetchHapi.ResultSetToRowDescriptor().mapRow(resultSet);
 		
 		assertNotNull(rowDescriptor);
 		assertEquals(rowDescriptor.resourceId(), "101");

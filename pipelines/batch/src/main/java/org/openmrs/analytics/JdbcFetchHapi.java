@@ -17,7 +17,6 @@ import java.sql.Blob;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 import com.google.common.annotations.VisibleForTesting;
@@ -43,10 +42,10 @@ public class JdbcFetchHapi {
 	 * element in the ResultSet returned by the query maps to a List of String objects corresponding to
 	 * the column values in the query result.
 	 */
-	public static class ResultSetToRowDescriptor implements JdbcIO.RowMapper<JdbcHapiRowDescriptor> {
+	public static class ResultSetToRowDescriptor implements JdbcIO.RowMapper<HapiRowDescriptor> {
 		
 		@Override
-		public JdbcHapiRowDescriptor mapRow(ResultSet resultSet) throws Exception {
+		public HapiRowDescriptor mapRow(ResultSet resultSet) throws Exception {
 			String jsonResource = "";
 			
 			switch (resultSet.getString("res_encoding")) {
@@ -67,7 +66,7 @@ public class JdbcFetchHapi {
 			String resourceType = resultSet.getString("res_type");
 			String lastUpdated = resultSet.getString("res_updated");
 			String resourceVersion = resultSet.getString("res_ver");
-			return JdbcHapiRowDescriptor.create(resourceId, resourceType, lastUpdated, resourceVersion, jsonResource);
+			return HapiRowDescriptor.create(resourceId, resourceType, lastUpdated, resourceVersion, jsonResource);
 		}
 	}
 	
@@ -75,7 +74,7 @@ public class JdbcFetchHapi {
 	 * Utilizes Beam JdbcIO to query for resources directly from FHIR (HAPI) server's database and
 	 * returns a PCollection of Lists of String objects - each corresponding to a resource's payload
 	 */
-	public static class FetchRowsJdbcIo extends PTransform<PCollection<List<String>>, PCollection<JdbcHapiRowDescriptor>> {
+	public static class FetchRowsJdbcIo extends PTransform<PCollection<QueryParameterDescriptor>, PCollection<HapiRowDescriptor>> {
 		
 		private final JdbcIO.DataSourceConfiguration dataSourceConfig;
 		
@@ -84,21 +83,21 @@ public class JdbcFetchHapi {
 		}
 		
 		@Override
-		public PCollection<JdbcHapiRowDescriptor> expand(PCollection<List<String>> queryParameters) {
+		public PCollection<HapiRowDescriptor> expand(PCollection<QueryParameterDescriptor> queryParameters) {
 			return queryParameters.apply("JdbcIO readAll",
-			    JdbcIO.<List<String>, JdbcHapiRowDescriptor> readAll().withDataSourceConfiguration(dataSourceConfig)
-			            .withParameterSetter(new JdbcIO.PreparedStatementSetter<List<String>>() {
+			    JdbcIO.<QueryParameterDescriptor, HapiRowDescriptor> readAll().withDataSourceConfiguration(dataSourceConfig)
+			            .withParameterSetter(new JdbcIO.PreparedStatementSetter<QueryParameterDescriptor>() {
 				            
 				            @Override
-				            public void setParameters(List<String> element, PreparedStatement preparedStatement)
+				            public void setParameters(QueryParameterDescriptor element, PreparedStatement preparedStatement)
 				                    throws Exception {
-					            preparedStatement.setString(1, element.get(0));
-					            preparedStatement.setInt(2, Integer.valueOf(element.get(1)));
-					            preparedStatement.setInt(3, Integer.valueOf(element.get(2)));
+					            preparedStatement.setString(1, element.resourceType());
+					            preparedStatement.setInt(2, element.numBatches());
+					            preparedStatement.setInt(3, element.batchId());
 				            }
 			            })
 			            // We are disabling this parameter because by default, this parameter causes JdbcIO to add a 
-			            // reshuffle transform after reading from the database. This breaks fushion between the read 
+			            // reshuffle transform after reading from the database. This breaks fusion between the read 
 			            // and write operations, thus resulting in high memory overhead. Diabling the below parameter 
 			            // results in optimal performance.
 			            .withOutputParallelization(false)
@@ -126,18 +125,18 @@ public class JdbcFetchHapi {
 	 * @return a list of query parameters in the form of lists of strings
 	 */
 	@VisibleForTesting
-	List<List<String>> generateQueryParameters(FhirEtlOptions options, String resourceType, int numResources) {
+	List<QueryParameterDescriptor> generateQueryParameters(FhirEtlOptions options, String resourceType, int numResources) {
 		log.info("Generating query parameters for " + resourceType);
 		
 		int jdbcFetchSize = options.getJdbcFetchSize();
-		List<List<String>> queryParameterList = new ArrayList<List<String>>();
+		List<QueryParameterDescriptor> queryParameterList = new ArrayList<QueryParameterDescriptor>();
 		int numBatches = numResources / jdbcFetchSize;
 		if (numResources % jdbcFetchSize != 0) {
 			numBatches += 1;
 		}
 		
 		for (int i = 0; i < numBatches; i++) {
-			queryParameterList.add(Arrays.asList(resourceType, String.valueOf(numBatches), String.valueOf(i)));
+			queryParameterList.add(QueryParameterDescriptor.create(resourceType, numBatches, i));
 		}
 		
 		return queryParameterList;

@@ -32,7 +32,7 @@ import org.hl7.fhir.r4.model.Resource;
 
 // TODO: A good amount of functionality/setup here is shared with FetchSearchPageFn. 
 // There is room for refactoring in the future.
-public class ConvertResourceFn extends DoFn<JdbcHapiRowDescriptor, Integer> {
+public class ConvertResourceFn extends DoFn<HapiRowDescriptor, Integer> {
 	
 	private final HashMap<String, Counter> numFetchedResources;
 	
@@ -103,7 +103,7 @@ public class ConvertResourceFn extends DoFn<JdbcHapiRowDescriptor, Integer> {
 		parquetUtil.closeAllWriters();
 	}
 	
-	public void writeResource(JdbcHapiRowDescriptor element) throws IOException, ParseException {
+	public void writeResource(HapiRowDescriptor element) throws IOException, ParseException {
 		String resourceId = element.resourceId();
 		String resourceType = element.resourceType();
 		Meta meta = new Meta().setVersionId(element.resourceVersion())
@@ -132,7 +132,7 @@ public class ConvertResourceFn extends DoFn<JdbcHapiRowDescriptor, Integer> {
 	
 	@ProcessElement
 	public void processElement(ProcessContext processContext) throws IOException, ParseException {
-		JdbcHapiRowDescriptor element = processContext.element();
+		HapiRowDescriptor element = processContext.element();
 		writeResource(element);
 	}
 }

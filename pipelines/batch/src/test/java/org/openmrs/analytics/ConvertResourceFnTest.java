@@ -63,7 +63,7 @@ public class ConvertResourceFnTest {
 	@Test
 	public void testProcessPatientResource() throws IOException, java.text.ParseException {
 		String patientResourceStr = Resources.toString(Resources.getResource("patient.json"), StandardCharsets.UTF_8);
-		JdbcHapiRowDescriptor element = JdbcHapiRowDescriptor.create("123", "Patient", "2020-09-19 12:09:23", "1",
+		HapiRowDescriptor element = HapiRowDescriptor.create("123", "Patient", "2020-09-19 12:09:23", "1",
 		    patientResourceStr);
 		convertResourceFn.writeResource(element);
 		
