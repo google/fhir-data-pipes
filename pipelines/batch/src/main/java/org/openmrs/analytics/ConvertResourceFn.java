@@ -91,6 +91,8 @@ public class ConvertResourceFn extends DoFn<HapiRowDescriptor, Integer> {
 	@Setup
 	public void setup() {
 		FhirContext fhirContext = FhirContext.forR4();
+		//This increases the socket timeout value for the RESTful client; the default is 10000 ms.
+		fhirContext.getRestfulClientFactory().setSocketTimeout(20000);
 		fhirStoreUtil = FhirStoreUtil.createFhirStoreUtil(sinkPath, sinkUsername, sinkPassword,
 		    fhirContext.getRestfulClientFactory());
 		parquetUtil = new ParquetUtil(parquetFile, secondsToFlush, rowGroupSize, "");
