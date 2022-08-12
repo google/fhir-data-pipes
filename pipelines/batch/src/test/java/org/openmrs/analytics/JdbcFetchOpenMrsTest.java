@@ -53,7 +53,7 @@ import org.mockito.junit.MockitoJUnitRunner;
 import org.openmrs.analytics.model.DatabaseConfiguration;
 
 @RunWith(MockitoJUnitRunner.class)
-public class JdbcFetchUtilTest extends TestCase {
+public class JdbcFetchOpenMrsTest extends TestCase {
 	
 	private String resourceStr;
 	
@@ -64,7 +64,7 @@ public class JdbcFetchUtilTest extends TestCase {
 	
 	private FhirContext fhirContext;
 	
-	private JdbcFetchUtil jdbcFetchUtil;
+	private JdbcFetchOpenMrs jdbcFetchUtil;
 	
 	private ParquetUtil parquetUtil;
 	
@@ -89,7 +89,7 @@ public class JdbcFetchUtilTest extends TestCase {
 		        options.getJdbcInitialPoolSize(), options.getJdbcMaxPoolSize());
 		// TODO jdbcConnectionUtil should be replaced by a mocked JdbcConnectionUtil which does not
 		// depend on options either, since we don't need real DB connections for unit-testing.
-		jdbcFetchUtil = new JdbcFetchUtil(jdbcConnectionUtil);
+		jdbcFetchUtil = new JdbcFetchOpenMrs(jdbcConnectionUtil);
 		parquetUtil = new ParquetUtil(basePath);
 		// clean up if folder exists
 		File file = new File(basePath);
@@ -125,7 +125,7 @@ public class JdbcFetchUtilTest extends TestCase {
 		PCollection<SearchSegmentDescriptor> createdSegments = testPipeline
 		        .apply("Create input", Create.of(Arrays.asList(uuIds)))
 		        // Inject
-		        .apply(new JdbcFetchUtil.CreateSearchSegments(resourceType, baseBundleUrl, batchSize));
+		        .apply(new JdbcFetchOpenMrs.CreateSearchSegments(resourceType, baseBundleUrl, batchSize));
 		// create expected output
 		List<SearchSegmentDescriptor> segments = new ArrayList<>();
 		// first batch
@@ -158,11 +158,11 @@ public class JdbcFetchUtilTest extends TestCase {
 	
 	@Test
 	public void testFetchAllUuidUtilonEmptyTable() throws SQLException, CannotProvideCoderException {
-		JdbcFetchUtil mockedJdbcFetchUtil = mock(JdbcFetchUtil.class);
+		JdbcFetchOpenMrs mockedJdbcFetchUtil = mock(JdbcFetchOpenMrs.class);
 		JdbcConnectionUtil mockedJdbcConnectionUtil = mock(JdbcConnectionUtil.class);
 		Statement mockedStatement = mock(Statement.class);
 		ResultSet mockedResultSet = mock(ResultSet.class);
-		mockedJdbcFetchUtil = new JdbcFetchUtil(mockedJdbcConnectionUtil);
+		mockedJdbcFetchUtil = new JdbcFetchOpenMrs(mockedJdbcConnectionUtil);
 		
 		when(mockedJdbcConnectionUtil.createStatement()).thenReturn(mockedStatement);
 		when(mockedStatement.executeQuery("SELECT MAX(`obs_id`) as max_id FROM obs")).thenReturn(mockedResultSet);
@@ -173,4 +173,5 @@ public class JdbcFetchUtilTest extends TestCase {
 		PAssert.that(uuids).empty();
 		testPipeline.run();
 	}
+	
 }

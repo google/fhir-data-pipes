@@ -40,6 +40,9 @@ ENV JDBC_MAX_POOL_SIZE=50
 ENV JDBC_INITIAL_POOL_SIZE=10
 ENV NUM_FILE_SHARDS=3
 ENV FHIR_DEBEZIUM_CONFIG_PATH="/workspace/utils/dbz_event_to_fhir_config.json"
+ENV FHIR_DATABASE_CONFIG_PATH="/workspace/utils/hapi-postgres-config.json"
+ENV JDBC_MODE_HAPI=false
+ENV RUNNER="DirectRunner"
 
 
 ENTRYPOINT java -jar /usr/src/Main/app.jar  \
@@ -48,5 +51,5 @@ ENTRYPOINT java -jar /usr/src/Main/app.jar  \
            --fhirSinkPath=${SINK_PATH}  --sinkUserName=${SINK_USERNAME} --sinkPassword=${SINK_PASSWORD} \
            --outputParquetPath=${PARQUET_PATH} --jdbcModeEnabled=${JDBC_MODE_ENABLED} --jdbcDriverClass=${JDBC_DRIVER_CLASS} \
            --jdbcMaxPoolSize=${JDBC_MAX_POOL_SIZE} --fhirDebeziumConfigPath=${FHIR_DEBEZIUM_CONFIG_PATH} \
-           --jdbcInitialPoolSize=${JDBC_INITIAL_POOL_SIZE} \
-           --jdbcFetchSize=${JDBC_FETCH_SIZE}
+           --fhirDatabaseConfigPath=${FHIR_DATABASE_CONFIG_PATH} --jdbcInitialPoolSize=${JDBC_INITIAL_POOL_SIZE} \
+           --jdbcFetchSize=${JDBC_FETCH_SIZE} --jdbcModeHapi=${JDBC_MODE_HAPI} --runner=${RUNNER}

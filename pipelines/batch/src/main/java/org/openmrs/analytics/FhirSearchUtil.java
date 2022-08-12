@@ -17,7 +17,9 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -59,6 +61,31 @@ public class FhirSearchUtil {
 			log.error("Failed to search for url: " + searchUrl + " ;  " + "Exception: " + e);
 		}
 		return null;
+	}
+	
+	/**
+	 * Searches for the total number of resources for each resource type
+	 * 
+	 * @param resourceList the resource types to be processed
+	 * @return a Map storing the counts of each resource type
+	 */
+	public Map<String, Integer> searchResourceCounts(String resourceList) {
+		HashSet<String> resourceTypes = new HashSet<String>(Arrays.asList(resourceList.split(",")));
+		HashMap<String, Integer> hashMap = new HashMap<String, Integer>();
+		for (String resourceType : resourceTypes) {
+			try {
+				String searchUrl = resourceType + "?";
+				IGenericClient client = openmrsUtil.getSourceClient();
+				Bundle result = client.search().byUrl(searchUrl).summaryMode(SummaryEnum.COUNT).returnBundle(Bundle.class)
+				        .execute();
+				hashMap.put(resourceType, result.getTotal());
+			}
+			catch (Exception e) {
+				log.error("Failed to search for resource: " + resourceType + " ;  " + "Exception: " + e);
+			}
+		}
+		
+		return hashMap;
 	}
 	
 	public String getNextUrl(Bundle bundle) {

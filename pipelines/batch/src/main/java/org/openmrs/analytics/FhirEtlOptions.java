@@ -47,9 +47,10 @@ public interface FhirEtlOptions extends PipelineOptions {
 	
 	void setBatchSize(int value);
 	
-	@Description("For the JDBC mode, this is the size of each ID chunk. Setting high values will yield faster query "
-	        + "execution.")
-	@Default.Integer(10000)
+	@Description("This flag is used in the JDBC mode. In the context of an OpenMRS source, this is the "
+	        + "size of each ID chunk. In the context of a HAPI source, this is the size of each database query. "
+	        + "Setting high values (~10000 for OpenMRS, ~1000 for HAPI) will yield faster query execution.")
+	@Default.Integer(1000)
 	int getJdbcFetchSize();
 	
 	void setJdbcFetchSize(int value);
@@ -121,11 +122,24 @@ public interface FhirEtlOptions extends PipelineOptions {
 	
 	void setFhirDebeziumConfigPath(String value);
 	
+	@Description("Path to FHIR database config for Jdbc mode")
+	@Default.String("../utils/hapi-postgres-config.json")
+	String getFhirDatabaseConfigPath();
+	
+	void setFhirDatabaseConfigPath(String value);
+	
 	@Description("Flag to switch between the 2 modes of batch extract")
 	@Default.Boolean(false)
 	Boolean isJdbcModeEnabled();
 	
 	void setJdbcModeEnabled(Boolean value);
+	
+	@Description("Flag to use jdbc mode batch extract for a HAPI source; this only has an effect "
+	        + "if jdbc-mode is enabled.")
+	@Default.Boolean(false)
+	Boolean isJdbcModeHapi();
+	
+	void setJdbcModeHapi(Boolean value);
 	
 	@Description("The number of seconds after which records are flushed into Parquet/text files; "
 	        + "use 0 to disable (note this may have undesired memory implications).")

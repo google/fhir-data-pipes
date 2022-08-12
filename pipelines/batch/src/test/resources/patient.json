@@ -1,0 +1,18 @@
+{
+    "resourceType":"Patient",
+    "text":{
+       "status":"generated",
+       "div":"<div></div>"
+    },
+    "name":[
+       {
+          "use":"official",
+          "family":"John",
+          "given":[
+             "Stevenson"
+          ]
+       }
+    ],
+    "gender":"male",
+    "birthDate":"1955-07-26"
+ }

@@ -42,13 +42,13 @@ import org.openmrs.analytics.model.EventConfiguration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class JdbcFetchUtil {
+public class JdbcFetchOpenMrs {
 	
-	private static final Logger log = LoggerFactory.getLogger(JdbcFetchUtil.class);
+	private static final Logger log = LoggerFactory.getLogger(JdbcFetchOpenMrs.class);
 	
 	private JdbcConnectionUtil jdbcConnectionUtil;
 	
-	JdbcFetchUtil(JdbcConnectionUtil jdbcConnectionUtil) {
+	JdbcFetchOpenMrs(JdbcConnectionUtil jdbcConnectionUtil) {
 		this.jdbcConnectionUtil = jdbcConnectionUtil;
 	}
 	
@@ -182,7 +182,7 @@ public class JdbcFetchUtil {
 		}
 		log.info(String.format("Will fetch up to %d rows from table %s", maxId, tableName));
 		Map<Integer, Integer> idRanges = createIdRanges(maxId, jdbcFetchSize);
-		return pipeline.apply(Create.of(idRanges)).apply(new JdbcFetchUtil.FetchUuids(tableName, getJdbcConfig()));
+		return pipeline.apply(Create.of(idRanges)).apply(new JdbcFetchOpenMrs.FetchUuids(tableName, getJdbcConfig()));
 	}
 	
 	private Integer fetchMaxId(String tableName) throws SQLException {

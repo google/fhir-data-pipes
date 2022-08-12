@@ -34,5 +34,4 @@ class EtlUtils {
 			log.info(String.format("Pipeline counter %s : %s", counter.getName(), counter.getCommitted()));
 		}
 	}
-	
 }

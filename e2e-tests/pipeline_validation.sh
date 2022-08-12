@@ -15,8 +15,8 @@
 # limitations under the License.
 
 # Example usage:
-#   ./pipeline_validation.sh ./ JDBC
-#   ./pipeline_validation.sh ./ NON-JDBC --use_docker_network
+#   ./pipeline_validation.sh ./ JDBC_OPENMRS
+#   ./pipeline_validation.sh ./ NON_JDBC --use_docker_network
 #   ./pipeline_validation.sh ./ STREAMING --use_docker_network
 
 set -e
@@ -40,13 +40,16 @@ function usage() {
   echo "                              or host network URLs"
   echo "     --streaming              Flag to specify whether we are testing a"
   echo "                              streaming pipeline"
+  echo "     --hapi                   Flag to specify whether we are testing a"
+  echo "                              batch pipeline executed with jdbc direct"
+  echo "                              fetch mode with HAPI as the source server"
 }
 
 #################################################
 # Makes sure args passed are correct
 #################################################
 function validate_args() {
-  if [[ $# -lt 2 || $# -gt 4  ]]; then
+  if [[ $# -lt 2 || $# -gt 5  ]]; then
     echo "Invalid number of args passed."
     usage
     exit 1
@@ -87,13 +90,15 @@ function print_message() {
 #   FHIR_SERVER_URL
 #   SINK_SERVER
 #   STREAMING
+#   HAPI
 # Arguments:
 #   Path where e2e-tests directory is. Directory contains parquet tools jar as 
 #      well as subdirectory of parquet file output
 #   Subdirectory name under HOME_DIR containing parquet files. 
-#      Example: NON_JDBC or JDBC
+#      Example: NON_JDBC or JDBC_OPENMRS
 #   Optional: Flag to specify whether to use docker or host network URLs.
 #   Optional: Flag to specify streaming pipeline test.
+#   Optional: Flag to specify whether Jdbc mode is executed with a HAPI source server.
 #################################################
 function setup() {
   HOME_PATH=$1
@@ -104,13 +109,25 @@ function setup() {
   FHIR_SERVER_URL='http://localhost:8099/openmrs/ws/fhir2/R4'
   SINK_SERVER='http://localhost:8098'
   STREAMING=""
+  HAPI=""
 
-  if [[ $3 = "--use_docker_network" || $4 = "--use_docker_network" ]]; then
-    FHIR_SERVER_URL='http://openmrs:8080/openmrs/ws/fhir2/R4'
+  # TODO: We should refactor this code to parse the arguments by going through
+  # each one and checking which ones are turned on.
+  if [[ $3 = "--hapi" ]] || [[ $4 = "--hapi" ]] || [[ $5 = "--hapi" ]]; then
+    HAPI="on"
+    FHIR_SERVER_URL='http://localhost:8091'
+  fi
+
+  if [[ $3 = "--use_docker_network" ]] || [[ $4 = "--use_docker_network" ]] || [[ $5 = "--use_docker_network" ]]; then
+    if [[ -n ${HAPI} ]]; then
+        FHIR_SERVER_URL='http://hapi-server:8080'
+    else
+        FHIR_SERVER_URL='http://openmrs:8080/openmrs/ws/fhir2/R4'
+    fi
     SINK_SERVER='http://sink-server:8080'
   fi
 
-  if [[ $3 = "--streaming" || $4 = "--streaming" ]]; then
+  if [[ $3 = "--streaming" ]] || [[ $4 = "--streaming" ]] || [[ $5 = "--streaming" ]]; then
     STREAMING="on"
   fi
 }
@@ -125,31 +142,42 @@ function setup() {
 #   TOTAL_TEST_ENCOUNTERS
 #   TOTAL_TEST_OBS
 #   STREAMING
+#   HAPI
 #################################################
 function fhir_source_query() {
-  local patient_query_param=""
-  local enc_obs_query_param=""
+  local patient_query_param="?_summary=count"
+  local enc_obs_query_param="?_summary=count"
+  local fhir_username="admin"
+  local fhir_password="Admin123"
+  local fhir_url_extension=""
 
   if [[ -n ${STREAMING} ]]; then 
       patient_query_param="?given=Alberta625"
       enc_obs_query_param="?subject.given=Alberta625"
   fi
   
-  curl -L -X GET -u admin:Admin123 --connect-timeout 5 --max-time 20 \
-    "${FHIR_SERVER_URL}/Patient${patient_query_param}" 2>/dev/null >>"${HOME_PATH}/${PARQUET_SUBDIR}/patients.json"
+  if [[ -n ${HAPI} ]]; then
+      fhir_username="hapi"
+      fhir_password="hapi"
+      fhir_url_extension="/fhir"
+  fi
 
+  curl -L -X GET -u $fhir_username:$fhir_password --connect-timeout 5 --max-time 20 \
+  "${FHIR_SERVER_URL}${fhir_url_extension}/Patient${patient_query_param}" 2>/dev/null >>"${HOME_PATH}/${PARQUET_SUBDIR}/patients.json"
   TOTAL_TEST_PATIENTS=$(jq '.total' "${HOME_PATH}/${PARQUET_SUBDIR}/patients.json")
-  print_message "Total openmrs test patients ---> ${TOTAL_TEST_PATIENTS}"
-  curl -L -X GET -u admin:Admin123 --connect-timeout 5 --max-time 20 \
-    "${FHIR_SERVER_URL}/Encounter${enc_obs_query_param}" \
+  print_message "Total FHIR source test patients ---> ${TOTAL_TEST_PATIENTS}"
+
+  curl -L -X GET -u $fhir_username:$fhir_password --connect-timeout 5 --max-time 20 \
+    "${FHIR_SERVER_URL}${fhir_url_extension}/Encounter${enc_obs_query_param}" \
     2>/dev/null >>"${HOME_PATH}/${PARQUET_SUBDIR}/encounters.json"
   TOTAL_TEST_ENCOUNTERS=$(jq '.total' "${HOME_PATH}/${PARQUET_SUBDIR}/encounters.json")
-  print_message "Total openmrs test encounters ---> ${TOTAL_TEST_ENCOUNTERS}"
-  curl -L -X GET -u admin:Admin123 --connect-timeout 5 --max-time 20 \
-    "${FHIR_SERVER_URL}/Observation${enc_obs_query_param}" \
+  print_message "Total FHIR source test encounters ---> ${TOTAL_TEST_ENCOUNTERS}"
+
+  curl -L -X GET -u $fhir_username:$fhir_password --connect-timeout 5 --max-time 20 \
+    "${FHIR_SERVER_URL}${fhir_url_extension}/Observation${enc_obs_query_param}" \
     2>/dev/null >>"${HOME_PATH}/${PARQUET_SUBDIR}/obs.json"
   TOTAL_TEST_OBS=$(jq '.total' "${HOME_PATH}/${PARQUET_SUBDIR}/obs.json")
-  print_message "Total openmrs test obs ---> ${TOTAL_TEST_OBS}"
+  print_message "Total FHIR source test obs ---> ${TOTAL_TEST_OBS}"
 }
 
 
@@ -162,6 +190,7 @@ function fhir_source_query() {
 #   TOTAL_TEST_PATIENTS
 #   TOTAL_TEST_ENCOUNTERS
 #   TOTAL_TEST_OBS
+#   HAPI
 #################################################
 function test_parquet_sink() {
   print_message "Counting number of patients, encounters and obs sinked to parquet files"
@@ -193,6 +222,7 @@ function test_parquet_sink() {
 #   TOTAL_TEST_ENCOUNTERS
 #   TOTAL_TEST_OBS
 #   STREAMING
+#   HAPI
 #################################################
 function test_fhir_sink() {
   local patient_query_param="?_summary=count"

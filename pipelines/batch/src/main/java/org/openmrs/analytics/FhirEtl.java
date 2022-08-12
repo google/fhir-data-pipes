@@ -18,6 +18,7 @@ import java.beans.PropertyVetoException;
 import java.io.IOException;
 import java.sql.SQLException;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -31,9 +32,11 @@ import org.apache.avro.Schema;
 import org.apache.beam.sdk.Pipeline;
 import org.apache.beam.sdk.PipelineResult;
 import org.apache.beam.sdk.coders.CannotProvideCoderException;
+import org.apache.beam.sdk.io.jdbc.JdbcIO;
 import org.apache.beam.sdk.options.PipelineOptionsFactory;
 import org.apache.beam.sdk.transforms.Create;
 import org.apache.beam.sdk.transforms.Flatten;
+import org.apache.beam.sdk.transforms.ParDo;
 import org.apache.beam.sdk.transforms.Sum;
 import org.apache.beam.sdk.values.KV;
 import org.apache.beam.sdk.values.PCollection;
@@ -68,8 +71,8 @@ public class FhirEtl {
 	}
 	
 	static OpenmrsUtil createOpenmrsUtil(FhirEtlOptions options, FhirContext fhirContext) {
-		return new OpenmrsUtil(options.getFhirServerUrl(),
-		        options.getFhirServerUserName(), options.getFhirServerPassword(), fhirContext);
+		return new OpenmrsUtil(options.getFhirServerUrl(), options.getFhirServerUserName(), options.getFhirServerPassword(),
+		        fhirContext);
 	}
 	
 	private static Schema getSchema(String resourceType) {
@@ -147,7 +150,7 @@ public class FhirEtl {
 		JdbcConnectionUtil jdbcConnectionUtil = new JdbcConnectionUtil(options.getJdbcDriverClass(),
 		        dbConfig.makeJdbsUrlFromConfig(), dbConfig.getDbUser(), dbConfig.getDbPassword(),
 		        options.getJdbcInitialPoolSize(), options.getJdbcMaxPoolSize());
-		JdbcFetchUtil jdbcUtil = new JdbcFetchUtil(jdbcConnectionUtil);
+		JdbcFetchOpenMrs jdbcUtil = new JdbcFetchOpenMrs(jdbcConnectionUtil);
 		int batchSize = Math.min(options.getBatchSize(), 170); // batch size > 200 will result in HTTP 400 Bad Request
 		Map<String, List<String>> reverseMap = jdbcUtil.createFhirReverseMap(options.getResourceList(), dbConfig);
 		// process each table-resource mappings
@@ -168,11 +171,10 @@ public class FhirEtl {
 			}
 			for (String resourceType : entry.getValue()) {
 				resourceTypes.add(resourceType);
-				String baseBundleUrl = options.getFhirServerUrl() + "/"
-				        + resourceType;
+				String baseBundleUrl = options.getFhirServerUrl() + "/" + resourceType;
 				PCollection<SearchSegmentDescriptor> inputSegments = uuids.apply(
 				    String.format("CreateSearchSegments_%s_table_%s", resourceType, tableName),
-				    new JdbcFetchUtil.CreateSearchSegments(resourceType, baseBundleUrl, batchSize));
+				    new JdbcFetchOpenMrs.CreateSearchSegments(resourceType, baseBundleUrl, batchSize));
 				allPatientIds.add(fetchSegmentsAndReturnPatientIds(inputSegments, resourceType, options));
 			}
 		}
@@ -201,6 +203,43 @@ public class FhirEtl {
 		}
 	}
 	
+	/**
+	 * Driver function for running JDBC direct fetch mode with a HAPI source server. The JDBC fetch mode
+	 * uses Beam JdbcIO to fetch FHIR resources directly from the HAPI server's database and uses the
+	 * ParquetUtil to write resources.
+	 */
+	//TODO: Implement active period feature for JDBC mode with a HAPI source server (Github issue #278).
+	static void runHapiJdbcFetch(FhirEtlOptions options, DatabaseConfiguration dbConfig, FhirContext fhirContext)
+	        throws PropertyVetoException {
+		Pipeline pipeline = Pipeline.create(options);
+		JdbcConnectionUtil jdbcConnectionUtil = new JdbcConnectionUtil(options.getJdbcDriverClass(),
+		        dbConfig.makeJdbsUrlFromConfig(), dbConfig.getDbUser(), dbConfig.getDbPassword(),
+		        options.getJdbcInitialPoolSize(), options.getJdbcMaxPoolSize());
+		FhirSearchUtil fhirSearchUtil = createFhirSearchUtil(options, fhirContext);
+		
+		//Get the resource count for each resource type and distribute the query workload based on batch size.
+		HashMap<String, Integer> resourceCount = (HashMap<String, Integer>) fhirSearchUtil
+		        .searchResourceCounts(options.getResourceList());
+		
+		for (String resourceType : options.getResourceList().split(",")) {
+			int numResources = resourceCount.get(resourceType);
+			
+			PCollection<QueryParameterDescriptor> queryParameters = pipeline
+			        .apply("Generate query parameters for " + resourceType, Create.of(
+			            new JdbcFetchHapi(jdbcConnectionUtil).generateQueryParameters(options, resourceType, numResources)));
+			
+			PCollection<HapiRowDescriptor> payload = queryParameters.apply("JdbcIO fetch for " + resourceType,
+			    new JdbcFetchHapi.FetchRowsJdbcIo(
+			            JdbcIO.DataSourceConfiguration.create(jdbcConnectionUtil.getConnectionObject())));
+			
+			payload.apply("Convert to parquet for " + resourceType, ParDo.of(new ConvertResourceFn(options)));
+		}
+		
+		PipelineResult result = pipeline.run();
+		result.waitUntilFinish();
+		EtlUtils.logMetrics(result.metrics());
+	}
+	
 	public static void main(String[] args)
 	        throws CannotProvideCoderException, PropertyVetoException, IOException, SQLException {
 		// Todo: Autowire
@@ -213,8 +252,17 @@ public class FhirEtl {
 		validateOptions(options);
 		
 		if (options.isJdbcModeEnabled()) {
-			DatabaseConfiguration dbConfig = DatabaseConfiguration.createConfigFromFile(options.getFhirDebeziumConfigPath());
-			runFhirJdbcFetch(options, dbConfig, fhirContext);
+			
+			if (options.isJdbcModeHapi()) {
+				DatabaseConfiguration dbConfig = DatabaseConfiguration
+				        .createConfigFromFile(options.getFhirDatabaseConfigPath());
+				runHapiJdbcFetch(options, dbConfig, fhirContext);
+			} else {
+				DatabaseConfiguration dbConfig = DatabaseConfiguration
+				        .createConfigFromFile(options.getFhirDebeziumConfigPath());
+				runFhirJdbcFetch(options, dbConfig, fhirContext);
+			}
+			
 		} else {
 			runFhirFetch(options, fhirContext);
 		}

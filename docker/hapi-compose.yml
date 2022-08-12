@@ -40,7 +40,7 @@ services:
 
     restart: unless-stopped
     ports:
-      - 8098:8080
+      - 8091:8080
       
 volumes:
   hapi-fhir-db:

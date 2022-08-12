@@ -46,6 +46,7 @@
     <nemo.version>0.1</nemo.version>
     <flink.artifact.name>beam-runners-flink-1.14</flink.artifact.name>
     <mysql.driver.version>8.0.16</mysql.driver.version>
+    <postgresql.version>42.2.10</postgresql.version>
 
   </properties>
 
@@ -291,6 +292,12 @@
       <groupId>org.apache.beam</groupId>
       <artifactId>beam-sdks-java-io-jdbc</artifactId>
       <version>${beam.version}</version>
+    </dependency>
+
+    <dependency>
+      <groupId>org.postgresql</groupId>
+      <artifactId>postgresql</artifactId>
+      <version>${postgresql.version}</version>
     </dependency>
 
     <!-- Adds a dependency on the Beam Google Cloud Platform IO module. -->
