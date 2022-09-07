@@ -12,6 +12,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import json
+import pathlib
+import tempfile
 import unittest
 from unittest import mock
 
@@ -23,22 +26,22 @@ class UploaderTest(unittest.TestCase):
   def setUp(self):
     super().setUp()
     self.mock_client = mock.MagicMock()
-    self.mock_bundle = mock.MagicMock()
     self._upload_resource = mock.patch.object(
         uploader.Uploader, '_upload_resource', return_value='123').start()
 
-  def test_upload_bundle(self):
-    self.mock_bundle.openmrs_patient = mock.MagicMock()
+  def test_upload_bundle_openmrs(self):
     mock_location = mock.MagicMock()
     upload_handler = uploader.Uploader(self.mock_client)
-    upload_handler.upload_openmrs_bundle(self.mock_bundle, mock_location)
+    # We need to keep the file until the end of the test scope, hence next var.
+    temp_file = self._create_file()
+    upload_handler.upload_openmrs_bundle(pathlib.PosixPath(temp_file.name),
+                                         mock_location)
     self.assertTrue(self._upload_resource.called)
-    self.assertEqual(self.mock_bundle.openmrs_patient.base.new_id, '123')
 
   def test_upload_bundle_gcp(self):
-    self.mock_bundle.patient = None
     upload_handler = uploader.Uploader(self.mock_client)
-    upload_handler.upload_bundle(self.mock_bundle)
+    temp_file = self._create_file()
+    upload_handler.upload_bundle(pathlib.PosixPath(temp_file.name))
     self.assertFalse(self._upload_resource.called)
 
   def test_fetch_location(self):
@@ -101,3 +104,49 @@ class UploaderTest(unittest.TestCase):
             '7f65d926-57d6-4402-ae10-a5b3bcbf7986': 'Pharmacy',
             '7fdfa2cb-bc95-405a-88c6-32b7673c0453': 'Laboratory'
         })
+
+  def _create_file(self) -> tempfile.NamedTemporaryFile:
+    # A Bundle with a single Patient is good enough for most of the tests.
+    config = {
+        "resourceType": "Bundle",
+        "type": "transaction",
+        "entry": [{
+            "fullUrl": "urn:uuid:495b7301-3b1b-9283-0334-8b574c3f9424",
+            "resource": {
+                "resourceType": "Patient",
+                "id": "495b7301-3b1b-9283-0334-8b574c3f9424",
+                "identifier": [{
+                    "system": "https://github.com/synthetichealth/synthea",
+                    "value": "495b7301-3b1b-9283-0334-8b574c3f9424"
+                }],
+                "name": [{
+                    "use": "official",
+                    "family": "Hagenes547",
+                    "given": [ "Andreas188" ],
+                    "prefix": [ "Mr." ]
+                }],
+                "telecom": [ {
+                    "system": "phone",
+                    "value": "555-338-1943",
+                    "use": "home"
+                }],
+                "gender": "male",
+                "birthDate": "1950-04-13",
+                "multipleBirthInteger": 3
+            },
+            "request": {
+                "method": "POST",
+                "url": "Patient"
+            }
+        }
+      ]
+    }
+    temp_file = tempfile.NamedTemporaryFile(mode='w+', encoding='utf-8')
+    json.dump(config, temp_file)
+    temp_file.flush()
+    return temp_file
+
+  def test_convert_to_bundle(self):
+    temp_file = self._create_file()
+    bundle = uploader._convert_to_bundle(pathlib.PosixPath(temp_file.name))
+    self.assertEqual(bundle.file_name.as_posix(), temp_file.name)
