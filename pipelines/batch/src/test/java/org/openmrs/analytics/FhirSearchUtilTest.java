@@ -33,6 +33,7 @@ import ca.uhn.fhir.rest.gclient.IUntypedQuery;
 import com.google.common.io.Resources;
 import org.hl7.fhir.r4.model.Bundle;
 import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
@@ -61,15 +62,19 @@ public class FhirSearchUtilTest {
 	
 	private Bundle bundle;
 	
-	private FhirContext fhirContext;
+	private static FhirContext fhirContext;
 	
 	private FhirSearchUtil fhirSearchUtil;
+	
+	@BeforeClass
+	public static void setupFhirContext() {
+		fhirContext = FhirContext.forR4();
+	}
 	
 	@Before
 	public void setup() throws IOException {
 		URL url = Resources.getResource("bundle.json");
 		String bundleStr = Resources.toString(url, StandardCharsets.UTF_8);
-		this.fhirContext = FhirContext.forR4();
 		IParser parser = fhirContext.newJsonParser();
 		bundle = parser.parseResource(Bundle.class, bundleStr);
 		fhirSearchUtil = new FhirSearchUtil(openmrsUtil);

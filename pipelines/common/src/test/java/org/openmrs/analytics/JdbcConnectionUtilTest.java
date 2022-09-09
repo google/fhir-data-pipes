@@ -52,7 +52,7 @@ public class JdbcConnectionUtilTest {
 		IllegalArgumentException thrown = Assert.assertThrows(IllegalArgumentException.class,
 		    () -> new JdbcConnectionUtil("random", "random", "omar", "123", 4, 2));
 		
-		assertTrue(thrown.getMessage().contains("initialPoolSize cannot be larger than dbcMaxPoolSize"));
+		assertTrue(thrown.getMessage().contains("initialPoolSize cannot be larger than jdbcMaxPoolSize"));
 	}
 	
 	@Test

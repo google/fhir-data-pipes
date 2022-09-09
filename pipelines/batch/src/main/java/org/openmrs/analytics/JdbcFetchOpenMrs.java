@@ -198,7 +198,7 @@ public class JdbcFetchOpenMrs {
 	
 	@VisibleForTesting
 	JdbcIO.DataSourceConfiguration getJdbcConfig() {
-		return JdbcIO.DataSourceConfiguration.create(this.jdbcConnectionUtil.getConnectionObject());
+		return JdbcIO.DataSourceConfiguration.create(this.jdbcConnectionUtil.getDataSource());
 	}
 	
 	@VisibleForTesting

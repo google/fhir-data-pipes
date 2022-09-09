@@ -14,6 +14,7 @@
 package org.openmrs.analytics;
 
 import java.io.IOException;
+import java.sql.SQLException;
 import java.util.List;
 
 import ca.uhn.fhir.rest.api.SummaryEnum;
@@ -50,7 +51,7 @@ public class FetchPatientHistory extends PTransform<PCollection<KV<String, Integ
 		fetchSearchPageFn = new FetchSearchPageFn<KV<String, Integer>>(options, stageId) {
 			
 			@ProcessElement
-			public void ProcessElement(@Element KV<String, Integer> patientIdCount) throws IOException {
+			public void ProcessElement(@Element KV<String, Integer> patientIdCount) throws IOException, SQLException {
 				if (startDate.isEmpty()) {
 					return;
 				}

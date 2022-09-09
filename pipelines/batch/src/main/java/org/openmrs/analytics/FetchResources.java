@@ -14,6 +14,7 @@
 package org.openmrs.analytics;
 
 import java.io.IOException;
+import java.sql.SQLException;
 import java.util.List;
 import java.util.Map;
 import java.util.regex.Matcher;
@@ -120,7 +121,7 @@ public class FetchResources extends PTransform<PCollection<SearchSegmentDescript
 		
 		@ProcessElement
 		public void processElement(@Element SearchSegmentDescriptor segment, OutputReceiver<KV<String, Integer>> out)
-		        throws IOException {
+		        throws IOException, SQLException {
 			String searchUrl = segment.searchUrl();
 			log.info(String.format("Fetching %d resources for state %s; URL= %s", segment.count(), this.stageIdentifier,
 			    searchUrl.substring(0, Math.min(200, searchUrl.length()))));

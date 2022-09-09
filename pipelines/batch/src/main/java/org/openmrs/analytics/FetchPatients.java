@@ -14,6 +14,7 @@
 package org.openmrs.analytics;
 
 import java.io.IOException;
+import java.sql.SQLException;
 import java.util.List;
 
 import ca.uhn.fhir.rest.api.SummaryEnum;
@@ -48,7 +49,7 @@ public class FetchPatients extends PTransform<PCollection<KV<String, Integer>>, 
 		fetchSearchPageFn = new FetchSearchPageFn<KV<String, Integer>>(options, "PatientById") {
 			
 			@ProcessElement
-			public void processElement(@Element KV<String, Integer> patientIdCount) throws IOException {
+			public void processElement(@Element KV<String, Integer> patientIdCount) throws IOException, SQLException {
 				String patientId = patientIdCount.getKey();
 				log.info(String.format("Already fetched %d resources for patient %s", patientIdCount.getValue(), patientId));
 				// TODO use openmrsUtil.fetchResource() instead of search and process bundle.

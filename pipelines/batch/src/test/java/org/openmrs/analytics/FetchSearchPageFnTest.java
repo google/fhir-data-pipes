@@ -17,8 +17,10 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.mockito.Mockito.verify;
 
+import java.beans.PropertyVetoException;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.sql.SQLException;
 
 import ca.uhn.fhir.context.FhirContext;
 import ca.uhn.fhir.parser.IParser;
@@ -47,13 +49,13 @@ public class FetchSearchPageFnTest {
 	private ArgumentCaptor<Bundle> bundleCaptor;
 	
 	@Before
-	public void setUp() {
+	public void setUp() throws SQLException, PropertyVetoException {
 		String[] args = { "--outputParquetPath=SOME_PATH" };
 		FhirEtlOptions options = PipelineOptionsFactory.fromArgs(args).withValidation().as(FhirEtlOptions.class);
 		fetchSearchPageFn = new FetchSearchPageFn<String>(options, "TEST") {
 			
 			@Override
-			public void setup() {
+			public void setup() throws SQLException, PropertyVetoException {
 				super.setup();
 				parquetUtil = mockParquetUtil;
 			}
@@ -64,7 +66,7 @@ public class FetchSearchPageFnTest {
 	}
 	
 	@Test
-	public void testProcessObservationBundle() throws IOException {
+	public void testProcessObservationBundle() throws IOException, SQLException {
 		String observationBundleStr = Resources.toString(Resources.getResource("observation_decimal_bundle.json"),
 		    StandardCharsets.UTF_8);
 		IParser parser = fhirContext.newJsonParser();

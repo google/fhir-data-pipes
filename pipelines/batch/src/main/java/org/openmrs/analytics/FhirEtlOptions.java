@@ -170,4 +170,37 @@ public interface FhirEtlOptions extends PipelineOptions {
 	String getActivePeriod();
 	
 	void setActivePeriod(String value);
+	
+	// TODO: Consolidate these options with source DB config that we read from file; in general
+	// it would be nice to have a file based approach for configuring pipeline options.
+	@Description("If set, it is the JDBC URL of the sink database.")
+	@Default.String("")
+	String getSinkDbUrl();
+	
+	void setSinkDbUrl(String value);
+	
+	@Description("The name prefix for the sink DB tables.")
+	@Default.String("")
+	String getSinkDbTablePrefix();
+	
+	void setSinkDbTablePrefix(String value);
+	
+	@Description("The username for JDBC sink connection.")
+	@Default.String("")
+	String getSinkDbUsername();
+	
+	void setSinkDbUsername(String value);
+	
+	@Description("The password for the JDBC sink connection.")
+	@Default.String("")
+	String getSinkDbPassword();
+	
+	void setSinkDbPassword(String value);
+	
+	@Description("If enabled all json resources are stored in the same table; by default a separate "
+	        + "table is created for each resource type.")
+	@Default.Boolean(false)
+	Boolean getUseSingleSinkTable();
+	
+	void setUseSingleSinkTable(Boolean value);
 }
