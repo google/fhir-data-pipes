@@ -251,6 +251,6 @@ public class ParquetUtilTest {
 		    StandardCharsets.UTF_8);
 		IParser parser = fhirContext.newJsonParser();
 		Bundle bundle = parser.parseResource(Bundle.class, observationBundleStr);
-		parquetUtil.writeRecords(bundle);
+		parquetUtil.writeRecords(bundle, null);
 	}
 }

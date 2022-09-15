@@ -13,9 +13,12 @@
 // limitations under the License.
 package org.openmrs.analytics;
 
+import javax.annotation.Nullable;
+
 import java.beans.PropertyVetoException;
 import java.io.IOException;
 import java.sql.SQLException;
+import java.util.Set;
 
 import ca.uhn.fhir.context.FhirContext;
 import ca.uhn.fhir.parser.IParser;
@@ -100,6 +103,8 @@ abstract class FetchSearchPageFn<T> extends DoFn<T, KV<String, Integer>> {
 	
 	protected IParser parser;
 	
+	protected FhirContext fhirContext;
+	
 	private static JdbcConnectionUtil jdbcConnectionUtil = null;
 	
 	// This is to enforce the Singleton pattern for JdbcConnectionUtil used by all workers running
@@ -142,7 +147,8 @@ abstract class FetchSearchPageFn<T> extends DoFn<T, KV<String, Integer>> {
 	
 	@Setup
 	public void setup() throws SQLException, PropertyVetoException {
-		FhirContext fhirContext = FhirContext.forR4();
+		log.info("Starting setup for stage " + stageIdentifier);
+		fhirContext = FhirContext.forR4();
 		fhirContext.getRestfulClientFactory().setSocketTimeout(20000);
 		fhirStoreUtil = FhirStoreUtil.createFhirStoreUtil(sinkPath, sinkUsername, sinkPassword,
 		    fhirContext.getRestfulClientFactory());
@@ -155,6 +161,11 @@ abstract class FetchSearchPageFn<T> extends DoFn<T, KV<String, Integer>> {
 			        fhirContext);
 		}
 		parser = fhirContext.newJsonParser();
+		// We want to keep the original IDs; this is particularly useful when the `fullUrl` is not
+		// a URL but a URN, e.g., `urn:uuid:...`; for example when Bundles come from JSON files.
+		// This should not have an effect when `fullUrl` is a URL, because with `IIdType.getIdPart` we
+		// extract only the logical ID part when exporting (but that code path does not work for URNs).
+		parser.setOverrideResourceIdWithBundleEntryFullUrl(false);
 	}
 	
 	@Teardown
@@ -167,11 +178,16 @@ abstract class FetchSearchPageFn<T> extends DoFn<T, KV<String, Integer>> {
 	}
 	
 	protected void processBundle(Bundle bundle) throws IOException, SQLException {
+		this.processBundle(bundle, null);
+	}
+	
+	// TODO remove `resourceTypes` once we support different FHIR versions in AVRO conversion.
+	protected void processBundle(Bundle bundle, @Nullable Set<String> resourceTypes) throws IOException, SQLException {
 		if (bundle != null && bundle.getEntry() != null) {
 			numFetchedResources.inc(bundle.getEntry().size());
 			if (!parquetFile.isEmpty()) {
 				long startTime = System.currentTimeMillis();
-				parquetUtil.writeRecords(bundle);
+				parquetUtil.writeRecords(bundle, resourceTypes);
 				totalGenerateTimeMillis.inc(System.currentTimeMillis() - startTime);
 			}
 			if (!this.sinkPath.isEmpty()) {
@@ -180,12 +196,14 @@ abstract class FetchSearchPageFn<T> extends DoFn<T, KV<String, Integer>> {
 				totalPushTimeMillis.inc(System.currentTimeMillis() - pushStartTime);
 			}
 			if (!this.sinkDbUrl.isEmpty()) {
-				if (bundle.getTotal() == 0) {
+				if (bundle.getEntry() == null) {
 					return;
 				}
 				for (BundleEntryComponent entry : bundle.getEntry()) {
 					Resource resource = entry.getResource();
-					jdbcWriter.writeResource(resource);
+					if (resourceTypes != null && resourceTypes.contains(resource.getResourceType().name())) {
+						jdbcWriter.writeResource(resource);
+					}
 				}
 			}
 		}

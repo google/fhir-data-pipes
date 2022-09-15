@@ -25,6 +25,7 @@ import java.util.Map;
 import java.util.Set;
 
 import ca.uhn.fhir.context.FhirContext;
+import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
@@ -32,6 +33,7 @@ import org.apache.avro.Schema;
 import org.apache.beam.sdk.Pipeline;
 import org.apache.beam.sdk.PipelineResult;
 import org.apache.beam.sdk.coders.CannotProvideCoderException;
+import org.apache.beam.sdk.io.FileIO;
 import org.apache.beam.sdk.io.jdbc.JdbcIO;
 import org.apache.beam.sdk.options.PipelineOptionsFactory;
 import org.apache.beam.sdk.transforms.Create;
@@ -201,6 +203,24 @@ public class FhirEtl {
 				                + options.getResourceList());
 			}
 		}
+		
+		if (!options.getSourceJsonFilePattern().isEmpty()) {
+			if (!options.getFhirServerUrl().isEmpty()) {
+				throw new IllegalArgumentException("--sourceJsonFilePattern and --fhirServerUrl cannot be used together!");
+			}
+			if (options.isJdbcModeEnabled()) {
+				throw new IllegalArgumentException("--sourceJsonFilePattern and --jdbcModeEnabled cannot be used together!");
+			}
+			if (!options.getActivePeriod().isEmpty()) {
+				throw new IllegalArgumentException(
+				        "Enabling --activePeriod is not supported when reading from file input (--sourceJsonFilePattern)!");
+			}
+		} else { // options.getSourceJsonFilePattern() is not set.
+			if (options.getFhirServerUrl().isEmpty()) {
+				throw new IllegalArgumentException("Either --fhirServerUrl or --sourceJsonFilePattern should be set!");
+			}
+		}
+		
 		if (!options.getSinkDbUrl().isEmpty()) {
 			JdbcResourceWriter.createTables(options);
 		}
@@ -244,6 +264,21 @@ public class FhirEtl {
 		EtlUtils.logMetrics(result.metrics());
 	}
 	
+	static void runJsonRead(FhirEtlOptions options, FhirContext fhirContext) {
+		Preconditions.checkArgument(!options.getSourceJsonFilePattern().isEmpty());
+		Preconditions.checkArgument(!options.isJdbcModeEnabled());
+		Preconditions.checkArgument(options.getActivePeriod().isEmpty());
+		
+		Pipeline pipeline = Pipeline.create(options);
+		PCollection<FileIO.ReadableFile> files = pipeline
+		        .apply(FileIO.match().filepattern(options.getSourceJsonFilePattern())).apply(FileIO.readMatches());
+		files.apply("Read JSON files", ParDo.of(new ReadJsonFilesFn(options)));
+		
+		PipelineResult result = pipeline.run();
+		result.waitUntilFinish();
+		EtlUtils.logMetrics(result.metrics());
+	}
+	
 	public static void main(String[] args)
 	        throws CannotProvideCoderException, PropertyVetoException, IOException, SQLException {
 		// Todo: Autowire
@@ -256,7 +291,6 @@ public class FhirEtl {
 		validateOptionsAndInit(options);
 		
 		if (options.isJdbcModeEnabled()) {
-			
 			if (options.isJdbcModeHapi()) {
 				DatabaseConfiguration dbConfig = DatabaseConfiguration
 				        .createConfigFromFile(options.getFhirDatabaseConfigPath());
@@ -267,6 +301,8 @@ public class FhirEtl {
 				runFhirJdbcFetch(options, dbConfig, fhirContext);
 			}
 			
+		} else if (!options.getSourceJsonFilePattern().isEmpty()) {
+			runJsonRead(options, fhirContext);
 		} else {
 			runFhirFetch(options, fhirContext);
 		}

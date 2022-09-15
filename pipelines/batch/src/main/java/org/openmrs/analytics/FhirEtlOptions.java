@@ -26,9 +26,10 @@ public interface FhirEtlOptions extends PipelineOptions {
 	/**
 	 * By default, this reads from the OpenMRS instance `openmrs` at the default port on localhost.
 	 */
-	@Description("Fhir source server URL")
+	@Description("Fhir source server URL, e.g., http://localhost:8099/openmrs/ws/fhir2/R4 or "
+	        + "http://localhost:8091/fhir, etc.")
 	@Required
-	@Default.String("http://localhost:8099/openmrs/ws/fhir2/R4")
+	@Default.String("")
 	String getFhirServerUrl();
 	
 	void setFhirServerUrl(String value);
@@ -203,4 +204,10 @@ public interface FhirEtlOptions extends PipelineOptions {
 	Boolean getUseSingleSinkTable();
 	
 	void setUseSingleSinkTable(Boolean value);
+	
+	@Description("The pattern for input JSON files, e.g., 'PATH/*'. Each file should be one Bundle resource.")
+	@Default.String("")
+	String getSourceJsonFilePattern();
+	
+	void setSourceJsonFilePattern(String value);
 }
