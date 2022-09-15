@@ -54,7 +54,7 @@ class Uploader:
     self.fhir_client.post_single_resource(resource, data)
     return self.fhir_client.response['id']
 
-  def upload_openmrs_bundle(self, json_file: pathlib.PosixPath,
+  def upload_openmrs_bundle(self, json_file: pathlib.Path,
       locations: Dict[str, str]):
     """Uploads FHIR Bundle to OpenMRS via Patients, Encounters, Observations.
 
@@ -121,7 +121,7 @@ class Uploader:
                         (json_file.as_posix(), traceback.format_exc()))
 
 
-def _convert_to_bundle(json_file: pathlib.PosixPath) -> bundle.Bundle:
+def _convert_to_bundle(json_file: pathlib.Path) -> bundle.Bundle:
   """Loads content of the given file to create a Bundle object.
 
   Args:

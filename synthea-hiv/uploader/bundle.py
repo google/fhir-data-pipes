@@ -28,7 +28,7 @@ import resources
 class Bundle:
   """Object to be uploaded to FHIR server."""
 
-  def __init__(self, file_name: pathlib.PosixPath, bundle_dict: Dict[str, Any]):
+  def __init__(self, file_name: pathlib.Path, bundle_dict: Dict[str, Any]):
     self.bundle_dict = bundle_dict
     self.file_name = file_name
     self.openmrs_patient = None
