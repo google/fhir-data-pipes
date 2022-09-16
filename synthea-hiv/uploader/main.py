@@ -30,7 +30,6 @@ Example usage:
 
 import argparse
 import itertools
-import json
 import logging
 import multiprocessing
 import pathlib
@@ -84,7 +83,7 @@ parser.add_argument(
     help='specify number of cores to use . Default is CPU count on machine')
 
 
-def list_all_files(directory: str) -> Dict[str, Set[pathlib.PosixPath]]:
+def list_all_files(directory: str) -> Dict[str, Set[pathlib.Path]]:
   """Lists JSON files under a directory.
 
   Args:
@@ -111,19 +110,6 @@ def list_all_files(directory: str) -> Dict[str, Set[pathlib.PosixPath]]:
   return file_type_dict
 
 
-def convert_to_bundle(json_file: pathlib.PosixPath) -> bundle.Bundle:
-  """Loads content of file to create Bundle object.
-
-  Args:
-   json_file: Set containing JSON files that need to be read
-
-  Returns:
-    Bundle object
-  """
-  with open(json_file) as f:
-    data = json.loads(f.read())
-    return bundle.Bundle(json_file, data)
-
 def create_sink(sink_type: str, url: str) -> uploader.Uploader:
   client_ = getattr(fhir_client, _CLIENT_MAP[sink_type])
   return uploader.Uploader(client_(url))
@@ -140,11 +126,10 @@ if __name__ == '__main__':
     with multiprocessing.Pool(processes=args.cores) as pool:
       locations_in_store = upload_handler.fetch_location()
       logging.info('Loading patient_history JSON files into memory')
-      bundle_list = pool.map(convert_to_bundle,
-                             json_file_dict['patient_history'])
       pool.starmap(
           upload_handler.upload_openmrs_bundle,
-          zip(bundle_list,itertools.repeat(locations_in_store)))
+          zip(json_file_dict['patient_history'],
+              itertools.repeat(locations_in_store)))
 
   else:
     # To post the files to GCP FHIR Store, they require a certain order because
@@ -153,5 +138,4 @@ if __name__ == '__main__':
     for file_type in ['hospital', 'practitioner', 'patient_history']:
       with multiprocessing.Pool(processes=args.cores) as pool:
         logging.info('Loading %s JSON files into memory', file_type)
-        bundle_list = pool.map(convert_to_bundle, json_file_dict[file_type])
-        pool.map(upload_handler.upload_bundle, bundle_list)
+        pool.map(upload_handler.upload_bundle, json_file_dict[file_type])
