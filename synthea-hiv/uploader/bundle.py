@@ -19,7 +19,7 @@ Bundle resources directly.
 """
 
 import pathlib
-from typing import Dict
+from typing import Dict, Any
 
 import logger_util
 import resources
@@ -28,7 +28,7 @@ import resources
 class Bundle:
   """Object to be uploaded to FHIR server."""
 
-  def __init__(self, file_name: pathlib.PosixPath, bundle_dict: Dict[str, str]):
+  def __init__(self, file_name: pathlib.Path, bundle_dict: Dict[str, Any]):
     self.bundle_dict = bundle_dict
     self.file_name = file_name
     self.openmrs_patient = None
@@ -68,11 +68,11 @@ class Bundle:
     pass
 
   def __repr__(self):
-    if self.patient:
+    if self.openmrs_patient:
       return str({
           'new_patient_id': self.openmrs_patient.base.new_id,
-          'encounters': self.openmrs_encounters.base,
-          'observations': self.openmrs_observations.base
+          'encounters': self.openmrs_encounters,
+          'observations': self.openmrs_observations
       })
     else:
       return str(self.bundle_dict)
