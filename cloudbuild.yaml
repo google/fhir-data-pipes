@@ -23,7 +23,7 @@ steps:
   id: 'Launch HAPI Source and Sink Servers for Jdbc Batch Mode Test'
   args: ['-f', './docker/hapi-compose.yml', '-f', './docker/sink-compose.yml', 'up', '--force-recreate', '--remove-orphan', '-d']
 
-- name: 'adoptopenjdk/maven-openjdk8'
+- name: 'adoptopenjdk/maven-openjdk11'
   id: 'Compile Bunsen and Pipeline'
   entrypoint: /bin/bash
   args:

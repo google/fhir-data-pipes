@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-FROM adoptopenjdk/maven-openjdk8
+FROM adoptopenjdk/maven-openjdk11
 
 ARG WORK_DIR="/usr/src/Main"
 COPY target/streaming-binlog-bundled-0.1.0-SNAPSHOT.jar ${WORK_DIR}/app.jar
