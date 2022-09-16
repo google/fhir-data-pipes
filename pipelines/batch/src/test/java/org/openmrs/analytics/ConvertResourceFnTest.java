@@ -17,8 +17,10 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.mockito.Mockito.verify;
 
+import java.beans.PropertyVetoException;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.sql.SQLException;
 import java.text.SimpleDateFormat;
 
 import com.google.common.io.Resources;
@@ -45,13 +47,13 @@ public class ConvertResourceFnTest {
 	private ArgumentCaptor<Resource> resourceCaptor;
 	
 	@Before
-	public void setUp() {
+	public void setUp() throws PropertyVetoException, SQLException {
 		String[] args = { "--outputParquetPath=SOME_PATH" };
 		FhirEtlOptions options = PipelineOptionsFactory.fromArgs(args).withValidation().as(FhirEtlOptions.class);
-		convertResourceFn = new ConvertResourceFn(options) {
+		convertResourceFn = new ConvertResourceFn(options, "Test") {
 			
 			@Override
-			public void setup() {
+			public void setup() throws PropertyVetoException, SQLException {
 				super.setup();
 				parquetUtil = mockParquetUtil;
 			}
@@ -61,7 +63,7 @@ public class ConvertResourceFnTest {
 	}
 	
 	@Test
-	public void testProcessPatientResource() throws IOException, java.text.ParseException {
+	public void testProcessPatientResource() throws IOException, java.text.ParseException, SQLException {
 		String patientResourceStr = Resources.toString(Resources.getResource("patient.json"), StandardCharsets.UTF_8);
 		HapiRowDescriptor element = HapiRowDescriptor.create("123", "Patient", "2020-09-19 12:09:23", "1",
 		    patientResourceStr);

@@ -20,27 +20,36 @@ import java.sql.SQLException;
 import java.sql.Statement;
 
 import com.google.common.base.Preconditions;
+// TODO switch to HikariCP: https://github.com/GoogleCloudPlatform/openmrs-fhir-analytics/issues/89
 import com.mchange.v2.c3p0.ComboPooledDataSource;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class JdbcConnectionUtil {
+	
+	private static final Logger log = LoggerFactory.getLogger(JdbcConnectionUtil.class);
 	
 	private final ComboPooledDataSource comboPooledDataSource;
 	
 	JdbcConnectionUtil(String jdbcDriverClass, String jdbcUrl, String dbUser, String dbPassword, int initialPoolSize,
-	    int dbcMaxPoolSize) throws PropertyVetoException {
-		Preconditions.checkArgument(initialPoolSize <= dbcMaxPoolSize,
-		    "initialPoolSize cannot be larger than dbcMaxPoolSize");
+	    int jdbcMaxPoolSize) throws PropertyVetoException {
+		log.info("Creating a JdbcConnectionUtil for " + jdbcUrl + " with driver class " + jdbcDriverClass
+		        + " and max pool size " + jdbcMaxPoolSize);
+		Preconditions.checkArgument(initialPoolSize <= jdbcMaxPoolSize,
+		    "initialPoolSize cannot be larger than jdbcMaxPoolSize");
 		comboPooledDataSource = new ComboPooledDataSource();
 		comboPooledDataSource.setDriverClass(jdbcDriverClass);
 		comboPooledDataSource.setJdbcUrl(jdbcUrl);
 		comboPooledDataSource.setUser(dbUser);
 		comboPooledDataSource.setPassword(dbPassword);
-		comboPooledDataSource.setMaxPoolSize(dbcMaxPoolSize);
+		comboPooledDataSource.setMaxPoolSize(jdbcMaxPoolSize);
 		comboPooledDataSource.setInitialPoolSize(initialPoolSize);
+		// Setting an idle time to reduce the number of connections when idle.
+		comboPooledDataSource.setMaxIdleTime(30);
 	}
 	
 	public Statement createStatement() throws SQLException {
-		Connection con = getConnectionObject().getConnection();
+		Connection con = getDataSource().getConnection();
 		return con.createStatement();
 	}
 	
@@ -52,7 +61,7 @@ public class JdbcConnectionUtil {
 		}
 	}
 	
-	public ComboPooledDataSource getConnectionObject() {
+	public ComboPooledDataSource getDataSource() {
 		return comboPooledDataSource;
 	}
 }

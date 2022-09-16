@@ -187,7 +187,7 @@ public class FhirEtl {
 		EtlUtils.logMetrics(result.metrics());
 	}
 	
-	static void validateOptions(FhirEtlOptions options) {
+	private static void validateOptions(FhirEtlOptions options) throws SQLException, PropertyVetoException {
 		if (!options.getActivePeriod().isEmpty()) {
 			Set<String> resourceSet = Sets.newHashSet(options.getResourceList().split(","));
 			if (resourceSet.contains("Patient")) {
@@ -230,9 +230,10 @@ public class FhirEtl {
 			
 			PCollection<HapiRowDescriptor> payload = queryParameters.apply("JdbcIO fetch for " + resourceType,
 			    new JdbcFetchHapi.FetchRowsJdbcIo(
-			            JdbcIO.DataSourceConfiguration.create(jdbcConnectionUtil.getConnectionObject())));
+			            JdbcIO.DataSourceConfiguration.create(jdbcConnectionUtil.getDataSource())));
 			
-			payload.apply("Convert to parquet for " + resourceType, ParDo.of(new ConvertResourceFn(options)));
+			payload.apply("Convert to parquet for " + resourceType,
+			    ParDo.of(new ConvertResourceFn(options, "ConvertResourceFn")));
 		}
 		
 		PipelineResult result = pipeline.run();
@@ -250,6 +251,10 @@ public class FhirEtl {
 		FhirEtlOptions options = PipelineOptionsFactory.fromArgs(args).withValidation().as(FhirEtlOptions.class);
 		log.info("Flags: " + options);
 		validateOptions(options);
+		
+		if (!options.getSinkDbUrl().isEmpty()) {
+			JdbcResourceWriter.createTables(options);
+		}
 		
 		if (options.isJdbcModeEnabled()) {
 			

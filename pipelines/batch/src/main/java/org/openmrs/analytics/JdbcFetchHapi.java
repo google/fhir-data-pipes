@@ -98,7 +98,7 @@ public class JdbcFetchHapi {
 			            })
 			            // We are disabling this parameter because by default, this parameter causes JdbcIO to add a 
 			            // reshuffle transform after reading from the database. This breaks fusion between the read 
-			            // and write operations, thus resulting in high memory overhead. Diabling the below parameter 
+			            // and write operations, thus resulting in high memory overhead. Disabling the below parameter
 			            // results in optimal performance.
 			            .withOutputParallelization(false)
 			            .withQuery(
@@ -111,7 +111,7 @@ public class JdbcFetchHapi {
 	}
 	
 	JdbcIO.DataSourceConfiguration getJdbcConfig() {
-		return JdbcIO.DataSourceConfiguration.create(this.jdbcConnectionUtil.getConnectionObject());
+		return JdbcIO.DataSourceConfiguration.create(this.jdbcConnectionUtil.getDataSource());
 	}
 	
 	/**

@@ -1,5 +1,6 @@
 {
     "resourceType":"Patient",
+    "id": "my-patient-id",
     "text":{
        "status":"generated",
        "div":"<div></div>"

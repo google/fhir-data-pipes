@@ -19,9 +19,11 @@ import static org.hamcrest.Matchers.notNullValue;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.when;
 
+import java.beans.PropertyVetoException;
 import java.io.IOException;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -102,7 +104,7 @@ public class FetchResourcesTest {
 			this.fetchSearchPageFn = new SearchFn(options, "TEST_FetchResources") {
 				
 				@Override
-				public void setup() {
+				public void setup() throws SQLException, PropertyVetoException {
 					super.setup();
 					this.fhirSearchUtil = Mockito.mock(FhirSearchUtil.class);
 					when(fhirSearchUtil.searchByUrl(any(String.class), any(Integer.class), any(SummaryEnum.class)))
