@@ -29,6 +29,11 @@ import org.slf4j.LoggerFactory;
 
 // TODO switch to using JdbcIO; currently we can't do this because resource processing is done
 // in the same DoFn as writing (for historical memory-related reasons).
+// See: https://github.com/GoogleCloudPlatform/openmrs-fhir-analytics/issues/288
+
+/**
+ * Writes FHIR resources to a relational database with a simple JSON based table schema.
+ */
 public class JdbcResourceWriter {
 	
 	private static final Logger log = LoggerFactory.getLogger(JdbcResourceWriter.class);
@@ -48,6 +53,14 @@ public class JdbcResourceWriter {
 		this.jdbcDataSource = jdbcDataSource;
 	}
 	
+	private static void createSingleTable(DataSource dataSource, String createStatement) throws SQLException {
+		try (Connection connection = dataSource.getConnection();
+		        PreparedStatement statement = connection.prepareStatement(createStatement)) {
+			log.info("Table creations statement is " + statement);
+			statement.execute();
+		}
+	}
+	
 	static void createTables(FhirEtlOptions options) throws PropertyVetoException, SQLException {
 		// This should not be triggered in pipeline workers because concurrent CREATEs lead to failures:
 		// https://stackoverflow.com/questions/54351783/duplicate-key-value-violates-unique-constraint
@@ -59,26 +72,18 @@ public class JdbcResourceWriter {
 		        options.getSinkDbPassword(), options.getSinkDbPassword(), options.getJdbcInitialPoolSize(),
 		        options.getJdbcMaxPoolSize());
 		if (options.getUseSingleSinkTable()) {
-			// For CREATE statements we cannot (and don't need to) use a placeholder for table name.
-			String createTemplate = String.format(
-			    "CREATE TABLE IF NOT EXISTS %s (id VARCHAR(100) NOT NULL, "
-			            + "type VARCHAR(50) NOT NULL, datab JSONB, PRIMARY KEY (id, type) );",
-			    options.getSinkDbTablePrefix());
-			try (Connection connection = connectionUtil.getDataSource().getConnection();
-			        PreparedStatement statement = connection.prepareStatement(createTemplate)) {
-				log.info("Table creations statement is " + statement);
-				statement.execute();
-			}
+			// For CREATE statements we cannot (and don't need to) use a placeholder for table name, i.e.,
+			// we don't need to use PreparedStatement with '?'.
+			String tableCreate = "CREATE TABLE IF NOT EXISTS %s (id VARCHAR(100) NOT NULL, "
+			        + "type VARCHAR(50) NOT NULL, datab JSONB, PRIMARY KEY (id, type) );";
+			String createStatement = String.format(tableCreate, options.getSinkDbTablePrefix());
+			createSingleTable(connectionUtil.getDataSource(), createStatement);
 		} else {
 			for (String resourceType : options.getResourceList().split(",")) {
-				String createTemplate = String.format(
-				    "CREATE TABLE IF NOT EXISTS %s (id VARCHAR(100) NOT NULL, " + "datab JSONB, PRIMARY KEY (id) );",
-				    options.getSinkDbTablePrefix() + resourceType);
-				try (Connection connection = connectionUtil.getDataSource().getConnection();
-				        PreparedStatement statement = connection.prepareStatement(createTemplate)) {
-					log.info("Table creations statement is " + statement);
-					statement.execute();
-				}
+				String tableCreate = "CREATE TABLE IF NOT EXISTS %s (id VARCHAR(100) NOT NULL, "
+				        + "datab JSONB, PRIMARY KEY (id) );";
+				String createStatement = String.format(tableCreate, options.getSinkDbTablePrefix() + resourceType);
+				createSingleTable(connectionUtil.getDataSource(), createStatement);
 			}
 		}
 	}
@@ -97,22 +102,22 @@ public class JdbcResourceWriter {
 				statement = connection.prepareStatement("INSERT INTO " + tableName + " (id, datab) VALUES(?, ?::jsonb) "
 				        + "ON CONFLICT (id) DO UPDATE SET id=?, datab=?::jsonb ;");
 			}
-			int i = 1;
-			statement.setString(i, resource.getIdElement().getIdPart());
+			int paramInd = 1;
+			statement.setString(paramInd, resource.getIdElement().getIdPart());
 			if (useSingleTable) {
-				i++;
-				statement.setString(i, resource.getResourceType().name());
+				paramInd++;
+				statement.setString(paramInd, resource.getResourceType().name());
 			}
-			i++;
-			statement.setString(i, parser.encodeResourceToString(resource));
-			i++;
-			statement.setString(i, resource.getIdElement().getIdPart());
+			paramInd++;
+			statement.setString(paramInd, parser.encodeResourceToString(resource));
+			paramInd++;
+			statement.setString(paramInd, resource.getIdElement().getIdPart());
 			if (useSingleTable) {
-				i++;
-				statement.setString(i, resource.getResourceType().name());
+				paramInd++;
+				statement.setString(paramInd, resource.getResourceType().name());
 			}
-			i++;
-			statement.setString(i, parser.encodeResourceToString(resource));
+			paramInd++;
+			statement.setString(paramInd, parser.encodeResourceToString(resource));
 			statement.execute();
 			statement.close();
 		}
