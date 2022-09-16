@@ -48,8 +48,8 @@ public class ReadJsonFilesFn extends FetchSearchPageFn<FileIO.ReadableFile> {
 		try {
 			IBaseResource resource = parser.parseResource(fileContent);
 			if (!"Bundle".equals(resource.fhirType())) {
-				log.error("The content of file " + file.getMetadata().toString() + " is not a Bundle; type: "
-				        + resource.fhirType());
+				log.error(String.format("The content of file %s is not a Bundle; type is %s.", file.getMetadata().toString(),
+				    resource.fhirType()));
 			}
 			Bundle bundle = (Bundle) resource;
 			updateResolvedRefIds(bundle);

@@ -203,7 +203,7 @@ public class FhirEtl {
 				                + options.getResourceList());
 			}
 		}
-
+		
 		if (!options.getSourceJsonFilePattern().isEmpty()) {
 			if (!options.getFhirServerUrl().isEmpty()) {
 				throw new IllegalArgumentException("--sourceJsonFilePattern and --fhirServerUrl cannot be used together!");
