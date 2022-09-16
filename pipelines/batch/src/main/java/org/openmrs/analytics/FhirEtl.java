@@ -189,7 +189,7 @@ public class FhirEtl {
 		EtlUtils.logMetrics(result.metrics());
 	}
 	
-	static void validateOptionsAndInit(FhirEtlOptions options) throws SQLException, PropertyVetoException {
+	private static void validateOptions(FhirEtlOptions options) throws SQLException, PropertyVetoException {
 		if (!options.getActivePeriod().isEmpty()) {
 			Set<String> resourceSet = Sets.newHashSet(options.getResourceList().split(","));
 			if (resourceSet.contains("Patient")) {
@@ -203,7 +203,7 @@ public class FhirEtl {
 				                + options.getResourceList());
 			}
 		}
-		
+
 		if (!options.getSourceJsonFilePattern().isEmpty()) {
 			if (!options.getFhirServerUrl().isEmpty()) {
 				throw new IllegalArgumentException("--sourceJsonFilePattern and --fhirServerUrl cannot be used together!");
@@ -288,7 +288,11 @@ public class FhirEtl {
 		
 		FhirEtlOptions options = PipelineOptionsFactory.fromArgs(args).withValidation().as(FhirEtlOptions.class);
 		log.info("Flags: " + options);
-		validateOptionsAndInit(options);
+		validateOptions(options);
+		
+		if (!options.getSinkDbUrl().isEmpty()) {
+			JdbcResourceWriter.createTables(options);
+		}
 		
 		if (options.isJdbcModeEnabled()) {
 			if (options.isJdbcModeHapi()) {

@@ -14,6 +14,7 @@
 package org.openmrs.analytics;
 
 import javax.annotation.Nullable;
+import javax.sql.DataSource;
 
 import java.beans.PropertyVetoException;
 import java.io.IOException;
@@ -156,9 +157,9 @@ abstract class FetchSearchPageFn<T> extends DoFn<T, KV<String, Integer>> {
 		fhirSearchUtil = new FhirSearchUtil(openmrsUtil);
 		parquetUtil = new ParquetUtil(parquetFile, secondsToFlush, rowGroupSize, stageIdentifier + "_");
 		if (!sinkDbUrl.isEmpty()) {
-			jdbcWriter = new JdbcResourceWriter(getJdbcConnectionUtil(jdbcDriverClass, sinkDbUrl, sinkDbUsername,
-			    sinkDbPassword, initialPoolSize, maxPoolSize).getDataSource(), sinkDbTableName, useSingleSinkDbTable,
-			        fhirContext);
+			DataSource dataSource = getJdbcConnectionUtil(jdbcDriverClass, sinkDbUrl, sinkDbUsername, sinkDbPassword,
+			    initialPoolSize, maxPoolSize).getDataSource();
+			jdbcWriter = new JdbcResourceWriter(dataSource, sinkDbTableName, useSingleSinkDbTable, fhirContext);
 		}
 		parser = fhirContext.newJsonParser();
 		// We want to keep the original IDs; this is particularly useful when the `fullUrl` is not
