@@ -56,7 +56,7 @@ public class JdbcResourceWriter {
 	private static void createSingleTable(DataSource dataSource, String createStatement) throws SQLException {
 		try (Connection connection = dataSource.getConnection();
 		        PreparedStatement statement = connection.prepareStatement(createStatement)) {
-			log.info("Table creations statement is " + statement);
+			log.info("Table creation statement is " + statement);
 			statement.execute();
 		}
 	}
