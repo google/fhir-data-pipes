@@ -30,6 +30,10 @@ your reviewers:
   repo, and then `merge` your `master` branch into your feature branch from
   which you sent the PR.
 
+- When sending a PR, _disable_ ["Allow edits by maintainers”"](https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/working-with-forks/allowing-changes-to-a-pull-request-branch-created-from-a-fork);
+  and if you are a reviewer, never push a change (even a master merge) to a
+  review branch. This will make it harder to maintain the local dev branch.
+
 - When responding to unresolved comments, please make sure you respond to all of
   them. Even if you simply do what the reviewer has suggested, add a "Done"
   comment before resolving the thread. This acts as a reminder to the reviewer
