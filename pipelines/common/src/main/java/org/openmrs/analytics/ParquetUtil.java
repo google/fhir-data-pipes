@@ -14,6 +14,8 @@
 
 package org.openmrs.analytics;
 
+import javax.annotation.Nullable;
+
 import java.io.IOException;
 import java.nio.file.FileSystem;
 import java.nio.file.FileSystems;
@@ -24,6 +26,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
+import java.util.Set;
 import java.util.Timer;
 import java.util.TimerTask;
 
@@ -181,7 +184,10 @@ public class ParquetUtil {
 			createWriter(resourceType);
 		}
 		final ParquetWriter<GenericRecord> parquetWriter = writerMap.get(resourceType);
-		parquetWriter.write(this.convertToAvro(resource));
+		GenericRecord record = convertToAvro(resource);
+		if (record != null) {
+			parquetWriter.write(record);
+		}
 	}
 	
 	synchronized private void flush(String resourceType) throws IOException {
@@ -222,27 +228,44 @@ public class ParquetUtil {
 		}
 		for (BundleEntryComponent entry : bundle.getEntry()) {
 			Resource resource = entry.getResource();
-			// TODO: Check why Bunsen returns IndexedRecord instead of GenericRecord.
-			records.add(convertToAvro(resource));
+			GenericRecord record = convertToAvro(resource);
+			if (record != null) {
+				records.add(record);
+			}
 		}
 		return records;
 	}
 	
-	public void writeRecords(Bundle bundle) throws IOException {
-		if (bundle.getTotal() == 0) {
+	public void writeRecords(Bundle bundle, Set<String> resourceTypes) throws IOException {
+		if (bundle.getEntry() == null) {
 			return;
 		}
 		for (BundleEntryComponent entry : bundle.getEntry()) {
 			Resource resource = entry.getResource();
-			write(resource);
+			if (resourceTypes == null || resourceTypes.contains(resource.getResourceType().name())) {
+				write(resource);
+			}
 		}
 	}
 	
 	@VisibleForTesting
+	@Nullable
 	GenericRecord convertToAvro(Resource resource) {
+		// TODO update Bunsen and get rid of this R3 conversion. Note that currently the conversion
+		// can fail for some R4 resource types (and they should be excluded). Once this is done we
+		// should remove the requirement for specifying resourceTypes when running the pipeline.
 		org.hl7.fhir.dstu3.model.Resource r3Resource = org.hl7.fhir.convertors.VersionConvertor_30_40
 		        .convertResource(resource, true);
+		if (r3Resource == null) {
+			log.error("R3 conversion failed; ignoring resource with type " + resource.getResourceType().name());
+			return null;
+		}
+		if (r3Resource.getResourceType() == null) {
+			log.error("No R3 resource type for R4 resource " + resource.getResourceType().name());
+			return null;
+		}
 		AvroConverter converter = getConverter(r3Resource.getResourceType().name());
+		// TODO: Check why Bunsen returns IndexedRecord instead of GenericRecord.
 		return (GenericRecord) converter.resourceToAvro(r3Resource);
 	}
 	

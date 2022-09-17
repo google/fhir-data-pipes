@@ -15,6 +15,7 @@ package org.openmrs.analytics;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
+import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.verify;
 
 import java.beans.PropertyVetoException;
@@ -74,7 +75,7 @@ public class FetchSearchPageFnTest {
 		fetchSearchPageFn.processBundle(bundle);
 		
 		// Verify the bundle is sent to the writer.
-		verify(mockParquetUtil).writeRecords(bundleCaptor.capture());
+		verify(mockParquetUtil).writeRecords(bundleCaptor.capture(), isNull());
 		Bundle capturedBundle = bundleCaptor.getValue();
 		assertThat(bundle, equalTo(capturedBundle));
 	}
