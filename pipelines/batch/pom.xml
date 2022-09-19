@@ -1,22 +1,26 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
 
-    This Source Code Form is subject to the terms of the Mozilla Public License,
-    v. 2.0. If a copy of the MPL was not distributed with this file, You can
-    obtain one at http://mozilla.org/MPL/2.0/. OpenMRS is also distributed under
-    the terms of the Healthcare Disclaimer located at http://openmrs.org/license.
+    Copyright 2020-2022 Google LLC
 
-    Copyright (C) OpenMRS Inc. OpenMRS is a registered trademark and the OpenMRS
-    graphic logo is a trademark of OpenMRS Inc.
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+         http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
 
 -->
 <!--
     This is created from Beam quickstart templates:
     https://beam.apache.org/get-started/quickstart-java
 -->
-<project xmlns="http://maven.apache.org/POM/4.0.0"
-         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
 
   <parent>
@@ -50,208 +54,8 @@
 
   </properties>
 
-  <repositories>
-    <repository>
-      <id>apache.snapshots</id>
-      <name>Apache Development Snapshot Repository</name>
-      <url>https://repository.apache.org/content/repositories/snapshots/</url>
-      <releases>
-        <enabled>false</enabled>
-      </releases>
-      <snapshots>
-        <enabled>true</enabled>
-      </snapshots>
-    </repository>
-  </repositories>
-
-  <build>
-    <plugins>
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-surefire-plugin</artifactId>
-        <version>${maven-surefire-plugin.version}</version>
-        <configuration>
-          <parallel>all</parallel>
-          <threadCount>4</threadCount>
-          <redirectTestOutputToFile>true</redirectTestOutputToFile>
-        </configuration>
-        <dependencies>
-          <dependency>
-            <groupId>org.apache.maven.surefire</groupId>
-            <artifactId>surefire-junit47</artifactId>
-            <version>${maven-surefire-plugin.version}</version>
-          </dependency>
-        </dependencies>
-      </plugin>
-      <!-- Ensure that the Maven jar plugin runs before the Maven
-            shade plugin by listing the plugin higher within the file. -->
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-jar-plugin</artifactId>
-        <configuration>
-          <archive>
-            <manifest>
-              <addClasspath>true</addClasspath>
-              <classpathPrefix>lib/</classpathPrefix>
-              <mainClass>org.openmrs.analytics.FhirEtl</mainClass>
-            </manifest>
-          </archive>
-        </configuration>
-      </plugin>
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-shade-plugin</artifactId>
-        <executions>
-          <execution>
-            <phase>package</phase>
-            <goals>
-              <goal>shade</goal>
-            </goals>
-            <configuration>
-              <finalName>${project.artifactId}-bundled-${project.version}</finalName>
-              <filters>
-                <filter>
-                  <artifact>*:*</artifact>
-                  <excludes>
-                    <exclude>META-INF/LICENSE</exclude>
-                    <exclude>META-INF/*.SF</exclude>
-                    <exclude>META-INF/*.DSA</exclude>
-                    <exclude>META-INF/*.RSA</exclude>
-                  </excludes>
-                </filter>
-              </filters>
-              <transformers>
-                <transformer implementation="org.apache.maven.plugins.shade.resource.ServicesResourceTransformer"/>
-              </transformers>
-            </configuration>
-          </execution>
-        </executions>
-      </plugin>
-      <!-- Allows the example to be run via IDE or 'mvn compile exec:java -pl batch/' -->
-      <plugin>
-        <groupId>org.codehaus.mojo</groupId>
-        <artifactId>exec-maven-plugin</artifactId>
-        <configuration>
-          <mainClass>org.openmrs.analytics.FhirEtl</mainClass>
-          <!--Fixes WARNING and threading messages when running in JDBC mode-->
-          <cleanupDaemonThreads>false</cleanupDaemonThreads>
-          <includePluginDependencies>false</includePluginDependencies>
-        </configuration>
-      </plugin>
-    </plugins>
-
-  </build>
-
-  <profiles>
-    <profile>
-      <id>direct-runner</id>
-      <activation>
-        <activeByDefault>true</activeByDefault>
-      </activation>
-      <!-- Makes the DirectRunner available when running a pipeline. -->
-      <dependencies>
-        <dependency>
-          <groupId>org.apache.beam</groupId>
-          <artifactId>beam-runners-direct-java</artifactId>
-          <version>${beam.version}</version>
-          <scope>runtime</scope>
-        </dependency>
-      </dependencies>
-    </profile>
-
-    <profile>
-      <id>dataflow-runner</id>
-      <!-- Makes the DataflowRunner available when running a pipeline. -->
-      <dependencies>
-        <dependency>
-          <groupId>org.apache.beam</groupId>
-          <artifactId>beam-runners-google-cloud-dataflow-java</artifactId>
-          <version>${beam.version}</version>
-          <scope>runtime</scope>
-        </dependency>
-      </dependencies>
-    </profile>
-
-    <profile>
-      <id>flink-runner</id>
-      <activation>
-        <activeByDefault>true</activeByDefault>
-      </activation>
-      <!-- Makes the FlinkRunner available when running a pipeline. -->
-      <dependencies>
-        <dependency>
-          <groupId>org.apache.beam</groupId>
-          <!-- Please see the Flink Runner page for an up-to-date list
-               of supported Flink versions and their artifact names:
-               https://beam.apache.org/documentation/runners/flink/ -->
-          <artifactId>${flink.artifact.name}</artifactId>
-          <version>${beam.version}</version>
-          <scope>runtime</scope>
-        </dependency>
-      </dependencies>
-    </profile>
-
-    <profile>
-      <id>spark-runner</id>
-      <!-- Makes the SparkRunner available when running a pipeline. Additionally,
-           overrides some Spark dependencies to Beam-compatible versions. -->
-      <properties>
-        <netty.version>4.1.17.Final</netty.version>
-      </properties>
-      <dependencies>
-        <dependency>
-          <groupId>org.apache.beam</groupId>
-          <artifactId>beam-runners-spark</artifactId>
-          <version>${beam.version}</version>
-          <scope>runtime</scope>
-        </dependency>
-        <dependency>
-          <groupId>org.apache.beam</groupId>
-          <artifactId>beam-sdks-java-io-hadoop-file-system</artifactId>
-          <version>${beam.version}</version>
-          <scope>runtime</scope>
-        </dependency>
-        <dependency>
-          <groupId>org.apache.spark</groupId>
-          <artifactId>spark-streaming_2.11</artifactId>
-          <version>${spark.version}</version>
-          <scope>runtime</scope>
-          <exclusions>
-            <exclusion>
-              <groupId>org.slf4j</groupId>
-              <artifactId>jul-to-slf4j</artifactId>
-            </exclusion>
-          </exclusions>
-        </dependency>
-        <dependency>
-          <groupId>com.fasterxml.jackson.module</groupId>
-          <artifactId>jackson-module-scala_2.11</artifactId>
-          <version>${jackson.version}</version>
-          <scope>runtime</scope>
-        </dependency>
-        <!-- [BEAM-3519] GCP IO exposes netty on its API surface, causing conflicts with runners -->
-        <dependency>
-          <groupId>org.apache.beam</groupId>
-          <artifactId>beam-sdks-java-io-google-cloud-platform</artifactId>
-          <version>${beam.version}</version>
-          <exclusions>
-            <exclusion>
-              <groupId>io.grpc</groupId>
-              <artifactId>grpc-netty</artifactId>
-            </exclusion>
-            <exclusion>
-              <groupId>io.netty</groupId>
-              <artifactId>netty-handler</artifactId>
-            </exclusion>
-          </exclusions>
-        </dependency>
-      </dependencies>
-    </profile>
-
-  </profiles>
-
   <dependencies>
-    
+
     <!-- Adds a dependency on the Beam SDK. -->
     <dependency>
       <groupId>org.apache.beam</groupId>
@@ -397,20 +201,6 @@
       <version>${hamcrest.version}</version>
     </dependency>
 
-    <!--
-    <dependency>
-      <groupId>junit</groupId>
-      <artifactId>junit</artifactId>
-      <version>${junit.version}</version>
-    </dependency>
-
-    <dependency>
-      <groupId>mysql</groupId>
-      <artifactId>mysql-connector-java</artifactId>
-      <version>8.0.20</version>
-    </dependency>
-    -->
-
     <!-- The DirectRunner is needed for unit tests. -->
     <dependency>
       <groupId>org.apache.beam</groupId>
@@ -430,4 +220,204 @@
       <version>${project.parent.version}</version>
     </dependency>
   </dependencies>
+
+  <repositories>
+    <repository>
+      <releases>
+        <enabled>false</enabled>
+      </releases>
+      <snapshots>
+        <enabled>true</enabled>
+      </snapshots>
+      <id>apache.snapshots</id>
+      <name>Apache Development Snapshot Repository</name>
+      <url>https://repository.apache.org/content/repositories/snapshots/</url>
+    </repository>
+  </repositories>
+
+  <build>
+    <plugins>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-surefire-plugin</artifactId>
+        <version>${maven-surefire-plugin.version}</version>
+        <configuration>
+          <parallel>all</parallel>
+          <threadCount>4</threadCount>
+          <redirectTestOutputToFile>true</redirectTestOutputToFile>
+        </configuration>
+        <dependencies>
+          <dependency>
+            <groupId>org.apache.maven.surefire</groupId>
+            <artifactId>surefire-junit47</artifactId>
+            <version>${maven-surefire-plugin.version}</version>
+          </dependency>
+        </dependencies>
+      </plugin>
+      <!-- Ensure that the Maven jar plugin runs before the Maven
+            shade plugin by listing the plugin higher within the file. -->
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-jar-plugin</artifactId>
+        <configuration>
+          <archive>
+            <manifest>
+              <addClasspath>true</addClasspath>
+              <classpathPrefix>lib/</classpathPrefix>
+              <mainClass>org.openmrs.analytics.FhirEtl</mainClass>
+            </manifest>
+          </archive>
+        </configuration>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-shade-plugin</artifactId>
+        <executions>
+          <execution>
+            <goals>
+              <goal>shade</goal>
+            </goals>
+            <phase>package</phase>
+            <configuration>
+              <finalName>${project.artifactId}-bundled-${project.version}</finalName>
+              <filters>
+                <filter>
+                  <artifact>*:*</artifact>
+                  <excludes>
+                    <exclude>META-INF/LICENSE</exclude>
+                    <exclude>META-INF/*.SF</exclude>
+                    <exclude>META-INF/*.DSA</exclude>
+                    <exclude>META-INF/*.RSA</exclude>
+                  </excludes>
+                </filter>
+              </filters>
+              <transformers>
+                <transformer implementation="org.apache.maven.plugins.shade.resource.ServicesResourceTransformer"/>
+              </transformers>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+      <!-- Allows the example to be run via IDE or 'mvn compile exec:java -pl batch/' -->
+      <plugin>
+        <groupId>org.codehaus.mojo</groupId>
+        <artifactId>exec-maven-plugin</artifactId>
+        <configuration>
+          <mainClass>org.openmrs.analytics.FhirEtl</mainClass>
+          <!--Fixes WARNING and threading messages when running in JDBC mode-->
+          <cleanupDaemonThreads>false</cleanupDaemonThreads>
+          <includePluginDependencies>false</includePluginDependencies>
+        </configuration>
+      </plugin>
+    </plugins>
+
+  </build>
+
+  <profiles>
+    <profile>
+      <id>direct-runner</id>
+      <activation>
+        <activeByDefault>true</activeByDefault>
+      </activation>
+      <!-- Makes the DirectRunner available when running a pipeline. -->
+      <dependencies>
+        <dependency>
+          <groupId>org.apache.beam</groupId>
+          <artifactId>beam-runners-direct-java</artifactId>
+          <version>${beam.version}</version>
+          <scope>runtime</scope>
+        </dependency>
+      </dependencies>
+    </profile>
+
+    <profile>
+      <id>dataflow-runner</id>
+      <!-- Makes the DataflowRunner available when running a pipeline. -->
+      <dependencies>
+        <dependency>
+          <groupId>org.apache.beam</groupId>
+          <artifactId>beam-runners-google-cloud-dataflow-java</artifactId>
+          <version>${beam.version}</version>
+          <scope>runtime</scope>
+        </dependency>
+      </dependencies>
+    </profile>
+
+    <profile>
+      <id>flink-runner</id>
+      <activation>
+        <activeByDefault>true</activeByDefault>
+      </activation>
+      <!-- Makes the FlinkRunner available when running a pipeline. -->
+      <dependencies>
+        <dependency>
+          <groupId>org.apache.beam</groupId>
+          <!-- Please see the Flink Runner page for an up-to-date list
+               of supported Flink versions and their artifact names:
+               https://beam.apache.org/documentation/runners/flink/ -->
+          <artifactId>${flink.artifact.name}</artifactId>
+          <version>${beam.version}</version>
+          <scope>runtime</scope>
+        </dependency>
+      </dependencies>
+    </profile>
+
+    <profile>
+      <id>spark-runner</id>
+      <!-- Makes the SparkRunner available when running a pipeline. Additionally,
+           overrides some Spark dependencies to Beam-compatible versions. -->
+      <properties>
+        <netty.version>4.1.17.Final</netty.version>
+      </properties>
+      <dependencies>
+        <dependency>
+          <groupId>org.apache.beam</groupId>
+          <artifactId>beam-runners-spark</artifactId>
+          <version>${beam.version}</version>
+          <scope>runtime</scope>
+        </dependency>
+        <dependency>
+          <groupId>org.apache.beam</groupId>
+          <artifactId>beam-sdks-java-io-hadoop-file-system</artifactId>
+          <version>${beam.version}</version>
+          <scope>runtime</scope>
+        </dependency>
+        <dependency>
+          <groupId>org.apache.spark</groupId>
+          <artifactId>spark-streaming_2.11</artifactId>
+          <version>${spark.version}</version>
+          <scope>runtime</scope>
+          <exclusions>
+            <exclusion>
+              <groupId>org.slf4j</groupId>
+              <artifactId>jul-to-slf4j</artifactId>
+            </exclusion>
+          </exclusions>
+        </dependency>
+        <dependency>
+          <groupId>com.fasterxml.jackson.module</groupId>
+          <artifactId>jackson-module-scala_2.11</artifactId>
+          <version>${jackson.version}</version>
+          <scope>runtime</scope>
+        </dependency>
+        <!-- [BEAM-3519] GCP IO exposes netty on its API surface, causing conflicts with runners -->
+        <dependency>
+          <groupId>org.apache.beam</groupId>
+          <artifactId>beam-sdks-java-io-google-cloud-platform</artifactId>
+          <version>${beam.version}</version>
+          <exclusions>
+            <exclusion>
+              <groupId>io.grpc</groupId>
+              <artifactId>grpc-netty</artifactId>
+            </exclusion>
+            <exclusion>
+              <groupId>io.netty</groupId>
+              <artifactId>netty-handler</artifactId>
+            </exclusion>
+          </exclusions>
+        </dependency>
+      </dependencies>
+    </profile>
+
+  </profiles>
 </project>

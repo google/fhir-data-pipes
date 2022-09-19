@@ -23,12 +23,15 @@ steps:
   id: 'Launch HAPI Source and Sink Servers for Jdbc Batch Mode Test'
   args: ['-f', './docker/hapi-compose.yml', '-f', './docker/sink-compose.yml', 'up', '--force-recreate', '--remove-orphan', '-d']
 
+# Note license checking will fail on Cloud Build because of .git dependencies
+# and there is not much point updating license headers at this stage anyway.
+# Ditto for Spotless (fails because of NPM dep).
 - name: 'adoptopenjdk/maven-openjdk11'
   id: 'Compile Bunsen and Pipeline'
   entrypoint: /bin/bash
   args:
   - -c
-  - mvn --no-transfer-progress -e install
+  - mvn --no-transfer-progress -e install -Dlicense.skip=true -Dspotless.apply.skip=true
   waitFor: ['-'] 
 
 - name: 'gcr.io/cloud-builders/docker'

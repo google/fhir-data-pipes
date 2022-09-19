@@ -16,14 +16,14 @@
 
 
 # Script to run batch pipeline locally
-# Make sure to run this script with the current path in the terminal being the 
+# Make sure to run this script with the current path in the terminal being the
 # same as the directory this scrip is in, so all you have to do is:
 #     ./run_batch_local.sh
 #
-# To override any of the ENV vars defined in the Dockerfile run the script and 
+# To override any of the ENV vars defined in the Dockerfile run the script and
 # add: -e ENV_VAR_NAME=VALUE for each variable you want to change
 # For example:
-# ./run_batch_local.sh -e OPENMRS_USERNAME="admin" -e JDBC_MODE_ENABLED=true 
+# ./run_batch_local.sh -e OPENMRS_USERNAME="admin" -e JDBC_MODE_ENABLED=true
 
 
 ENV_VARS=$@
