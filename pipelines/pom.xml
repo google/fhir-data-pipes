@@ -39,7 +39,7 @@
     <junit.version>4.13.2</junit.version>
     <slf4j.version>1.7.30</slf4j.version>
     <log4j2.version>2.19.0</log4j2.version>
-    <hapifhirVersion>6.1.1</hapifhirVersion>
+    <hapifhirVersion>4.2.0</hapifhirVersion>
     <hamcrest.version>2.2</hamcrest.version>
     <openmrsPlatformVersion>2.6.0-SNAPSHOT</openmrsPlatformVersion>
     <mockito.version>3.5.10</mockito.version>

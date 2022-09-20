@@ -23,7 +23,7 @@ import ca.uhn.fhir.rest.client.interceptor.BearerTokenAuthInterceptor;
 import com.google.api.client.http.HttpRequestInitializer;
 import com.google.api.client.http.javanet.NetHttpTransport;
 import com.google.api.client.json.JsonFactory;
-import com.google.api.client.json.jackson2.JacksonFactory;
+import com.google.api.client.json.gson.GsonFactory;
 import com.google.api.services.healthcare.v1beta1.CloudHealthcare;
 import com.google.api.services.healthcare.v1beta1.CloudHealthcareScopes;
 import com.google.auth.http.HttpCredentialsAdapter;
@@ -48,7 +48,7 @@ import org.slf4j.LoggerFactory;
  */
 class GcpStoreUtil extends FhirStoreUtil {
 
-  private static final JsonFactory JSON_FACTORY = new JacksonFactory();
+  private static final JsonFactory JSON_FACTORY = new GsonFactory();
 
   private static final NetHttpTransport HTTP_TRANSPORT = new NetHttpTransport();
 
