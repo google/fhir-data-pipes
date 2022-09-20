@@ -34,7 +34,7 @@
     <scm.connection>scm:git:git@github.com/cerner/bunsen.git</scm.connection>
     <python.version>3.5.3</python.version>
     <maven-javadoc.plugin.version>2.10.3</maven-javadoc.plugin.version>
-    <maven-project-info-reports.plugin.version>2.9</maven-project-info-reports.plugin.version>
+    <maven-project-info-reports.plugin.version>3.4.1</maven-project-info-reports.plugin.version>
   </properties>
 
   <modules>
