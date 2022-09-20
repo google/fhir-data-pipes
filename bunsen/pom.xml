@@ -27,7 +27,7 @@
     <scala.version>2.11.8</scala.version>
     <scala.binary.version>2.11</scala.binary.version>
     <hapi.fhir.version>3.8.0</hapi.fhir.version>
-    <avro.version>1.8.2</avro.version>
+    <avro.version>1.11.1</avro.version>
     <junit.version>4.13.1</junit.version>
     <hamcrest.version>2.2</hamcrest.version>
     <scm.url>http://github.com/cerner/bunsen/tree/master/</scm.url>
