@@ -43,7 +43,7 @@
     <hamcrest.version>2.2</hamcrest.version>
     <openmrsPlatformVersion>2.6.0-SNAPSHOT</openmrsPlatformVersion>
     <mockito.version>3.5.10</mockito.version>
-    <jcommander.version>1.78</jcommander.version>
+    <jcommander.version>1.82</jcommander.version>
     <license-maven-plugin.version>4.1</license-maven-plugin.version>
   </properties>
 
