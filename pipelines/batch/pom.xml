@@ -49,7 +49,7 @@
     <maven-surefire-plugin.version>2.22.2</maven-surefire-plugin.version>
     <nemo.version>0.1</nemo.version>
     <flink.artifact.name>beam-runners-flink-1.14</flink.artifact.name>
-    <mysql.driver.version>8.0.16</mysql.driver.version>
+    <mysql.driver.version>8.0.30</mysql.driver.version>
     <postgresql.version>42.2.10</postgresql.version>
 
   </properties>
