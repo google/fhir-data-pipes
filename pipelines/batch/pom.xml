@@ -40,7 +40,7 @@
     <google-api-client.version>1.31.1</google-api-client.version>
     <google-http-client.version>1.38.0</google-http-client.version>
     <hamcrest.version>2.1</hamcrest.version>
-    <jackson.version>2.13.0</jackson.version>
+    <jackson.version>2.13.4</jackson.version>
     <joda.version>2.10.5</joda.version>
     <pubsub.version>v1-rev20191111-1.30.3</pubsub.version>
     <auto-value.version>1.7.2</auto-value.version>
