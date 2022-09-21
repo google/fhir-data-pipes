@@ -29,7 +29,7 @@
 
   <properties>
     <mysql.init.timeout>30000</mysql.init.timeout>
-    <version.camel>3.18.2</version.camel>
+    <version.camel>3.2.0</version.camel>
     <version.debezium>1.0.0.Final</version.debezium>
     <version.debezium.tag>1.0</version.debezium.tag>
     <version.mysql.driver>8.0.30</version.mysql.driver>
