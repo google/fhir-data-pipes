@@ -29,9 +29,7 @@ public class Runner {
   public static void main(String[] args) throws Exception {
     ParquetUtil.initializeAvroConverters();
 
-    MAIN.addRoutesBuilder(new DebeziumListener(args));
-    // and enable graceful hangup support when container/process is shutdown
-    MAIN.enableHangupSupport();
+    MAIN.configure().addRoutesBuilder(new DebeziumListener(args));
     // echo to console how to terminate
     System.out.println("\n\nThe pipeline in now running. You can press ctrl + c to stop.\n\n");
     MAIN.run();

@@ -58,7 +58,7 @@ public class ParquetUtil {
 
   private final Map<String, ParquetWriter<GenericRecord>> writerMap;
 
-  private final int rowGroupSize;
+  private final long rowGroupSize;
 
   private final String parquetFilePath;
 

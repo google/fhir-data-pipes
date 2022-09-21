@@ -109,6 +109,13 @@
     </dependency>
 
     <dependency>
+      <groupId>org.apache.hadoop</groupId>
+      <artifactId>hadoop-mapreduce-client-core</artifactId>
+      <version>3.3.4</version>
+      <scope>test</scope>
+    </dependency>
+
+    <dependency>
       <groupId>com.cerner.bunsen</groupId>
       <artifactId>bunsen-core-stu3</artifactId>
       <version>0.5.13-SNAPSHOT</version>
