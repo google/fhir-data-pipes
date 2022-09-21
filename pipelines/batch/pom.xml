@@ -38,7 +38,7 @@
 
     <bigquery.version>v2-rev20220827-2.0.0</bigquery.version>
     <google-api-client.version>1.31.1</google-api-client.version>
-    <google-http-client.version>1.38.0</google-http-client.version>
+    <google-http-client.version>1.42.2</google-http-client.version>
     <hamcrest.version>2.1</hamcrest.version>
     <jackson.version>2.13.4</jackson.version>
     <joda.version>2.10.5</joda.version>
