@@ -1,0 +1,8 @@
+version: 2
+updates:
+  - package-ecosystem: "maven"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    # Allow up to 20 open pull requests at the same time
+    open-pull-requests-limit: 20
