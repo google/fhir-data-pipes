@@ -42,6 +42,8 @@ import org.apache.avro.specific.SpecificData;
 import org.apache.hadoop.fs.Path;
 import org.apache.parquet.avro.AvroParquetWriter;
 import org.apache.parquet.hadoop.ParquetWriter;
+import org.hl7.fhir.convertors.advisors.impl.BaseAdvisor_30_40;
+import org.hl7.fhir.convertors.conv30_40.VersionConvertor_30_40;
 import org.hl7.fhir.r4.model.Bundle;
 import org.hl7.fhir.r4.model.Bundle.BundleEntryComponent;
 import org.hl7.fhir.r4.model.Resource;
@@ -274,7 +276,7 @@ public class ParquetUtil {
     // can fail for some R4 resource types (and they should be excluded). Once this is done we
     // should remove the requirement for specifying resourceTypes when running the pipeline.
     org.hl7.fhir.dstu3.model.Resource r3Resource =
-        org.hl7.fhir.convertors.VersionConvertor_30_40.convertResource(resource, true);
+        new VersionConvertor_30_40(new BaseAdvisor_30_40()).convertResource(resource);
     if (r3Resource == null) {
       log.error(
           "R3 conversion failed; ignoring resource with type " + resource.getResourceType().name());

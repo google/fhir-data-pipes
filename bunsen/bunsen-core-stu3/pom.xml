@@ -43,12 +43,6 @@
       <scope>compile</scope>
     </dependency>
 
-    <dependency>
-      <groupId>ca.uhn.hapi.fhir</groupId>
-      <artifactId>hapi-fhir-utilities</artifactId>
-      <scope>compile</scope>
-    </dependency>
-
     <!-- Testing -->
 
     <!-- HAPI FHIR DSTU3 resources included only for unit tests. -->
