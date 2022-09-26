@@ -41,7 +41,7 @@
     <google-http-client.version>1.38.0</google-http-client.version>
     <hamcrest.version>2.1</hamcrest.version>
     <jackson.version>2.13.0</jackson.version>
-    <joda.version>2.10.5</joda.version>
+    <joda.version>2.11.2</joda.version>
     <pubsub.version>v1-rev20191111-1.30.3</pubsub.version>
     <auto-value.version>1.9</auto-value.version>
     <spark.version>2.4.5</spark.version>
