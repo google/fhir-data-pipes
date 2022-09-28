@@ -158,7 +158,6 @@ abstract class FetchSearchPageFn<T> extends DoFn<T, KV<String, Integer>> {
   @Setup
   public void setup() throws SQLException, PropertyVetoException {
     log.info("Starting setup for stage " + stageIdentifier);
-    // TODO switch to `forR4Cached()` once we depend on a newer HAPI version.
     fhirContext = FhirContext.forR4Cached();
     fhirContext.getRestfulClientFactory().setSocketTimeout(20000);
     fhirStoreUtil =
