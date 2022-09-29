@@ -17,6 +17,7 @@
 package org.openmrs.analytics;
 
 import ca.uhn.fhir.context.FhirContext;
+import ca.uhn.fhir.context.FhirVersionEnum;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
@@ -82,8 +83,8 @@ public class FhirEtl {
         fhirContext);
   }
 
-  private static Schema getSchema(String resourceType) {
-    ParquetUtil parquetUtil = new ParquetUtil(null); // This is used only to get schema.
+  private static Schema getSchema(String resourceType, FhirVersionEnum version) {
+    ParquetUtil parquetUtil = new ParquetUtil(version, null); // just for the schema.
     return parquetUtil.getResourceSchema(resourceType);
   }
 
@@ -109,14 +110,16 @@ public class FhirEtl {
       Pipeline pipeline,
       List<PCollection<KV<String, Integer>>> allPatientIds,
       Set<String> patientAssociatedResources,
-      FhirEtlOptions options) {
+      FhirEtlOptions options,
+      FhirContext fhirContext) {
     PCollectionList<KV<String, Integer>> patientIdList =
         PCollectionList.<KV<String, Integer>>empty(pipeline).and(allPatientIds);
     PCollection<KV<String, Integer>> flattenedPatients =
         patientIdList.apply(Flatten.pCollections());
     PCollection<KV<String, Integer>> mergedPatients = flattenedPatients.apply(Sum.integersPerKey());
     final String patientType = "Patient";
-    FetchPatients fetchPatients = new FetchPatients(options, getSchema(patientType));
+    FetchPatients fetchPatients =
+        new FetchPatients(options, getSchema(patientType, fhirContext.getVersion().getVersion()));
     mergedPatients.apply(fetchPatients);
     for (String resourceType : patientAssociatedResources) {
       FetchPatientHistory fetchPatientHistory = new FetchPatientHistory(options, resourceType);
@@ -152,7 +155,8 @@ public class FhirEtl {
     if (!options.getActivePeriod().isEmpty()) {
       Set<String> patientAssociatedResources =
           fhirSearchUtil.findPatientAssociatedResources(segmentMap.keySet());
-      fetchPatientHistory(pipeline, allPatientIds, patientAssociatedResources, options);
+      fetchPatientHistory(
+          pipeline, allPatientIds, patientAssociatedResources, options, fhirContext);
     }
     PipelineResult result = pipeline.run();
     result.waitUntilFinish();
@@ -210,7 +214,8 @@ public class FhirEtl {
     if (!options.getActivePeriod().isEmpty()) {
       Set<String> patientAssociatedResources =
           fhirSearchUtil.findPatientAssociatedResources(resourceTypes);
-      fetchPatientHistory(pipeline, allPatientIds, patientAssociatedResources, options);
+      fetchPatientHistory(
+          pipeline, allPatientIds, patientAssociatedResources, options, fhirContext);
     }
     PipelineResult result = pipeline.run();
     result.waitUntilFinish();
@@ -331,7 +336,7 @@ public class FhirEtl {
   public static void main(String[] args)
       throws CannotProvideCoderException, PropertyVetoException, IOException, SQLException {
     // Todo: Autowire
-    FhirContext fhirContext = FhirContext.forR4();
+    FhirContext fhirContext = FhirContext.forR4Cached();
 
     ParquetUtil.initializeAvroConverters();
 

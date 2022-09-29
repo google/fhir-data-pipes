@@ -17,6 +17,7 @@
 package org.openmrs.analytics;
 
 import ca.uhn.fhir.context.FhirContext;
+import ca.uhn.fhir.context.FhirVersionEnum;
 import com.cerner.bunsen.avro.AvroConverter;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
@@ -42,8 +43,6 @@ import org.apache.avro.specific.SpecificData;
 import org.apache.hadoop.fs.Path;
 import org.apache.parquet.avro.AvroParquetWriter;
 import org.apache.parquet.hadoop.ParquetWriter;
-import org.hl7.fhir.convertors.advisors.impl.BaseAdvisor_30_40;
-import org.hl7.fhir.convertors.conv30_40.VersionConvertor_30_40;
 import org.hl7.fhir.r4.model.Bundle;
 import org.hl7.fhir.r4.model.Bundle.BundleEntryComponent;
 import org.hl7.fhir.r4.model.Resource;
@@ -91,18 +90,20 @@ public class ParquetUtil {
   }
 
   /**
-   * Note using this constructor may cause the files not be be flushed until `closeAllWriters` is
+   * Note using this constructor may cause the files not be flushed until `closeAllWriters` is
    * called.
    *
+   * @param fhirVersionEnum the FHIR version
    * @param parquetFilePath The directory under which the Parquet files are written.
    */
-  public ParquetUtil(String parquetFilePath) {
-    this(parquetFilePath, 0, 0, "", FileSystems.getDefault());
+  public ParquetUtil(FhirVersionEnum fhirVersionEnum, String parquetFilePath) {
+    this(fhirVersionEnum, parquetFilePath, 0, 0, "", FileSystems.getDefault());
   }
 
   /**
    * The preferred constructor for the streaming mode.
    *
+   * @param fhirVersionEnum This should match the resources intended to be converted.
    * @param parquetFilePath The directory under which the Parquet files are written.
    * @param secondsToFlush The interval after which the content of Parquet writers is flushed to
    *     disk.
@@ -110,18 +111,35 @@ public class ParquetUtil {
    *     default).
    */
   public ParquetUtil(
-      String parquetFilePath, int secondsToFlush, int rowGroupSize, String namePrefix) {
-    this(parquetFilePath, secondsToFlush, rowGroupSize, namePrefix, FileSystems.getDefault());
+      FhirVersionEnum fhirVersionEnum,
+      String parquetFilePath,
+      int secondsToFlush,
+      int rowGroupSize,
+      String namePrefix) {
+    this(
+        fhirVersionEnum,
+        parquetFilePath,
+        secondsToFlush,
+        rowGroupSize,
+        namePrefix,
+        FileSystems.getDefault());
   }
 
   @VisibleForTesting
   ParquetUtil(
+      FhirVersionEnum fhirVersionEnum,
       String parquetFilePath,
       int secondsToFlush,
       int rowGroupSize,
       String namePrefix,
       FileSystem fileSystem) {
-    this.fhirContext = FhirContext.forDstu3();
+    if (fhirVersionEnum == FhirVersionEnum.DSTU3) {
+      this.fhirContext = FhirContext.forDstu3Cached();
+    } else if (fhirVersionEnum == FhirVersionEnum.R4) {
+      this.fhirContext = FhirContext.forR4Cached();
+    } else {
+      throw new IllegalArgumentException("Only versions 3 and 4 of FHIR are supported!");
+    }
     this.converterMap = new HashMap<>();
     this.writerMap = new HashMap<>();
     this.parquetFilePath = parquetFilePath;
@@ -272,22 +290,8 @@ public class ParquetUtil {
   @VisibleForTesting
   @Nullable
   GenericRecord convertToAvro(Resource resource) {
-    // TODO update Bunsen and get rid of this R3 conversion. Note that currently the conversion
-    // can fail for some R4 resource types (and they should be excluded). Once this is done we
-    // should remove the requirement for specifying resourceTypes when running the pipeline.
-    org.hl7.fhir.dstu3.model.Resource r3Resource =
-        new VersionConvertor_30_40(new BaseAdvisor_30_40()).convertResource(resource);
-    if (r3Resource == null) {
-      log.error(
-          "R3 conversion failed; ignoring resource with type " + resource.getResourceType().name());
-      return null;
-    }
-    if (r3Resource.getResourceType() == null) {
-      log.error("No R3 resource type for R4 resource " + resource.getResourceType().name());
-      return null;
-    }
-    AvroConverter converter = getConverter(r3Resource.getResourceType().name());
+    AvroConverter converter = getConverter(resource.getResourceType().name());
     // TODO: Check why Bunsen returns IndexedRecord instead of GenericRecord.
-    return (GenericRecord) converter.resourceToAvro(r3Resource);
+    return (GenericRecord) converter.resourceToAvro(resource);
   }
 }

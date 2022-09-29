@@ -34,6 +34,7 @@ import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
+// TODO Add unit tests for R4 as well.
 public class AvroConverterTest {
 
   private static final Observation testObservation = TestData.newObservation();
