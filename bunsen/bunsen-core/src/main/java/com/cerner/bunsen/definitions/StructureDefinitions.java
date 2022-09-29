@@ -2,7 +2,7 @@ package com.cerner.bunsen.definitions;
 
 import ca.uhn.fhir.context.FhirContext;
 import ca.uhn.fhir.context.FhirVersionEnum;
-import ca.uhn.fhir.context.support.IContextValidationSupport;
+import ca.uhn.fhir.context.support.IValidationSupport;
 import com.google.common.collect.ImmutableSet;
 import java.lang.reflect.Constructor;
 import java.util.List;
@@ -39,7 +39,7 @@ public abstract class StructureDefinitions {
 
   protected final FhirContext context;
 
-  protected final IContextValidationSupport validationSupport;
+  protected final IValidationSupport validationSupport;
 
   /**
    * Creates a new instance with the given context.

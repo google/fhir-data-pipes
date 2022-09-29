@@ -26,7 +26,7 @@
     <spark.version>2.4.8</spark.version>
     <scala.version>2.11.8</scala.version>
     <scala.binary.version>2.11</scala.binary.version>
-    <hapi.fhir.version>3.8.0</hapi.fhir.version>
+    <hapi.fhir.version>6.1.1</hapi.fhir.version>
     <avro.version>1.11.1</avro.version>
     <junit.version>4.13.2</junit.version>
     <hamcrest.version>2.2</hamcrest.version>
@@ -592,12 +592,6 @@
       <dependency>
         <groupId>ca.uhn.hapi.fhir</groupId>
         <artifactId>hapi-fhir-base</artifactId>
-        <version>${hapi.fhir.version}</version>
-      </dependency>
-
-      <dependency>
-        <groupId>ca.uhn.hapi.fhir</groupId>
-        <artifactId>hapi-fhir-utilities</artifactId>
         <version>${hapi.fhir.version}</version>
       </dependency>
 

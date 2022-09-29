@@ -31,12 +31,6 @@
       <scope>compile</scope>
     </dependency>
 
-    <dependency>
-      <groupId>ca.uhn.hapi.fhir</groupId>
-      <artifactId>hapi-fhir-utilities</artifactId>
-      <scope>compile</scope>
-    </dependency>
-
     <!-- Testing -->
     <dependency>
       <groupId>com.cerner.bunsen</groupId>
