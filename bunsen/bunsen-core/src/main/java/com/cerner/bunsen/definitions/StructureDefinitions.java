@@ -109,26 +109,27 @@ public abstract class StructureDefinitions {
     Class structureDefinitionsClass;
 
     FhirVersionEnum versionEnum = context.getVersion().getVersion();
-    if (FhirVersionEnum.DSTU3.equals(versionEnum) || FhirVersionEnum.R4.equals(versionEnum)) {
-      String className = STU3_DEFINITIONS_CLASS;
-      if (FhirVersionEnum.R4.equals(versionEnum)) {
-        className = R4_DEFINITIONS_CLASS;
-      }
-      try {
-        structureDefinitionsClass = Class.forName(className);
-      } catch (ClassNotFoundException exception) {
-        throw new IllegalStateException(exception);
-      }
+    String className = null;
 
-      try {
-        Constructor constructor = structureDefinitionsClass.getConstructor(FhirContext.class);
-        return (StructureDefinitions) constructor.newInstance(context);
-      } catch (Exception exception) {
-        throw new IllegalStateException(exception);
-      }
-
+    if (FhirVersionEnum.DSTU3.equals(versionEnum)) {
+      className = STU3_DEFINITIONS_CLASS;
+    } else if (FhirVersionEnum.R4.equals(versionEnum)) {
+      className = R4_DEFINITIONS_CLASS;
     } else {
       throw new IllegalArgumentException("Unsupported FHIR version: " + versionEnum);
+    }
+
+    try {
+      structureDefinitionsClass = Class.forName(className);
+    } catch (ClassNotFoundException exception) {
+      throw new IllegalStateException(exception);
+    }
+
+    try {
+      Constructor constructor = structureDefinitionsClass.getConstructor(FhirContext.class);
+      return (StructureDefinitions) constructor.newInstance(context);
+    } catch (Exception exception) {
+      throw new IllegalStateException(exception);
     }
   }
 }

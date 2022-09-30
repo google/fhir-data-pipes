@@ -84,7 +84,7 @@ public class FhirEtl {
   }
 
   private static Schema getSchema(String resourceType, FhirVersionEnum version) {
-    ParquetUtil parquetUtil = new ParquetUtil(version, null); // just for the schema.
+    ParquetUtil parquetUtil = new ParquetUtil(version, null);
     return parquetUtil.getResourceSchema(resourceType);
   }
 
