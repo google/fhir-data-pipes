@@ -18,6 +18,7 @@ import com.cerner.bunsen.definitions.LeafExtensionConverter;
 import com.cerner.bunsen.definitions.PrimitiveConverter;
 import com.cerner.bunsen.definitions.StringConverter;
 import com.cerner.bunsen.definitions.StructureField;
+import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -92,6 +93,8 @@ public class DefinitionToAvroVisitor implements DefinitionVisitor<HapiConverter<
     }
   };
 
+  // The key set of this map should be exactly the same as StructureDefinitions.PRIMITIVE_TYPES.
+  // TODO refactor/consolidate these two.
   static final Map<String, HapiConverter<Schema>> TYPE_TO_CONVERTER =
       ImmutableMap.<String, HapiConverter<Schema>>builder()
           .put("id", ID_CONVERTER)
@@ -112,6 +115,19 @@ public class DefinitionToAvroVisitor implements DefinitionVisitor<HapiConverter<
           .put("positiveInt", INTEGER_CONVERTER)
           .put("base64Binary", STRING_CONVERTER) // FIXME: convert to Base64
           .put("uri", STRING_CONVERTER)
+          // These are added for R4 support.
+          .put("http://hl7.org/fhirpath/System.Boolean", BOOLEAN_CONVERTER)
+          .put("http://hl7.org/fhirpath/System.String", STRING_CONVERTER)
+          .put("http://hl7.org/fhirpath/System.Integer", INTEGER_CONVERTER)
+          .put("http://hl7.org/fhirpath/System.Long", INTEGER_CONVERTER)
+          .put("http://hl7.org/fhirpath/System.Decimal", DOUBLE_CONVERTER)
+          .put("http://hl7.org/fhirpath/System.DateTime", DATE_CONVERTER)
+          .put("http://hl7.org/fhirpath/System.Time", STRING_CONVERTER)
+          // TODO add the following converter; in the standard R4 implementation this seems missing!
+          //  .put("http://hl7.org/fhirpath/System.Quantity", ?)
+          .put("canonical", STRING_CONVERTER)
+          .put("url", STRING_CONVERTER)
+          .put("uuid", STRING_CONVERTER)
           .build();
 
   private static class CompositeToAvroConverter extends HapiCompositeConverter<Schema> {
@@ -371,7 +387,10 @@ public class DefinitionToAvroVisitor implements DefinitionVisitor<HapiConverter<
 
   @Override
   public HapiConverter<Schema> visitPrimitive(String elementName, String primitiveType) {
-
+    // TODO for R4, `id` elements use STRING_CONVERTER because of type changes; fix it!
+    Preconditions.checkNotNull(
+        TYPE_TO_CONVERTER.get(primitiveType),
+        "No converter found for the primitive type " + primitiveType);
     return TYPE_TO_CONVERTER.get(primitiveType);
   }
 

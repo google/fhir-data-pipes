@@ -165,7 +165,13 @@ abstract class FetchSearchPageFn<T> extends DoFn<T, KV<String, Integer>> {
             sinkPath, sinkUsername, sinkPassword, fhirContext.getRestfulClientFactory());
     openmrsUtil = new OpenmrsUtil(sourceUrl, sourceUser, sourcePw, fhirContext);
     fhirSearchUtil = new FhirSearchUtil(openmrsUtil);
-    parquetUtil = new ParquetUtil(parquetFile, secondsToFlush, rowGroupSize, stageIdentifier + "_");
+    parquetUtil =
+        new ParquetUtil(
+            fhirContext.getVersion().getVersion(),
+            parquetFile,
+            secondsToFlush,
+            rowGroupSize,
+            stageIdentifier + "_");
     if (!sinkDbUrl.isEmpty()) {
       DataSource dataSource =
           getJdbcConnectionUtil(

@@ -6,8 +6,7 @@
   <parent>
     <artifactId>bunsen-parent</artifactId>
     <groupId>com.cerner.bunsen</groupId>
-    <!-- version>0.5.12-SNAPSHOT</version -->
-    <version>0.5.13-SNAPSHOT</version>
+    <version>0.5.14-SNAPSHOT</version>
     <relativePath>../pom.xml</relativePath>
   </parent>
   <name>Bunsen US Core STU3 Resources</name>

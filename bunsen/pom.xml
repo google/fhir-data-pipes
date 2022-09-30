@@ -5,8 +5,7 @@
   <groupId>com.cerner.bunsen</groupId>
   <artifactId>bunsen-parent</artifactId>
   <packaging>pom</packaging>
-  <!-- version>0.5.12-SNAPSHOT</version -->
-  <version>0.5.13-SNAPSHOT</version>
+  <version>0.5.14-SNAPSHOT</version>
   <name>Bunsen Parent</name>
   <description>Use FHIR resources as native Spark data sets</description>
   <url>http://engineering.cerner.com/bunsen</url>
@@ -51,6 +50,7 @@
     <module>assembly</module>
     -->
     <module>bunsen-core</module>
+    <module>bunsen-core-r4</module>
     <module>bunsen-core-stu3</module>
     <module>bunsen-uscore-resources-stu3</module>
     <module>bunsen-avro</module>
@@ -173,7 +173,6 @@
             </goals>
             <configuration>
               <configLocation>google_checks.xml</configLocation>
-              <encoding>UTF-8</encoding>
               <consoleOutput>false</consoleOutput>
               <enableRulesSummary>true</enableRulesSummary>
               <enableFilesSummary>true</enableFilesSummary>
@@ -189,7 +188,6 @@
             </goals>
             <configuration>
               <configLocation>google_checks.xml</configLocation>
-              <encoding>UTF-8</encoding>
               <consoleOutput>true</consoleOutput>
               <failOnViolation>true</failOnViolation>
               <includeTestSourceDirectory>true</includeTestSourceDirectory>
@@ -509,6 +507,19 @@
       <dependency>
         <groupId>com.cerner.bunsen</groupId>
         <artifactId>bunsen-core-stu3</artifactId>
+        <version>${project.version}</version>
+        <type>test-jar</type>
+      </dependency>
+
+      <dependency>
+        <groupId>com.cerner.bunsen</groupId>
+        <artifactId>bunsen-core-r4</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+
+      <dependency>
+        <groupId>com.cerner.bunsen</groupId>
+        <artifactId>bunsen-core-r4</artifactId>
         <type>test-jar</type>
         <version>${project.version}</version>
       </dependency>
