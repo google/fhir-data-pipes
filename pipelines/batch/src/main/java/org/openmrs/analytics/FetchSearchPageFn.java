@@ -16,6 +16,7 @@
 package org.openmrs.analytics;
 
 import ca.uhn.fhir.context.FhirContext;
+import ca.uhn.fhir.context.ParserOptions;
 import ca.uhn.fhir.parser.IParser;
 import com.google.common.annotations.VisibleForTesting;
 import java.beans.PropertyVetoException;
@@ -159,6 +160,10 @@ abstract class FetchSearchPageFn<T> extends DoFn<T, KV<String, Integer>> {
   public void setup() throws SQLException, PropertyVetoException {
     log.info("Starting setup for stage " + stageIdentifier);
     fhirContext = FhirContext.forR4Cached();
+    // The documentation for `FhirContext` claims that it is thread-safe but looking at the code,
+    // it is not obvious if it is. This might be an issue when we write to it, like the next line.
+    fhirContext.setParserOptions(
+        new ParserOptions().setOverrideResourceIdWithBundleEntryFullUrl(false));
     fhirContext.getRestfulClientFactory().setSocketTimeout(20000);
     fhirStoreUtil =
         FhirStoreUtil.createFhirStoreUtil(

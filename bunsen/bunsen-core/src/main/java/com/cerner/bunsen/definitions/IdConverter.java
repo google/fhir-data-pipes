@@ -12,7 +12,11 @@ public class IdConverter<T> extends StringConverter<T> {
 
   @Override
   protected Object fromHapi(IPrimitiveType primitive) {
-    Preconditions.checkArgument(primitive instanceof IIdType);
+    // We do this hack to work around the issue in R4 where `id`s are of type `System.String`
+    // instead of just type `id`. Note `id` elements of FHIR types are strings and not `IIdType`!
+    if (!(primitive instanceof IIdType)) {
+      return super.fromHapi(primitive);
+    }
     return ((IIdType) primitive).getIdPart();
   }
 }
