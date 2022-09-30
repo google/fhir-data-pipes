@@ -82,7 +82,7 @@ public class DefinitionToAvroVisitor implements DefinitionVisitor<HapiConverter<
 
   private static final String ID_TYPE = "id";
 
-  private static final String NEW_STRING_TYPE = "http://hl7.org/fhirpath/System.String";
+  private static final String R4_STRING_TYPE = "http://hl7.org/fhirpath/System.String";
 
   // We cannot use Avro logical type `decimal` to represent FHIR `decimal` type. The reason is that
   // Avro `decimal` type  has a fixed scale and a maximum precision but with a fixed scale we have
@@ -120,8 +120,8 @@ public class DefinitionToAvroVisitor implements DefinitionVisitor<HapiConverter<
           .put("base64Binary", STRING_CONVERTER) // FIXME: convert to Base64
           .put("uri", STRING_CONVERTER)
           // These are added for R4 support.
+          .put(R4_STRING_TYPE, STRING_CONVERTER)
           .put("http://hl7.org/fhirpath/System.Boolean", BOOLEAN_CONVERTER)
-          .put("http://hl7.org/fhirpath/System.String", STRING_CONVERTER)
           .put("http://hl7.org/fhirpath/System.Integer", INTEGER_CONVERTER)
           .put("http://hl7.org/fhirpath/System.Long", INTEGER_CONVERTER)
           .put("http://hl7.org/fhirpath/System.Decimal", DOUBLE_CONVERTER)
@@ -395,7 +395,7 @@ public class DefinitionToAvroVisitor implements DefinitionVisitor<HapiConverter<
     // Note for resource `id`s we should use ID_CONVERTER but for type `id`s use STRING_CONVERTER;
     // this is handled in ID_CONVERTER.
     String realType = primitiveType;
-    if (ID_TYPE.equals(elementName) && NEW_STRING_TYPE.equals(primitiveType)) {
+    if (ID_TYPE.equals(elementName) && R4_STRING_TYPE.equals(primitiveType)) {
       realType = ID_TYPE;
     }
     Preconditions.checkNotNull(
