@@ -65,7 +65,7 @@ public class FhirSearchUtilTest {
 
   @BeforeClass
   public static void setupFhirContext() {
-    fhirContext = FhirContext.forR4();
+    fhirContext = FhirContext.forR4Cached();
   }
 
   @Before

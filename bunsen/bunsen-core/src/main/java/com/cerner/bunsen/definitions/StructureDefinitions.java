@@ -132,4 +132,5 @@ public abstract class StructureDefinitions {
       throw new IllegalStateException(exception);
     }
   }
+
 }
