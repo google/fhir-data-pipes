@@ -111,7 +111,7 @@ class BigQueryPatientQuery(base.PatientQuery):
              O.effective.dateTime obs_effective_datetime,
              O.value.quantity.value AS obs_value_quantity,
              O.subject.PatientId obs_subject_patient_id,
-             O.context.encounterId obs_context_encounter_id,
+             O.encounter.encounterId obs_context_encounter_id,
              FORMAT('%s,%s', cast(O.effective.dateTime AS string),
                     cast(O.value.quantity.value AS string)) AS date_and_value,
              FORMAT('%s,%s', cast(O.effective.dateTime AS string), OVC.code)

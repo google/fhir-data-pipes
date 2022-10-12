@@ -17,12 +17,11 @@ import unittest
 import query_lib as ql
 
 
-_BIGQUERY_DATASET = "synthea_big"
+_BIGQUERY_DATASET = "synthea_big_r4"
 _PROJECT_NAME = "fhir-analytics-test"
 _CODE_SYSTEM = "http://www.ampathkenya.org"
 
-_SPARK_BASE_DIR = "./test_files/parquet_big_db"
-
+_SPARK_BASE_DIR = "./test_files/parquet_big_db_r4"
 
 class _PatientQueryTest:
     """
@@ -39,7 +38,7 @@ class _PatientQueryTest:
         actual_df = pq.get_patient_encounter_view(
             force_location_type_columns=True
         )
-        self.assertEqual(62848, len(actual_df))
+        self.assertEqual(62833, len(actual_df))
         expected_cols = sorted(
             [
                 "encPatientId",
