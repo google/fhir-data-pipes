@@ -79,6 +79,7 @@ public class DebeziumListener extends RouteBuilder {
             fhirContext.getRestfulClientFactory());
     ParquetUtil parquetUtil =
         new ParquetUtil(
+            fhirContext.getVersion().getVersion(),
             params.outputParquetPath,
             params.secondsToFlushParquetFiles,
             params.rowGroupSizeForParquetFiles,

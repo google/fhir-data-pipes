@@ -6,8 +6,7 @@
   <parent>
     <artifactId>bunsen-parent</artifactId>
     <groupId>com.cerner.bunsen</groupId>
-    <!-- version>0.5.12-SNAPSHOT</version -->
-    <version>0.5.13-SNAPSHOT</version>
+    <version>0.5.14-SNAPSHOT</version>
     <relativePath>../pom.xml</relativePath>
   </parent>
   <name>Bunsen Core Stu3</name>
@@ -43,14 +42,8 @@
       <scope>compile</scope>
     </dependency>
 
-    <dependency>
-      <groupId>ca.uhn.hapi.fhir</groupId>
-      <artifactId>hapi-fhir-utilities</artifactId>
-      <scope>compile</scope>
-    </dependency>
-
     <!-- Testing -->
-
+    <!-- TODO this "testing" claim does not seem to be tru; update! -->
     <!-- HAPI FHIR DSTU3 resources included only for unit tests. -->
     <dependency>
       <groupId>ca.uhn.hapi.fhir</groupId>

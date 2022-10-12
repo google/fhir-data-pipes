@@ -1,7 +1,7 @@
 package com.cerner.bunsen.definitions.stu3;
 
 import ca.uhn.fhir.context.FhirContext;
-import ca.uhn.fhir.context.support.IContextValidationSupport;
+import ca.uhn.fhir.context.support.IValidationSupport;
 import com.cerner.bunsen.definitions.DefinitionVisitor;
 import com.cerner.bunsen.definitions.FhirConversionSupport;
 import com.cerner.bunsen.definitions.QualifiedPath;
@@ -76,7 +76,7 @@ public class Stu3StructureDefinitions extends StructureDefinitions {
         || element.getTypeFirstRep().getCode().equals("BackboneElement")
         || element.getTypeFirstRep().getCode().equals("Element")
         ? null
-        : (StructureDefinition) validationSupport.fetchStructureDefinition(context,
+        : (StructureDefinition) validationSupport.fetchStructureDefinition(
             element.getTypeFirstRep().getCode());
   }
 
@@ -122,7 +122,7 @@ public class Stu3StructureDefinitions extends StructureDefinitions {
     // FIXME: extension is a type rather than an external structure....
     StructureDefinition definition = element.getTypeFirstRep().getProfile() != null
         ? (StructureDefinition) validationSupport
-        .fetchStructureDefinition(context, element.getTypeFirstRep().getProfile())
+        .fetchStructureDefinition(element.getTypeFirstRep().getProfile())
         : null;
 
     List<StructureField<T>> extensions;
@@ -309,7 +309,7 @@ public class Stu3StructureDefinitions extends StructureDefinitions {
 
           StructureDefinition structureDefinition =
               (StructureDefinition) validationSupport
-                  .fetchStructureDefinition(context, typeRef.getCode());
+                  .fetchStructureDefinition(typeRef.getCode());
 
           T child = transform(visitor, element, structureDefinition, new ArrayDeque<>());
 
@@ -486,7 +486,7 @@ public class Stu3StructureDefinitions extends StructureDefinitions {
   public <T> T transform(DefinitionVisitor<T> visitor, String resourceTypeUrl) {
 
     StructureDefinition definition = (StructureDefinition) context.getValidationSupport()
-        .fetchStructureDefinition(context, resourceTypeUrl);
+        .fetchStructureDefinition(resourceTypeUrl);
 
     if (definition == null) {
 
@@ -512,7 +512,7 @@ public class Stu3StructureDefinitions extends StructureDefinitions {
       List<String> containedResourceTypeUrls) {
 
     StructureDefinition definition = (StructureDefinition) context.getValidationSupport()
-        .fetchStructureDefinition(context, resourceTypeUrl);
+        .fetchStructureDefinition(resourceTypeUrl);
 
     if (definition == null) {
 
@@ -523,7 +523,7 @@ public class Stu3StructureDefinitions extends StructureDefinitions {
         .map(containedResourceTypeUrl -> {
           StructureDefinition containedDefinition = (StructureDefinition) context
               .getValidationSupport()
-              .fetchStructureDefinition(context, containedResourceTypeUrl);
+              .fetchStructureDefinition(containedResourceTypeUrl);
 
           if (containedDefinition == null) {
 
@@ -578,10 +578,10 @@ public class Stu3StructureDefinitions extends StructureDefinitions {
           .filter(type -> type.getTargetProfile() != null)
           .map(type -> {
 
-            IContextValidationSupport validation = context.getValidationSupport();
+            IValidationSupport validation = context.getValidationSupport();
 
             StructureDefinition targetDefinition = (StructureDefinition)
-                validation.fetchStructureDefinition(context, type.getTargetProfile());
+                validation.fetchStructureDefinition(type.getTargetProfile());
 
             return targetDefinition.getType();
           })

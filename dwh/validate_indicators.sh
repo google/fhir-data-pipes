@@ -50,7 +50,7 @@ TEMP_OUT=$(mktemp indicators_output_XXXXXX.csv --tmpdir)
 echo "Output indicators file is: ${TEMP_OUT}"
 
 # Setting the reporting period to a year because the synthetic data is sparse.
-spark-submit indicators.py --src_dir=./test_files/parquet_big_db \
+spark-submit indicators.py --src_dir=./test_files/parquet_big_db_r4 \
   --last_date=2010-01-01 --num_days=365 --output_csv=${TEMP_OUT}
 
 ##########################################
@@ -85,35 +85,35 @@ function validate() {
 
 FAILED=""
 # PVLS counts
-validate "Suppressed, non-suppressed, none, male_25 numbers are" "8,751,0,2" 3
+validate "Suppressed, non-suppressed, none, male_25 numbers are" "8,752,0,2" 3
 # PVLS ratio
 validate "Suppressed, non-suppressed, none, male_25 ratios are" \
-  "0.0105,0.989,0,0.00264" 4
+  "0.0105,0.989,0,0.00263" 4
 # TX_NEW counts
 # TODO validate these manually by querying the DB
-validate "TX_NEW, non-TX_NEW, none, male_25 numbers are" "95,436,0,24" 6
+validate "TX_NEW, non-TX_NEW, none, male_25 numbers are" "95,439,0,24" 6
 # TX_NEW ratio
-validate "TX_NEW, non-TX_NEW, none, male_25 ratios are" "0.179,0.821,0,0.0452" 7
+validate "TX_NEW, non-TX_NEW, none, male_25 ratios are" "0.178,0.822,0,0.0449" 7
 # TB_STAT counts
-validate "TB_STAT, non-TB_STAT, none, male_25 numbers are" "86,445,0,29" 9
+validate "TB_STAT, non-TB_STAT, none, male_25 numbers are" "86,448,0,29" 9
 # TB_STAT ratio
 validate "TB_STAT, non-TB_STAT, none, male_25 ratios are" \
-  "0.162,0.838,0,0.0546" 10
+  "0.161,0.839,0,0.0543" 10
 # TX_CURR counts
-validate "TX_CURR, non-TX_CURR, none, male_25 numbers are" "116,415,0,29" 12
+validate "TX_CURR, non-TX_CURR, none, male_25 numbers are" "116,418,0,29" 12
 # TX_CURR ratio
 validate "TX_CURR, non-TX_CURR, none, male_25 ratios are" \
-  "0.218,0.782,0,0.0546" 13
+  "0.217,0.783,0,0.0543" 13
 # TB_ART counts
-validate "TB_ART, non-TB_ART, none, male_25 numbers are" "43,488,0,13" 15
+validate "TB_ART, non-TB_ART, none, male_25 numbers are" "43,491,0,13" 15
 # TB_ART ratio
 validate "TB_ART, non-TB_ART, none, male_25 ratios are" \
-  "0.081,0.919,0,0.0245" 16
+  "0.0805,0.919,0,0.0243" 16
 # TB_PREV counts
-validate "TB_PREV, non-TB_PREV, none, male_25 numbers are" "58,6.34e+03,0,8" 18
+validate "TB_PREV, non-TB_PREV, none, male_25 numbers are" "57,6.35e+03,0,8" 18
 # TB_PREV ratio
 validate "TB_PREV, non-TB_PREV, none, male_25 ratios are" \
-  "0.00906,0.991,0,0.00125" 19
+  "0.0089,0.991,0,0.00125" 19
 
 # TX_TB counts
 validate "TX_TB, non-TX_TB, none, male_25 numbers are" "0,6.4e+03,0,0" 21

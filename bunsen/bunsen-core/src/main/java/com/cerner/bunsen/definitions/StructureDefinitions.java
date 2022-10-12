@@ -2,7 +2,7 @@ package com.cerner.bunsen.definitions;
 
 import ca.uhn.fhir.context.FhirContext;
 import ca.uhn.fhir.context.FhirVersionEnum;
-import ca.uhn.fhir.context.support.IContextValidationSupport;
+import ca.uhn.fhir.context.support.IValidationSupport;
 import com.google.common.collect.ImmutableSet;
 import java.lang.reflect.Constructor;
 import java.util.List;
@@ -32,14 +32,28 @@ public abstract class StructureDefinitions {
       .add("positiveInt")
       .add("base64Binary")
       .add("uri")
+      // TODO: Figure out why these are added to R4 resource definitions.
+      .add("http://hl7.org/fhirpath/System.Boolean")
+      .add("http://hl7.org/fhirpath/System.String")
+      .add("http://hl7.org/fhirpath/System.Integer")
+      .add("http://hl7.org/fhirpath/System.Long")
+      .add("http://hl7.org/fhirpath/System.Decimal")
+      .add("http://hl7.org/fhirpath/System.DateTime")
+      .add("http://hl7.org/fhirpath/System.Time")
+      .add("http://hl7.org/fhirpath/System.Quantity")
+      .add("canonical")
+      .add("url")
       .build();
 
   private static final String STU3_DEFINITIONS_CLASS =
       "com.cerner.bunsen.definitions.stu3.Stu3StructureDefinitions";
 
+  private static final String R4_DEFINITIONS_CLASS =
+      "com.cerner.bunsen.definitions.r4.R4StructureDefinitions";
+
   protected final FhirContext context;
 
-  protected final IContextValidationSupport validationSupport;
+  protected final IValidationSupport validationSupport;
 
   /**
    * Creates a new instance with the given context.
@@ -94,30 +108,29 @@ public abstract class StructureDefinitions {
 
     Class structureDefinitionsClass;
 
-    if (FhirVersionEnum.DSTU3.equals(context.getVersion().getVersion())) {
+    FhirVersionEnum versionEnum = context.getVersion().getVersion();
+    String className = null;
 
-      try {
-        structureDefinitionsClass = Class.forName(STU3_DEFINITIONS_CLASS);
-
-
-      } catch (ClassNotFoundException exception) {
-
-        throw new IllegalStateException(exception);
-
-      }
-
-      try {
-        Constructor constructor = structureDefinitionsClass.getConstructor(FhirContext.class);
-
-        return (StructureDefinitions) constructor.newInstance(context);
-
-      } catch (Exception exception) {
-        throw new IllegalStateException(exception);
-      }
-
+    if (FhirVersionEnum.DSTU3.equals(versionEnum)) {
+      className = STU3_DEFINITIONS_CLASS;
+    } else if (FhirVersionEnum.R4.equals(versionEnum)) {
+      className = R4_DEFINITIONS_CLASS;
     } else {
-      throw new IllegalArgumentException("Unsupported FHIR version: "
-        + context.getVersion().getVersion());
+      throw new IllegalArgumentException("Unsupported FHIR version: " + versionEnum);
+    }
+
+    try {
+      structureDefinitionsClass = Class.forName(className);
+    } catch (ClassNotFoundException exception) {
+      throw new IllegalStateException(exception);
+    }
+
+    try {
+      Constructor constructor = structureDefinitionsClass.getConstructor(FhirContext.class);
+      return (StructureDefinitions) constructor.newInstance(context);
+    } catch (Exception exception) {
+      throw new IllegalStateException(exception);
     }
   }
+
 }

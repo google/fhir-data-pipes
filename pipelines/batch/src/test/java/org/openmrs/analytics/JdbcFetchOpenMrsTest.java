@@ -44,8 +44,8 @@ import org.apache.beam.sdk.transforms.Create;
 import org.apache.beam.sdk.values.PCollection;
 import org.apache.commons.dbcp2.PoolingDataSource;
 import org.apache.commons.io.FileUtils;
-import org.hl7.fhir.dstu3.model.Encounter;
-import org.hl7.fhir.dstu3.model.Resource;
+import org.hl7.fhir.r4.model.Encounter;
+import org.hl7.fhir.r4.model.Resource;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -76,7 +76,7 @@ public class JdbcFetchOpenMrsTest extends TestCase {
   public void setup() throws IOException, PropertyVetoException {
     URL url = Resources.getResource("encounter.json");
     resourceStr = Resources.toString(url, StandardCharsets.UTF_8);
-    this.fhirContext = FhirContext.forDstu3();
+    this.fhirContext = FhirContext.forR4Cached();
     IParser parser = fhirContext.newJsonParser();
     resource = parser.parseResource(Encounter.class, resourceStr);
 
@@ -99,7 +99,7 @@ public class JdbcFetchOpenMrsTest extends TestCase {
     // TODO jdbcConnectionUtil should be replaced by a mocked JdbcConnectionUtil which does not
     // depend on options either, since we don't need real DB connections for unit-testing.
     jdbcFetchUtil = new JdbcFetchOpenMrs(jdbcConnectionUtil);
-    parquetUtil = new ParquetUtil(basePath);
+    parquetUtil = new ParquetUtil(fhirContext.getVersion().getVersion(), basePath);
     // clean up if folder exists
     File file = new File(basePath);
     if (file.exists()) FileUtils.cleanDirectory(file);

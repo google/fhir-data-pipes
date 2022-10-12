@@ -111,13 +111,19 @@
     <dependency>
       <groupId>com.cerner.bunsen</groupId>
       <artifactId>bunsen-core-stu3</artifactId>
-      <version>0.5.13-SNAPSHOT</version>
+      <version>0.5.14-SNAPSHOT</version>
+    </dependency>
+
+    <dependency>
+      <groupId>com.cerner.bunsen</groupId>
+      <artifactId>bunsen-core-r4</artifactId>
+      <version>0.5.14-SNAPSHOT</version>
     </dependency>
 
     <dependency>
       <groupId>com.cerner.bunsen</groupId>
       <artifactId>bunsen-avro</artifactId>
-      <version>0.5.13-SNAPSHOT</version>
+      <version>0.5.14-SNAPSHOT</version>
     </dependency>
 
     <dependency>
