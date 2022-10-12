@@ -316,7 +316,7 @@ class SparkPatientQuery(base.PatientQuery):
                 F.col("effective.dateTime").alias("dateTime"),
                 F.col("dateAndValue"),
                 F.col("dateAndValueCode"),
-                F.col("context.EncounterId").alias("encounterId"),
+                F.col("encounter.EncounterId").alias("encounterId"),
             )
         )
 
