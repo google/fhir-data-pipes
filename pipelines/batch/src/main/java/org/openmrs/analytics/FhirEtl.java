@@ -172,8 +172,8 @@ public class FhirEtl {
         new JdbcConnectionUtil(
             options.getJdbcDriverClass(),
             dbConfig.makeJdbsUrlFromConfig(),
-            dbConfig.getDbUser(),
-            dbConfig.getDbPassword(),
+            dbConfig.getDatabaseUser(),
+            dbConfig.getDatabasePassword(),
             options.getJdbcInitialPoolSize(),
             options.getJdbcMaxPoolSize());
     JdbcFetchOpenMrs jdbcUtil = new JdbcFetchOpenMrs(jdbcConnectionUtil);
@@ -279,8 +279,8 @@ public class FhirEtl {
         new JdbcConnectionUtil(
             options.getJdbcDriverClass(),
             dbConfig.makeJdbsUrlFromConfig(),
-            dbConfig.getDbUser(),
-            dbConfig.getDbPassword(),
+            dbConfig.getDatabaseUser(),
+            dbConfig.getDatabasePassword(),
             options.getJdbcInitialPoolSize(),
             options.getJdbcMaxPoolSize());
     FhirSearchUtil fhirSearchUtil = createFhirSearchUtil(options, fhirContext);
@@ -335,28 +335,27 @@ public class FhirEtl {
 
   public static void main(String[] args)
       throws CannotProvideCoderException, PropertyVetoException, IOException, SQLException {
-    // Todo: Autowire
-    FhirContext fhirContext = FhirContext.forR4Cached();
 
     ParquetUtil.initializeAvroConverters();
 
+    PipelineOptionsFactory.register(FhirEtlOptions.class);
     FhirEtlOptions options =
         PipelineOptionsFactory.fromArgs(args).withValidation().as(FhirEtlOptions.class);
     log.info("Flags: " + options);
     validateOptions(options);
+    // TODO: Check if we can use some sort of dependency-injection (e.g., `@Autowired`).
+    FhirContext fhirContext = FhirContext.forR4Cached();
 
     if (!options.getSinkDbUrl().isEmpty()) {
       JdbcResourceWriter.createTables(options);
     }
 
     if (options.isJdbcModeEnabled()) {
+      DatabaseConfiguration dbConfig =
+          DatabaseConfiguration.createConfigFromFile(options.getFhirDatabaseConfigPath());
       if (options.isJdbcModeHapi()) {
-        DatabaseConfiguration dbConfig =
-            DatabaseConfiguration.createConfigFromFile(options.getFhirDatabaseConfigPath());
         runHapiJdbcFetch(options, dbConfig, fhirContext);
       } else {
-        DatabaseConfiguration dbConfig =
-            DatabaseConfiguration.createConfigFromFile(options.getFhirDebeziumConfigPath());
         runFhirJdbcFetch(options, dbConfig, fhirContext);
       }
 

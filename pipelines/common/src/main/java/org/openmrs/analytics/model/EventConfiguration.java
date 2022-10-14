@@ -19,37 +19,23 @@ import java.util.LinkedHashMap;
 import lombok.Getter;
 import lombok.Setter;
 
+@Getter
+@Setter
 public class EventConfiguration {
-
-  @Getter @Setter private boolean enabled;
-
-  @Getter @Setter private String title;
-
-  @Getter @Setter private String parentForeignKey;
-
-  @Getter @Setter private String childPrimaryKey;
-
-  @Getter @Setter private String parentTable;
-
-  @Getter @Setter private LinkedHashMap<String, String> linkTemplates;
-
-  @Getter @Setter private String databaseHostName;
-
-  @Getter @Setter private int databasePort;
-
-  @Getter @Setter private String databaseUser;
-
-  @Getter @Setter private String databasePassword;
-
-  @Getter @Setter private int databaseServerId;
-
-  @Getter @Setter private String databaseServerName;
-
-  @Getter @Setter private String databaseSchema;
-
-  @Getter @Setter private String databaseOffsetStorage;
-
-  @Getter @Setter private String databaseHistory;
-
-  @Getter @Setter private String snapshotMode;
+  private boolean enabled;
+  private String title;
+  private String parentForeignKey;
+  private String childPrimaryKey;
+  private String parentTable;
+  private LinkedHashMap<String, String> linkTemplates;
+  private String databaseHostName;
+  private int databasePort;
+  private String databaseUser;
+  private String databasePassword;
+  private int databaseServerId;
+  private String databaseServerName;
+  private String databaseSchema;
+  private String databaseOffsetStorage;
+  private String databaseHistory;
+  private String snapshotMode;
 }

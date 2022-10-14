@@ -53,8 +53,8 @@ public class JdbcFetchHapiTest extends TestCase {
         new JdbcConnectionUtil(
             options.getJdbcDriverClass(),
             dbConfig.makeJdbsUrlFromConfig(),
-            dbConfig.getDbUser(),
-            dbConfig.getDbPassword(),
+            dbConfig.getDatabaseUser(),
+            dbConfig.getDatabasePassword(),
             options.getJdbcInitialPoolSize(),
             options.getJdbcMaxPoolSize());
 

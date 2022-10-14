@@ -88,8 +88,8 @@ public class DebeziumListener extends RouteBuilder {
         new JdbcConnectionUtil(
             params.jdbcDriverClass,
             this.databaseConfiguration.makeJdbsUrlFromConfig(),
-            this.databaseConfiguration.getDebeziumConfigurations().get("databaseUser"),
-            this.databaseConfiguration.getDebeziumConfigurations().get("databasePassword"),
+            this.databaseConfiguration.getDatabaseUser(),
+            this.databaseConfiguration.getDatabasePassword(),
             params.initialPoolSize,
             params.jdbcMaxPoolSize);
     UuidUtil uuidUtil = new UuidUtil(jdbcConnectionUtil);
@@ -116,19 +116,19 @@ public class DebeziumListener extends RouteBuilder {
         + debeziumConfigs.get("databaseServerName")
         + "?"
         + "databaseHostname="
-        + debeziumConfigs.get("databaseHostName")
+        + databaseConfiguration.getDatabaseHostName()
         + "&databaseServerId="
         + debeziumConfigs.get("databaseServerId")
         + "&databasePort="
-        + debeziumConfigs.get("databasePort")
+        + databaseConfiguration.getDatabasePort()
         + "&databaseUser="
-        + debeziumConfigs.get("databaseUser")
+        + databaseConfiguration.getDatabaseUser()
         + "&databasePassword="
-        + debeziumConfigs.get("databasePassword")
+        + databaseConfiguration.getDatabasePassword()
         + "&databaseServerName="
         + debeziumConfigs.get("databaseServerName")
         + "&databaseWhitelist="
-        + debeziumConfigs.get("databaseName")
+        + databaseConfiguration.getDatabaseName()
         + "&offsetStorage=org.apache.kafka.connect.storage.FileOffsetBackingStore"
         + "&offsetStorageFileName="
         + debeziumConfigs.get("databaseOffsetStorage")
