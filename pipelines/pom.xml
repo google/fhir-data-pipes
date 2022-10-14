@@ -38,7 +38,7 @@
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <junit.version>4.13.2</junit.version>
     <slf4j.version>2.0.3</slf4j.version>
-    <log4j2.version>2.19.0</log4j2.version>
+    <logback.version>1.4.3</logback.version>
     <hapifhirVersion>6.1.2</hapifhirVersion>
     <hamcrest.version>2.2</hamcrest.version>
     <openmrsPlatformVersion>2.6.0-SNAPSHOT</openmrsPlatformVersion>
@@ -96,11 +96,11 @@
       <version>${slf4j.version}</version>
     </dependency>
 
-    <!-- Use log4j2 as the logging framework. -->
+    <!-- Use logback as the logging framework. -->
     <dependency>
-      <groupId>org.apache.logging.log4j</groupId>
-      <artifactId>log4j-slf4j-impl</artifactId>
-      <version>${log4j2.version}</version>
+      <groupId>ch.qos.logback</groupId>
+      <artifactId>logback-classic</artifactId>
+      <version>${logback.version}</version>
       <scope>runtime</scope>
     </dependency>
 
