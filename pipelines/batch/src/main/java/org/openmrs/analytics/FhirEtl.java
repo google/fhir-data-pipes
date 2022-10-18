@@ -163,19 +163,23 @@ public class FhirEtl {
     EtlUtils.logMetrics(result.metrics());
   }
 
+  private static JdbcConnectionUtil createJdbcConnection(
+      FhirEtlOptions options, DatabaseConfiguration dbConfig) throws PropertyVetoException {
+    return new JdbcConnectionUtil(
+        options.getJdbcDriverClass(),
+        dbConfig.makeJdbsUrlFromConfig(),
+        dbConfig.getDatabaseUser(),
+        dbConfig.getDatabasePassword(),
+        options.getJdbcInitialPoolSize(),
+        options.getJdbcMaxPoolSize());
+  }
+
   static void runFhirJdbcFetch(
       FhirEtlOptions options, DatabaseConfiguration dbConfig, FhirContext fhirContext)
       throws PropertyVetoException, IOException, SQLException, CannotProvideCoderException {
     FhirSearchUtil fhirSearchUtil = createFhirSearchUtil(options, fhirContext);
     Pipeline pipeline = Pipeline.create(options);
-    JdbcConnectionUtil jdbcConnectionUtil =
-        new JdbcConnectionUtil(
-            options.getJdbcDriverClass(),
-            dbConfig.makeJdbsUrlFromConfig(),
-            dbConfig.getDbUser(),
-            dbConfig.getDbPassword(),
-            options.getJdbcInitialPoolSize(),
-            options.getJdbcMaxPoolSize());
+    JdbcConnectionUtil jdbcConnectionUtil = createJdbcConnection(options, dbConfig);
     JdbcFetchOpenMrs jdbcUtil = new JdbcFetchOpenMrs(jdbcConnectionUtil);
     int batchSize =
         Math.min(
@@ -275,14 +279,8 @@ public class FhirEtl {
       FhirEtlOptions options, DatabaseConfiguration dbConfig, FhirContext fhirContext)
       throws PropertyVetoException {
     Pipeline pipeline = Pipeline.create(options);
-    JdbcConnectionUtil jdbcConnectionUtil =
-        new JdbcConnectionUtil(
-            options.getJdbcDriverClass(),
-            dbConfig.makeJdbsUrlFromConfig(),
-            dbConfig.getDbUser(),
-            dbConfig.getDbPassword(),
-            options.getJdbcInitialPoolSize(),
-            options.getJdbcMaxPoolSize());
+    JdbcConnectionUtil jdbcConnectionUtil = createJdbcConnection(options, dbConfig);
+
     FhirSearchUtil fhirSearchUtil = createFhirSearchUtil(options, fhirContext);
 
     // Get the resource count for each resource type and distribute the query workload based on
@@ -335,28 +333,27 @@ public class FhirEtl {
 
   public static void main(String[] args)
       throws CannotProvideCoderException, PropertyVetoException, IOException, SQLException {
-    // Todo: Autowire
-    FhirContext fhirContext = FhirContext.forR4Cached();
 
     ParquetUtil.initializeAvroConverters();
 
+    PipelineOptionsFactory.register(FhirEtlOptions.class);
     FhirEtlOptions options =
         PipelineOptionsFactory.fromArgs(args).withValidation().as(FhirEtlOptions.class);
     log.info("Flags: " + options);
     validateOptions(options);
+    // TODO: Check if we can use some sort of dependency-injection (e.g., `@Autowired`).
+    FhirContext fhirContext = FhirContext.forR4Cached();
 
     if (!options.getSinkDbUrl().isEmpty()) {
       JdbcResourceWriter.createTables(options);
     }
 
     if (options.isJdbcModeEnabled()) {
+      DatabaseConfiguration dbConfig =
+          DatabaseConfiguration.createConfigFromFile(options.getFhirDatabaseConfigPath());
       if (options.isJdbcModeHapi()) {
-        DatabaseConfiguration dbConfig =
-            DatabaseConfiguration.createConfigFromFile(options.getFhirDatabaseConfigPath());
         runHapiJdbcFetch(options, dbConfig, fhirContext);
       } else {
-        DatabaseConfiguration dbConfig =
-            DatabaseConfiguration.createConfigFromFile(options.getFhirDebeziumConfigPath());
         runFhirJdbcFetch(options, dbConfig, fhirContext);
       }
 

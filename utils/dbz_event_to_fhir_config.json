@@ -1,13 +1,13 @@
 {
+  "databaseService" : "mysql",
+  "databaseHostName" : "openmrs-fhir-mysql",
+  "databasePort" : "3306",
+  "databaseUser" : "root",
+  "databasePassword" : "debezium",
+  "databaseName" : "openmrs",
   "debeziumConfigurations": {
-    "databaseService" : "mysql",
     "databaseServerName" : "MyDbName",
-    "databaseHostName" : "openmrs-fhir-mysql",
     "databaseServerId" : "223344",
-    "databasePort" : "3306",
-    "databaseUser" : "root",
-    "databasePassword" : "debezium",
-    "databaseName" : "openmrs",
     "databaseOffsetStorage" : "data/offset.dat",
     "databaseHistory" : "data/dbhistory.dat",
     "snapshotMode" : "schema_only"

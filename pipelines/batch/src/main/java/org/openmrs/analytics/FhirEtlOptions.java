@@ -120,13 +120,11 @@ public interface FhirEtlOptions extends PipelineOptions {
 
   void setJdbcInitialPoolSize(int value);
 
-  @Description("Path to Table-FHIR map config")
-  @Default.String("../utils/dbz_event_to_fhir_config.json")
-  String getFhirDebeziumConfigPath();
-
-  void setFhirDebeziumConfigPath(String value);
-
-  @Description("Path to FHIR database config for Jdbc mode")
+  @Description(
+      "Path to FHIR database config for JDBC mode; the default value file (i.e.,"
+          + " hapi-postgres-config.json) is for a HAPI server with PostgreSQL database. There is"
+          + " also a sample file for an OpenMRS server with MySQL database"
+          + " (dbz_event_to_fhir_config.json); the Debezium config can be ignored for batch.")
   @Default.String("../utils/hapi-postgres-config.json")
   String getFhirDatabaseConfigPath();
 

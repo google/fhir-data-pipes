@@ -31,37 +31,19 @@ import lombok.Setter;
 @Setter
 public class DatabaseConfiguration {
 
+  // General configuration parameters that needs to be exposed beyond Debezium.
+  private String databaseService;
+  private String databaseHostName;
+  private String databasePort;
+  private String databaseUser;
+  private String databasePassword;
+  private String databaseName;
+
   private LinkedHashMap<String, EventConfiguration> eventConfigurations;
 
-  private LinkedHashMap<String, String> debeziumConfigurations;
-
-  // Accessor functions for any configuration parameter that needs to be exposed beyond Debezium.
   // For Debezium only configs, it is okay to directly use the string values which is done mostly
   // in `DebeziumListener.getDebeziumConfig`.
-
-  public String getDbUser() {
-    return debeziumConfigurations.get("databaseUser");
-  }
-
-  public String getDbPassword() {
-    return debeziumConfigurations.get("databasePassword");
-  }
-
-  public String getDbPort() {
-    return debeziumConfigurations.get("databasePort");
-  }
-
-  public String getDbHostName() {
-    return debeziumConfigurations.get("databaseHostName");
-  }
-
-  public String getDbName() {
-    return debeziumConfigurations.get("databaseName");
-  }
-
-  public String getDbService() {
-    return debeziumConfigurations.get("databaseService");
-  }
+  private LinkedHashMap<String, String> debeziumConfigurations;
 
   /**
    * From the config parameters, this reconstructs a JDBC URL.
@@ -69,11 +51,12 @@ public class DatabaseConfiguration {
    * @return the JDBC URL, e.g., "jdbc:mysql://localhost:3306/openmrs".
    */
   public String makeJdbsUrlFromConfig() {
-    Preconditions.checkNotNull(getDbHostName());
-    Preconditions.checkNotNull(getDbPort());
-    Preconditions.checkNotNull(getDbName());
+    Preconditions.checkNotNull(getDatabaseHostName());
+    Preconditions.checkNotNull(getDatabasePort());
+    Preconditions.checkNotNull(getDatabaseName());
     return String.format(
-        "jdbc:%s://%s:%s/%s", getDbService(), getDbHostName(), getDbPort(), getDbName());
+        "jdbc:%s://%s:%s/%s",
+        getDatabaseService(), getDatabaseHostName(), getDatabasePort(), getDatabaseName());
   }
 
   /**

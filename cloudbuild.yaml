@@ -152,6 +152,7 @@ steps:
     - SINK_PATH=http://sink-server:8080/fhir
     - SINK_USERNAME=hapi
     - SINK_PASSWORD=hapi
+    - FHIR_DATABASE_CONFIG_PATH=/workspace/utils/dbz_event_to_fhir_config.json
 
 - name: '${_REPOSITORY}/e2e-tests:${_TAG}'
   id: 'Run E2E Test JDBC with OpenMRS source'
