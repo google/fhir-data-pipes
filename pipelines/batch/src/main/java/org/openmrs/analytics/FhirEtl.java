@@ -163,19 +163,23 @@ public class FhirEtl {
     EtlUtils.logMetrics(result.metrics());
   }
 
+  private static JdbcConnectionUtil createJdbcConnection(
+      FhirEtlOptions options, DatabaseConfiguration dbConfig) throws PropertyVetoException {
+    return new JdbcConnectionUtil(
+        options.getJdbcDriverClass(),
+        dbConfig.makeJdbsUrlFromConfig(),
+        dbConfig.getDatabaseUser(),
+        dbConfig.getDatabasePassword(),
+        options.getJdbcInitialPoolSize(),
+        options.getJdbcMaxPoolSize());
+  }
+
   static void runFhirJdbcFetch(
       FhirEtlOptions options, DatabaseConfiguration dbConfig, FhirContext fhirContext)
       throws PropertyVetoException, IOException, SQLException, CannotProvideCoderException {
     FhirSearchUtil fhirSearchUtil = createFhirSearchUtil(options, fhirContext);
     Pipeline pipeline = Pipeline.create(options);
-    JdbcConnectionUtil jdbcConnectionUtil =
-        new JdbcConnectionUtil(
-            options.getJdbcDriverClass(),
-            dbConfig.makeJdbsUrlFromConfig(),
-            dbConfig.getDatabaseUser(),
-            dbConfig.getDatabasePassword(),
-            options.getJdbcInitialPoolSize(),
-            options.getJdbcMaxPoolSize());
+    JdbcConnectionUtil jdbcConnectionUtil = createJdbcConnection(options, dbConfig);
     JdbcFetchOpenMrs jdbcUtil = new JdbcFetchOpenMrs(jdbcConnectionUtil);
     int batchSize =
         Math.min(
@@ -275,14 +279,8 @@ public class FhirEtl {
       FhirEtlOptions options, DatabaseConfiguration dbConfig, FhirContext fhirContext)
       throws PropertyVetoException {
     Pipeline pipeline = Pipeline.create(options);
-    JdbcConnectionUtil jdbcConnectionUtil =
-        new JdbcConnectionUtil(
-            options.getJdbcDriverClass(),
-            dbConfig.makeJdbsUrlFromConfig(),
-            dbConfig.getDatabaseUser(),
-            dbConfig.getDatabasePassword(),
-            options.getJdbcInitialPoolSize(),
-            options.getJdbcMaxPoolSize());
+    JdbcConnectionUtil jdbcConnectionUtil = createJdbcConnection(options, dbConfig);
+
     FhirSearchUtil fhirSearchUtil = createFhirSearchUtil(options, fhirContext);
 
     // Get the resource count for each resource type and distribute the query workload based on
