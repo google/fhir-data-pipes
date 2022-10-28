@@ -37,6 +37,7 @@ services:
       - spring.datasource.password=admin
       - spring.datasource.driverClassName=org.postgresql.Driver
       - spring.jpa.properties.hibernate.dialect=org.hibernate.dialect.PostgreSQL95Dialect
+      - hapi.fhir.bulk_export_enabled=true
 
     restart: unless-stopped
     ports:
