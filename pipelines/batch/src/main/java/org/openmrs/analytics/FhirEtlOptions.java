@@ -102,7 +102,7 @@ public interface FhirEtlOptions extends PipelineOptions {
   void setOutputParquetPath(String value);
 
   /** JDBC DB settings: defaults values have been pointed to ./openmrs-compose.yaml */
-  @Description("JDBC MySQL driver class")
+  @Description("JDBC driver class")
   @Default.String("com.mysql.cj.jdbc.Driver")
   String getJdbcDriverClass();
 
@@ -162,15 +162,16 @@ public interface FhirEtlOptions extends PipelineOptions {
 
   void setRowGroupSizeForParquetFiles(int value);
 
+  // TODO: Either remove this feature or properly implement patient history fetching based on
+  //   Patient Compartment definition.
   @Description(
       "The active period with format: 'DATE1_DATE2' OR 'DATE1'. The first form declares the first"
           + " date-time (non-inclusive) and last date-time (inclusive); the second form declares"
           + " the active period to be from the given date-time (non-inclusive) until now."
           + " Resources outside the active period are only fetched if they are associated with"
-          + " Patients in the active period. All requested resources in the active period are"
+          + " Patients in the active period . All requested resources in the active period are"
           + " fetched.\n"
-          + "The date format follows the dateTime format in the FHIR standard, without the"
-          + " time-zone:\n"
+          + "The date format follows the dateTime format in the FHIR standard, without time-zone:\n"
           + "https://www.hl7.org/fhir/datatypes.html#dateTime\n"
           + "For example: --activePeriod=2020-11-10T00:00:00_2020-11-20\n"
           + "Note this feature implies fetching Patient resources that were active in the given"
@@ -182,8 +183,18 @@ public interface FhirEtlOptions extends PipelineOptions {
 
   void setActivePeriod(String value);
 
+  @Description(
+      "Fetch only FHIR resources that were updated after the given timestamp."
+          + "The date format follows the dateTime format in the FHIR standard, without time-zone:\n"
+          + "https://www.hl7.org/fhir/datatypes.html#dateTime\n"
+          + "This feature is currently implemented only for HAPI JDBC mode.")
+  @Default.String("")
+  String getSince();
+
+  void setSince(String value);
+
   // TODO: Consolidate these options with source DB config that we read from file; in general
-  // it would be nice to have a file based approach for configuring pipeline options.
+  //   it would be nice to have a file based approach for configuring pipeline options.
   @Description("If set, it is the JDBC URL of the sink database.")
   @Default.String("")
   String getSinkDbUrl();

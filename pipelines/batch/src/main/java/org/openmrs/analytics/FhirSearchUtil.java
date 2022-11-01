@@ -21,6 +21,7 @@ import ca.uhn.fhir.rest.client.api.IGenericClient;
 import ca.uhn.fhir.rest.gclient.DateClientParam;
 import ca.uhn.fhir.rest.gclient.IQuery;
 import ca.uhn.fhir.rest.gclient.ReferenceClientParam;
+import ca.uhn.fhir.rest.param.DateRangeParam;
 import ca.uhn.fhir.rest.server.exceptions.InvalidRequestException;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.Lists;
@@ -75,23 +76,28 @@ public class FhirSearchUtil {
    * @param resourceList the resource types to be processed
    * @return a Map storing the counts of each resource type
    */
-  public Map<String, Integer> searchResourceCounts(String resourceList) {
+  public Map<String, Integer> searchResourceCounts(String resourceList, String since) {
     HashSet<String> resourceTypes = new HashSet<String>(Arrays.asList(resourceList.split(",")));
     HashMap<String, Integer> hashMap = new HashMap<String, Integer>();
     for (String resourceType : resourceTypes) {
       try {
         String searchUrl = resourceType + "?";
         IGenericClient client = openmrsUtil.getSourceClient();
-        Bundle result =
+        IQuery<Bundle> query =
             client
                 .search()
                 .byUrl(searchUrl)
                 .summaryMode(SummaryEnum.COUNT)
-                .returnBundle(Bundle.class)
-                .execute();
+                .returnBundle(Bundle.class);
+        if (since != null && !since.isEmpty()) {
+          query.lastUpdated(new DateRangeParam(since, null));
+        }
+        Bundle result = query.execute();
         hashMap.put(resourceType, result.getTotal());
+        log.info("Number of {} resources = {}", resourceType, result.getTotal());
       } catch (Exception e) {
         log.error("Failed to search for resource: " + resourceType + " ;  " + "Exception: " + e);
+        throw e;
       }
     }
 
