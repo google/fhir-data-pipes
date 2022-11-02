@@ -169,7 +169,7 @@ public interface FhirEtlOptions extends PipelineOptions {
           + " date-time (non-inclusive) and last date-time (inclusive); the second form declares"
           + " the active period to be from the given date-time (non-inclusive) until now."
           + " Resources outside the active period are only fetched if they are associated with"
-          + " Patients in the active period . All requested resources in the active period are"
+          + " Patients in the active period. All requested resources in the active period are"
           + " fetched.\n"
           + "The date format follows the dateTime format in the FHIR standard, without time-zone:\n"
           + "https://www.hl7.org/fhir/datatypes.html#dateTime\n"
