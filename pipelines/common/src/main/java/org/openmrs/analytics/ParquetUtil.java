@@ -21,10 +21,10 @@ import ca.uhn.fhir.context.FhirVersionEnum;
 import com.cerner.bunsen.avro.AvroConverter;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
+import com.google.common.collect.Maps;
 import java.io.IOException;
 import java.nio.file.FileSystem;
 import java.nio.file.FileSystems;
-import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -53,17 +53,21 @@ public class ParquetUtil {
 
   private static final Logger log = LoggerFactory.getLogger(ParquetUtil.class);
 
+  public static String PARQUET_EXTENSION = ".parquet";
+
   private final FhirContext fhirContext;
 
-  private final Map<String, AvroConverter> converterMap;
+  private static final Map<String, AvroConverter> converterMap;
+
+  static {
+    converterMap = Maps.newHashMap();
+  }
 
   private final Map<String, ParquetWriter<GenericRecord>> writerMap;
 
   private final int rowGroupSize;
 
-  private final String parquetFilePath;
-
-  private final FileSystem fileSystem;
+  private final DwhFiles dwhFiles;
 
   private final Timer timer;
 
@@ -86,7 +90,7 @@ public class ParquetUtil {
   }
 
   public String getParquetPath() {
-    return this.parquetFilePath;
+    return dwhFiles.getParquetPath();
   }
 
   /**
@@ -125,6 +129,7 @@ public class ParquetUtil {
         FileSystems.getDefault());
   }
 
+  // TODO remove this constructor and only expose a similar one in `DwhFiles` (for testing).
   @VisibleForTesting
   ParquetUtil(
       FhirVersionEnum fhirVersionEnum,
@@ -140,12 +145,10 @@ public class ParquetUtil {
     } else {
       throw new IllegalArgumentException("Only versions 3 and 4 of FHIR are supported!");
     }
-    this.converterMap = new HashMap<>();
+    this.dwhFiles = new DwhFiles(parquetFilePath, fileSystem);
     this.writerMap = new HashMap<>();
-    this.parquetFilePath = parquetFilePath;
     this.rowGroupSize = rowGroupSize;
     this.namePrefix = namePrefix;
-    this.fileSystem = fileSystem;
     if (secondsToFlush > 0) {
       TimerTask task =
           new TimerTask() {
@@ -169,7 +172,8 @@ public class ParquetUtil {
     this.random = new Random(System.currentTimeMillis());
   }
 
-  private synchronized AvroConverter getConverter(String resourceType) {
+  private static synchronized AvroConverter getConverter(
+      String resourceType, FhirContext fhirContext) {
     if (!converterMap.containsKey(resourceType)) {
       AvroConverter converter = AvroConverter.forResource(fhirContext, resourceType);
       converterMap.put(resourceType, converter);
@@ -179,18 +183,18 @@ public class ParquetUtil {
 
   @VisibleForTesting
   synchronized Path uniqueOutputFile(String resourceType) throws IOException {
-    java.nio.file.Path outputDir = fileSystem.getPath(getParquetPath(), resourceType);
-    Files.createDirectories(outputDir);
+    java.nio.file.Path outputDir = dwhFiles.createResourcePath(resourceType);
     String uniquetFileName =
         String.format(
-            "%s%s_output-parquet-th-%d-ts-%d-r-%d",
+            "%s%s_output-parquet-th-%d-ts-%d-r-%d%s",
             namePrefix,
             resourceType,
             Thread.currentThread().getId(),
             System.currentTimeMillis(),
-            random.nextInt(1000000));
+            random.nextInt(1000000),
+            PARQUET_EXTENSION);
     Path bestFilePath =
-        new Path(Paths.get(getParquetPath(), resourceType).toString(), uniquetFileName);
+        new Path(Paths.get(dwhFiles.getParquetPath(), resourceType).toString(), uniquetFileName);
     log.info("Creating new Parguet file " + bestFilePath);
     return bestFilePath;
   }
@@ -204,7 +208,7 @@ public class ParquetUtil {
       builder.withRowGroupSize(rowGroupSize);
     }
     ParquetWriter<GenericRecord> writer =
-        builder.withSchema(getResourceSchema(resourceType)).build();
+        builder.withSchema(getResourceSchema(resourceType, fhirContext)).build();
     writerMap.put(resourceType, writer);
   }
 
@@ -216,7 +220,6 @@ public class ParquetUtil {
    * left to Beam similar to the batch mode.
    */
   public synchronized void write(Resource resource) throws IOException {
-    Preconditions.checkNotNull(getParquetPath());
     Preconditions.checkNotNull(resource.fhirType());
     String resourceType = resource.fhirType();
     if (!writerMap.containsKey(resourceType)) {
@@ -253,8 +256,12 @@ public class ParquetUtil {
     }
   }
 
-  public Schema getResourceSchema(String resourceType) {
-    AvroConverter converter = getConverter(resourceType);
+  public static Schema getResourceSchema(String resourceType, FhirVersionEnum fhirVersion) {
+    return getResourceSchema(resourceType, FhirContext.forCached(fhirVersion));
+  }
+
+  public static Schema getResourceSchema(String resourceType, FhirContext fhirContext) {
+    AvroConverter converter = getConverter(resourceType, fhirContext);
     Schema schema = converter.getSchema();
     log.debug(String.format("Schema for resource type %s is %s", resourceType, schema));
     return schema;
@@ -290,7 +297,7 @@ public class ParquetUtil {
   @VisibleForTesting
   @Nullable
   GenericRecord convertToAvro(Resource resource) {
-    AvroConverter converter = getConverter(resource.getResourceType().name());
+    AvroConverter converter = getConverter(resource.getResourceType().name(), fhirContext);
     // TODO: Check why Bunsen returns IndexedRecord instead of GenericRecord.
     return (GenericRecord) converter.resourceToAvro(resource);
   }

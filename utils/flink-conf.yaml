@@ -1,0 +1,5 @@
+# This is needed to prevent a "Insufficient number of network buffers"
+# exceptions when running the merger on large input with many workers.
+# To use this config, FLINK_CONF_DIR env. var should be set.
+
+taskmanager.network.memory.max: 5gb

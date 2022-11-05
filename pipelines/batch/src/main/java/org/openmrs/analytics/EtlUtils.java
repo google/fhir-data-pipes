@@ -25,7 +25,7 @@ import org.slf4j.LoggerFactory;
 
 class EtlUtils {
 
-  static final String METRICS_NAMESPACE = "FhirEtl";
+  static final String METRICS_NAMESPACE = "PipelineMetrics";
 
   private static final Logger log = LoggerFactory.getLogger(EtlUtils.class);
 
@@ -37,7 +37,7 @@ class EtlUtils {
                 .build());
     for (MetricResult<Long> counter : metrics.getCounters()) {
       log.info(
-          String.format("Pipeline counter %s : %s", counter.getName(), counter.getCommitted()));
+          String.format("Pipeline counter %s : %s", counter.getName(), counter.getAttempted()));
     }
   }
 }
