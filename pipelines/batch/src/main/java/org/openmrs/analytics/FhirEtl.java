@@ -278,6 +278,7 @@ public class FhirEtl {
   static void runHapiJdbcFetch(
       FhirEtlOptions options, DatabaseConfiguration dbConfig, FhirContext fhirContext)
       throws PropertyVetoException {
+    boolean foundResource = false;
     Pipeline pipeline = Pipeline.create(options);
     JdbcConnectionUtil jdbcConnectionUtil = createJdbcConnection(options, dbConfig);
 
@@ -286,10 +287,15 @@ public class FhirEtl {
     // Get the resource count for each resource type and distribute the query workload based on
     // batch size.
     HashMap<String, Integer> resourceCount =
-        (HashMap<String, Integer>) fhirSearchUtil.searchResourceCounts(options.getResourceList());
+        (HashMap<String, Integer>)
+            fhirSearchUtil.searchResourceCounts(options.getResourceList(), options.getSince());
 
     for (String resourceType : options.getResourceList().split(",")) {
       int numResources = resourceCount.get(resourceType);
+      if (numResources == 0) {
+        continue;
+      }
+      foundResource = true;
 
       PCollection<QueryParameterDescriptor> queryParameters =
           pipeline.apply(
@@ -302,16 +308,19 @@ public class FhirEtl {
           queryParameters.apply(
               "JdbcIO fetch for " + resourceType,
               new JdbcFetchHapi.FetchRowsJdbcIo(
-                  JdbcIO.DataSourceConfiguration.create(jdbcConnectionUtil.getDataSource())));
+                  JdbcIO.DataSourceConfiguration.create(jdbcConnectionUtil.getDataSource()),
+                  options.getSince()));
 
       payload.apply(
           "Convert to parquet for " + resourceType,
           ParDo.of(new ConvertResourceFn(options, "ConvertResourceFn")));
     }
 
-    PipelineResult result = pipeline.run();
-    result.waitUntilFinish();
-    EtlUtils.logMetrics(result.metrics());
+    if (foundResource) { // Otherwise, there is nothing to be done!
+      PipelineResult result = pipeline.run();
+      result.waitUntilFinish();
+      EtlUtils.logMetrics(result.metrics());
+    }
   }
 
   static void runJsonRead(FhirEtlOptions options, FhirContext fhirContext) {
