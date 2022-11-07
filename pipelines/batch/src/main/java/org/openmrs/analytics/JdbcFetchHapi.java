@@ -80,8 +80,23 @@ public class JdbcFetchHapi {
 
     private final JdbcIO.DataSourceConfiguration dataSourceConfig;
 
-    public FetchRowsJdbcIo(JdbcIO.DataSourceConfiguration dataSourceConfig) {
+    private final String query;
+
+    public FetchRowsJdbcIo(JdbcIO.DataSourceConfiguration dataSourceConfig, String since) {
       this.dataSourceConfig = dataSourceConfig;
+      // Note the constraint on `res.res_ver` ensures we only pick the latest version.
+      StringBuilder builder =
+          new StringBuilder(
+              "SELECT res.res_id, res.res_type, res.res_updated, res.res_ver, "
+                  + "ver.res_encoding, ver.res_text FROM hfj_resource res, hfj_res_ver ver "
+                  + "WHERE res.res_type=? AND res.res_id = ver.res_id AND "
+                  + "  res.res_ver = ver.res_ver AND res.res_id % ? = ? ");
+      // TODO do date sanity-checking on `since` (note this is partly done by HAPI client call).
+      if (since != null && !since.isEmpty()) {
+        builder.append(" AND res.res_updated > '").append(since).append("'");
+      }
+      query = builder.toString();
+      log.info("JDBC query template for HAPI is " + query);
     }
 
     @Override
@@ -104,17 +119,11 @@ public class JdbcFetchHapi {
                     }
                   })
               // We are disabling this parameter because by default, this parameter causes JdbcIO to
-              // add a
-              // reshuffle transform after reading from the database. This breaks fusion between the
-              // read
-              // and write operations, thus resulting in high memory overhead. Disabling the below
-              // parameter
-              // results in optimal performance.
+              // add a reshuffle transform after reading from the database. This breaks fusion
+              // between the read and write operations, thus resulting in high memory overhead.
+              // Disabling the below parameter results in optimal performance.
               .withOutputParallelization(false)
-              .withQuery(
-                  "SELECT res.res_id, res.res_type, res.res_updated, res.res_ver,"
-                      + " ver.res_encoding, ver.res_text FROM hfj_resource res, hfj_res_ver ver"
-                      + " WHERE res.res_type=? AND res.res_id = ver.res_id AND res.res_id %? = ?")
+              .withQuery(query)
               .withRowMapper(new ResultSetToRowDescriptor()));
     }
   }
@@ -130,7 +139,6 @@ public class JdbcFetchHapi {
    * @param options the pipeline options
    * @param resourceType the resource type
    * @param numResources total number of resources of the given type
-   * @param batchNum the relevant batch number
    * @return a list of query parameters in the form of lists of strings
    */
   @VisibleForTesting
