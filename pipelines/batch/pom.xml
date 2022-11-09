@@ -37,7 +37,7 @@
     <beam.version>2.42.0</beam.version>
 
     <hamcrest.version>2.1</hamcrest.version>
-    <jackson.version>2.13.0</jackson.version>
+    <jackson.version>2.14.0</jackson.version>
     <pubsub.version>v1-rev20220904-2.0.0</pubsub.version>
     <auto-value.version>1.10</auto-value.version>
     <spark.version>2.4.5</spark.version>
