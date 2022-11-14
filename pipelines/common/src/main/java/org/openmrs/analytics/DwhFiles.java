@@ -28,6 +28,10 @@ import org.apache.commons.io.FileUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/**
+ * The interface for working with the data-warehouse files. This is where all file-structure logic
+ * should be implemented. This should support different file-systems, including distributed ones.
+ */
 public class DwhFiles {
 
   private static final Logger log = LoggerFactory.getLogger(DwhFiles.class);
@@ -87,9 +91,9 @@ public class DwhFiles {
     return typeSet;
   }
 
-  public void copyResourceType(String resourceType, String destDwh) throws IOException {
+  public void copyResourcesToDwh(String resourceType, DwhFiles destDwh) throws IOException {
     Path path = fileSystem.getPath(getParquetPath(), resourceType);
-    Path destPath = fileSystem.getPath(destDwh).resolve(resourceType);
+    Path destPath = destDwh.getResourcePath(resourceType);
     log.info("Copying {} to {}", path, destPath);
     FileUtils.copyDirectory(path.toFile(), destPath.toFile());
   }

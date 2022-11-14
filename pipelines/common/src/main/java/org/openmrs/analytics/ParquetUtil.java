@@ -138,10 +138,8 @@ public class ParquetUtil {
       int rowGroupSize,
       String namePrefix,
       FileSystem fileSystem) {
-    if (fhirVersionEnum == FhirVersionEnum.DSTU3) {
-      this.fhirContext = FhirContext.forDstu3Cached();
-    } else if (fhirVersionEnum == FhirVersionEnum.R4) {
-      this.fhirContext = FhirContext.forR4Cached();
+    if (fhirVersionEnum == FhirVersionEnum.DSTU3 || fhirVersionEnum == FhirVersionEnum.R4) {
+      this.fhirContext = FhirContext.forCached(fhirVersionEnum);
     } else {
       throw new IllegalArgumentException("Only versions 3 and 4 of FHIR are supported!");
     }

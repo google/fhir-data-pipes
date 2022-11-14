@@ -69,7 +69,7 @@ public class DwhFilesTest {
   @Test
   public void copyResourceTypeTest() throws IOException {
     Path destPath = Files.createTempDirectory("DWH_DEST_TEST");
-    instance.copyResourceType("Patient", destPath.toString());
+    instance.copyResourcesToDwh("Patient", new DwhFiles(destPath.toString()));
     List<Path> destFiles = Files.list(destPath).collect(Collectors.toList());
     assertThat(destFiles.size(), equalTo(1));
     assertThat(destFiles.get(0).toString(), equalTo(destPath.resolve("Patient").toString()));

@@ -43,6 +43,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 // TODO add unit-tests for sub-pipelines.
+
+/**
+ * Pipelines for merging two FHIR data-warehouses (e.g., an old version and an incremental update)
+ * which does deduplication of resources too.
+ */
 public class ParquetMerger {
 
   private static final Logger log = LoggerFactory.getLogger(ParquetMerger.class);
@@ -53,7 +58,7 @@ public class ParquetMerger {
 
   private static PCollection<KV<String, GenericRecord>> readAndMapToId(
       Pipeline pipeline, DwhFiles dwh, String resourceType) {
-    PCollection<GenericRecord> records1 =
+    PCollection<GenericRecord> records =
         pipeline.apply(
             ParquetIO.read(ParquetUtil.getResourceSchema(resourceType, FhirVersionEnum.R4))
                 .from(
@@ -62,7 +67,7 @@ public class ParquetMerger {
                         dwh.getResourcePath(resourceType).toString(),
                         ParquetUtil.PARQUET_EXTENSION)));
 
-    return records1.apply(
+    return records.apply(
         ParDo.of(
             new DoFn<GenericRecord, KV<String, GenericRecord>>() {
               @ProcessElement
@@ -133,10 +138,10 @@ public class ParquetMerger {
     Set<String> resourceTypes2 = dwhFiles2.findResourceTypes();
 
     for (String resourceType : Sets.difference(resourceTypes1, resourceTypes2)) {
-      dwhFiles1.copyResourceType(resourceType, mergedDwh);
+      dwhFiles1.copyResourcesToDwh(resourceType, mergedDwhFiles);
     }
     for (String resourceType : Sets.difference(resourceTypes2, resourceTypes1)) {
-      dwhFiles2.copyResourceType(resourceType, mergedDwh);
+      dwhFiles2.copyResourcesToDwh(resourceType, mergedDwhFiles);
     }
     Pipeline pipeline = Pipeline.create(options);
     for (String type : resourceTypes1) {
@@ -155,12 +160,10 @@ public class ParquetMerger {
       PCollection<GenericRecord> merged =
           join.apply(
                   ParDo.of(
-                      // new DoFn<KV<String, CoGbkResult>, GenericRecord>() {
                       new DoFn<KV<String, CoGbkResult>, GenericRecord>() {
                         @ProcessElement
                         public void processElement(ProcessContext c) {
                           KV<String, CoGbkResult> e = c.element();
-                          String id = e.getKey();
                           Iterable<GenericRecord> iter1 = e.getValue().getAll(tag1);
                           Iterable<GenericRecord> iter2 = e.getValue().getAll(tag2);
                           GenericRecord lastRecord = findLastRecord(iter1, iter2, numDuplicates);
