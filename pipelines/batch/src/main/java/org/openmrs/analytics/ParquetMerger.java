@@ -54,7 +54,7 @@ public class ParquetMerger {
 
   private static String ID_KEY = "id";
   private static String META_KEY = "meta";
-  private static String LAST_UPDATED__KEY = "lastUpdated";
+  private static String LAST_UPDATED_KEY = "lastUpdated";
 
   private static PCollection<KV<String, GenericRecord>> readAndMapToId(
       Pipeline pipeline, DwhFiles dwh, String resourceType) {
@@ -84,8 +84,7 @@ public class ParquetMerger {
   }
 
   private static String getUpdateTime(GenericRecord record) {
-    Object updateTime = ((GenericRecord) record.get(META_KEY)).get(LAST_UPDATED__KEY);
-    return updateTime.toString();
+    return ((GenericRecord) record.get(META_KEY)).get(LAST_UPDATED_KEY).toString();
   }
 
   private static GenericRecord findLastRecord(
