@@ -28,7 +28,9 @@ services:
       - hapi-fhir-db:/var/lib/postgresql/data
     
   hapi-server:
-    image: "hapiproject/hapi:latest"
+    # Using an older version as the latest image broke our build.
+    # image: "hapiproject/hapi:latest"
+    image: "hapiproject/hapi:v6.1.0"
     container_name: hapi-server
     environment:
       - hapi.fhir.mdm_enabled=false

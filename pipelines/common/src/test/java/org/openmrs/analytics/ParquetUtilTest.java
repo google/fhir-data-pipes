@@ -83,13 +83,13 @@ public class ParquetUtilTest {
     observationBundle =
         Resources.toString(
             Resources.getResource("observation_bundle.json"), StandardCharsets.UTF_8);
-    this.fhirContext = FhirContext.forR4();
+    this.fhirContext = FhirContext.forR4Cached();
     parquetUtil = new ParquetUtil(FhirVersionEnum.R4, PARQUET_ROOT, 0, 0, "TEST_", fileSystem);
   }
 
   @Test
   public void getResourceSchema_Patient() {
-    Schema schema = parquetUtil.getResourceSchema("Patient");
+    Schema schema = parquetUtil.getResourceSchema("Patient", fhirContext);
     assertThat(schema.getField("id").toString(), notNullValue());
     assertThat(schema.getField("identifier").toString(), notNullValue());
     assertThat(schema.getField("name").toString(), notNullValue());
@@ -97,7 +97,7 @@ public class ParquetUtilTest {
 
   @Test
   public void getResourceSchema_Observation() {
-    Schema schema = parquetUtil.getResourceSchema("Observation");
+    Schema schema = parquetUtil.getResourceSchema("Observation", fhirContext);
     assertThat(schema.getField("id").toString(), notNullValue());
     assertThat(schema.getField("identifier").toString(), notNullValue());
     assertThat(schema.getField("basedOn").toString(), notNullValue());
@@ -107,7 +107,7 @@ public class ParquetUtilTest {
 
   @Test
   public void getResourceSchema_Encounter() {
-    Schema schema = parquetUtil.getResourceSchema("Encounter");
+    Schema schema = parquetUtil.getResourceSchema("Encounter", fhirContext);
     assertThat(schema.getField("id").toString(), notNullValue());
     assertThat(schema.getField("identifier").toString(), notNullValue());
     assertThat(schema.getField("status").toString(), notNullValue());
@@ -155,7 +155,7 @@ public class ParquetUtilTest {
     assertThat(
         bestFile.toString(),
         matchesPattern(
-            "/parquet_root/Patient/TEST_Patient_output-parquet-th-[\\p{Digit}]+-ts-[\\p{Digit}]+-r-[\\p{Digit}]+"));
+            "/parquet_root/Patient/TEST_Patient_output-parquet-th-[\\p{Digit}]+-ts-[\\p{Digit}]+-r-[\\p{Digit}]+.parquet"));
   }
 
   @Test
@@ -166,7 +166,7 @@ public class ParquetUtilTest {
     assertThat(
         bestFile.toString(),
         matchesPattern(
-            "/parquet_root/Patient/TEST_Patient_output-parquet-th-[\\p{Digit}]+-ts-[\\p{Digit}]+-r-[\\p{Digit}]+"));
+            "/parquet_root/Patient/TEST_Patient_output-parquet-th-[\\p{Digit}]+-ts-[\\p{Digit}]+-r-[\\p{Digit}]+.parquet"));
   }
 
   private void initilizeLocalFileSystem() throws IOException {

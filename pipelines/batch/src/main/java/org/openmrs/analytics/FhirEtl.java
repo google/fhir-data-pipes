@@ -17,7 +17,6 @@
 package org.openmrs.analytics;
 
 import ca.uhn.fhir.context.FhirContext;
-import ca.uhn.fhir.context.FhirVersionEnum;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
@@ -31,7 +30,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import org.apache.avro.Schema;
 import org.apache.beam.sdk.Pipeline;
 import org.apache.beam.sdk.PipelineResult;
 import org.apache.beam.sdk.coders.CannotProvideCoderException;
@@ -83,11 +81,6 @@ public class FhirEtl {
         fhirContext);
   }
 
-  private static Schema getSchema(String resourceType, FhirVersionEnum version) {
-    ParquetUtil parquetUtil = new ParquetUtil(version, null);
-    return parquetUtil.getResourceSchema(resourceType);
-  }
-
   /**
    * For each SearchSegmentDescriptor, it fetches the given resources, convert them to output
    * Parquet/JSON files, and output the IDs of the fetched resources.
@@ -119,7 +112,7 @@ public class FhirEtl {
     PCollection<KV<String, Integer>> mergedPatients = flattenedPatients.apply(Sum.integersPerKey());
     final String patientType = "Patient";
     FetchPatients fetchPatients =
-        new FetchPatients(options, getSchema(patientType, fhirContext.getVersion().getVersion()));
+        new FetchPatients(options, ParquetUtil.getResourceSchema(patientType, fhirContext));
     mergedPatients.apply(fetchPatients);
     for (String resourceType : patientAssociatedResources) {
       FetchPatientHistory fetchPatientHistory = new FetchPatientHistory(options, resourceType);

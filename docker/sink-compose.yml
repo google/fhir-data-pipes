@@ -15,7 +15,9 @@
 version: '2.4'
 services:
   sink-server:
-    image: "hapiproject/hapi:latest"
+    # Using an older version as the latest image broke our build.
+    # image: "hapiproject/hapi:latest"
+    image: "hapiproject/hapi:v6.1.0"
     container_name: sink-server
     environment:
       - spring.datasource.hikari.maximum-pool-size=50
