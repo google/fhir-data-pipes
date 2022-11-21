@@ -120,7 +120,7 @@ public class FhirEtl {
     }
   }
 
-  static void runFhirFetch(FhirEtlOptions options, FhirContext fhirContext) {
+  static void runFhirFetch(FhirEtlOptions options, FhirContext fhirContext) throws IOException {
     FhirSearchUtil fhirSearchUtil = createFhirSearchUtil(options, fhirContext);
     Map<String, List<SearchSegmentDescriptor>> segmentMap = Maps.newHashMap();
     try {
@@ -151,9 +151,7 @@ public class FhirEtl {
       fetchPatientHistory(
           pipeline, allPatientIds, patientAssociatedResources, options, fhirContext);
     }
-    PipelineResult result = pipeline.run();
-    result.waitUntilFinish();
-    EtlUtils.logMetrics(result.metrics());
+    EtlUtils.runPipelineWithTimestamp(pipeline, options);
   }
 
   private static JdbcConnectionUtil createJdbcConnection(
@@ -214,9 +212,7 @@ public class FhirEtl {
       fetchPatientHistory(
           pipeline, allPatientIds, patientAssociatedResources, options, fhirContext);
     }
-    PipelineResult result = pipeline.run();
-    result.waitUntilFinish();
-    EtlUtils.logMetrics(result.metrics());
+    EtlUtils.runPipelineWithTimestamp(pipeline, options);
   }
 
   private static void validateOptions(FhirEtlOptions options)
@@ -268,7 +264,7 @@ public class FhirEtl {
    */
   // TODO: Implement active period feature for JDBC mode with a HAPI source server (Github issue
   // #278).
-  static void runHapiJdbcFetch(
+  static Pipeline buildHapiJdbcFetch(
       FhirEtlOptions options, DatabaseConfiguration dbConfig, FhirContext fhirContext)
       throws PropertyVetoException {
     boolean foundResource = false;
@@ -310,13 +306,22 @@ public class FhirEtl {
     }
 
     if (foundResource) { // Otherwise, there is nothing to be done!
-      PipelineResult result = pipeline.run();
-      result.waitUntilFinish();
-      EtlUtils.logMetrics(result.metrics());
+      return pipeline;
     }
+    return null;
   }
 
-  static void runJsonRead(FhirEtlOptions options, FhirContext fhirContext) {
+  static PipelineResult runHapiJdbcFetch(
+      FhirEtlOptions options, DatabaseConfiguration dbConfig, FhirContext fhirContext)
+      throws PropertyVetoException, IOException {
+    Pipeline pipeline = buildHapiJdbcFetch(options, dbConfig, fhirContext);
+    if (pipeline != null) {
+      return EtlUtils.runPipelineWithTimestamp(pipeline, options);
+    }
+    return null;
+  }
+
+  static void runJsonRead(FhirEtlOptions options, FhirContext fhirContext) throws IOException {
     Preconditions.checkArgument(!options.getSourceJsonFilePattern().isEmpty());
     Preconditions.checkArgument(!options.isJdbcModeEnabled());
     Preconditions.checkArgument(options.getActivePeriod().isEmpty());
@@ -328,9 +333,7 @@ public class FhirEtl {
             .apply(FileIO.readMatches());
     files.apply("Read JSON files", ParDo.of(new ReadJsonFilesFn(options)));
 
-    PipelineResult result = pipeline.run();
-    result.waitUntilFinish();
-    EtlUtils.logMetrics(result.metrics());
+    EtlUtils.runPipelineWithTimestamp(pipeline, options);
   }
 
   public static void main(String[] args)
