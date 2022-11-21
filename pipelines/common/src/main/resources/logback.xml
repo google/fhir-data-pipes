@@ -20,14 +20,16 @@
   <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
     <encoder>
       <pattern>
-        %d{HH:mm:ss.SSS} [%thread] %-5level %C{50}.%M:%L - %msg%n
+        %d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} %C{50}.%M:%L - %msg%n
       </pattern>
     </encoder>
   </appender>
   <!-- We can set this to "debug" to see our debug log messages. -->
   <logger name="org.openmrs.analytics" level="info" />
+  <!-- This is too noisy because of "long DoFn name" warnings. -->
+  <logger name="org.apache.flink.metrics" level="error" />
 
-  <root level="info">
+  <root level="warn">
     <appender-ref ref="STDOUT" />
   </root>
 </configuration>

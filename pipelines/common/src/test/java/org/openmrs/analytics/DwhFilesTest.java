@@ -18,6 +18,7 @@ package org.openmrs.analytics;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 
+import ca.uhn.fhir.context.FhirContext;
 import java.io.IOException;
 import java.nio.file.FileSystem;
 import java.nio.file.FileSystems;
@@ -49,7 +50,7 @@ public class DwhFilesTest {
     Files.createDirectory(patientRoot);
     Path obsRoot = fileSystem.getPath(root.toString(), "Observation");
     Files.createDirectory(obsRoot);
-    instance = new DwhFiles(root.toString(), fileSystem);
+    instance = new DwhFiles(root.toString(), fileSystem, FhirContext.forR4Cached());
   }
 
   @Test
@@ -69,7 +70,7 @@ public class DwhFilesTest {
   @Test
   public void copyResourceTypeTest() throws IOException {
     Path destPath = Files.createTempDirectory("DWH_DEST_TEST");
-    instance.copyResourcesToDwh("Patient", new DwhFiles(destPath.toString()));
+    instance.copyResourcesToDwh("Patient", DwhFiles.forRoot(destPath.toString()));
     List<Path> destFiles = Files.list(destPath).collect(Collectors.toList());
     assertThat(destFiles.size(), equalTo(1));
     assertThat(destFiles.get(0).toString(), equalTo(destPath.resolve("Patient").toString()));

@@ -90,7 +90,7 @@ public class ParquetUtil {
   }
 
   public String getParquetPath() {
-    return dwhFiles.getParquetPath();
+    return dwhFiles.getRoot();
   }
 
   /**
@@ -143,7 +143,7 @@ public class ParquetUtil {
     } else {
       throw new IllegalArgumentException("Only versions 3 and 4 of FHIR are supported!");
     }
-    this.dwhFiles = new DwhFiles(parquetFilePath, fileSystem);
+    this.dwhFiles = new DwhFiles(parquetFilePath, fileSystem, fhirContext);
     this.writerMap = new HashMap<>();
     this.rowGroupSize = rowGroupSize;
     this.namePrefix = namePrefix;
@@ -192,8 +192,8 @@ public class ParquetUtil {
             random.nextInt(1000000),
             PARQUET_EXTENSION);
     Path bestFilePath =
-        new Path(Paths.get(dwhFiles.getParquetPath(), resourceType).toString(), uniquetFileName);
-    log.info("Creating new Parguet file " + bestFilePath);
+        new Path(Paths.get(dwhFiles.getRoot(), resourceType).toString(), uniquetFileName);
+    log.debug("Creating new Parguet file " + bestFilePath);
     return bestFilePath;
   }
 

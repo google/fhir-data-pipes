@@ -1,5 +1,9 @@
-# This is needed to prevent a "Insufficient number of network buffers"
-# exceptions when running the merger on large input with many workers.
 # To use this config, FLINK_CONF_DIR env. var should be set.
 
+# This is needed to prevent a "Insufficient number of network buffers"
+# exceptions when running the merger on large input with many workers.
 taskmanager.network.memory.max: 5gb
+
+# This is to make pipeline.run() non-blocking with FlinkRunner; unfortunately
+# this is overwritten in `local` mode: https://stackoverflow.com/a/74416240
+execution.attached: false

@@ -23,7 +23,6 @@ import java.io.IOException;
 import java.util.Set;
 import org.apache.avro.generic.GenericRecord;
 import org.apache.beam.sdk.Pipeline;
-import org.apache.beam.sdk.PipelineResult;
 import org.apache.beam.sdk.coders.AvroCoder;
 import org.apache.beam.sdk.io.FileIO;
 import org.apache.beam.sdk.io.parquet.ParquetIO;
@@ -118,7 +117,8 @@ public class ParquetMerger {
     return lastRecord;
   }
 
-  static void runMerge(ParquetMergerOptions options, FhirContext fhirContext) throws IOException {
+  static Pipeline createMergerPipeline(ParquetMergerOptions options, FhirContext fhirContext)
+      throws IOException {
     Preconditions.checkArgument(!options.getDwh1().isEmpty());
     Preconditions.checkArgument(!options.getDwh2().isEmpty());
     Preconditions.checkArgument(!options.getMergedDwh().isEmpty());
@@ -129,9 +129,9 @@ public class ParquetMerger {
     String dwh1 = options.getDwh1();
     String dwh2 = options.getDwh2();
     String mergedDwh = options.getMergedDwh();
-    DwhFiles dwhFiles1 = new DwhFiles(dwh1);
-    DwhFiles dwhFiles2 = new DwhFiles(dwh2);
-    DwhFiles mergedDwhFiles = new DwhFiles(mergedDwh);
+    DwhFiles dwhFiles1 = DwhFiles.forRoot(dwh1);
+    DwhFiles dwhFiles2 = DwhFiles.forRoot(dwh2);
+    DwhFiles mergedDwhFiles = DwhFiles.forRoot(mergedDwh);
 
     Set<String> resourceTypes1 = dwhFiles1.findResourceTypes();
     Set<String> resourceTypes2 = dwhFiles2.findResourceTypes();
@@ -183,10 +183,7 @@ public class ParquetMerger {
               //   happens for TextIO. We should investigate this further and possibly file a bug.
               .withNumShards(options.getNumShards()));
     }
-
-    PipelineResult result = pipeline.run();
-    result.waitUntilFinish();
-    EtlUtils.logMetrics(result.metrics());
+    return pipeline;
   }
 
   public static void main(String[] args) throws IOException {
@@ -205,7 +202,8 @@ public class ParquetMerger {
       throw new IllegalArgumentException("All of --dwh1, --dwh2, and --mergedDwh should be set!");
     }
 
-    runMerge(options, fhirContext);
+    Pipeline pipeline = createMergerPipeline(options, fhirContext);
+    EtlUtils.runMergerPipelineWithTimestamp(pipeline, options);
 
     log.info("DONE!");
   }

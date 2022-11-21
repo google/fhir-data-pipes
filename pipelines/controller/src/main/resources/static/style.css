@@ -1,0 +1,21 @@
+.header {
+  background-color: #d8e364;
+}
+
+.button {
+  border: 1px solid black;
+  color: white;
+  padding: 0px 2px;
+  margin: 10px 2px;
+  text-align: center;
+  text-decoration: solid;
+  font-size: 20px;
+  cursor: pointer;
+  border-radius: 5px;
+  background-color: #5099f4;
+}
+
+.disabled {
+    pointer-events: none;
+    opacity: 0.3;
+}

@@ -49,6 +49,7 @@ public class JdbcFetchHapi {
     public HapiRowDescriptor mapRow(ResultSet resultSet) throws Exception {
       String jsonResource = "";
 
+      // TODO check for null values before accessing columns; this caused NPEs with `latest` HAPI.
       switch (resultSet.getString("res_encoding")) {
         case "JSON":
           jsonResource = new String(resultSet.getBytes("res_text"), Charsets.UTF_8);
