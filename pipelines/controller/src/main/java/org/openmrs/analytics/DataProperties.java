@@ -28,6 +28,7 @@ import java.util.Set;
 import javax.annotation.PostConstruct;
 import lombok.Getter;
 import lombok.Setter;
+import org.apache.beam.runners.flink.FlinkPipelineOptions;
 import org.apache.beam.runners.flink.FlinkRunner;
 import org.apache.beam.sdk.options.Default;
 import org.apache.beam.sdk.options.Description;
@@ -39,7 +40,7 @@ import org.springframework.core.annotation.AnnotationUtils;
 import org.springframework.scheduling.support.CronExpression;
 import org.springframework.stereotype.Component;
 
-@ConfigurationProperties("data")
+@ConfigurationProperties("fhirdata")
 @Getter
 @Setter
 @Component
@@ -70,6 +71,8 @@ public class DataProperties {
 
   private String resourceList;
 
+  private int maxWorkers;
+
   @PostConstruct
   void validateProperties() {
     CronExpression.parse(incrementalSchedule);
@@ -86,17 +89,20 @@ public class DataProperties {
     options.setOutputParquetPath(
         dwhRootPrefix + TIMESTAMP_PREFIX + Instant.now().toString().replaceAll(":", "-"));
     options.setRunner(FlinkRunner.class);
+    FlinkPipelineOptions flinkOptions = options.as(FlinkPipelineOptions.class);
+    flinkOptions.setMaxParallelism(getMaxWorkers());
     return options;
   }
 
   List<ConfigFields> getConfigParams() {
     // TODO automate generation of this list.
     return ImmutableList.of(
-        new ConfigFields("data.fhirServerUrl", fhirServerUrl, "", ""),
-        new ConfigFields("data.dwhRootPrefix", dwhRootPrefix, "", ""),
-        new ConfigFields("data.incrementalSchedule", incrementalSchedule, "", ""),
-        new ConfigFields("data.resourceList", resourceList, "", ""),
-        new ConfigFields("data.dbConfig", dbConfig, "", ""));
+        new ConfigFields("fhirdata.fhirServerUrl", fhirServerUrl, "", ""),
+        new ConfigFields("fhirdata.dwhRootPrefix", dwhRootPrefix, "", ""),
+        new ConfigFields("fhirdata.incrementalSchedule", incrementalSchedule, "", ""),
+        new ConfigFields("fhirdata.resourceList", resourceList, "", ""),
+        new ConfigFields("fhirdata.maxWorkers", String.valueOf(maxWorkers), "", ""),
+        new ConfigFields("fhirdata.dbConfig", dbConfig, "", ""));
   }
 
   ConfigFields getConfigFields(FhirEtlOptions options, Method getMethod) {

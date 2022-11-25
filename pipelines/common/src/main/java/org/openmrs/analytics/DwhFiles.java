@@ -147,8 +147,6 @@ public class DwhFiles {
         fhirContext.getResourceType(file);
         typeSet.add(file);
       } catch (DataFormatException e) {
-        log.info(
-            " HERE DEBUG ***************** Ignoring file {} which is not a FHIR resource.", file);
       }
     }
     log.info("Resource types under {} are {}", dwhRoot, typeSet);

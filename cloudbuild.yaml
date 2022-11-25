@@ -93,6 +93,18 @@ steps:
     - DOCKER_NETWORK=--use_docker_network
     - HAPI_TEST=--hapi
 
+# TODO also run full and incremental pipelines and run Spark SQL queries.
+- name: 'docker/compose'
+  id: 'Bring up controller and Spark containers'
+  env:
+    - PIPELINE_CONFIG=/workspace/pipelines/controller/config
+    - DWH_ROOT=/workspace/DWH_ROOT
+  args: ['-f', './pipelines/controller/compose-controller-spark-sql.yaml', 'up', '--force-recreate', '-d']
+
+- name: 'docker/compose'
+  id: 'Bring down controller and Spark containers'
+  args: ['-f', './pipelines/controller/compose-controller-spark-sql.yaml', 'down']
+
 - name: 'docker/compose'
   id: 'Turn down HAPI Source and Sink Servers'
   args: ['-f', './docker/hapi-compose.yml', '-f', './docker/sink-compose.yml', 'down']
