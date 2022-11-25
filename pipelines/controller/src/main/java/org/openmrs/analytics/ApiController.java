@@ -34,18 +34,18 @@ public class ApiController {
   @Autowired private PipelineManager pipelineManager;
 
   @PostMapping("/run")
-  public String runBatch(@RequestParam(name = "isFull", required = true) boolean isFull)
+  public String runBatch(@RequestParam(name = "isFullRun", required = true) boolean isFullRun)
       throws IOException, PropertyVetoException {
     if (pipelineManager.isRunning()) {
       throw new IllegalStateException("Another pipeline is running!");
     }
     logger.info("Received request to start the pipeline ...");
-    if (isFull) {
+    if (isFullRun) {
       pipelineManager.runBatchPipeline();
     } else {
       pipelineManager.runIncrementalPipeline();
     }
-    return SUCCESS;
+    return "SUCCESS";
   }
 
   @GetMapping("/status")
