@@ -1,0 +1,248 @@
+<html>
+<head>
+
+  <title>
+    FHIR Analytics Pipelines Control Panel
+  </title>
+
+  <link rel="stylesheet" type="text/css" href="../static/style.css"
+        th:href="@{/style.css}">
+  <script>
+    function changeVisibility(elemId, makeVisible) {
+      var elem = document.getElementById(elemId);
+      if (makeVisible) {
+        elem.style.display = 'block';
+      } else {
+        elem.style.display = 'none';
+      }
+    }
+
+    function runPipeline(isFullRun) {
+      console.log('Trying to start pipeline; isFullRun: ' + isFullRun);
+      var xhr = new XMLHttpRequest();
+      xhr.open("POST", '/run', true);
+      xhr.onreadystatechange = function() {
+        if (this.readyState === XMLHttpRequest.DONE && this.status === 200) {
+          console.log('Submit succeeded.');
+          changeVisibility('pipelineSubmit', true);
+          setTimeout(function() {
+            // Reload the page after 2 seconds
+            location.reload();
+          }, 2000);
+        }
+        // Handle errors.
+        if (this.readyState === XMLHttpRequest.DONE && this.status != 200) {
+          console.log('Starting the pipeline failed: ' + this.response);
+          // TODO display the error message too.
+          changeVisibility('submitError', true);
+        }
+      }
+      formData = new FormData();
+      formData.append('isFullRun', isFullRun);
+      changeVisibility('pipelineWait', true);
+      xhr.send(formData);
+    }
+
+  </script>
+
+  <script th:if="${isRunning}">origStatus = "RUNNING"</script>
+  <script th:unless="${isRunning}">origStatus = "IDLE"</script>
+  <script>
+    function updateStatus() {
+      var xhr = new XMLHttpRequest();
+      xhr.open("GET", '/status', true);
+      xhr.onreadystatechange = function() {
+        if (this.readyState === XMLHttpRequest.DONE && this.status === 200) {
+          status = this.response;
+          console.log('Received status: ' + status);
+          if (status != origStatus) {
+            if (status == "IDLE") {
+              changeVisibility('pipelineRunning', false);
+              changeVisibility('pipelineDone', true);
+            } else {
+              changeVisibility('pipelineSubmit', true);
+            }
+            setTimeout(function() {
+              // Reload the page after 2 seconds
+              location.reload();
+            }, 2000);
+          }
+        }
+        if (this.readyState === XMLHttpRequest.DONE && this.status != 200) {
+          console.log('Error in fetching status: ' + this.response);
+        }
+      }
+      xhr.send();
+    }
+    timer = setInterval(
+      function() {
+        updateStatus();
+      }, 5000);
+  </script>
+</head>
+
+<body>
+<div class="header">
+  <h1>
+    FHIR Analytics Pipelines Control Panel
+  </h1>
+</div>
+
+<div id="pipelineRunning" th:if="${isRunning}">
+  <!-- TODO add progress data too. -->
+  <!-- TODO replace the spinning GIF with something that uses less CPU for rendering. -->
+  <img width="100px" src="../static/Spinning_wheel_throbber_blue.gif"
+       th:src="@{/Spinning_wheel_throbber_blue.gif}"/>
+  <br/>
+  A pipeline is currently running!
+  <br/>
+  Sink data-warehouse is: <b>[[${dwh}]]</b>
+</div>
+<div id="pipelineDone" style="display:none">
+  The pipeline finished; reloading ...
+</div>
+
+<div id="pipelineWait" style="display:none">
+  <img width="100px" src="../static/Spinning_wheel_throbber_blue.gif"
+       th:src="@{/Spinning_wheel_throbber_blue.gif}"/>
+  The pipeline is being started ...
+</div>
+
+<div id="pipelineSubmit" style="display:none">
+  A new pipeline started; wait for reload ...
+</div>
+<div id="submitError" style="display:none; color:red">
+  Error in starting the pipeline!
+</div>
+
+<div th:attr="class=${isRunning ? 'disabled' : ''}">
+  <button type="submit" name="mode" class="button" onclick="runPipeline(false)">
+    Run Incremental Pipeline
+  </button>
+  This fetches the resources since last run and merges them into the data-warehouse.
+  <br/><br/>
+
+  <button type="submit" name="mode" class="button" onclick="runPipeline(true)">
+    Run Full Pipeline
+  </button>
+  This fetches all resources.
+  <br/><br/>
+  The latest data-warehouse version is: <b>[[${dwh}]]</b>
+</div>
+
+<h2>
+  Configuration parameters
+</h2>
+<table width="100%" cellspacing="2px" cellpadding="5px" border="2px">
+  <thead>
+  <tr>
+    <td width="20%" align="center">
+      Parameter
+    </td>
+    <td width="20%" align="center">
+      Value
+    </td>
+    <td width="20%" align="center">
+      Default Value
+    </td>
+    <td align="left">
+      Description
+    </td>
+  </tr>
+  </thead>
+  <tr th:each="config: ${configParams}">
+    <td align="left">
+      <span th:text="${config.name}">test param</span>
+    </td>
+    <td align="left">
+      <span th:text="${config.value}">test value</span>
+    </td>
+    <td align="left">
+      <span th:text="${config.def}">default value</span>
+    </td>
+    <td align="left">
+      <span th:text="${config.description}">test description</span>
+    </td>
+  </tr>
+</table>
+
+<br/><br/>
+
+<h2>
+  Batch pipeline non-default configurations
+</h2>
+<table width="100%" cellspacing="2px" cellpadding="5px" border="2px">
+  <thead>
+  <tr>
+    <td width="20%" align="center">
+      Parameter
+    </td>
+    <td width="20%" align="center">
+      Value
+    </td>
+    <td width="20%" align="center">
+      Default Value
+    </td>
+    <td align="left">
+      Description
+    </td>
+  </tr>
+  </thead>
+  <tr th:each="config: ${nonDefConfigs}">
+    <td align="left">
+      <span th:text="${config.name}">test param</span>
+    </td>
+    <td align="left">
+      <span th:text="${config.value}">test value</span>
+    </td>
+    <td align="left">
+      <span th:text="${config.def}">default value</span>
+    </td>
+    <td align="left">
+      <span th:text="${config.description}">test description</span>
+    </td>
+  </tr>
+</table>
+
+<br/><br/>
+
+<h2>
+  Batch pipeline default configurations
+</h2>
+<table width="100%" cellspacing="2px" cellpadding="5px" border="2px">
+  <thead>
+  <tr>
+    <td width="20%" align="center">
+      Parameter
+    </td>
+    <td width="20%" align="center">
+      Value
+    </td>
+    <td width="20%" align="center">
+      Default Value
+    </td>
+    <td align="left">
+      Description
+    </td>
+  </tr>
+  </thead>
+  <tr th:each="config: ${defConfigs}">
+    <td align="left">
+      <span th:text="${config.name}">test param</span>
+    </td>
+    <td align="left">
+      <span th:text="${config.value}">test value</span>
+    </td>
+    <td align="left">
+      <span th:text="${config.def}">default value</span>
+    </td>
+    <td align="left">
+      <span th:text="${config.description}">test description</span>
+    </td>
+  </tr>
+</table>
+
+<br/><br/>
+<a href="config.html" th:href="@{/help}">Help</a>
+</body>
+</html>

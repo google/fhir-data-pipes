@@ -158,7 +158,9 @@ abstract class FetchSearchPageFn<T> extends DoFn<T, KV<String, Integer>> {
 
   @Setup
   public void setup() throws SQLException, PropertyVetoException {
-    log.info("Starting setup for stage " + stageIdentifier);
+    log.debug("Starting setup for stage " + stageIdentifier);
+    // TODO make this configurable
+    //   https://github.com/GoogleCloudPlatform/openmrs-fhir-analytics/issues/400
     fhirContext = FhirContext.forR4Cached();
     // The documentation for `FhirContext` claims that it is thread-safe but looking at the code,
     // it is not obvious if it is. This might be an issue when we write to it, like the next line.

@@ -73,19 +73,6 @@
       <version>1.11.1</version>
     </dependency>
 
-    <dependency>
-      <groupId>org.apache.hadoop</groupId>
-      <artifactId>hadoop-common</artifactId>
-      <version>3.3.4</version>
-      <scope>runtime</scope>
-      <exclusions>
-        <exclusion>
-          <groupId>org.slf4j</groupId>
-          <artifactId>slf4j-log4j12</artifactId>
-        </exclusion>
-      </exclusions>
-    </dependency>
-
     <!--JDBC specific dependencies-->
 
     <dependency>
@@ -158,21 +145,23 @@
       <artifactId>common</artifactId>
       <version>${project.parent.version}</version>
     </dependency>
-  </dependencies>
 
-  <repositories>
-    <repository>
-      <releases>
-        <enabled>false</enabled>
-      </releases>
-      <snapshots>
-        <enabled>true</enabled>
-      </snapshots>
-      <id>apache.snapshots</id>
-      <name>Apache Development Snapshot Repository</name>
-      <url>https://repository.apache.org/content/repositories/snapshots/</url>
-    </repository>
-  </repositories>
+    <!-- Include DirectRunner and FlinkRunner by default. -->
+    <dependency>
+      <groupId>org.apache.beam</groupId>
+      <artifactId>beam-runners-direct-java</artifactId>
+      <version>${beam.version}</version>
+    </dependency>
+
+    <dependency>
+      <groupId>org.apache.beam</groupId>
+      <!-- Please see the Flink Runner page for an up-to-date list
+           of supported Flink versions and their artifact names:
+           https://beam.apache.org/documentation/runners/flink/ -->
+      <artifactId>${flink.artifact.name}</artifactId>
+      <version>${beam.version}</version>
+    </dependency>
+  </dependencies>
 
   <build>
     <plugins>
@@ -218,6 +207,12 @@
             </goals>
             <phase>package</phase>
             <configuration>
+              <!-- We need to disable this to keep all dependencies in the
+                 generated POM; otherwise we cannot depend on this module from
+                 elsewhere (will get class-loader exceptions at run-time).
+                 Note with the following `fileName` we produce a "bundled"
+                 uber-jar while keep the original normal jar. -->
+              <createDependencyReducedPom>false</createDependencyReducedPom>
               <finalName>${project.artifactId}-bundled-${project.version}</finalName>
               <filters>
                 <filter>
@@ -259,21 +254,6 @@
   </build>
 
   <profiles>
-    <profile>
-      <id>direct-runner</id>
-      <activation>
-        <activeByDefault>true</activeByDefault>
-      </activation>
-      <!-- Makes the DirectRunner available when running a pipeline. -->
-      <dependencies>
-        <dependency>
-          <groupId>org.apache.beam</groupId>
-          <artifactId>beam-runners-direct-java</artifactId>
-          <version>${beam.version}</version>
-          <scope>runtime</scope>
-        </dependency>
-      </dependencies>
-    </profile>
 
     <profile>
       <id>dataflow-runner</id>
@@ -282,25 +262,6 @@
         <dependency>
           <groupId>org.apache.beam</groupId>
           <artifactId>beam-runners-google-cloud-dataflow-java</artifactId>
-          <version>${beam.version}</version>
-          <scope>runtime</scope>
-        </dependency>
-      </dependencies>
-    </profile>
-
-    <profile>
-      <id>flink-runner</id>
-      <activation>
-        <activeByDefault>true</activeByDefault>
-      </activation>
-      <!-- Makes the FlinkRunner available when running a pipeline. -->
-      <dependencies>
-        <dependency>
-          <groupId>org.apache.beam</groupId>
-          <!-- Please see the Flink Runner page for an up-to-date list
-               of supported Flink versions and their artifact names:
-               https://beam.apache.org/documentation/runners/flink/ -->
-          <artifactId>${flink.artifact.name}</artifactId>
           <version>${beam.version}</version>
           <scope>runtime</scope>
         </dependency>

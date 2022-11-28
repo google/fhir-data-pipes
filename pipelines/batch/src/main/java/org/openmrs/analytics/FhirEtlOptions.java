@@ -23,12 +23,7 @@ import org.apache.beam.sdk.options.Validation.Required;
 /** Options supported by {@link FhirEtl}. */
 public interface FhirEtlOptions extends PipelineOptions {
 
-  /**
-   * By default, this reads from the OpenMRS instance `openmrs` at the default port on localhost.
-   */
-  @Description(
-      "Fhir source server URL, e.g., http://localhost:8099/openmrs/ws/fhir2/R4 or "
-          + "http://localhost:8091/fhir, etc.")
+  @Description("Fhir source server URL, e.g., http://localhost:8091/fhir, etc.")
   @Required
   @Default.String("")
   String getFhirServerUrl();
@@ -75,7 +70,7 @@ public interface FhirEtlOptions extends PipelineOptions {
   @Description(
       "The path to the target generic fhir store, or a GCP fhir store with the format:"
           + " `projects/[\\w-]+/locations/[\\w-]+/datasets/[\\w-]+/fhirStores/[\\w-]+`, e.g., "
-          + "`projects/my-project/locations/us-central1/datasets/openmrs_fhir_test/fhirStores/test`")
+          + "`projects/my-project/locations/us-central1/datasets/fhir_test/fhirStores/test`")
   @Required
   @Default.String("")
   String getFhirSinkPath();
@@ -101,7 +96,6 @@ public interface FhirEtlOptions extends PipelineOptions {
 
   void setOutputParquetPath(String value);
 
-  /** JDBC DB settings: defaults values have been pointed to ./openmrs-compose.yaml */
   @Description("JDBC driver class")
   @Default.String("com.mysql.cj.jdbc.Driver")
   String getJdbcDriverClass();

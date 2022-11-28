@@ -120,7 +120,7 @@ public class FhirEtl {
     }
   }
 
-  static void runFhirFetch(FhirEtlOptions options, FhirContext fhirContext) {
+  static void runFhirFetch(FhirEtlOptions options, FhirContext fhirContext) throws IOException {
     FhirSearchUtil fhirSearchUtil = createFhirSearchUtil(options, fhirContext);
     Map<String, List<SearchSegmentDescriptor>> segmentMap = Maps.newHashMap();
     try {
@@ -151,9 +151,7 @@ public class FhirEtl {
       fetchPatientHistory(
           pipeline, allPatientIds, patientAssociatedResources, options, fhirContext);
     }
-    PipelineResult result = pipeline.run();
-    result.waitUntilFinish();
-    EtlUtils.logMetrics(result.metrics());
+    EtlUtils.runPipelineWithTimestamp(pipeline, options);
   }
 
   private static JdbcConnectionUtil createJdbcConnection(
@@ -167,11 +165,12 @@ public class FhirEtl {
         options.getJdbcMaxPoolSize());
   }
 
-  static void runFhirJdbcFetch(
-      FhirEtlOptions options, DatabaseConfiguration dbConfig, FhirContext fhirContext)
+  static void runFhirJdbcFetch(FhirEtlOptions options, FhirContext fhirContext)
       throws PropertyVetoException, IOException, SQLException, CannotProvideCoderException {
     FhirSearchUtil fhirSearchUtil = createFhirSearchUtil(options, fhirContext);
     Pipeline pipeline = Pipeline.create(options);
+    DatabaseConfiguration dbConfig =
+        DatabaseConfiguration.createConfigFromFile(options.getFhirDatabaseConfigPath());
     JdbcConnectionUtil jdbcConnectionUtil = createJdbcConnection(options, dbConfig);
     JdbcFetchOpenMrs jdbcUtil = new JdbcFetchOpenMrs(jdbcConnectionUtil);
     int batchSize =
@@ -214,9 +213,7 @@ public class FhirEtl {
       fetchPatientHistory(
           pipeline, allPatientIds, patientAssociatedResources, options, fhirContext);
     }
-    PipelineResult result = pipeline.run();
-    result.waitUntilFinish();
-    EtlUtils.logMetrics(result.metrics());
+    EtlUtils.runPipelineWithTimestamp(pipeline, options);
   }
 
   private static void validateOptions(FhirEtlOptions options)
@@ -268,7 +265,7 @@ public class FhirEtl {
    */
   // TODO: Implement active period feature for JDBC mode with a HAPI source server (Github issue
   // #278).
-  static void runHapiJdbcFetch(
+  static Pipeline buildHapiJdbcFetch(
       FhirEtlOptions options, DatabaseConfiguration dbConfig, FhirContext fhirContext)
       throws PropertyVetoException {
     boolean foundResource = false;
@@ -310,13 +307,23 @@ public class FhirEtl {
     }
 
     if (foundResource) { // Otherwise, there is nothing to be done!
-      PipelineResult result = pipeline.run();
-      result.waitUntilFinish();
-      EtlUtils.logMetrics(result.metrics());
+      return pipeline;
     }
+    return null;
   }
 
-  static void runJsonRead(FhirEtlOptions options, FhirContext fhirContext) {
+  static PipelineResult runHapiJdbcFetch(FhirEtlOptions options, FhirContext fhirContext)
+      throws PropertyVetoException, IOException {
+    DatabaseConfiguration dbConfig =
+        DatabaseConfiguration.createConfigFromFile(options.getFhirDatabaseConfigPath());
+    Pipeline pipeline = buildHapiJdbcFetch(options, dbConfig, fhirContext);
+    if (pipeline != null) {
+      return EtlUtils.runPipelineWithTimestamp(pipeline, options);
+    }
+    return null;
+  }
+
+  static void runJsonRead(FhirEtlOptions options) throws IOException {
     Preconditions.checkArgument(!options.getSourceJsonFilePattern().isEmpty());
     Preconditions.checkArgument(!options.isJdbcModeEnabled());
     Preconditions.checkArgument(options.getActivePeriod().isEmpty());
@@ -328,9 +335,7 @@ public class FhirEtl {
             .apply(FileIO.readMatches());
     files.apply("Read JSON files", ParDo.of(new ReadJsonFilesFn(options)));
 
-    PipelineResult result = pipeline.run();
-    result.waitUntilFinish();
-    EtlUtils.logMetrics(result.metrics());
+    EtlUtils.runPipelineWithTimestamp(pipeline, options);
   }
 
   public static void main(String[] args)
@@ -351,16 +356,14 @@ public class FhirEtl {
     }
 
     if (options.isJdbcModeEnabled()) {
-      DatabaseConfiguration dbConfig =
-          DatabaseConfiguration.createConfigFromFile(options.getFhirDatabaseConfigPath());
       if (options.isJdbcModeHapi()) {
-        runHapiJdbcFetch(options, dbConfig, fhirContext);
+        runHapiJdbcFetch(options, fhirContext);
       } else {
-        runFhirJdbcFetch(options, dbConfig, fhirContext);
+        runFhirJdbcFetch(options, fhirContext);
       }
 
     } else if (!options.getSourceJsonFilePattern().isEmpty()) {
-      runJsonRead(options, fhirContext);
+      runJsonRead(options);
     } else {
       runFhirFetch(options, fhirContext);
     }
