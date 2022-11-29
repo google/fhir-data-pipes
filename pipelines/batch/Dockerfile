@@ -18,6 +18,10 @@
 
 
 FROM adoptopenjdk/maven-openjdk11
+
+# TODO: Investigate why switching to the next base image, breaks the e2e in a
+# strange way, i.e., in one of the last steps, when running JDBC version of the
+# pipeline against OpenMRS (with a DB connection error)!
 # FROM eclipse-temurin:11-jdk-focal
 
 ARG WORK_DIR="/usr/src/Main"

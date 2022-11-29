@@ -12,6 +12,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+# This creates a docker image for running the controller web-app. It is expected
+# that in real use-cases, the config dir will be mounted to the host machine.
+
 FROM eclipse-temurin:11-jdk-focal
 
 ARG WORK_DIR="/app"
