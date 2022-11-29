@@ -17,8 +17,8 @@
       }
     }
 
-    function runPipeline(isFull) {
-      console.log('Trying to start pipeline; isFull: ' + isFull);
+    function runPipeline(isFullRun) {
+      console.log('Trying to start pipeline; isFullRun: ' + isFullRun);
       var xhr = new XMLHttpRequest();
       xhr.open("POST", '/run', true);
       xhr.onreadystatechange = function() {
@@ -38,7 +38,7 @@
         }
       }
       formData = new FormData();
-      formData.append('isFull', isFull);
+      formData.append('isFullRun', isFullRun);
       changeVisibility('pipelineWait', true);
       xhr.send(formData);
     }

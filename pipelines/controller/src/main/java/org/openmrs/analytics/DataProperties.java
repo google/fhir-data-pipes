@@ -22,7 +22,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.time.Instant;
 import java.util.ArrayList;
-import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Set;
 import javax.annotation.PostConstruct;
@@ -40,6 +40,11 @@ import org.springframework.core.annotation.AnnotationUtils;
 import org.springframework.scheduling.support.CronExpression;
 import org.springframework.stereotype.Component;
 
+/**
+ * This class contains all configuration parameters of the controller app. Pipeline option instances
+ * are created from these parameters. As all Spring configurations, these can be configured through
+ * a config file, command line arguments, Java properties, or environment variables.
+ */
 @ConfigurationProperties("fhirdata")
 @Getter
 @Setter
@@ -131,7 +136,7 @@ public class DataProperties {
   }
 
   void sortConfigList(List<ConfigFields> configFields) {
-    Collections.sort(configFields, (c1, c2) -> c1.name.compareTo(c2.name));
+    configFields.sort(Comparator.comparing(c -> c.name));
   }
 
   List<ConfigFields> getConfigFieldsList(FhirEtlOptions options) {

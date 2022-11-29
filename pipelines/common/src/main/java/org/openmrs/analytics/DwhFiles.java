@@ -147,6 +147,7 @@ public class DwhFiles {
         fhirContext.getResourceType(file);
         typeSet.add(file);
       } catch (DataFormatException e) {
+        log.debug("Ignoring file {} which is not a FHIR resource.", file);
       }
     }
     log.info("Resource types under {} are {}", dwhRoot, typeSet);
@@ -184,7 +185,7 @@ public class DwhFiles {
     if (lines.isEmpty()) {
       String errorMessage = String.format("The timestamp file %s is empty", filePath);
       log.error(errorMessage);
-      throw new IOException(errorMessage);
+      throw new IllegalStateException(errorMessage);
     }
     return Instant.parse(lines.get(0));
   }

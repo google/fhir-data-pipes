@@ -82,10 +82,7 @@ public class PipelineManager {
         parent.listFiles(
             file -> {
               String fileName = file.getName();
-              if (fileName.startsWith(noDirFilePrefix)) {
-                return true;
-              }
-              return false;
+              return fileName.startsWith(noDirFilePrefix);
             });
     Preconditions.checkState(files != null, "Make sure DWH prefix is a valid path!");
     String lastDwh = "";
@@ -117,10 +114,7 @@ public class PipelineManager {
   }
 
   synchronized boolean isRunning() {
-    if (currentPipeline != null && currentPipeline.isAlive()) {
-      return true;
-    }
-    return false;
+    return currentPipeline != null && currentPipeline.isAlive();
   }
 
   synchronized String getCurrentDwhRoot() {
@@ -130,7 +124,7 @@ public class PipelineManager {
     return currentDwh.getRoot();
   }
 
-  // Every 10 seconds, check for pipeline status and incremental pipeline schedule.
+  // Every 30 seconds, check for pipeline status and incremental pipeline schedule.
   @Scheduled(fixedDelay = 30000)
   private void checkSchedule() throws IOException, PropertyVetoException {
     if (isRunning() || lastRunEnd == null) {
@@ -208,7 +202,7 @@ public class PipelineManager {
   private static class PipelineThread extends Thread {
     private final Pipeline pipeline;
     private final PipelineManager manager;
-    // This is used only the incremental mode.
+    // This is used in the incremental mode only.
     private final ParquetMergerOptions mergerOptions;
 
     PipelineThread(Pipeline pipeline, PipelineManager manager) {
