@@ -22,6 +22,7 @@ import java.io.File;
 import java.io.IOException;
 import java.time.LocalDateTime;
 import javax.annotation.PostConstruct;
+import org.apache.beam.runners.flink.FlinkPipelineOptions;
 import org.apache.beam.runners.flink.FlinkRunner;
 import org.apache.beam.sdk.Pipeline;
 import org.apache.beam.sdk.options.PipelineOptionsFactory;
@@ -123,8 +124,8 @@ public class PipelineManager {
     return currentDwh.getRoot();
   }
 
-  // Every 10 seconds, check for pipeline status and incremental pipeline schedule.
-  @Scheduled(fixedDelay = 10000)
+  // Every 30 seconds, check for pipeline status and incremental pipeline schedule.
+  @Scheduled(fixedDelay = 30000)
   private void checkSchedule() throws IOException, PropertyVetoException {
     if (isRunning() || lastRunEnd == null) {
       return;
@@ -178,6 +179,9 @@ public class PipelineManager {
     mergerOptions.setDwh2(incrementalDwhRoot);
     mergerOptions.setMergedDwh(finalDwhRoot);
     mergerOptions.setRunner(FlinkRunner.class);
+    mergerOptions.setNumShards(dataProperties.getMaxWorkers());
+    FlinkPipelineOptions flinkOptions = mergerOptions.as(FlinkPipelineOptions.class);
+    flinkOptions.setMaxParallelism(dataProperties.getMaxWorkers());
 
     if (pipeline == null) {
       // TODO communicate this to the UI
