@@ -7,6 +7,10 @@
 
   <link rel="stylesheet" type="text/css" href="../static/style.css"
         th:href="@{/style.css}">
+  <!-- Bootstrap core CSS -->
+  <link href="/bootstrap-5.0.2-dist/css/bootstrap.min.css" rel="stylesheet">
+  <script src="/bootstrap-5.0.2-dist/js/bootstrap.min.js"></script>
+
   <script>
     function changeVisibility(elemId, makeVisible) {
       var elem = document.getElementById(elemId);
@@ -82,167 +86,280 @@
 </head>
 
 <body>
-<div class="header">
-  <h1>
-    FHIR Analytics Pipelines Control Panel
-  </h1>
+<div class="container container-sm">
+  <header class="d-flex flex-wrap justify-content-center py-3 mb-4 border-bottom">
+    <a href="/" class="d-flex align-items-center mb-3 mb-md-0 me-md-auto text-dark text-decoration-none">
+      <span class="fs-4">FHIR Data Pipes Control Panel</span>
+    </a>
+    <ul class="nav nav-pills">
+      <!--<li class="nav-item"><a href="#" class="nav-link active" aria-current="page">Control Home</a></li>-->
+      <li class="nav-item"><a href="#" class="nav-link">Spark Admin</a></li>
+      <li class="nav-item"><a href="#" class="nav-link">SQL Console</a></li>
+      <li class="nav-item"><a href="#" class="nav-link">Notebook</a></li>
+      <li class="nav-item"><a href="config.html" th:href="@{/help}" class="nav-link">Help</a></li>
+    </ul>
+  </header>
+
+  <div class="container py-3">
+    <div class="row">
+      <main>
+
+        <!--<div id="pipelineDone" style="display:none" class="alert alert-success" role="alert">
+          <h4 class="alert-heading">Pipeline status</h4>
+          <p>Aww yeah, you successfully read this important alert message. This example text is going to run a bit longer so that you can see how spacing within an alert works with this kind of content.</p>
+          <hr>
+          <p class="mb-0">Whenever you need to, be sure to use margin utilities to keep things nice and tidy.</p>
+        </div>-->
+
+        <div class="alert alert-primary alert-dismissible fade show" role="alert" id="pipelineRunning" th:if="${isRunning}">
+          <!-- TODO add progress data too. -->
+          <!-- TODO replace the spinning GIF with something that uses less CPU for rendering. -->
+          <img width="100px" src="/Spinning_wheel_throbber_blue.gif">
+          The pipeline is being started ...
+          Sink data-warehouse is: <b>[[${dwh}]]</b>
+          <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+
+        <div class="alert alert-primary alert-dismissible fade show" role="alert" id="pipelineDone" style="display:none">
+          The pipeline finished; reloading ...
+          <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+
+        <div class="alert alert-info alert-dismissible fade show" id="pipelineWait" style="display:none">
+          <img width="100px" src="/Spinning_wheel_throbber_blue.gif">
+          The pipeline is being started ...
+          <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+
+        <div class="alert alert-info alert-dismissible fade show" style="display:none">
+          A new pipeline started; wait for reload ...
+          <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+        <div class="alert alert-danger alert-dismissible fade show" id="submitError" style="display:none; color:red">
+          Error in starting the pipeline!
+          <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+
+        <div th:attr="class=${isRunning ? 'disabled' : ''}">
+          <!--<img class="float-start" src="./images/update_icon.png" width="30px">-->
+          <h3 class="ml-5">Run pipelines</h3>
+          <!-- ToDo - if pipeline is scheduled show this -->
+          <div class="alert alert-info alert-dismissible fade show mt-2">
+            Incremental pipeline is scheduled to run in approx <strong>[Replace with value from config]</strong>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+          </div>
+          <!-- End to-do -->
+          <div class="row row-cols-1 row-cols-md-2 mb-2 text-center">
+            <div class="col">
+              <div class="card md-5 rounded-3 shadow-sm">
+                <!--<img src="./images/update_icon.png" alt="Run incremental pipeline" width="100%">-->
+                <div class="card-header py-3">
+                  <h5>Run Incremental Pipeline</h5>
+                </div>
+                <div class="card-body">
+                  <p>This fetches the resources since last run and merges them into the data-warehouse.</p>
+                  <button type="submit" name="mode" class="button btn btn-primary" onclick="runPipeline(false)">
+                    Run Incremental
+                  </button>
+                  <!-- Todo: replace with last run time iff applicable
+                  <p class="small"><strong>Last run:</strong> 11-22-2022 20:34:03</p>
+                  -->
+                </div>
+              </div>
+            </div>
+            <div class="col">
+              <div class="card md-4 rounded-3 shadow-sm">
+                <!--<img src="./images/update_icon.png" alt="Run incremental pipeline" width="100%">-->
+                <div class="card-header py-3">
+                  <h5>Run Full Pipeline</h5>
+                </div>
+                <div class="card-body">
+                  <p>Fetch all of the resources and create a new data warehouse snapshot</p>
+                  <button type="submit" name="mode" class="button btn btn-primary" onclick="runPipeline(true)">
+                    Run Full
+                  </button>
+                  <!-- Todo: replace with last run time iff applicable
+                  <p class="small"><strong>Last run:</strong> 11-22-2022 20:34:03</p>
+                  -->
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div style="margin-top: 50px">
+            <h3>List of DWH snapshots</h3>
+            <div class="alert alert-secondary alert-dismissible fade show" role="alert">
+              [[${dwh}]]
+              <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+            <div class="accordion" id="accordionDWH">
+              <div class="accordion-item">
+                <h2 class="accordion-header" id="flush-headingOne">
+                  <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#flush-collapseOne" aria-expanded="false" aria-controls="flush-collapseOne">
+                    Archive of DWH Snapshots
+                  </button>
+                </h2>
+                <!--
+                Todo - only show this if there are available snapshots
+                -->
+                <div id="flush-collapseOne" class="accordion-collapse collapse" aria-labelledby="flush-headingOne" data-bs-parent="#accordionDWH">
+                  <div class="accordion-body">
+                    <!--
+                    Todo - Only replace this with list of available snapshots
+                    -->
+                    <ul>
+                      <li><span class="badge bg-primary">Latest</span>&nbsp;<span class="badge bg-secondary">Incremental pipeline</span>&nbsp;/tmp/controller_DWH_TIMESTAMP_2022-11-22T03-41-13.693399Z</li>
+                      <li><span class="badge bg-secondary">Full pipeline</span>&nbsp;/tmp/controller_DWH_TIMESTAMP_2022-10-22T03-41-13.693399Z</li>
+                    </ul>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        <div style="margin-top: 50px">
+          <h3>Configuration Settings</h3>
+          <div class="accordion" id="configAccordian">
+            <div class="accordion-item">
+              <h2 class="accordion-header" id="ca-headingOne">
+                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#ca-collapseOne" aria-expanded="false" aria-controls="ca-collapseOne">
+                  Data Pipes Configuration parameters
+                </button>
+              </h2>
+              <div id="ca-collapseOne" class="accordion-collapse collapse" aria-labelledby="ca-headingOne" data-bs-parent="#configAccordian">
+                <div class="accordion-body">
+                  <table class="table table-striped">
+                    <thead>
+                    <tr>
+                      <td>
+                        Parameter
+                      </td>
+                      <td>
+                        Value
+                      </td>
+                      <td>
+                        Default Value
+                      </td>
+                      <td>
+                        Description
+                      </td>
+                    </tr>
+                    </thead>
+                    <tr th:each="config: ${configParams}">
+                      <td>
+                        <span th:text="${config.name}">test param</span>
+                      </td>
+                      <td>
+                        <span th:text="${config.value}">test value</span>
+                      </td>
+                      <td>
+                        <span th:text="${config.def}">default value</span>
+                      </td>
+                      <td>
+                        <span th:text="${config.description}">test description</span>
+                      </td>
+                    </tr>
+                  </table>
+                </div>
+              </div>
+            </div>
+            <div class="accordion-item">
+              <h2 class="accordion-header" id="flush-headingTwo">
+                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#flush-collapseTwo" aria-expanded="false" aria-controls="flush-collapseTwo">
+                  Batch pipeline non-default configurations
+                </button>
+              </h2>
+              <div id="flush-collapseTwo" class="accordion-collapse collapse" aria-labelledby="flush-headingTwo" data-bs-parent="#accordionFlushExample">
+                <div class="accordion-body">
+                  <table class="table table-striped">
+                    <thead>
+                    <tr>
+                      <td>
+                        Parameter
+                      </td>
+                      <td>
+                        Value
+                      </td>
+                      <td>
+                        Default Value
+                      </td>
+                      <td>
+                        Description
+                      </td>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr th:each="config: ${nonDefConfigs}">
+                      <td>
+                        <span th:text="${config.name}">test param</span>
+                      </td>
+                      <td>
+                        <span th:text="${config.value}">test value</span>
+                      </td>
+                      <td>
+                        <span th:text="${config.def}">default value</span>
+                      </td>
+                      <td>
+                        <span th:text="${config.description}">test description</span>
+                      </td>
+                    </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+            <div class="accordion-item">
+              <h2 class="accordion-header" id="flush-headingThree">
+                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#flush-collapseThree" aria-expanded="false" aria-controls="flush-collapseThree">
+                  Batch pipeline default configurations
+                </button>
+              </h2>
+              <div id="flush-collapseThree" class="accordion-collapse collapse" aria-labelledby="flush-headingThree" data-bs-parent="#accordionFlushExample">
+                <div class="accordion-body">
+                  <table class="table table-striped">
+                    <thead>
+                    <tr>
+                      <td>
+                        Parameter
+                      </td>
+                      <td>
+                        Value
+                      </td>
+                      <td>
+                        Default Value
+                      </td>
+                      <td>
+                        Description
+                      </td>
+                    </tr>
+                    </thead>
+                    <tr th:each="config: ${defConfigs}">
+                      <td>
+                        <span th:text="${config.name}">test param</span>
+                      </td>
+                      <td>
+                        <span th:text="${config.value}">test value</span>
+                      </td>
+                      <td>
+                        <span th:text="${config.def}">default value</span>
+                      </td>
+                      <td>
+                        <span th:text="${config.description}">test description</span>
+                      </td>
+                    </tr>
+                  </table>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </main>
+    </div>
+  </div>
+  <footer class="footer mt-auto py-3">
+    <div class="container text-center">
+      <span class="text-footer">View source at <a href="https://github.com/google/fhir-data-pipes">github.com</a></span>
+    </div>
+  </footer>
 </div>
-
-<div id="pipelineRunning" th:if="${isRunning}">
-  <!-- TODO add progress data too. -->
-  <!-- TODO replace the spinning GIF with something that uses less CPU for rendering. -->
-  <img width="100px" src="../static/Spinning_wheel_throbber_blue.gif"
-       th:src="@{/Spinning_wheel_throbber_blue.gif}"/>
-  <br/>
-  A pipeline is currently running!
-  <br/>
-  Sink data-warehouse is: <b>[[${dwh}]]</b>
-</div>
-<div id="pipelineDone" style="display:none">
-  The pipeline finished; reloading ...
-</div>
-
-<div id="pipelineWait" style="display:none">
-  <img width="100px" src="../static/Spinning_wheel_throbber_blue.gif"
-       th:src="@{/Spinning_wheel_throbber_blue.gif}"/>
-  The pipeline is being started ...
-</div>
-
-<div id="pipelineSubmit" style="display:none">
-  A new pipeline started; wait for reload ...
-</div>
-<div id="submitError" style="display:none; color:red">
-  Error in starting the pipeline!
-</div>
-
-<div th:attr="class=${isRunning ? 'disabled' : ''}">
-  <button type="submit" name="mode" class="button" onclick="runPipeline(false)">
-    Run Incremental Pipeline
-  </button>
-  This fetches the resources since last run and merges them into the data-warehouse.
-  <br/><br/>
-
-  <button type="submit" name="mode" class="button" onclick="runPipeline(true)">
-    Run Full Pipeline
-  </button>
-  This fetches all resources.
-  <br/><br/>
-  The latest data-warehouse version is: <b>[[${dwh}]]</b>
-</div>
-
-<h2>
-  Configuration parameters
-</h2>
-<table width="100%" cellspacing="2px" cellpadding="5px" border="2px">
-  <thead>
-  <tr>
-    <td width="20%" align="center">
-      Parameter
-    </td>
-    <td width="20%" align="center">
-      Value
-    </td>
-    <td width="20%" align="center">
-      Default Value
-    </td>
-    <td align="left">
-      Description
-    </td>
-  </tr>
-  </thead>
-  <tr th:each="config: ${configParams}">
-    <td align="left">
-      <span th:text="${config.name}">test param</span>
-    </td>
-    <td align="left">
-      <span th:text="${config.value}">test value</span>
-    </td>
-    <td align="left">
-      <span th:text="${config.def}">default value</span>
-    </td>
-    <td align="left">
-      <span th:text="${config.description}">test description</span>
-    </td>
-  </tr>
-</table>
-
-<br/><br/>
-
-<h2>
-  Batch pipeline non-default configurations
-</h2>
-<table width="100%" cellspacing="2px" cellpadding="5px" border="2px">
-  <thead>
-  <tr>
-    <td width="20%" align="center">
-      Parameter
-    </td>
-    <td width="20%" align="center">
-      Value
-    </td>
-    <td width="20%" align="center">
-      Default Value
-    </td>
-    <td align="left">
-      Description
-    </td>
-  </tr>
-  </thead>
-  <tr th:each="config: ${nonDefConfigs}">
-    <td align="left">
-      <span th:text="${config.name}">test param</span>
-    </td>
-    <td align="left">
-      <span th:text="${config.value}">test value</span>
-    </td>
-    <td align="left">
-      <span th:text="${config.def}">default value</span>
-    </td>
-    <td align="left">
-      <span th:text="${config.description}">test description</span>
-    </td>
-  </tr>
-</table>
-
-<br/><br/>
-
-<h2>
-  Batch pipeline default configurations
-</h2>
-<table width="100%" cellspacing="2px" cellpadding="5px" border="2px">
-  <thead>
-  <tr>
-    <td width="20%" align="center">
-      Parameter
-    </td>
-    <td width="20%" align="center">
-      Value
-    </td>
-    <td width="20%" align="center">
-      Default Value
-    </td>
-    <td align="left">
-      Description
-    </td>
-  </tr>
-  </thead>
-  <tr th:each="config: ${defConfigs}">
-    <td align="left">
-      <span th:text="${config.name}">test param</span>
-    </td>
-    <td align="left">
-      <span th:text="${config.value}">test value</span>
-    </td>
-    <td align="left">
-      <span th:text="${config.def}">default value</span>
-    </td>
-    <td align="left">
-      <span th:text="${config.description}">test description</span>
-    </td>
-  </tr>
-</table>
-
-<br/><br/>
-<a href="config.html" th:href="@{/help}">Help</a>
 </body>
 </html>
