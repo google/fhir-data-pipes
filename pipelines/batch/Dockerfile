@@ -1,4 +1,4 @@
-# Copyright 2021 Google LLC
+# Copyright 2021-2022 Google LLC
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -18,6 +18,11 @@
 
 
 FROM adoptopenjdk/maven-openjdk11
+
+# TODO: Investigate why switching to the next base image, breaks the e2e in a
+# strange way, i.e., in one of the last steps, when running JDBC version of the
+# pipeline against OpenMRS (with a DB connection error)!
+# FROM eclipse-temurin:11-jdk-focal
 
 ARG WORK_DIR="/usr/src/Main"
 COPY target/batch-bundled-0.1.0-SNAPSHOT.jar ${WORK_DIR}/app.jar

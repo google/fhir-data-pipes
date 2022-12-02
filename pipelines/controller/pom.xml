@@ -91,10 +91,26 @@
       <plugin>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-maven-plugin</artifactId>
+        <!-- The version specification should not be needed but on Cloud-Build
+          for some reason it picks 3.0.0 and then fails as it needs Java 17. -->
+        <version>2.7.5</version>
         <!-- This is for being able to debug from IDE. -->
         <configuration>
           <fork>false</fork>
         </configuration>
+        <executions>
+          <execution>
+            <!-- This creates the standalone fat-jar with "-exec" suffix.  -->
+            <id>repackage</id>
+            <goals>
+              <goal>repackage</goal>
+            </goals>
+            <configuration>
+              <classifier>exec</classifier>
+            </configuration>
+          </execution>
+        </executions>
+
       </plugin>
     </plugins>
   </build>
