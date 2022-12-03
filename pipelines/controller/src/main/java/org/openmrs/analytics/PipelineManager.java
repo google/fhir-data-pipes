@@ -124,13 +124,24 @@ public class PipelineManager {
     return currentDwh.getRoot();
   }
 
+  /**
+   * @return the next scheduled time to run the incremental pipeline or null iff a pipeline is
+   *     currently running or no previous DWH exist.
+   */
+  LocalDateTime getNextIncrementalTime() {
+    if (isRunning() || lastRunEnd == null) {
+      return null;
+    }
+    return cron.next(lastRunEnd);
+  }
+
   // Every 30 seconds, check for pipeline status and incremental pipeline schedule.
   @Scheduled(fixedDelay = 30000)
   private void checkSchedule() throws IOException, PropertyVetoException {
-    if (isRunning() || lastRunEnd == null) {
+    LocalDateTime next = getNextIncrementalTime();
+    if (next == null) {
       return;
     }
-    LocalDateTime next = cron.next(lastRunEnd);
     logger.info("Last run was at {} next run is at {}", lastRunEnd, next);
     if (next.compareTo(LocalDateTime.now()) < 0) {
       logger.info("Incremental run triggered at {}", LocalDateTime.now());
@@ -164,6 +175,9 @@ public class PipelineManager {
   synchronized void runIncrementalPipeline() throws IOException, PropertyVetoException {
     // TODO do the same as above but read/set --since
     Preconditions.checkState(!isRunning(), "cannot start a pipeline while another one is running");
+    Preconditions.checkState(
+        currentDwh != null,
+        "cannot start the incremental pipeline while there are no DWHs; run full pipeline");
     FhirEtlOptions options = dataProperties.createBatchOptions();
     String finalDwhRoot = options.getOutputParquetPath();
     // TODO move old incremental_run dir if there is one
@@ -195,7 +209,7 @@ public class PipelineManager {
     }
   }
 
-  synchronized void updateDwh(String newRoot) {
+  private synchronized void updateDwh(String newRoot) {
     currentDwh = DwhFiles.forRoot(newRoot);
   }
 
@@ -224,8 +238,9 @@ public class PipelineManager {
       try {
         FhirEtlOptions options = pipeline.getOptions().as(FhirEtlOptions.class);
         EtlUtils.runPipelineWithTimestamp(pipeline, options);
-        manager.updateDwh(options.getOutputParquetPath());
-        if (mergerOptions != null) {
+        if (mergerOptions == null) { // Do not update DWH yet if this was an incremental run.
+          manager.updateDwh(options.getOutputParquetPath());
+        } else {
           FhirContext fhirContext = FhirContext.forR4Cached();
           Pipeline mergerPipeline = ParquetMerger.createMergerPipeline(mergerOptions, fhirContext);
           logger.info("Merger options are {}", mergerOptions);
