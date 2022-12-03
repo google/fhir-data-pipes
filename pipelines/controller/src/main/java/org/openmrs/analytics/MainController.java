@@ -17,6 +17,7 @@ package org.openmrs.analytics;
 
 import java.beans.PropertyVetoException;
 import java.io.IOException;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 import org.slf4j.Logger;
@@ -51,6 +52,14 @@ public class MainController {
               dataProperties.getDwhRootPrefix()));
     } else {
       model.addAttribute("dwh", dwh);
+    }
+    LocalDateTime next = pipelineManager.getNextIncrementalTime();
+    if (next == null) {
+      model.addAttribute("next_run", "NOT SCHEDULED");
+      model.addAttribute("hasDwh", false);
+    } else {
+      model.addAttribute("next_run", next.toString());
+      model.addAttribute("hasDwh", true);
     }
     FhirEtlOptions options = dataProperties.createBatchOptions();
     List<DataProperties.ConfigFields> configParams = dataProperties.getConfigParams();
