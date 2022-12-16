@@ -39,7 +39,7 @@
     <hamcrest.version>2.1</hamcrest.version>
     <jackson.version>2.14.0</jackson.version>
     <pubsub.version>v1-rev20220904-2.0.0</pubsub.version>
-    <auto-value.version>1.10</auto-value.version>
+    <auto-value.version>1.10.1</auto-value.version>
     <spark.version>2.4.5</spark.version>
     <maven-surefire-plugin.version>2.22.2</maven-surefire-plugin.version>
     <nemo.version>0.1</nemo.version>
