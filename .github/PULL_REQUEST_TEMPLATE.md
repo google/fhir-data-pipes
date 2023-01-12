@@ -24,25 +24,17 @@ automated e2e/unit tests.
 <!--- Put an `x` in the box if you did the task -->
 <!--- If you forgot a task please follow the instructions below -->
 
-- [ ] I have read and will follow the
-      [review process](https://github.com/GoogleCloudPlatform/openmrs-fhir-analytics/blob/master/doc/review_process.md).
+- [ ] I have read and will follow the [review process](https://github.com/GoogleCloudPlatform/openmrs-fhir-analytics/blob/master/doc/review_process.md).
 - [ ] I am familiar with Google Style Guides for the language I have coded in.
 
-  No? Please take some time and review
-  [Java](https://google.github.io/styleguide/javaguide.html) and
-  [Python](https://google.github.io/styleguide/pyguide.html) style guides. Note,
-  when in conflict, OpenMRS style guide overrules.
+  No? Please take some time and review [Java](https://google.github.io/styleguide/javaguide.html) and [Python](https://google.github.io/styleguide/pyguide.html) style guides.
 
-- [ ] My IDE is configured to follow the Google
-      [**code styles**](https://google.github.io/styleguide/).
+- [ ] My IDE is configured to follow the Google [**code styles**](https://google.github.io/styleguide/).
 
-  No? Unsure? ->
-  [configure your IDE](https://github.com/google/google-java-format).
+  No? Unsure? -> [configure your IDE](https://github.com/google/google-java-format).
 
-- [ ] I have **added tests** to cover my changes. (If you refactored existing
-      code that was well tested you do not have to add tests)
-- [ ] I ran `mvn clean package` right before creating this pull request and
-      added all formatting changes to my commit.
+- [ ] I have **added tests** to cover my changes. (If you refactored existing code that was well tested you do not have to add tests)
+- [ ] I ran `mvn clean package` right before creating this pull request and added all formatting changes to my commit.
 - [ ] All new and existing **tests passed**.
 - [ ] My pull request is **based on the latest changes** of the master branch.
 
