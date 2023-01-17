@@ -45,7 +45,7 @@
     <nemo.version>0.1</nemo.version>
     <flink.artifact.name>beam-runners-flink-1.14</flink.artifact.name>
     <mysql.driver.version>8.0.30</mysql.driver.version>
-    <postgresql.version>42.4.3</postgresql.version>
+    <postgresql.version>42.5.1</postgresql.version>
 
   </properties>
 
