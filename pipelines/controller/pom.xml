@@ -93,7 +93,7 @@
         <artifactId>spring-boot-maven-plugin</artifactId>
         <!-- The version specification should not be needed but on Cloud-Build
           for some reason it picks 3.0.0 and then fails as it needs Java 17. -->
-        <version>2.7.5</version>
+        <version>3.0.1</version>
         <!-- This is for being able to debug from IDE. -->
         <configuration>
           <fork>false</fork>
