@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
 
-    Copyright 2020-2022 Google LLC
+    Copyright 2020-2023 Google LLC
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -93,7 +93,7 @@
         <artifactId>spring-boot-maven-plugin</artifactId>
         <!-- The version specification should not be needed but on Cloud-Build
           for some reason it picks 3.0.0 and then fails as it needs Java 17. -->
-        <version>2.7.5</version>
+        <version>${spring-boot.version}</version>
         <!-- This is for being able to debug from IDE. -->
         <configuration>
           <fork>false</fork>
