@@ -1,6 +1,6 @@
 # Process for a smooth code review
 
-We put great emphasis on code reviews, every pull requery (PR) , big or small,
+We put great emphasis on code reviews, every pull request (PR) , big or small,
 has to be approved by a reviewer with write access. Unfortunately, GitHub's
 review tool has a lot of shortcomings, especially for longer review threads.
 It can also make it hard to follow the changes that has been done to address
