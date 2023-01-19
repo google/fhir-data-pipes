@@ -15,7 +15,7 @@ server (like [HAPI](https://hapifhir.io/),
 or even [OpenMRS](https://openmrs.org)) using the
 [FHIR format](https://www.hl7.org/fhir/overview.html) into a data warehouse
 based on [Apache Parquet files](https://parquet.apache.org), or another FHIR
-server. There is also a query library in Python to make working with FHIR based
+server. There is also a query library in Python to make working with FHIR-based
 data warehouses simpler.
 
 These tools are intended to be generic and eventually work with any FHIR-based
@@ -23,8 +23,8 @@ data source and data warehouse. Here is the list of main directories with a
 brief description of their content:
 
 - [pipelines/](pipelines/) Batch and streaming pipelines to transform data from 
-  a FHIR based source to an analytics friendly data warehouse or another FHIR 
-  store.
+a FHIR-based source to an analytics-friendly data warehouse or another FHIR
+store.
 
 - [dwh/](dwh/) Query library for working with distributed FHIR-based data
   warehouses.
