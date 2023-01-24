@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2022 Google LLC
+ * Copyright 2020-2023 Google LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -70,7 +70,13 @@ public class DataProperties {
 
   private String dbConfig;
 
+  private String thriftserverHiveConfig;
+
+  private String hiveJdbcDriver;
+
   private String dwhRootPrefix;
+
+  private String thriftServerParquetPathPrefix;
 
   private String incrementalSchedule;
 
@@ -89,10 +95,15 @@ public class DataProperties {
     options.setFhirServerUrl(fhirServerUrl);
     options.setFhirDatabaseConfigPath(dbConfig);
     options.setResourceList(resourceList);
-    // Note we prefer to use a human-readable name but we do not rely on the timestamp being in
-    // the DWH name; the reason for replacing `:` is easier copy/paste from the UI to `bash`.
-    options.setOutputParquetPath(
-        dwhRootPrefix + TIMESTAMP_PREFIX + Instant.now().toString().replaceAll(":", "-"));
+
+    // Using underscore for suffix as hyphens are discouraged in hive table names.
+    String timestampSuffix =
+        Instant.now().toString().replaceAll(":", "-").replaceAll("-", "_").replaceAll("\\.", "_");
+    options.setOutputParquetPath(dwhRootPrefix + TIMESTAMP_PREFIX + timestampSuffix);
+    options.setThriftServerParquetPath(
+        thriftServerParquetPathPrefix + TIMESTAMP_PREFIX + timestampSuffix);
+    options.setTimestampSuffix(timestampSuffix);
+
     options.setRunner(FlinkRunner.class);
     FlinkPipelineOptions flinkOptions = options.as(FlinkPipelineOptions.class);
     flinkOptions.setMaxParallelism(getMaxWorkers());

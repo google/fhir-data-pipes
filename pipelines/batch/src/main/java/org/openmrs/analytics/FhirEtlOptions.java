@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2022 Google LLC
+ * Copyright 2020-2023 Google LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -227,4 +227,16 @@ public interface FhirEtlOptions extends PipelineOptions {
   String getSourceJsonFilePattern();
 
   void setSourceJsonFilePattern(String value);
+
+  @Description("Prefix required for Thrift Server Parquet files location.")
+  @Default.String("")
+  String getThriftServerParquetPath();
+
+  void setThriftServerParquetPath(String value);
+
+  @Description("Timestamp suffix to be used in Thrift Server Hive table name.")
+  @Default.String("")
+  String getTimestampSuffix();
+
+  void setTimestampSuffix(String value);
 }

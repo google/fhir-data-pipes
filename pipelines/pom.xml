@@ -94,13 +94,6 @@
   </dependencyManagement>
 
   <dependencies>
-    <!-- Add slf4j API frontend binding with JUL backend -->
-    <dependency>
-      <groupId>org.slf4j</groupId>
-      <artifactId>slf4j-api</artifactId>
-      <version>${slf4j.version}</version>
-    </dependency>
-
     <!-- Use logback as the logging framework. -->
     <dependency>
       <groupId>ch.qos.logback</groupId>
