@@ -40,4 +40,6 @@ fhirdata:
 
   maxWorkers: 10
 
+  createHiveResourceTables: true
+
   hiveJdbcDriver: "org.apache.hive.jdbc.HiveDriver"

@@ -78,6 +78,8 @@ public class DataProperties {
 
   private String thriftServerParquetPathPrefix;
 
+  private boolean createHiveResourceTables;
+
   private String incrementalSchedule;
 
   private String resourceList;
