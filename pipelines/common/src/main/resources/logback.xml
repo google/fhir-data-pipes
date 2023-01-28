@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <!--
 
-    Copyright 2020-2022 Google LLC
+    Copyright 2020-2023 Google LLC
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -25,7 +25,7 @@
     </encoder>
   </appender>
   <!-- We can set this to "debug" to see our debug log messages. -->
-  <logger name="org.openmrs.analytics" level="info" />
+  <logger name="com.google.fhir.analytics" level="info" />
   <!-- This is too noisy because of "long DoFn name" warnings. -->
   <logger name="org.apache.flink.metrics" level="error" />
 

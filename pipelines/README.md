@@ -116,7 +116,7 @@ To start Batch Mode using FHIR Search, run:
 
 ```shell
 $ java -cp batch/target/fhir-batch-etl-bundled-0.1.0-SNAPSHOT.jar \
-    org.openmrs.analytics.FhirEtl \
+    com.google.fhir.analytics.FhirEtl \
     --fhirServerUrl=http://localhost:8099/openmrs/ws/fhir2/R4 \
     --fhirServerUserName=admin --fhirServerPassword=Admin123 \
     --fhirSinkPath=http://localhost:8098/fhir \
@@ -140,7 +140,7 @@ To start Batch Mode using FHIR Search, run:
 
 ```shell
 $ java -cp batch/target/fhir-batch-etl-bundled-0.1.0-SNAPSHOT.jar \
-    org.openmrs.analytics.FhirEtl \
+    com.google.fhir.analytics.FhirEtl \
     --fhirServerUrl=http://localhost:8098/fhir \
     --outputParquetPath=/tmp/TEST/ \
     --resourceList=Patient,Encounter,Observation --batchSize=20
@@ -152,7 +152,7 @@ To start Batch Mode using JDBC, run:
 
 ```shell
 $ java -cp batch/target/fhir-batch-etl-bundled-0.1.0-SNAPSHOT.jar \
-    org.openmrs.analytics.FhirEtl \
+    com.google.fhir.analytics.FhirEtl \
     --fhirServerUrl=http://localhost:8099/openmrs/ws/fhir2/R4 \
     --fhirServerUserName=admin --fhirServerPassword=Admin123 \
     --fhirSinkPath=http://localhost:8098/fhir \
@@ -181,7 +181,7 @@ To start Batch Mode using JDBC, run:
 
 ```shell
 $ java -cp batch/target/fhir-batch-etl-bundled-0.1.0-SNAPSHOT.jar \
-    org.openmrs.analytics.FhirEtl \
+    com.google.fhir.analytics.FhirEtl \
     --fhirServerUrl=http://localhost:8091/fhir \
     --fhirServerUserName=hapi --fhirServerPassword=hapi \
     --fhirDatabaseConfigPath=../utils/hapi-postgres-config.json
