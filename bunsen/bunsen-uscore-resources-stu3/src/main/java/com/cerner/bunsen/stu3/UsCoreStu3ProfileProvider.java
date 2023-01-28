@@ -1,6 +1,7 @@
 package com.cerner.bunsen.stu3;
 
 import ca.uhn.fhir.context.FhirContext;
+import ca.uhn.fhir.context.FhirVersionEnum;
 import ca.uhn.fhir.context.support.IValidationSupport;
 import ca.uhn.fhir.parser.IParser;
 import com.cerner.bunsen.profiles.ProfileProvider;
@@ -71,6 +72,11 @@ public class UsCoreStu3ProfileProvider implements ProfileProvider {
 
   @Override
   public void loadStructureDefinitions(FhirContext context) {
+
+    if (context.getVersion().getVersion() != FhirVersionEnum.DSTU3) {
+      // The context is for a different FHIR version so we should not load the structure-defs.
+      return;
+    }
 
     IValidationSupport defaultSupport = context.getValidationSupport();
 
