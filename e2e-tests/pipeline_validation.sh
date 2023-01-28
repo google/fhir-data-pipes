@@ -16,7 +16,7 @@
 
 # Example usage:
 #   ./pipeline_validation.sh ./ JDBC_OPENMRS
-#   ./pipeline_validation.sh ./ NON_JDBC --use_docker_network
+#   ./pipeline_validation.sh ./ NON_JDBC_OPENMRS --use_docker_network
 #   ./pipeline_validation.sh ./ STREAMING --use_docker_network
 
 set -e
@@ -26,7 +26,7 @@ set -e
 #################################################
 function usage() {
   echo "This script validates if number of resources sunk in parquet files and" 
-  echo "FHIR Server match what is stored in the OpenMRS server"
+  echo "sink FHIR server match what is stored in the source FHIR server"
   echo 
   echo " usage: ./pipeline_validation.sh  HOME_DIR  PARQUET_SUBDIR  [OPTIONS] "
   echo "    HOME_DIR          Path where e2e-tests directory is. Directory MUST"
@@ -87,8 +87,8 @@ function print_message() {
 # Globals:
 #   HOME_PATH
 #   PARQUET_SUBDIR
-#   FHIR_SERVER_URL
-#   SINK_SERVER
+#   SOURCE_FHIR_SERVER_URL
+#   SINK_FHIR_SERVER_URL
 #   STREAMING
 #   HAPI
 # Arguments:
@@ -106,8 +106,8 @@ function setup() {
   rm -rf "${HOME_PATH}/fhir"
   rm -rf "${HOME_PATH}/${PARQUET_SUBDIR}/*.json"
   find "${HOME_PATH}/${PARQUET_SUBDIR}" -size 0 -delete
-  FHIR_SERVER_URL='http://localhost:8099/openmrs/ws/fhir2/R4'
-  SINK_SERVER='http://localhost:8098'
+  SOURCE_FHIR_SERVER_URL='http://localhost:8099/openmrs/ws/fhir2/R4'
+  SINK_FHIR_SERVER_URL='http://localhost:8098'
   STREAMING=""
   HAPI=""
 
@@ -115,16 +115,16 @@ function setup() {
   # each one and checking which ones are turned on.
   if [[ $3 = "--hapi" ]] || [[ $4 = "--hapi" ]] || [[ $5 = "--hapi" ]]; then
     HAPI="on"
-    FHIR_SERVER_URL='http://localhost:8091'
+    SOURCE_FHIR_SERVER_URL='http://localhost:8091'
   fi
 
   if [[ $3 = "--use_docker_network" ]] || [[ $4 = "--use_docker_network" ]] || [[ $5 = "--use_docker_network" ]]; then
     if [[ -n ${HAPI} ]]; then
-        FHIR_SERVER_URL='http://hapi-server:8080'
+        SOURCE_FHIR_SERVER_URL='http://hapi-server:8080'
     else
-        FHIR_SERVER_URL='http://openmrs:8080/openmrs/ws/fhir2/R4'
+        SOURCE_FHIR_SERVER_URL='http://openmrs:8080/openmrs/ws/fhir2/R4'
     fi
-    SINK_SERVER='http://sink-server:8080'
+    SINK_FHIR_SERVER_URL='http://sink-server:8080'
   fi
 
   if [[ $3 = "--streaming" ]] || [[ $4 = "--streaming" ]] || [[ $5 = "--streaming" ]]; then
@@ -137,7 +137,7 @@ function setup() {
 # Globals:
 #   HOME_PATH
 #   PARQUET_SUBDIR
-#   FHIR_SERVER_URL
+#   SOURCE_FHIR_SERVER_URL
 #   TOTAL_TEST_PATIENTS
 #   TOTAL_TEST_ENCOUNTERS
 #   TOTAL_TEST_OBS
@@ -163,18 +163,18 @@ function fhir_source_query() {
   fi
 
   curl -L -X GET -u $fhir_username:$fhir_password --connect-timeout 5 --max-time 20 \
-  "${FHIR_SERVER_URL}${fhir_url_extension}/Patient${patient_query_param}" 2>/dev/null >>"${HOME_PATH}/${PARQUET_SUBDIR}/patients.json"
+  "${SOURCE_FHIR_SERVER_URL}${fhir_url_extension}/Patient${patient_query_param}" 2>/dev/null >>"${HOME_PATH}/${PARQUET_SUBDIR}/patients.json"
   TOTAL_TEST_PATIENTS=$(jq '.total' "${HOME_PATH}/${PARQUET_SUBDIR}/patients.json")
   print_message "Total FHIR source test patients ---> ${TOTAL_TEST_PATIENTS}"
 
   curl -L -X GET -u $fhir_username:$fhir_password --connect-timeout 5 --max-time 20 \
-    "${FHIR_SERVER_URL}${fhir_url_extension}/Encounter${enc_obs_query_param}" \
+    "${SOURCE_FHIR_SERVER_URL}${fhir_url_extension}/Encounter${enc_obs_query_param}" \
     2>/dev/null >>"${HOME_PATH}/${PARQUET_SUBDIR}/encounters.json"
   TOTAL_TEST_ENCOUNTERS=$(jq '.total' "${HOME_PATH}/${PARQUET_SUBDIR}/encounters.json")
   print_message "Total FHIR source test encounters ---> ${TOTAL_TEST_ENCOUNTERS}"
 
   curl -L -X GET -u $fhir_username:$fhir_password --connect-timeout 5 --max-time 20 \
-    "${FHIR_SERVER_URL}${fhir_url_extension}/Observation${enc_obs_query_param}" \
+    "${SOURCE_FHIR_SERVER_URL}${fhir_url_extension}/Observation${enc_obs_query_param}" \
     2>/dev/null >>"${HOME_PATH}/${PARQUET_SUBDIR}/obs.json"
   TOTAL_TEST_OBS=$(jq '.total' "${HOME_PATH}/${PARQUET_SUBDIR}/obs.json")
   print_message "Total FHIR source test obs ---> ${TOTAL_TEST_OBS}"
@@ -217,7 +217,7 @@ function test_parquet_sink() {
 # Globals:
 #   HOME_PATH
 #   PARQUET_SUBDIR
-#   SINK_SERVER
+#   SINK_FHIR_SERVER_URL
 #   TOTAL_TEST_PATIENTS
 #   TOTAL_TEST_ENCOUNTERS
 #   TOTAL_TEST_OBS
@@ -236,13 +236,13 @@ function test_fhir_sink() {
 
   mkdir "${HOME_PATH}/fhir"
   curl -L -X GET -u hapi:hapi --connect-timeout 5 --max-time 20 \
-    "${SINK_SERVER}/fhir/Patient${patient_query_param}" 2>/dev/null >>"${HOME_PATH}/fhir/patients.json"
+    "${SINK_FHIR_SERVER_URL}/fhir/Patient${patient_query_param}" 2>/dev/null >>"${HOME_PATH}/fhir/patients.json"
 
   curl -L -X GET -u hapi:hapi --connect-timeout 5 --max-time 20 \
-    "${SINK_SERVER}/fhir/Encounter${enc_obs_query_param}" 2>/dev/null >>"${HOME_PATH}/fhir/encounters.json"
+    "${SINK_FHIR_SERVER_URL}/fhir/Encounter${enc_obs_query_param}" 2>/dev/null >>"${HOME_PATH}/fhir/encounters.json"
 
   curl -L -X GET -u hapi:hapi --connect-timeout 5 --max-time 20 \
-    "${SINK_SERVER}/fhir/Observation${enc_obs_query_param}" 2>/dev/null >>"${HOME_PATH}/fhir/obs.json"
+    "${SINK_FHIR_SERVER_URL}/fhir/Observation${enc_obs_query_param}" 2>/dev/null >>"${HOME_PATH}/fhir/obs.json"
 
   print_message "Counting number of patients, encounters and obs sinked to fhir files"
 

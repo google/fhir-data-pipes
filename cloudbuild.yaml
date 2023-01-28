@@ -74,7 +74,23 @@ steps:
     docker build -t ${_REPOSITORY}/streaming-pipeline:${_TAG} .;
 
 - name: '${_REPOSITORY}/batch-pipeline:${_TAG}'
-  id: 'Run Batch Pipeline JDBC with HAPI source'
+  id: 'Run Batch Pipeline NON_JDBC with HAPI source and HAPI sink'
+  env:
+  - FHIR_SERVER_URL=http://hapi-server:8080/fhir
+  - PARQUET_PATH=/workspace/e2e-tests/NON_JDBC_HAPI
+  - SINK_PATH=http://sink-server:8080/fhir
+  - SINK_USERNAME=hapi
+  - SINK_PASSWORD=hapi
+
+- name: '${_REPOSITORY}/e2e-tests:${_TAG}'
+  id: 'Run E2E Test for NON_JDBC with HAPI source and HAPI sink'
+  env:
+  - PARQUET_SUBDIR=NON_JDBC_HAPI
+  - DOCKER_NETWORK=--use_docker_network
+  - HAPI_TEST=--hapi
+
+- name: '${_REPOSITORY}/batch-pipeline:${_TAG}'
+  id: 'Run Batch Pipeline JDBC with HAPI source and HAPI sink'
   env:
     - JDBC_MODE_ENABLED=true
     - JDBC_MODE_HAPI=true
@@ -87,7 +103,7 @@ steps:
     - JDBC_FETCH_SIZE=1000
 
 - name: '${_REPOSITORY}/e2e-tests:${_TAG}'
-  id: 'Run E2E Test JDBC with HAPI source'
+  id: 'Run E2E Test JDBC with HAPI source and HAPI sink'
   env:
     - PARQUET_SUBDIR=JDBC_HAPI
     - DOCKER_NETWORK=--use_docker_network
@@ -129,7 +145,7 @@ steps:
     -  e2e-tests/wait_for_streaming.sh --use_docker_network
 
 - name: '${_REPOSITORY}/e2e-tests:${_TAG}'
-  id: 'Run E2E Test for STREAMING'
+  id: 'Run E2E Test for STREAMING, using OpenMRS Source and HAPI Sink'
   env:
     - PARQUET_SUBDIR=STREAMING
     - DOCKER_NETWORK=--use_docker_network
@@ -144,21 +160,21 @@ steps:
     - FHIR_ENDPOINT=http://openmrs:8080/openmrs/ws/fhir2/R4
 
 - name: '${_REPOSITORY}/batch-pipeline:${_TAG}'
-  id: 'Run Batch Pipeline NON_JDBC'
+  id: 'Run Batch Pipeline NON_JDBC with OpenMRS source and HAPI sink'
   env:
-    - PARQUET_PATH=/workspace/e2e-tests/NON_JDBC
+    - PARQUET_PATH=/workspace/e2e-tests/NON_JDBC_OPENMRS
     - SINK_PATH=http://sink-server:8080/fhir
     - SINK_USERNAME=hapi
     - SINK_PASSWORD=hapi
 
 - name: '${_REPOSITORY}/e2e-tests:${_TAG}'
-  id: 'Run E2E Test for NON_JDBC'
+  id: 'Run E2E Test for NON_JDBC with OpenMRS source and HAPI sink'
   env:
-    - PARQUET_SUBDIR=NON_JDBC
+    - PARQUET_SUBDIR=NON_JDBC_OPENMRS
     - DOCKER_NETWORK=--use_docker_network
 
 - name: '${_REPOSITORY}/batch-pipeline:${_TAG}'
-  id: 'Run Batch Pipeline JDBC with OpenMRS source'
+  id: 'Run Batch Pipeline JDBC with OpenMRS source and HAPI sink'
   env:
     - JDBC_MODE_ENABLED=true
     - PARQUET_PATH=/workspace/e2e-tests/JDBC_OPENMRS
@@ -168,7 +184,7 @@ steps:
     - FHIR_DATABASE_CONFIG_PATH=/workspace/utils/dbz_event_to_fhir_config.json
 
 - name: '${_REPOSITORY}/e2e-tests:${_TAG}'
-  id: 'Run E2E Test JDBC with OpenMRS source'
+  id: 'Run E2E Test JDBC with OpenMRS source and HAPI sink'
   env:
     - PARQUET_SUBDIR=JDBC_OPENMRS
     - DOCKER_NETWORK=--use_docker_network
