@@ -15,8 +15,8 @@
 # limitations under the License.
 
 # Example usage:
-#   ./pipeline_validation.sh ./ JDBC_OPENMRS
-#   ./pipeline_validation.sh ./ NON_JDBC_OPENMRS --use_docker_network
+#   ./pipeline_validation.sh ./ JDBC_OPENMRS --openmrs
+#   ./pipeline_validation.sh ./ FHIR_SEARCH_HAPI --use_docker_network
 #   ./pipeline_validation.sh ./ STREAMING --use_docker_network
 
 set -e
@@ -40,9 +40,9 @@ function usage() {
   echo "                              or host network URLs"
   echo "     --streaming              Flag to specify whether we are testing a"
   echo "                              streaming pipeline"
-  echo "     --hapi                   Flag to specify whether we are testing a"
-  echo "                              batch pipeline executed with jdbc direct"
-  echo "                              fetch mode with HAPI as the source server"
+  echo "     --openmrs                Flag to specify whether we are testing a"
+  echo "                              batch pipeline with OpenMRS as the source"
+  echo "                              server"
 }
 
 #################################################
@@ -90,15 +90,15 @@ function print_message() {
 #   SOURCE_FHIR_SERVER_URL
 #   SINK_FHIR_SERVER_URL
 #   STREAMING
-#   HAPI
+#   OPENMRS
 # Arguments:
 #   Path where e2e-tests directory is. Directory contains parquet tools jar as 
 #      well as subdirectory of parquet file output
 #   Subdirectory name under HOME_DIR containing parquet files. 
-#      Example: NON_JDBC or JDBC_OPENMRS
+#      Example: FHIR_SEARCH or JDBC_OPENMRS
 #   Optional: Flag to specify whether to use docker or host network URLs.
 #   Optional: Flag to specify streaming pipeline test.
-#   Optional: Flag to specify whether Jdbc mode is executed with a HAPI source server.
+#   Optional: Flag to specify whether the source server is OpenMRS.
 #################################################
 function setup() {
   HOME_PATH=$1
@@ -106,23 +106,23 @@ function setup() {
   rm -rf "${HOME_PATH}/fhir"
   rm -rf "${HOME_PATH}/${PARQUET_SUBDIR}/*.json"
   find "${HOME_PATH}/${PARQUET_SUBDIR}" -size 0 -delete
-  SOURCE_FHIR_SERVER_URL='http://localhost:8099/openmrs/ws/fhir2/R4'
+  SOURCE_FHIR_SERVER_URL='http://localhost:8091'
   SINK_FHIR_SERVER_URL='http://localhost:8098'
   STREAMING=""
-  HAPI=""
+  OPENMRS=""
 
   # TODO: We should refactor this code to parse the arguments by going through
   # each one and checking which ones are turned on.
-  if [[ $3 = "--hapi" ]] || [[ $4 = "--hapi" ]] || [[ $5 = "--hapi" ]]; then
-    HAPI="on"
-    SOURCE_FHIR_SERVER_URL='http://localhost:8091'
+  if [[ $3 = "--openmrs" ]] || [[ $4 = "--openmrs" ]] || [[ $5 = "--openmrs" ]]; then
+    OPENMRS="on"
+    SOURCE_FHIR_SERVER_URL='http://localhost:8099/openmrs/ws/fhir2/R4'
   fi
 
   if [[ $3 = "--use_docker_network" ]] || [[ $4 = "--use_docker_network" ]] || [[ $5 = "--use_docker_network" ]]; then
-    if [[ -n ${HAPI} ]]; then
-        SOURCE_FHIR_SERVER_URL='http://hapi-server:8080'
-    else
+    if [[ -n ${OPENMRS} ]]; then
         SOURCE_FHIR_SERVER_URL='http://openmrs:8080/openmrs/ws/fhir2/R4'
+    else
+        SOURCE_FHIR_SERVER_URL='http://hapi-server:8080'
     fi
     SINK_FHIR_SERVER_URL='http://sink-server:8080'
   fi
@@ -133,7 +133,7 @@ function setup() {
 }
 
 #################################################
-# Function to count resources in fhir server
+# Function to count resources in source fhir server
 # Globals:
 #   HOME_PATH
 #   PARQUET_SUBDIR
@@ -142,24 +142,24 @@ function setup() {
 #   TOTAL_TEST_ENCOUNTERS
 #   TOTAL_TEST_OBS
 #   STREAMING
-#   HAPI
+#   OPENMRS
 #################################################
 function fhir_source_query() {
   local patient_query_param="?_summary=count"
   local enc_obs_query_param="?_summary=count"
-  local fhir_username="admin"
-  local fhir_password="Admin123"
-  local fhir_url_extension=""
+  local fhir_username="hapi"
+  local fhir_password="hapi"
+  local fhir_url_extension="/fhir"
 
   if [[ -n ${STREAMING} ]]; then 
       patient_query_param="?given=Alberta625"
       enc_obs_query_param="?subject.given=Alberta625"
   fi
   
-  if [[ -n ${HAPI} ]]; then
-      fhir_username="hapi"
-      fhir_password="hapi"
-      fhir_url_extension="/fhir"
+  if [[ -n ${OPENMRS} ]]; then
+      fhir_username="admin"
+      fhir_password="Admin123"
+      fhir_url_extension=""
   fi
 
   curl -L -X GET -u $fhir_username:$fhir_password --connect-timeout 5 --max-time 20 \
@@ -183,14 +183,14 @@ function fhir_source_query() {
 
 #################################################
 # Function that counts resources in parquet files and compares output to what 
-#  is in openmrs server
+#  is in source FHIR server
 # Globals:
 #   HOME_PATH
 #   PARQUET_SUBDIR
 #   TOTAL_TEST_PATIENTS
 #   TOTAL_TEST_ENCOUNTERS
 #   TOTAL_TEST_OBS
-#   HAPI
+#   OPENMRS
 #################################################
 function test_parquet_sink() {
   print_message "Counting number of patients, encounters and obs sinked to parquet files"
@@ -213,7 +213,7 @@ function test_parquet_sink() {
 
 #################################################
 # Function that counts resources in  FHIR server and compares output to what is 
-#  in openmrs server
+#  in the source FHIR server
 # Globals:
 #   HOME_PATH
 #   PARQUET_SUBDIR
@@ -222,7 +222,7 @@ function test_parquet_sink() {
 #   TOTAL_TEST_ENCOUNTERS
 #   TOTAL_TEST_OBS
 #   STREAMING
-#   HAPI
+#   OPENMRS
 #################################################
 function test_fhir_sink() {
   local patient_query_param="?_summary=count"
