@@ -1,5 +1,3 @@
-<!-- This is based on openmrs-cord PR template. -->
-
 ## Description of what I changed
 
 <!--- Describe your changes in detail -->
