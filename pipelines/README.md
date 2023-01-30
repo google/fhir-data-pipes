@@ -6,21 +6,21 @@ another FHIR store (for data integration). These pipelines are tested with
 [HAPI](https://hapifhir.io/) instances as the source or
 [OpenMRS](https://openmrs.org) instances as the source using the
 [OpenMRS FHIR2 Module](https://addons.openmrs.org/show/org.openmrs.module.openmrs-fhir2-module).
-or. The data warehouse can be a collection of
+The data warehouse can be a collection of
 [Apache Parquet files](https://parquet.apache.org), or it can be another FHIR
 server (e.g., a HAPI FHIR server or Google Cloud FHIR store) or eventually a
 cloud based data warehouse (like [BigQuery](https://cloud.google.com/bigquery)).
 
 There are four modes of transfer:
 
-- [**Batch mode (FHIR)**](#batch-mode-using-fhir-search): This mode uses FHIR
-  Search APIs to select resources to copy, retrieves them as FHIR resources, and
-  transfers the data via FHIR APIs or Parquet files.
+- [**Batch mode (FHIR-search)**](#batch-mode-using-fhir-search): This mode uses
+  FHIR Search APIs to select resources to copy, retrieves them as FHIR
+  resources, and transfers the data via FHIR APIs or Parquet files.
 - [**Batch mode (JDBC)**](#batch-mode-using-jdbc): For a HAPI source, this mode
   uses JDBC to read FHIR resources directly from a HAPI database, and transfers
   the data. For an OpenMRS source, this mode uses JDBC to read the IDs of
-  entities in an OpenMRS MySQL database, retrieves those entities as FHIR
-  resources, and transfers the data via FHIR APIs or Parquet files.
+  entities in an OpenMRS database, retrieves those entities as FHIR resources,
+  and transfers the data via FHIR APIs or Parquet files.
 - **[Streaming mode (Debezium)](#streaming-mode-debezium)**: This mode
   continuously listens for changes to the underlying OpenMRS MySQL database
   using
@@ -40,12 +40,16 @@ There is also a query module built on top of the generated data warehouse.
 - Bring up FHIR source server. Either a:
 
   - [HAPI source server and database](../docker/hapi-compose.yml) image. The
-    base URL for this server is `http://localhost:8081/fhir`. Run:
+    sample docker-compose file that is provided, brings up a standard HAPI JPA
+    server backed by a PostgreSQL database. The base URL for this server is
+    `http://localhost:8081/fhir`. Run:
     ```shell
     docker-compose  -f ./docker/hapi-compose.yml up  --force-recreate -d
     ```
   - [OpenMRS Reference Application](../docker/openmrs-compose.yaml) image. The
-    base URL for this server is `http://localhost:8099/openmrs/ws/fhir2/R4`
+    sample docker-compose file that is provided, brings up the latest OpenMRS
+    release backed by a MySQL database. The base URL for this server is
+    `http://localhost:8099/openmrs/ws/fhir2/R4`
     ```shell
     docker-compose -f ./docker/openmrs-compose.yml up --force-recreate -d
     ```
@@ -58,12 +62,10 @@ There is also a query module built on top of the generated data warehouse.
   python3 ./synthea-hiv/uploader/main.py HAPI http://localhost:8091/fhir \
   --input_dir ./synthea-hiv/sample_data
   ```
-- Bring up a target output for the data. Supported options are Apache Parquet
-  files and/or a FHIR server such as HAPI FHIR or
-  [Google Cloud FHIR Store](https://cloud.google.com/healthcare/docs/how-tos/fhir).
-  You can use our sink [HAPI FHIR server](../docker/sink-compose.yml) image for
-  testing FHIR API targets. The base URL for this server is
-  `http://localhost:8098/fhir`. Run:
+- [Optional] If the output is not only Apache Parquet files, and you want to
+  output to a FHIR sink server, the sample docker-compose file that is provided,
+  [HAPI sink server](../docker/sink-compose.yml), brings up a plain HAPI server
+  . The base URL for this server is `http://localhost:8098/fhir`. Run:
   ```shell
   docker-compose  -f ./docker/sink-compose.yml up  --force-recreate -d
   ```
@@ -295,12 +297,19 @@ If `outputParquetPath` is set, there are additional parameters:
 - **What do I do if running `docker-compose` to stand up the OpenMRS image
   fails** If `docker-compose` fails, you may need to adjust file permissions. In
   particular if the permissions on `mysqld.cnf` is not right, the `datadir` set
-  in this file will not be read by MySQL and it will cause OpenMRS to require
+  in this file will not be read by MySQL, and it will cause OpenMRS to require
   its `initialsetup` (which is not needed since the MySQL image already has all
   the data and tables needed):
-  `$ docker-compose -f docker/openmrs-compose.yaml down -v $ chmod a+r docker/mysql-build/mysqld.cnf $ chmod -R a+r ./utils $ docker-compose -f docker/openmrs-compose.yaml up` -**How
-  do I see the demo data in OpenMRS?** In order to see the demo data in OpenMRS
-  you must rebuild the search index. In OpenMRS go to **Home > System
+
+  ```shell
+  $ docker-compose -f docker/openmrs-compose.yaml down -v
+  $ chmod a+r docker/mysql-build/mysqld.cnf
+  $ chmod -R a+r ./utils
+  $ docker-compose -f docker/openmrs-compose.yaml up
+  ```
+
+- **How do I see the demo data in OpenMRS?** In order to see the demo data in
+  OpenMRS you must rebuild the search index. In OpenMRS go to **Home > System
   Administration > Advanced Administration**. Under **Maintenance** go to
   **Search Index** then **Rebuild Search Index**.
 
