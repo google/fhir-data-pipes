@@ -38,6 +38,12 @@
     </dependency>
 
     <dependency>
+      <groupId>com.cerner.bunsen</groupId>
+      <artifactId>bunsen-core-r4</artifactId>
+      <scope>test</scope>
+    </dependency>
+
+    <dependency>
       <groupId>org.apache.avro</groupId>
       <artifactId>avro-compiler</artifactId>
       <scope>test</scope>
@@ -47,6 +53,13 @@
     <dependency>
       <groupId>com.cerner.bunsen</groupId>
       <artifactId>bunsen-core-stu3</artifactId>
+      <type>test-jar</type>
+      <scope>test</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>com.cerner.bunsen</groupId>
+      <artifactId>bunsen-core-r4</artifactId>
       <type>test-jar</type>
       <scope>test</scope>
     </dependency>

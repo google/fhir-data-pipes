@@ -1,6 +1,7 @@
 package com.cerner.bunsen.stu3;
 
 import ca.uhn.fhir.context.FhirContext;
+import ca.uhn.fhir.context.FhirVersionEnum;
 import ca.uhn.fhir.context.support.IValidationSupport;
 import ca.uhn.fhir.parser.IParser;
 import com.cerner.bunsen.profiles.ProfileProvider;
@@ -10,11 +11,14 @@ import java.io.InputStreamReader;
 import java.util.List;
 import org.hl7.fhir.common.hapi.validation.support.PrePopulatedValidationSupport;
 import org.hl7.fhir.dstu3.model.StructureDefinition;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * SPI implementation to load profile resources for US Core.
  */
 public class UsCoreStu3ProfileProvider implements ProfileProvider {
+  private static final Logger log = LoggerFactory.getLogger(UsCoreStu3ProfileProvider.class);
 
   private static void load(PrePopulatedValidationSupport support,
       IParser jsonParser,
@@ -71,6 +75,16 @@ public class UsCoreStu3ProfileProvider implements ProfileProvider {
 
   @Override
   public void loadStructureDefinitions(FhirContext context) {
+
+    if (context.getVersion().getVersion() != FhirVersionEnum.DSTU3) {
+      // The context is for a different FHIR version so we should not load the structure-defs.
+      // TODO: https://github.com/google/fhir-data-pipes/issues/511
+      log.warn(
+          "Loading profiles for version {} in a context with version {}",
+          FhirVersionEnum.DSTU3,
+          context.getVersion().getVersion());
+      return;
+    }
 
     IValidationSupport defaultSupport = context.getValidationSupport();
 
