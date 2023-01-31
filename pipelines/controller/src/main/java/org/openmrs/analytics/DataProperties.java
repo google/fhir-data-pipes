@@ -70,15 +70,7 @@ public class DataProperties {
 
   private String dbConfig;
 
-  private String thriftserverHiveConfig;
-
-  private String hiveJdbcDriver;
-
   private String dwhRootPrefix;
-
-  private String thriftServerParquetPathPrefix;
-
-  private boolean createHiveResourceTables;
 
   private String incrementalSchedule;
 
@@ -86,30 +78,53 @@ public class DataProperties {
 
   private int maxWorkers;
 
+  private String thriftserverHiveConfig;
+
+  private String hiveJdbcDriver;
+
+  private boolean createHiveResourceTables;
+
+  private String thriftServerParquetPathPrefix;
+
   @PostConstruct
-  void validateProperties() {
+  void validateProperties() throws ClassNotFoundException {
     CronExpression.parse(incrementalSchedule);
+
+    if (createHiveResourceTables) {
+      try {
+        Class.forName(hiveJdbcDriver);
+      } catch (ClassNotFoundException e) {
+        String err = "Unable to locate Hive JDBC driver.";
+        logger.error(err);
+        throw new ClassNotFoundException(err);
+      }
+    }
   }
 
-  FhirEtlOptions createBatchOptions() {
+  PipelineConfig createBatchOptions() {
     FhirEtlOptions options = PipelineOptionsFactory.as(FhirEtlOptions.class);
     logger.info("Converting options for fhirServerUrl {}", fhirServerUrl);
     options.setFhirServerUrl(fhirServerUrl);
     options.setFhirDatabaseConfigPath(dbConfig);
     options.setResourceList(resourceList);
 
+    PipelineConfig.PipelineConfigBuilder pipelineConfigBuilder = PipelineConfig.builder();
+
     // Using underscore for suffix as hyphens are discouraged in hive table names.
     String timestampSuffix =
         Instant.now().toString().replaceAll(":", "-").replaceAll("-", "_").replaceAll("\\.", "_");
     options.setOutputParquetPath(dwhRootPrefix + TIMESTAMP_PREFIX + timestampSuffix);
-    options.setThriftServerParquetPath(
+
+    pipelineConfigBuilder.thriftServerParquetPath(
         thriftServerParquetPathPrefix + TIMESTAMP_PREFIX + timestampSuffix);
-    options.setTimestampSuffix(timestampSuffix);
+    pipelineConfigBuilder.timestampSuffix(timestampSuffix);
 
     options.setRunner(FlinkRunner.class);
     FlinkPipelineOptions flinkOptions = options.as(FlinkPipelineOptions.class);
     flinkOptions.setMaxParallelism(getMaxWorkers());
-    return options;
+
+    pipelineConfigBuilder.fhirEtlOptions(options);
+    return pipelineConfigBuilder.build();
   }
 
   List<ConfigFields> getConfigParams() {

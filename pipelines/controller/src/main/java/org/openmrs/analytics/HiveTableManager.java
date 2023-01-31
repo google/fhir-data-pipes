@@ -23,18 +23,14 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /** This class manages to create resources on Thrift Server post each pipeline run. */
-public class ThriftServerHiveResourceManager {
+public class HiveTableManager {
 
-  private static final Logger logger =
-      LoggerFactory.getLogger(ThriftServerHiveResourceManager.class.getName());
-  private final String jdbcDriverClass;
+  private static final Logger logger = LoggerFactory.getLogger(HiveTableManager.class.getName());
   private final String jdbcUrl;
   private final String user;
   private final String password;
 
-  public ThriftServerHiveResourceManager(
-      String jdbcDriverClass, String jdbcUrl, String user, String password) {
-    this.jdbcDriverClass = jdbcDriverClass;
+  public HiveTableManager(String jdbcUrl, String user, String password) {
     this.jdbcUrl = jdbcUrl;
     this.user = user;
     this.password = password;
@@ -48,14 +44,8 @@ public class ThriftServerHiveResourceManager {
    * @param thriftServerParquetPath location of parquet files in Thrift Server
    * @throws SQLException
    */
-  public void createResources(String resourceList, String timestamp, String thriftServerParquetPath)
-      throws SQLException {
-    try {
-      Class.forName(jdbcDriverClass);
-    } catch (ClassNotFoundException e) {
-      logger.error("Unable to locate Hive JDBC driver.");
-      return;
-    }
+  public void createResourceTables(
+      String resourceList, String timestamp, String thriftServerParquetPath) throws SQLException {
     if (resourceList == null || resourceList.isEmpty()) {
       return;
     }
@@ -65,7 +55,7 @@ public class ThriftServerHiveResourceManager {
     }
     try (Connection connection = DriverManager.getConnection(jdbcUrl)) {
       for (String resource : resources) {
-        createResource(connection, resource, timestamp, thriftServerParquetPath);
+        createResourceTable(connection, resource, timestamp, thriftServerParquetPath);
       }
     }
   }
@@ -77,7 +67,7 @@ public class ThriftServerHiveResourceManager {
    * <p>wrt PARQUET LOCATION, /dwh is symlink for mounted volume defined in docker-compose and
    * thriftServerParquetPath would be controller_DWH_ORIG_TIMESTAMP_2023_01_24T18_42_54_302111Z
    */
-  private void createResource(
+  private void createResourceTable(
       Connection connection, String resource, String timestamp, String thriftServerParquetPath)
       throws SQLException {
     try (Statement statement = connection.createStatement()) {

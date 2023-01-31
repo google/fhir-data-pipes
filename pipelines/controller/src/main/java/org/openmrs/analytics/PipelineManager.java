@@ -161,13 +161,14 @@ public class PipelineManager {
 
   synchronized void runBatchPipeline() throws IOException, PropertyVetoException {
     Preconditions.checkState(!isRunning(), "cannot start a pipeline while another one is running");
-    FhirEtlOptions options = dataProperties.createBatchOptions();
+    PipelineConfig pipelineConfig = dataProperties.createBatchOptions();
+    FhirEtlOptions options = pipelineConfig.getFhirEtlOptions();
     Pipeline pipeline = buildJdbcPipeline(options);
     if (pipeline == null) {
       logger.warn("No resources found to be fetched!");
       return;
     } else {
-      currentPipeline = new PipelineThread(pipeline, this, dataProperties);
+      currentPipeline = new PipelineThread(pipeline, this, dataProperties, pipelineConfig);
     }
     logger.info("Running full pipeline for DWH {}", options.getOutputParquetPath());
     // We will only have one thread for running pipelines hence no need for a thread pool.
@@ -180,7 +181,8 @@ public class PipelineManager {
     Preconditions.checkState(
         currentDwh != null,
         "cannot start the incremental pipeline while there are no DWHs; run full pipeline");
-    FhirEtlOptions options = dataProperties.createBatchOptions();
+    PipelineConfig pipelineConfig = dataProperties.createBatchOptions();
+    FhirEtlOptions options = pipelineConfig.getFhirEtlOptions();
     String finalDwhRoot = options.getOutputParquetPath();
     // TODO move old incremental_run dir if there is one
     String incrementalDwhRoot = currentDwh.newIncrementalRunPath().toString();
@@ -205,7 +207,8 @@ public class PipelineManager {
       setLastRunStatus(LastRunStatus.SUCCESS);
     } else {
       // Creating a thread for running both pipelines, one after the other.
-      currentPipeline = new PipelineThread(pipeline, mergerOptions, this, dataProperties);
+      currentPipeline =
+          new PipelineThread(pipeline, mergerOptions, this, dataProperties, pipelineConfig);
       logger.info("Running incremental pipeline for DWH {} since {}", currentDwh.getRoot(), since);
       currentPipeline.start();
     }
@@ -223,11 +226,18 @@ public class PipelineManager {
 
     private final DataProperties dataProperties;
 
-    PipelineThread(Pipeline pipeline, PipelineManager manager, DataProperties dataProperties) {
+    private final PipelineConfig pipelineConfig;
+
+    PipelineThread(
+        Pipeline pipeline,
+        PipelineManager manager,
+        DataProperties dataProperties,
+        PipelineConfig pipelineConfig) {
       Preconditions.checkArgument(pipeline.getOptions().as(FhirEtlOptions.class) != null);
       this.pipeline = pipeline;
       this.manager = manager;
       this.dataProperties = dataProperties;
+      this.pipelineConfig = pipelineConfig;
       this.mergerOptions = null;
     }
 
@@ -235,12 +245,14 @@ public class PipelineManager {
         Pipeline pipeline,
         ParquetMergerOptions mergerOptions,
         PipelineManager manager,
-        DataProperties dataProperties) {
+        DataProperties dataProperties,
+        PipelineConfig pipelineConfig) {
       Preconditions.checkArgument(pipeline.getOptions().as(FhirEtlOptions.class) != null);
       this.pipeline = pipeline;
       this.manager = manager;
       this.mergerOptions = mergerOptions;
       this.dataProperties = dataProperties;
+      this.pipelineConfig = pipelineConfig;
     }
 
     @Override
@@ -249,10 +261,10 @@ public class PipelineManager {
         FhirEtlOptions options = pipeline.getOptions().as(FhirEtlOptions.class);
         EtlUtils.runPipelineWithTimestamp(pipeline, options);
         if (dataProperties.isCreateHiveResourceTables()) {
-          createHiveResources(
+          createHiveResourceTables(
               options.getResourceList(),
-              options.getTimestampSuffix(),
-              options.getThriftServerParquetPath());
+              pipelineConfig.getTimestampSuffix(),
+              pipelineConfig.getThriftServerParquetPath());
         }
         if (mergerOptions == null) { // Do not update DWH yet if this was an incremental run.
           manager.updateDwh(options.getOutputParquetPath());
@@ -262,9 +274,9 @@ public class PipelineManager {
           logger.info("Merger options are {}", mergerOptions);
           EtlUtils.runMergerPipelineWithTimestamp(mergerPipeline, mergerOptions);
           if (dataProperties.isCreateHiveResourceTables()) {
-            createHiveResources(
+            createHiveResourceTables(
                 options.getResourceList(),
-                options.getTimestampSuffix(),
+                pipelineConfig.getTimestampSuffix(),
                 mergerOptions.getMergedDwh());
           }
           manager.updateDwh(mergerOptions.getMergedDwh());
@@ -276,7 +288,7 @@ public class PipelineManager {
       }
     }
 
-    private void createHiveResources(
+    private void createHiveResourceTables(
         String resourceList, String timestampSuffix, String thriftServerParquetPath)
         throws IOException, SQLException {
 
@@ -285,14 +297,12 @@ public class PipelineManager {
           DatabaseConfiguration.createConfigFromFile(dataProperties.getThriftserverHiveConfig());
 
       logger.info("Creating resources on Thrift server Hive");
-      ThriftServerHiveResourceManager thriftServerHiveResourceManager =
-          new ThriftServerHiveResourceManager(
-              dataProperties.getHiveJdbcDriver(),
+      HiveTableManager hiveTableManager =
+          new HiveTableManager(
               dbConfig.makeJdbsUrlFromConfig(),
               dbConfig.getDatabaseUser(),
               dbConfig.getDatabasePassword());
-      thriftServerHiveResourceManager.createResources(
-          resourceList, timestampSuffix, thriftServerParquetPath);
+      hiveTableManager.createResourceTables(resourceList, timestampSuffix, thriftServerParquetPath);
       logger.info("Created resources on Thrift server Hive");
     }
   }

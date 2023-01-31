@@ -227,16 +227,4 @@ public interface FhirEtlOptions extends PipelineOptions {
   String getSourceJsonFilePattern();
 
   void setSourceJsonFilePattern(String value);
-
-  @Description("Prefix required for Thrift Server Parquet files location.")
-  @Default.String("")
-  String getThriftServerParquetPath();
-
-  void setThriftServerParquetPath(String value);
-
-  @Description("Timestamp suffix to be used in Thrift Server Hive table name.")
-  @Default.String("")
-  String getTimestampSuffix();
-
-  void setTimestampSuffix(String value);
 }
