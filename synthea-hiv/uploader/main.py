@@ -121,7 +121,7 @@ if __name__ == '__main__':
   json_file_dict = list_all_files(args.input_dir)
   upload_handler = create_sink(args.sink_type, args.fhir_endpoint)
 
-  logging.info("Using %s cores to uplaod", args.cores)
+  logging.info("Using %s cores to upload", args.cores)
   if args.convert_to_openmrs:
     with multiprocessing.Pool(processes=args.cores) as pool:
       locations_in_store = upload_handler.fetch_location()

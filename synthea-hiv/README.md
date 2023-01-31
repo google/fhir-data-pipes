@@ -45,7 +45,7 @@ python3 main.py GCP $FHIR_ENDPOINT \
 To upload to a HAPI Server, run the following:
 
 ```bash
-FHIR_ENDPOINT=http://localhost:8098/fhir
+FHIR_ENDPOINT=http://localhost:8091/fhir
 cd ./uploader
 python3 main.py HAPI $FHIR_ENDPOINT \
   --input_dir /absolute/path/to/fhir/bundles
