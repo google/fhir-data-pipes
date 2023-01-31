@@ -113,11 +113,12 @@ steps:
   env:
     - PIPELINE_CONFIG=/workspace/pipelines/controller/config
     - DWH_ROOT=/workspace/DWH_ROOT
-  args: [ '-f', './pipelines/controller/compose-controller-spark-sql.yaml', 'up', '--force-recreate', '-d' ]
+  args: [ '-f', './docker/compose-controller-spark-sql.yaml', 'up',
+          '--force-recreate', '-d' ]
 
 - name: 'docker/compose'
   id: 'Bring down controller and Spark containers'
-  args: [ '-f', './pipelines/controller/compose-controller-spark-sql.yaml', 'down' ]
+  args: [ '-f', './docker/compose-controller-spark-sql.yaml', 'down' ]
 
 - name: 'docker/compose'
   id: 'Turn down HAPI Source and Sink Servers'
