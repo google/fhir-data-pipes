@@ -32,9 +32,9 @@ version: '2'
 
 services:
   pipeline-controller:
+    # to force a build use `--build` option of `docker-compose up`.
     build:
-      context: .
-    image: controller:local
+      context: ..
     container_name: pipeline-controller
     volumes:
       - ${PIPELINE_CONFIG}:/app/config:ro

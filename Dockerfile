@@ -15,14 +15,33 @@
 # This creates a docker image for running the controller web-app. It is expected
 # that in real use-cases, the config dir will be mounted to the host machine.
 
-FROM eclipse-temurin:11-jdk-focal
+FROM maven:3.8.5-openjdk-11 as build
 
-ARG WORK_DIR="/app"
-COPY target/controller-0.1.0-SNAPSHOT-exec.jar ${WORK_DIR}/controller.jar
-COPY config ${WORK_DIR}/config
-WORKDIR ${WORK_DIR}
+RUN apt-get update && apt-get install -y nodejs npm
+RUN npm cache clean -f && npm install -g n && n stable
+
+WORKDIR /app
+
+COPY ./bunsen ./bunsen
+COPY ./pipelines ./pipelines
+COPY ./pom.xml ./pom.xml
+COPY ./utils ./utils
+
+# Updating license will fail in e2e and there is no point doing it here anyways.
+# Note this build can be faster by excluding some uber-jars we don't copy.
+RUN mvn --batch-mode clean package -Dlicense.skip=true
+
+FROM eclipse-temurin:11-jdk-focal as main
+
+WORKDIR /app
+
+COPY --from=build \
+  /app/pipelines/controller/target/controller-0.1.0-SNAPSHOT-exec.jar \
+  ./controller.jar
+
+COPY ./docker/config ./config
 
 # Flink will read the flink-conf.yaml file from this directory.
-ENV FLINK_CONF_DIR=${WORK_DIR}/config
+ENV FLINK_CONF_DIR=/app/config
 
 ENTRYPOINT java -jar /app/controller.jar
