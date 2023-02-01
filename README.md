@@ -34,7 +34,9 @@ store.
   warehouses.
 
 - [bunsen/](bunsen/): A fork of a subset of the
-  [Bunsen](https://github.com/cerner/bunsen) project.  
+  [Bunsen](https://github.com/cerner/bunsen) project which is used to transform
+  FHIR JSON resources to Avro records with
+  [SQL-on-FHIR schema](https://github.com/FHIR/sql-on-fhir/blob/master/sql-on-fhir.md).
   
 - [e2e-tests/](e2e-tests/): Scripts for testing pipelines end-to-end.
 
