@@ -1,4 +1,4 @@
-# Copyright 2022 Google LLC
+# Copyright 2023 Google LLC
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -12,17 +12,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# This creates a docker image for running the controller web-app. It is expected
-# that in real use-cases, the config dir will be mounted to the host machine.
+# To use this config, FLINK_CONF_DIR env. var should be set to the parent dir.
 
-FROM eclipse-temurin:11-jdk-focal
+# This is needed to prevent an "Insufficient number of network buffers"
+# exceptions when running the merger on large input with many workers.
+taskmanager.memory.network.max: 5gb
 
-ARG WORK_DIR="/app"
-COPY target/controller-0.1.0-SNAPSHOT-exec.jar ${WORK_DIR}/controller.jar
-COPY config ${WORK_DIR}/config
-WORKDIR ${WORK_DIR}
-
-# Flink will read the flink-conf.yaml file from this directory.
-ENV FLINK_CONF_DIR=${WORK_DIR}/config
-
-ENTRYPOINT java -jar /app/controller.jar
+# This is to make pipeline.run() non-blocking with FlinkRunner; unfortunately
+# this is overwritten in `local` mode: https://stackoverflow.com/a/74416240
+execution.attached: false
