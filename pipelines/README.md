@@ -11,6 +11,18 @@ The data warehouse can be a collection of
 server (e.g., a HAPI FHIR server or Google Cloud FHIR store) or eventually a
 cloud based data warehouse (like [BigQuery](https://cloud.google.com/bigquery)).
 
+There is also a [`controller`](controller) module which provides a dashboard to
+schedule and manage the transformation of data from a FHIR server to a
+collection of Apache Parquet files. To try out the Pipelines Controller,
+[see the wiki](https://github.com/google/fhir-data-pipes/wiki/Try-out-the-FHIR-Pipelines-Controller).
+
+For more information on pipelines, see
+[Get started with FHIR Data Pipes](https://github.com/google/fhir-data-pipes/wiki/Get-Started-with-FHIR-Data-Pipes-Pipelines).
+You can also
+[try the pipelines using local test data](https://github.com/google/fhir-data-pipes/wiki/Try-the-pipelines-using-local-test-servers).
+
+## Pipelines
+
 There are four modes of transfer:
 
 - [**Batch mode (FHIR-search)**](#batch-mode-using-fhir-search): This mode uses

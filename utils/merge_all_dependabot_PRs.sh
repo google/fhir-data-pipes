@@ -19,12 +19,12 @@
 # This is not meant to be fully automated and the final cherry-pick may require
 # user intervention to resolve conflicts.
 
-git fetch upstream
+n=0
+git fetch upstream --prune
 for b in $(git branch -r --list upstream/dependabot/*) ;
 do
-  echo "Fetching last commit from $b"
-  last_commit="$(git log HEAD~1..HEAD $b | awk '/^commit/{ print $2; exit;}')"
-  commit_list="${commit_list} ${last_commit}"
+  echo "Merging remote branch $b"
+  git merge --no-edit $b
+  ((n=$n+1))
 done
-echo "Cherry-picking commits: ${commit_list}"
-git cherry-pick "${commit_list}"
+echo "DONE merging ${n} branches"
