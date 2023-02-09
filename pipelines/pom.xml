@@ -94,7 +94,12 @@
   </dependencyManagement>
 
   <dependencies>
-    <!-- Use logback as the logging framework. -->
+    <!-- Use slf4j API with logback. -->
+    <dependency>
+      <groupId>org.slf4j</groupId>
+      <artifactId>slf4j-api</artifactId>
+      <version>${slf4j.version}</version>
+    </dependency>
     <dependency>
       <groupId>ch.qos.logback</groupId>
       <artifactId>logback-classic</artifactId>

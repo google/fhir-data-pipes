@@ -89,7 +89,7 @@
       <version>${project.parent.version}</version>
     </dependency>
 
-    <!-- https://mvnrepository.com/artifact/org.apache.hive/hive-jdbc-->
+    <!-- Hive dependency for creating tables -->
     <dependency>
       <groupId>org.apache.hive</groupId>
       <artifactId>hive-jdbc</artifactId>

@@ -23,9 +23,6 @@ fhirdata:
 
   dwhRootPrefix: "config/controller_DWH_ORIG"
 
-  # This should be exactly the same as used in dwhRootPrefix
-  thriftServerParquetPathPrefix: "controller_DWH_ORIG"
-
   thriftserverHiveConfig: "config/thriftserver-hive-config.json"
 
   # The schedule format is similar to Spring's CronExpression, i.e.,

@@ -30,6 +30,8 @@ public class HiveTableManager {
   private final String user;
   private final String password;
 
+  private static final String THRIFT_CONTAINER_PARQUET_PATH_PREFIX = "/dwh";
+
   public HiveTableManager(String jdbcUrl, String user, String password) {
     this.jdbcUrl = jdbcUrl;
     this.user = user;
@@ -53,6 +55,9 @@ public class HiveTableManager {
     if (resources == null || resources.length == 0) {
       return;
     }
+
+    // TODO: Make use of JdbcConnectionUtil to create jdbc connection
+    //  (https://github.com/google/fhir-data-pipes/issues/483)
     try (Connection connection = DriverManager.getConnection(jdbcUrl)) {
       for (String resource : resources) {
         createResourceTable(connection, resource, timestamp, thriftServerParquetPath);
@@ -63,9 +68,6 @@ public class HiveTableManager {
   /**
    * This method will create table 'encounter_2023_01_24t18_42_54_302111z' if the given resource is
    * Encounter and the timestamp suffix is 2023_01_24t18_42_54_302111z
-   *
-   * <p>wrt PARQUET LOCATION, /dwh is symlink for mounted volume defined in docker-compose and
-   * thriftServerParquetPath would be controller_DWH_ORIG_TIMESTAMP_2023_01_24T18_42_54_302111Z
    */
   private void createResourceTable(
       Connection connection, String resource, String timestamp, String thriftServerParquetPath)
@@ -73,8 +75,12 @@ public class HiveTableManager {
     try (Statement statement = connection.createStatement()) {
       String sql =
           String.format(
-              "CREATE TABLE IF NOT EXISTS default.%s_%s USING PARQUET LOCATION '/dwh/%s/%s'",
-              resource, timestamp, thriftServerParquetPath, resource);
+              "CREATE TABLE IF NOT EXISTS default.%s_%s USING PARQUET LOCATION '%s/%s/%s'",
+              resource,
+              timestamp,
+              THRIFT_CONTAINER_PARQUET_PATH_PREFIX,
+              thriftServerParquetPath,
+              resource);
       statement.execute(sql);
     }
   }

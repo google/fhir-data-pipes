@@ -84,8 +84,6 @@ public class DataProperties {
 
   private boolean createHiveResourceTables;
 
-  private String thriftServerParquetPathPrefix;
-
   @PostConstruct
   void validateProperties() throws ClassNotFoundException {
     CronExpression.parse(incrementalSchedule);
@@ -94,9 +92,9 @@ public class DataProperties {
       try {
         Class.forName(hiveJdbcDriver);
       } catch (ClassNotFoundException e) {
-        String err = "Unable to locate Hive JDBC driver.";
-        logger.error(err);
-        throw new ClassNotFoundException(err);
+        String hiveJdbcDriverError = "Unable to locate Hive JDBC driver.";
+        logger.error(hiveJdbcDriverError);
+        throw new ClassNotFoundException(hiveJdbcDriverError);
       }
     }
   }
@@ -115,6 +113,9 @@ public class DataProperties {
         Instant.now().toString().replaceAll(":", "-").replaceAll("-", "_").replaceAll("\\.", "_");
     options.setOutputParquetPath(dwhRootPrefix + TIMESTAMP_PREFIX + timestampSuffix);
 
+    // Get hold of thrift server parquet directory from dwhRootPrefix config.
+    String thriftServerParquetPathPrefix =
+        dwhRootPrefix.substring(dwhRootPrefix.lastIndexOf("/") + 1, dwhRootPrefix.length());
     pipelineConfigBuilder.thriftServerParquetPath(
         thriftServerParquetPathPrefix + TIMESTAMP_PREFIX + timestampSuffix);
     pipelineConfigBuilder.timestampSuffix(timestampSuffix);
