@@ -68,6 +68,10 @@ public class HiveTableManager {
   /**
    * This method will create table 'encounter_2023_01_24t18_42_54_302111z' if the given resource is
    * Encounter and the timestamp suffix is 2023_01_24t18_42_54_302111z
+   *
+   * <p>wrt PARQUET LOCATION, THRIFT_CONTAINER_PARQUET_PATH_PREFIX is the directory hosting parquet
+   * files, thriftServerParquetPath is the exact path for parquet files and resource shall be the
+   * respective resource name e.g. Patient
    */
   private void createResourceTable(
       Connection connection, String resource, String timestamp, String thriftServerParquetPath)

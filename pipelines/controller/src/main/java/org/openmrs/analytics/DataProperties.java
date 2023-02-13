@@ -92,7 +92,7 @@ public class DataProperties {
       try {
         Class.forName(hiveJdbcDriver);
       } catch (ClassNotFoundException e) {
-        String hiveJdbcDriverError = "Unable to locate Hive JDBC driver.";
+        String hiveJdbcDriverError = "Unable to locate Hive JDBC driver: " + hiveJdbcDriver;
         logger.error(hiveJdbcDriverError);
         throw new ClassNotFoundException(hiveJdbcDriverError);
       }
