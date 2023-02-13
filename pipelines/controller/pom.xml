@@ -58,7 +58,11 @@
         <!--exclusion>
           <groupId>org.apache.logging.log4j</groupId>
           <artifactId>log4j-to-slf4j</artifactId>
-        </exclusion-->
+        </exclusion>-->
+        <exclusion>
+          <groupId>org.slf4j</groupId>
+          <artifactId>jul-to-slf4j</artifactId>
+        </exclusion>
       </exclusions>
     </dependency>
 
@@ -83,6 +87,39 @@
       <groupId>${project.parent.groupId}</groupId>
       <artifactId>common</artifactId>
       <version>${project.parent.version}</version>
+    </dependency>
+
+    <!-- Hive dependency for creating tables -->
+    <dependency>
+      <groupId>org.apache.hive</groupId>
+      <artifactId>hive-jdbc</artifactId>
+      <version>3.1.2</version>
+      <exclusions>
+        <exclusion>
+          <groupId>org.slf4j</groupId>
+          <artifactId>slf4j-reload4j</artifactId>
+        </exclusion>
+        <exclusion>
+          <groupId>org.slf4j</groupId>
+          <artifactId>slf4j-api</artifactId>
+        </exclusion>
+        <exclusion>
+          <groupId>org.apache.logging.log4j</groupId>
+          <artifactId>log4j-slf4j-impl</artifactId>
+        </exclusion>
+        <exclusion>
+          <groupId>javax.servlet.jsp</groupId>
+          <artifactId>javax.servlet.jsp-api</artifactId>
+        </exclusion>
+        <exclusion>
+          <groupId>org.eclipse.jetty</groupId>
+          <artifactId>jetty-runner</artifactId>
+        </exclusion>
+        <exclusion>
+          <groupId>org.apache.parquet</groupId>
+          <artifactId>parquet-hadoop-bundle</artifactId>
+        </exclusion>
+      </exclusions>
     </dependency>
   </dependencies>
 

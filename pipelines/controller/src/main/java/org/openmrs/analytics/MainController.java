@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2022 Google LLC
+ * Copyright 2020-2023 Google LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -61,7 +61,7 @@ public class MainController {
       model.addAttribute("next_run", next.toString());
       model.addAttribute("hasDwh", true);
     }
-    FhirEtlOptions options = dataProperties.createBatchOptions();
+    FhirEtlOptions options = dataProperties.createBatchOptions().getFhirEtlOptions();
     List<DataProperties.ConfigFields> configParams = dataProperties.getConfigParams();
     model.addAttribute("configParams", configParams);
     List<DataProperties.ConfigFields> pipelineConfigs = dataProperties.getConfigFieldsList(options);

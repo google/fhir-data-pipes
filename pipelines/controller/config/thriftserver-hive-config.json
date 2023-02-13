@@ -1,0 +1,8 @@
+{
+  "databaseService" : "hive2",
+  "databaseHostName" : "172.17.0.1",
+  "databasePort" : "10001",
+  "databaseUser" : "hive",
+  "databasePassword" : "",
+  "databaseName" : "default"
+}

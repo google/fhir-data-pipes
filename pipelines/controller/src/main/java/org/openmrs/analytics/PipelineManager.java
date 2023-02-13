@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2022 Google LLC
+ * Copyright 2020-2023 Google LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ import com.google.common.base.Preconditions;
 import java.beans.PropertyVetoException;
 import java.io.File;
 import java.io.IOException;
+import java.sql.SQLException;
 import java.time.LocalDateTime;
 import javax.annotation.PostConstruct;
 import org.apache.beam.runners.flink.FlinkPipelineOptions;
@@ -160,12 +161,14 @@ public class PipelineManager {
 
   synchronized void runBatchPipeline() throws IOException, PropertyVetoException {
     Preconditions.checkState(!isRunning(), "cannot start a pipeline while another one is running");
-    FhirEtlOptions options = dataProperties.createBatchOptions();
+    PipelineConfig pipelineConfig = dataProperties.createBatchOptions();
+    FhirEtlOptions options = pipelineConfig.getFhirEtlOptions();
     Pipeline pipeline = buildJdbcPipeline(options);
     if (pipeline == null) {
       logger.warn("No resources found to be fetched!");
+      return;
     } else {
-      currentPipeline = new PipelineThread(pipeline, this);
+      currentPipeline = new PipelineThread(pipeline, this, dataProperties, pipelineConfig);
     }
     logger.info("Running full pipeline for DWH {}", options.getOutputParquetPath());
     // We will only have one thread for running pipelines hence no need for a thread pool.
@@ -178,7 +181,8 @@ public class PipelineManager {
     Preconditions.checkState(
         currentDwh != null,
         "cannot start the incremental pipeline while there are no DWHs; run full pipeline");
-    FhirEtlOptions options = dataProperties.createBatchOptions();
+    PipelineConfig pipelineConfig = dataProperties.createBatchOptions();
+    FhirEtlOptions options = pipelineConfig.getFhirEtlOptions();
     String finalDwhRoot = options.getOutputParquetPath();
     // TODO move old incremental_run dir if there is one
     String incrementalDwhRoot = currentDwh.newIncrementalRunPath().toString();
@@ -203,7 +207,8 @@ public class PipelineManager {
       setLastRunStatus(LastRunStatus.SUCCESS);
     } else {
       // Creating a thread for running both pipelines, one after the other.
-      currentPipeline = new PipelineThread(pipeline, mergerOptions, this);
+      currentPipeline =
+          new PipelineThread(pipeline, mergerOptions, this, dataProperties, pipelineConfig);
       logger.info("Running incremental pipeline for DWH {} since {}", currentDwh.getRoot(), since);
       currentPipeline.start();
     }
@@ -219,18 +224,35 @@ public class PipelineManager {
     // This is used in the incremental mode only.
     private final ParquetMergerOptions mergerOptions;
 
-    PipelineThread(Pipeline pipeline, PipelineManager manager) {
+    private final DataProperties dataProperties;
+
+    private final PipelineConfig pipelineConfig;
+
+    PipelineThread(
+        Pipeline pipeline,
+        PipelineManager manager,
+        DataProperties dataProperties,
+        PipelineConfig pipelineConfig) {
       Preconditions.checkArgument(pipeline.getOptions().as(FhirEtlOptions.class) != null);
       this.pipeline = pipeline;
       this.manager = manager;
+      this.dataProperties = dataProperties;
+      this.pipelineConfig = pipelineConfig;
       this.mergerOptions = null;
     }
 
-    PipelineThread(Pipeline pipeline, ParquetMergerOptions mergerOptions, PipelineManager manager) {
+    PipelineThread(
+        Pipeline pipeline,
+        ParquetMergerOptions mergerOptions,
+        PipelineManager manager,
+        DataProperties dataProperties,
+        PipelineConfig pipelineConfig) {
       Preconditions.checkArgument(pipeline.getOptions().as(FhirEtlOptions.class) != null);
       this.pipeline = pipeline;
       this.manager = manager;
       this.mergerOptions = mergerOptions;
+      this.dataProperties = dataProperties;
+      this.pipelineConfig = pipelineConfig;
     }
 
     @Override
@@ -238,6 +260,12 @@ public class PipelineManager {
       try {
         FhirEtlOptions options = pipeline.getOptions().as(FhirEtlOptions.class);
         EtlUtils.runPipelineWithTimestamp(pipeline, options);
+        if (dataProperties.isCreateHiveResourceTables()) {
+          createHiveResourceTables(
+              options.getResourceList(),
+              pipelineConfig.getTimestampSuffix(),
+              pipelineConfig.getThriftServerParquetPath());
+        }
         if (mergerOptions == null) { // Do not update DWH yet if this was an incremental run.
           manager.updateDwh(options.getOutputParquetPath());
         } else {
@@ -245,6 +273,12 @@ public class PipelineManager {
           Pipeline mergerPipeline = ParquetMerger.createMergerPipeline(mergerOptions, fhirContext);
           logger.info("Merger options are {}", mergerOptions);
           EtlUtils.runMergerPipelineWithTimestamp(mergerPipeline, mergerOptions);
+          if (dataProperties.isCreateHiveResourceTables()) {
+            createHiveResourceTables(
+                options.getResourceList(),
+                pipelineConfig.getTimestampSuffix(),
+                mergerOptions.getMergedDwh());
+          }
           manager.updateDwh(mergerOptions.getMergedDwh());
         }
         manager.setLastRunStatus(LastRunStatus.SUCCESS);
@@ -252,6 +286,24 @@ public class PipelineManager {
         logger.error("exception while running pipeline: ", e);
         manager.setLastRunStatus(LastRunStatus.FAILURE);
       }
+    }
+
+    private void createHiveResourceTables(
+        String resourceList, String timestampSuffix, String thriftServerParquetPath)
+        throws IOException, SQLException {
+
+      logger.info("Establishing connection to Thrift server Hive");
+      DatabaseConfiguration dbConfig =
+          DatabaseConfiguration.createConfigFromFile(dataProperties.getThriftserverHiveConfig());
+
+      logger.info("Creating resources on Thrift server Hive");
+      HiveTableManager hiveTableManager =
+          new HiveTableManager(
+              dbConfig.makeJdbsUrlFromConfig(),
+              dbConfig.getDatabaseUser(),
+              dbConfig.getDatabasePassword());
+      hiveTableManager.createResourceTables(resourceList, timestampSuffix, thriftServerParquetPath);
+      logger.info("Created resources on Thrift server Hive");
     }
   }
 
