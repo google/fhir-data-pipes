@@ -1,4 +1,4 @@
-# Copyright 2020 Google LLC
+# Copyright 2023 Google LLC
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -12,12 +12,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-COMPOSE_HTTP_TIMEOUT=200
+# This is to ignore all `dwh` dirs; the root one has a lot of test parquet files
+# and we also commonly use this directory name for storing pipelines' outputs.
+**/dwh/
 
-# These are for compose-controller-spark-sql.yaml
-PIPELINE_CONFIG=./config
-DWH_ROOT=./dwh
-
-# This is for openmrs-compose.yaml; for big data dump set `big`, for small
-# data dump set `small`, which is the default mode.
-DATABASE_DUMP_MODE=small
+# Ignoring other large directories that are not needed for the docker image.
+docker/mysql-build
+synthea-hiv/
+e2e-tests/
+**/tmp
+**/venv*

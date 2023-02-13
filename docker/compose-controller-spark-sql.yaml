@@ -1,0 +1,83 @@
+# Copyright 2022 Google LLC
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+# This docker-compose configuration is for bringing up a pipeline controller
+# along with a local Spark cluster and a SQL console.
+# The Spark part is partially based on:
+# https://github.com/bitnami/containers/blob/main/bitnami/spark/docker-compose.yml
+
+# Environment variables:
+#
+# PIPELINE_CONFIG: The directory that contains pipeline configurations, namely
+#   application.yaml and flink-conf.yaml files.
+#
+# DWH_ROOT: The directory where Parquet files are written. This is shared
+#   between all containers; the pipeline writes to it and Spark ones read.
+#
+# Note if local paths are used, they should start with `./ `or `../`
+
+
+version: '2'
+
+services:
+  pipeline-controller:
+    # to force a build use `--build` option of `docker-compose up`.
+    build:
+      context: ..
+    container_name: pipeline-controller
+    volumes:
+      - ${PIPELINE_CONFIG}:/app/config:ro
+      - ${DWH_ROOT}:/dwh
+    ports:
+      - '8090:8080'
+
+  # TODO: switch back to version 3.3 after the following issue is resolved:
+  # https://github.com/bitnami/containers/issues/19802
+  spark:
+    image: docker.io/bitnami/spark:3.3.1-debian-11-r19
+    container_name: spark-master
+    environment:
+      - SPARK_MODE=master
+    ports:
+      - '8082:8080'
+    volumes:
+      - ${DWH_ROOT}:/dwh
+
+  spark-worker:
+    image: docker.io/bitnami/spark:3.3.1-debian-11-r19
+    container_name: spark-worker
+    environment:
+      - SPARK_MODE=worker
+      - SPARK_MASTER_URL=spark://spark:7077
+      - SPARK_WORKER_MEMORY=20G
+      - SPARK_WORKER_CORES=20
+    volumes:
+      - ${DWH_ROOT}:/dwh
+
+  thriftserver:
+    image: docker.io/bitnami/spark:3.3.1-debian-11-r19
+    container_name: spark-thriftserver
+    command:
+      - sbin/start-thriftserver.sh
+      - --master
+      - spark://spark:7077
+    environment:
+      - HIVE_SERVER2_THRIFT_PORT=10000
+    ports:
+      - '10001:10000'
+      - '4041:4040'
+    volumes:
+      - ${DWH_ROOT}:/dwh
+
+# TODO add a link to a Jupyter notebook to show how to use JDBC.

@@ -21,11 +21,7 @@
 
     <compile.source>11</compile.source>
 
-    <!-- Spark -->
-    <spark.version>2.4.8</spark.version>
-    <scala.version>2.11.8</scala.version>
-    <scala.binary.version>2.11</scala.binary.version>
-    <hapi.fhir.version>6.2.4</hapi.fhir.version>
+    <hapi.fhir.version>6.2.5</hapi.fhir.version>
     <avro.version>1.11.1</avro.version>
     <junit.version>4.13.2</junit.version>
     <hamcrest.version>2.2</hamcrest.version>
@@ -34,21 +30,11 @@
     <python.version>3.5.3</python.version>
     <maven-javadoc.plugin.version>2.10.3</maven-javadoc.plugin.version>
     <maven-project-info-reports.plugin.version>3.4.2</maven-project-info-reports.plugin.version>
+    <slf4j.version>1.7.36</slf4j.version>
+    <logback.version>1.2.11</logback.version>
   </properties>
 
   <modules>
-    <!--
-    <module>bunsen-core</module>
-    <module>bunsen-core-stu3</module>
-    <module>bunsen-uscore-resources-stu3</module>
-    <module>bunsen-spark</module>
-    <module>bunsen-spark-stu3</module>
-    <module>bunsen-avro</module>
-    <module>bunsen-avro-records-stu3</module>
-    <module>bunsen-spark-shaded</module>
-    <module>python</module>
-    <module>assembly</module>
-    -->
     <module>bunsen-core</module>
     <module>bunsen-core-r4</module>
     <module>bunsen-core-stu3</module>
@@ -75,6 +61,23 @@
       <timezone>-6</timezone>
     </developer>
   </developers>
+
+  <dependencies>
+    <!-- Use slf4j API with logback. -->
+    <dependency>
+      <groupId>org.slf4j</groupId>
+      <artifactId>slf4j-api</artifactId>
+      <version>${slf4j.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>ch.qos.logback</groupId>
+      <artifactId>logback-classic</artifactId>
+      <version>${logback.version}</version>
+      <!-- We only enable the logback binding while testing such that it is
+        not imposed on the end-user of the Bunsen libraries.-->
+      <scope>test</scope>
+    </dependency>
+  </dependencies>
 
   <build>
     <plugins>
@@ -467,7 +470,7 @@
               <report>index</report>
               <report>project-team</report>
               <report>summary</report>
-              <report>issue-tracking</report>
+              <report>issue-management</report>
               <report>scm</report>
               <report>dependencies</report>
             </reports>
@@ -475,7 +478,6 @@
         </reportSets>
         <configuration>
           <dependencyDetailsEnabled>false</dependencyDetailsEnabled>
-          <dependencyLocationsEnabled>false</dependencyLocationsEnabled>
         </configuration>
       </plugin>
 
@@ -577,26 +579,6 @@
         <groupId>com.cerner.bunsen</groupId>
         <artifactId>bunsen-python</artifactId>
         <version>${project.version}</version>
-      </dependency>
-
-      <!-- Spark -->
-      <dependency>
-        <groupId>org.apache.spark</groupId>
-        <artifactId>spark-core_${scala.binary.version}</artifactId>
-        <version>${spark.version}</version>
-        <scope>provided</scope>
-      </dependency>
-      <dependency>
-        <groupId>org.apache.spark</groupId>
-        <artifactId>spark-sql_${scala.binary.version}</artifactId>
-        <version>${spark.version}</version>
-        <scope>provided</scope>
-      </dependency>
-      <dependency>
-        <groupId>org.apache.spark</groupId>
-        <artifactId>spark-hive_${scala.binary.version}</artifactId>
-        <version>${spark.version}</version>
-        <scope>provided</scope>
       </dependency>
 
       <!-- FHIR dependencies -->

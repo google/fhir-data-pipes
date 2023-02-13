@@ -11,6 +11,9 @@ To address some of these shortcomings, we follow the following process. Before
 sending a PR, please spend some time and fully understand this process to help
 your reviewers:
 
+- Please always create a PR from a branch on your forked repository. Never create
+  a branch on the main repository.
+
 - Please try to have _a single commit per each review round_. When you want
   to send your PR, if you have multiple commits,
   [squash them](https://stackoverflow.com/questions/5189560/how-to-squash-my-last-x-commits-together).

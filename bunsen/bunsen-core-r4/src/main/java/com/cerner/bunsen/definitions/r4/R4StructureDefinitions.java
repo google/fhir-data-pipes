@@ -9,6 +9,7 @@ import com.cerner.bunsen.definitions.StructureDefinitions;
 import com.cerner.bunsen.definitions.StructureField;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Deque;
 import java.util.LinkedHashMap;
@@ -122,14 +123,21 @@ public class R4StructureDefinitions extends StructureDefinitions {
     return stack.stream().filter(path -> path.equals(newPath)).count() > maxDepth;
   }
 
-  private String getFirstProfile(List<CanonicalType> types) {
-    if (types == null || types.isEmpty()) {
+  /**
+   * This is a helper to address differences of `ElementDefinition.TypeRefComponent.getProfile()` in
+   * R4 vs. STU3 versions which returns a {@code List<CanonicalType>} in the former but a String
+   * in the latter. This is due to the difference between how `Reference` types are represented
+   * in R4 vs STU3; in R4 all "target profiles" (i.e., reference's target type) are under the same
+   * `type` while in STU3 we have multiple `type` each with a single target-profile.
+   *
+   * @return
+   */
+  private String getFirstTypeProfile(ElementDefinition element) {
+    List<CanonicalType> profiles = element.getTypeFirstRep().getProfile();
+    if (profiles == null || profiles.isEmpty()) {
       return  null;
     }
-    if (types.size() > 1) {
-      log.warn(String.format("Got %d profiles; expected at most 1!", types.size()));
-    }
-    return types.get(0).getValue();
+    return profiles.get(0).getValue();
   }
 
   private <T> List<StructureField<T>> extensionElementToFields(DefinitionVisitor<T> visitor,
@@ -140,8 +148,7 @@ public class R4StructureDefinitions extends StructureDefinitions {
 
     // FIXME: extension is a type rather than an external structure....
     StructureDefinition definition = null;
-    // TODO consolidate between `getProfile()` for different FHIR versions.
-    String profileUrl = getFirstProfile(element.getTypeFirstRep().getProfile());
+    String profileUrl = getFirstTypeProfile(element);
     if (profileUrl != null) {
       definition = (StructureDefinition) validationSupport.fetchStructureDefinition(profileUrl);
     }
@@ -181,7 +188,7 @@ public class R4StructureDefinitions extends StructureDefinitions {
           rootDefinition,
           element.getSliceName(),
           stack,
-          getFirstProfile(element.getTypeFirstRep().getProfile()),
+          getFirstTypeProfile(element),
           definitions,
           element);
     }
@@ -285,7 +292,6 @@ public class R4StructureDefinitions extends StructureDefinitions {
       Deque<QualifiedPath> stack) {
 
     String elementName = elementName(element);
-    log.debug("In elementToFields for element " + element.getPath());
 
     if (shouldTerminateRecursive(visitor, rootDefinition, element, stack)) {
 
@@ -598,12 +604,17 @@ public class R4StructureDefinitions extends StructureDefinitions {
           .stream()
           .filter(type -> "Reference".equals(type.getCode()))
           .filter(type -> type.getTargetProfile() != null)
-          .map(type -> {
+          .map(type -> type.getTargetProfile())
+          // Note there is a difference between how `Reference` types are represented in R4 vs STU3,
+          // in R4 all "target profiles" (i.e., reference's target type) are under the same `type`
+          // while in STU3 we have multiple `type` each with a single target-profile.
+          .flatMap(Collection::stream)
+          .map(profile -> {
 
             IValidationSupport validation = context.getValidationSupport();
 
             StructureDefinition targetDefinition = (StructureDefinition)
-                validation.fetchStructureDefinition(getFirstProfile(type.getTargetProfile()));
+                validation.fetchStructureDefinition(profile.getValue());
 
             return targetDefinition.getType();
           })
