@@ -21,7 +21,11 @@ fhirdata:
 
   dbConfig: "config/hapi-postgres-config.json"
 
-  dwhRootPrefix: "config/controller_DWH_ORIG"
+  # This is the uri path for the GCS file system, the uri should be in the
+  # format "gs://<bucket>"
+  # gscEndPoint: "gs://fhir-test-analytics"
+  # dwhRootPrefix: "gs://fhir-test-analytics/config10/controller_DWH"
+  dwhRootPrefix: "/tmp/controller_DWH"
 
   thriftserverHiveConfig: "config/thriftserver-hive-config.json"
 

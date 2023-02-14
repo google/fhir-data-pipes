@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2022 Google LLC
+ * Copyright 2020-2023 Google LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.openmrs.analytics;
 
 import ca.uhn.fhir.context.FhirContext;
@@ -23,9 +22,11 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Maps;
 import java.io.IOException;
+import java.io.OutputStream;
+import java.nio.channels.Channels;
+import java.nio.channels.WritableByteChannel;
 import java.nio.file.FileSystem;
 import java.nio.file.FileSystems;
-import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -40,7 +41,9 @@ import org.apache.avro.Schema;
 import org.apache.avro.generic.GenericData;
 import org.apache.avro.generic.GenericRecord;
 import org.apache.avro.specific.SpecificData;
-import org.apache.hadoop.fs.Path;
+import org.apache.beam.sdk.io.fs.ResolveOptions.StandardResolveOptions;
+import org.apache.beam.sdk.io.fs.ResourceId;
+import org.apache.beam.sdk.util.MimeTypes;
 import org.apache.parquet.avro.AvroParquetWriter;
 import org.apache.parquet.hadoop.ParquetWriter;
 import org.hl7.fhir.r4.model.Bundle;
@@ -143,7 +146,7 @@ public class ParquetUtil {
     } else {
       throw new IllegalArgumentException("Only versions 3 and 4 of FHIR are supported!");
     }
-    this.dwhFiles = new DwhFiles(parquetFilePath, fileSystem, fhirContext);
+    this.dwhFiles = new DwhFiles(parquetFilePath, fhirContext);
     this.writerMap = new HashMap<>();
     this.rowGroupSize = rowGroupSize;
     this.namePrefix = namePrefix;
@@ -180,8 +183,8 @@ public class ParquetUtil {
   }
 
   @VisibleForTesting
-  synchronized Path uniqueOutputFile(String resourceType) throws IOException {
-    java.nio.file.Path outputDir = dwhFiles.createResourcePath(resourceType);
+  synchronized ResourceId getUniqueOutputFilePath(String resourceType) throws IOException {
+    ResourceId resourceId = dwhFiles.getResourcePath(resourceType);
     String uniquetFileName =
         String.format(
             "%s%s_output-parquet-th-%d-ts-%d-r-%d%s",
@@ -191,16 +194,19 @@ public class ParquetUtil {
             System.currentTimeMillis(),
             random.nextInt(1000000),
             PARQUET_EXTENSION);
-    Path bestFilePath =
-        new Path(Paths.get(dwhFiles.getRoot(), resourceType).toString(), uniquetFileName);
-    log.debug("Creating new Parguet file " + bestFilePath);
-    return bestFilePath;
+    return resourceId.resolve(uniquetFileName, StandardResolveOptions.RESOLVE_FILE);
   }
 
   private synchronized void createWriter(String resourceType) throws IOException {
     // TODO: Find a way to convince Hadoop file operations to use `fileSystem` (needed for testing).
-    AvroParquetWriter.Builder<GenericRecord> builder =
-        AvroParquetWriter.builder(uniqueOutputFile(resourceType));
+
+    ResourceId resourceId = getUniqueOutputFilePath(resourceType);
+    WritableByteChannel writableByteChannel =
+        org.apache.beam.sdk.io.FileSystems.create(resourceId, MimeTypes.BINARY);
+    OutputStream outputStream = Channels.newOutputStream(writableByteChannel);
+    FhirOutputFile fhirOutputFile = new FhirOutputFile(outputStream);
+
+    AvroParquetWriter.Builder<GenericRecord> builder = AvroParquetWriter.builder(fhirOutputFile);
     // TODO: Adjust other parquet file parameters for our needs or make them configurable.
     if (rowGroupSize > 0) {
       builder.withRowGroupSize(rowGroupSize);

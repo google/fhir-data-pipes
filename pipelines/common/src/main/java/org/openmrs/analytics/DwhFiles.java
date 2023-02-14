@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2022 Google LLC
+ * Copyright 2020-2023 Google LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,18 +19,31 @@ import ca.uhn.fhir.context.FhirContext;
 import ca.uhn.fhir.parser.DataFormatException;
 import com.google.api.client.util.Sets;
 import com.google.common.base.Preconditions;
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.nio.ByteBuffer;
+import java.nio.channels.Channels;
+import java.nio.channels.ReadableByteChannel;
+import java.nio.channels.WritableByteChannel;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.FileAlreadyExistsException;
-import java.nio.file.FileSystem;
-import java.nio.file.FileSystems;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.time.Instant;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
-import org.apache.commons.io.FileUtils;
+import org.apache.beam.sdk.io.FileSystems;
+import org.apache.beam.sdk.io.fs.MatchResult;
+import org.apache.beam.sdk.io.fs.MatchResult.Metadata;
+import org.apache.beam.sdk.io.fs.MatchResult.Status;
+import org.apache.beam.sdk.io.fs.ResolveOptions.StandardResolveOptions;
+import org.apache.beam.sdk.io.fs.ResourceId;
+import org.apache.beam.sdk.util.MimeTypes;
+import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.collect.Iterables;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -42,54 +55,36 @@ public class DwhFiles {
 
   private static final Logger log = LoggerFactory.getLogger(DwhFiles.class);
 
-  private static final String TIMESTAMP_FILE = "timestamp.txt";
+  public static final String TIMESTAMP_FILE = "timestamp.txt";
 
-  private static final String INCREMENTAL_DIR = "incremental_run";
+  public static final String INCREMENTAL_DIR = "incremental_run";
 
   private final String dwhRoot;
-
-  private final FileSystem fileSystem;
 
   private final FhirContext fhirContext;
 
   private DwhFiles(String dwhRoot) {
-    this(dwhRoot, FileSystems.getDefault(), FhirContext.forR4Cached());
+    this(dwhRoot, FhirContext.forR4Cached());
+  }
+
+  DwhFiles(String dwhRoot, FhirContext fhirContext) {
+    Preconditions.checkNotNull(dwhRoot);
+    this.dwhRoot = dwhRoot;
+    this.fhirContext = fhirContext;
   }
 
   static DwhFiles forRoot(String dwhRoot) {
     return new DwhFiles(dwhRoot);
   }
 
-  DwhFiles(String dwhRoot, FileSystem fileSystem, FhirContext fhirContext) {
-    Preconditions.checkNotNull(dwhRoot);
-    this.dwhRoot = dwhRoot;
-    this.fileSystem = fileSystem;
-    this.fhirContext = fhirContext;
-  }
-
   public String getRoot() {
     return dwhRoot;
   }
 
-  /**
-   * This returns the path to the directory which contains resources of a specific type. It will
-   * also make sure the directory exists.
-   *
-   * @param resourceType the type of the FHIR resources
-   * @return The path to the resource type dir.
-   * @throws IOException if directory creation fails (won't fail if dir already exists).
-   */
-  public Path createResourcePath(String resourceType) throws IOException {
-    // TODO Check this code on GCS and make it file-system agnostic:
-    //   https://github.com/GoogleCloudPlatform/openmrs-fhir-analytics/issues/390
-    Path path = getResourcePath(resourceType);
-    Files.createDirectories(path);
-    return path;
-  }
-
   /** Similar to {@code createResourcePath} but does not create the directory */
-  public Path getResourcePath(String resourceType) {
-    return fileSystem.getPath(getRoot(), resourceType);
+  public ResourceId getResourcePath(String resourceType) {
+    return FileSystems.matchNewResource(getRoot(), true)
+        .resolve(resourceType, StandardResolveOptions.RESOLVE_DIRECTORY);
   }
 
   /**
@@ -98,14 +93,17 @@ public class DwhFiles {
    *
    * @return the default incremental run path
    */
-  public Path getIncrementalRunPath() {
-    return fileSystem.getPath(getRoot(), INCREMENTAL_DIR);
+  public ResourceId getIncrementalRunPath() {
+    return FileSystems.matchNewResource(getRoot(), true)
+        .resolve(INCREMENTAL_DIR, StandardResolveOptions.RESOLVE_DIRECTORY);
   }
 
   /** This is used when we want to keep a backup of the old incremental run output. */
-  public Path getIncrementalRunPathWithTimestamp() {
-    return fileSystem.getPath(
-        getRoot(), String.format("%s_old_%d", INCREMENTAL_DIR, System.currentTimeMillis()));
+  public ResourceId getIncrementalRunPathWithTimestamp() {
+    return FileSystems.matchNewResource(getRoot(), true)
+        .resolve(
+            String.format("%s_old_%d", INCREMENTAL_DIR, System.currentTimeMillis()),
+            StandardResolveOptions.RESOLVE_DIRECTORY);
   }
 
   /**
@@ -115,32 +113,58 @@ public class DwhFiles {
    * @return same as {@link #getIncrementalRunPath()}
    * @throws IOException if the directory move fails
    */
-  public Path newIncrementalRunPath() throws IOException {
-    Path incPath = getIncrementalRunPath();
+  public ResourceId newIncrementalRunPath() throws IOException {
+    ResourceId incPath = getIncrementalRunPath();
     if (hasIncrementalDir()) {
-      Path movePath = getIncrementalRunPathWithTimestamp();
+      ResourceId movePath = getIncrementalRunPathWithTimestamp();
       log.info("Moving the old {} directory to {}", INCREMENTAL_DIR, movePath);
-      Files.move(incPath, movePath);
+      FileSystems.rename(Collections.singletonList(incPath), Collections.singletonList(movePath));
     }
     return incPath;
   }
 
   /** @return true iff there is already an incremental run subdirectory in this DWH. */
-  public boolean hasIncrementalDir() {
-    return Files.exists(getIncrementalRunPath());
+  public boolean hasIncrementalDir() throws IOException {
+    List<MatchResult> matches =
+        FileSystems.matchResources(Collections.singletonList(getIncrementalRunPath()));
+    MatchResult matchResult = Iterables.getOnlyElement(matches);
+    if (matchResult.status() == Status.OK) {
+      return true;
+    }
+    return false;
   }
 
-  public Set<String> findResourceTypes() throws IOException {
-    // TODO: Switch to using Beam's FileSystems API or make sure this works on all platforms.
-    //   Currently Beam's API fails to find directories under `dwhPath` with "*" wildcard and
-    //   even with ResourceId.resolve; why? Sample pseudo-code:
-    //   MatchResult matchResult = FileSystems.match(dwhRoot); // with "/*" it does not work either!
-    //   ResourceId resourceId = matchResult -> metadata -> resourceId;
-    //   resourceId.resolve("*", StandardResolveOptions.RESOLVE_DIRECTORY)
-    //   https://github.com/GoogleCloudPlatform/openmrs-fhir-analytics/issues/390
-    Path dwhPath = fileSystem.getPath(dwhRoot);
-    Set<String> fileSet =
-        Files.list(dwhPath).map(p -> dwhPath.relativize(p).toString()).collect(Collectors.toSet());
+  /**
+   * This method returns the list of non-empty directories which contains atleast one file under it.
+   * The directory name should be a valid FHIR resource type.
+   *
+   * @return the set of non-empty directories
+   * @throws IOException
+   */
+  public Set<String> findNonEmptyFhirResourceTypes() throws IOException {
+    // TODO : If the list of files under the dwhRoot is huge then there can be a lag in the api
+    //  response. This issue https://github.com/google/fhir-data-pipes/issues/288 helps in
+    //  maintaining the number of file to an optimum value.
+
+    ResourceId childResourceId =
+        FileSystems.matchNewResource(dwhRoot, true)
+            .resolve("*/*", StandardResolveOptions.RESOLVE_FILE);
+
+    Set<String> fileSet = new HashSet<>();
+    List<MatchResult> matchedChildResultList =
+        FileSystems.matchResources(Collections.singletonList(childResourceId));
+
+    for (MatchResult matchResult : matchedChildResultList) {
+      if (matchResult.status() == Status.OK && !matchResult.metadata().isEmpty()) {
+        for (Metadata metadata : matchResult.metadata()) {
+          fileSet.add(metadata.resourceId().getCurrentDirectory().getFilename());
+        }
+      } else if (matchResult.status() == Status.ERROR) {
+        log.error("Error matching resource types under {} ", dwhRoot);
+        throw new IOException(String.format("Error matching resource types under %s", dwhRoot));
+      }
+    }
+
     Set<String> typeSet = Sets.newHashSet();
     for (String file : fileSet) {
       try {
@@ -154,11 +178,43 @@ public class DwhFiles {
     return typeSet;
   }
 
+  /**
+   * This method copies all the files under the directory (getRoot() + resourceType) into the
+   * destination DwhFiles under the similar directory.
+   *
+   * @param resourceType
+   * @param destDwh
+   * @throws IOException
+   */
   public void copyResourcesToDwh(String resourceType, DwhFiles destDwh) throws IOException {
-    Path path = fileSystem.getPath(getRoot(), resourceType);
-    Path destPath = destDwh.getResourcePath(resourceType);
-    log.info("Copying {} to {}", path, destPath);
-    FileUtils.copyDirectory(path.toFile(), destPath.toFile());
+    ResourceId sourceFiles =
+        FileSystems.matchNewResource(getRoot(), true)
+            .resolve(resourceType, StandardResolveOptions.RESOLVE_DIRECTORY)
+            .resolve("*", StandardResolveOptions.RESOLVE_FILE);
+
+    List<MatchResult> sourceMatchResultList = FileSystems.matchResources(List.of(sourceFiles));
+    List<ResourceId> sourceResourceIdList = new ArrayList<>();
+    for (MatchResult matchResult : sourceMatchResultList) {
+      if (matchResult.status() == Status.OK) {
+        List<ResourceId> resourceIds =
+            matchResult.metadata().stream()
+                .map(metadata -> metadata.resourceId())
+                .collect(Collectors.toList());
+        sourceResourceIdList.addAll(resourceIds);
+      }
+    }
+
+    List<ResourceId> destResourceIdList = new ArrayList<>();
+    sourceResourceIdList.stream()
+        .forEach(
+            resourceId -> {
+              ResourceId destResourceId =
+                  FileSystems.matchNewResource(destDwh.getRoot(), true)
+                      .resolve(resourceType, StandardResolveOptions.RESOLVE_DIRECTORY)
+                      .resolve(resourceId.getFilename(), StandardResolveOptions.RESOLVE_FILE);
+              destResourceIdList.add(destResourceId);
+            });
+    FileSystems.copy(sourceResourceIdList, destResourceIdList);
   }
 
   public void writeTimestampFile() throws IOException {
@@ -166,27 +222,52 @@ public class DwhFiles {
   }
 
   public void writeTimestampFile(Instant instant) throws IOException {
-    Path filePath = fileSystem.getPath(getRoot(), TIMESTAMP_FILE);
-    if (Files.exists(filePath)) {
+    ResourceId resourceId =
+        FileSystems.matchNewResource(getRoot(), true)
+            .resolve(TIMESTAMP_FILE, StandardResolveOptions.RESOLVE_FILE);
+    List<MatchResult> matches = FileSystems.matchResources(Collections.singletonList(resourceId));
+    MatchResult matchResult = Iterables.getOnlyElement(matches);
+
+    if (matchResult.status() == Status.OK) {
       String errorMessage =
           String.format(
-              "Attempting to write to the timestamp file %s which already exists", filePath);
+              "Attempting to write to the timestamp file %s which already exists",
+              getRoot() + "/" + TIMESTAMP_FILE);
       log.error(errorMessage);
       throw new FileAlreadyExistsException(errorMessage);
+    } else if (matchResult.status() == Status.NOT_FOUND) {
+      WritableByteChannel writableByteChannel = FileSystems.create(resourceId, MimeTypes.BINARY);
+      writableByteChannel.write(
+          ByteBuffer.wrap(instant.toString().getBytes(StandardCharsets.UTF_8)));
+      writableByteChannel.close();
+    } else {
+      throw new IOException(
+          String.format(
+              "Error matching file spec %s: status %s",
+              getRoot() + "/" + TIMESTAMP_FILE, matchResult.status()));
     }
-    Files.createDirectories(fileSystem.getPath(dwhRoot));
-    Files.createFile(filePath);
-    Files.write(filePath, instant.toString().getBytes(StandardCharsets.UTF_8));
   }
 
   public Instant readTimestampFile() throws IOException {
-    Path filePath = fileSystem.getPath(getRoot(), TIMESTAMP_FILE);
-    List<String> lines = Files.readAllLines(filePath, StandardCharsets.UTF_8);
-    if (lines.isEmpty()) {
-      String errorMessage = String.format("The timestamp file %s is empty", filePath);
+    ResourceId resourceId =
+        FileSystems.matchNewResource(getRoot(), true)
+            .resolve(TIMESTAMP_FILE, StandardResolveOptions.RESOLVE_FILE);
+    List<String> result = new ArrayList<>();
+    ReadableByteChannel channel = FileSystems.open(resourceId);
+    try (InputStream stream = Channels.newInputStream(channel)) {
+      BufferedReader streamReader =
+          new BufferedReader(new InputStreamReader(stream, StandardCharsets.UTF_8));
+      String line;
+      while ((line = streamReader.readLine()) != null) {
+        result.add(line);
+      }
+    }
+    if (result.isEmpty()) {
+      String errorMessage =
+          String.format("The timestamp file %s is empty", getRoot() + "/" + TIMESTAMP_FILE);
       log.error(errorMessage);
       throw new IllegalStateException(errorMessage);
     }
-    return Instant.parse(lines.get(0));
+    return Instant.parse(result.get(0));
   }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2022 Google LLC
+ * Copyright 2020-2023 Google LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -42,6 +42,7 @@ import org.apache.avro.Schema;
 import org.apache.avro.generic.GenericData;
 import org.apache.avro.generic.GenericData.Record;
 import org.apache.avro.generic.GenericRecord;
+import org.apache.beam.sdk.io.fs.ResourceId;
 import org.hl7.fhir.r4.model.Bundle;
 import org.hl7.fhir.r4.model.Observation;
 import org.junit.Before;
@@ -151,7 +152,7 @@ public class ParquetUtilTest {
 
   @Test
   public void bestOutputFile_NoDir() throws IOException {
-    org.apache.hadoop.fs.Path bestFile = parquetUtil.uniqueOutputFile("Patient");
+    ResourceId bestFile = parquetUtil.getUniqueOutputFilePath("Patient");
     assertThat(
         bestFile.toString(),
         matchesPattern(
@@ -162,7 +163,7 @@ public class ParquetUtilTest {
   public void bestOutputFile_NoFiles() throws IOException {
     Path patientPath = rootPath.resolve("Patient");
     Files.createDirectory(patientPath);
-    org.apache.hadoop.fs.Path bestFile = parquetUtil.uniqueOutputFile("Patient");
+    ResourceId bestFile = parquetUtil.getUniqueOutputFilePath("Patient");
     assertThat(
         bestFile.toString(),
         matchesPattern(

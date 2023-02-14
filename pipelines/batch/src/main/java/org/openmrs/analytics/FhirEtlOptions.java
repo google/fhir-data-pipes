@@ -15,13 +15,14 @@
  */
 package org.openmrs.analytics;
 
+import org.apache.beam.sdk.extensions.gcp.options.GcsOptions;
 import org.apache.beam.sdk.options.Default;
 import org.apache.beam.sdk.options.Description;
 import org.apache.beam.sdk.options.PipelineOptions;
 import org.apache.beam.sdk.options.Validation.Required;
 
 /** Options supported by {@link FhirEtl}. */
-public interface FhirEtlOptions extends PipelineOptions {
+public interface FhirEtlOptions extends PipelineOptions, GcsOptions {
 
   @Description("Fhir source server URL, e.g., http://localhost:8091/fhir, etc.")
   @Required

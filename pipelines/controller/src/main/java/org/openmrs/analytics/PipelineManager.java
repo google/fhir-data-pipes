@@ -18,14 +18,24 @@ package org.openmrs.analytics;
 import ca.uhn.fhir.context.FhirContext;
 import com.google.common.base.Preconditions;
 import java.beans.PropertyVetoException;
-import java.io.File;
 import java.io.IOException;
 import java.sql.SQLException;
 import java.time.LocalDateTime;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 import javax.annotation.PostConstruct;
 import org.apache.beam.runners.flink.FlinkPipelineOptions;
 import org.apache.beam.runners.flink.FlinkRunner;
 import org.apache.beam.sdk.Pipeline;
+import org.apache.beam.sdk.io.FileSystems;
+import org.apache.beam.sdk.io.fs.MatchResult;
+import org.apache.beam.sdk.io.fs.MatchResult.Metadata;
+import org.apache.beam.sdk.io.fs.MatchResult.Status;
+import org.apache.beam.sdk.io.fs.ResolveOptions.StandardResolveOptions;
+import org.apache.beam.sdk.io.fs.ResourceId;
 import org.apache.beam.sdk.options.PipelineOptionsFactory;
 import org.openmrs.analytics.model.DatabaseConfiguration;
 import org.slf4j.Logger;
@@ -69,38 +79,42 @@ public class PipelineManager {
 
   @PostConstruct
   private void initDwhStatus() {
+
+    PipelineConfig pipelineConfig = dataProperties.createBatchOptions();
+    FileSystems.setDefaultPipelineOptions(pipelineConfig.getFhirEtlOptions());
+
     cron = CronExpression.parse(dataProperties.getIncrementalSchedule());
-    String prefix = dataProperties.getDwhRootPrefix();
-    Preconditions.checkState(prefix != null && !prefix.isEmpty());
-    File rootPrefix = new File(prefix);
-    File parent = rootPrefix.getParentFile();
-    if (parent == null) {
-      // TODO make the logic here working on different file-systems including distributed ones.
-      parent = new File(".");
-    }
-    String noDirFilePrefix = rootPrefix.getName();
-    File[] files =
-        parent.listFiles(
-            file -> {
-              String fileName = file.getName();
-              return fileName.startsWith(noDirFilePrefix);
-            });
-    Preconditions.checkState(files != null, "Make sure DWH prefix is a valid path!");
+    String rootPrefix = dataProperties.getDwhRootPrefix();
+    Preconditions.checkState(rootPrefix != null && !rootPrefix.isEmpty());
+
     String lastDwh = "";
-    for (File f : files) {
-      String fileName = f.getName();
-      if (!fileName.startsWith(noDirFilePrefix + DataProperties.TIMESTAMP_PREFIX)) {
-        // This is not necessarily an error; the user may want to bootstrap from an already created
-        // DWH outside the control-panel framework, e.g., by running the batch pipeline directly.
-        logger.warn(
-            "DWH directory {} does not start with {}",
-            files,
-            noDirFilePrefix + DataProperties.TIMESTAMP_PREFIX);
+    String baseDir = getBaseDir(rootPrefix);
+    try {
+      String prefix = getPrefix(rootPrefix);
+      List<ResourceId> paths =
+          getAllChildDirectories(baseDir).stream()
+              .filter(dir -> dir.getFilename().startsWith(prefix))
+              .collect(Collectors.toList());
+
+      Preconditions.checkState(paths != null, "Make sure DWH prefix is a valid path!");
+
+      for (ResourceId path : paths) {
+        if (!path.getFilename().startsWith(prefix + DataProperties.TIMESTAMP_PREFIX)) {
+          // This is not necessarily an error; the user may want to bootstrap from an already
+          // created DWH outside the control-panel framework, e.g., by running the batch pipeline
+          // directly.
+          logger.warn(
+              "DWH directory {} does not start with {}",
+              paths,
+              prefix + DataProperties.TIMESTAMP_PREFIX);
+        }
+        if (lastDwh.isEmpty() || lastDwh.compareTo(path.getFilename()) < 0) {
+          logger.debug("Found a more recent DWH {}", path.getFilename());
+          lastDwh = path.getFilename();
+        }
       }
-      if (lastDwh.isEmpty() || lastDwh.compareTo(fileName) < 0) {
-        logger.debug("Found a more recent DWH {}", fileName);
-        lastDwh = fileName;
-      }
+    } catch (IOException e) {
+      throw new RuntimeException(e);
     }
     if (lastDwh.isEmpty()) {
       logger.info("No DWH found; it should be created by running a full pipeline");
@@ -108,10 +122,43 @@ public class PipelineManager {
       lastRunEnd = null;
     } else {
       logger.info("Initializing with most recent DWH {}", lastDwh);
-      currentDwh = DwhFiles.forRoot(new File(parent.getPath(), lastDwh).getPath());
+      ResourceId resourceId =
+          FileSystems.matchNewResource(baseDir, true)
+              .resolve(lastDwh, StandardResolveOptions.RESOLVE_DIRECTORY);
+      currentDwh = DwhFiles.forRoot(resourceId.toString());
       // There exists a DWH from before, so we set the scheduler to continue updating the DWH.
       lastRunEnd = LocalDateTime.now();
     }
+  }
+
+  private Set<ResourceId> getAllChildDirectories(String baseDir) throws IOException {
+    ResourceId resourceId =
+        FileSystems.matchNewResource(baseDir, true)
+            .resolve("*/*", StandardResolveOptions.RESOLVE_FILE);
+    List<MatchResult> matchResultList =
+        FileSystems.matchResources(Collections.singletonList(resourceId));
+    Set<ResourceId> childDirectories = new HashSet<>();
+    for (MatchResult matchResult : matchResultList) {
+      if (matchResult.status() == Status.OK && !matchResult.metadata().isEmpty()) {
+        for (Metadata metadata : matchResult.metadata()) {
+          childDirectories.add(metadata.resourceId().getCurrentDirectory());
+        }
+      } else if (matchResult.status() == Status.ERROR) {
+        logger.error("Error matching resource types under {} ", baseDir);
+        throw new IOException(String.format("Error matching resource types under %s", baseDir));
+      }
+    }
+    logger.info("Child resources : {}", childDirectories);
+    return childDirectories;
+  }
+
+  private String getBaseDir(String rootPrefix) {
+    return rootPrefix.substring(0, rootPrefix.lastIndexOf("/"));
+  }
+
+  private String getPrefix(String rootPrefix) {
+    int index = rootPrefix.lastIndexOf("/");
+    return rootPrefix.substring(index + 1);
   }
 
   synchronized boolean isRunning() {
