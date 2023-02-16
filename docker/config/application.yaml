@@ -16,9 +16,10 @@
 
 # This config is meant to work with `compose-controller-spark-sql.yaml`.
 fhirdata:
-  fhirServerUrl: "http://172.17.0.1:8091/fhir"
+  fhirServerUrl: "http://hapi-server:8080/fhir"
   dbConfig: "config/hapi-postgres-config_local.json"
   dwhRootPrefix: "/dwh/controller_DWH"
+  thriftserverHiveConfig: "config/thriftserver-hive-config_local.json"
   # The schedule format is similar to Spring's CronExpression, i.e.,
   # "second minute hour day-of-the-month month day-of-the-week", e.g.,
   # "0 0 * * * *" means top of every hour;
@@ -28,7 +29,5 @@ fhirdata:
   # Comma separated list of resources to fetch/monitor.
   resourceList: "Patient,Encounter,Observation"
   maxWorkers: 10
-
-
-
-
+  createHiveResourceTables: true
+  hiveJdbcDriver: "org.apache.hive.jdbc.HiveDriver"
