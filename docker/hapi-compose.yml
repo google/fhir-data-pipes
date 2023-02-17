@@ -26,6 +26,9 @@ services:
       POSTGRES_PASSWORD: 'admin'
     volumes:
       - hapi-fhir-db:/var/lib/postgresql/data
+    networks:
+      - cloudbuild
+      - default
     
   hapi-server:
     # Using an older version as the latest image broke our build.
@@ -44,12 +47,15 @@ services:
     restart: unless-stopped
     ports:
       - 8091:8080
+    networks:
+      - cloudbuild
+      - default
       
 volumes:
   hapi-fhir-db:
   hapi-server:
 
 networks:
-  default:
-    external:
-      name: cloudbuild # Needed for Continuous integration
+  cloudbuild:
+    external: true
+    name: cloudbuild # Needed for Continuous integration
