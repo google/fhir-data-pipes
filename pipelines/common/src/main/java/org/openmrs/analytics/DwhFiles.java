@@ -55,9 +55,9 @@ public class DwhFiles {
 
   private static final Logger log = LoggerFactory.getLogger(DwhFiles.class);
 
-  public static final String TIMESTAMP_FILE = "timestamp.txt";
+  private static final String TIMESTAMP_FILE = "timestamp.txt";
 
-  public static final String INCREMENTAL_DIR = "incremental_run";
+  private static final String INCREMENTAL_DIR = "incremental_run";
 
   private final String dwhRoot;
 
@@ -81,7 +81,12 @@ public class DwhFiles {
     return dwhRoot;
   }
 
-  /** Similar to {@code createResourcePath} but does not create the directory */
+  /**
+   * This returns the path to the directory which contains resources of a specific type.
+   *
+   * @param resourceType the type of the FHIR resources
+   * @return The path to the resource type dir
+   */
   public ResourceId getResourcePath(String resourceType) {
     return FileSystems.matchNewResource(getRoot(), true)
         .resolve(resourceType, StandardResolveOptions.RESOLVE_DIRECTORY);
@@ -135,8 +140,8 @@ public class DwhFiles {
   }
 
   /**
-   * This method returns the list of non-empty directories which contains atleast one file under it.
-   * The directory name should be a valid FHIR resource type.
+   * This method returns the list of non-empty directories which contains at least one file under
+   * it. The directory name should be a valid FHIR resource type.
    *
    * @return the set of non-empty directories
    * @throws IOException
@@ -241,6 +246,10 @@ public class DwhFiles {
           ByteBuffer.wrap(instant.toString().getBytes(StandardCharsets.UTF_8)));
       writableByteChannel.close();
     } else {
+      log.error(
+          "Error matching file spec {}: status {}",
+          getRoot() + "/" + TIMESTAMP_FILE,
+          matchResult.status());
       throw new IOException(
           String.format(
               "Error matching file spec %s: status %s",

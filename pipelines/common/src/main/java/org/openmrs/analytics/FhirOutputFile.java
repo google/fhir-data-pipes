@@ -20,8 +20,12 @@ import java.io.OutputStream;
 import org.apache.parquet.io.OutputFile;
 import org.apache.parquet.io.PositionOutputStream;
 
+/**
+ * This is an implementation of the OutputFile. This class is used by the AvroParquetWriter for
+ * writing the FHIR resources into parquet files. This class instead of directly writing into the
+ * files, it writes into the OutputStream which is passed during class instantiation.
+ */
 public class FhirOutputFile implements OutputFile {
-
   private final OutputStream outputStream;
 
   FhirOutputFile(OutputStream outputStream) {

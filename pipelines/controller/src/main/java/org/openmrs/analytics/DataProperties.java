@@ -72,8 +72,6 @@ public class DataProperties {
 
   private String dwhRootPrefix;
 
-  private String gcsEndPoint;
-
   private String incrementalSchedule;
 
   private String resourceList;
@@ -107,7 +105,6 @@ public class DataProperties {
     options.setFhirServerUrl(fhirServerUrl);
     options.setFhirDatabaseConfigPath(dbConfig);
     options.setResourceList(resourceList);
-    options.setGcsEndpoint(gcsEndPoint);
     // Note we prefer to use a human-readable name but we do not rely on the timestamp being in
     // the DWH name; the reason for replacing `:` is easier copy/paste from the UI to `bash`.
     options.setOutputParquetPath(

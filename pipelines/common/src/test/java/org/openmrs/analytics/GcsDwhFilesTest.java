@@ -92,9 +92,7 @@ public class GcsDwhFilesTest {
     Mockito.when(mockGcsUtil.getObjects(Mockito.anyList())).thenReturn(items);
 
     ResourceId resourceId = dwhFiles.newIncrementalRunPath();
-    assertThat(
-        resourceId.toString(),
-        equalTo("gs://testbucket/testdirectory" + "/" + DwhFiles.INCREMENTAL_DIR + "/"));
+    assertThat(resourceId.toString(), equalTo("gs://testbucket/testdirectory/incremental_run/"));
   }
 
   @Test
