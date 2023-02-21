@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2022 Google LLC
+ * Copyright 2020-2023 Google LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -85,13 +85,15 @@ public class JdbcFetchHapi {
 
     public FetchRowsJdbcIo(JdbcIO.DataSourceConfiguration dataSourceConfig, String since) {
       this.dataSourceConfig = dataSourceConfig;
-      // Note the constraint on `res.res_ver` ensures we only pick the latest version.
+      // Note the constraint on `res.res_ver` ensures we only pick the latest version,
+      // filter deleted records.
       StringBuilder builder =
           new StringBuilder(
               "SELECT res.res_id, res.res_type, res.res_updated, res.res_ver, "
                   + "ver.res_encoding, ver.res_text FROM hfj_resource res, hfj_res_ver ver "
                   + "WHERE res.res_type=? AND res.res_id = ver.res_id AND "
-                  + "  res.res_ver = ver.res_ver AND res.res_id % ? = ? ");
+                  + "  res.res_ver = ver.res_ver AND res.res_id % ? = ? "
+                  + "AND ver.res_encoding != 'DEL' ");
       // TODO do date sanity-checking on `since` (note this is partly done by HAPI client call).
       if (since != null && !since.isEmpty()) {
         builder.append(" AND res.res_updated > '").append(since).append("'");

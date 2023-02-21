@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2022 Google LLC
+ * Copyright 2020-2023 Google LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,8 +15,11 @@
  */
 package org.openmrs.analytics;
 
+import com.google.common.io.Resources;
 import java.beans.PropertyVetoException;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.sql.Blob;
 import java.sql.ResultSet;
 import java.util.List;
 import junit.framework.TestCase;
@@ -78,11 +81,17 @@ public class JdbcFetchHapiTest extends TestCase {
 
   @Test
   public void testMapRow() throws Exception {
-    Mockito.when(resultSet.getString("res_encoding")).thenReturn("DEL");
+    Mockito.when(resultSet.getString("res_encoding")).thenReturn("JSONC");
     Mockito.when(resultSet.getString("res_id")).thenReturn("101");
     Mockito.when(resultSet.getString("res_type")).thenReturn("Encounter");
     Mockito.when(resultSet.getString("res_updated")).thenReturn("2002-03-12 10:09:20");
     Mockito.when(resultSet.getString("res_ver")).thenReturn("1");
+    Blob blob = Mockito.mock(Blob.class);
+    String patientResourceStr =
+        Resources.toString(Resources.getResource("patient.json"), StandardCharsets.UTF_8);
+    byte[] compressedData = GZipUtil.compress(patientResourceStr);
+    Mockito.when(blob.getBytes(Mockito.anyLong(), Mockito.anyInt())).thenReturn(compressedData);
+    Mockito.when(resultSet.getBlob("res_text")).thenReturn(blob);
 
     HapiRowDescriptor rowDescriptor =
         new JdbcFetchHapi.ResultSetToRowDescriptor().mapRow(resultSet);
@@ -92,6 +101,6 @@ public class JdbcFetchHapiTest extends TestCase {
     assertEquals(rowDescriptor.resourceType(), "Encounter");
     assertEquals(rowDescriptor.resourceVersion(), "1");
     assertEquals(rowDescriptor.lastUpdated(), "2002-03-12 10:09:20");
-    assertEquals(rowDescriptor.jsonResource(), "");
+    assertEquals(rowDescriptor.jsonResource(), patientResourceStr);
   }
 }
