@@ -307,12 +307,6 @@ public class PipelineManager {
       try {
         FhirEtlOptions options = pipeline.getOptions().as(FhirEtlOptions.class);
         EtlUtils.runPipelineWithTimestamp(pipeline, options);
-        if (dataProperties.isCreateHiveResourceTables()) {
-          createHiveResourceTables(
-              options.getResourceList(),
-              pipelineConfig.getTimestampSuffix(),
-              pipelineConfig.getThriftServerParquetPath());
-        }
         if (mergerOptions == null) { // Do not update DWH yet if this was an incremental run.
           manager.updateDwh(options.getOutputParquetPath());
         } else {
@@ -320,13 +314,13 @@ public class PipelineManager {
           Pipeline mergerPipeline = ParquetMerger.createMergerPipeline(mergerOptions, fhirContext);
           logger.info("Merger options are {}", mergerOptions);
           EtlUtils.runMergerPipelineWithTimestamp(mergerPipeline, mergerOptions);
-          if (dataProperties.isCreateHiveResourceTables()) {
-            createHiveResourceTables(
-                options.getResourceList(),
-                pipelineConfig.getTimestampSuffix(),
-                mergerOptions.getMergedDwh());
-          }
           manager.updateDwh(mergerOptions.getMergedDwh());
+        }
+        if (dataProperties.isCreateHiveResourceTables()) {
+          createHiveResourceTables(
+              options.getResourceList(),
+              pipelineConfig.getTimestampSuffix(),
+              pipelineConfig.getThriftServerParquetPath());
         }
         manager.setLastRunStatus(LastRunStatus.SUCCESS);
       } catch (Exception e) {

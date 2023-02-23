@@ -86,6 +86,17 @@ public class HiveTableManager {
               thriftServerParquetPath,
               resource);
       statement.execute(sql);
+
+      // Drop canonical table if exists.
+      sql = String.format("DROP TABLE IF EXISTS default.%s", resource);
+      statement.execute(sql);
+
+      // Create canonical table with latest parquet files.
+      sql =
+          String.format(
+              "CREATE TABLE IF NOT EXISTS default.%s USING PARQUET LOCATION '%s/%s/%s'",
+              resource, THRIFT_CONTAINER_PARQUET_PATH_PREFIX, thriftServerParquetPath, resource);
+      statement.execute(sql);
     }
   }
 }
