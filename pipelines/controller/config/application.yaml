@@ -21,6 +21,10 @@ fhirdata:
 
   dbConfig: "config/hapi-postgres-config.json"
 
+  # for GCS file system the dwhRootPrefix should be of the format
+  # "gs://<bucket>/<baseDirPath>/<prefix>"
+  # for Unix file system the dwhRootPrefix should be of the format "/<baseDirPath>/<prefix>
+  # dwhRootPrefix: "gs://fhir-test-analytics/config/controller_DWH_ORIG"
   dwhRootPrefix: "config/controller_DWH_ORIG"
 
   thriftserverHiveConfig: "config/thriftserver-hive-config.json"

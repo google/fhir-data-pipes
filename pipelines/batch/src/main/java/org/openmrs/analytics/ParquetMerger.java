@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2022 Google LLC
+ * Copyright 2020-2023 Google LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -62,7 +62,7 @@ public class ParquetMerger {
             ParquetIO.read(ParquetUtil.getResourceSchema(resourceType, FhirVersionEnum.R4))
                 .from(
                     String.format(
-                        "%s/*%s",
+                        "%s*%s",
                         dwh.getResourcePath(resourceType).toString(),
                         ParquetUtil.PARQUET_EXTENSION)));
 
@@ -133,8 +133,8 @@ public class ParquetMerger {
     DwhFiles dwhFiles2 = DwhFiles.forRoot(dwh2);
     DwhFiles mergedDwhFiles = DwhFiles.forRoot(mergedDwh);
 
-    Set<String> resourceTypes1 = dwhFiles1.findResourceTypes();
-    Set<String> resourceTypes2 = dwhFiles2.findResourceTypes();
+    Set<String> resourceTypes1 = dwhFiles1.findNonEmptyFhirResourceTypes();
+    Set<String> resourceTypes2 = dwhFiles2.findNonEmptyFhirResourceTypes();
 
     for (String resourceType : Sets.difference(resourceTypes1, resourceTypes2)) {
       dwhFiles1.copyResourcesToDwh(resourceType, mergedDwhFiles);
@@ -176,7 +176,7 @@ public class ParquetMerger {
               .via(
                   ParquetIO.sink(ParquetUtil.getResourceSchema(type, fhirContext))
                       .withCompressionCodec(CompressionCodecName.SNAPPY))
-              .to(mergedDwhFiles.createResourcePath(type).toString())
+              .to(mergedDwhFiles.getResourcePath(type).toString())
               .withSuffix(".parquet")
               // TODO if we don't set this, DirectRunner works fine but FlinkRunner only writes
               //   ~10% of the records. This is not specific to Parquet or GenericRecord; it even
@@ -189,13 +189,11 @@ public class ParquetMerger {
   public static void main(String[] args) throws IOException {
 
     ParquetUtil.initializeAvroConverters();
-
     PipelineOptionsFactory.register(ParquetMergerOptions.class);
     ParquetMergerOptions options =
         PipelineOptionsFactory.fromArgs(args).withValidation().as(ParquetMergerOptions.class);
     log.info("Flags: " + options);
     FhirContext fhirContext = FhirContext.forR4Cached();
-
     if (options.getDwh1().isEmpty()
         || options.getDwh2().isEmpty()
         || options.getMergedDwh().isEmpty()) {

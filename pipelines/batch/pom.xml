@@ -34,8 +34,6 @@
   <packaging>jar</packaging>
 
   <properties>
-    <beam.version>2.44.0</beam.version>
-
     <hamcrest.version>2.1</hamcrest.version>
     <jackson.version>2.14.2</jackson.version>
     <pubsub.version>v1-rev20220904-2.0.0</pubsub.version>
