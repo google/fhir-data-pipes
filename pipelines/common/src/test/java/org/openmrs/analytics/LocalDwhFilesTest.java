@@ -21,12 +21,16 @@ import static org.hamcrest.Matchers.equalTo;
 import ca.uhn.fhir.context.FhirContext;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.time.Instant;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
+import org.apache.beam.sdk.io.fs.ResourceId;
+import org.junit.Assert;
 import org.junit.Test;
 
 public class LocalDwhFilesTest {
@@ -34,6 +38,13 @@ public class LocalDwhFilesTest {
   public void getResourcePathTest() {
     DwhFiles dwhFiles = new DwhFiles("/tmp", FhirContext.forR4Cached());
     assertThat(dwhFiles.getResourcePath("Patient").toString(), equalTo("/tmp/Patient/"));
+  }
+
+  @Test
+  public void newIncrementalRunPathTest() throws IOException {
+    DwhFiles instance = new DwhFiles("/tmp", FhirContext.forR4Cached());
+    ResourceId incrementalRunPath = instance.newIncrementalRunPath();
+    assertThat(incrementalRunPath.toString(), equalTo("/tmp/incremental_run/"));
   }
 
   @Test
@@ -93,6 +104,50 @@ public class LocalDwhFilesTest {
     Files.delete(Paths.get(patientPath.toString()));
     Files.delete(destPath);
     Files.delete(sourcePath);
+  }
+
+  @Test
+  public void writeTimestampFile_FileAlreadyExists_ThrowsError() throws IOException {
+    Path root = Files.createTempDirectory("DWH_FILES_TEST");
+    Path timestampPath = Paths.get(root.toString(), "timestamp.txt");
+    createFile(timestampPath, Instant.now().toString().getBytes(StandardCharsets.UTF_8));
+    DwhFiles dwhFiles = new DwhFiles(root.toString(), FhirContext.forR4Cached());
+
+    Assert.assertThrows(FileAlreadyExistsException.class, () -> dwhFiles.writeTimestampFile());
+
+    Files.delete(timestampPath);
+    Files.delete(root);
+  }
+
+  @Test
+  public void writeTimestampFile_FileDoesNotExist_CreatesFile() throws IOException {
+    Path root = Files.createTempDirectory("DWH_FILES_TEST");
+    DwhFiles dwhFiles = new DwhFiles(root.toString(), FhirContext.forR4Cached());
+
+    dwhFiles.writeTimestampFile();
+
+    List<Path> destFiles = Files.list(root).collect(Collectors.toList());
+    assertThat(destFiles.size(), equalTo(1));
+    assertThat(destFiles.get(0).toString(), equalTo(root.resolve("timestamp.txt").toString()));
+
+    Files.delete(destFiles.get(0));
+    Files.delete(root);
+  }
+
+  @Test
+  public void readTimestampFile() throws IOException {
+    Path root = Files.createTempDirectory("DWH_FILES_TEST");
+    Instant currentInstant = Instant.now();
+    Path timestampPath = Paths.get(root.toString(), "timestamp.txt");
+    createFile(timestampPath, currentInstant.toString().getBytes(StandardCharsets.UTF_8));
+    DwhFiles dwhFiles = new DwhFiles(root.toString(), FhirContext.forR4Cached());
+
+    Instant actualInstant = dwhFiles.readTimestampFile();
+
+    Assert.assertEquals(currentInstant.getEpochSecond(), actualInstant.getEpochSecond());
+
+    Files.delete(timestampPath);
+    Files.delete(root);
   }
 
   private void createFile(Path path, byte[] bytes) throws IOException {

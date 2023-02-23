@@ -199,6 +199,10 @@ public class DwhFiles {
 
     List<MatchResult> sourceMatchResultList = FileSystems.matchResources(List.of(sourceFiles));
     List<ResourceId> sourceResourceIdList = new ArrayList<>();
+
+    // The sourceMatchResultList should only contain 1 element as the matching list
+    // (List.of(sourceFiles)) used for it was also one. The actual matched files should be
+    // retrieved from the matchResult.metadata element which could be more than one
     for (MatchResult matchResult : sourceMatchResultList) {
       if (matchResult.status() == Status.OK) {
         List<ResourceId> resourceIds =
@@ -246,14 +250,12 @@ public class DwhFiles {
           ByteBuffer.wrap(instant.toString().getBytes(StandardCharsets.UTF_8)));
       writableByteChannel.close();
     } else {
-      log.error(
-          "Error matching file spec {}: status {}",
-          getRoot() + "/" + TIMESTAMP_FILE,
-          matchResult.status());
-      throw new IOException(
+      String errorMessage =
           String.format(
               "Error matching file spec %s: status %s",
-              getRoot() + "/" + TIMESTAMP_FILE, matchResult.status()));
+              getRoot() + "/" + TIMESTAMP_FILE, matchResult.status());
+      log.error(errorMessage);
+      throw new IOException(errorMessage);
     }
   }
 
