@@ -24,7 +24,6 @@ fhirdata:
   # for GCS file system the dwhRootPrefix should be of the format
   # "gs://<bucket>/<baseDirPath>/<prefix>"
   # for Unix file system the dwhRootPrefix should be of the format "/<baseDirPath>/<prefix>
-  # Absolute paths should be defined instead of the relative paths
   # dwhRootPrefix: "gs://fhir-test-analytics/config11/controller_DWH"
   dwhRootPrefix: "/tmp/controller_DWH"
 

@@ -152,13 +152,29 @@ public class PipelineManager {
     return childDirectories;
   }
 
-  private String getBaseDir(String rootPrefix) {
-    return rootPrefix.substring(0, rootPrefix.lastIndexOf("/"));
+  private String getBaseDir(String dwhRootPrefix) {
+    int index = dwhRootPrefix.lastIndexOf("/");
+    if (index <= 0) {
+      String errorMessage =
+          "dwhRootPrefix should be configured with a non-empty base directory. It should be of the"
+              + " format <baseDir>/<prefix>";
+      logger.error(errorMessage);
+      throw new IllegalArgumentException(errorMessage);
+    }
+    return dwhRootPrefix.substring(0, index);
   }
 
-  private String getPrefix(String rootPrefix) {
-    int index = rootPrefix.lastIndexOf("/");
-    return rootPrefix.substring(index + 1);
+  private String getPrefix(String dwhRootPrefix) {
+    int index = dwhRootPrefix.lastIndexOf("/");
+    String prefix = dwhRootPrefix.substring(index + 1);
+    if (prefix == null || prefix.isBlank()) {
+      String errorMessage =
+          "dwhRootPrefix should be configured with a non-empty suffix string after the last"
+              + " occurrence of the character '/'";
+      logger.error(errorMessage);
+      throw new IllegalArgumentException(errorMessage);
+    }
+    return prefix;
   }
 
   synchronized boolean isRunning() {
