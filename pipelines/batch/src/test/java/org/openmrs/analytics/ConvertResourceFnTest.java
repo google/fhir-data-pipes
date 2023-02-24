@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2022 Google LLC
+ * Copyright 2020-2023 Google LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@ package org.openmrs.analytics;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
 import com.google.common.io.Resources;
@@ -24,6 +25,7 @@ import java.beans.PropertyVetoException;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.sql.SQLException;
+import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import org.apache.beam.sdk.options.PipelineOptionsFactory;
 import org.hl7.fhir.r4.model.Patient;
@@ -34,6 +36,7 @@ import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.mockito.Mock;
+import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnitRunner;
 
 @RunWith(MockitoJUnitRunner.class)
@@ -82,5 +85,15 @@ public class ConvertResourceFnTest {
         equalTo(new SimpleDateFormat("yyyy-MM-dd hh:mm:ss").parse("2020-09-19 12:09:23")));
     assertThat(capturedResource.getResourceType().toString(), equalTo("Patient"));
     assertThat(((Patient) capturedResource).getGender().toString(), equalTo("MALE"));
+  }
+
+  @Test
+  public void testProcessDeletedPatientResource() throws SQLException, IOException, ParseException {
+    // Deleted Patient resource
+    HapiRowDescriptor element =
+        HapiRowDescriptor.create("123", "Patient", "2020-09-19 12:09:23", "2", "");
+    convertResourceFn.writeResource(element);
+    // Verify that the ParquetUtil writer is not invoked for the deleted resource.
+    verify(mockParquetUtil, times(0)).write(Mockito.any());
   }
 }
