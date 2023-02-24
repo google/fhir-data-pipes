@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2022 Google LLC
+ * Copyright 2020-2023 Google LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.openmrs.analytics;
 
 import java.io.IOException;
@@ -76,7 +75,16 @@ public class ConvertResourceFn extends FetchSearchPageFn<HapiRowDescriptor> {
         new Meta()
             .setVersionId(element.resourceVersion())
             .setLastUpdated(simpleDateFormat.parse(element.lastUpdated()));
+
     String jsonResource = element.jsonResource();
+    // The jsonResource field will be empty in case of deleted records and are skipped when written
+    // to target parquet files/sinkDb. This is fine for initial batch as they need not be migrated,
+    // but for incremental run they need to be migrated and the original records have to be deleted
+    // from the consolidated parquet files/sinkDb.
+    // TODO https://github.com/google/fhir-data-pipes/issues/547
+    if (jsonResource == null || jsonResource.isBlank()) {
+      return;
+    }
 
     long startTime = System.currentTimeMillis();
     Resource resource = (Resource) parser.parseResource(jsonResource);
