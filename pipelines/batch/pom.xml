@@ -34,7 +34,7 @@
   <packaging>jar</packaging>
 
   <properties>
-    <hamcrest.version>2.1</hamcrest.version>
+    <hamcrest.version>2.2</hamcrest.version>
     <jackson.version>2.14.2</jackson.version>
     <pubsub.version>v1-rev20220904-2.0.0</pubsub.version>
     <auto-value.version>1.10.1</auto-value.version>
