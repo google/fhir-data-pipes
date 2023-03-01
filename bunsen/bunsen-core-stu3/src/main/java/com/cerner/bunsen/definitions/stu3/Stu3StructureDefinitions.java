@@ -300,9 +300,9 @@ public class Stu3StructureDefinitions extends StructureDefinitions {
 
       for (TypeRefComponent typeRef: element.getType()) {
 
-        if (PRIMITIVE_TYPES.contains(typeRef.getCode().toLowerCase())) {
+        if (PRIMITIVE_TYPES.contains(typeRef.getCode())) {
 
-          T child = visitor.visitPrimitive(elementName, typeRef.getCode().toLowerCase());
+          T child = visitor.visitPrimitive(elementName, typeRef.getCode());
           choiceTypes.put(typeRef.getCode(), child);
 
         } else {
