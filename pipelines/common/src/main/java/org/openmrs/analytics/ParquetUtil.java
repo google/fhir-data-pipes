@@ -17,6 +17,7 @@ package org.openmrs.analytics;
 
 import ca.uhn.fhir.context.FhirContext;
 import ca.uhn.fhir.context.FhirVersionEnum;
+import com.cerner.bunsen.FhirContexts;
 import com.cerner.bunsen.avro.AvroConverter;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
@@ -142,7 +143,7 @@ public class ParquetUtil {
       String namePrefix,
       FileSystem fileSystem) {
     if (fhirVersionEnum == FhirVersionEnum.DSTU3 || fhirVersionEnum == FhirVersionEnum.R4) {
-      this.fhirContext = FhirContext.forCached(fhirVersionEnum);
+      this.fhirContext = FhirContexts.contextFor(fhirVersionEnum);
     } else {
       throw new IllegalArgumentException("Only versions 3 and 4 of FHIR are supported!");
     }
@@ -176,6 +177,10 @@ public class ParquetUtil {
   private static synchronized AvroConverter getConverter(
       String resourceType, FhirContext fhirContext) {
     if (!converterMap.containsKey(resourceType)) {
+      // TODO: Check how to automate discovery of relevant profiles to be applied. Right now we need
+      // to supply the corresponding resource profile identifier for the extensions to work, e.g.,
+      // "http://hl7.org/fhir/us/core/StructureDefinition/us-core-patient" instead of "Patient".
+      // https://github.com/google/fhir-data-pipes/issues/560
       AvroConverter converter = AvroConverter.forResource(fhirContext, resourceType);
       converterMap.put(resourceType, converter);
     }
@@ -261,7 +266,7 @@ public class ParquetUtil {
   }
 
   public static Schema getResourceSchema(String resourceType, FhirVersionEnum fhirVersion) {
-    return getResourceSchema(resourceType, FhirContext.forCached(fhirVersion));
+    return getResourceSchema(resourceType, FhirContexts.contextFor(fhirVersion));
   }
 
   public static Schema getResourceSchema(String resourceType, FhirContext fhirContext) {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2022 Google LLC
+ * Copyright 2020-2023 Google LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,13 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.openmrs.analytics;
 
 import ca.uhn.fhir.context.FhirContext;
 import com.beust.jcommander.JCommander;
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.Parameters;
+import com.cerner.bunsen.FhirContexts;
 import com.google.common.annotations.VisibleForTesting;
 import java.io.IOException;
 import java.time.ZoneOffset;
@@ -66,7 +66,7 @@ public class DebeziumListener extends RouteBuilder {
 
   @VisibleForTesting
   FhirConverter createFhirConverter(CamelContext camelContext) throws Exception {
-    FhirContext fhirContext = FhirContext.forR4();
+    FhirContext fhirContext = FhirContexts.forR4();
     String fhirBaseUrl = params.fhirServerUrl;
     OpenmrsUtil openmrsUtil =
         new OpenmrsUtil(
