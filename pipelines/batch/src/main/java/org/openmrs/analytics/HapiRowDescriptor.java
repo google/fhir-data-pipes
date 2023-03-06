@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2022 Google LLC
+ * Copyright 2020-2023 Google LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,11 +17,14 @@ package org.openmrs.analytics;
 
 import com.google.auto.value.AutoValue;
 import java.io.Serializable;
+import lombok.Data;
 import org.apache.beam.sdk.coders.DefaultCoder;
 import org.apache.beam.sdk.coders.SerializableCoder;
+import org.hl7.fhir.r4.model.Coding;
 
 @DefaultCoder(SerializableCoder.class)
 @AutoValue
+@Data
 abstract class HapiRowDescriptor implements Serializable {
 
   static HapiRowDescriptor create(
@@ -43,4 +46,6 @@ abstract class HapiRowDescriptor implements Serializable {
   abstract String resourceVersion();
 
   abstract String jsonResource();
+
+  Coding coding;
 }

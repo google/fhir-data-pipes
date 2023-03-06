@@ -74,7 +74,8 @@ public class ConvertResourceFn extends FetchSearchPageFn<HapiRowDescriptor> {
     Meta meta =
         new Meta()
             .setVersionId(element.resourceVersion())
-            .setLastUpdated(simpleDateFormat.parse(element.lastUpdated()));
+            .setLastUpdated(simpleDateFormat.parse(element.lastUpdated()))
+            .setTag(List.of(element.getCoding()));
 
     String jsonResource = element.jsonResource();
     // The jsonResource field will be empty in case of deleted records and are skipped when written

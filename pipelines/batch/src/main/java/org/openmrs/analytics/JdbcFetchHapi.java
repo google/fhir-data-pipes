@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2022 Google LLC
+ * Copyright 2020-2023 Google LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,6 +25,7 @@ import java.util.List;
 import org.apache.beam.sdk.io.jdbc.JdbcIO;
 import org.apache.beam.sdk.transforms.PTransform;
 import org.apache.beam.sdk.values.PCollection;
+import org.hl7.fhir.r4.model.Coding;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -67,8 +68,18 @@ public class JdbcFetchHapi {
       String resourceType = resultSet.getString("res_type");
       String lastUpdated = resultSet.getString("res_updated");
       String resourceVersion = resultSet.getString("res_ver");
-      return HapiRowDescriptor.create(
-          resourceId, resourceType, lastUpdated, resourceVersion, jsonResource);
+
+      String tagCode = resultSet.getString("tag_code");
+      String tagDisplay = resultSet.getString("tag_display");
+      String tagSystem = resultSet.getString("tag_system");
+      Coding coding = new Coding(tagCode, tagDisplay, tagSystem);
+
+      HapiRowDescriptor hapiRowDescriptor =
+          HapiRowDescriptor.create(
+              resourceId, resourceType, lastUpdated, resourceVersion, jsonResource);
+      hapiRowDescriptor.setCoding(coding);
+
+      return hapiRowDescriptor;
     }
   }
 
@@ -88,10 +99,27 @@ public class JdbcFetchHapi {
       // Note the constraint on `res.res_ver` ensures we only pick the latest version.
       StringBuilder builder =
           new StringBuilder(
-              "SELECT res.res_id, res.res_type, res.res_updated, res.res_ver, "
-                  + "ver.res_encoding, ver.res_text FROM hfj_resource res, hfj_res_ver ver "
-                  + "WHERE res.res_type=? AND res.res_id = ver.res_id AND "
-                  + "  res.res_ver = ver.res_ver AND res.res_id % ? = ? ");
+              "SELECT "
+                  + "res.res_id, "
+                  + "res.res_type, "
+                  + "res.res_updated, "
+                  + "res.res_ver, "
+                  + "tagdef.tag_code,"
+                  + "tagdef.tag_display, "
+                  + "tagdef.tag_system, "
+                  + "ver.res_encoding, "
+                  + "ver.res_text "
+                  + "FROM "
+                  + "hfj_resource res "
+                  + "JOIN "
+                  + "hfj_res_ver ver ON res.res_id = ver.res_id AND res.res_ver = ver.res_ver "
+                  + "LEFT JOIN "
+                  + "hfj_res_tag tag ON res.res_id = tag.res_id "
+                  + "LEFT JOIN "
+                  + "hfj_tag_def tagdef ON tag.tag_id = tagdef.tag_id "
+                  + "WHERE "
+                  + "res.res_type = ? "
+                  + "AND res.res_id % ? = ? ");
       // TODO do date sanity-checking on `since` (note this is partly done by HAPI client call).
       if (since != null && !since.isEmpty()) {
         builder.append(" AND res.res_updated > '").append(since).append("'");
