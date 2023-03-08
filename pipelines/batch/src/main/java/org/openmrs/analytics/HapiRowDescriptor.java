@@ -17,6 +17,7 @@ package org.openmrs.analytics;
 
 import com.google.auto.value.AutoValue;
 import java.io.Serializable;
+import java.util.List;
 import lombok.Data;
 import org.apache.beam.sdk.coders.DefaultCoder;
 import org.apache.beam.sdk.coders.SerializableCoder;
@@ -47,5 +48,5 @@ abstract class HapiRowDescriptor implements Serializable {
 
   abstract String jsonResource();
 
-  Coding coding;
+  List<Coding> tags;
 }

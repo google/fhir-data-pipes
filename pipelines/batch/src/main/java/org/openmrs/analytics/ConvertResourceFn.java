@@ -76,8 +76,8 @@ public class ConvertResourceFn extends FetchSearchPageFn<HapiRowDescriptor> {
             .setVersionId(element.resourceVersion())
             .setLastUpdated(simpleDateFormat.parse(element.lastUpdated()));
 
-    if (element.getCoding() != null) {
-      meta.setTag(List.of(element.getCoding()));
+    if (element.getTags() != null) {
+      meta.setTag(element.getTags());
     }
 
     String jsonResource = element.jsonResource();

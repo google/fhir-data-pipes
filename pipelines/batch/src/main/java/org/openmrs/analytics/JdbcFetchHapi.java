@@ -17,14 +17,15 @@ package org.openmrs.analytics;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Charsets;
-import java.sql.Blob;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
+import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
 import org.apache.beam.sdk.io.jdbc.JdbcIO;
+import org.apache.beam.sdk.transforms.DoFn;
 import org.apache.beam.sdk.transforms.PTransform;
+import org.apache.beam.sdk.transforms.ParDo;
 import org.apache.beam.sdk.values.PCollection;
+import org.apache.parquet.Strings;
 import org.hl7.fhir.r4.model.Coding;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -68,18 +69,8 @@ public class JdbcFetchHapi {
       String resourceType = resultSet.getString("res_type");
       String lastUpdated = resultSet.getString("res_updated");
       String resourceVersion = resultSet.getString("res_ver");
-
-      String tagCode = resultSet.getString("tag_code");
-      String tagDisplay = resultSet.getString("tag_display");
-      String tagSystem = resultSet.getString("tag_system");
-      Coding coding = new Coding(tagCode, tagDisplay, tagSystem);
-
-      HapiRowDescriptor hapiRowDescriptor =
-          HapiRowDescriptor.create(
-              resourceId, resourceType, lastUpdated, resourceVersion, jsonResource);
-      hapiRowDescriptor.setCoding(coding);
-
-      return hapiRowDescriptor;
+      return HapiRowDescriptor.create(
+          resourceId, resourceType, lastUpdated, resourceVersion, jsonResource);
     }
   }
 
@@ -90,36 +81,22 @@ public class JdbcFetchHapi {
   public static class FetchRowsJdbcIo
       extends PTransform<PCollection<QueryParameterDescriptor>, PCollection<HapiRowDescriptor>> {
 
+    private final JdbcConnectionUtil jdbcConnectionUtil;
     private final JdbcIO.DataSourceConfiguration dataSourceConfig;
 
     private final String query;
 
-    public FetchRowsJdbcIo(JdbcIO.DataSourceConfiguration dataSourceConfig, String since) {
-      this.dataSourceConfig = dataSourceConfig;
+    public FetchRowsJdbcIo(JdbcConnectionUtil jdbcConnectionUtil, String since) {
+      this.jdbcConnectionUtil = jdbcConnectionUtil;
+      this.dataSourceConfig =
+          JdbcIO.DataSourceConfiguration.create(jdbcConnectionUtil.getDataSource());
       // Note the constraint on `res.res_ver` ensures we only pick the latest version.
       StringBuilder builder =
           new StringBuilder(
-              "SELECT "
-                  + "res.res_id, "
-                  + "res.res_type, "
-                  + "res.res_updated, "
-                  + "res.res_ver, "
-                  + "tagdef.tag_code,"
-                  + "tagdef.tag_display, "
-                  + "tagdef.tag_system, "
-                  + "ver.res_encoding, "
-                  + "ver.res_text "
-                  + "FROM "
-                  + "hfj_resource res "
-                  + "JOIN "
-                  + "hfj_res_ver ver ON res.res_id = ver.res_id AND res.res_ver = ver.res_ver "
-                  + "LEFT JOIN "
-                  + "hfj_res_tag tag ON res.res_id = tag.res_id "
-                  + "LEFT JOIN "
-                  + "hfj_tag_def tagdef ON tag.tag_id = tagdef.tag_id "
-                  + "WHERE "
-                  + "res.res_type = ? "
-                  + "AND res.res_id % ? = ? ");
+              "SELECT res.res_id, res.res_type, res.res_updated, res.res_ver, "
+                  + "ver.res_encoding, ver.res_text FROM hfj_resource res, hfj_res_ver ver "
+                  + "WHERE res.res_type=? AND res.res_id = ver.res_id AND "
+                  + "  res.res_ver = ver.res_ver AND res.res_id % ? = ? ");
       // TODO do date sanity-checking on `since` (note this is partly done by HAPI client call).
       if (since != null && !since.isEmpty()) {
         builder.append(" AND res.res_updated > '").append(since).append("'");
@@ -131,29 +108,71 @@ public class JdbcFetchHapi {
     @Override
     public PCollection<HapiRowDescriptor> expand(
         PCollection<QueryParameterDescriptor> queryParameters) {
-      return queryParameters.apply(
-          "JdbcIO readAll",
-          JdbcIO.<QueryParameterDescriptor, HapiRowDescriptor>readAll()
-              .withDataSourceConfiguration(dataSourceConfig)
-              .withParameterSetter(
-                  new JdbcIO.PreparedStatementSetter<QueryParameterDescriptor>() {
+      return queryParameters
+          .apply(
+              "JdbcIO readAll",
+              JdbcIO.<QueryParameterDescriptor, HapiRowDescriptor>readAll()
+                  .withDataSourceConfiguration(dataSourceConfig)
+                  .withParameterSetter(
+                      new JdbcIO.PreparedStatementSetter<QueryParameterDescriptor>() {
 
-                    @Override
-                    public void setParameters(
-                        QueryParameterDescriptor element, PreparedStatement preparedStatement)
-                        throws Exception {
-                      preparedStatement.setString(1, element.resourceType());
-                      preparedStatement.setInt(2, element.numBatches());
-                      preparedStatement.setInt(3, element.batchId());
+                        @Override
+                        public void setParameters(
+                            QueryParameterDescriptor element, PreparedStatement preparedStatement)
+                            throws Exception {
+                          preparedStatement.setString(1, element.resourceType());
+                          preparedStatement.setInt(2, element.numBatches());
+                          preparedStatement.setInt(3, element.batchId());
+                        }
+                      })
+                  // We are disabling this parameter because by default, this parameter causes
+                  // JdbcIO to
+                  // add a reshuffle transform after reading from the database. This breaks fusion
+                  // between the read and write operations, thus resulting in high memory overhead.
+                  // Disabling the below parameter results in optimal performance.
+                  .withOutputParallelization(false)
+                  .withQuery(query)
+                  .withRowMapper(new ResultSetToRowDescriptor()))
+          .apply(
+              "Jdbc fetch tags",
+              ParDo.of(
+                  new DoFn<HapiRowDescriptor, HapiRowDescriptor>() {
+                    @ProcessElement
+                    public void processElement(ProcessContext processContext) throws SQLException {
+                      HapiRowDescriptor hapiRowDescriptor = processContext.element();
+                      String resourceId = hapiRowDescriptor.resourceId();
+                      if (Strings.isNullOrEmpty(resourceId)) {
+                        throw new IllegalStateException("resourceId cant be null or empty");
+                      }
+                      List<Coding> tags = getResourceMetaTags(Integer.parseInt(resourceId));
+                      hapiRowDescriptor.setTags(tags);
+                      processContext.output(hapiRowDescriptor);
                     }
-                  })
-              // We are disabling this parameter because by default, this parameter causes JdbcIO to
-              // add a reshuffle transform after reading from the database. This breaks fusion
-              // between the read and write operations, thus resulting in high memory overhead.
-              // Disabling the below parameter results in optimal performance.
-              .withOutputParallelization(false)
-              .withQuery(query)
-              .withRowMapper(new ResultSetToRowDescriptor()));
+                  }));
+    }
+
+    private List<Coding> getResourceMetaTags(int resourceId) throws SQLException {
+
+      List<Coding> tags = new ArrayList<>();
+
+      String query =
+          "select td.tag_code, td.tag_display, td.tag_system from hfj_res_tag tag "
+              + "join hfj_tag_def td on tag.tag_id = td.tag_id and tag.res_id = ?";
+      PreparedStatement statement = jdbcConnectionUtil.createPreparedStatement(query);
+      statement.setInt(1, resourceId);
+
+      try (ResultSet resultSet = statement.executeQuery()) {
+        while (resultSet.next()) {
+          tags.add(
+              new Coding(
+                  resultSet.getString("tag_code"),
+                  resultSet.getString("tag_display"),
+                  resultSet.getString("tag_system")));
+        }
+      } finally {
+        jdbcConnectionUtil.closeConnection(statement);
+      }
+      return tags;
     }
   }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2022 Google LLC
+ * Copyright 2020-2023 Google LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.openmrs.analytics;
 
 import ca.uhn.fhir.context.FhirContext;
@@ -34,7 +33,6 @@ import org.apache.beam.sdk.Pipeline;
 import org.apache.beam.sdk.PipelineResult;
 import org.apache.beam.sdk.coders.CannotProvideCoderException;
 import org.apache.beam.sdk.io.FileIO;
-import org.apache.beam.sdk.io.jdbc.JdbcIO;
 import org.apache.beam.sdk.options.PipelineOptionsFactory;
 import org.apache.beam.sdk.transforms.Create;
 import org.apache.beam.sdk.transforms.Flatten;
@@ -297,9 +295,7 @@ public class FhirEtl {
       PCollection<HapiRowDescriptor> payload =
           queryParameters.apply(
               "JdbcIO fetch for " + resourceType,
-              new JdbcFetchHapi.FetchRowsJdbcIo(
-                  JdbcIO.DataSourceConfiguration.create(jdbcConnectionUtil.getDataSource()),
-                  options.getSince()));
+              new JdbcFetchHapi.FetchRowsJdbcIo(jdbcConnectionUtil, options.getSince()));
 
       payload.apply(
           "Convert to parquet for " + resourceType,
