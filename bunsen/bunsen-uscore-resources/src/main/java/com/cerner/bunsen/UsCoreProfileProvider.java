@@ -31,8 +31,121 @@ public class UsCoreProfileProvider implements ProfileProvider {
       IBaseResource definition = jsonParser.parseResource(new InputStreamReader(input));
       support.addStructureDefinition(definition);
     } catch (IOException exception) {
-      throw new RuntimeException(exception);
+      throw new RuntimeException("Failed to load US Core resource " + resource, exception);
     }
+  }
+
+  private static void addUsCoreDefinitionsForDstu3(
+      PrePopulatedValidationSupport support, FhirContext context) {
+    IParser parser = context.newJsonParser();
+    // TODO remove non-StructureDefinition files in definitions-stu3/ if they are not needed.
+    load(support, parser, "definitions-stu3/StructureDefinition-us-core-allergyintolerance.json");
+    load(support, parser, "definitions-stu3/StructureDefinition-us-core-birthsex.json");
+    load(support, parser, "definitions-stu3/StructureDefinition-us-core-careplan.json");
+    load(support, parser, "definitions-stu3/StructureDefinition-us-core-careteam.json");
+    load(support, parser, "definitions-stu3/StructureDefinition-us-core-condition.json");
+    load(support, parser, "definitions-stu3/StructureDefinition-us-core-device.json");
+    load(support, parser, "definitions-stu3/StructureDefinition-us-core-diagnosticreport.json");
+    load(support, parser, "definitions-stu3/StructureDefinition-us-core-direct.json");
+    load(support, parser, "definitions-stu3/StructureDefinition-us-core-documentreference.json");
+    load(support, parser, "definitions-stu3/StructureDefinition-us-core-encounter.json");
+    load(support, parser, "definitions-stu3/StructureDefinition-us-core-ethnicity.json");
+    load(support, parser, "definitions-stu3/StructureDefinition-us-core-goal.json");
+    load(support, parser, "definitions-stu3/StructureDefinition-us-core-immunization.json");
+    load(support, parser, "definitions-stu3/StructureDefinition-us-core-location.json");
+    load(support, parser, "definitions-stu3/StructureDefinition-us-core-medication.json");
+    load(support, parser, "definitions-stu3/StructureDefinition-us-core-medicationrequest.json");
+    load(support, parser, "definitions-stu3/StructureDefinition-us-core-medicationstatement.json");
+    load(support, parser, "definitions-stu3/StructureDefinition-us-core-observationresults.json");
+    load(support, parser, "definitions-stu3/StructureDefinition-us-core-organization.json");
+    load(support, parser, "definitions-stu3/StructureDefinition-us-core-patient.json");
+    load(support, parser, "definitions-stu3/StructureDefinition-us-core-practitioner.json");
+    load(support, parser, "definitions-stu3/StructureDefinition-us-core-practitionerrole.json");
+    load(support, parser, "definitions-stu3/StructureDefinition-us-core-procedure.json");
+    load(support, parser, "definitions-stu3/StructureDefinition-us-core-profile-link.json");
+    load(support, parser, "definitions-stu3/StructureDefinition-us-core-race.json");
+    load(support, parser, "definitions-stu3/StructureDefinition-us-core-smokingstatus.json");
+  }
+
+  private static void addUsCoreDefinitionsForR4(
+      PrePopulatedValidationSupport support, FhirContext context) {
+    IParser parser = context.newJsonParser();
+    load(
+        support,
+        parser,
+        "definitions-r4/"
+            + "StructureDefinition-head-occipital-frontal-circumference-percentile.json");
+    load(support, parser, "definitions-r4/StructureDefinition-pediatric-bmi-for-age.json");
+    load(support, parser, "definitions-r4/StructureDefinition-pediatric-weight-for-height.json");
+    load(support, parser, "definitions-r4/StructureDefinition-us-core-allergyintolerance.json");
+    load(support, parser, "definitions-r4/StructureDefinition-us-core-birthsex.json");
+    load(support, parser, "definitions-r4/StructureDefinition-us-core-blood-pressure.json");
+    load(support, parser, "definitions-r4/StructureDefinition-us-core-bmi.json");
+    load(support, parser, "definitions-r4/StructureDefinition-us-core-body-height.json");
+    load(support, parser, "definitions-r4/StructureDefinition-us-core-body-temperature.json");
+    load(support, parser, "definitions-r4/StructureDefinition-us-core-body-weight.json");
+    load(support, parser, "definitions-r4/StructureDefinition-us-core-careplan.json");
+    load(support, parser, "definitions-r4/StructureDefinition-us-core-careteam.json");
+    load(
+        support,
+        parser,
+        "definitions-r4/StructureDefinition-us-core-condition-encounter-diagnosis.json");
+    load(
+        support,
+        parser,
+        "definitions-r4/StructureDefinition-us-core-condition-problems-health-concerns.json");
+    load(support, parser, "definitions-r4/StructureDefinition-us-core-diagnosticreport-lab.json");
+    load(support, parser, "definitions-r4/StructureDefinition-us-core-diagnosticreport-note.json");
+    load(support, parser, "definitions-r4/StructureDefinition-us-core-direct.json");
+    load(support, parser, "definitions-r4/StructureDefinition-us-core-documentreference.json");
+    load(support, parser, "definitions-r4/StructureDefinition-us-core-encounter.json");
+    load(support, parser, "definitions-r4/StructureDefinition-us-core-ethnicity.json");
+    load(
+        support,
+        parser,
+        "definitions-r4/StructureDefinition-us-core-extension-questionnaire-uri.json");
+    load(support, parser, "definitions-r4/StructureDefinition-us-core-genderIdentity.json");
+    load(support, parser, "definitions-r4/StructureDefinition-us-core-goal.json");
+    load(support, parser, "definitions-r4/StructureDefinition-us-core-head-circumference.json");
+    load(support, parser, "definitions-r4/StructureDefinition-us-core-heart-rate.json");
+    load(support, parser, "definitions-r4/StructureDefinition-us-core-immunization.json");
+    load(support, parser, "definitions-r4/StructureDefinition-us-core-implantable-device.json");
+    load(support, parser, "definitions-r4/StructureDefinition-us-core-location.json");
+    load(support, parser, "definitions-r4/StructureDefinition-us-core-medication.json");
+    load(support, parser, "definitions-r4/StructureDefinition-us-core-medicationrequest.json");
+    load(
+        support,
+        parser,
+        "definitions-r4/StructureDefinition-us-core-observation-clinical-test.json");
+    load(support, parser, "definitions-r4/StructureDefinition-us-core-observation-imaging.json");
+    load(support, parser, "definitions-r4/StructureDefinition-us-core-observation-lab.json");
+    load(
+        support,
+        parser,
+        "definitions-r4/StructureDefinition-us-core-observation-sdoh-assessment.json");
+    load(
+        support,
+        parser,
+        "definitions-r4/StructureDefinition-us-core-observation-sexual-orientation.json");
+    load(
+        support,
+        parser,
+        "definitions-r4/StructureDefinition-us-core-observation-social-history.json");
+    load(support, parser, "definitions-r4/StructureDefinition-us-core-observation-survey.json");
+    load(support, parser, "definitions-r4/StructureDefinition-us-core-organization.json");
+    load(support, parser, "definitions-r4/StructureDefinition-us-core-patient.json");
+    load(support, parser, "definitions-r4/StructureDefinition-us-core-practitioner.json");
+    load(support, parser, "definitions-r4/StructureDefinition-us-core-practitionerrole.json");
+    load(support, parser, "definitions-r4/StructureDefinition-us-core-procedure.json");
+    load(support, parser, "definitions-r4/StructureDefinition-us-core-provenance.json");
+    load(support, parser, "definitions-r4/StructureDefinition-us-core-pulse-oximetry.json");
+    load(support, parser, "definitions-r4/StructureDefinition-us-core-questionnaireresponse.json");
+    load(support, parser, "definitions-r4/StructureDefinition-us-core-race.json");
+    load(support, parser, "definitions-r4/StructureDefinition-us-core-relatedperson.json");
+    load(support, parser, "definitions-r4/StructureDefinition-us-core-respiratory-rate.json");
+    load(support, parser, "definitions-r4/StructureDefinition-us-core-servicerequest.json");
+    load(support, parser, "definitions-r4/StructureDefinition-us-core-smokingstatus.json");
+    load(support, parser, "definitions-r4/StructureDefinition-us-core-vital-signs.json");
   }
 
   private static void addUsCoreDefinitions(PrePopulatedValidationSupport support,
@@ -40,118 +153,12 @@ public class UsCoreProfileProvider implements ProfileProvider {
     Preconditions.checkArgument(context.getVersion().getVersion() == FhirVersionEnum.DSTU3
         || context.getVersion().getVersion() == FhirVersionEnum.R4);
 
-    IParser parser = context.newJsonParser();
-
     if (context.getVersion().getVersion() == FhirVersionEnum.DSTU3) {
-      // TODO remove non-StructureDefinition files in definitions-stu3/ if they are not needed.
-      load(support, parser, "definitions-stu3/StructureDefinition-us-core-allergyintolerance.json");
-      load(support, parser, "definitions-stu3/StructureDefinition-us-core-birthsex.json");
-      load(support, parser, "definitions-stu3/StructureDefinition-us-core-careplan.json");
-      load(support, parser, "definitions-stu3/StructureDefinition-us-core-careteam.json");
-      load(support, parser, "definitions-stu3/StructureDefinition-us-core-condition.json");
-      load(support, parser, "definitions-stu3/StructureDefinition-us-core-device.json");
-      load(support, parser, "definitions-stu3/StructureDefinition-us-core-diagnosticreport.json");
-      load(support, parser, "definitions-stu3/StructureDefinition-us-core-direct.json");
-      load(support, parser, "definitions-stu3/StructureDefinition-us-core-documentreference.json");
-      load(support, parser, "definitions-stu3/StructureDefinition-us-core-encounter.json");
-      load(support, parser, "definitions-stu3/StructureDefinition-us-core-ethnicity.json");
-      load(support, parser, "definitions-stu3/StructureDefinition-us-core-goal.json");
-      load(support, parser, "definitions-stu3/StructureDefinition-us-core-immunization.json");
-      load(support, parser, "definitions-stu3/StructureDefinition-us-core-location.json");
-      load(support, parser, "definitions-stu3/StructureDefinition-us-core-medication.json");
-      load(support, parser, "definitions-stu3/StructureDefinition-us-core-medicationrequest.json");
-      load(
-          support, parser, "definitions-stu3/StructureDefinition-us-core-medicationstatement.json");
-      load(support, parser, "definitions-stu3/StructureDefinition-us-core-observationresults.json");
-      load(support, parser, "definitions-stu3/StructureDefinition-us-core-organization.json");
-      load(support, parser, "definitions-stu3/StructureDefinition-us-core-patient.json");
-      load(support, parser, "definitions-stu3/StructureDefinition-us-core-practitioner.json");
-      load(support, parser, "definitions-stu3/StructureDefinition-us-core-practitionerrole.json");
-      load(support, parser, "definitions-stu3/StructureDefinition-us-core-procedure.json");
-      load(support, parser, "definitions-stu3/StructureDefinition-us-core-profile-link.json");
-      load(support, parser, "definitions-stu3/StructureDefinition-us-core-race.json");
-      load(support, parser, "definitions-stu3/StructureDefinition-us-core-smokingstatus.json");
+      addUsCoreDefinitionsForDstu3(support, context);
     }
 
     if (context.getVersion().getVersion() == FhirVersionEnum.R4) {
-      load(
-          support,
-          parser,
-          "definitions-r4/"
-              + "StructureDefinition-head-occipital-frontal-circumference-percentile.json");
-      load(support, parser, "definitions-r4/StructureDefinition-pediatric-bmi-for-age.json");
-      load(support, parser, "definitions-r4/StructureDefinition-pediatric-weight-for-height.json");
-      load(support, parser, "definitions-r4/StructureDefinition-us-core-allergyintolerance.json");
-      load(support, parser, "definitions-r4/StructureDefinition-us-core-birthsex.json");
-      load(support, parser, "definitions-r4/StructureDefinition-us-core-blood-pressure.json");
-      load(support, parser, "definitions-r4/StructureDefinition-us-core-bmi.json");
-      load(support, parser, "definitions-r4/StructureDefinition-us-core-body-height.json");
-      load(support, parser, "definitions-r4/StructureDefinition-us-core-body-temperature.json");
-      load(support, parser, "definitions-r4/StructureDefinition-us-core-body-weight.json");
-      load(support, parser, "definitions-r4/StructureDefinition-us-core-careplan.json");
-      load(support, parser, "definitions-r4/StructureDefinition-us-core-careteam.json");
-      load(
-          support,
-          parser,
-          "definitions-r4/StructureDefinition-us-core-condition-encounter-diagnosis.json");
-      load(
-          support,
-          parser,
-          "definitions-r4/StructureDefinition-us-core-condition-problems-health-concerns.json");
-      load(support, parser, "definitions-r4/StructureDefinition-us-core-diagnosticreport-lab.json");
-      load(
-          support, parser, "definitions-r4/StructureDefinition-us-core-diagnosticreport-note.json");
-      load(support, parser, "definitions-r4/StructureDefinition-us-core-direct.json");
-      load(support, parser, "definitions-r4/StructureDefinition-us-core-documentreference.json");
-      load(support, parser, "definitions-r4/StructureDefinition-us-core-encounter.json");
-      load(support, parser, "definitions-r4/StructureDefinition-us-core-ethnicity.json");
-      load(
-          support,
-          parser,
-          "definitions-r4/StructureDefinition-us-core-extension-questionnaire-uri.json");
-      load(support, parser, "definitions-r4/StructureDefinition-us-core-genderIdentity.json");
-      load(support, parser, "definitions-r4/StructureDefinition-us-core-goal.json");
-      load(support, parser, "definitions-r4/StructureDefinition-us-core-head-circumference.json");
-      load(support, parser, "definitions-r4/StructureDefinition-us-core-heart-rate.json");
-      load(support, parser, "definitions-r4/StructureDefinition-us-core-immunization.json");
-      load(support, parser, "definitions-r4/StructureDefinition-us-core-implantable-device.json");
-      load(support, parser, "definitions-r4/StructureDefinition-us-core-location.json");
-      load(support, parser, "definitions-r4/StructureDefinition-us-core-medication.json");
-      load(support, parser, "definitions-r4/StructureDefinition-us-core-medicationrequest.json");
-      load(
-          support,
-          parser,
-          "definitions-r4/StructureDefinition-us-core-observation-clinical-test.json");
-      load(support, parser, "definitions-r4/StructureDefinition-us-core-observation-imaging.json");
-      load(support, parser, "definitions-r4/StructureDefinition-us-core-observation-lab.json");
-      load(
-          support,
-          parser,
-          "definitions-r4/StructureDefinition-us-core-observation-sdoh-assessment.json");
-      load(
-          support,
-          parser,
-          "definitions-r4/StructureDefinition-us-core-observation-sexual-orientation.json");
-      load(
-          support,
-          parser,
-          "definitions-r4/StructureDefinition-us-core-observation-social-history.json");
-      load(support, parser, "definitions-r4/StructureDefinition-us-core-observation-survey.json");
-      load(support, parser, "definitions-r4/StructureDefinition-us-core-organization.json");
-      load(support, parser, "definitions-r4/StructureDefinition-us-core-patient.json");
-      load(support, parser, "definitions-r4/StructureDefinition-us-core-practitioner.json");
-      load(support, parser, "definitions-r4/StructureDefinition-us-core-practitionerrole.json");
-      load(support, parser, "definitions-r4/StructureDefinition-us-core-procedure.json");
-      load(support, parser, "definitions-r4/StructureDefinition-us-core-provenance.json");
-      load(support, parser, "definitions-r4/StructureDefinition-us-core-pulse-oximetry.json");
-      load(
-          support, parser, "definitions-r4/StructureDefinition-us-core-questionnaireresponse.json");
-      load(support, parser, "definitions-r4/StructureDefinition-us-core-race.json");
-      load(support, parser, "definitions-r4/StructureDefinition-us-core-relatedperson.json");
-      load(support, parser, "definitions-r4/StructureDefinition-us-core-respiratory-rate.json");
-      load(support, parser, "definitions-r4/StructureDefinition-us-core-servicerequest.json");
-      load(support, parser, "definitions-r4/StructureDefinition-us-core-smokingstatus.json");
-      load(support, parser, "definitions-r4/StructureDefinition-us-core-vital-signs.json");
+      addUsCoreDefinitionsForR4(support, context);
     }
   }
 
