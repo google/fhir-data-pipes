@@ -320,7 +320,8 @@ public class R4StructureDefinitions extends StructureDefinitions {
         return singleField(elementName, primitiveConverter);
       }
 
-    } else if (element.getPath().endsWith("[x]")) {
+    } else if (element.getPath().endsWith("[x]") && !element.getPath().startsWith("Extension")) {
+      // TODO fix for "Extension": https://github.com/google/fhir-data-pipes/issues/559
 
       // Use a linked hash map to preserve the order of the fields
       // for iteration.

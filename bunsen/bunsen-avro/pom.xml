@@ -66,13 +66,13 @@
 
     <dependency>
       <groupId>com.cerner.bunsen</groupId>
-      <artifactId>bunsen-uscore-resources-stu3</artifactId>
+      <artifactId>bunsen-uscore-resources</artifactId>
       <scope>test</scope>
     </dependency>
 
     <dependency>
       <groupId>com.cerner.bunsen</groupId>
-      <artifactId>bunsen-uscore-resources-stu3</artifactId>
+      <artifactId>bunsen-uscore-resources</artifactId>
       <type>test-jar</type>
       <scope>test</scope>
     </dependency>

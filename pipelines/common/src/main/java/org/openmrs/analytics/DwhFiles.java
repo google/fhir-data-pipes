@@ -17,6 +17,7 @@ package org.openmrs.analytics;
 
 import ca.uhn.fhir.context.FhirContext;
 import ca.uhn.fhir.parser.DataFormatException;
+import com.cerner.bunsen.FhirContexts;
 import com.google.api.client.util.Sets;
 import com.google.common.base.Preconditions;
 import java.io.BufferedReader;
@@ -64,7 +65,7 @@ public class DwhFiles {
   private final FhirContext fhirContext;
 
   private DwhFiles(String dwhRoot) {
-    this(dwhRoot, FhirContext.forR4Cached());
+    this(dwhRoot, FhirContexts.forR4());
   }
 
   DwhFiles(String dwhRoot, FhirContext fhirContext) {

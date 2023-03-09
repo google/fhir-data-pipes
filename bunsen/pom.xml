@@ -21,7 +21,7 @@
 
     <compile.source>11</compile.source>
 
-    <hapi.fhir.version>6.2.5</hapi.fhir.version>
+    <hapi.fhir.version>6.4.2</hapi.fhir.version>
     <avro.version>1.11.1</avro.version>
     <junit.version>4.13.2</junit.version>
     <hamcrest.version>2.2</hamcrest.version>
@@ -38,7 +38,7 @@
     <module>bunsen-core</module>
     <module>bunsen-core-r4</module>
     <module>bunsen-core-stu3</module>
-    <module>bunsen-uscore-resources-stu3</module>
+    <module>bunsen-uscore-resources</module>
     <module>bunsen-avro</module>
   </modules>
 
@@ -540,13 +540,13 @@
 
       <dependency>
         <groupId>com.cerner.bunsen</groupId>
-        <artifactId>bunsen-uscore-resources-stu3</artifactId>
+        <artifactId>bunsen-uscore-resources</artifactId>
         <version>${project.version}</version>
       </dependency>
 
       <dependency>
         <groupId>com.cerner.bunsen</groupId>
-        <artifactId>bunsen-uscore-resources-stu3</artifactId>
+        <artifactId>bunsen-uscore-resources</artifactId>
         <type>test-jar</type>
         <version>${project.version}</version>
       </dependency>
