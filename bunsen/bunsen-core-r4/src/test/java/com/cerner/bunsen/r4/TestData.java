@@ -40,27 +40,26 @@ import org.hl7.fhir.utilities.xhtml.XhtmlNode;
  */
 public class TestData {
 
-  // TODO add US-core structure-definitions for R4.
-  // public static final String US_CORE_BIRTHSEX
-  //     = "http://hl7.org/fhir/us/core/StructureDefinition/us-core-birthsex";
+  public static final String US_CORE_BIRTHSEX
+      = "http://hl7.org/fhir/us/core/StructureDefinition/us-core-birthsex";
 
-  // public static final String US_CORE_ETHNICITY
-  //     = "http://hl7.org/fhir/us/core/StructureDefinition/us-core-ethnicity";
+  public static final String US_CORE_ETHNICITY
+      = "http://hl7.org/fhir/us/core/StructureDefinition/us-core-ethnicity";
 
-  // public static final String US_CORE_PATIENT =
-  //     "http://hl7.org/fhir/us/core/StructureDefinition/us-core-patient";
+  public static final String US_CORE_PATIENT =
+      "http://hl7.org/fhir/us/core/StructureDefinition/us-core-patient";
 
-  // public static final String US_CORE_OBSERVATION =
-  //     "http://hl7.org/fhir/us/core/StructureDefinition/us-core-observationresults";
+  public static final String US_CORE_OBSERVATION =
+      "http://hl7.org/fhir/us/core/StructureDefinition/us-core-observationresults";
 
-  // public static final String US_CORE_CONDITION =
-  //     "http://hl7.org/fhir/us/core/StructureDefinition/us-core-condition";
+  public static final String US_CORE_CONDITION =
+      "http://hl7.org/fhir/us/core/StructureDefinition/us-core-condition";
 
-  // public static final String US_CORE_MEDICATION =
-  //     "http://hl7.org/fhir/us/core/StructureDefinition/us-core-medication";
+  public static final String US_CORE_MEDICATION =
+      "http://hl7.org/fhir/us/core/StructureDefinition/us-core-medication";
 
-  // public static final String US_CORE_MEDICATION_REQUEST =
-  //     "http://hl7.org/fhir/us/core/StructureDefinition/us-core-medicationrequest";
+  public static final String US_CORE_MEDICATION_REQUEST =
+      "http://hl7.org/fhir/us/core/StructureDefinition/us-core-medicationrequest";
 
   public static final String PROVENANCE =
       "http://hl7.org/fhir/StructureDefinition/Provenance";
@@ -68,7 +67,7 @@ public class TestData {
   public static final String VALUE_SET =
       "http://hl7.org/fhir/StructureDefinition/ValueSet";
 
-  // TODO add as part of https://github.com/google/fhir-data-pipes/issues/286
+  // TODO add test profile for R4: https://github.com/google/fhir-data-pipes/issues/558
   // public static final String BUNSEN_TEST_PATIENT =
   //     "http://hl7.org/fhir/bunsen/test/StructureDefinition/bunsen-test-patient";
 
@@ -219,50 +218,49 @@ public class TestData {
     address.setState("IL");
     address.setDistrict("12345");
 
-    // TODO add US-core structure-definitions for R4.
-    // Extension birthSex = patient.addExtension();
-    // birthSex.setUrl(US_CORE_BIRTHSEX);
-    // birthSex.setValue(new CodeType("M"));
+    Extension birthSex = patient.addExtension();
+    birthSex.setUrl(US_CORE_BIRTHSEX);
+    birthSex.setValue(new CodeType("M"));
 
-    // Extension ethnicity = patient.addExtension();
-    // ethnicity.setUrl(US_CORE_ETHNICITY);
-    // ethnicity.setValue(null);
+    Extension ethnicity = patient.addExtension();
+    ethnicity.setUrl(US_CORE_ETHNICITY);
+    ethnicity.setValue(null);
 
-    // Coding ombCoding = new Coding();
+    Coding ombCoding = new Coding();
 
-    // ombCoding.setSystem("urn:oid:2.16.840.1.113883.6.238");
-    // ombCoding.setCode("2135-2");
-    // ombCoding.setDisplay("Hispanic or Latino");
+    ombCoding.setSystem("urn:oid:2.16.840.1.113883.6.238");
+    ombCoding.setCode("2135-2");
+    ombCoding.setDisplay("Hispanic or Latino");
 
-    // // Add category to ethnicity extension
-    // Extension ombCategory = ethnicity.addExtension();
+    // Add category to ethnicity extension
+    Extension ombCategory = ethnicity.addExtension();
 
-    // ombCategory.setUrl("ombCategory");
-    // ombCategory.setValue(ombCoding);
+    ombCategory.setUrl("ombCategory");
+    ombCategory.setValue(ombCoding);
 
-    // // Add multiple detailed sub-extension to ethnicity extension
-    // Coding detailedCoding1 = new Coding();
-    // detailedCoding1.setSystem("urn:oid:2.16.840.1.113883.6.238");
-    // detailedCoding1.setCode("2165-9");
-    // detailedCoding1.setDisplay("South American");
+    // Add multiple detailed sub-extension to ethnicity extension
+    Coding detailedCoding1 = new Coding();
+    detailedCoding1.setSystem("urn:oid:2.16.840.1.113883.6.238");
+    detailedCoding1.setCode("2165-9");
+    detailedCoding1.setDisplay("South American");
 
-    // Coding detailedCoding2 = new Coding();
-    // detailedCoding2.setSystem("urn:oid:2.16.840.1.113883.6.238");
-    // detailedCoding2.setCode("2166-7");
-    // detailedCoding2.setDisplay("Argentinean");
+    Coding detailedCoding2 = new Coding();
+    detailedCoding2.setSystem("urn:oid:2.16.840.1.113883.6.238");
+    detailedCoding2.setCode("2166-7");
+    detailedCoding2.setDisplay("Argentinean");
 
-    // final Extension detailed1 = ethnicity.addExtension();
-    // detailed1.setUrl("detailed");
-    // detailed1.setValue(detailedCoding1);
+    final Extension detailed1 = ethnicity.addExtension();
+    detailed1.setUrl("detailed");
+    detailed1.setValue(detailedCoding1);
 
-    // final Extension detailed2 = ethnicity.addExtension();
-    // detailed2.setUrl("detailed");
-    // detailed2.setValue(detailedCoding2);
+    final Extension detailed2 = ethnicity.addExtension();
+    detailed2.setUrl("detailed");
+    detailed2.setValue(detailedCoding2);
 
-    // // Add text display to ethnicity extension
-    // Extension ethnicityText = ethnicity.addExtension();
-    // ethnicityText.setUrl("text");
-    // ethnicityText.setValue(new StringType("Not Hispanic or Latino"));
+    // Add text display to ethnicity extension
+    Extension ethnicityText = ethnicity.addExtension();
+    ethnicityText.setUrl("text");
+    ethnicityText.setValue(new StringType("Not Hispanic or Latino"));
 
     // Human Name
     HumanName humanName = new HumanName();
@@ -372,7 +370,7 @@ public class TestData {
     return provenance;
   }
 
-  // TODO add as part of https://github.com/google/fhir-data-pipes/issues/286
+  // TODO add test profile for R4: https://github.com/google/fhir-data-pipes/issues/558
   // /**
   //  * Returns a new Patient from Bunsen Test profile for testing.
   //  *

@@ -16,6 +16,7 @@
 package org.openmrs.analytics;
 
 import ca.uhn.fhir.context.FhirContext;
+import com.cerner.bunsen.FhirContexts;
 import com.google.common.base.Preconditions;
 import java.beans.PropertyVetoException;
 import java.io.IOException;
@@ -217,7 +218,7 @@ public class PipelineManager {
       throws IOException, PropertyVetoException {
     DatabaseConfiguration dbConfig =
         DatabaseConfiguration.createConfigFromFile(options.getFhirDatabaseConfigPath());
-    FhirContext fhirContext = FhirContext.forR4Cached();
+    FhirContext fhirContext = FhirContexts.forR4();
     logger.info("Creating HAPI JDBC pipeline with options {}", options);
     return FhirEtl.buildHapiJdbcFetch(options, dbConfig, fhirContext);
   }
@@ -326,7 +327,7 @@ public class PipelineManager {
         if (mergerOptions == null) { // Do not update DWH yet if this was an incremental run.
           manager.updateDwh(options.getOutputParquetPath());
         } else {
-          FhirContext fhirContext = FhirContext.forR4Cached();
+          FhirContext fhirContext = FhirContexts.forR4();
           Pipeline mergerPipeline = ParquetMerger.createMergerPipeline(mergerOptions, fhirContext);
           logger.info("Merger options are {}", mergerOptions);
           EtlUtils.runMergerPipelineWithTimestamp(mergerPipeline, mergerOptions);
