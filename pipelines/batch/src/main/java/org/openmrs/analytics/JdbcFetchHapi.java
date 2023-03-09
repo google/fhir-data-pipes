@@ -17,6 +17,7 @@ package org.openmrs.analytics;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Charsets;
+import com.google.common.base.Strings;
 import java.sql.Blob;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -28,7 +29,6 @@ import org.apache.beam.sdk.transforms.DoFn;
 import org.apache.beam.sdk.transforms.PTransform;
 import org.apache.beam.sdk.transforms.ParDo;
 import org.apache.beam.sdk.values.PCollection;
-import org.apache.parquet.Strings;
 import org.hl7.fhir.r4.model.Coding;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -158,9 +158,10 @@ public class JdbcFetchHapi {
 
       List<Coding> tags = new ArrayList<>();
 
+      // The column tag_type of value 0 means it's of type TAG, 1 for PROFILE and 2 for SYSTEM.
       String query =
-          "select td.tag_code, td.tag_display, td.tag_system from hfj_res_tag tag "
-              + "join hfj_tag_def td on tag.tag_id = td.tag_id and tag.res_id = ?";
+          "select td.tag_code, td.tag_display, td.tag_system from hfj_res_tag tag join hfj_tag_def"
+              + " td on tag.tag_id = td.tag_id where tag.res_id = ? and td.tag_type = 0";
       PreparedStatement statement = jdbcConnectionUtil.createPreparedStatement(query);
       statement.setInt(1, resourceId);
 
@@ -168,9 +169,9 @@ public class JdbcFetchHapi {
         while (resultSet.next()) {
           tags.add(
               new Coding(
+                  resultSet.getString("tag_system"),
                   resultSet.getString("tag_code"),
-                  resultSet.getString("tag_display"),
-                  resultSet.getString("tag_system")));
+                  resultSet.getString("tag_display")));
         }
       } finally {
         jdbcConnectionUtil.closeConnection(statement);
