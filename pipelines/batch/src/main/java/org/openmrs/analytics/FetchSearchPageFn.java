@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2022 Google LLC
+ * Copyright 2020-2023 Google LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package org.openmrs.analytics;
 import ca.uhn.fhir.context.FhirContext;
 import ca.uhn.fhir.context.ParserOptions;
 import ca.uhn.fhir.parser.IParser;
+import com.cerner.bunsen.FhirContexts;
 import com.google.common.annotations.VisibleForTesting;
 import java.beans.PropertyVetoException;
 import java.io.IOException;
@@ -161,7 +162,7 @@ abstract class FetchSearchPageFn<T> extends DoFn<T, KV<String, Integer>> {
     log.debug("Starting setup for stage " + stageIdentifier);
     // TODO make this configurable
     //   https://github.com/GoogleCloudPlatform/openmrs-fhir-analytics/issues/400
-    fhirContext = FhirContext.forR4Cached();
+    fhirContext = FhirContexts.forR4();
     // The documentation for `FhirContext` claims that it is thread-safe but looking at the code,
     // it is not obvious if it is. This might be an issue when we write to it, like the next line.
     fhirContext.setParserOptions(

@@ -17,6 +17,7 @@ package org.openmrs.analytics;
 
 import ca.uhn.fhir.context.FhirContext;
 import ca.uhn.fhir.context.FhirVersionEnum;
+import com.cerner.bunsen.FhirContexts;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Sets;
 import java.io.IOException;
@@ -193,7 +194,7 @@ public class ParquetMerger {
     ParquetMergerOptions options =
         PipelineOptionsFactory.fromArgs(args).withValidation().as(ParquetMergerOptions.class);
     log.info("Flags: " + options);
-    FhirContext fhirContext = FhirContext.forR4Cached();
+    FhirContext fhirContext = FhirContexts.forR4();
     if (options.getDwh1().isEmpty()
         || options.getDwh2().isEmpty()
         || options.getMergedDwh().isEmpty()) {

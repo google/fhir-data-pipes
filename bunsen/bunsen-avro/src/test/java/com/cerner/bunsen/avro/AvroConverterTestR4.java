@@ -80,7 +80,7 @@ public class AvroConverterTestR4 {
 
   private static MedicationRequest testMedicationRequestDecoded;
 
-  // TODO add for R4 as part of https://github.com/google/fhir-data-pipes/issues/286
+  // TODO add test profile for R4: https://github.com/google/fhir-data-pipes/issues/558
   // private static final Patient testBunsenTestProfilePatient = TestData
   //     .newBunsenTestProfilePatient();
 
@@ -108,7 +108,7 @@ public class AvroConverterTestR4 {
         .avroToResource(avroObservationNullStatus);
 
     AvroConverter patientConverter = AvroConverter.forResource(FhirContexts.forR4(),
-        "Patient" /* TODO TestData.US_CORE_PATIENT */);
+        TestData.US_CORE_PATIENT);
 
     avroPatient = (Record) patientConverter.resourceToAvro(testPatient);
 
@@ -122,7 +122,7 @@ public class AvroConverterTestR4 {
     testConditionDecoded = (Condition) conditionConverter.avroToResource(avroCondition);
 
     AvroConverter medicationConverter = AvroConverter.forResource(FhirContexts.forR4(),
-        "Medication" /* TODO TestData.US_CORE_MEDICATION */);
+        TestData.US_CORE_MEDICATION);
 
     Record avroMedication = (Record) medicationConverter.resourceToAvro(testMedicationOne);
 
@@ -138,7 +138,7 @@ public class AvroConverterTestR4 {
     testMedicationRequestDecoded = (MedicationRequest) medicationRequestConverter
         .avroToResource(avroMedicationRequest);
 
-    // TODO add as part of https://github.com/google/fhir-data-pipes/issues/286
+    // TODO add test profile for R4: https://github.com/google/fhir-data-pipes/issues/558
     // AvroConverter converterBunsenTestProfilePatient = AvroConverter
     //    .forResource(FhirContexts.forR4(), TestData.BUNSEN_TEST_PATIENT);
 
@@ -299,106 +299,105 @@ public class AvroConverterTestR4 {
         testConditionDecoded.getSubject().getReference());
   }
 
-  // TODO add for R4 as part of https://github.com/google/fhir-data-pipes/issues/286
-  // @Test
-  // public void testSimpleExtension() {
+  @Test
+  public void testSimpleExtension() {
 
-  //   String testBirthSex = testPatient
-  //       .getExtensionsByUrl(TestData.US_CORE_BIRTHSEX)
-  //       .get(0)
-  //       .getValueAsPrimitive()
-  //       .getValueAsString();
+    String testBirthSex = testPatient
+        .getExtensionsByUrl(TestData.US_CORE_BIRTHSEX)
+        .get(0)
+        .getValueAsPrimitive()
+        .getValueAsString();
 
-  //   String decodedBirthSex = testPatientDecoded
-  //       .getExtensionsByUrl(TestData.US_CORE_BIRTHSEX)
-  //       .get(0)
-  //       .getValueAsPrimitive()
-  //       .getValueAsString();
+    String decodedBirthSex = testPatientDecoded
+        .getExtensionsByUrl(TestData.US_CORE_BIRTHSEX)
+        .get(0)
+        .getValueAsPrimitive()
+        .getValueAsString();
 
-  //   Assert.assertEquals(testBirthSex, decodedBirthSex);
+    Assert.assertEquals(testBirthSex, decodedBirthSex);
 
-  //   Assert.assertEquals(testBirthSex,
-  //       ((Record) avroPatient).get("birthsex"));
-  // }
+    Assert.assertEquals(testBirthSex,
+        ((Record) avroPatient).get("birthsex"));
+  }
 
-  // @Test
-  // public void testNestedExtension() {
+  @Test
+  public void testNestedExtension() {
 
-  //   Extension testEthnicity = testPatient
-  //       .getExtensionsByUrl(TestData.US_CORE_ETHNICITY)
-  //       .get(0);
+    Extension testEthnicity = testPatient
+        .getExtensionsByUrl(TestData.US_CORE_ETHNICITY)
+        .get(0);
 
-  //   Coding testOmbCategory = (Coding) testEthnicity
-  //       .getExtensionsByUrl("ombCategory")
-  //       .get(0)
-  //       .getValue();
+    Coding testOmbCategory = (Coding) testEthnicity
+        .getExtensionsByUrl("ombCategory")
+        .get(0)
+        .getValue();
 
-  //   Coding testDetailed1 = (Coding) testEthnicity
-  //       .getExtensionsByUrl("detailed")
-  //       .get(0)
-  //       .getValue();
+    Coding testDetailed1 = (Coding) testEthnicity
+        .getExtensionsByUrl("detailed")
+        .get(0)
+        .getValue();
 
-  //   Coding testDetailed2 = (Coding) testEthnicity
-  //       .getExtensionsByUrl("detailed")
-  //       .get(1)
-  //       .getValue();
+    Coding testDetailed2 = (Coding) testEthnicity
+        .getExtensionsByUrl("detailed")
+        .get(1)
+        .getValue();
 
-  //   String testText = testEthnicity
-  //       .getExtensionsByUrl("text")
-  //       .get(0)
-  //       .getValueAsPrimitive()
-  //       .getValueAsString();
+    String testText = testEthnicity
+        .getExtensionsByUrl("text")
+        .get(0)
+        .getValueAsPrimitive()
+        .getValueAsString();
 
-  //   Extension decodedEthnicity = testPatientDecoded
-  //       .getExtensionsByUrl(TestData.US_CORE_ETHNICITY)
-  //       .get(0);
+    Extension decodedEthnicity = testPatientDecoded
+        .getExtensionsByUrl(TestData.US_CORE_ETHNICITY)
+        .get(0);
 
-  //   Coding decodedOmbCategory = (Coding) decodedEthnicity
-  //       .getExtensionsByUrl("ombCategory")
-  //       .get(0)
-  //       .getValue();
+    Coding decodedOmbCategory = (Coding) decodedEthnicity
+        .getExtensionsByUrl("ombCategory")
+        .get(0)
+        .getValue();
 
-  //   Coding decodedDetailed1 = (Coding) decodedEthnicity
-  //       .getExtensionsByUrl("detailed")
-  //       .get(0)
-  //       .getValue();
+    Coding decodedDetailed1 = (Coding) decodedEthnicity
+        .getExtensionsByUrl("detailed")
+        .get(0)
+        .getValue();
 
-  //   Coding decodedDetailed2 = (Coding) decodedEthnicity
-  //       .getExtensionsByUrl("detailed")
-  //       .get(1)
-  //       .getValue();
+    Coding decodedDetailed2 = (Coding) decodedEthnicity
+        .getExtensionsByUrl("detailed")
+        .get(1)
+        .getValue();
 
-  //   String decodedText = decodedEthnicity
-  //       .getExtensionsByUrl("text")
-  //       .get(0)
-  //       .getValueAsPrimitive()
-  //       .getValueAsString();
+    String decodedText = decodedEthnicity
+        .getExtensionsByUrl("text")
+        .get(0)
+        .getValueAsPrimitive()
+        .getValueAsString();
 
-  //   Assert.assertTrue(testOmbCategory.equalsDeep(decodedOmbCategory));
-  //   Assert.assertTrue(testDetailed1.equalsDeep(decodedDetailed1));
-  //   Assert.assertTrue(testDetailed2.equalsDeep(decodedDetailed2));
-  //   Assert.assertEquals(testText, decodedText);
+    Assert.assertTrue(testOmbCategory.equalsDeep(decodedOmbCategory));
+    Assert.assertTrue(testDetailed1.equalsDeep(decodedDetailed1));
+    Assert.assertTrue(testDetailed2.equalsDeep(decodedDetailed2));
+    Assert.assertEquals(testText, decodedText);
 
-  //   Record ethnicityRecord = (Record) avroPatient.get("ethnicity");
+    Record ethnicityRecord = (Record) avroPatient.get("ethnicity");
 
-  //   Record ombCategoryRecord =  (Record) ethnicityRecord.get("ombCategory");
+    Record ombCategoryRecord =  (Record) ethnicityRecord.get("ombCategory");
 
-  //   List<Record> detailedRecord =  (List<Record>) ethnicityRecord.get("detailed");
+    List<Record> detailedRecord =  (List<Record>) ethnicityRecord.get("detailed");
 
-  //   Assert.assertEquals(testOmbCategory.getSystem(), ombCategoryRecord.get("system"));
-  //   Assert.assertEquals(testOmbCategory.getCode(), ombCategoryRecord.get("code"));
-  //   Assert.assertEquals(testOmbCategory.getDisplay(), ombCategoryRecord.get("display"));
+    Assert.assertEquals(testOmbCategory.getSystem(), ombCategoryRecord.get("system"));
+    Assert.assertEquals(testOmbCategory.getCode(), ombCategoryRecord.get("code"));
+    Assert.assertEquals(testOmbCategory.getDisplay(), ombCategoryRecord.get("display"));
 
-  //   Assert.assertEquals(testDetailed1.getSystem(), detailedRecord.get(0).get("system"));
-  //   Assert.assertEquals(testDetailed1.getCode(), detailedRecord.get(0).get("code"));
-  //   Assert.assertEquals(testDetailed1.getDisplay(), detailedRecord.get(0).get("display"));
+    Assert.assertEquals(testDetailed1.getSystem(), detailedRecord.get(0).get("system"));
+    Assert.assertEquals(testDetailed1.getCode(), detailedRecord.get(0).get("code"));
+    Assert.assertEquals(testDetailed1.getDisplay(), detailedRecord.get(0).get("display"));
 
-  //   Assert.assertEquals(testDetailed2.getSystem(), detailedRecord.get(1).get("system"));
-  //   Assert.assertEquals(testDetailed2.getCode(), detailedRecord.get(1).get("code"));
-  //   Assert.assertEquals(testDetailed2.getDisplay(), detailedRecord.get(1).get("display"));
+    Assert.assertEquals(testDetailed2.getSystem(), detailedRecord.get(1).get("system"));
+    Assert.assertEquals(testDetailed2.getCode(), detailedRecord.get(1).get("code"));
+    Assert.assertEquals(testDetailed2.getDisplay(), detailedRecord.get(1).get("display"));
 
-  //   Assert.assertEquals(testText, ethnicityRecord.get("text"));
-  // }
+    Assert.assertEquals(testText, ethnicityRecord.get("text"));
+  }
 
   // TODO fix this regression for R4: https://github.com/google/fhir-data-pipes/issues/495
   // @Test
@@ -443,10 +442,12 @@ public class AvroConverterTestR4 {
   public void testCompile() throws IOException {
 
     List<Schema> schemas = AvroConverter.generateSchemas(FhirContexts.forR4(),
-        ImmutableMap.of("Patient" /* TODO TestData.US_CORE_PATIENT */, Collections.emptyList(),
-            TestData.VALUE_SET, Collections.emptyList(),
-            "MedicationRequest" /* TODO TestData.US_CORE_MEDICATION_REQUEST */,
-            Collections.emptyList() /* TODO ImmutableList.of(TestData.US_CORE_MEDICATION */));
+        ImmutableMap.of(TestData.US_CORE_PATIENT, Collections.emptyList(),
+            TestData.VALUE_SET, Collections.emptyList()
+    // TODO check why this complains about duplicate `category`; there are two elements
+    // in the StructureDefinition with `"path": "MedicationRequest.category"`
+    // TestData.US_CORE_MEDICATION_REQUEST, ImmutableList.of(TestData.US_CORE_MEDICATION)
+    ));
 
     // Wrap the schemas in a protocol to simplify the invocation of the compiler.
     Protocol protocol = new Protocol("fhir-test",
@@ -476,23 +477,22 @@ public class AvroConverterTestR4 {
     Assert.assertTrue(javaFiles.contains("com/cerner/bunsen/r4/avro/Coding.java"));
     Assert.assertTrue(javaFiles.contains("com/cerner/bunsen/r4/avro/ValueSet.java"));
 
-    // TODO add as part of https://github.com/google/fhir-data-pipes/issues/286
-    // // The specific profile should be created in the expecter4b-package.
-    // Assert.assertTrue(javaFiles.contains("com/cerner/bunsen/r4/avro/us/core/Patient.java"));
+    // The specific profile should be created in the expecter4b-package.
+    Assert.assertTrue(javaFiles.contains("com/cerner/bunsen/r4/avro/us/core/Patient.java"));
 
-    // // Check extension types.
-    // Assert.assertTrue(javaFiles.contains("com/cerner/bunsen/r4/avro/us/core/UsCoreRace.java"));
+    // Check extension types.
+    Assert.assertTrue(javaFiles.contains("com/cerner/bunsen/r4/avro/us/core/UsCoreRace.java"));
 
     // Choice types include each choice that could be used.
     Assert.assertTrue(javaFiles.contains("com/cerner/bunsen/r4/avro/ChoiceBooleanInteger.java"));
 
-    // TODO add as part of https://github.com/google/fhir-data-pipes/issues/286
-    // // Contained types created.
+    // TODO check/fix why this fails!
+    // Contained types created.
     // Assert.assertTrue(javaFiles.contains(
-    //     "com/cerner/bunsen/r4/avro/us/core/MedicationRequestContained.java"));
+    //    "com/cerner/bunsen/r4/avro/us/core/MedicationRequestContained.java"));
   }
 
-  // TODO add as part of https://github.com/google/fhir-data-pipes/issues/286
+  // TODO add test profile for R4: https://github.com/google/fhir-data-pipes/issues/558
   // @Test
   // public void testSimpleExtensionWithBooleanField() {
 

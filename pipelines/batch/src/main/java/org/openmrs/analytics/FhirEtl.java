@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2022 Google LLC
+ * Copyright 2020-2023 Google LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,10 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.openmrs.analytics;
 
 import ca.uhn.fhir.context.FhirContext;
+import com.cerner.bunsen.FhirContexts;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
@@ -349,7 +349,7 @@ public class FhirEtl {
     log.info("Flags: " + options);
     validateOptions(options);
     // TODO: Check if we can use some sort of dependency-injection (e.g., `@Autowired`).
-    FhirContext fhirContext = FhirContext.forR4Cached();
+    FhirContext fhirContext = FhirContexts.forR4();
 
     if (!options.getSinkDbUrl().isEmpty()) {
       JdbcResourceWriter.createTables(options);
