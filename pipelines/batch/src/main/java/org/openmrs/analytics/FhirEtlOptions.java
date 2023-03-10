@@ -227,4 +227,10 @@ public interface FhirEtlOptions extends PipelineOptions {
   String getSourceJsonFilePattern();
 
   void setSourceJsonFilePattern(String value);
+
+  @Description("Flag to specify whether the triggered pipeline is incremental or initial batch")
+  @Default.Boolean(false)
+  Boolean isRunIncremental();
+
+  void setRunIncremental(Boolean value);
 }

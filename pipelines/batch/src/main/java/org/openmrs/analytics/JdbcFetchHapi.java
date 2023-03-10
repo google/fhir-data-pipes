@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2022 Google LLC
+ * Copyright 2020-2023 Google LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,8 +20,13 @@ import com.google.common.base.Charsets;
 import java.sql.Blob;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import org.apache.beam.sdk.io.jdbc.JdbcIO;
 import org.apache.beam.sdk.transforms.PTransform;
 import org.apache.beam.sdk.values.PCollection;
@@ -159,5 +164,35 @@ public class JdbcFetchHapi {
     }
 
     return queryParameterList;
+  }
+
+  /**
+   * Searches for the total number of resources for each resource type
+   *
+   * @param resourceList the resource types to be processed
+   * @param since the time from which the records need to be fetched
+   * @return a Map storing the counts of each resource type
+   */
+  public Map<String, Integer> searchResourceCounts(String resourceList, String since)
+      throws SQLException {
+    HashSet<String> resourceTypes = new HashSet<String>(Arrays.asList(resourceList.split(",")));
+    HashMap<String, Integer> hashMap = new HashMap<String, Integer>();
+    for (String resourceType : resourceTypes) {
+      StringBuilder builder = new StringBuilder();
+      builder.append("SELECT count(*) FROM hfj_resource res where res.res_type = ?");
+      if (since != null && !since.isBlank()) {
+        builder.append(" AND res.res_updated > '").append(since).append("'");
+      }
+      PreparedStatement statement =
+          jdbcConnectionUtil.createPreparedStatement(
+              builder.toString(), ResultSet.TYPE_SCROLL_SENSITIVE, ResultSet.CONCUR_READ_ONLY);
+      statement.setString(1, resourceType);
+      ResultSet resultSet = statement.executeQuery();
+      resultSet.first();
+      int count = resultSet.getInt("count");
+      hashMap.put(resourceType, count);
+      jdbcConnectionUtil.closeConnection(statement);
+    }
+    return hashMap;
   }
 }

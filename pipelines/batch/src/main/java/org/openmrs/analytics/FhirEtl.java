@@ -25,7 +25,6 @@ import java.beans.PropertyVetoException;
 import java.io.IOException;
 import java.sql.SQLException;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -267,18 +266,24 @@ public class FhirEtl {
   // #278).
   static Pipeline buildHapiJdbcFetch(
       FhirEtlOptions options, DatabaseConfiguration dbConfig, FhirContext fhirContext)
-      throws PropertyVetoException {
+      throws PropertyVetoException, SQLException {
     boolean foundResource = false;
     Pipeline pipeline = Pipeline.create(options);
     JdbcConnectionUtil jdbcConnectionUtil = createJdbcConnection(options, dbConfig);
 
-    FhirSearchUtil fhirSearchUtil = createFhirSearchUtil(options, fhirContext);
+    Map<String, Integer> resourceCount = null;
+    if (!options.isRunIncremental()) {
+      FhirSearchUtil fhirSearchUtil = createFhirSearchUtil(options, fhirContext);
 
-    // Get the resource count for each resource type and distribute the query workload based on
-    // batch size.
-    HashMap<String, Integer> resourceCount =
-        (HashMap<String, Integer>)
-            fhirSearchUtil.searchResourceCounts(options.getResourceList(), options.getSince());
+      // Get the resource count for each resource type and distribute the query workload based on
+      // batch size.
+      resourceCount =
+          fhirSearchUtil.searchResourceCounts(options.getResourceList(), options.getSince());
+    } else {
+      JdbcFetchHapi jdbcFetchHapi = new JdbcFetchHapi(jdbcConnectionUtil);
+      resourceCount =
+          jdbcFetchHapi.searchResourceCounts(options.getResourceList(), options.getSince());
+    }
 
     for (String resourceType : options.getResourceList().split(",")) {
       int numResources = resourceCount.get(resourceType);
@@ -313,7 +318,7 @@ public class FhirEtl {
   }
 
   static PipelineResult runHapiJdbcFetch(FhirEtlOptions options, FhirContext fhirContext)
-      throws PropertyVetoException, IOException {
+      throws PropertyVetoException, IOException, SQLException {
     DatabaseConfiguration dbConfig =
         DatabaseConfiguration.createConfigFromFile(options.getFhirDatabaseConfigPath());
     Pipeline pipeline = buildHapiJdbcFetch(options, dbConfig, fhirContext);

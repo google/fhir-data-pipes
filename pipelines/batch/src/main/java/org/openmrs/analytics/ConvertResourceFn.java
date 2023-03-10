@@ -16,16 +16,21 @@
 package org.openmrs.analytics;
 
 import java.io.IOException;
+import java.lang.reflect.InvocationTargetException;
 import java.sql.SQLException;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Arrays;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import org.apache.beam.sdk.metrics.Counter;
 import org.apache.beam.sdk.metrics.Metrics;
+import org.hl7.fhir.exceptions.FHIRException;
+import org.hl7.fhir.r4.model.Coding;
 import org.hl7.fhir.r4.model.Meta;
 import org.hl7.fhir.r4.model.Resource;
+import org.hl7.fhir.r4.model.codesystems.ActionType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -43,12 +48,15 @@ public class ConvertResourceFn extends FetchSearchPageFn<HapiRowDescriptor> {
 
   private final HashMap<String, Counter> totalPushTimeMillisMap;
 
+  private final Boolean isRunIncremental;
+
   ConvertResourceFn(FhirEtlOptions options, String stageIdentifier) {
     super(options, stageIdentifier);
     this.numFetchedResourcesMap = new HashMap<String, Counter>();
     this.totalParseTimeMillisMap = new HashMap<String, Counter>();
     this.totalGenerateTimeMillisMap = new HashMap<String, Counter>();
     this.totalPushTimeMillisMap = new HashMap<String, Counter>();
+    this.isRunIncremental = options.isRunIncremental();
     List<String> resourceTypes = Arrays.asList(options.getResourceList().split(","));
     for (String resourceType : resourceTypes) {
       this.numFetchedResourcesMap.put(
@@ -75,19 +83,30 @@ public class ConvertResourceFn extends FetchSearchPageFn<HapiRowDescriptor> {
         new Meta()
             .setVersionId(element.resourceVersion())
             .setLastUpdated(simpleDateFormat.parse(element.lastUpdated()));
-
     String jsonResource = element.jsonResource();
     // The jsonResource field will be empty in case of deleted records and are skipped when written
     // to target parquet files/sinkDb. This is fine for initial batch as they need not be migrated,
     // but for incremental run they need to be migrated and the original records have to be deleted
     // from the consolidated parquet files/sinkDb.
     // TODO https://github.com/google/fhir-data-pipes/issues/547
-    if (jsonResource == null || jsonResource.isBlank()) {
-      return;
-    }
-
     long startTime = System.currentTimeMillis();
-    Resource resource = (Resource) parser.parseResource(jsonResource);
+    Resource resource = null;
+    if (jsonResource == null || jsonResource.isBlank()) {
+      // Ignore deleted records during initial batch run
+      if (!isRunIncremental) {
+        return;
+      }
+
+      // Create a new resource and attach the meta with a deleted tag, this deleted tag is later
+      // used in the merge process to identify if the record has been deleted
+      resource = createNewFhirResource(resourceType);
+      ActionType removeAction = ActionType.REMOVE;
+      meta.setLastUpdated(new Date());
+      meta.addTag(
+          new Coding(removeAction.getSystem(), removeAction.toCode(), removeAction.getDisplay()));
+    } else {
+      resource = (Resource) parser.parseResource(jsonResource);
+    }
     totalParseTimeMillisMap.get(resourceType).inc(System.currentTimeMillis() - startTime);
     resource.setId(resourceId);
     resource.setMeta(meta);
@@ -114,5 +133,21 @@ public class ConvertResourceFn extends FetchSearchPageFn<HapiRowDescriptor> {
       throws IOException, ParseException, SQLException {
     HapiRowDescriptor element = processContext.element();
     writeResource(element);
+  }
+
+  private Resource createNewFhirResource(String resourceType) {
+    try {
+      return (Resource)
+          Class.forName("org.hl7.fhir.r4.model." + resourceType).getConstructor().newInstance();
+    } catch (InstantiationException
+        | IllegalAccessException
+        | ClassNotFoundException
+        | NoSuchMethodException
+        | InvocationTargetException e) {
+      String errorMessage =
+          String.format("Failed to instantiate new FHIR resource of type %s", resourceType);
+      log.error(errorMessage, e);
+      throw new FHIRException(errorMessage, e);
+    }
   }
 }

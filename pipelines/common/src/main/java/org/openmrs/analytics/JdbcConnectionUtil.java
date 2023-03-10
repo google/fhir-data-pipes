@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2022 Google LLC
+ * Copyright 2020-2023 Google LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,13 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.openmrs.analytics;
 
 import com.google.common.base.Preconditions;
 import com.mchange.v2.c3p0.ComboPooledDataSource;
 import java.beans.PropertyVetoException;
 import java.sql.Connection;
+import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.sql.Statement;
 import org.slf4j.Logger;
@@ -63,6 +63,12 @@ public class JdbcConnectionUtil {
   public Statement createStatement() throws SQLException {
     Connection con = getDataSource().getConnection();
     return con.createStatement();
+  }
+
+  public PreparedStatement createPreparedStatement(
+      String sql, int resultSetType, int resultSetConcurrency) throws SQLException {
+    Connection con = getDataSource().getConnection();
+    return con.prepareStatement(sql, resultSetType, resultSetConcurrency);
   }
 
   public void closeConnection(Statement stmt) throws SQLException {
