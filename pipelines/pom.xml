@@ -44,7 +44,7 @@
       For the same reason, we use an older version of SLF4J too. -->
     <slf4j.version>1.7.36</slf4j.version>
     <logback.version>1.2.11</logback.version>
-    <hapifhirVersion>6.2.5</hapifhirVersion>
+    <hapifhirVersion>6.4.2</hapifhirVersion>
     <hamcrest.version>2.2</hamcrest.version>
     <openmrsPlatformVersion>2.6.0-SNAPSHOT</openmrsPlatformVersion>
     <mockito.version>5.1.1</mockito.version>
