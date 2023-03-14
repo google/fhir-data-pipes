@@ -21,12 +21,13 @@ import java.util.List;
 import lombok.Data;
 import org.apache.beam.sdk.coders.DefaultCoder;
 import org.apache.beam.sdk.coders.SerializableCoder;
-import org.hl7.fhir.r4.model.Coding;
 
 @DefaultCoder(SerializableCoder.class)
 @AutoValue
 @Data
 abstract class HapiRowDescriptor implements Serializable {
+
+  private static final long serialVersionUID = 1L;
 
   static HapiRowDescriptor create(
       String resourceId,
@@ -48,5 +49,5 @@ abstract class HapiRowDescriptor implements Serializable {
 
   abstract String jsonResource();
 
-  List<Coding> tags;
+  List<ResourceTag> tags;
 }

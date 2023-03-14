@@ -103,7 +103,7 @@ public interface FhirEtlOptions extends PipelineOptions {
   void setJdbcDriverClass(String value);
 
   @Description("JDBC maximum pool size")
-  @Default.Integer(50)
+  @Default.Integer(20)
   int getJdbcMaxPoolSize();
 
   void setJdbcMaxPoolSize(int value);

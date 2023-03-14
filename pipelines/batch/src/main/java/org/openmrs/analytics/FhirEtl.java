@@ -34,6 +34,7 @@ import org.apache.beam.sdk.Pipeline;
 import org.apache.beam.sdk.PipelineResult;
 import org.apache.beam.sdk.coders.CannotProvideCoderException;
 import org.apache.beam.sdk.io.FileIO;
+import org.apache.beam.sdk.io.jdbc.JdbcIO;
 import org.apache.beam.sdk.options.PipelineOptionsFactory;
 import org.apache.beam.sdk.transforms.Create;
 import org.apache.beam.sdk.transforms.Flatten;
@@ -296,7 +297,9 @@ public class FhirEtl {
       PCollection<HapiRowDescriptor> payload =
           queryParameters.apply(
               "JdbcIO fetch for " + resourceType,
-              new JdbcFetchHapi.FetchRowsJdbcIo(jdbcConnectionUtil, options.getSince()));
+              new JdbcFetchHapi.FetchRowsJdbcIo(
+                  JdbcIO.DataSourceConfiguration.create(jdbcConnectionUtil.getDataSource()),
+                  options.getSince()));
 
       payload.apply(
           "Convert to parquet for " + resourceType,

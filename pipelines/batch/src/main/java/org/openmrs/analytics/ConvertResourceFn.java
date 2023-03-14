@@ -19,11 +19,14 @@ import java.io.IOException;
 import java.sql.SQLException;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import org.apache.beam.sdk.metrics.Counter;
 import org.apache.beam.sdk.metrics.Metrics;
+import org.hl7.fhir.r4.model.CanonicalType;
+import org.hl7.fhir.r4.model.Coding;
 import org.hl7.fhir.r4.model.Meta;
 import org.hl7.fhir.r4.model.Resource;
 import org.slf4j.Logger;
@@ -77,7 +80,18 @@ public class ConvertResourceFn extends FetchSearchPageFn<HapiRowDescriptor> {
             .setLastUpdated(simpleDateFormat.parse(element.lastUpdated()));
 
     if (element.getTags() != null) {
-      meta.setTag(element.getTags());
+      List<Coding> tags = new ArrayList<>();
+      for (ResourceTag resourceTag : element.getTags()) {
+        // The column tag_type of value 0 means it's of type TAG, 1 for PROFILE and 2 for SYSTEM.
+        if (resourceTag.getTagType() == 1) {
+          CanonicalType canonicalType = new CanonicalType();
+          canonicalType.setValue(resourceTag.getCoding().getCode());
+          meta.setProfile(List.of(canonicalType));
+        } else if (resourceTag.getTagType() == 0) {
+          tags.add(resourceTag.getCoding());
+        }
+      }
+      meta.setTag(tags);
     }
 
     String jsonResource = element.jsonResource();

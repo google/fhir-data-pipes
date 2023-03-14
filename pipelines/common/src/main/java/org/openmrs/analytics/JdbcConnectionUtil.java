@@ -18,16 +18,13 @@ package org.openmrs.analytics;
 import com.google.common.base.Preconditions;
 import com.mchange.v2.c3p0.ComboPooledDataSource;
 import java.beans.PropertyVetoException;
-import java.io.Serializable;
 import java.sql.Connection;
-import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.sql.Statement;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class JdbcConnectionUtil implements Serializable {
-  private static final long serialVersionUID = 1L;
+public class JdbcConnectionUtil {
   private static final Logger log = LoggerFactory.getLogger(JdbcConnectionUtil.class);
 
   private final ComboPooledDataSource comboPooledDataSource;
@@ -64,11 +61,6 @@ public class JdbcConnectionUtil implements Serializable {
   public Statement createStatement() throws SQLException {
     Connection con = getDataSource().getConnection();
     return con.createStatement();
-  }
-
-  public PreparedStatement createPreparedStatement(String query) throws SQLException {
-    Connection connection = getDataSource().getConnection();
-    return connection.prepareStatement(query);
   }
 
   public void closeConnection(Statement stmt) throws SQLException {
