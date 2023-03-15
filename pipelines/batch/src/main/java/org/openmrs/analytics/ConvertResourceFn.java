@@ -81,16 +81,19 @@ public class ConvertResourceFn extends FetchSearchPageFn<HapiRowDescriptor> {
 
     if (element.getTags() != null) {
       List<Coding> tags = new ArrayList<>();
+      List<CanonicalType> profiles = new ArrayList<>();
       for (ResourceTag resourceTag : element.getTags()) {
-        // The column tag_type of value 0 means it's of type TAG, 1 for PROFILE and 2 for SYSTEM.
+        // The HAPI FHIR tagType of value 0 means it's of type TAG, 1 for PROFILE and 2 for SYSTEM.
+        // https://hapifhir.io/hapi-fhir/apidocs/hapi-fhir-jpaserver-model/ca/uhn/fhir/jpa/model/entity/TagTypeEnum.html
         if (resourceTag.getTagType() == 1) {
           CanonicalType canonicalType = new CanonicalType();
           canonicalType.setValue(resourceTag.getCoding().getCode());
-          meta.setProfile(List.of(canonicalType));
+          profiles.add(canonicalType);
         } else if (resourceTag.getTagType() == 0) {
           tags.add(resourceTag.getCoding());
         }
       }
+      meta.setProfile(profiles);
       meta.setTag(tags);
     }
 

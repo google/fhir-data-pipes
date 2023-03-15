@@ -49,5 +49,6 @@ abstract class HapiRowDescriptor implements Serializable {
 
   abstract String jsonResource();
 
+  // FHIR tags.
   List<ResourceTag> tags;
 }

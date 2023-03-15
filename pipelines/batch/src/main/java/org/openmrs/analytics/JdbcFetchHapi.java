@@ -32,6 +32,7 @@ import org.apache.beam.sdk.transforms.join.KeyedPCollectionTuple;
 import org.apache.beam.sdk.values.KV;
 import org.apache.beam.sdk.values.PCollection;
 import org.apache.beam.sdk.values.TupleTag;
+import org.apache.commons.lang3.SerializationUtils;
 import org.hl7.fhir.r4.model.Coding;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -246,8 +247,10 @@ public class JdbcFetchHapi {
                   Iterator<HapiRowDescriptor> iterator = hapiRowDescriptorIterable.iterator();
                   if (iterator.hasNext()) {
                     HapiRowDescriptor hapiRowDescriptor = iterator.next();
-                    hapiRowDescriptor.setTags(tags);
-                    processContext.output(hapiRowDescriptor);
+                    // This is to avoid IllegalMutationException.
+                    HapiRowDescriptor rowDescriptor = SerializationUtils.clone(hapiRowDescriptor);
+                    rowDescriptor.setTags(tags);
+                    processContext.output(rowDescriptor);
                   }
                 }
               }));
