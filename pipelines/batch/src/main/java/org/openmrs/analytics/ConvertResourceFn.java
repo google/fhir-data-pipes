@@ -81,6 +81,7 @@ public class ConvertResourceFn extends FetchSearchPageFn<HapiRowDescriptor> {
 
     if (element.getTags() != null) {
       List<Coding> tags = new ArrayList<>();
+      List<Coding> securityList = new ArrayList<>();
       List<CanonicalType> profiles = new ArrayList<>();
       for (ResourceTag resourceTag : element.getTags()) {
         // The HAPI FHIR tagType of value 0 means it's of type TAG, 1 for PROFILE and 2 for SYSTEM.
@@ -91,10 +92,13 @@ public class ConvertResourceFn extends FetchSearchPageFn<HapiRowDescriptor> {
           profiles.add(canonicalType);
         } else if (resourceTag.getTagType() == 0) {
           tags.add(resourceTag.getCoding());
+        } else if (resourceTag.getTagType() == 2) {
+          securityList.add(resourceTag.getCoding());
         }
       }
       meta.setProfile(profiles);
       meta.setTag(tags);
+      meta.setSecurity(securityList);
     }
 
     String jsonResource = element.jsonResource();
