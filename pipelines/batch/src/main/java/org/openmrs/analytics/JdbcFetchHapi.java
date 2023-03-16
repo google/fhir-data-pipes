@@ -187,15 +187,22 @@ public class JdbcFetchHapi {
       if (!Strings.isNullOrEmpty(since)) {
         builder.append(" AND res.res_updated > '").append(since).append("'");
       }
-      try (Connection connection = jdbcConnectionUtil.getDataSource().getConnection()) {
-        PreparedStatement statement = connection.prepareStatement(builder.toString());
-        statement.setString(1, resourceType);
-        ResultSet resultSet = statement.executeQuery();
+      try (Connection connection = jdbcConnectionUtil.getDataSource().getConnection();
+          PreparedStatement statement =
+              createPreparedStatement(connection, builder.toString(), resourceType);
+          ResultSet resultSet = statement.executeQuery()) {
         resultSet.next();
         int count = resultSet.getInt("count");
         resourceCountMap.put(resourceType, count);
       }
     }
     return resourceCountMap;
+  }
+
+  private PreparedStatement createPreparedStatement(
+      Connection connection, String query, String parameter) throws SQLException {
+    PreparedStatement preparedStatement = connection.prepareStatement(query);
+    preparedStatement.setString(1, parameter);
+    return preparedStatement;
   }
 }
