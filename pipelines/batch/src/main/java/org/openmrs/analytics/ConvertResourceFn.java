@@ -79,27 +79,7 @@ public class ConvertResourceFn extends FetchSearchPageFn<HapiRowDescriptor> {
             .setVersionId(element.resourceVersion())
             .setLastUpdated(simpleDateFormat.parse(element.lastUpdated()));
 
-    if (element.getTags() != null) {
-      List<Coding> tags = new ArrayList<>();
-      List<Coding> securityList = new ArrayList<>();
-      List<CanonicalType> profiles = new ArrayList<>();
-      for (ResourceTag resourceTag : element.getTags()) {
-        // The HAPI FHIR tagType of value 0 means it's of type TAG, 1 for PROFILE and 2 for SYSTEM.
-        // https://hapifhir.io/hapi-fhir/apidocs/hapi-fhir-jpaserver-model/ca/uhn/fhir/jpa/model/entity/TagTypeEnum.html
-        if (resourceTag.getTagType() == 1) {
-          CanonicalType canonicalType = new CanonicalType();
-          canonicalType.setValue(resourceTag.getCoding().getCode());
-          profiles.add(canonicalType);
-        } else if (resourceTag.getTagType() == 0) {
-          tags.add(resourceTag.getCoding());
-        } else if (resourceTag.getTagType() == 2) {
-          securityList.add(resourceTag.getCoding());
-        }
-      }
-      meta.setProfile(profiles);
-      meta.setTag(tags);
-      meta.setSecurity(securityList);
-    }
+    setMetaTags(element, meta);
 
     String jsonResource = element.jsonResource();
     // The jsonResource field will be empty in case of deleted records and are skipped when written
@@ -131,6 +111,37 @@ public class ConvertResourceFn extends FetchSearchPageFn<HapiRowDescriptor> {
     }
     if (!this.sinkDbUrl.isEmpty()) {
       jdbcWriter.writeResource(resource);
+    }
+  }
+
+  private void setMetaTags(HapiRowDescriptor element, Meta meta) {
+    if (element.getTags() != null) {
+      List<Coding> tags = new ArrayList<>();
+      List<Coding> securityList = new ArrayList<>();
+      List<CanonicalType> profiles = new ArrayList<>();
+      for (ResourceTag resourceTag : element.getTags()) {
+        // The HAPI FHIR tagType of value 0 means it's of type TAG, 1 for PROFILE and 2 for SYSTEM.
+        // https://hapifhir.io/hapi-fhir/apidocs/hapi-fhir-jpaserver-model/ca/uhn/fhir/jpa/model/entity/TagTypeEnum.html
+        if (resourceTag.getTagType() == 1) {
+          CanonicalType canonicalType = new CanonicalType();
+          canonicalType.setValue(resourceTag.getCoding().getCode());
+          profiles.add(canonicalType);
+        } else if (resourceTag.getTagType() == 0) {
+          tags.add(resourceTag.getCoding());
+        } else if (resourceTag.getTagType() == 2) {
+          securityList.add(resourceTag.getCoding());
+        }
+      }
+
+      if (!profiles.isEmpty()) {
+        meta.setProfile(profiles);
+      }
+      if (!tags.isEmpty()) {
+        meta.setTag(tags);
+      }
+      if (!securityList.isEmpty()) {
+        meta.setSecurity(securityList);
+      }
     }
   }
 
