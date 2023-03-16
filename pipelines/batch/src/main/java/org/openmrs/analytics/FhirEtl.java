@@ -272,9 +272,10 @@ public class FhirEtl {
     JdbcConnectionUtil jdbcConnectionUtil = createJdbcConnection(options, dbConfig);
 
     Map<String, Integer> resourceCount = null;
-    if (!options.isRunIncremental()) {
+    // The Fhir Search APIs does not consider the deleted records, hence use this mode if deleted
+    // records need to be ignored.
+    if (!options.getProcessDeletedRecords()) {
       FhirSearchUtil fhirSearchUtil = createFhirSearchUtil(options, fhirContext);
-
       // Get the resource count for each resource type and distribute the query workload based on
       // batch size.
       resourceCount =

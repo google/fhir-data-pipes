@@ -19,7 +19,6 @@ import com.google.common.base.Preconditions;
 import com.mchange.v2.c3p0.ComboPooledDataSource;
 import java.beans.PropertyVetoException;
 import java.sql.Connection;
-import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.sql.Statement;
 import org.slf4j.Logger;
@@ -63,12 +62,6 @@ public class JdbcConnectionUtil {
   public Statement createStatement() throws SQLException {
     Connection con = getDataSource().getConnection();
     return con.createStatement();
-  }
-
-  public PreparedStatement createPreparedStatement(
-      String sql, int resultSetType, int resultSetConcurrency) throws SQLException {
-    Connection con = getDataSource().getConnection();
-    return con.prepareStatement(sql, resultSetType, resultSetConcurrency);
   }
 
   public void closeConnection(Statement stmt) throws SQLException {

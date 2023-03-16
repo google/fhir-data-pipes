@@ -228,9 +228,10 @@ public interface FhirEtlOptions extends PipelineOptions {
 
   void setSourceJsonFilePattern(String value);
 
-  @Description("Flag to specify whether the triggered pipeline is incremental or initial batch")
+  @Description(
+      "Flag to specify whether the deleted records should be processed or not during the pipeline")
   @Default.Boolean(false)
-  Boolean isRunIncremental();
+  Boolean getProcessDeletedRecords();
 
-  void setRunIncremental(Boolean value);
+  void setProcessDeletedRecords(Boolean value);
 }

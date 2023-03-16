@@ -15,6 +15,7 @@
  */
 package org.openmrs.analytics;
 
+import ca.uhn.fhir.context.FhirVersionEnum;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.sql.SQLException;
@@ -48,7 +49,7 @@ public class ConvertResourceFn extends FetchSearchPageFn<HapiRowDescriptor> {
 
   private final HashMap<String, Counter> totalPushTimeMillisMap;
 
-  private final Boolean isRunIncremental;
+  private final Boolean processDeletedRecords;
 
   ConvertResourceFn(FhirEtlOptions options, String stageIdentifier) {
     super(options, stageIdentifier);
@@ -56,7 +57,7 @@ public class ConvertResourceFn extends FetchSearchPageFn<HapiRowDescriptor> {
     this.totalParseTimeMillisMap = new HashMap<String, Counter>();
     this.totalGenerateTimeMillisMap = new HashMap<String, Counter>();
     this.totalPushTimeMillisMap = new HashMap<String, Counter>();
-    this.isRunIncremental = options.isRunIncremental();
+    this.processDeletedRecords = options.getProcessDeletedRecords();
     List<String> resourceTypes = Arrays.asList(options.getResourceList().split(","));
     for (String resourceType : resourceTypes) {
       this.numFetchedResourcesMap.put(
@@ -84,22 +85,19 @@ public class ConvertResourceFn extends FetchSearchPageFn<HapiRowDescriptor> {
             .setVersionId(element.resourceVersion())
             .setLastUpdated(simpleDateFormat.parse(element.lastUpdated()));
     String jsonResource = element.jsonResource();
-    // The jsonResource field will be empty in case of deleted records and are skipped when written
-    // to target parquet files/sinkDb. This is fine for initial batch as they need not be migrated,
-    // but for incremental run they need to be migrated and the original records have to be deleted
-    // from the consolidated parquet files/sinkDb.
-    // TODO https://github.com/google/fhir-data-pipes/issues/547
     long startTime = System.currentTimeMillis();
     Resource resource = null;
     if (jsonResource == null || jsonResource.isBlank()) {
-      // Ignore deleted records during initial batch run
-      if (!isRunIncremental) {
+      // The jsonResource field will be empty in case of deleted records and are ignored during
+      // the initial batch run
+      if (!processDeletedRecords) {
         return;
       }
 
-      // Create a new resource and attach the meta with a deleted tag, this deleted tag is later
-      // used in the merge process to identify if the record has been deleted
-      resource = createNewFhirResource(resourceType);
+      // For incremental run, create a new resource and attach the meta field with a deleted tag,
+      // this deleted tag is later used in the merge process to identify if the record has been
+      // deleted
+      resource = createNewFhirResource(element.fhirVersion(), resourceType);
       ActionType removeAction = ActionType.REMOVE;
       meta.setLastUpdated(new Date());
       meta.addTag(
@@ -120,10 +118,14 @@ public class ConvertResourceFn extends FetchSearchPageFn<HapiRowDescriptor> {
     }
     if (!this.sinkPath.isEmpty()) {
       startTime = System.currentTimeMillis();
+      // TODO : Remove the deleted resources from the sink fhir store
+      // https://github.com/google/fhir-data-pipes/issues/588
       fhirStoreUtil.uploadResource(resource);
       totalPushTimeMillisMap.get(resourceType).inc(System.currentTimeMillis() - startTime);
     }
     if (!this.sinkDbUrl.isEmpty()) {
+      // TODO : Remove the deleted resources from the sink database
+      // https://github.com/google/fhir-data-pipes/issues/588
       jdbcWriter.writeResource(resource);
     }
   }
@@ -135,10 +137,12 @@ public class ConvertResourceFn extends FetchSearchPageFn<HapiRowDescriptor> {
     writeResource(element);
   }
 
-  private Resource createNewFhirResource(String resourceType) {
+  private Resource createNewFhirResource(String fhirVersion, String resourceType) {
     try {
       return (Resource)
-          Class.forName("org.hl7.fhir.r4.model." + resourceType).getConstructor().newInstance();
+          Class.forName(getFhirBasePackageName(fhirVersion) + "." + resourceType)
+              .getConstructor()
+              .newInstance();
     } catch (InstantiationException
         | IllegalAccessException
         | ClassNotFoundException
@@ -148,6 +152,28 @@ public class ConvertResourceFn extends FetchSearchPageFn<HapiRowDescriptor> {
           String.format("Failed to instantiate new FHIR resource of type %s", resourceType);
       log.error(errorMessage, e);
       throw new FHIRException(errorMessage, e);
+    }
+  }
+
+  private String getFhirBasePackageName(String fhirVersion) {
+    FhirVersionEnum fhirVersionEnum = FhirVersionEnum.forVersionString(fhirVersion);
+    switch (fhirVersionEnum) {
+      case DSTU2:
+        return org.hl7.fhir.dstu2.model.Base.class.getPackageName();
+      case DSTU2_1:
+        return org.hl7.fhir.dstu2016may.model.Base.class.getPackageName();
+      case DSTU3:
+        return org.hl7.fhir.dstu3.model.Base.class.getPackageName();
+      case R4:
+        return org.hl7.fhir.r4.model.Base.class.getPackageName();
+      case R4B:
+        return org.hl7.fhir.r4b.model.Base.class.getPackageName();
+      case R5:
+        return org.hl7.fhir.r5.model.Base.class.getPackageName();
+      default:
+        String errorMessage = String.format("Invalid fhir version %s", fhirVersion);
+        log.error(errorMessage);
+        throw new FHIRException(errorMessage);
     }
   }
 }

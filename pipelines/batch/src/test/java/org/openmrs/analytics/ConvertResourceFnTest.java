@@ -17,6 +17,7 @@ package org.openmrs.analytics;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.notNullValue;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
@@ -30,7 +31,7 @@ import java.text.SimpleDateFormat;
 import org.apache.beam.sdk.options.PipelineOptionsFactory;
 import org.hl7.fhir.r4.model.Patient;
 import org.hl7.fhir.r4.model.Resource;
-import org.junit.Before;
+import org.hl7.fhir.r4.model.codesystems.ActionType;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
@@ -48,9 +49,7 @@ public class ConvertResourceFnTest {
 
   @Captor private ArgumentCaptor<Resource> resourceCaptor;
 
-  @Before
-  public void setUp() throws PropertyVetoException, SQLException {
-    String[] args = {"--outputParquetPath=SOME_PATH"};
+  private void setUp(String args[]) throws PropertyVetoException, SQLException {
     FhirEtlOptions options =
         PipelineOptionsFactory.fromArgs(args).withValidation().as(FhirEtlOptions.class);
     convertResourceFn =
@@ -68,11 +67,14 @@ public class ConvertResourceFnTest {
 
   @Test
   public void testProcessPatientResource()
-      throws IOException, java.text.ParseException, SQLException {
+      throws IOException, java.text.ParseException, SQLException, PropertyVetoException {
+    String[] args = {"--outputParquetPath=SOME_PATH"};
+    setUp(args);
     String patientResourceStr =
         Resources.toString(Resources.getResource("patient.json"), StandardCharsets.UTF_8);
     HapiRowDescriptor element =
-        HapiRowDescriptor.create("123", "Patient", "2020-09-19 12:09:23", "1", patientResourceStr);
+        HapiRowDescriptor.create(
+            "123", "Patient", "2020-09-19 12:09:23", "R4", "1", patientResourceStr);
     convertResourceFn.writeResource(element);
 
     // Verify the resource is sent to the writer.
@@ -88,12 +90,41 @@ public class ConvertResourceFnTest {
   }
 
   @Test
-  public void testProcessDeletedPatientResource() throws SQLException, IOException, ParseException {
+  public void testProcessDeletedPatientResourceWithFlagFalse()
+      throws SQLException, IOException, ParseException, PropertyVetoException {
+    String[] args = {"--outputParquetPath=SOME_PATH", "--processDeletedRecords=false"};
+    setUp(args);
     // Deleted Patient resource
     HapiRowDescriptor element =
-        HapiRowDescriptor.create("123", "Patient", "2020-09-19 12:09:23", "2", "");
+        HapiRowDescriptor.create("123", "Patient", "2020-09-19 12:09:23", "R4", "2", "");
     convertResourceFn.writeResource(element);
     // Verify that the ParquetUtil writer is not invoked for the deleted resource.
     verify(mockParquetUtil, times(0)).write(Mockito.any());
+  }
+
+  @Test
+  public void testProcessDeletedPatientResourceWithFlagTrue()
+      throws SQLException, IOException, ParseException, PropertyVetoException {
+    String[] args = {"--outputParquetPath=SOME_PATH", "--processDeletedRecords=true"};
+    setUp(args);
+    // Deleted Patient resource
+    HapiRowDescriptor element =
+        HapiRowDescriptor.create("123", "Patient", "2020-09-19 12:09:23", "R4", "2", "");
+    convertResourceFn.writeResource(element);
+
+    // Verify the deleted resource is sent to the writer.
+    verify(mockParquetUtil).write(resourceCaptor.capture());
+    Resource capturedResource = resourceCaptor.getValue();
+    assertThat(capturedResource.getId(), equalTo("123"));
+    assertThat(capturedResource.getMeta().getVersionId(), equalTo("2"));
+    assertThat(
+        capturedResource
+            .getMeta()
+            .getTag(ActionType.REMOVE.getSystem(), ActionType.REMOVE.toCode()),
+        notNullValue());
+    assertThat(capturedResource.getResourceType().toString(), equalTo("Patient"));
+    assertThat(
+        capturedResource.getClass().getName(),
+        equalTo(org.hl7.fhir.r4.model.Patient.class.getName()));
   }
 }

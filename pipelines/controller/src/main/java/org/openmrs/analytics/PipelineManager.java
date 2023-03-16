@@ -254,7 +254,7 @@ public class PipelineManager {
     options.setOutputParquetPath(incrementalDwhRoot);
     String since = currentDwh.readTimestampFile().toString();
     options.setSince(since);
-    options.setRunIncremental(Boolean.TRUE);
+    options.setProcessDeletedRecords(Boolean.TRUE);
     Pipeline pipeline = buildJdbcPipeline(options);
 
     // The merger pipeline merges the original full DWH with the new incremental one.

@@ -17,7 +17,9 @@ package org.openmrs.analytics;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Charsets;
+import com.google.common.base.Strings;
 import java.sql.Blob;
+import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -27,6 +29,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import org.apache.beam.sdk.io.jdbc.JdbcIO;
 import org.apache.beam.sdk.transforms.PTransform;
 import org.apache.beam.sdk.values.PCollection;
@@ -71,9 +74,10 @@ public class JdbcFetchHapi {
       String resourceId = resultSet.getString("res_id");
       String resourceType = resultSet.getString("res_type");
       String lastUpdated = resultSet.getString("res_updated");
+      String fhirVersion = resultSet.getString("res_version");
       String resourceVersion = resultSet.getString("res_ver");
       return HapiRowDescriptor.create(
-          resourceId, resourceType, lastUpdated, resourceVersion, jsonResource);
+          resourceId, resourceType, lastUpdated, fhirVersion, resourceVersion, jsonResource);
     }
   }
 
@@ -93,7 +97,7 @@ public class JdbcFetchHapi {
       // Note the constraint on `res.res_ver` ensures we only pick the latest version.
       StringBuilder builder =
           new StringBuilder(
-              "SELECT res.res_id, res.res_type, res.res_updated, res.res_ver, "
+              "SELECT res.res_id, res.res_type, res.res_updated, res.res_version, res.res_ver, "
                   + "ver.res_encoding, ver.res_text FROM hfj_resource res, hfj_res_ver ver "
                   + "WHERE res.res_type=? AND res.res_id = ver.res_id AND "
                   + "  res.res_ver = ver.res_ver AND res.res_id % ? = ? ");
@@ -175,24 +179,23 @@ public class JdbcFetchHapi {
    */
   public Map<String, Integer> searchResourceCounts(String resourceList, String since)
       throws SQLException {
-    HashSet<String> resourceTypes = new HashSet<String>(Arrays.asList(resourceList.split(",")));
-    HashMap<String, Integer> hashMap = new HashMap<String, Integer>();
+    Set<String> resourceTypes = new HashSet<>(Arrays.asList(resourceList.split(",")));
+    Map<String, Integer> resourceCountMap = new HashMap<>();
     for (String resourceType : resourceTypes) {
       StringBuilder builder = new StringBuilder();
       builder.append("SELECT count(*) FROM hfj_resource res where res.res_type = ?");
-      if (since != null && !since.isBlank()) {
+      if (!Strings.isNullOrEmpty(since)) {
         builder.append(" AND res.res_updated > '").append(since).append("'");
       }
-      PreparedStatement statement =
-          jdbcConnectionUtil.createPreparedStatement(
-              builder.toString(), ResultSet.TYPE_SCROLL_SENSITIVE, ResultSet.CONCUR_READ_ONLY);
-      statement.setString(1, resourceType);
-      ResultSet resultSet = statement.executeQuery();
-      resultSet.first();
-      int count = resultSet.getInt("count");
-      hashMap.put(resourceType, count);
-      jdbcConnectionUtil.closeConnection(statement);
+      try (Connection connection = jdbcConnectionUtil.getDataSource().getConnection()) {
+        PreparedStatement statement = connection.prepareStatement(builder.toString());
+        statement.setString(1, resourceType);
+        ResultSet resultSet = statement.executeQuery();
+        resultSet.next();
+        int count = resultSet.getInt("count");
+        resourceCountMap.put(resourceType, count);
+      }
     }
-    return hashMap;
+    return resourceCountMap;
   }
 }

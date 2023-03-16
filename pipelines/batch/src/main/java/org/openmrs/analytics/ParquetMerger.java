@@ -110,11 +110,10 @@ public class ParquetMerger {
         while (iterator.hasNext()) {
           GenericRecord tagCoding = (GenericRecord) iterator.next();
           if (tagCoding.get(SYSTEM_KEY) != null
-              && tagCoding.get(SYSTEM_KEY).toString().equals(ActionType.REMOVE.getSystem())) {
-            if (tagCoding.get(CODE_KEY) != null
-                && tagCoding.get(CODE_KEY).toString().equals(ActionType.REMOVE.toCode())) {
-              return Boolean.TRUE;
-            }
+              && tagCoding.get(SYSTEM_KEY).toString().equals(ActionType.REMOVE.getSystem())
+              && tagCoding.get(CODE_KEY) != null
+              && tagCoding.get(CODE_KEY).toString().equals(ActionType.REMOVE.toCode())) {
+            return Boolean.TRUE;
           }
         }
       }
