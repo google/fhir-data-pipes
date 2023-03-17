@@ -263,6 +263,7 @@ public class PipelineManager {
     mergerOptions.setRunner(FlinkRunner.class);
     mergerOptions.setNumShards(dataProperties.getMaxWorkers());
     FlinkPipelineOptions flinkOptions = mergerOptions.as(FlinkPipelineOptions.class);
+    flinkOptions.setFasterCopy(true);
     flinkOptions.setMaxParallelism(dataProperties.getMaxWorkers());
 
     if (pipeline == null) {
