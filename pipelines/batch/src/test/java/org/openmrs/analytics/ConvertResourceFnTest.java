@@ -27,7 +27,9 @@ import java.nio.charset.StandardCharsets;
 import java.sql.SQLException;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.util.List;
 import org.apache.beam.sdk.options.PipelineOptionsFactory;
+import org.hl7.fhir.r4.model.Coding;
 import org.hl7.fhir.r4.model.Patient;
 import org.hl7.fhir.r4.model.Resource;
 import org.junit.Before;
@@ -95,5 +97,40 @@ public class ConvertResourceFnTest {
     convertResourceFn.writeResource(element);
     // Verify that the ParquetUtil writer is not invoked for the deleted resource.
     verify(mockParquetUtil, times(0)).write(Mockito.any());
+  }
+
+  @Test
+  public void testResourceMetaTags() throws IOException, java.text.ParseException, SQLException {
+    String patientResourceStr =
+        Resources.toString(Resources.getResource("patient.json"), StandardCharsets.UTF_8);
+    HapiRowDescriptor element =
+        HapiRowDescriptor.create("123", "Patient", "2020-09-19 12:09:23", "1", patientResourceStr);
+    // Set Tag of HAPI FHIR tag type 0
+    Coding coding0 = new Coding("system0", "code0", "display0");
+    ResourceTag tag0 = new ResourceTag(coding0, "123", 0);
+    // Set Tag of HAPI FHIR tag type 1
+    Coding coding1 = new Coding("system1", "code1", "display1");
+    ResourceTag tag1 = new ResourceTag(coding1, "123", 1);
+    // Set Tag of HAPI FHIR tag type 2
+    Coding coding2 = new Coding("system2", "code2", "display2");
+    ResourceTag tag2 = new ResourceTag(coding2, "123", 2);
+    element.setTags(List.of(tag0, tag1, tag2));
+    convertResourceFn.writeResource(element);
+
+    // Verify the resource is sent to the writer.
+    verify(mockParquetUtil).write(resourceCaptor.capture());
+    Resource capturedResource = resourceCaptor.getValue();
+    assertThat(capturedResource.getId(), equalTo("123"));
+    assertThat(capturedResource.getMeta().getVersionId(), equalTo("1"));
+    assertThat(
+        capturedResource.getMeta().getLastUpdated(),
+        equalTo(new SimpleDateFormat("yyyy-MM-dd hh:mm:ss").parse("2020-09-19 12:09:23")));
+    assertThat(capturedResource.getMeta().getTag().get(0).getSystem(), equalTo("system0"));
+    assertThat(capturedResource.getMeta().getTag().get(0).getCode(), equalTo("code0"));
+    assertThat(capturedResource.getMeta().getTag().get(0).getDisplay(), equalTo("display0"));
+    assertThat(capturedResource.getMeta().getProfile().get(0).asStringValue(), equalTo("code1"));
+    assertThat(capturedResource.getMeta().getSecurity().get(0).getCode(), equalTo("code2"));
+    assertThat(capturedResource.getMeta().getSecurity().get(0).getSystem(), equalTo("system2"));
+    assertThat(capturedResource.getMeta().getSecurity().get(0).getDisplay(), equalTo("display2"));
   }
 }
