@@ -25,7 +25,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class JdbcConnectionUtil {
-
   private static final Logger log = LoggerFactory.getLogger(JdbcConnectionUtil.class);
 
   private final ComboPooledDataSource comboPooledDataSource;
