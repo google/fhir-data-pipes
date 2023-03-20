@@ -37,7 +37,11 @@ import org.apache.beam.sdk.io.fs.MatchResult.Metadata;
 import org.apache.beam.sdk.io.fs.MatchResult.Status;
 import org.apache.beam.sdk.io.fs.ResolveOptions.StandardResolveOptions;
 import org.apache.beam.sdk.io.fs.ResourceId;
+import org.apache.beam.sdk.metrics.MetricQueryResults;
 import org.apache.beam.sdk.options.PipelineOptionsFactory;
+import org.openmrs.analytics.exception.MetricsNotSupportedException;
+import org.openmrs.analytics.metrics.PipelineMetrics;
+import org.openmrs.analytics.metrics.PipelineMetricsFactory;
 import org.openmrs.analytics.model.DatabaseConfiguration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -60,6 +64,8 @@ public class PipelineManager {
 
   @Autowired private DataProperties dataProperties;
 
+  @Autowired private PipelineMetricsFactory pipelineMetricsFactory;
+
   private PipelineThread currentPipeline;
 
   private DwhFiles currentDwh;
@@ -70,6 +76,16 @@ public class PipelineManager {
 
   // TODO expose this in the web-UI
   private LastRunStatus lastRunStatus = LastRunStatus.NOT_RUN;
+
+  public MetricQueryResults getPipelineMetrics() throws MetricsNotSupportedException {
+    if (isRunning()) {
+      PipelineMetrics pipelineMetrics =
+          pipelineMetricsFactory.getPipelineMetrics(
+              currentPipeline.pipeline.getOptions().getRunner());
+      return pipelineMetrics.getMetricResults();
+    }
+    return null;
+  }
 
   private void setLastRunStatus(LastRunStatus status) {
     lastRunStatus = status;

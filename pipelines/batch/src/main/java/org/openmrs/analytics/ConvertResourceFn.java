@@ -56,16 +56,24 @@ public class ConvertResourceFn extends FetchSearchPageFn<HapiRowDescriptor> {
     for (String resourceType : resourceTypes) {
       this.numFetchedResourcesMap.put(
           resourceType,
-          Metrics.counter(EtlUtils.METRICS_NAMESPACE, "numFetchedResources_" + resourceType));
+          Metrics.counter(
+              MetricsConstants.METRICS_NAMESPACE,
+              MetricsConstants.NUM_FETCHED_RESOURCES + resourceType));
       this.totalParseTimeMillisMap.put(
           resourceType,
-          Metrics.counter(EtlUtils.METRICS_NAMESPACE, "totalParseTimeMillis_" + resourceType));
+          Metrics.counter(
+              MetricsConstants.METRICS_NAMESPACE,
+              MetricsConstants.TOTAL_PARSE_TIME_MILLIS + resourceType));
       this.totalGenerateTimeMillisMap.put(
           resourceType,
-          Metrics.counter(EtlUtils.METRICS_NAMESPACE, "totalGenerateTimeMillis_" + resourceType));
+          Metrics.counter(
+              MetricsConstants.METRICS_NAMESPACE,
+              MetricsConstants.TOTAL_GENERATE_TIME_MILLIS + resourceType));
       this.totalPushTimeMillisMap.put(
           resourceType,
-          Metrics.counter(EtlUtils.METRICS_NAMESPACE, "totalPushTimeMillis_" + resourceType));
+          Metrics.counter(
+              MetricsConstants.METRICS_NAMESPACE,
+              MetricsConstants.TOTAL_PUSH_TIME_MILLIS + resourceType));
     }
     simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd hh:mm:ss");
   }

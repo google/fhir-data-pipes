@@ -7,3 +7,5 @@ taskmanager.memory.network.max: 5gb
 # This is to make pipeline.run() non-blocking with FlinkRunner; unfortunately
 # this is overwritten in `local` mode: https://stackoverflow.com/a/74416240
 execution.attached: false
+
+execution.job-listeners: org.openmrs.analytics.metrics.FlinkJobListener

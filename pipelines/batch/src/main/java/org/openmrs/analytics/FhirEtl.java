@@ -35,8 +35,10 @@ import org.apache.beam.sdk.PipelineResult;
 import org.apache.beam.sdk.coders.CannotProvideCoderException;
 import org.apache.beam.sdk.io.FileIO;
 import org.apache.beam.sdk.io.jdbc.JdbcIO;
+import org.apache.beam.sdk.metrics.Metrics;
 import org.apache.beam.sdk.options.PipelineOptionsFactory;
 import org.apache.beam.sdk.transforms.Create;
+import org.apache.beam.sdk.transforms.DoFn;
 import org.apache.beam.sdk.transforms.Flatten;
 import org.apache.beam.sdk.transforms.ParDo;
 import org.apache.beam.sdk.transforms.Sum;
@@ -258,6 +260,19 @@ public class FhirEtl {
     }
   }
 
+  /** A simple DoFn that captures the gauge metric of the given input type */
+  public static class LogAsMetric extends DoFn<KV<String, Long>, Void> {
+    @ProcessElement
+    public void processElement(ProcessContext c) {
+      KV<String, Long> input = c.element();
+      Metrics.gauge(
+              MetricsConstants.METRICS_NAMESPACE,
+              MetricsConstants.TOTAL_NO_OF_RESOURCES + input.getKey())
+          .set(input.getValue());
+      log.info("Logging the metric {}, {}", input.getKey(), input.getValue());
+    }
+  }
+
   /**
    * Driver function for running JDBC direct fetch mode with a HAPI source server. The JDBC fetch
    * mode uses Beam JdbcIO to fetch FHIR resources directly from the HAPI server's database and uses
@@ -285,7 +300,13 @@ public class FhirEtl {
       if (numResources == 0) {
         continue;
       }
+
       foundResource = true;
+      PCollection<KV<String, Long>> initialPCollection =
+          pipeline.apply(
+              "Metric parameters for " + resourceType,
+              Create.of(KV.of(resourceType, Long.valueOf(numResources))));
+      initialPCollection.apply(ParDo.of((new LogAsMetric())));
 
       PCollection<QueryParameterDescriptor> queryParameters =
           pipeline.apply(

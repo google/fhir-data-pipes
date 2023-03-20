@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2022 Google LLC
+ * Copyright 2020-2023 Google LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,11 @@ package org.openmrs.analytics;
 
 import java.beans.PropertyVetoException;
 import java.io.IOException;
+import org.apache.beam.sdk.metrics.MetricQueryResults;
+import org.openmrs.analytics.exception.MetricsNotSupportedException;
+import org.openmrs.analytics.metrics.ProgressStats;
+import org.openmrs.analytics.metrics.Stats;
+import org.openmrs.analytics.metrics.StatsHelper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -49,11 +54,25 @@ public class ApiController {
   }
 
   @GetMapping("/status")
-  public String getStatus() {
-    // TODO instead of just a boolean status, we should return progress stats too.
+  public ProgressStats getStatus() {
+    ProgressStats progressStats = new ProgressStats();
     if (pipelineManager.isRunning()) {
-      return "RUNNING";
+      progressStats.setPipelineStatus("RUNNING");
+      progressStats.setStats(getStats());
+    } else {
+      progressStats.setPipelineStatus("IDLE");
     }
-    return "IDLE";
+    return progressStats;
+  }
+
+  private Stats getStats() {
+    MetricQueryResults metricQueryResults = null;
+    try {
+      metricQueryResults = pipelineManager.getPipelineMetrics();
+    } catch (MetricsNotSupportedException e) {
+      logger.warn("Metrics currently not supported for the pipeline.", e);
+      return null;
+    }
+    return StatsHelper.createStats(metricQueryResults);
   }
 }
