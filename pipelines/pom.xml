@@ -50,7 +50,7 @@
     <mockito.version>5.1.1</mockito.version>
     <jcommander.version>1.82</jcommander.version>
     <license-maven-plugin.version>4.1</license-maven-plugin.version>
-    <beam.version>2.44.0</beam.version>
+    <beam.version>2.45.0</beam.version>
   </properties>
 
   <dependencyManagement>
