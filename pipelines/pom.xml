@@ -42,7 +42,7 @@
       spring-boot-starter-logging; it uses org.slf4j.impl.StaticLoggerBinder
       which was removed in 1.3 https://stackoverflow.com/questions/67082351
       For the same reason, we use an older version of SLF4J too. -->
-    <slf4j.version>1.7.36</slf4j.version>
+    <slf4j.version>2.0.7</slf4j.version>
     <logback.version>1.2.11</logback.version>
     <hapifhirVersion>6.2.5</hapifhirVersion>
     <hamcrest.version>2.2</hamcrest.version>
