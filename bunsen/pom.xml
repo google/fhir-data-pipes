@@ -21,14 +21,14 @@
 
     <compile.source>11</compile.source>
 
-    <hapi.fhir.version>6.4.2</hapi.fhir.version>
+    <hapi.fhir.version>6.4.3</hapi.fhir.version>
     <avro.version>1.11.1</avro.version>
     <junit.version>4.13.2</junit.version>
     <hamcrest.version>2.2</hamcrest.version>
     <scm.url>http://github.com/cerner/bunsen/tree/master/</scm.url>
     <scm.connection>scm:git:git@github.com/cerner/bunsen.git</scm.connection>
     <python.version>3.5.3</python.version>
-    <maven-javadoc.plugin.version>2.10.3</maven-javadoc.plugin.version>
+    <maven-javadoc.plugin.version>3.5.0</maven-javadoc.plugin.version>
     <maven-project-info-reports.plugin.version>3.4.2</maven-project-info-reports.plugin.version>
     <slf4j.version>1.7.36</slf4j.version>
     <logback.version>1.2.11</logback.version>
@@ -225,7 +225,7 @@
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-compiler-plugin</artifactId>
-          <version>3.10.1</version>
+          <version>3.11.0</version>
         </plugin>
 
         <plugin>
@@ -245,7 +245,7 @@
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-javadoc-plugin</artifactId>
-          <version>3.4.1</version>
+          <version>3.5.0</version>
         </plugin>
 
         <plugin>
@@ -300,13 +300,13 @@
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-scm-plugin</artifactId>
-          <version>1.13.0</version>
+          <version>2.0.0</version>
         </plugin>
 
         <plugin>
           <groupId>net.alchim31.maven</groupId>
           <artifactId>scala-maven-plugin</artifactId>
-          <version>4.8.0</version>
+          <version>4.8.1</version>
           <executions>
             <execution>
               <id>scala-compile-first</id>
@@ -346,13 +346,13 @@
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-surefire-plugin</artifactId>
-          <version>2.22.2</version>
+          <version>3.0.0</version>
         </plugin>
 
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-surefire-report-plugin</artifactId>
-          <version>2.22.2</version>
+          <version>3.0.0</version>
         </plugin>
 
         <plugin>
