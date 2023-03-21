@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2022 Google LLC
+ * Copyright 2020-2023 Google LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,10 +15,18 @@
  */
 package org.openmrs.analytics;
 
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.equalTo;
+
+import com.mchange.v2.c3p0.ComboPooledDataSource;
 import java.beans.PropertyVetoException;
 import java.io.IOException;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.List;
+import java.util.Map;
 import junit.framework.TestCase;
 import org.apache.beam.sdk.options.PipelineOptionsFactory;
 import org.apache.beam.sdk.testing.TestPipeline;
@@ -83,6 +91,7 @@ public class JdbcFetchHapiTest extends TestCase {
     Mockito.when(resultSet.getString("res_type")).thenReturn("Encounter");
     Mockito.when(resultSet.getString("res_updated")).thenReturn("2002-03-12 10:09:20");
     Mockito.when(resultSet.getString("res_ver")).thenReturn("1");
+    Mockito.when(resultSet.getString("res_version")).thenReturn("R4");
 
     HapiRowDescriptor rowDescriptor =
         new JdbcFetchHapi.ResultSetToRowDescriptor().mapRow(resultSet);
@@ -92,6 +101,38 @@ public class JdbcFetchHapiTest extends TestCase {
     assertEquals(rowDescriptor.resourceType(), "Encounter");
     assertEquals(rowDescriptor.resourceVersion(), "1");
     assertEquals(rowDescriptor.lastUpdated(), "2002-03-12 10:09:20");
+    assertEquals(rowDescriptor.fhirVersion(), "R4");
     assertEquals(rowDescriptor.jsonResource(), "");
+  }
+
+  @Test
+  public void testSearchResourceCounts() throws SQLException {
+    String resourceList = "Patient,Encounter,Observation";
+    String since = "2002-03-12T10:09:20.123456Z";
+
+    JdbcConnectionUtil mockedJdbcConnectionUtil = Mockito.mock(JdbcConnectionUtil.class);
+    ComboPooledDataSource mockedDataSource = Mockito.mock(ComboPooledDataSource.class);
+    Mockito.when(mockedJdbcConnectionUtil.getDataSource()).thenReturn(mockedDataSource);
+    JdbcFetchHapi jdbcFetchHapi1 = new JdbcFetchHapi(mockedJdbcConnectionUtil);
+    Connection mockedConnection = Mockito.mock(Connection.class);
+    PreparedStatement mockedPreparedStatement = Mockito.mock(PreparedStatement.class);
+    ResultSet mockedResultSet = Mockito.mock(ResultSet.class);
+    Mockito.when(mockedPreparedStatement.executeQuery()).thenReturn(mockedResultSet);
+    Mockito.when(mockedResultSet.getInt("count")).thenReturn(100, 100, 100);
+    Mockito.when(mockedDataSource.getConnection()).thenReturn(mockedConnection);
+    Mockito.when(
+            mockedConnection.prepareStatement(
+                "SELECT count(*) FROM hfj_resource res where res.res_type = ? AND res.res_updated >"
+                    + " '"
+                    + since
+                    + "'"))
+        .thenReturn(mockedPreparedStatement);
+
+    Map<String, Integer> resourceCountMap =
+        jdbcFetchHapi1.searchResourceCounts(resourceList, since);
+
+    assertThat(resourceCountMap.get("Patient"), equalTo(100));
+    assertThat(resourceCountMap.get("Encounter"), equalTo(100));
+    assertThat(resourceCountMap.get("Observation"), equalTo(100));
   }
 }
