@@ -19,11 +19,14 @@ import java.io.IOException;
 import java.sql.SQLException;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import org.apache.beam.sdk.metrics.Counter;
 import org.apache.beam.sdk.metrics.Metrics;
+import org.hl7.fhir.r4.model.CanonicalType;
+import org.hl7.fhir.r4.model.Coding;
 import org.hl7.fhir.r4.model.Meta;
 import org.hl7.fhir.r4.model.Resource;
 import org.slf4j.Logger;
@@ -76,6 +79,8 @@ public class ConvertResourceFn extends FetchSearchPageFn<HapiRowDescriptor> {
             .setVersionId(element.resourceVersion())
             .setLastUpdated(simpleDateFormat.parse(element.lastUpdated()));
 
+    setMetaTags(element, meta);
+
     String jsonResource = element.jsonResource();
     // The jsonResource field will be empty in case of deleted records and are skipped when written
     // to target parquet files/sinkDb. This is fine for initial batch as they need not be migrated,
@@ -106,6 +111,37 @@ public class ConvertResourceFn extends FetchSearchPageFn<HapiRowDescriptor> {
     }
     if (!this.sinkDbUrl.isEmpty()) {
       jdbcWriter.writeResource(resource);
+    }
+  }
+
+  private void setMetaTags(HapiRowDescriptor element, Meta meta) {
+    if (element.getTags() != null) {
+      List<Coding> tags = new ArrayList<>();
+      List<Coding> securityList = new ArrayList<>();
+      List<CanonicalType> profiles = new ArrayList<>();
+      for (ResourceTag resourceTag : element.getTags()) {
+        // The HAPI FHIR tagType of value 0 means it's of type TAG, 1 for PROFILE and 2 for SYSTEM.
+        // https://hapifhir.io/hapi-fhir/apidocs/hapi-fhir-jpaserver-model/ca/uhn/fhir/jpa/model/entity/TagTypeEnum.html
+        if (resourceTag.getTagType() == 1) {
+          CanonicalType canonicalType = new CanonicalType();
+          canonicalType.setValue(resourceTag.getCoding().getCode());
+          profiles.add(canonicalType);
+        } else if (resourceTag.getTagType() == 0) {
+          tags.add(resourceTag.getCoding());
+        } else if (resourceTag.getTagType() == 2) {
+          securityList.add(resourceTag.getCoding());
+        }
+      }
+
+      if (!profiles.isEmpty()) {
+        meta.setProfile(profiles);
+      }
+      if (!tags.isEmpty()) {
+        meta.setTag(tags);
+      }
+      if (!securityList.isEmpty()) {
+        meta.setSecurity(securityList);
+      }
     }
   }
 

@@ -15,40 +15,21 @@
  */
 package org.openmrs.analytics;
 
-import com.google.auto.value.AutoValue;
 import java.io.Serializable;
-import java.util.List;
+import lombok.Builder;
 import lombok.Data;
 import org.apache.beam.sdk.coders.DefaultCoder;
 import org.apache.beam.sdk.coders.SerializableCoder;
+import org.hl7.fhir.r4.model.Coding;
 
 @DefaultCoder(SerializableCoder.class)
-@AutoValue
 @Data
-abstract class HapiRowDescriptor implements Serializable {
+@Builder
+public class ResourceTag implements Serializable {
 
   private static final long serialVersionUID = 1L;
 
-  static HapiRowDescriptor create(
-      String resourceId,
-      String resourceType,
-      String lastUpdated,
-      String resourceVersion,
-      String jsonResource) {
-    return new AutoValue_HapiRowDescriptor(
-        resourceId, resourceType, lastUpdated, resourceVersion, jsonResource);
-  }
-
-  abstract String resourceId();
-
-  abstract String resourceType();
-
-  abstract String lastUpdated();
-
-  abstract String resourceVersion();
-
-  abstract String jsonResource();
-
-  // FHIR tags.
-  List<ResourceTag> tags;
+  Coding coding;
+  String resourceId;
+  Integer tagType;
 }
