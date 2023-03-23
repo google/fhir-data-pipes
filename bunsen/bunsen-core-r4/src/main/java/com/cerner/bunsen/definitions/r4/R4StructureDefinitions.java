@@ -594,6 +594,10 @@ public class R4StructureDefinitions extends StructureDefinitions {
     List<StructureField<T>> childElements = transformChildren(visitor, definition,
         definitions, stack, root);
 
+    // We don't want 'id' to be present in nested fields to make it consistent with SQL-on-FHIR.
+    // https://github.com/FHIR/sql-on-fhir/blob/master/sql-on-fhir.md#id-fields-omitted
+    childElements.removeIf(field -> field.fieldName().equals("id"));
+
     stack.pop();
 
     if ("Reference".equals(definition.getType())) {
@@ -676,6 +680,7 @@ public class R4StructureDefinitions extends StructureDefinitions {
         rootName,
         rootName,
         definition.getUrl(),
-        childElements);
+        childElements,
+        true);
   }
 }

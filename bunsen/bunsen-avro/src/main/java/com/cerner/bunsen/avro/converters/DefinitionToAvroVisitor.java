@@ -452,6 +452,17 @@ public class DefinitionToAvroVisitor implements DefinitionVisitor<HapiConverter<
       String elementTypeUrl,
       List<StructureField<HapiConverter<Schema>>> children) {
 
+    return visitComposite(elementName, elementPath, baseType, elementTypeUrl, children, false);
+  }
+
+  @Override
+  public HapiConverter<Schema> visitComposite(String elementName,
+      String elementPath,
+      String baseType,
+      String elementTypeUrl,
+      List<StructureField<HapiConverter<Schema>>> children,
+      boolean isRootElement) {
+
     String recordName = DefinitionVisitorsUtil.recordNameFor(elementPath);
     String recordNamespace = DefinitionVisitorsUtil.namespaceFor(basePackage, elementTypeUrl);
     String fullName = recordNamespace + "." + recordName;
@@ -459,6 +470,12 @@ public class DefinitionToAvroVisitor implements DefinitionVisitor<HapiConverter<
     HapiConverter<Schema> converter = visitedConverters.get(fullName);
 
     if (converter == null) {
+
+      // We don't want 'id' to be present in nested fields to make it consistent with SQL-ON-FHIR.
+      // https://github.com/FHIR/sql-on-fhir/blob/master/sql-on-fhir.md#id-fields-omitted
+      if (!isRootElement) {
+        children.removeIf(field -> field.fieldName().equals("id"));
+      }
 
       List<Field> fields = children.stream()
           .map((StructureField<HapiConverter<Schema>> field) -> {
@@ -570,6 +587,14 @@ public class DefinitionToAvroVisitor implements DefinitionVisitor<HapiConverter<
               .map(refUri -> {
 
                 String relativeType = refUri.substring(refUri.lastIndexOf('/') + 1);
+
+                // Convert to lower camel case if any of the element name is in upper camel case.
+                // E.g. OrganizationId to organizationId; To make it consistent with SQL-on-FHIR.
+                // https://github.com/FHIR/sql-on-fhir/blob/master/sql-on-fhir.md#references
+                if (relativeType != null && relativeType.length() > 0) {
+                  relativeType = Character.toLowerCase(relativeType.charAt(0))
+                          + relativeType.substring(1);
+                }
 
                 return new StructureField<HapiConverter<Schema>>("reference",
                     relativeType + "Id",
