@@ -21,6 +21,8 @@ import com.cerner.bunsen.FhirContexts;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Sets;
 import java.io.IOException;
+import java.util.Collection;
+import java.util.Iterator;
 import java.util.Set;
 import org.apache.avro.generic.GenericRecord;
 import org.apache.beam.sdk.Pipeline;
@@ -39,6 +41,7 @@ import org.apache.beam.sdk.values.KV;
 import org.apache.beam.sdk.values.PCollection;
 import org.apache.beam.sdk.values.TupleTag;
 import org.apache.parquet.hadoop.metadata.CompressionCodecName;
+import org.hl7.fhir.r4.model.codesystems.ActionType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -55,6 +58,9 @@ public class ParquetMerger {
   private static String ID_KEY = "id";
   private static String META_KEY = "meta";
   private static String LAST_UPDATED_KEY = "lastUpdated";
+  private static String TAG_KEY = "tag";
+  private static String SYSTEM_KEY = "system";
+  private static String CODE_KEY = "code";
 
   private static PCollection<KV<String, GenericRecord>> readAndMapToId(
       Pipeline pipeline, DwhFiles dwh, String resourceType) {
@@ -85,6 +91,34 @@ public class ParquetMerger {
 
   private static String getUpdateTime(GenericRecord record) {
     return ((GenericRecord) record.get(META_KEY)).get(LAST_UPDATED_KEY).toString();
+  }
+
+  /**
+   * This method identifies if the record is a deleted record. For a deleted record, the meta.tag
+   * would be updated with a ActionType.REMOVE during the incremental parquet file creation, the
+   * same information is being reused to check if the record is deleted or not.
+   *
+   * @param record
+   * @return
+   */
+  private static Boolean isRecordDeleted(GenericRecord record) {
+    Object tag = ((GenericRecord) record.get(META_KEY)).get(TAG_KEY);
+    if (tag != null && tag instanceof Collection) {
+      Collection tagCollection = (Collection) tag;
+      if (!tagCollection.isEmpty()) {
+        Iterator iterator = tagCollection.iterator();
+        while (iterator.hasNext()) {
+          GenericRecord tagCoding = (GenericRecord) iterator.next();
+          if (tagCoding.get(SYSTEM_KEY) != null
+              && tagCoding.get(SYSTEM_KEY).toString().equals(ActionType.REMOVE.getSystem())
+              && tagCoding.get(CODE_KEY) != null
+              && tagCoding.get(CODE_KEY).toString().equals(ActionType.REMOVE.toCode())) {
+            return Boolean.TRUE;
+          }
+        }
+      }
+    }
+    return Boolean.FALSE;
   }
 
   private static GenericRecord findLastRecord(
@@ -167,8 +201,10 @@ public class ParquetMerger {
                           Iterable<GenericRecord> iter1 = e.getValue().getAll(tag1);
                           Iterable<GenericRecord> iter2 = e.getValue().getAll(tag2);
                           GenericRecord lastRecord = findLastRecord(iter1, iter2, numDuplicates);
-                          numOutputRecords.inc();
-                          c.output(lastRecord);
+                          if (!isRecordDeleted(lastRecord)) {
+                            numOutputRecords.inc();
+                            c.output(lastRecord);
+                          }
                         }
                       }))
               .setCoder(AvroCoder.of(ParquetUtil.getResourceSchema(type, fhirContext)));

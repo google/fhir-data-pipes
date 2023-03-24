@@ -17,6 +17,7 @@ package org.openmrs.analytics;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.notNullValue;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
@@ -27,10 +28,12 @@ import java.nio.charset.StandardCharsets;
 import java.sql.SQLException;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.util.List;
 import org.apache.beam.sdk.options.PipelineOptionsFactory;
+import org.hl7.fhir.r4.model.Coding;
 import org.hl7.fhir.r4.model.Patient;
 import org.hl7.fhir.r4.model.Resource;
-import org.junit.Before;
+import org.hl7.fhir.r4.model.codesystems.ActionType;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
@@ -48,9 +51,7 @@ public class ConvertResourceFnTest {
 
   @Captor private ArgumentCaptor<Resource> resourceCaptor;
 
-  @Before
-  public void setUp() throws PropertyVetoException, SQLException {
-    String[] args = {"--outputParquetPath=SOME_PATH"};
+  private void setUp(String args[]) throws PropertyVetoException, SQLException {
     FhirEtlOptions options =
         PipelineOptionsFactory.fromArgs(args).withValidation().as(FhirEtlOptions.class);
     convertResourceFn =
@@ -68,11 +69,14 @@ public class ConvertResourceFnTest {
 
   @Test
   public void testProcessPatientResource()
-      throws IOException, java.text.ParseException, SQLException {
+      throws IOException, java.text.ParseException, SQLException, PropertyVetoException {
+    String[] args = {"--outputParquetPath=SOME_PATH"};
+    setUp(args);
     String patientResourceStr =
         Resources.toString(Resources.getResource("patient.json"), StandardCharsets.UTF_8);
     HapiRowDescriptor element =
-        HapiRowDescriptor.create("123", "Patient", "2020-09-19 12:09:23", "1", patientResourceStr);
+        HapiRowDescriptor.create(
+            "123", "Patient", "2020-09-19 12:09:23", "R4", "1", patientResourceStr);
     convertResourceFn.writeResource(element);
 
     // Verify the resource is sent to the writer.
@@ -88,12 +92,76 @@ public class ConvertResourceFnTest {
   }
 
   @Test
-  public void testProcessDeletedPatientResource() throws SQLException, IOException, ParseException {
+  public void testProcessDeletedPatientResourceWithFlagFalse()
+      throws SQLException, IOException, ParseException, PropertyVetoException {
+    String[] args = {"--outputParquetPath=SOME_PATH", "--processDeletedRecords=false"};
+    setUp(args);
     // Deleted Patient resource
     HapiRowDescriptor element =
-        HapiRowDescriptor.create("123", "Patient", "2020-09-19 12:09:23", "2", "");
+        HapiRowDescriptor.create("123", "Patient", "2020-09-19 12:09:23", "R4", "2", "");
     convertResourceFn.writeResource(element);
     // Verify that the ParquetUtil writer is not invoked for the deleted resource.
     verify(mockParquetUtil, times(0)).write(Mockito.any());
+  }
+
+  @Test
+  public void testProcessDeletedPatientResourceWithFlagTrue()
+      throws SQLException, IOException, ParseException, PropertyVetoException {
+    String[] args = {"--outputParquetPath=SOME_PATH", "--processDeletedRecords=true"};
+    setUp(args);
+    // Deleted Patient resource
+    HapiRowDescriptor element =
+        HapiRowDescriptor.create("123", "Patient", "2020-09-19 12:09:23", "R4", "2", "");
+    convertResourceFn.writeResource(element);
+
+    // Verify the deleted resource is sent to the writer.
+    verify(mockParquetUtil).write(resourceCaptor.capture());
+    Resource capturedResource = resourceCaptor.getValue();
+    assertThat(capturedResource.getId(), equalTo("123"));
+    assertThat(capturedResource.getMeta().getVersionId(), equalTo("2"));
+    assertThat(
+        capturedResource
+            .getMeta()
+            .getTag(ActionType.REMOVE.getSystem(), ActionType.REMOVE.toCode()),
+        notNullValue());
+    assertThat(capturedResource.getResourceType().toString(), equalTo("Patient"));
+    assertThat(
+        capturedResource.getClass().getName(),
+        equalTo(org.hl7.fhir.r4.model.Patient.class.getName()));
+  }
+
+  public void testResourceMetaTags() throws IOException, java.text.ParseException, SQLException {
+    String patientResourceStr =
+        Resources.toString(Resources.getResource("patient.json"), StandardCharsets.UTF_8);
+    HapiRowDescriptor element =
+        HapiRowDescriptor.create(
+            "123", "Patient", "2020-09-19 12:09:23", "R4", "1", patientResourceStr);
+    // Set Tag of HAPI FHIR tag type 0
+    Coding coding0 = new Coding("system0", "code0", "display0");
+    ResourceTag tag0 = new ResourceTag(coding0, "123", 0);
+    // Set Tag of HAPI FHIR tag type 1
+    Coding coding1 = new Coding("system1", "code1", "display1");
+    ResourceTag tag1 = new ResourceTag(coding1, "123", 1);
+    // Set Tag of HAPI FHIR tag type 2
+    Coding coding2 = new Coding("system2", "code2", "display2");
+    ResourceTag tag2 = new ResourceTag(coding2, "123", 2);
+    element.setTags(List.of(tag0, tag1, tag2));
+    convertResourceFn.writeResource(element);
+
+    // Verify the resource is sent to the writer.
+    verify(mockParquetUtil).write(resourceCaptor.capture());
+    Resource capturedResource = resourceCaptor.getValue();
+    assertThat(capturedResource.getId(), equalTo("123"));
+    assertThat(capturedResource.getMeta().getVersionId(), equalTo("1"));
+    assertThat(
+        capturedResource.getMeta().getLastUpdated(),
+        equalTo(new SimpleDateFormat("yyyy-MM-dd hh:mm:ss").parse("2020-09-19 12:09:23")));
+    assertThat(capturedResource.getMeta().getTag().get(0).getSystem(), equalTo("system0"));
+    assertThat(capturedResource.getMeta().getTag().get(0).getCode(), equalTo("code0"));
+    assertThat(capturedResource.getMeta().getTag().get(0).getDisplay(), equalTo("display0"));
+    assertThat(capturedResource.getMeta().getProfile().get(0).asStringValue(), equalTo("code1"));
+    assertThat(capturedResource.getMeta().getSecurity().get(0).getCode(), equalTo("code2"));
+    assertThat(capturedResource.getMeta().getSecurity().get(0).getSystem(), equalTo("system2"));
+    assertThat(capturedResource.getMeta().getSecurity().get(0).getDisplay(), equalTo("display2"));
   }
 }

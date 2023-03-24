@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2022 Google LLC
+ * Copyright 2020-2023 Google LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,14 +17,32 @@ package org.openmrs.analytics;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Charsets;
+import com.google.common.base.Strings;
 import java.sql.Blob;
+import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import org.apache.beam.sdk.io.jdbc.JdbcIO;
+import org.apache.beam.sdk.transforms.DoFn;
 import org.apache.beam.sdk.transforms.PTransform;
+import org.apache.beam.sdk.transforms.ParDo;
+import org.apache.beam.sdk.transforms.join.CoGbkResult;
+import org.apache.beam.sdk.transforms.join.CoGroupByKey;
+import org.apache.beam.sdk.transforms.join.KeyedPCollectionTuple;
+import org.apache.beam.sdk.values.KV;
 import org.apache.beam.sdk.values.PCollection;
+import org.apache.beam.sdk.values.TupleTag;
+import org.apache.commons.lang3.SerializationUtils;
+import org.hl7.fhir.r4.model.Coding;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -66,9 +84,29 @@ public class JdbcFetchHapi {
       String resourceId = resultSet.getString("res_id");
       String resourceType = resultSet.getString("res_type");
       String lastUpdated = resultSet.getString("res_updated");
+      String fhirVersion = resultSet.getString("res_version");
       String resourceVersion = resultSet.getString("res_ver");
       return HapiRowDescriptor.create(
-          resourceId, resourceType, lastUpdated, resourceVersion, jsonResource);
+          resourceId, resourceType, lastUpdated, fhirVersion, resourceVersion, jsonResource);
+    }
+  }
+
+  public static class CodingToRowDescriptor implements JdbcIO.RowMapper<ResourceTag> {
+
+    @Override
+    public ResourceTag mapRow(ResultSet resultSet) throws Exception {
+
+      Coding coding =
+          new Coding(
+              resultSet.getString("tag_system"),
+              resultSet.getString("tag_code"),
+              resultSet.getString("tag_display"));
+
+      return ResourceTag.builder()
+          .coding(coding)
+          .resourceId(resultSet.getString("res_id"))
+          .tagType(resultSet.getInt("tag_type"))
+          .build();
     }
   }
 
@@ -83,54 +121,150 @@ public class JdbcFetchHapi {
 
     private final String query;
 
+    private final String tagQuery;
+
     public FetchRowsJdbcIo(JdbcIO.DataSourceConfiguration dataSourceConfig, String since) {
       this.dataSourceConfig = dataSourceConfig;
       // Note the constraint on `res.res_ver` ensures we only pick the latest version.
       StringBuilder builder =
           new StringBuilder(
-              "SELECT res.res_id, res.res_type, res.res_updated, res.res_ver, "
+              "SELECT res.res_id, res.res_type, res.res_updated, res.res_version, res.res_ver, "
                   + "ver.res_encoding, ver.res_text FROM hfj_resource res, hfj_res_ver ver "
-                  + "WHERE res.res_type=? AND res.res_id = ver.res_id AND "
-                  + "  res.res_ver = ver.res_ver AND res.res_id % ? = ? ");
+                  + "WHERE res.res_type = ? AND res.res_id = ver.res_id AND "
+                  + "res.res_ver = ver.res_ver AND res.res_id % ? = ? ");
       // TODO do date sanity-checking on `since` (note this is partly done by HAPI client call).
       if (since != null && !since.isEmpty()) {
         builder.append(" AND res.res_updated > '").append(since).append("'");
       }
       query = builder.toString();
       log.info("JDBC query template for HAPI is " + query);
+
+      builder =
+          new StringBuilder(
+              "select td.tag_code, td.tag_display, td.tag_system, td.tag_type, tag.res_id from"
+                  + " hfj_res_tag tag join hfj_tag_def td on tag.tag_id = td.tag_id join"
+                  + " hfj_resource res on tag.res_id = res.res_id where res.res_type = ? and"
+                  + " res.res_id % ? = ? ");
+      if (since != null && !since.isEmpty()) {
+        builder.append("  and res.res_updated > '").append(since).append("'");
+      }
+      tagQuery = builder.toString();
+      log.info("JDBC query for tags: " + tagQuery);
     }
 
     @Override
     public PCollection<HapiRowDescriptor> expand(
         PCollection<QueryParameterDescriptor> queryParameters) {
-      return queryParameters.apply(
-          "JdbcIO readAll",
-          JdbcIO.<QueryParameterDescriptor, HapiRowDescriptor>readAll()
-              .withDataSourceConfiguration(dataSourceConfig)
-              .withParameterSetter(
-                  new JdbcIO.PreparedStatementSetter<QueryParameterDescriptor>() {
+      PCollection<HapiRowDescriptor> hapiRowDescriptorPCollection =
+          queryParameters.apply(
+              "JdbcIO readAll",
+              JdbcIO.<QueryParameterDescriptor, HapiRowDescriptor>readAll()
+                  .withDataSourceConfiguration(dataSourceConfig)
+                  .withParameterSetter(
+                      (JdbcIO.PreparedStatementSetter<QueryParameterDescriptor>)
+                          (element, preparedStatement) -> {
+                            preparedStatement.setString(1, element.resourceType());
+                            preparedStatement.setInt(2, element.numBatches());
+                            preparedStatement.setInt(3, element.batchId());
+                          })
+                  // We are disabling this parameter because by default, this parameter causes
+                  // JdbcIO to
+                  // add a reshuffle transform after reading from the database. This breaks fusion
+                  // between the read and write operations, thus resulting in high memory overhead.
+                  // Disabling the below parameter results in optimal performance.
+                  .withOutputParallelization(false)
+                  .withQuery(query)
+                  .withRowMapper(new ResultSetToRowDescriptor()));
+      PCollection<ResourceTag> resourceTagPCollection =
+          queryParameters.apply(
+              "JdbcIO fetch tags",
+              JdbcIO.<QueryParameterDescriptor, ResourceTag>readAll()
+                  .withDataSourceConfiguration(dataSourceConfig)
+                  .withParameterSetter(
+                      (JdbcIO.PreparedStatementSetter<QueryParameterDescriptor>)
+                          (element, preparedStatement) -> {
+                            preparedStatement.setString(1, element.resourceType());
+                            preparedStatement.setInt(2, element.numBatches());
+                            preparedStatement.setInt(3, element.batchId());
+                          })
+                  .withOutputParallelization(false)
+                  .withQuery(tagQuery)
+                  .withRowMapper(new CodingToRowDescriptor()));
 
-                    @Override
-                    public void setParameters(
-                        QueryParameterDescriptor element, PreparedStatement preparedStatement)
-                        throws Exception {
-                      preparedStatement.setString(1, element.resourceType());
-                      preparedStatement.setInt(2, element.numBatches());
-                      preparedStatement.setInt(3, element.batchId());
-                    }
-                  })
-              // We are disabling this parameter because by default, this parameter causes JdbcIO to
-              // add a reshuffle transform after reading from the database. This breaks fusion
-              // between the read and write operations, thus resulting in high memory overhead.
-              // Disabling the below parameter results in optimal performance.
-              .withOutputParallelization(false)
-              .withQuery(query)
-              .withRowMapper(new ResultSetToRowDescriptor()));
+      return joinResourceTagCollections(hapiRowDescriptorPCollection, resourceTagPCollection);
     }
-  }
 
-  JdbcIO.DataSourceConfiguration getJdbcConfig() {
-    return JdbcIO.DataSourceConfiguration.create(this.jdbcConnectionUtil.getDataSource());
+    private PCollection<HapiRowDescriptor> joinResourceTagCollections(
+        PCollection<HapiRowDescriptor> hapiRowDescriptorPCollection,
+        PCollection<ResourceTag> resourceTagPCollection) {
+      // Step to convert HapiRowDescriptor to key value struct <ResourceId, HapiRowDescriptor>,
+      // this will help in joining with tag PCollection.
+      PCollection<KV<String, HapiRowDescriptor>> resourceCollection =
+          hapiRowDescriptorPCollection.apply(
+              "Convert Resource Collection to KV",
+              ParDo.of(
+                  new DoFn<HapiRowDescriptor, KV<String, HapiRowDescriptor>>() {
+                    @ProcessElement
+                    public void processElement(ProcessContext processContext) {
+                      HapiRowDescriptor hapiRowDescriptor = processContext.element();
+                      processContext.output(
+                          KV.of(hapiRowDescriptor.resourceId(), hapiRowDescriptor));
+                    }
+                  }));
+
+      // Step to convert ResourceTag to key value struct <ResourceId, ResourceTag>,
+      // this will help in joining with resource PCollection.
+      PCollection<KV<String, ResourceTag>> tagCollection =
+          resourceTagPCollection.apply(
+              "Convert Tag Collection to KV",
+              ParDo.of(
+                  new DoFn<ResourceTag, KV<String, ResourceTag>>() {
+                    @ProcessElement
+                    public void processElement(ProcessContext processContext) {
+                      ResourceTag resourceTag = processContext.element();
+                      processContext.output(KV.of(resourceTag.getResourceId(), resourceTag));
+                    }
+                  }));
+
+      // Helper Tuples for joining.
+      TupleTag<HapiRowDescriptor> resourceTuple = new TupleTag<>();
+      TupleTag<ResourceTag> resourceTagTuple = new TupleTag<>();
+
+      // Join the collections.
+      PCollection<KV<String, CoGbkResult>> joinedResourceCollection =
+          KeyedPCollectionTuple.of(resourceTuple, resourceCollection)
+              .and(resourceTagTuple, tagCollection)
+              .apply(CoGroupByKey.create());
+
+      // Process the HapiRowDescriptor collection from the joined collection.
+      return joinedResourceCollection.apply(
+          "Join Resource and Tag Collections",
+          ParDo.of(
+              new DoFn<KV<String, CoGbkResult>, HapiRowDescriptor>() {
+                @ProcessElement
+                public void process(ProcessContext processContext) {
+                  KV<String, CoGbkResult> element = processContext.element();
+                  Iterable<HapiRowDescriptor> hapiRowDescriptorIterable =
+                      element.getValue().getAll(resourceTuple);
+                  Iterable<ResourceTag> resourceTagIterable =
+                      element.getValue().getAll(resourceTagTuple);
+
+                  List<ResourceTag> tags = new ArrayList<>();
+                  for (ResourceTag resourceTag : resourceTagIterable) {
+                    tags.add(resourceTag);
+                  }
+
+                  Iterator<HapiRowDescriptor> iterator = hapiRowDescriptorIterable.iterator();
+                  if (iterator.hasNext()) {
+                    HapiRowDescriptor hapiRowDescriptor = iterator.next();
+                    // This is to avoid IllegalMutationException.
+                    HapiRowDescriptor rowDescriptor = SerializationUtils.clone(hapiRowDescriptor);
+                    rowDescriptor.setTags(tags);
+                    processContext.output(rowDescriptor);
+                  }
+                }
+              }));
+    }
   }
 
   /**
@@ -159,5 +293,41 @@ public class JdbcFetchHapi {
     }
 
     return queryParameterList;
+  }
+
+  /**
+   * Searches for the total number of resources for each resource type
+   *
+   * @param resourceList the resource types to be processed
+   * @param since the time from which the records need to be fetched
+   * @return a Map storing the counts of each resource type
+   */
+  public Map<String, Integer> searchResourceCounts(String resourceList, String since)
+      throws SQLException {
+    Set<String> resourceTypes = new HashSet<>(Arrays.asList(resourceList.split(",")));
+    Map<String, Integer> resourceCountMap = new HashMap<>();
+    for (String resourceType : resourceTypes) {
+      StringBuilder builder = new StringBuilder();
+      builder.append("SELECT count(*) FROM hfj_resource res where res.res_type = ?");
+      if (!Strings.isNullOrEmpty(since)) {
+        builder.append(" AND res.res_updated > '").append(since).append("'");
+      }
+      try (Connection connection = jdbcConnectionUtil.getDataSource().getConnection();
+          PreparedStatement statement =
+              createPreparedStatement(connection, builder.toString(), resourceType);
+          ResultSet resultSet = statement.executeQuery()) {
+        resultSet.next();
+        int count = resultSet.getInt("count");
+        resourceCountMap.put(resourceType, count);
+      }
+    }
+    return resourceCountMap;
+  }
+
+  private PreparedStatement createPreparedStatement(
+      Connection connection, String query, String parameter) throws SQLException {
+    PreparedStatement preparedStatement = connection.prepareStatement(query);
+    preparedStatement.setString(1, parameter);
+    return preparedStatement;
   }
 }
