@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2022 Google LLC
+ * Copyright 2020-2023 Google LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@ package org.openmrs.analytics;
 
 import java.beans.PropertyVetoException;
 import java.io.IOException;
+import java.sql.SQLException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -35,7 +36,7 @@ public class ApiController {
 
   @PostMapping("/run")
   public String runBatch(@RequestParam(name = "isFullRun", required = true) boolean isFullRun)
-      throws IOException, PropertyVetoException {
+      throws IOException, PropertyVetoException, SQLException {
     if (pipelineManager.isRunning()) {
       throw new IllegalStateException("Another pipeline is running!");
     }
