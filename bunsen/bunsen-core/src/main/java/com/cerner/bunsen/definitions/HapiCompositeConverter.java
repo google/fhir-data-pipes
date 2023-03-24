@@ -170,13 +170,10 @@ public abstract class HapiCompositeConverter<T> extends HapiConverter<T> {
         values[0] = schemaEntry.result().fromHapi(((IAnyResource) composite).getIdElement());
         valueIndex++;
 
-        // Meta element.
         schemaEntry = schemaIterator.next();
-        values[valueIndex++] = schemaEntry.result().fromHapi(((IAnyResource) composite).getMeta());
-      } else {
-        // Meta element.
-        values[valueIndex++] = schemaEntry.result().fromHapi(((IAnyResource) composite).getMeta());
       }
+      // Meta element.
+      values[valueIndex++] = schemaEntry.result().fromHapi(((IAnyResource) composite).getMeta());
     }
 
     Map<String, List> properties = fhirSupport.compositeValues(composite);
