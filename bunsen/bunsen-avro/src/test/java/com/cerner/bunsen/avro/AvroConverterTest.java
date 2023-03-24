@@ -269,7 +269,8 @@ public class AvroConverterTest {
     Assert.assertEquals(testCondition.getSubject().getReference(),
         subject.get("reference"));
 
-    Assert.assertEquals("12345",  subject.get("PatientId"));
+    // We do not want ids in references as we want the schema to be consistent with SQL-on-FHIR.
+    Assert.assertNull(subject.get("patientId"));
 
     Assert.assertEquals(testCondition.getSubject().getReference(),
         testConditionDecoded.getSubject().getReference());
@@ -280,15 +281,14 @@ public class AvroConverterTest {
 
     Record practitioner = (Record) ((List) avroPatient.get("generalPractitioner")).get(0);
 
-    String organizationId = (String) practitioner.get("OrganizationId");
-    String practitionerId = (String) practitioner.get("PractitionerId");
+    String organizationId = (String) practitioner.get("organizationId");
+    String practitionerId = (String) practitioner.get("practitionerId");
 
-    // The reference is not of this type, so the field should be null.
+    // We do not want ids in references as we want the schema to be consistent with SQL-on-FHIR.
     Assert.assertNull(organizationId);
 
-    // The field with the expected prefix should match the original data.
-    Assert.assertEquals(testPatient.getGeneralPractitionerFirstRep().getReference(),
-        "Practitioner/" + practitionerId);
+    // We do not want ids in references as we want the schema to be consistent with SQL-on-FHIR.
+    Assert.assertNull(practitionerId);
 
     Assert.assertEquals(testCondition.getSubject().getReference(),
         testConditionDecoded.getSubject().getReference());
@@ -398,7 +398,6 @@ public class AvroConverterTest {
   public void testContainedResources() throws FHIRException {
 
     Medication testMedicationOne = (Medication) testMedicationRequest.getContained().get(0);
-    String testMedicationOneId = testMedicationOne.getId();
     CodeableConcept testMedicationIngredientItem = testMedicationOne.getIngredientFirstRep()
         .getItemCodeableConcept();
 
@@ -409,25 +408,26 @@ public class AvroConverterTest {
         .getIngredientFirstRep()
         .getItemCodeableConcept();
 
-    Assert.assertEquals(testMedicationOneId, decodedMedicationOneId);
+    Assert.assertNull(decodedMedicationOneId);
     Assert.assertTrue(decodedMedicationOneIngredientItem.equalsDeep(testMedicationIngredientItem));
-
-    Provenance testProvenance = (Provenance) testMedicationRequest.getContained().get(1);
-    String testProvenanceId = testProvenance.getId();
 
     Provenance decodedProvenance = (Provenance) testMedicationRequestDecoded.getContained().get(1);
     String decodedProvenanceId = decodedProvenance.getId();
 
-    Assert.assertEquals(testProvenanceId, decodedProvenanceId);
+    Assert.assertNull(decodedProvenanceId);
 
     Medication testMedicationTwo = (Medication) testMedicationRequest.getContained().get(2);
-    String testMedicationTwoId = testMedicationTwo.getId();
+    String testMedicationTwoReference =
+            testMedicationTwo.getPackage().getContent().get(0).getItemReference().getReference();
 
     Medication decodedMedicationTwo = (Medication) testMedicationRequestDecoded.getContained()
         .get(2);
     String decodedMedicationTwoId = decodedMedicationTwo.getId();
+    String decodedMedicationTwoReference =
+            decodedMedicationTwo.getPackage().getContent().get(0).getItemReference().getReference();
 
-    Assert.assertEquals(testMedicationTwoId, decodedMedicationTwoId);
+    Assert.assertNull(decodedMedicationTwoId);
+    Assert.assertEquals(testMedicationTwoReference, decodedMedicationTwoReference);
   }
 
   @Test
