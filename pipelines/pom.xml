@@ -49,7 +49,7 @@
     <openmrsPlatformVersion>2.6.0-SNAPSHOT</openmrsPlatformVersion>
     <mockito.version>5.2.0</mockito.version>
     <jcommander.version>1.82</jcommander.version>
-    <license-maven-plugin.version>4.1</license-maven-plugin.version>
+    <license-maven-plugin.version>4.2</license-maven-plugin.version>
     <beam.version>2.45.0</beam.version>
   </properties>
 
