@@ -554,13 +554,11 @@ public class Stu3StructureDefinitions extends StructureDefinitions {
       StructureDefinition definition,
       Deque<QualifiedPath> stack) {
 
-    ElementDefinition definitionRootElement = definition.getSnapshot().getElement().get(0);
-
     List<ElementDefinition> definitions = definition.getSnapshot().getElement();
 
     ElementDefinition root = definitions.get(0);
 
-    stack.push(new QualifiedPath(definition.getUrl(), definitionRootElement.getPath()));
+    stack.push(new QualifiedPath(definition.getUrl(), root.getPath()));
 
     List<StructureField<T>> childElements = transformChildren(visitor, definition,
         definitions, stack, root);

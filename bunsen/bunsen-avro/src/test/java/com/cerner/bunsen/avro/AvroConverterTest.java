@@ -266,11 +266,9 @@ public class AvroConverterTest {
 
     Record subject = (Record) avroCondition.get("subject");
 
-    Assert.assertEquals(testCondition.getSubject().getReference(),
-        subject.get("reference"));
+    Assert.assertEquals(testCondition.getSubject().getReference(), subject.get("reference"));
 
-    // We do not want ids in references as we want the schema to be consistent with SQL-on-FHIR.
-    Assert.assertNull(subject.get("patientId"));
+    Assert.assertEquals("12345",  subject.get("patientId"));
 
     Assert.assertEquals(testCondition.getSubject().getReference(),
         testConditionDecoded.getSubject().getReference());
@@ -284,11 +282,12 @@ public class AvroConverterTest {
     String organizationId = (String) practitioner.get("organizationId");
     String practitionerId = (String) practitioner.get("practitionerId");
 
-    // We do not want ids in references as we want the schema to be consistent with SQL-on-FHIR.
+    // The reference is not of this type, so the field should be null.
     Assert.assertNull(organizationId);
 
-    // We do not want ids in references as we want the schema to be consistent with SQL-on-FHIR.
-    Assert.assertNull(practitionerId);
+    // The field with the expected prefix should match the original data.
+    Assert.assertEquals(testPatient.getGeneralPractitionerFirstRep().getReference(),
+            "Practitioner/" + practitionerId);
 
     Assert.assertEquals(testCondition.getSubject().getReference(),
         testConditionDecoded.getSubject().getReference());

@@ -541,7 +541,7 @@ public class DefinitionToAvroVisitor implements DefinitionVisitor<HapiConverter<
     public Object fromHapi(Object input) {
       String uri =  ((IPrimitiveType) input).getValueAsString();
 
-      return uri != null && uri.startsWith(prefix)
+      return uri != null && uri.toLowerCase().startsWith(prefix.toLowerCase())
           ? uri.substring(uri.lastIndexOf('/') + 1)
           : null;
     }
