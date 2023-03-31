@@ -397,6 +397,7 @@ public class AvroConverterTest {
   public void testContainedResources() throws FHIRException {
 
     Medication testMedicationOne = (Medication) testMedicationRequest.getContained().get(0);
+    String testMedicationOneId = testMedicationOne.getId();
     CodeableConcept testMedicationIngredientItem = testMedicationOne.getIngredientFirstRep()
         .getItemCodeableConcept();
 
@@ -407,13 +408,16 @@ public class AvroConverterTest {
         .getIngredientFirstRep()
         .getItemCodeableConcept();
 
-    Assert.assertNull(decodedMedicationOneId);
+    Assert.assertEquals(testMedicationOneId, decodedMedicationOneId);
     Assert.assertTrue(decodedMedicationOneIngredientItem.equalsDeep(testMedicationIngredientItem));
 
     Provenance decodedProvenance = (Provenance) testMedicationRequestDecoded.getContained().get(1);
     String decodedProvenanceId = decodedProvenance.getId();
 
-    Assert.assertNull(decodedProvenanceId);
+    Provenance testProvenance = (Provenance) testMedicationRequest.getContained().get(1);
+    String testProvenanceId = testProvenance.getId();
+
+    Assert.assertEquals(testProvenanceId, decodedProvenanceId);
 
     Medication testMedicationTwo = (Medication) testMedicationRequest.getContained().get(2);
     String testMedicationTwoReference =
@@ -421,11 +425,12 @@ public class AvroConverterTest {
 
     Medication decodedMedicationTwo = (Medication) testMedicationRequestDecoded.getContained()
         .get(2);
+    String testMedicationTwoId = testMedicationTwo.getId();
     String decodedMedicationTwoId = decodedMedicationTwo.getId();
     String decodedMedicationTwoReference =
             decodedMedicationTwo.getPackage().getContent().get(0).getItemReference().getReference();
 
-    Assert.assertNull(decodedMedicationTwoId);
+    Assert.assertEquals(testMedicationTwoId, decodedMedicationTwoId);
     Assert.assertEquals(testMedicationTwoReference, decodedMedicationTwoReference);
   }
 

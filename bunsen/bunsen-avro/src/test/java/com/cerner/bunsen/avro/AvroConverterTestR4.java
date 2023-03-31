@@ -274,7 +274,7 @@ public class AvroConverterTestR4 {
     Assert.assertEquals(testCondition.getSubject().getReference(),
         subject.get("reference"));
 
-    Assert.assertEquals("12345",  subject.get("PatientId"));
+    Assert.assertEquals("12345",  subject.get("patientId"));
 
     Assert.assertEquals(testCondition.getSubject().getReference(),
         testConditionDecoded.getSubject().getReference());
@@ -285,8 +285,8 @@ public class AvroConverterTestR4 {
 
     Record practitioner = (Record) ((List) avroPatient.get("generalPractitioner")).get(0);
 
-    String organizationId = (String) practitioner.get("OrganizationId");
-    String practitionerId = (String) practitioner.get("PractitionerId");
+    String organizationId = (String) practitioner.get("organizationId");
+    String practitionerId = (String) practitioner.get("practitionerId");
 
     // The reference is not of this type, so the field should be null.
     Assert.assertNull(organizationId);

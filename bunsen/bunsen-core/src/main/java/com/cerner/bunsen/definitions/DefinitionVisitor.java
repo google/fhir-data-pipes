@@ -37,24 +37,6 @@ public interface DefinitionVisitor<T> {
       List<StructureField<T>> children);
 
   /**
-   * Visits a composite type with an additional flag for root element.
-   *
-   * @param elementName the element to visit.
-   * @param elementPath the FHIR path to the element.
-   * @param baseType the type of the composite type.
-   * @param elementTypeUrl the URL of the resource containing the element.
-   * @param children the composite type's children.
-   * @param isRootElement to indicate whether element is at root level.
-   * @return the visitor result.
-   */
-  T visitComposite(String elementName,
-       String elementPath,
-       String baseType,
-       String elementTypeUrl,
-       List<StructureField<T>> children,
-       boolean isRootElement);
-
-  /**
    * Visits a container type.
    *
    * @param elementPath the FHIR path to the element.
