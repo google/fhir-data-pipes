@@ -42,10 +42,8 @@ services:
     ports:
       - '8090:8080'
 
-  # TODO: switch back to version 3.3 after the following issue is resolved:
-  # https://github.com/bitnami/containers/issues/19802
   spark:
-    image: docker.io/bitnami/spark:3.3.1-debian-11-r19
+    image: docker.io/bitnami/spark:3.3
     container_name: spark-master
     environment:
       - SPARK_MODE=master
@@ -55,7 +53,7 @@ services:
       - ${DWH_ROOT}:/dwh
 
   spark-worker:
-    image: docker.io/bitnami/spark:3.3.1-debian-11-r19
+    image: docker.io/bitnami/spark:3.3
     container_name: spark-worker
     environment:
       - SPARK_MODE=worker
@@ -66,7 +64,7 @@ services:
       - ${DWH_ROOT}:/dwh
 
   thriftserver:
-    image: docker.io/bitnami/spark:3.3.1-debian-11-r19
+    image: docker.io/bitnami/spark:3.3
     container_name: spark-thriftserver
     command:
       - sbin/start-thriftserver.sh
