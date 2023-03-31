@@ -34,7 +34,7 @@ import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-public class AvroConverterTest {
+public class Stu3AvroConverterTest {
 
   private static final Observation testObservation = TestData.newObservation();
 

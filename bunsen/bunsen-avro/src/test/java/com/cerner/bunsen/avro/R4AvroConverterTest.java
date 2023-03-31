@@ -2,13 +2,11 @@ package com.cerner.bunsen.avro;
 
 import com.cerner.bunsen.FhirContexts;
 import com.cerner.bunsen.r4.TestData;
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
@@ -18,7 +16,6 @@ import org.apache.avro.Schema;
 import org.apache.avro.compiler.specific.SpecificCompiler;
 import org.apache.avro.generic.GenericData.Record;
 import org.hl7.fhir.exceptions.FHIRException;
-import org.hl7.fhir.r4.model.CodeableConcept;
 import org.hl7.fhir.r4.model.Coding;
 import org.hl7.fhir.r4.model.Condition;
 import org.hl7.fhir.r4.model.Extension;
@@ -35,7 +32,7 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 // TODO refactor the shared code with AvroConverterTest (STU3).
-public class AvroConverterTestR4 {
+public class R4AvroConverterTest {
 
   private static final Observation testObservation = TestData.newObservation();
 
