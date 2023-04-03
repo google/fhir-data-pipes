@@ -184,6 +184,14 @@ public class R4AvroConverterTest {
         .equalsDeep(testPatientDecoded.getMultipleBirth()));
   }
 
+  @Test
+  public void testIdInNestedElement() throws FHIRException {
+
+    // Ensure that nested elements do not have id as property.
+    Assert.assertNull(testPatientDecoded.getAddress().get(0).getId());
+    Assert.assertNull(testPatientDecoded.getName().get(0).getId());
+  }
+
   /**
    * Tests that FHIR StructureDefinitions that contain fields having identical ChoiceTypes generate
    * an Avro definition that does not trigger an erroneous re-definition of the Avro, and that the

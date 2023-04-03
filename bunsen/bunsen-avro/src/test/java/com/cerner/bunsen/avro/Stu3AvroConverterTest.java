@@ -184,6 +184,14 @@ public class Stu3AvroConverterTest {
         .equalsDeep(testPatientDecoded.getMultipleBirth()));
   }
 
+  @Test
+  public void testIdInNestedElement() throws FHIRException {
+
+    // Ensure that nested elements do not have id as property.
+    Assert.assertNull(testPatientDecoded.getAddress().get(0).getId());
+    Assert.assertNull(testPatientDecoded.getName().get(0).getId());
+  }
+
   /**
    * Tests that FHIR StructureDefinitions that contain fields having identical ChoiceTypes generate
    * an Avro definition that does not trigger an erroneous re-definition of the Avro, and that the
@@ -287,7 +295,7 @@ public class Stu3AvroConverterTest {
 
     // The field with the expected prefix should match the original data.
     Assert.assertEquals(testPatient.getGeneralPractitionerFirstRep().getReference(),
-            "Practitioner/" + practitionerId);
+        "Practitioner/" + practitionerId);
 
     Assert.assertEquals(testCondition.getSubject().getReference(),
         testConditionDecoded.getSubject().getReference());
@@ -411,21 +419,21 @@ public class Stu3AvroConverterTest {
     Assert.assertEquals(testMedicationOneId, decodedMedicationOneId);
     Assert.assertTrue(decodedMedicationOneIngredientItem.equalsDeep(testMedicationIngredientItem));
 
-    Provenance decodedProvenance = (Provenance) testMedicationRequestDecoded.getContained().get(1);
-    String decodedProvenanceId = decodedProvenance.getId();
-
     Provenance testProvenance = (Provenance) testMedicationRequest.getContained().get(1);
     String testProvenanceId = testProvenance.getId();
+
+    Provenance decodedProvenance = (Provenance) testMedicationRequestDecoded.getContained().get(1);
+    String decodedProvenanceId = decodedProvenance.getId();
 
     Assert.assertEquals(testProvenanceId, decodedProvenanceId);
 
     Medication testMedicationTwo = (Medication) testMedicationRequest.getContained().get(2);
+    String testMedicationTwoId = testMedicationTwo.getId();
     String testMedicationTwoReference =
             testMedicationTwo.getPackage().getContent().get(0).getItemReference().getReference();
 
     Medication decodedMedicationTwo = (Medication) testMedicationRequestDecoded.getContained()
         .get(2);
-    String testMedicationTwoId = testMedicationTwo.getId();
     String decodedMedicationTwoId = decodedMedicationTwo.getId();
     String decodedMedicationTwoReference =
             decodedMedicationTwo.getPackage().getContent().get(0).getItemReference().getReference();
