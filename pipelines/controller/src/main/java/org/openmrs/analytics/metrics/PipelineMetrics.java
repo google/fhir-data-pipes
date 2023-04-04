@@ -18,5 +18,11 @@ package org.openmrs.analytics.metrics;
 import org.apache.beam.sdk.metrics.MetricQueryResults;
 
 public interface PipelineMetrics {
+
+  /**
+   * Fetch the MetricQueryResults object for the currently running pipeline.
+   *
+   * @return MetricQueryResults
+   */
   MetricQueryResults getMetricResults();
 }

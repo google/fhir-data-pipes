@@ -22,7 +22,6 @@ import org.apache.beam.sdk.metrics.MetricQueryResults;
 import org.openmrs.analytics.exception.MetricsNotSupportedException;
 import org.openmrs.analytics.metrics.ProgressStats;
 import org.openmrs.analytics.metrics.Stats;
-import org.openmrs.analytics.metrics.StatsHelper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -71,9 +70,9 @@ public class ApiController {
     try {
       metricQueryResults = pipelineManager.getPipelineMetrics();
     } catch (MetricsNotSupportedException e) {
-      logger.warn("Metrics currently not supported for the pipeline.", e);
+      logger.warn("Metrics are not supported for the current pipeline runner.", e);
       return null;
     }
-    return StatsHelper.createStats(metricQueryResults);
+    return Stats.createStats(metricQueryResults);
   }
 }

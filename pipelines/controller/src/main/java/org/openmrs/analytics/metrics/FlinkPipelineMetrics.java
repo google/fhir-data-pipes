@@ -15,6 +15,7 @@
  */
 package org.openmrs.analytics.metrics;
 
+import java.util.ArrayList;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
 import org.apache.beam.runners.core.metrics.MetricsContainerStepMap;
@@ -27,20 +28,27 @@ import org.apache.flink.core.execution.JobClient;
 import org.openmrs.analytics.MetricsConstants;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 
 @Component
-@Scope("singleton")
 public class FlinkPipelineMetrics implements PipelineMetrics {
 
   private static final Logger logger = LoggerFactory.getLogger(FlinkPipelineMetrics.class);
 
   private static volatile JobClient jobClient;
 
+  /**
+   * This method returns the MetricQueryResults for the currently running pipeline. The current
+   * running pipeline is determined by the JobClient which is set by the FlinkJobListener when the
+   * pipeline is started.
+   *
+   * @return MetricQueryResults
+   */
   @Override
   public MetricQueryResults getMetricResults() {
-    if (jobClient == null) return null;
+    if (jobClient == null) {
+      return getEmptyMetricQueryResults();
+    }
 
     try {
       // Blocking call to get the accumulators
@@ -65,7 +73,11 @@ public class FlinkPipelineMetrics implements PipelineMetrics {
     } catch (InterruptedException | ExecutionException e) {
       throw new RuntimeException(e);
     }
-    return null;
+    return getEmptyMetricQueryResults();
+  }
+
+  private MetricQueryResults getEmptyMetricQueryResults() {
+    return MetricQueryResults.create(new ArrayList<>(), new ArrayList<>(), new ArrayList<>());
   }
 
   public static synchronized void setJobClient(JobClient jobClient) {

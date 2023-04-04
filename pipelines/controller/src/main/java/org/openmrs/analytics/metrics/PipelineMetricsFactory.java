@@ -15,8 +15,8 @@
  */
 package org.openmrs.analytics.metrics;
 
+import javax.annotation.Nullable;
 import org.apache.beam.sdk.PipelineRunner;
-import org.openmrs.analytics.exception.MetricsNotSupportedException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -30,14 +30,24 @@ public class PipelineMetricsFactory {
   private static final String FLINK_RUNNER = "FlinkRunner";
   @Autowired private FlinkPipelineMetrics flinkPipelineMetrics;
 
-  public PipelineMetrics getPipelineMetrics(Class<? extends PipelineRunner> pipelineRunner)
-      throws MetricsNotSupportedException {
+  /**
+   * This method returns an implementation of the PipelineMetrics class for the given
+   * pipelineRunner. A null value is returned if the pipelineRunner does not support metrics
+   * retrieval when the pipeline is still running.
+   *
+   * @param pipelineRunner the runner for which PipelineMetrics is to be returned
+   * @return An implementation of the PipelineMetrics
+   */
+  @Nullable
+  public PipelineMetrics getPipelineMetrics(Class<? extends PipelineRunner> pipelineRunner) {
     switch (pipelineRunner.getSimpleName()) {
       case FLINK_RUNNER:
         return flinkPipelineMetrics;
       default:
-        throw new MetricsNotSupportedException(
-            "metrics not supported " + pipelineRunner.getClass().getSimpleName());
+        logger.warn(
+            "Metrics is not supported for the pipeline runner {}",
+            pipelineRunner.getClass().getSimpleName());
+        return null;
     }
   }
 }

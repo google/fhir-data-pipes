@@ -126,6 +126,8 @@ public class FhirEtl {
     Map<String, List<SearchSegmentDescriptor>> segmentMap = Maps.newHashMap();
     try {
       // TODO in the activePeriod case, among patientAssociatedResources, only fetch Encounter here.
+      // TODO Capture the total resources to be processed as a metric which can be used to derive
+      //  the stats of how many records has been completed.
       segmentMap = fhirSearchUtil.createSegments(options);
     } catch (IllegalArgumentException e) {
       log.error(
@@ -262,8 +264,7 @@ public class FhirEtl {
   /** A simple DoFn that captures the gauge metric of the given input type */
   public static class LogAsMetric extends DoFn<KV<String, Long>, Void> {
     @ProcessElement
-    public void processElement(ProcessContext c) {
-      KV<String, Long> input = c.element();
+    public void processElement(@Element KV<String, Long> input) {
       Metrics.gauge(
               MetricsConstants.METRICS_NAMESPACE,
               MetricsConstants.TOTAL_NO_OF_RESOURCES + input.getKey())
@@ -308,6 +309,8 @@ public class FhirEtl {
       }
 
       foundResource = true;
+      // TODO See if the below code of adding a metric can be moved to any existing DoFn,
+      //  e.g., as constructor parameter
       PCollection<KV<String, Long>> initialPCollection =
           pipeline.apply(
               "Metric parameters for " + resourceType,
@@ -325,6 +328,7 @@ public class FhirEtl {
           queryParameters.apply(
               "JdbcIO fetch for " + resourceType,
               new JdbcFetchHapi.FetchRowsJdbcIo(
+                  options.getResourceList(),
                   JdbcIO.DataSourceConfiguration.create(jdbcConnectionUtil.getDataSource()),
                   options.getSince()));
 
