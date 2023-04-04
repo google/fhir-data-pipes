@@ -554,13 +554,11 @@ public class Stu3StructureDefinitions extends StructureDefinitions {
       StructureDefinition definition,
       Deque<QualifiedPath> stack) {
 
-    ElementDefinition definitionRootElement = definition.getSnapshot().getElement().get(0);
-
     List<ElementDefinition> definitions = definition.getSnapshot().getElement();
 
     ElementDefinition root = definitions.get(0);
 
-    stack.push(new QualifiedPath(definition.getUrl(), definitionRootElement.getPath()));
+    stack.push(new QualifiedPath(definition.getUrl(), root.getPath()));
 
     List<StructureField<T>> childElements = transformChildren(visitor, definition,
         definitions, stack, root);
@@ -593,6 +591,10 @@ public class Stu3StructureDefinitions extends StructureDefinitions {
     } else {
 
       String rootName = elementName(root);
+
+      // We don't want 'id' to be present in nested fields to make it consistent with SQL-on-FHIR.
+      // https://github.com/FHIR/sql-on-fhir/blob/master/sql-on-fhir.md#id-fields-omitted
+      childElements.removeIf(field -> field.fieldName().equals("id"));
 
       return visitor.visitComposite(rootName,
           rootName,

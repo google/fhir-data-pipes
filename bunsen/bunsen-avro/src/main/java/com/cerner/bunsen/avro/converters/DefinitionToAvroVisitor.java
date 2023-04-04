@@ -524,7 +524,7 @@ public class DefinitionToAvroVisitor implements DefinitionVisitor<HapiConverter<
     public Object fromHapi(Object input) {
       String uri =  ((IPrimitiveType) input).getValueAsString();
 
-      return uri != null && uri.startsWith(prefix)
+      return uri != null && lowercase(uri).startsWith(lowercase(prefix))
           ? uri.substring(uri.lastIndexOf('/') + 1)
           : null;
     }
@@ -570,6 +570,11 @@ public class DefinitionToAvroVisitor implements DefinitionVisitor<HapiConverter<
               .map(refUri -> {
 
                 String relativeType = refUri.substring(refUri.lastIndexOf('/') + 1);
+
+                // Convert to lower camel case if any of the element name is in upper camel case.
+                // E.g. OrganizationId to organizationId; To make it consistent with SQL-on-FHIR.
+                // https://github.com/FHIR/sql-on-fhir/blob/master/sql-on-fhir.md#referenced
+                relativeType = lowercase(relativeType);
 
                 return new StructureField<HapiConverter<Schema>>("reference",
                     relativeType + "Id",

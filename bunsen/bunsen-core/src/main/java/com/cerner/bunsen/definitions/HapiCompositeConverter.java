@@ -164,15 +164,18 @@ public abstract class HapiCompositeConverter<T> extends HapiConverter<T> {
 
     if (composite instanceof IAnyResource) {
 
-      // Id element
       StructureField<HapiConverter<T>> schemaEntry = schemaIterator.next();
-      values[0] = schemaEntry.result().fromHapi(((IAnyResource) composite).getIdElement());
-      valueIndex++;
+      // We do not want id in nested elements or sub-elements.
+      // https://github.com/FHIR/sql-on-fhir/blob/master/sql-on-fhir.md#id-fields-omitted
+      if (schemaEntry.fieldName().equals("id")) {
+        // Id element.
+        values[0] = schemaEntry.result().fromHapi(((IAnyResource) composite).getIdElement());
+        valueIndex++;
 
-      // Meta element
-      schemaEntry = schemaIterator.next();
-      values[valueIndex] = schemaEntry.result().fromHapi(((IAnyResource) composite).getMeta());
-      valueIndex++;
+        schemaEntry = schemaIterator.next();
+      }
+      // Meta element.
+      values[valueIndex++] = schemaEntry.result().fromHapi(((IAnyResource) composite).getMeta());
     }
 
     Map<String, List> properties = fhirSupport.compositeValues(composite);

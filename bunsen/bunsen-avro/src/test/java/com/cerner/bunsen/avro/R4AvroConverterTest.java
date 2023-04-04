@@ -2,13 +2,11 @@ package com.cerner.bunsen.avro;
 
 import com.cerner.bunsen.FhirContexts;
 import com.cerner.bunsen.r4.TestData;
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
@@ -18,7 +16,6 @@ import org.apache.avro.Schema;
 import org.apache.avro.compiler.specific.SpecificCompiler;
 import org.apache.avro.generic.GenericData.Record;
 import org.hl7.fhir.exceptions.FHIRException;
-import org.hl7.fhir.r4.model.CodeableConcept;
 import org.hl7.fhir.r4.model.Coding;
 import org.hl7.fhir.r4.model.Condition;
 import org.hl7.fhir.r4.model.Extension;
@@ -35,7 +32,7 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 // TODO refactor the shared code with AvroConverterTest (STU3).
-public class AvroConverterTestR4 {
+public class R4AvroConverterTest {
 
   private static final Observation testObservation = TestData.newObservation();
 
@@ -187,6 +184,14 @@ public class AvroConverterTestR4 {
         .equalsDeep(testPatientDecoded.getMultipleBirth()));
   }
 
+  @Test
+  public void testIdInNestedElement() throws FHIRException {
+
+    // Ensure that nested elements do not have id as property.
+    Assert.assertNull(testPatientDecoded.getAddress().get(0).getId());
+    Assert.assertNull(testPatientDecoded.getName().get(0).getId());
+  }
+
   /**
    * Tests that FHIR StructureDefinitions that contain fields having identical ChoiceTypes generate
    * an Avro definition that does not trigger an erroneous re-definition of the Avro, and that the
@@ -274,7 +279,7 @@ public class AvroConverterTestR4 {
     Assert.assertEquals(testCondition.getSubject().getReference(),
         subject.get("reference"));
 
-    Assert.assertEquals("12345",  subject.get("PatientId"));
+    Assert.assertEquals("12345",  subject.get("patientId"));
 
     Assert.assertEquals(testCondition.getSubject().getReference(),
         testConditionDecoded.getSubject().getReference());
@@ -285,8 +290,8 @@ public class AvroConverterTestR4 {
 
     Record practitioner = (Record) ((List) avroPatient.get("generalPractitioner")).get(0);
 
-    String organizationId = (String) practitioner.get("OrganizationId");
-    String practitionerId = (String) practitioner.get("PractitionerId");
+    String organizationId = (String) practitioner.get("organizationId");
+    String practitionerId = (String) practitioner.get("practitionerId");
 
     // The reference is not of this type, so the field should be null.
     Assert.assertNull(organizationId);

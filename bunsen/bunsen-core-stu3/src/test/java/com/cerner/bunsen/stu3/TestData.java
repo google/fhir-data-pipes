@@ -209,6 +209,7 @@ public class TestData {
 
     Address address = patient.addAddress();
     address.addLine("123 Fake Street");
+    address.setId("address123");
     address.setCity("Chicago");
     address.setState("IL");
     address.setDistrict("12345");
@@ -263,6 +264,7 @@ public class TestData {
     humanName.setFamily("family_name");
     humanName.addGiven("given_name");
     humanName.addGiven("middle_name");
+    humanName.setId("name123");
     patient.addName(humanName);
 
 
