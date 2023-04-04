@@ -72,7 +72,15 @@ public class DebeziumListener extends RouteBuilder {
     String fhirBaseUrl = params.fhirServerUrl;
     OpenmrsUtil openmrsUtil =
         new OpenmrsUtil(
-            fhirBaseUrl, params.fhirServerUserName, params.fhirServerPassword, fhirContext);
+            fhirBaseUrl,
+            params.fhirServerUserName,
+            params.fhirServerPassword,
+            params.oidConnectUrl,
+            params.clientId,
+            params.clientSecret,
+            params.oAuthUsername,
+            params.oAuthPassword,
+            fhirContext);
     FhirStoreUtil fhirStoreUtil =
         FhirStoreUtil.createFhirStoreUtil(
             params.fhirSinkPath,

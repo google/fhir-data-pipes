@@ -157,7 +157,7 @@ public class PipelineManager implements ApplicationListener<ApplicationReadyEven
   }
 
   @PostConstruct
-  private void initDwhStatus() {
+  private void initDwhStatus() throws IOException {
 
     PipelineConfig pipelineConfig = dataProperties.createBatchOptions();
     FileSystems.setDefaultPipelineOptions(pipelineConfig.getFhirEtlOptions());
@@ -258,7 +258,7 @@ public class PipelineManager implements ApplicationListener<ApplicationReadyEven
    * Validate the FHIR source configuration parameters during the launch of the application. This is
    * to detect any mis-configurations earlier enough and avoid failures during pipeline runs.
    */
-  void validateFhirSourceConfiguration(FhirEtlOptions options) {
+  void validateFhirSourceConfiguration(FhirEtlOptions options) throws IOException {
     if (Boolean.TRUE.equals(options.isJdbcModeHapi())) {
       validateDbConfigParameters(options.getFhirDatabaseConfigPath());
     } else if (!Strings.isNullOrEmpty(options.getFhirServerUrl())) {
@@ -283,13 +283,18 @@ public class PipelineManager implements ApplicationListener<ApplicationReadyEven
     }
   }
 
-  private void validateFhirSearchParameters(FhirEtlOptions options) {
+  private void validateFhirSearchParameters(FhirEtlOptions options) throws IOException {
     FhirSearchUtil fhirSearchUtil =
         new FhirSearchUtil(
             new OpenmrsUtil(
                 options.getFhirServerUrl(),
                 options.getFhirServerUserName(),
                 options.getFhirServerPassword(),
+                options.getOidConnectUrl(),
+                options.getClientId(),
+                options.getClientSecret(),
+                options.getOAuthUsername(),
+                options.getOAuthPassword(),
                 FhirContext.forR4()));
     fhirSearchUtil.testFhirConnection();
   }

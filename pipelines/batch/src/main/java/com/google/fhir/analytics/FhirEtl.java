@@ -82,6 +82,11 @@ public class FhirEtl {
         options.getFhirServerUrl(),
         options.getFhirServerUserName(),
         options.getFhirServerPassword(),
+        options.getOidConnectUrl(),
+        options.getClientId(),
+        options.getClientSecret(),
+        options.getOAuthUsername(),
+        options.getOAuthPassword(),
         fhirContext);
   }
 
@@ -125,7 +130,7 @@ public class FhirEtl {
   }
 
   private static List<Pipeline> buildFhirSearchPipeline(
-      FhirEtlOptions options, FhirContext fhirContext) {
+      FhirEtlOptions options, FhirContext fhirContext) throws IOException {
     FhirSearchUtil fhirSearchUtil = createFhirSearchUtil(options, fhirContext);
     Map<String, List<SearchSegmentDescriptor>> segmentMap = Maps.newHashMap();
     try {
@@ -133,7 +138,7 @@ public class FhirEtl {
       // TODO Capture the total resources to be processed as a metric which can be used to derive
       //  the stats of how many records has been completed.
       segmentMap = fhirSearchUtil.createSegments(options);
-    } catch (IllegalArgumentException e) {
+    } catch (IllegalArgumentException | IOException e) {
       log.error(
           "Either the date format in the active period is wrong or none of the resources support"
               + " 'date' feature"

@@ -23,6 +23,11 @@ fhirdata:
   # running on the same docker network.
   # fhirServerUrl: "http://172.17.0.1:8091/fhir"
   # fhirServerUrl: "http://hapi-server:8080/fhir"
+  oidConnectUrl: ""
+  clientId: ""
+  clientSecret: ""
+  oAuthUsername: ""
+  oAuthPassword: ""
   dbConfig: "config/hapi-postgres-config_local.json"
   dwhRootPrefix: "/dwh/controller_DWH"
   incrementalSchedule: "0 0 * * * *"

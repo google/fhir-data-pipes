@@ -67,6 +67,16 @@ public class DataProperties {
 
   private String fhirServerUrl;
 
+  private String oidConnectUrl;
+
+  private String clientId;
+
+  private String clientSecret;
+
+  private String oAuthUsername;
+
+  private String oAuthPassword;
+
   private String dbConfig;
 
   private String dwhRootPrefix;
@@ -127,6 +137,14 @@ public class DataProperties {
       options.setFhirServerPassword(fhirServerPassword);
       options.setFhirServerUserName(fhirServerUserName);
     }
+    logger.info("Converting options for fhirServerUrl {}", fhirServerUrl);
+    options.setFhirServerUrl(fhirServerUrl);
+    options.setOidConnectUrl(oidConnectUrl);
+    options.setClientId(clientId);
+    options.setClientSecret(clientSecret);
+    options.setOAuthUsername(oAuthUsername);
+    options.setOAuthPassword(oAuthPassword);
+    options.setFhirDatabaseConfigPath(dbConfig);
     options.setResourceList(resourceList);
 
     PipelineConfig.PipelineConfigBuilder pipelineConfigBuilder = PipelineConfig.builder();
@@ -168,6 +186,11 @@ public class DataProperties {
             ""),
         new ConfigFields("fhirdata.resourceList", resourceList, "", ""),
         new ConfigFields("fhirdata.maxWorkers", String.valueOf(maxWorkers), "", ""),
+        new ConfigFields("fhirdata.oidConnectUrl", oidConnectUrl, "", ""),
+        new ConfigFields("fhirdata.clientId", clientId, "", ""),
+        new ConfigFields("fhirdata.clientSecret", clientSecret, "", ""),
+        new ConfigFields("fhirdata.oAuthUsername", oAuthUsername, "", ""),
+        new ConfigFields("fhirdata.oAuthPassword", oAuthPassword, "", ""),
         new ConfigFields("fhirdata.dbConfig", dbConfig, "", ""));
   }
 

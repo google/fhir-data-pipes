@@ -19,7 +19,9 @@ import ca.uhn.fhir.context.FhirContext;
 import ca.uhn.fhir.rest.client.api.IClientInterceptor;
 import ca.uhn.fhir.rest.client.api.IGenericClient;
 import ca.uhn.fhir.rest.client.interceptor.BasicAuthInterceptor;
+import ca.uhn.fhir.rest.client.interceptor.BearerTokenAuthInterceptor;
 import ca.uhn.fhir.rest.client.interceptor.LoggingInterceptor;
+import java.io.IOException;
 import org.hl7.fhir.instance.model.api.IBaseResource;
 import org.hl7.fhir.r4.model.Resource;
 import org.slf4j.Logger;
@@ -35,13 +37,37 @@ public class OpenmrsUtil {
 
   private final String sourcePw;
 
+  private final String oidConnectUrl;
+
+  private final String clientId;
+
+  private final String clientSecret;
+
+  private final String oAuthUsername;
+
+  private final String oAuthPassword;
+
   private final FhirContext fhirContext;
 
-  OpenmrsUtil(String sourceFhirUrl, String sourceUser, String sourcePw, FhirContext fhirContext)
+  OpenmrsUtil(
+      String sourceFhirUrl,
+      String sourceUser,
+      String sourcePw,
+      String oidConnectUrl,
+      String clientId,
+      String clientSecret,
+      String oAuthUsername,
+      String oAuthPassword,
+      FhirContext fhirContext)
       throws IllegalArgumentException {
     this.fhirUrl = sourceFhirUrl;
     this.sourceUser = sourceUser;
     this.sourcePw = sourcePw;
+    this.oidConnectUrl = oidConnectUrl;
+    this.clientId = clientId;
+    this.clientSecret = clientSecret;
+    this.oAuthUsername = oAuthUsername;
+    this.oAuthPassword = oAuthPassword;
     this.fhirContext = fhirContext;
   }
 
@@ -68,16 +94,28 @@ public class OpenmrsUtil {
     return fetchFhirResource(resourceType, resourceId);
   }
 
-  public IGenericClient getSourceClient() {
+  public IGenericClient getSourceClient() throws IOException {
     return getSourceClient(false);
   }
 
-  public IGenericClient getSourceClient(boolean enableRequestLogging) {
-    IClientInterceptor authInterceptor = new BasicAuthInterceptor(this.sourceUser, this.sourcePw);
-    fhirContext.getRestfulClientFactory().setSocketTimeout(200 * 1000);
-
+  public IGenericClient getSourceClient(boolean enableRequestLogging) throws IOException {
     IGenericClient client = fhirContext.getRestfulClientFactory().newGenericClient(this.fhirUrl);
-    client.registerInterceptor(authInterceptor);
+    if (this.oidConnectUrl != null && !oidConnectUrl.isBlank()) {
+      OAuthToken oaToken =
+          new OAuthToken(
+              this.oidConnectUrl,
+              new OAuthToken.PasswordGrantCredentials(
+                  this.clientId, this.clientSecret, this.oAuthUsername, this.oAuthPassword));
+
+      IClientInterceptor authInterceptor =
+          new BearerTokenAuthInterceptor(oaToken.getCurrentAccessToken());
+      client.registerInterceptor(authInterceptor);
+    } else {
+      IClientInterceptor authInterceptor = new BasicAuthInterceptor(this.sourceUser, this.sourcePw);
+      client.registerInterceptor(authInterceptor);
+    }
+
+    fhirContext.getRestfulClientFactory().setSocketTimeout(200 * 1000);
 
     if (enableRequestLogging) {
       LoggingInterceptor loggingInterceptor = new LoggingInterceptor();

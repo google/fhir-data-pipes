@@ -35,6 +35,31 @@ public class BaseArgs {
   public String fhirServerUrl = "http://localhost:8099/openmrs/ws/fhir2/R4";
 
   @Parameter(
+      names = {"--oidConnectUrl"},
+      description = "OAuth OIDC Connect URL.")
+  public String oidConnectUrl = "";
+
+  @Parameter(
+      names = {"--clientId"},
+      description = "Oauth Client ID.")
+  public String clientId = "";
+
+  @Parameter(
+      names = {"--clientSecret"},
+      description = "OAuth Client Secret.")
+  public String clientSecret = "";
+
+  @Parameter(
+      names = {"--oAuthUsername"},
+      description = "OAuth Password Credentials Username.")
+  public String oAuthUsername = "";
+
+  @Parameter(
+      names = {"--oAuthPassword"},
+      description = "OAuth Password Credentials Password.")
+  public String oAuthPassword = "";
+
+  @Parameter(
       names = {"--fhirSinkPath"},
       description = "Google cloud FHIR store or target generic fhir store")
   public String fhirSinkPath = "";

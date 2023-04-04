@@ -67,6 +67,37 @@ public interface FhirEtlOptions extends PipelineOptions {
 
   void setFhirServerPassword(String value);
 
+  @Description("OAuth OIDC Connect URL.")
+  @Required
+  @Default.String("")
+  String getOidConnectUrl();
+
+  void setOidConnectUrl(String value);
+
+  @Description("Oauth Client ID.")
+  @Default.String("")
+  String getClientId();
+
+  void setClientId(String value);
+
+  @Description("OAuth Client Secret.")
+  @Default.String("")
+  String getClientSecret();
+
+  void setClientSecret(String value);
+
+  @Description("OAuth Password Credentials Username.")
+  @Default.String("")
+  String getOAuthUsername();
+
+  void setOAuthUsername(String value);
+
+  @Description("OAuth Password Credentials Password.")
+  @Default.String("")
+  String getOAuthPassword();
+
+  void setOAuthPassword(String value);
+
   @Description(
       "The path to the target generic fhir store, or a GCP fhir store with the format:"
           + " `projects/[\\w-]+/locations/[\\w-]+/datasets/[\\w-]+/fhirStores/[\\w-]+`, e.g., "

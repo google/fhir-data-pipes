@@ -25,6 +25,7 @@ import ca.uhn.fhir.context.FhirContext;
 import ca.uhn.fhir.rest.client.api.IClientInterceptor;
 import ca.uhn.fhir.rest.client.api.IGenericClient;
 import ca.uhn.fhir.rest.client.impl.RestfulClientFactory;
+import java.io.IOException;
 import org.hl7.fhir.r4.model.Patient;
 import org.junit.Before;
 import org.junit.Test;
@@ -51,7 +52,9 @@ public class OpenmrsUtilTest {
 
   @Before
   public void setUp() throws Exception {
-    openmrsUtil = new OpenmrsUtil(SOURCE_FHIR_URL, "someuser", "somepw", fhirContext);
+    openmrsUtil =
+        new OpenmrsUtil(
+            SOURCE_FHIR_URL, "someuser", "somepw", null, null, null, null, null, fhirContext);
 
     doNothing().when(clientFactory).setSocketTimeout(any(Integer.class));
     when(fhirContext.getRestfulClientFactory()).thenReturn(clientFactory);
@@ -77,7 +80,7 @@ public class OpenmrsUtilTest {
   }
 
   @Test
-  public void shouldGetSourceClient() {
+  public void shouldGetSourceClient() throws IOException {
     IGenericClient result = openmrsUtil.getSourceClient();
 
     assertThat(result, equalTo(client));

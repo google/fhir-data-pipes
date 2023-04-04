@@ -134,7 +134,7 @@ public class FhirSearchUtilTest {
   }
 
   @Test
-  public void testCreateSegments() {
+  public void testCreateSegments() throws IOException {
     FhirEtlOptions options = PipelineOptionsFactory.as(FhirEtlOptions.class);
     options.setResourceList("Patient");
     options.setBatchSize(15);
@@ -144,7 +144,7 @@ public class FhirSearchUtilTest {
   }
 
   @Test
-  public void testCreateSegmentsWithSince() {
+  public void testCreateSegmentsWithSince() throws IOException {
     FhirEtlOptions options = PipelineOptionsFactory.as(FhirEtlOptions.class);
     options.setResourceList("Patient");
     options.setBatchSize(15);
