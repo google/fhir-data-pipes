@@ -1,0 +1,18 @@
+{{ $scope := . }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "fhir-data-pipes.fullname" . }}
+  labels:
+    {{- include "fhir-data-pipes.labels" . | nindent 4 }}
+data:
+  hapi-postgres-config-json: |
+    {{ tpl (.Values.hapi.postgres | toJson ) $scope}}
+  thriftserver-hive-config-json: |
+    {{ tpl ( .Values.thriftserver.hive | toJson ) $scope }}
+  application-config-yaml: |
+    {{ tpl ( .Values.applicationConfig | toYaml) $scope | nindent 8}}
+  {{ range $value := .Values.extraConfigMaps -}}
+  {{ $value.name }}: |
+  {{ tpl $value.contents $scope | nindent 8 }}
+  {{ end }}

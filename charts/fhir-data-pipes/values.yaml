@@ -1,0 +1,163 @@
+# Default values for fhir-data-pipes.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+replicaCount: 1
+
+image:
+  repository: onaio/fhir-data-pipes
+  pullPolicy: IfNotPresent
+  # Overrides the image tag whose default is the chart appVersion.
+  tag: "master"
+
+imagePullSecrets: []
+nameOverride: ""
+fullnameOverride: ""
+
+serviceAccount:
+  # Specifies whether a service account should be created
+  create: true
+  # Annotations to add to the service account
+  annotations: {}
+  # The name of the service account to use.
+  # If not set and create is true a name is generated using the fullname template
+  name: ""
+
+podAnnotations: {}
+
+podSecurityContext: {}
+# fsGroup: 2000
+
+securityContext: {}
+  # capabilities:
+  #   drop:
+  #   - ALL
+  # readOnlyRootFilesystem: true
+# runAsNonRoot: true
+# runAsUser: 1000
+
+service:
+  type: ClusterIP
+  port: 8080
+
+ingress:
+  enabled: false
+  className: ""
+  annotations: {}
+  # kubernetes.io/ingress.class: nginx
+  # kubernetes.io/tls-acme: "true"
+  hosts:
+    - host: fhir-data-pipes.local
+      paths:
+        - path: /
+          pathType: ImplementationSpecific
+  tls: []
+  #  - secretName: chart-example-tls
+  #    hosts:
+  #      - chart-example.local
+
+resources:
+# We usually recommend not to specify default resources and to leave this as a conscious
+# choice for the user. This also increases chances charts run on environments with little
+# resources such as Minikube. If you do want to specify resources uncomment the following
+# lines adjust them as necessary and remove the curly braces after 'resources:'.
+#   limits:
+#     memory: 1024Mi
+#   requests:
+#     cpu: 100m
+#     memory: 128Mi
+
+autoscaling:
+  enabled: false
+  minReplicas: 1
+  maxReplicas: 100
+  targetCPUUtilizationPercentage: 80
+  # targetMemoryUtilizationPercentage: 80
+
+nodeSelector: {}
+
+tolerations: []
+
+affinity: {}
+
+recreatePodsWhenConfigMapChange: true
+
+livenessProbe:
+  httpGet:
+    path: /
+    port: http
+
+readinessProbe:
+  httpGet:
+    path: /
+    port: http
+
+hapi:
+  postgres:
+    databaseService: "postgresql"
+    databaseHostName: ""
+    databasePort: "5432"
+    databaseUser: ""
+    databasePassword: ""
+    databaseName: ""
+
+thriftserver:
+  hive:
+    databaseService: "hive2"
+    databaseHostName: "spark-thriftserver"
+    databasePort: "10000"
+    databaseUser: "hive"
+    databasePassword: ""
+    databaseName: "default"
+
+applicationConfig:
+  fhirdata:
+    fhirServerUrl: ""
+    dbConfig: "/app/config/hapi-postgres-config.json"
+    dwhRootPrefix: "/dwh/controller_DWH"
+    thriftserverHiveConfig: "/app/config/thrifter-hive-config.json"
+    incrementalSchedule: "* * * * * *"
+    resourceList: "PatientEncounterObservation"
+    maxWorkers: "10"
+    createHiveResourceTables: "true"
+    hiveJdbcDriver: "org.apache.hive.jdbc.HiveDriver"
+
+initContainers:
+
+extraVolumes:
+#  - name: some-name
+#    configMap:
+#      name: '{{ include "fhir-data-pipes.fullname" . }}'
+
+
+extraVolumeMounts:
+#  - mountPath: /app/resources/some-file.json
+#    name: some-name
+#    subPath: some-configmap.json
+
+extraConfigMaps:
+#  - name: some-configmap.json
+#    contents: |
+#      {
+#      "entries": [
+#          {
+#          }
+#        ]
+#      }
+
+env:
+#  - name: APP_LOGGING_LEVEL
+#    value: DEBUG
+#  - name: _JAVA_OPTIONS
+#    value: -Dlogging.level.org.springframework=TRACE
+
+pdb:
+  enabled: false
+  minAvailable: ""
+  maxUnavailable: 1
+
+vpa:
+  enabled: false
+  updatePolicy:
+    updateMode: "Off"
+  resourcePolicy: {}

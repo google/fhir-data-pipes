@@ -1,0 +1,22 @@
+{{ if .Values.pdb.enabled }}
+{{- if semverCompare "<1.21-0" .Capabilities.KubeVersion.GitVersion -}}
+apiVersion: "policy/v1beta1"
+{{- else -}}
+apiVersion: "policy/v1"
+{{- end }}
+kind: PodDisruptionBudget
+metadata:
+  name: {{ include "fhir-data-pipes.fullname" . }}
+  labels:
+    {{- include "fhir-data-pipes.labels" . | nindent 4 }}
+spec:
+  {{- if .Values.pdb.minAvailable }}
+  minAvailable: {{ .Values.pdb.minAvailable }}
+  {{- end }}
+  {{- if .Values.pdb.maxUnavailable }}
+  maxUnavailable: {{ .Values.pdb.maxUnavailable }}
+  {{- end }}
+  selector:
+    matchLabels:
+      {{- include "fhir-data-pipes.selectorLabels" . | nindent 6 }}
+{{- end }}

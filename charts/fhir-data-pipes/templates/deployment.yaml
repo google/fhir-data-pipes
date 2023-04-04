@@ -1,0 +1,91 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "fhir-data-pipes.fullname" . }}
+  labels:
+    {{- include "fhir-data-pipes.labels" . | nindent 4 }}
+spec:
+  {{- if not .Values.autoscaling.enabled }}
+  replicas: {{ .Values.replicaCount }}
+  {{- end }}
+  selector:
+    matchLabels:
+      {{- include "fhir-data-pipes.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      annotations:
+        {{- include "fhir-data-pipes.podAnnotations" . | indent 8 }}
+      labels:
+        {{- include "fhir-data-pipes.selectorLabels" . | nindent 8 }}
+    spec:
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      serviceAccountName: {{ include "fhir-data-pipes.serviceAccountName" . }}
+      securityContext:
+        {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      volumes:
+        - name: application-config-yaml
+          configMap:
+            name: {{ include "fhir-data-pipes.fullname" . }}
+        - name: hapi-postgres-config-json
+          configMap:
+            name: {{ include "fhir-data-pipes.fullname" . }}
+        - name: thriftserver-hive-config-json
+          configMap:
+            name: {{ include "fhir-data-pipes.fullname" . }}
+        {{- if .Values.extraVolumes }}
+        {{- tpl (toYaml .Values.extraVolumes) . | nindent 12 }}
+        {{- end }}
+      {{- if .Values.initContainers }}
+      initContainers:
+        {{- toYaml .Values.initContainers | nindent 12 }}
+      {{- end }}
+      containers:
+        - name: {{ .Chart.Name }}
+          securityContext:
+            {{- toYaml .Values.securityContext | nindent 12 }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          env:
+            - name: SPRING_CONFIG_LOCATION
+              value: /app/config/application.yaml
+              {{- if  .Values.env }}
+              {{- tpl (toYaml .Values.env) .  | nindent 12 }}
+              {{- end }}
+          ports:
+            - name: http
+              containerPort: 8080
+              protocol: TCP
+          livenessProbe:
+            {{- toYaml .Values.livenessProbe | nindent 12 }}
+          readinessProbe:
+            {{- toYaml .Values.readinessProbe | nindent 12 }}
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+          volumeMounts:
+            - name: application-config-yaml
+              mountPath: /app/config/application.yaml
+              subPath: application-config-yaml
+            - name: hapi-postgres-config-json
+              mountPath: /app/config/hapi-postgres-config.json
+              subPath: hapi-postgres-config-json
+            - name: thriftserver-hive-config-json
+              mountPath: /app/config/thriftserver-hive-config.json
+              subPath: thriftserver-hive-config-json
+          {{- if .Values.extraVolumeMounts }}
+          {{- toYaml .Values.extraVolumeMounts | nindent 12 }}
+          {{- end }}
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
