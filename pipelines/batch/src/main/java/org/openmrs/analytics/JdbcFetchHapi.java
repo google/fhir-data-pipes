@@ -17,11 +17,20 @@ package org.openmrs.analytics;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Charsets;
+import com.google.common.base.Strings;
 import java.sql.Blob;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import org.apache.beam.sdk.io.jdbc.JdbcIO;
 import org.apache.beam.sdk.transforms.DoFn;
 import org.apache.beam.sdk.transforms.PTransform;
@@ -75,9 +84,10 @@ public class JdbcFetchHapi {
       String resourceId = resultSet.getString("res_id");
       String resourceType = resultSet.getString("res_type");
       String lastUpdated = resultSet.getString("res_updated");
+      String fhirVersion = resultSet.getString("res_version");
       String resourceVersion = resultSet.getString("res_ver");
       return HapiRowDescriptor.create(
-          resourceId, resourceType, lastUpdated, resourceVersion, jsonResource);
+          resourceId, resourceType, lastUpdated, fhirVersion, resourceVersion, jsonResource);
     }
   }
 
@@ -118,7 +128,7 @@ public class JdbcFetchHapi {
       // Note the constraint on `res.res_ver` ensures we only pick the latest version.
       StringBuilder builder =
           new StringBuilder(
-              "SELECT res.res_id, res.res_type, res.res_updated, res.res_ver, "
+              "SELECT res.res_id, res.res_type, res.res_updated, res.res_version, res.res_ver, "
                   + "ver.res_encoding, ver.res_text FROM hfj_resource res, hfj_res_ver ver "
                   + "WHERE res.res_type = ? AND res.res_id = ver.res_id AND "
                   + "res.res_ver = ver.res_ver AND res.res_id % ? = ? ");
@@ -283,5 +293,41 @@ public class JdbcFetchHapi {
     }
 
     return queryParameterList;
+  }
+
+  /**
+   * Searches for the total number of resources for each resource type
+   *
+   * @param resourceList the resource types to be processed
+   * @param since the time from which the records need to be fetched
+   * @return a Map storing the counts of each resource type
+   */
+  public Map<String, Integer> searchResourceCounts(String resourceList, String since)
+      throws SQLException {
+    Set<String> resourceTypes = new HashSet<>(Arrays.asList(resourceList.split(",")));
+    Map<String, Integer> resourceCountMap = new HashMap<>();
+    for (String resourceType : resourceTypes) {
+      StringBuilder builder = new StringBuilder();
+      builder.append("SELECT count(*) FROM hfj_resource res where res.res_type = ?");
+      if (!Strings.isNullOrEmpty(since)) {
+        builder.append(" AND res.res_updated > '").append(since).append("'");
+      }
+      try (Connection connection = jdbcConnectionUtil.getDataSource().getConnection();
+          PreparedStatement statement =
+              createPreparedStatement(connection, builder.toString(), resourceType);
+          ResultSet resultSet = statement.executeQuery()) {
+        resultSet.next();
+        int count = resultSet.getInt("count");
+        resourceCountMap.put(resourceType, count);
+      }
+    }
+    return resourceCountMap;
+  }
+
+  private PreparedStatement createPreparedStatement(
+      Connection connection, String query, String parameter) throws SQLException {
+    PreparedStatement preparedStatement = connection.prepareStatement(query);
+    preparedStatement.setString(1, parameter);
+    return preparedStatement;
   }
 }

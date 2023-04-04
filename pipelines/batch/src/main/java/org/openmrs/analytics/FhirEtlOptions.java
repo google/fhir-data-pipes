@@ -227,4 +227,11 @@ public interface FhirEtlOptions extends PipelineOptions {
   String getSourceJsonFilePattern();
 
   void setSourceJsonFilePattern(String value);
+
+  @Description(
+      "Flag to specify whether the deleted records should be processed or not during the pipeline")
+  @Default.Boolean(false)
+  Boolean getProcessDeletedRecords();
+
+  void setProcessDeletedRecords(Boolean value);
 }

@@ -218,7 +218,7 @@ public class PipelineManager {
 
   // Every 30 seconds, check for pipeline status and incremental pipeline schedule.
   @Scheduled(fixedDelay = 30000)
-  private void checkSchedule() throws IOException, PropertyVetoException {
+  private void checkSchedule() throws IOException, PropertyVetoException, SQLException {
     LocalDateTime next = getNextIncrementalTime();
     if (next == null) {
       return;
@@ -231,7 +231,7 @@ public class PipelineManager {
   }
 
   private Pipeline buildJdbcPipeline(FhirEtlOptions options)
-      throws IOException, PropertyVetoException {
+      throws IOException, PropertyVetoException, SQLException {
     DatabaseConfiguration dbConfig =
         DatabaseConfiguration.createConfigFromFile(options.getFhirDatabaseConfigPath());
     FhirContext fhirContext = FhirContexts.forR4();
@@ -239,7 +239,7 @@ public class PipelineManager {
     return FhirEtl.buildHapiJdbcFetch(options, dbConfig, fhirContext);
   }
 
-  synchronized void runBatchPipeline() throws IOException, PropertyVetoException {
+  synchronized void runBatchPipeline() throws IOException, PropertyVetoException, SQLException {
     Preconditions.checkState(!isRunning(), "cannot start a pipeline while another one is running");
     PipelineConfig pipelineConfig = dataProperties.createBatchOptions();
     FhirEtlOptions options = pipelineConfig.getFhirEtlOptions();
@@ -255,7 +255,8 @@ public class PipelineManager {
     currentPipeline.start();
   }
 
-  synchronized void runIncrementalPipeline() throws IOException, PropertyVetoException {
+  synchronized void runIncrementalPipeline()
+      throws IOException, PropertyVetoException, SQLException {
     // TODO do the same as above but read/set --since
     Preconditions.checkState(!isRunning(), "cannot start a pipeline while another one is running");
     Preconditions.checkState(
@@ -269,6 +270,7 @@ public class PipelineManager {
     options.setOutputParquetPath(incrementalDwhRoot);
     String since = currentDwh.readTimestampFile().toString();
     options.setSince(since);
+    options.setProcessDeletedRecords(Boolean.TRUE);
     Pipeline pipeline = buildJdbcPipeline(options);
 
     // The merger pipeline merges the original full DWH with the new incremental one.

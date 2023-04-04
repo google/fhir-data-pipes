@@ -17,6 +17,7 @@ package org.openmrs.analytics;
 
 import java.beans.PropertyVetoException;
 import java.io.IOException;
+import java.sql.SQLException;
 import org.apache.beam.sdk.metrics.MetricQueryResults;
 import org.openmrs.analytics.exception.MetricsNotSupportedException;
 import org.openmrs.analytics.metrics.ProgressStats;
@@ -40,7 +41,7 @@ public class ApiController {
 
   @PostMapping("/run")
   public String runBatch(@RequestParam(name = "isFullRun", required = true) boolean isFullRun)
-      throws IOException, PropertyVetoException {
+      throws IOException, PropertyVetoException, SQLException {
     if (pipelineManager.isRunning()) {
       throw new IllegalStateException("Another pipeline is running!");
     }

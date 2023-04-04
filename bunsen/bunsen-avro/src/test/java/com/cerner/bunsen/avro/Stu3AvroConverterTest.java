@@ -34,7 +34,7 @@ import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-public class AvroConverterTest {
+public class Stu3AvroConverterTest {
 
   private static final Observation testObservation = TestData.newObservation();
 
@@ -184,6 +184,14 @@ public class AvroConverterTest {
         .equalsDeep(testPatientDecoded.getMultipleBirth()));
   }
 
+  @Test
+  public void testIdInNestedElement() throws FHIRException {
+
+    // Ensure that nested elements do not have id as property.
+    Assert.assertNull(testPatientDecoded.getAddress().get(0).getId());
+    Assert.assertNull(testPatientDecoded.getName().get(0).getId());
+  }
+
   /**
    * Tests that FHIR StructureDefinitions that contain fields having identical ChoiceTypes generate
    * an Avro definition that does not trigger an erroneous re-definition of the Avro, and that the
@@ -266,10 +274,9 @@ public class AvroConverterTest {
 
     Record subject = (Record) avroCondition.get("subject");
 
-    Assert.assertEquals(testCondition.getSubject().getReference(),
-        subject.get("reference"));
+    Assert.assertEquals(testCondition.getSubject().getReference(), subject.get("reference"));
 
-    Assert.assertEquals("12345",  subject.get("PatientId"));
+    Assert.assertEquals("12345",  subject.get("patientId"));
 
     Assert.assertEquals(testCondition.getSubject().getReference(),
         testConditionDecoded.getSubject().getReference());
@@ -280,8 +287,8 @@ public class AvroConverterTest {
 
     Record practitioner = (Record) ((List) avroPatient.get("generalPractitioner")).get(0);
 
-    String organizationId = (String) practitioner.get("OrganizationId");
-    String practitionerId = (String) practitioner.get("PractitionerId");
+    String organizationId = (String) practitioner.get("organizationId");
+    String practitionerId = (String) practitioner.get("practitionerId");
 
     // The reference is not of this type, so the field should be null.
     Assert.assertNull(organizationId);
@@ -422,12 +429,17 @@ public class AvroConverterTest {
 
     Medication testMedicationTwo = (Medication) testMedicationRequest.getContained().get(2);
     String testMedicationTwoId = testMedicationTwo.getId();
+    String testMedicationTwoReference =
+            testMedicationTwo.getPackage().getContent().get(0).getItemReference().getReference();
 
     Medication decodedMedicationTwo = (Medication) testMedicationRequestDecoded.getContained()
         .get(2);
     String decodedMedicationTwoId = decodedMedicationTwo.getId();
+    String decodedMedicationTwoReference =
+            decodedMedicationTwo.getPackage().getContent().get(0).getItemReference().getReference();
 
     Assert.assertEquals(testMedicationTwoId, decodedMedicationTwoId);
+    Assert.assertEquals(testMedicationTwoReference, decodedMedicationTwoReference);
   }
 
   @Test
