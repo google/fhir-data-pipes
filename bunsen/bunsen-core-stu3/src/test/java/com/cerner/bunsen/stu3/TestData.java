@@ -198,6 +198,11 @@ public class TestData {
     patient.setActive(true);
     patient.setMultipleBirth(new IntegerType(1));
 
+    Identifier patientIdentifier = new Identifier();
+    patientIdentifier.setId("patient123");
+    patientIdentifier.getAssigner().setReference("assigner/123");
+    patient.setIdentifier(List.of(patientIdentifier));
+
     patient.setBirthDateElement(new DateType("1945-01-02"));
 
     patient.addGeneralPractitioner().setReference("Practitioner/12345");
@@ -206,6 +211,11 @@ public class TestData {
     practitionerIdentifier.setId("P123456");
     practitionerIdentifier.getAssigner().setReference("Organization/123456");
     patient.getGeneralPractitionerFirstRep().setIdentifier(practitionerIdentifier);
+
+    Identifier managingOrganisationIdentifier = new Identifier();
+    managingOrganisationIdentifier.setId("O123456");
+    managingOrganisationIdentifier.getAssigner().setReference("Organization/234");
+    patient.getManagingOrganization().setIdentifier(managingOrganisationIdentifier);
 
     Address address = patient.addAddress();
     address.addLine("123 Fake Street");

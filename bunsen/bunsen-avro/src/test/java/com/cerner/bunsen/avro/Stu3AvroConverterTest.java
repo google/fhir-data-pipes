@@ -17,18 +17,7 @@ import org.apache.avro.Protocol;
 import org.apache.avro.Schema;
 import org.apache.avro.compiler.specific.SpecificCompiler;
 import org.apache.avro.generic.GenericData.Record;
-import org.hl7.fhir.dstu3.model.CodeableConcept;
-import org.hl7.fhir.dstu3.model.Coding;
-import org.hl7.fhir.dstu3.model.Condition;
-import org.hl7.fhir.dstu3.model.Extension;
-import org.hl7.fhir.dstu3.model.IntegerType;
-import org.hl7.fhir.dstu3.model.Medication;
-import org.hl7.fhir.dstu3.model.MedicationRequest;
-import org.hl7.fhir.dstu3.model.Meta;
-import org.hl7.fhir.dstu3.model.Observation;
-import org.hl7.fhir.dstu3.model.Patient;
-import org.hl7.fhir.dstu3.model.Provenance;
-import org.hl7.fhir.dstu3.model.Quantity;
+import org.hl7.fhir.dstu3.model.*;
 import org.hl7.fhir.exceptions.FHIRException;
 import org.junit.Assert;
 import org.junit.BeforeClass;
@@ -280,6 +269,15 @@ public class Stu3AvroConverterTest {
 
     Assert.assertEquals(testCondition.getSubject().getReference(),
         testConditionDecoded.getSubject().getReference());
+  }
+
+  @Test
+  public void testManagingOrganizationIdentifier() {
+
+    Identifier identifier = testPatientDecoded.getManagingOrganization().getIdentifier();
+
+    Assert.assertNotNull(identifier);
+    Assert.assertEquals(identifier.getAssigner().getReference(), "Organization/234");
   }
 
   @Test
