@@ -39,7 +39,17 @@ securityContext: {}
 service:
   type: ClusterIP
   port: 8080
-
+  extraPorts:
+#    - port: 4040
+#      targetPort: hive-webui
+#      protocol: TCP
+#      name: hive-webui
+#    - port: 10000
+#      targetPort: hive
+#      protocol: TCP
+#      name: hive
+  headless:
+    type: ClusterIP
 ingress:
   enabled: false
   className: ""
@@ -52,6 +62,8 @@ ingress:
         - path: /
           pathType: ImplementationSpecific
   tls: []
+  extraRules:
+
   #  - secretName: chart-example-tls
   #    hosts:
   #      - chart-example.local
@@ -92,6 +104,9 @@ readinessProbe:
     path: /
     port: http
 
+flink:
+  execution.attached: false
+
 hapi:
   postgres:
     databaseService: "postgresql"
@@ -123,6 +138,8 @@ applicationConfig:
     hiveJdbcDriver: "org.apache.hive.jdbc.HiveDriver"
 
 initContainers:
+
+sidecars:
 
 extraVolumes:
 #  - name: some-name
@@ -161,3 +178,15 @@ vpa:
   updatePolicy:
     updateMode: "Off"
   resourcePolicy: {}
+
+pvc:
+  enabled: true
+  volumeMode: Filesystem
+  storageClassName:
+  resources:
+    requests:
+      # update accordingly
+      storage: 20Gi
+  accessModes:
+    - ReadWriteOnce
+  selector: {}

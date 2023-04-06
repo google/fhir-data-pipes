@@ -12,6 +12,8 @@ data:
     {{ tpl ( .Values.thriftserver.hive | toJson ) $scope }}
   application-config-yaml: |
     {{ tpl ( .Values.applicationConfig | toYaml) $scope | nindent 8}}
+  flink-conf-yaml: |
+    {{ tpl ( .Values.flink | toYaml) $scope | nindent 8}}
   {{ range $value := .Values.extraConfigMaps -}}
   {{ $value.name }}: |
   {{ tpl $value.contents $scope | nindent 8 }}

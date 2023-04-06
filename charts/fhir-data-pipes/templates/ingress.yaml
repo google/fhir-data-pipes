@@ -58,4 +58,7 @@ spec:
               {{- end }}
           {{- end }}
     {{- end }}
+    {{- if .Values.ingress.extraRules }}
+    {{- toYaml .Values.ingress.extraRules | nindent 4 }}
+    {{- end }}
 {{- end }}

@@ -11,5 +11,8 @@ spec:
       targetPort: http
       protocol: TCP
       name: http
+    {{- if .Values.service.extraPorts }}
+    {{- toYaml .Values.service.extraPorts | nindent 4 }}
+    {{- end }}
   selector:
     {{- include "fhir-data-pipes.selectorLabels" . | nindent 4 }}

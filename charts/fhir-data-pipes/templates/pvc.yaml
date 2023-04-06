@@ -1,0 +1,21 @@
+{{- if .Values.pvc.enabled -}}
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ include "fhir-data-pipes.fullname" . }}
+  labels:
+    {{- include "fhir-data-pipes.labels" . | nindent 4 }}
+spec:
+  accessModes:
+    {{- toYaml .Values.pvc.accessModes | nindent 4 }}
+  volumeMode: {{ .Values.pvc.volumeMode }}
+  resources:
+    {{- toYaml .Values.pvc.resources | nindent 4 }}
+  {{- if .Values.pvc.storageClassName }}
+  storageClassName: {{ .Values.pvc.storageClassName }}
+  {{- end }}
+  {{- if .Values.pvc.selector }}
+  selector:
+    {{- toYaml .Values.pvc.selector | nindent 4 }}
+  {{- end  }}
+{{- end -}}

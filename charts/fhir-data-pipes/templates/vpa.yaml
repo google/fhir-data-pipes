@@ -9,7 +9,7 @@ metadata:
 spec:
   targetRef:
     apiVersion: "apps/v1"
-    kind: Deployment
+    kind: StatefulSet
     name: {{ include "fhir-data-pipes.fullname" . }}
   updatePolicy:
     {{- toYaml .Values.vpa.updatePolicy | nindent 4 }}

@@ -1,5 +1,5 @@
 apiVersion: apps/v1
-kind: Deployment
+kind: StatefulSet
 metadata:
   name: {{ include "fhir-data-pipes.fullname" . }}
   labels:
@@ -8,6 +8,7 @@ spec:
   {{- if not .Values.autoscaling.enabled }}
   replicas: {{ .Values.replicaCount }}
   {{- end }}
+  serviceName: {{ printf "%s-headless" (include "fhir-data-pipes.fullname" .) }}
   selector:
     matchLabels:
       {{- include "fhir-data-pipes.selectorLabels" . | nindent 6 }}
@@ -35,6 +36,14 @@ spec:
         - name: thriftserver-hive-config-json
           configMap:
             name: {{ include "fhir-data-pipes.fullname" . }}
+        - name: flink-conf-yaml
+          configMap:
+            name: {{ include "fhir-data-pipes.fullname" . }}
+        {{- if .Values.pvc.enabled }}
+        - name: dwh-dir
+          persistentVolumeClaim:
+            claimName: {{ include "fhir-data-pipes.fullname" . }}
+        {{- end }}
         {{- if .Values.extraVolumes }}
         {{- tpl (toYaml .Values.extraVolumes) . | nindent 12 }}
         {{- end }}
@@ -74,9 +83,19 @@ spec:
             - name: thriftserver-hive-config-json
               mountPath: /app/config/thriftserver-hive-config.json
               subPath: thriftserver-hive-config-json
+            - name: flink-conf-yaml
+              mountPath: /app/config/flink-conf.yaml
+              subPath: flink-conf-yaml
+              {{- if .Values.pvc.enabled }}
+            - name: dwh-dir
+              mountPath: /dwh
+              {{- end }}
           {{- if .Values.extraVolumeMounts }}
           {{- toYaml .Values.extraVolumeMounts | nindent 12 }}
           {{- end }}
+        {{- if .Values.sidecars }}
+        {{- toYaml .Values.sidecars | nindent 8 }}
+        {{- end }}
       {{- with .Values.nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}
