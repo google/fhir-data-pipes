@@ -24,5 +24,5 @@ public interface PipelineMetrics {
    *
    * @return MetricQueryResults
    */
-  MetricQueryResults getMetricResults();
+  MetricQueryResults getMetricQueryResults();
 }

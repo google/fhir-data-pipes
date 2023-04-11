@@ -234,4 +234,10 @@ public interface FhirEtlOptions extends PipelineOptions {
   Boolean getProcessDeletedRecords();
 
   void setProcessDeletedRecords(Boolean value);
+
+  @Description("Flag to specify whether the current run is batch run or not")
+  @Default.Boolean(false)
+  Boolean isBatchRun();
+
+  void setBatchRun(Boolean value);
 }

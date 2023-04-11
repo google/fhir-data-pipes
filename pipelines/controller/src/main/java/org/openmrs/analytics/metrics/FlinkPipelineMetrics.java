@@ -45,7 +45,7 @@ public class FlinkPipelineMetrics implements PipelineMetrics {
    * @return MetricQueryResults
    */
   @Override
-  public MetricQueryResults getMetricResults() {
+  public MetricQueryResults getMetricQueryResults() {
     if (jobClient == null) {
       return getEmptyMetricQueryResults();
     }

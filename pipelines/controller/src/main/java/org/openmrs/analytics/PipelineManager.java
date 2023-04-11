@@ -39,7 +39,6 @@ import org.apache.beam.sdk.io.fs.ResolveOptions.StandardResolveOptions;
 import org.apache.beam.sdk.io.fs.ResourceId;
 import org.apache.beam.sdk.metrics.MetricQueryResults;
 import org.apache.beam.sdk.options.PipelineOptionsFactory;
-import org.openmrs.analytics.exception.MetricsNotSupportedException;
 import org.openmrs.analytics.metrics.PipelineMetrics;
 import org.openmrs.analytics.metrics.PipelineMetricsFactory;
 import org.openmrs.analytics.model.DatabaseConfiguration;
@@ -60,6 +59,7 @@ import org.springframework.stereotype.Component;
 @EnableScheduling
 @Component
 public class PipelineManager {
+
   private static final Logger logger = LoggerFactory.getLogger(PipelineManager.class.getName());
 
   @Autowired private DataProperties dataProperties;
@@ -77,12 +77,15 @@ public class PipelineManager {
   // TODO expose this in the web-UI
   private LastRunStatus lastRunStatus = LastRunStatus.NOT_RUN;
 
-  public MetricQueryResults getPipelineMetrics() throws MetricsNotSupportedException {
-    if (isRunning()) {
+  public MetricQueryResults getMetricQueryResults() {
+    // TODO Generate metrics and stats even for incremental run, incremental run has two pipelines
+    //  running one after the other, come up with a strategy to aggregate the metrics and generate
+    //  the stats
+    if (isBatchRun() && isRunning()) {
       PipelineMetrics pipelineMetrics =
           pipelineMetricsFactory.getPipelineMetrics(
               currentPipeline.pipeline.getOptions().getRunner());
-      return pipelineMetrics.getMetricResults();
+      return pipelineMetrics.getMetricQueryResults();
     }
     return null;
   }
@@ -194,6 +197,11 @@ public class PipelineManager {
     return prefix;
   }
 
+  synchronized boolean isBatchRun() {
+    return currentPipeline != null
+        && currentPipeline.pipelineConfig.getFhirEtlOptions().isBatchRun();
+  }
+
   synchronized boolean isRunning() {
     return currentPipeline != null && currentPipeline.isAlive();
   }
@@ -243,6 +251,7 @@ public class PipelineManager {
     Preconditions.checkState(!isRunning(), "cannot start a pipeline while another one is running");
     PipelineConfig pipelineConfig = dataProperties.createBatchOptions();
     FhirEtlOptions options = pipelineConfig.getFhirEtlOptions();
+    options.setBatchRun(true);
     Pipeline pipeline = buildJdbcPipeline(options);
     if (pipeline == null) {
       logger.warn("No resources found to be fetched!");
@@ -302,6 +311,7 @@ public class PipelineManager {
   }
 
   private static class PipelineThread extends Thread {
+
     private final Pipeline pipeline;
     private final PipelineManager manager;
     // This is used in the incremental mode only.
