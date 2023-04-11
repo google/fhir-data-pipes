@@ -40,11 +40,14 @@ The following table lists the configurable parameters of the Fhir-data-pipes cha
 | `securityContext`                                     |             | `{}`                                                                                                  |
 | `service.type`                                        |             | `"ClusterIP"`                                                                                         |
 | `service.port`                                        |             | `8080`                                                                                                |
+| `service.extraPorts`                                  |             | `null`                                                                                                |
+| `service.headless.type`                               |             | `"ClusterIP"`                                                                                         |
 | `ingress.enabled`                                     |             | `false`                                                                                               |
 | `ingress.className`                                   |             | `""`                                                                                                  |
 | `ingress.annotations`                                 |             | `{}`                                                                                                  |
 | `ingress.hosts`                                       |             | `[{"host": "fhir-data-pipes.local", "paths": [{"path": "/", "pathType": "ImplementationSpecific"}]}]` |
 | `ingress.tls`                                         |             | `[]`                                                                                                  |
+| `ingress.extraRules`                                  |             | `null`                                                                                                |
 | `resources`                                           |             | `null`                                                                                                |
 | `autoscaling.enabled`                                 |             | `false`                                                                                               |
 | `autoscaling.minReplicas`                             |             | `1`                                                                                                   |
@@ -58,6 +61,7 @@ The following table lists the configurable parameters of the Fhir-data-pipes cha
 | `livenessProbe.httpGet.port`                          |             | `"http"`                                                                                              |
 | `readinessProbe.httpGet.path`                         |             | `"/"`                                                                                                 |
 | `readinessProbe.httpGet.port`                         |             | `"http"`                                                                                              |
+| `flink.execution.attached`                            |             | `false`                                                                                               |
 | `hapi.postgres.databaseService`                       |             | `"postgresql"`                                                                                        |
 | `hapi.postgres.databaseHostName`                      |             | `""`                                                                                                  |
 | `hapi.postgres.databasePort`                          |             | `"5432"`                                                                                              |
@@ -80,6 +84,7 @@ The following table lists the configurable parameters of the Fhir-data-pipes cha
 | `applicationConfig.fhirdata.createHiveResourceTables` |             | `"true"`                                                                                              |
 | `applicationConfig.fhirdata.hiveJdbcDriver`           |             | `"org.apache.hive.jdbc.HiveDriver"`                                                                   |
 | `initContainers`                                      |             | `null`                                                                                                |
+| `sidecars`                                            |             | `null`                                                                                                |
 | `extraVolumes`                                        |             | `null`                                                                                                |
 | `extraVolumeMounts`                                   |             | `null`                                                                                                |
 | `extraConfigMaps`                                     |             | `null`                                                                                                |
@@ -90,3 +95,69 @@ The following table lists the configurable parameters of the Fhir-data-pipes cha
 | `vpa.enabled`                                         |             | `false`                                                                                               |
 | `vpa.updatePolicy.updateMode`                         |             | `"Off"`                                                                                               |
 | `vpa.resourcePolicy`                                  |             | `{}`                                                                                                  |
+| `pvc.enabled`                                         |             | `true`                                                                                                |
+| `pvc.volumeMode`                                      |             | `"Filesystem"`                                                                                        |
+| `pvc.storageClassName`                                |             | `null`                                                                                                |
+| `pvc.resources.requests.storage`                      |             | `"20Gi"`                                                                                              |
+| `pvc.accessModes`                                     |             | `["ReadWriteOnce"]`                                                                                   |
+| `pvc.selector`                                        |             | `{}`                                                                                                  |
+
+
+## Spark SQL (Thrift Server) as Sidecar
+The chart provides the necessary configuration to set up additional containers on the StatefulSet. One such container could be the spark thrift server. Below is how one can set it up.
+````yaml
+---
+sidecars:
+  - name: spark-thrift-server
+    image: docker.io/bitnami/spark:3.3.2-debian-11-r12
+    imagePullPolicy: IfNotPresent
+    ports:
+      - name: hive
+        containerPort: 10000
+      - name: hive-webui
+        containerPort: 4040
+    args:
+      - "/bin/sh"
+      - "-c"
+      - "sbin/start-thriftserver.sh"
+      - "--master spark://spark-master-svc:7077"
+    env:
+      - name: "HIVE_SERVER2_THRIFT_PORT"
+        value: "10000"
+    resources:
+      limits:
+        memory: 1024Mi
+      requests:
+        cpu: 250m
+        memory: 256Mi
+    volumeMounts:
+      - name: dwh-dir
+        mountPath: /dwh
+
+
+# Creates a volume for parquet files.
+pvc:
+  enabled: true
+  volumeMode: Filesystem
+  storageClassName:
+  resources:
+    requests:
+      storage: 20Gi
+  accessModes:
+    - ReadWriteOnce
+  selector: {}
+
+#  One can expose the thrift server port using tcp services e.g. for nginx(https://github.com/kubernetes/ingress-nginx/blob/main/docs/user-guide/exposing-tcp-udp-services.md) 
+service:
+  type: ClusterIP
+  port: 8080
+  extraPorts:
+    - port: 4040
+      targetPort: hive-webui
+      protocol: TCP
+      name: hive-webui
+    - port: 10000
+      targetPort: hive
+      protocol: TCP
+      name: hive
+````
