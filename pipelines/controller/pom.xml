@@ -119,6 +119,8 @@
           <groupId>org.apache.parquet</groupId>
           <artifactId>parquet-hadoop-bundle</artifactId>
         </exclusion>
+        <!-- This exclusion is required as it fails to read artifact descriptor for
+             org.glassfish:javax.el:jar:3.0.1-b06-SNAPSHOT when built project at root level. -->
         <exclusion>
           <groupId>org.glassfish</groupId>
           <artifactId>javax.el</artifactId>
