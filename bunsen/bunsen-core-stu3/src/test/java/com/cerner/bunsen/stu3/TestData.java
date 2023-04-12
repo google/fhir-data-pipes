@@ -198,7 +198,8 @@ public class TestData {
     patient.setActive(true);
     patient.setMultipleBirth(new IntegerType(1));
 
-    // This is to introduce conflict with managingOrganization identifier and make sure conflict is resolved.
+    // This is to introduce conflict with managingOrganization identifier
+    // and make sure conflict is resolved.
     Identifier patientIdentifier = new Identifier();
     patientIdentifier.setId("patient123");
     patientIdentifier.getAssigner().setReference("Organization/123");
