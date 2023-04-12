@@ -50,7 +50,6 @@ public interface DefinitionVisitor<T> {
 
   /**
    * Visits a reference type.
-   *
    * The element name in itself is not sufficient as similar element names at
    * different places cause conflict and hence we would need full schema path
    * to differentiate between such conflicting reference names.
