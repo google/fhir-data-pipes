@@ -255,8 +255,7 @@ public class PipelineManager {
       logger.warn("No resources found to be fetched!");
       return;
     } else {
-      currentPipeline =
-          new PipelineThread(pipeline, this, dataProperties, pipelineConfig, Boolean.TRUE);
+      currentPipeline = new PipelineThread(pipeline, this, dataProperties, pipelineConfig, true);
     }
     logger.info("Running full pipeline for DWH {}", options.getOutputParquetPath());
     // We will only have one thread for running pipelines hence no need for a thread pool.
@@ -299,8 +298,7 @@ public class PipelineManager {
     } else {
       // Creating a thread for running both pipelines, one after the other.
       currentPipeline =
-          new PipelineThread(
-              pipeline, mergerOptions, this, dataProperties, pipelineConfig, Boolean.FALSE);
+          new PipelineThread(pipeline, mergerOptions, this, dataProperties, pipelineConfig, false);
       logger.info("Running incremental pipeline for DWH {} since {}", currentDwh.getRoot(), since);
       currentPipeline.start();
     }
