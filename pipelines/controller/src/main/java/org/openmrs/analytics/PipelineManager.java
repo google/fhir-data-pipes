@@ -198,8 +198,7 @@ public class PipelineManager {
   }
 
   synchronized boolean isBatchRun() {
-    return currentPipeline != null
-        && currentPipeline.pipelineConfig.getFhirEtlOptions().isBatchRun();
+    return currentPipeline != null && currentPipeline.isBatchRun;
   }
 
   synchronized boolean isRunning() {
@@ -251,13 +250,13 @@ public class PipelineManager {
     Preconditions.checkState(!isRunning(), "cannot start a pipeline while another one is running");
     PipelineConfig pipelineConfig = dataProperties.createBatchOptions();
     FhirEtlOptions options = pipelineConfig.getFhirEtlOptions();
-    options.setBatchRun(true);
     Pipeline pipeline = buildJdbcPipeline(options);
     if (pipeline == null) {
       logger.warn("No resources found to be fetched!");
       return;
     } else {
-      currentPipeline = new PipelineThread(pipeline, this, dataProperties, pipelineConfig);
+      currentPipeline =
+          new PipelineThread(pipeline, this, dataProperties, pipelineConfig, Boolean.TRUE);
     }
     logger.info("Running full pipeline for DWH {}", options.getOutputParquetPath());
     // We will only have one thread for running pipelines hence no need for a thread pool.
@@ -300,7 +299,8 @@ public class PipelineManager {
     } else {
       // Creating a thread for running both pipelines, one after the other.
       currentPipeline =
-          new PipelineThread(pipeline, mergerOptions, this, dataProperties, pipelineConfig);
+          new PipelineThread(
+              pipeline, mergerOptions, this, dataProperties, pipelineConfig, Boolean.FALSE);
       logger.info("Running incremental pipeline for DWH {} since {}", currentDwh.getRoot(), since);
       currentPipeline.start();
     }
@@ -321,16 +321,20 @@ public class PipelineManager {
 
     private final PipelineConfig pipelineConfig;
 
+    private final boolean isBatchRun;
+
     PipelineThread(
         Pipeline pipeline,
         PipelineManager manager,
         DataProperties dataProperties,
-        PipelineConfig pipelineConfig) {
+        PipelineConfig pipelineConfig,
+        boolean isBatchRun) {
       Preconditions.checkArgument(pipeline.getOptions().as(FhirEtlOptions.class) != null);
       this.pipeline = pipeline;
       this.manager = manager;
       this.dataProperties = dataProperties;
       this.pipelineConfig = pipelineConfig;
+      this.isBatchRun = isBatchRun;
       this.mergerOptions = null;
     }
 
@@ -339,13 +343,15 @@ public class PipelineManager {
         ParquetMergerOptions mergerOptions,
         PipelineManager manager,
         DataProperties dataProperties,
-        PipelineConfig pipelineConfig) {
+        PipelineConfig pipelineConfig,
+        boolean isBatchRun) {
       Preconditions.checkArgument(pipeline.getOptions().as(FhirEtlOptions.class) != null);
       this.pipeline = pipeline;
       this.manager = manager;
       this.mergerOptions = mergerOptions;
       this.dataProperties = dataProperties;
       this.pipelineConfig = pipelineConfig;
+      this.isBatchRun = isBatchRun;
     }
 
     @Override

@@ -263,6 +263,7 @@ public class FhirEtl {
 
   /** A simple DoFn that captures the gauge metric of the given input type */
   public static class LogAsMetric extends DoFn<KV<String, Long>, Void> {
+
     @ProcessElement
     public void processElement(@Element KV<String, Long> input) {
       Metrics.gauge(
@@ -309,8 +310,11 @@ public class FhirEtl {
       }
 
       foundResource = true;
-      // TODO See if the below code of adding a metric can be moved to any existing DoFn,
-      //  e.g., as constructor parameter
+      // The below metrics are logged at the beginning of the pipeline start so that they can be
+      // used to calculate the progress of the pipeline (ratio of currently completed resources vs
+      // the total resources). These had to be logged via a separate DoFn as it required the
+      // pipeline context (which otherwise could not be tracked if injected during constructor
+      // initialisation for the beginning pipeline stage)
       PCollection<KV<String, Long>> initialPCollection =
           pipeline.apply(
               "Metric parameters for " + resourceType,
