@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2022 Google LLC
+ * Copyright 2020-2023 Google LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -132,7 +132,7 @@ public class FetchResources
       String searchUrl = segment.searchUrl();
       log.info(
           String.format(
-              "Fetching %d resources for state %s; URL= %s",
+              "Fetching %d resources for stage %s; URL= %s",
               segment.count(),
               this.stageIdentifier,
               searchUrl.substring(0, Math.min(200, searchUrl.length()))));

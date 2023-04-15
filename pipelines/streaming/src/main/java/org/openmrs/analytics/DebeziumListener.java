@@ -68,8 +68,8 @@ public class DebeziumListener extends RouteBuilder {
   FhirConverter createFhirConverter(CamelContext camelContext) throws Exception {
     FhirContext fhirContext = FhirContexts.forR4();
     String fhirBaseUrl = params.fhirServerUrl;
-    OpenmrsUtil openmrsUtil =
-        new OpenmrsUtil(
+    FhirClientUtil fhirClientUtil =
+        new FhirClientUtil(
             fhirBaseUrl, params.fhirServerUserName, params.fhirServerPassword, fhirContext);
     FhirStoreUtil fhirStoreUtil =
         FhirStoreUtil.createFhirStoreUtil(
@@ -102,7 +102,7 @@ public class DebeziumListener extends RouteBuilder {
     statusServer.setVar(
         "start", ZonedDateTime.now(ZoneOffset.UTC).format(DateTimeFormatter.ISO_OFFSET_DATE_TIME));
     return new FhirConverter(
-        openmrsUtil,
+        fhirClientUtil,
         fhirStoreUtil,
         parquetUtil,
         params.fhirDebeziumConfigPath,

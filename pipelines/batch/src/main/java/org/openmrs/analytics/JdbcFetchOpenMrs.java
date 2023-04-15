@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2022 Google LLC
+ * Copyright 2020-2023 Google LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -99,6 +99,7 @@ public class JdbcFetchOpenMrs {
     }
   }
 
+  // TODO move this class out of this file as it is not JDBC related.
   /**
    * batch together request using batchSize and generate segment descriptors `_id?<uuid>,<uuid>..`
    */
@@ -107,14 +108,20 @@ public class JdbcFetchOpenMrs {
 
     private final String baseBundleUrl;
 
-    private final String resourceType;
+    private final long numWorkers;
 
     private final int batchSize;
 
-    public CreateSearchSegments(String resourceType, String baseBundleUrl, int batchSize) {
+    /**
+     * @param numWorkers this does not need to be exact; it should just be higher than the number of
+     *     workers. The created batches are keyed by a number from 0 to `numWorkers`-1.
+     * @param baseBundleUrl the base search URL
+     * @param batchSize number of IDs to put into a single query segment
+     */
+    public CreateSearchSegments(long numWorkers, String baseBundleUrl, int batchSize) {
       this.baseBundleUrl = baseBundleUrl;
       this.batchSize = batchSize;
-      this.resourceType = resourceType;
+      this.numWorkers = numWorkers;
     }
 
     @Override
@@ -123,27 +130,32 @@ public class JdbcFetchOpenMrs {
           // create KV required by GroupIntoBatches
           .apply(
               ParDo.of(
-                  new DoFn<String, KV<String, String>>() {
+                  new DoFn<String, KV<Long, String>>() {
 
                     @ProcessElement
                     public void processElement(
-                        @Element String element, OutputReceiver<KV<String, String>> r) {
+                        @Element String element, OutputReceiver<KV<Long, String>> r) {
                       if (element != null) {
-                        r.output(KV.of(resourceType, element));
+                        // Note the number of keys in the following KVs should be higher than the
+                        // number of workers to have good parallelism. This is because all elements
+                        // with the same key will go through the same worker in the next ParDo.
+                        r.output(KV.of(element.hashCode() % numWorkers, element));
                       }
                     }
                   }))
           .apply(
               String.format("GroupIntoBatches of %s", this.batchSize),
-              GroupIntoBatches.<String, String>ofSize(this.batchSize))
+              // TODO switch to `ofByteSize` to make sure all of the IDs in
+              //  a single batch fit in a URL, regardless of each ID length.
+              GroupIntoBatches.<Long, String>ofSize(this.batchSize))
           .apply(
               "Generate Segments",
               ParDo.of(
-                  new DoFn<KV<String, Iterable<String>>, SearchSegmentDescriptor>() {
+                  new DoFn<KV<Long, Iterable<String>>, SearchSegmentDescriptor>() {
 
                     @ProcessElement
                     public void processElement(
-                        @Element KV<String, Iterable<String>> element,
+                        @Element KV<Long, Iterable<String>> element,
                         OutputReceiver<SearchSegmentDescriptor> r) {
                       List<String> uuids = new ArrayList<String>();
                       element.getValue().forEach(uuids::add);

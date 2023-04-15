@@ -69,11 +69,11 @@ public class FhirEtl {
   }
 
   static FhirSearchUtil createFhirSearchUtil(FhirEtlOptions options, FhirContext fhirContext) {
-    return new FhirSearchUtil(createOpenmrsUtil(options, fhirContext));
+    return new FhirSearchUtil(createFhirClientUtil(options, fhirContext));
   }
 
-  static OpenmrsUtil createOpenmrsUtil(FhirEtlOptions options, FhirContext fhirContext) {
-    return new OpenmrsUtil(
+  static FhirClientUtil createFhirClientUtil(FhirEtlOptions options, FhirContext fhirContext) {
+    return new FhirClientUtil(
         options.getFhirServerUrl(),
         options.getFhirServerUserName(),
         options.getFhirServerPassword(),
@@ -84,18 +84,30 @@ public class FhirEtl {
    * For each SearchSegmentDescriptor, it fetches the given resources, convert them to output
    * Parquet/JSON files, and output the IDs of the fetched resources.
    *
-   * @param inputSegments each element defines a set of resources to be fetched in one FHIR call.
+   * @param uuids the set of ids that need to be fetched
    * @param resourceType the type of the resources, e.g., Patient or Observation
+   * @param numResources the number of resources of the above type; this does not need to be
+   *     accurate, and it is only a hint for how to distribute IDs.
    * @param options the pipeline options
    * @return a PCollection of all patient IDs of fetched resources or empty if `resourceType` has no
    *     patient ID association.
    */
   private static PCollection<KV<String, Integer>> fetchSegmentsAndReturnPatientIds(
-      PCollection<SearchSegmentDescriptor> inputSegments,
-      String resourceType,
-      FhirEtlOptions options) {
-    FetchResources fetchResources = new FetchResources(options, resourceType + "_main");
-    return inputSegments.apply(fetchResources);
+      PCollection<String> uuids, String resourceType, long numResources, FhirEtlOptions options) {
+    // batch size > 200 will result in HTTP 400 Bad Request for OpenMRS
+    int batchSize = Math.min(options.getBatchSize(), 170);
+    String baseBundleUrl = options.getFhirServerUrl() + "/" + resourceType;
+    // Note that inside `CreateSearchSegments` there is a `GroupIntoBatches`
+    // which breaks the fusion. This is important because we need the previous
+    // stage for fetching IDs to complete before the next one (which is for
+    // fetching the actual resource contents to start.
+    PCollection<SearchSegmentDescriptor> idSegments =
+        uuids.apply(
+            String.format("CreateSearchSegments_%s", resourceType),
+            new JdbcFetchOpenMrs.CreateSearchSegments(
+                numResources / batchSize + 1, baseBundleUrl, batchSize));
+    FetchResources fetchResources = new FetchResources(options, resourceType + "_content");
+    return idSegments.apply(fetchResources);
   }
 
   static void fetchPatientHistory(
@@ -121,10 +133,12 @@ public class FhirEtl {
 
   static void runFhirFetch(FhirEtlOptions options, FhirContext fhirContext) throws IOException {
     FhirSearchUtil fhirSearchUtil = createFhirSearchUtil(options, fhirContext);
+    Map<String, Integer> resourceCount =
+        fhirSearchUtil.searchResourceCounts(options.getResourceList(), options.getSince());
     Map<String, List<SearchSegmentDescriptor>> segmentMap = Maps.newHashMap();
     try {
       // TODO in the activePeriod case, among patientAssociatedResources, only fetch Encounter here.
-      segmentMap = fhirSearchUtil.createSegments(options);
+      segmentMap = fhirSearchUtil.createIdSegments(options);
     } catch (IllegalArgumentException e) {
       log.error(
           "Either the date format in the active period is wrong or none of the resources support"
@@ -142,7 +156,11 @@ public class FhirEtl {
       String resourceType = entry.getKey();
       PCollection<SearchSegmentDescriptor> inputSegments =
           pipeline.apply(Create.of(entry.getValue()));
-      allPatientIds.add(fetchSegmentsAndReturnPatientIds(inputSegments, resourceType, options));
+      FetchResourceIds fetchResourceIds = new FetchResourceIds(options, resourceType + "_id");
+      PCollection<String> uuids = inputSegments.apply(ParDo.of(fetchResourceIds));
+      allPatientIds.add(
+          fetchSegmentsAndReturnPatientIds(
+              uuids, resourceType, resourceCount.get(resourceType), options));
     }
     if (!options.getActivePeriod().isEmpty()) {
       Set<String> patientAssociatedResources =
@@ -164,17 +182,16 @@ public class FhirEtl {
         options.getJdbcMaxPoolSize());
   }
 
-  static void runFhirJdbcFetch(FhirEtlOptions options, FhirContext fhirContext)
+  static void runOpenmrsJdbcFetch(FhirEtlOptions options, FhirContext fhirContext)
       throws PropertyVetoException, IOException, SQLException, CannotProvideCoderException {
     FhirSearchUtil fhirSearchUtil = createFhirSearchUtil(options, fhirContext);
+    Map<String, Integer> resourceCount =
+        fhirSearchUtil.searchResourceCounts(options.getResourceList(), options.getSince());
     Pipeline pipeline = Pipeline.create(options);
     DatabaseConfiguration dbConfig =
         DatabaseConfiguration.createConfigFromFile(options.getFhirDatabaseConfigPath());
     JdbcConnectionUtil jdbcConnectionUtil = createJdbcConnection(options, dbConfig);
     JdbcFetchOpenMrs jdbcUtil = new JdbcFetchOpenMrs(jdbcConnectionUtil);
-    int batchSize =
-        Math.min(
-            options.getBatchSize(), 170); // batch size > 200 will result in HTTP 400 Bad Request
     Map<String, List<String>> reverseMap =
         jdbcUtil.createFhirReverseMap(options.getResourceList(), dbConfig);
     // process each table-resource mappings
@@ -198,12 +215,9 @@ public class FhirEtl {
       }
       for (String resourceType : entry.getValue()) {
         resourceTypes.add(resourceType);
-        String baseBundleUrl = options.getFhirServerUrl() + "/" + resourceType;
-        PCollection<SearchSegmentDescriptor> inputSegments =
-            uuids.apply(
-                String.format("CreateSearchSegments_%s_table_%s", resourceType, tableName),
-                new JdbcFetchOpenMrs.CreateSearchSegments(resourceType, baseBundleUrl, batchSize));
-        allPatientIds.add(fetchSegmentsAndReturnPatientIds(inputSegments, resourceType, options));
+        allPatientIds.add(
+            fetchSegmentsAndReturnPatientIds(
+                uuids, resourceType, resourceCount.get(resourceType), options));
       }
     }
     if (!options.getActivePeriod().isEmpty()) {
@@ -365,7 +379,7 @@ public class FhirEtl {
       if (options.isJdbcModeHapi()) {
         runHapiJdbcFetch(options, fhirContext);
       } else {
-        runFhirJdbcFetch(options, fhirContext);
+        runOpenmrsJdbcFetch(options, fhirContext);
       }
 
     } else if (!options.getSourceJsonFilePattern().isEmpty()) {

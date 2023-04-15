@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2022 Google LLC
+ * Copyright 2020-2023 Google LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.openmrs.analytics;
 
 import ca.uhn.fhir.context.FhirContext;
@@ -26,9 +25,9 @@ import org.hl7.fhir.r4.model.Resource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class OpenmrsUtil {
+public class FhirClientUtil {
 
-  private static final Logger log = LoggerFactory.getLogger(OpenmrsUtil.class);
+  private static final Logger log = LoggerFactory.getLogger(FhirClientUtil.class);
 
   private final String fhirUrl;
 
@@ -38,7 +37,7 @@ public class OpenmrsUtil {
 
   private final FhirContext fhirContext;
 
-  OpenmrsUtil(String sourceFhirUrl, String sourceUser, String sourcePw, FhirContext fhirContext)
+  FhirClientUtil(String sourceFhirUrl, String sourceUser, String sourcePw, FhirContext fhirContext)
       throws IllegalArgumentException {
     this.fhirUrl = sourceFhirUrl;
     this.sourceUser = sourceUser;

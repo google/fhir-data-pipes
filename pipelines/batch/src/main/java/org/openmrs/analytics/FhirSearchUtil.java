@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2022 Google LLC
+ * Copyright 2020-2023 Google LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@ import ca.uhn.fhir.rest.client.api.IGenericClient;
 import ca.uhn.fhir.rest.gclient.DateClientParam;
 import ca.uhn.fhir.rest.gclient.IQuery;
 import ca.uhn.fhir.rest.gclient.ReferenceClientParam;
+import ca.uhn.fhir.rest.gclient.StringClientParam;
 import ca.uhn.fhir.rest.param.DateRangeParam;
 import ca.uhn.fhir.rest.server.exceptions.InvalidRequestException;
 import com.google.common.annotations.VisibleForTesting;
@@ -36,8 +37,10 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import javax.annotation.Nullable;
 import org.apache.http.NameValuePair;
 import org.apache.http.client.utils.URLEncodedUtils;
+import org.hl7.fhir.instance.model.api.IBaseBundle;
 import org.hl7.fhir.r4.model.Bundle;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -46,23 +49,28 @@ public class FhirSearchUtil {
 
   private static final Logger log = LoggerFactory.getLogger(FhirSearchUtil.class);
 
-  private final OpenmrsUtil openmrsUtil;
+  private final FhirClientUtil fhirClientUtil;
 
-  FhirSearchUtil(OpenmrsUtil openmrsUtil) {
-    this.openmrsUtil = openmrsUtil;
+  FhirSearchUtil(FhirClientUtil fhirClientUtil) {
+    this.fhirClientUtil = fhirClientUtil;
   }
 
-  public Bundle searchByUrl(String searchUrl, int count, SummaryEnum summaryMode) {
+  /**
+   * Sends a search query to the FHIR server and returns the response Bundle.
+   *
+   * @param searchUrl the base search query url
+   * @param count the `_count` query parameter value
+   * @param summaryMode if not null, defines the `_summary` parameter
+   * @return the response as a FHIR Bundle
+   */
+  public Bundle searchByUrl(String searchUrl, int count, @Nullable SummaryEnum summaryMode) {
     try {
-      IGenericClient client = openmrsUtil.getSourceClient();
-      Bundle result =
-          client
-              .search()
-              .byUrl(searchUrl)
-              .count(count)
-              .summaryMode(summaryMode)
-              .returnBundle(Bundle.class)
-              .execute();
+      IGenericClient client = fhirClientUtil.getSourceClient();
+      IQuery<IBaseBundle> query = client.search().byUrl(searchUrl).count(count);
+      if (summaryMode != null) {
+        query = query.summaryMode(summaryMode);
+      }
+      Bundle result = query.returnBundle(Bundle.class).execute();
       return result;
     } catch (Exception e) {
       log.error("Failed to search for url: " + searchUrl + " ;  " + "Exception: " + e);
@@ -82,7 +90,7 @@ public class FhirSearchUtil {
     for (String resourceType : resourceTypes) {
       try {
         String searchUrl = resourceType + "?";
-        IGenericClient client = openmrsUtil.getSourceClient();
+        IGenericClient client = fhirClientUtil.getSourceClient();
         IQuery<Bundle> query =
             client
                 .search()
@@ -131,7 +139,7 @@ public class FhirSearchUtil {
         throw new IllegalArgumentException(
             String.format("No _getpages parameter found in search link %s", searchLink));
       }
-      return openmrsUtil.getSourceFhirUrl() + "?" + pagesParam.toString();
+      return fhirClientUtil.getSourceFhirUrl() + "?" + pagesParam.toString();
     } catch (URISyntaxException e) {
       throw new IllegalArgumentException(
           String.format(
@@ -154,14 +162,14 @@ public class FhirSearchUtil {
     return selfLink;
   }
 
-  private IQuery<Bundle> makeQueryForResource(String resourceType, int count) {
-    IGenericClient client = openmrsUtil.getSourceClient(true);
+  private IQuery<Bundle> makeIdQueryForResource(String resourceType, int count) {
+    IGenericClient client = fhirClientUtil.getSourceClient(true);
     return client
         .search()
         .forResource(resourceType)
+        .where(new StringClientParam("_elements").matches().value("id"))
         .totalMode(SearchTotalModeEnum.ACCURATE)
         .count(count)
-        .summaryMode(SummaryEnum.DATA)
         .returnBundle(Bundle.class);
   }
 
@@ -179,8 +187,8 @@ public class FhirSearchUtil {
     return Lists.newArrayList(dateRange);
   }
 
-  private IQuery<Bundle> makeQueryWithDate(String resourceType, FhirEtlOptions options) {
-    IQuery<Bundle> searchQuery = makeQueryForResource(resourceType, options.getBatchSize());
+  private IQuery<Bundle> makeIdQueryWithDate(String resourceType, FhirEtlOptions options) {
+    IQuery<Bundle> searchQuery = makeIdQueryForResource(resourceType, options.getBatchSize());
     if (!options.getActivePeriod().isEmpty()) {
       List<String> dateRange = getDateRange(options.getActivePeriod());
       searchQuery = searchQuery.where(new DateClientParam("date").after().second(dateRange.get(0)));
@@ -200,12 +208,13 @@ public class FhirSearchUtil {
     return searchQuery;
   }
 
-  Map<String, List<SearchSegmentDescriptor>> createSegments(FhirEtlOptions options) {
+  Map<String, List<SearchSegmentDescriptor>> createIdSegments(FhirEtlOptions options) {
     if (options.getBatchSize() > 100) {
       // TODO: Probe this value from the server and set the maximum automatically.
       log.warn(
-          "NOTE batchSize flag is higher than 100; make sure that `fhir2.paging.maximum` "
-              + "is set accordingly on the OpenMRS server.");
+          "NOTE batchSize flag is higher than 100; make sure that this is "
+              + "supported on the FHIR server, e.g., for OpenMRS check "
+              + "`fhir2.paging.maximum` for HAPI JAP server `max_page_size`.");
     }
     Map<String, List<SearchSegmentDescriptor>> segmentMap = new HashMap<>();
 
@@ -213,7 +222,7 @@ public class FhirSearchUtil {
     for (String resourceType : options.getResourceList().split(",")) {
       List<SearchSegmentDescriptor> segments = new ArrayList<>();
       segmentMap.put(resourceType, segments);
-      IQuery<Bundle> searchQuery = makeQueryWithDate(resourceType, options);
+      IQuery<Bundle> searchQuery = makeIdQueryWithDate(resourceType, options);
       log.info(String.format("Fetching first batch of %s", resourceType));
       Bundle searchBundle = null;
       try {
@@ -225,7 +234,7 @@ public class FhirSearchUtil {
                 "While searching for resource %s with date, caught exception %s",
                 resourceType, e.toString()));
         log.info("Trying without date for resource " + resourceType);
-        searchBundle = makeQueryForResource(resourceType, options.getBatchSize()).execute();
+        searchBundle = makeIdQueryForResource(resourceType, options.getBatchSize()).execute();
       }
       if (searchBundle == null) {
         log.error("Failed searching for resource " + resourceType);
@@ -238,7 +247,7 @@ public class FhirSearchUtil {
         segments.add(
             SearchSegmentDescriptor.create(findSelfUrl(searchBundle), options.getBatchSize()));
       } else {
-        String baseUrl = findBaseSearchUrl(searchBundle) + "&_getpagesoffset=";
+        String baseUrl = findBaseSearchUrl(searchBundle) + "&_elements=id&_getpagesoffset=";
         for (int offset = 0; offset < total; offset += options.getBatchSize()) {
           String pageSearchUrl = baseUrl + offset;
           segments.add(SearchSegmentDescriptor.create(pageSearchUrl, options.getBatchSize()));
@@ -262,7 +271,7 @@ public class FhirSearchUtil {
     // Note this can also be done by fetching server's `metadata` and parsing the
     // CapabilityStatement.
     Set<String> patientAssociatedResources = Sets.newHashSet();
-    IGenericClient client = openmrsUtil.getSourceClient(true);
+    IGenericClient client = fhirClientUtil.getSourceClient(true);
     for (String resourceType : resourceTypes) {
       IQuery<Bundle> query =
           client
@@ -292,7 +301,7 @@ public class FhirSearchUtil {
 
   Bundle searchByPatientAndLastDate(
       String resourceType, String patientId, String lastDate, int count) {
-    IGenericClient client = openmrsUtil.getSourceClient(true);
+    IGenericClient client = fhirClientUtil.getSourceClient(true);
     IQuery<Bundle> query =
         client
             .search()

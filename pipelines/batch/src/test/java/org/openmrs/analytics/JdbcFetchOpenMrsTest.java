@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2022 Google LLC
+ * Copyright 2020-2023 Google LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -130,13 +130,13 @@ public class JdbcFetchOpenMrsTest extends TestCase {
     String resourceType = "Encounter";
     String baseBundleUrl = "https://test.com/" + resourceType;
     int batchSize = 2;
+    int numWorkers = 3;
     String[] uuIds = {"<uuid>", "<uuid>", "<uuid>", "<uuid>", "<uuid>", "<uuid>"};
     PCollection<SearchSegmentDescriptor> createdSegments =
         testPipeline
             .apply("Create input", Create.of(Arrays.asList(uuIds)))
             // Inject
-            .apply(
-                new JdbcFetchOpenMrs.CreateSearchSegments(resourceType, baseBundleUrl, batchSize));
+            .apply(new JdbcFetchOpenMrs.CreateSearchSegments(numWorkers, baseBundleUrl, batchSize));
     // create expected output
     List<SearchSegmentDescriptor> segments = new ArrayList<>();
     // first batch

@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2022 Google LLC
+ * Copyright 2020-2023 Google LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.openmrs.analytics;
 
 import com.google.common.annotations.VisibleForTesting;
@@ -40,7 +39,7 @@ public class FhirConverter implements Processor {
 
   private static final Logger log = LoggerFactory.getLogger(FhirConverter.class);
 
-  private final OpenmrsUtil openmrsUtil;
+  private final FhirClientUtil fhirClientUtil;
 
   private final FhirStoreUtil fhirStoreUtil;
 
@@ -54,7 +53,7 @@ public class FhirConverter implements Processor {
 
   @VisibleForTesting
   FhirConverter() {
-    this.openmrsUtil = null;
+    this.fhirClientUtil = null;
     this.fhirStoreUtil = null;
     this.parquetUtil = null;
     this.databaseConfiguration = null;
@@ -63,7 +62,7 @@ public class FhirConverter implements Processor {
   }
 
   public FhirConverter(
-      OpenmrsUtil openmrsUtil,
+      FhirClientUtil fhirClientUtil,
       FhirStoreUtil fhirStoreUtil,
       ParquetUtil parquetUtil,
       String configFileName,
@@ -71,7 +70,7 @@ public class FhirConverter implements Processor {
       StatusServer statusServer)
       throws IOException {
     // TODO add option for switching to Parquet-file outputs.
-    this.openmrsUtil = openmrsUtil;
+    this.fhirClientUtil = fhirClientUtil;
     this.fhirStoreUtil = fhirStoreUtil;
     this.parquetUtil = parquetUtil;
     this.databaseConfiguration = DatabaseConfiguration.createConfigFromFile(configFileName);
@@ -132,7 +131,7 @@ public class FhirConverter implements Processor {
     }
     final String fhirUrl = config.getLinkTemplates().get("fhir").replace("{uuid}", uuid);
     log.info("Fetching FHIR resource at " + fhirUrl);
-    Resource resource = openmrsUtil.fetchFhirResource(fhirUrl);
+    Resource resource = fhirClientUtil.fetchFhirResource(fhirUrl);
     if (resource == null) {
       // TODO: check how this can be signalled to Camel to be retried.
       return;

@@ -95,7 +95,7 @@ abstract class FetchSearchPageFn<T> extends DoFn<T, KV<String, Integer>> {
 
   @VisibleForTesting protected ParquetUtil parquetUtil;
 
-  protected OpenmrsUtil openmrsUtil;
+  protected FhirClientUtil fhirClientUtil;
 
   protected FhirSearchUtil fhirSearchUtil;
 
@@ -179,8 +179,8 @@ abstract class FetchSearchPageFn<T> extends DoFn<T, KV<String, Integer>> {
     fhirStoreUtil =
         FhirStoreUtil.createFhirStoreUtil(
             sinkPath, sinkUsername, sinkPassword, fhirContext.getRestfulClientFactory());
-    openmrsUtil = new OpenmrsUtil(sourceUrl, sourceUser, sourcePw, fhirContext);
-    fhirSearchUtil = new FhirSearchUtil(openmrsUtil);
+    fhirClientUtil = new FhirClientUtil(sourceUrl, sourceUser, sourcePw, fhirContext);
+    fhirSearchUtil = new FhirSearchUtil(fhirClientUtil);
     parquetUtil =
         new ParquetUtil(
             fhirContext.getVersion().getVersion(),

@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2022 Google LLC
+ * Copyright 2020-2023 Google LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -47,11 +47,11 @@ public class OpenmrsUtilTest {
   @Mock(answer = Answers.RETURNS_DEEP_STUBS)
   IGenericClient client;
 
-  OpenmrsUtil openmrsUtil;
+  FhirClientUtil fhirClientUtil;
 
   @Before
   public void setUp() throws Exception {
-    openmrsUtil = new OpenmrsUtil(SOURCE_FHIR_URL, "someuser", "somepw", fhirContext);
+    fhirClientUtil = new FhirClientUtil(SOURCE_FHIR_URL, "someuser", "somepw", fhirContext);
 
     doNothing().when(clientFactory).setSocketTimeout(any(Integer.class));
     when(fhirContext.getRestfulClientFactory()).thenReturn(clientFactory);
@@ -71,14 +71,14 @@ public class OpenmrsUtilTest {
     when(client.read().resource(resourceType).withId(RESOURCE_ID).execute())
         .thenReturn(testResource);
 
-    Patient result = (Patient) openmrsUtil.fetchFhirResource(resourceUrl);
+    Patient result = (Patient) fhirClientUtil.fetchFhirResource(resourceUrl);
 
     assertThat(result, equalTo(testResource));
   }
 
   @Test
   public void shouldGetSourceClient() {
-    IGenericClient result = openmrsUtil.getSourceClient();
+    IGenericClient result = fhirClientUtil.getSourceClient();
 
     assertThat(result, equalTo(client));
   }

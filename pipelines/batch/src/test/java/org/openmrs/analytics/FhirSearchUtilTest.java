@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2022 Google LLC
+ * Copyright 2020-2023 Google LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -49,7 +49,7 @@ public class FhirSearchUtilTest {
 
   private static final String SEARCH_URL = "Patient?given=TEST";
 
-  @Mock private OpenmrsUtil openmrsUtil;
+  @Mock private FhirClientUtil fhirClientUtil;
 
   @Mock private IGenericClient genericClient;
 
@@ -74,9 +74,9 @@ public class FhirSearchUtilTest {
     String bundleStr = Resources.toString(url, StandardCharsets.UTF_8);
     IParser parser = fhirContext.newJsonParser();
     bundle = parser.parseResource(Bundle.class, bundleStr);
-    fhirSearchUtil = new FhirSearchUtil(openmrsUtil);
-    when(openmrsUtil.getSourceFhirUrl()).thenReturn(BASE_URL);
-    when(openmrsUtil.getSourceClient()).thenReturn(genericClient);
+    fhirSearchUtil = new FhirSearchUtil(fhirClientUtil);
+    when(fhirClientUtil.getSourceFhirUrl()).thenReturn(BASE_URL);
+    when(fhirClientUtil.getSourceClient()).thenReturn(genericClient);
     when(genericClient.search()).thenReturn(untypedQuery);
     when(untypedQuery.byUrl(SEARCH_URL)).thenReturn(query);
     when(query.count(anyInt())).thenReturn(query);
