@@ -158,8 +158,10 @@ public class ParquetMerger {
     Preconditions.checkArgument(!options.getDwh2().isEmpty());
     Preconditions.checkArgument(!options.getMergedDwh().isEmpty());
 
-    Counter numOutputRecords = Metrics.counter(EtlUtils.METRICS_NAMESPACE, "numOutputRecords");
-    Counter numDuplicates = Metrics.counter(EtlUtils.METRICS_NAMESPACE, "numDuplicates");
+    Counter numOutputRecords =
+        Metrics.counter(MetricsConstants.METRICS_NAMESPACE, MetricsConstants.NUM_OUTPUT_RECORDS);
+    Counter numDuplicates =
+        Metrics.counter(MetricsConstants.METRICS_NAMESPACE, MetricsConstants.NUM_DUPLICATES);
 
     String dwh1 = options.getDwh1();
     String dwh2 = options.getDwh2();
