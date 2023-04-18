@@ -32,6 +32,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import org.apache.beam.sdk.io.jdbc.JdbcIO;
+import org.apache.beam.sdk.metrics.Counter;
+import org.apache.beam.sdk.metrics.Metrics;
 import org.apache.beam.sdk.transforms.DoFn;
 import org.apache.beam.sdk.transforms.PTransform;
 import org.apache.beam.sdk.transforms.ParDo;
@@ -63,6 +65,20 @@ public class JdbcFetchHapi {
    */
   public static class ResultSetToRowDescriptor implements JdbcIO.RowMapper<HapiRowDescriptor> {
 
+    private final HashMap<String, Counter> numMappedResourcesMap;
+
+    public ResultSetToRowDescriptor(String resourceList) {
+      this.numMappedResourcesMap = new HashMap<>();
+      List<String> resourceTypes = Arrays.asList(resourceList.split(","));
+      for (String resourceType : resourceTypes) {
+        this.numMappedResourcesMap.put(
+            resourceType,
+            Metrics.counter(
+                MetricsConstants.METRICS_NAMESPACE,
+                MetricsConstants.NUM_MAPPED_RESOURCES + resourceType));
+      }
+    }
+
     @Override
     public HapiRowDescriptor mapRow(ResultSet resultSet) throws Exception {
       String jsonResource = "";
@@ -86,6 +102,7 @@ public class JdbcFetchHapi {
       String lastUpdated = resultSet.getString("res_updated");
       String fhirVersion = resultSet.getString("res_version");
       String resourceVersion = resultSet.getString("res_ver");
+      numMappedResourcesMap.get(resourceType).inc();
       return HapiRowDescriptor.create(
           resourceId, resourceType, lastUpdated, fhirVersion, resourceVersion, jsonResource);
     }
@@ -117,13 +134,16 @@ public class JdbcFetchHapi {
   public static class FetchRowsJdbcIo
       extends PTransform<PCollection<QueryParameterDescriptor>, PCollection<HapiRowDescriptor>> {
 
+    private String resourceList;
     private final JdbcIO.DataSourceConfiguration dataSourceConfig;
 
     private final String query;
 
     private final String tagQuery;
 
-    public FetchRowsJdbcIo(JdbcIO.DataSourceConfiguration dataSourceConfig, String since) {
+    public FetchRowsJdbcIo(
+        String resourceList, JdbcIO.DataSourceConfiguration dataSourceConfig, String since) {
+      this.resourceList = resourceList;
       this.dataSourceConfig = dataSourceConfig;
       // Note the constraint on `res.res_ver` ensures we only pick the latest version.
       StringBuilder builder =
@@ -174,7 +194,7 @@ public class JdbcFetchHapi {
                   // Disabling the below parameter results in optimal performance.
                   .withOutputParallelization(false)
                   .withQuery(query)
-                  .withRowMapper(new ResultSetToRowDescriptor()));
+                  .withRowMapper(new ResultSetToRowDescriptor(resourceList)));
       PCollection<ResourceTag> resourceTagPCollection =
           queryParameters.apply(
               "JdbcIO fetch tags",

@@ -148,13 +148,21 @@ abstract class FetchSearchPageFn<T> extends DoFn<T, KV<String, Integer>> {
     // We are assuming that the potential source and sink DBs are the same type.
     this.jdbcDriverClass = options.getJdbcDriverClass();
     this.numFetchedResources =
-        Metrics.counter(EtlUtils.METRICS_NAMESPACE, "numFetchedResources_" + stageIdentifier);
+        Metrics.counter(
+            MetricsConstants.METRICS_NAMESPACE,
+            MetricsConstants.NUM_FETCHED_RESOURCES + stageIdentifier);
     this.totalFetchTimeMillis =
-        Metrics.counter(EtlUtils.METRICS_NAMESPACE, "totalFetchTimeMillis_" + stageIdentifier);
+        Metrics.counter(
+            MetricsConstants.METRICS_NAMESPACE,
+            MetricsConstants.TOTAL_FETCH_TIME_MILLIS + stageIdentifier);
     this.totalGenerateTimeMillis =
-        Metrics.counter(EtlUtils.METRICS_NAMESPACE, "totalGenerateTimeMillis_" + stageIdentifier);
+        Metrics.counter(
+            MetricsConstants.METRICS_NAMESPACE,
+            MetricsConstants.TOTAL_GENERATE_TIME_MILLIS + stageIdentifier);
     this.totalPushTimeMillis =
-        Metrics.counter(EtlUtils.METRICS_NAMESPACE, "totalPushTimeMillis_" + stageIdentifier);
+        Metrics.counter(
+            MetricsConstants.METRICS_NAMESPACE,
+            MetricsConstants.TOTAL_PUSH_TIME_MILLIS + stageIdentifier);
   }
 
   @Setup
