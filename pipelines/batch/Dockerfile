@@ -17,7 +17,7 @@
 # and run the docker image for you.  
 
 
-FROM adoptopenjdk/maven-openjdk11
+FROM eclipse-temurin:17-jdk-focal
 
 # TODO: Investigate why switching to the next base image, breaks the e2e in a
 # strange way, i.e., in one of the last steps, when running JDBC version of the

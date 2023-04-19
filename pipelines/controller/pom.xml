@@ -29,8 +29,8 @@
   <description>A Spring Boot based controller for FHIR Analytics pipelines</description>
 
   <properties>
-    <java.version>11</java.version>
-    <spring-boot.version>2.7.5</spring-boot.version>
+    <java.version>17</java.version>
+    <spring-boot.version>3.0.5</spring-boot.version>
   </properties>
 
   <dependencyManagement>
