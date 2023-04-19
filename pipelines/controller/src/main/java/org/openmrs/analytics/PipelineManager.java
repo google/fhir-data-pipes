@@ -20,13 +20,20 @@ import com.cerner.bunsen.FhirContexts;
 import com.google.common.base.Preconditions;
 import java.beans.PropertyVetoException;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.sql.SQLException;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import javax.annotation.PostConstruct;
 import org.apache.beam.runners.flink.FlinkPipelineOptions;
 import org.apache.beam.runners.flink.FlinkRunner;
@@ -42,6 +49,7 @@ import org.apache.beam.sdk.options.PipelineOptionsFactory;
 import org.openmrs.analytics.metrics.PipelineMetrics;
 import org.openmrs.analytics.metrics.PipelineMetricsFactory;
 import org.openmrs.analytics.model.DatabaseConfiguration;
+import org.openmrs.analytics.utils.Constants;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -301,6 +309,60 @@ public class PipelineManager {
           new PipelineThread(pipeline, mergerOptions, this, dataProperties, pipelineConfig, false);
       logger.info("Running incremental pipeline for DWH {} since {}", currentDwh.getRoot(), since);
       currentPipeline.start();
+    }
+  }
+
+  /**
+   * This method periodically checks on Thrift server output directory and commands to create
+   * resource tables. The very first run happens over a minute later once controller spins up. And
+   * it's programmed to check on Thrift server every hour in case it went down for unfortunate
+   * reasons.
+   *
+   * @throws IOException
+   * @throws SQLException
+   */
+  @Scheduled(initialDelay = 60000, fixedDelay = 3600000)
+  private void createResourceTablesOnStart() throws IOException, SQLException {
+    DatabaseConfiguration dbConfig =
+        DatabaseConfiguration.createConfigFromFile(dataProperties.getThriftserverHiveConfig());
+
+    HiveTableManager hiveTableManager =
+        new HiveTableManager(
+            dbConfig.makeJdbsUrlFromConfig(),
+            dbConfig.getDatabaseUser(),
+            dbConfig.getDatabasePassword());
+
+    // Traverse through directories in parquet output directory to collect their names.
+    List<Path> paths;
+    try (Stream<Path> walk =
+        Files.walk(Paths.get(Constants.THRIFT_CONTAINER_PARQUET_PATH_PREFIX))) {
+      paths = walk.filter(Files::isDirectory).collect(Collectors.toList());
+    }
+    Map<String, List<String>> snapshots = new HashMap<>();
+    for (Path path : paths) {
+      String[] tokens = path.toString().split("/");
+      String resource = tokens[tokens.length - 1];
+      if (dataProperties.getResourceList().indexOf(resource) != -1) {
+        if (!snapshots.containsKey(resource)) {
+          snapshots.put(resource, new ArrayList<>());
+        }
+        snapshots.get(resource).add(path.toString());
+
+        // Get timestamp from directory name.
+        String[] snapshotsToken = tokens[tokens.length - 2].split(DataProperties.TIMESTAMP_PREFIX);
+        hiveTableManager.createResourceTable(resource, snapshotsToken[1], path.toString());
+      }
+    }
+
+    // For each resource, create canonical table.
+    for (String resource : snapshots.keySet()) {
+      List<String> resourceSnapShots = snapshots.get(resource);
+      if (resourceSnapShots != null && !resourceSnapShots.isEmpty()) {
+        // Sort the directory names to make sure canonical table is created from the latest
+        // snapshot.
+        resourceSnapShots.sort(Collections.reverseOrder());
+        hiveTableManager.createResourceCanonicalTable(resource, resourceSnapShots.get(0));
+      }
     }
   }
 

@@ -19,6 +19,7 @@ import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.sql.Statement;
+import org.openmrs.analytics.utils.Constants;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -29,8 +30,6 @@ public class HiveTableManager {
   private final String jdbcUrl;
   private final String user;
   private final String password;
-
-  private static final String THRIFT_CONTAINER_PARQUET_PATH_PREFIX = "/dwh";
 
   public HiveTableManager(String jdbcUrl, String user, String password) {
     this.jdbcUrl = jdbcUrl;
@@ -76,26 +75,75 @@ public class HiveTableManager {
   private void createResourceTable(
       Connection connection, String resource, String timestamp, String thriftServerParquetPath)
       throws SQLException {
+
+    String sql =
+        String.format(
+            "CREATE TABLE IF NOT EXISTS default.%s_%s USING PARQUET LOCATION '%s/%s/%s'",
+            resource,
+            timestamp,
+            Constants.THRIFT_CONTAINER_PARQUET_PATH_PREFIX,
+            thriftServerParquetPath,
+            resource);
+    createResourceTable(connection, sql);
+
+    // Drop canonical table if exists.
+    sql = String.format("DROP TABLE IF EXISTS default.%s", resource);
+    createResourceTable(connection, sql);
+
+    // Create canonical table with latest parquet files.
+    sql =
+        String.format(
+            "CREATE TABLE IF NOT EXISTS default.%s USING PARQUET LOCATION '%s/%s/%s'",
+            resource,
+            Constants.THRIFT_CONTAINER_PARQUET_PATH_PREFIX,
+            thriftServerParquetPath,
+            resource);
+    createResourceTable(connection, sql);
+  }
+
+  /**
+   * The method creates resource tables with names suffixed with given timestamp if not present. It
+   * excepts complete parquet files path.
+   *
+   * @param resource
+   * @param timestamp
+   * @param thriftServerParquetPath
+   * @throws SQLException
+   */
+  public void createResourceTable(String resource, String timestamp, String thriftServerParquetPath)
+      throws SQLException {
+
+    String sql =
+        String.format(
+            "CREATE TABLE IF NOT EXISTS default.%s_%s USING PARQUET LOCATION '%s'",
+            resource, timestamp, thriftServerParquetPath);
+    try (Connection connection = DriverManager.getConnection(jdbcUrl)) {
+      createResourceTable(connection, sql);
+    }
+  }
+
+  /**
+   * This method creates canonical resource tables if not present. It excepts complete parquet files
+   * path.
+   *
+   * @param resource
+   * @param thriftServerParquetPath
+   * @throws SQLException
+   */
+  public void createResourceCanonicalTable(String resource, String thriftServerParquetPath)
+      throws SQLException {
+
+    String sql =
+        String.format(
+            "CREATE TABLE IF NOT EXISTS default.%s USING PARQUET LOCATION '%s'",
+            resource, thriftServerParquetPath);
+    try (Connection connection = DriverManager.getConnection(jdbcUrl)) {
+      createResourceTable(connection, sql);
+    }
+  }
+
+  private void createResourceTable(Connection connection, String sql) throws SQLException {
     try (Statement statement = connection.createStatement()) {
-      String sql =
-          String.format(
-              "CREATE TABLE IF NOT EXISTS default.%s_%s USING PARQUET LOCATION '%s/%s/%s'",
-              resource,
-              timestamp,
-              THRIFT_CONTAINER_PARQUET_PATH_PREFIX,
-              thriftServerParquetPath,
-              resource);
-      statement.execute(sql);
-
-      // Drop canonical table if exists.
-      sql = String.format("DROP TABLE IF EXISTS default.%s", resource);
-      statement.execute(sql);
-
-      // Create canonical table with latest parquet files.
-      sql =
-          String.format(
-              "CREATE TABLE IF NOT EXISTS default.%s USING PARQUET LOCATION '%s/%s/%s'",
-              resource, THRIFT_CONTAINER_PARQUET_PATH_PREFIX, thriftServerParquetPath, resource);
       statement.execute(sql);
     }
   }
