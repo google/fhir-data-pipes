@@ -105,7 +105,7 @@
     <dependency>
       <groupId>org.apache.parquet</groupId>
       <artifactId>parquet-avro</artifactId>
-      <version>1.12.3</version>
+      <version>1.13.0</version>
     </dependency>
 
     <!-- TODO: This is in the dependencies of the above with "provided" scope.
