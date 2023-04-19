@@ -323,6 +323,10 @@ public class PipelineManager {
    */
   @Scheduled(initialDelay = 60000, fixedDelay = 3600000)
   private void createResourceTablesOnStart() throws IOException, SQLException {
+    if (!dataProperties.isCreateHiveResourceTables()) {
+      return;
+    }
+
     DatabaseConfiguration dbConfig =
         DatabaseConfiguration.createConfigFromFile(dataProperties.getThriftserverHiveConfig());
 
