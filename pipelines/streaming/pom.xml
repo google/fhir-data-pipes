@@ -29,7 +29,7 @@
 
   <properties>
     <mysql.init.timeout>30000</mysql.init.timeout>
-    <version.camel>3.2.0</version.camel>
+    <version.camel>3.20.0</version.camel>
     <version.debezium>1.0.0.Final</version.debezium>
     <version.debezium.tag>1.0</version.debezium.tag>
     <version.mysql.driver>8.0.16</version.mysql.driver>
@@ -66,18 +66,22 @@
     <dependency>
       <groupId>org.apache.camel</groupId>
       <artifactId>camel-main</artifactId>
+      <version>${version.camel}</version>
     </dependency>
     <dependency>
       <groupId>org.apache.camel</groupId>
       <artifactId>camel-core</artifactId>
+      <version>${version.camel}</version>
     </dependency>
     <dependency>
       <groupId>org.apache.camel</groupId>
       <artifactId>camel-jackson</artifactId>
+      <version>${version.camel}</version>
     </dependency>
     <dependency>
       <groupId>org.apache.camel</groupId>
       <artifactId>camel-test</artifactId>
+      <version>${version.camel}</version>
       <scope>test</scope>
     </dependency>
     <dependency>
@@ -88,6 +92,7 @@
     <dependency>
       <groupId>org.apache.camel</groupId>
       <artifactId>camel-http</artifactId>
+      <version>${version.camel}</version>
     </dependency>
     <dependency>
       <groupId>mysql</groupId>
