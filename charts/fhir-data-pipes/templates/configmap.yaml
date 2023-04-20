@@ -14,6 +14,10 @@ data:
     {{ tpl ( .Values.applicationConfig | toYaml) $scope | nindent 8}}
   flink-conf-yaml: |
     {{ tpl ( .Values.flink | toYaml) $scope | nindent 8}}
+  {{- if .Values.hiveSiteConfig }}
+  hive-site-xml: |
+    {{ tpl (.Values.hiveSiteConfig) $scope | nindent 4 | trim }}
+  {{- end }}
   {{ range $value := .Values.extraConfigMaps -}}
   {{ $value.name }}: |
   {{ tpl $value.contents $scope | nindent 8 }}

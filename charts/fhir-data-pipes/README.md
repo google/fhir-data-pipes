@@ -133,7 +133,9 @@ sidecars:
     volumeMounts:
       - name: dwh-dir
         mountPath: /dwh
-
+      - name: hive-site-xml
+        mountPath: /opt/bitnami/spark/conf/hive-site.xml
+        subPath: hive-site-xml
 
 # Creates a volume for parquet files.
 pvc:

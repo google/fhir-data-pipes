@@ -137,15 +137,62 @@ applicationConfig:
     createHiveResourceTables: "true"
     hiveJdbcDriver: "org.apache.hive.jdbc.HiveDriver"
 
+# Uncomment below block to override the hive-site.xml
+#hiveSiteConfig: |
+#  <?xml version="1.0"?>
+#  <?xml-stylesheet type="text/xsl" href="configuration.xsl"?>
+#
+#  <configuration>
+#    <property>
+#     <name>hive.server2.authentication</name>
+#     <value>LDAP</value>
+#     </property>
+#    <property>
+#      <name>hive.server2.authentication.ldap.url</name>
+#      <value>ldap://openldap.default.svc.cluster.local:389</value>
+#    </property>
+#    <property>
+#      <name>hive.server2.authentication.ldap.baseDN</name>
+#      <value>ou=users,dc=ldapadmin,dc=labs,dc=example,dc=org</value>
+#    </property>
+#  </configuration>
+
 initContainers:
 
 sidecars:
+#  - name: spark-thrift-server
+#    image: docker.io/bitnami/spark:3.3.2-debian-11-r12
+#    imagePullPolicy: IfNotPresent
+#    ports:
+#      - name: hive
+#        containerPort: 10000
+#      - name: hive-webui
+#        containerPort: 4040
+#    args:
+#      - "/bin/sh"
+#      - "-c"
+#      - "sbin/start-thriftserver.sh"
+#      - "--master spark://spark-master-svc:7077"
+#    env:
+#      - name: "HIVE_SERVER2_THRIFT_PORT"
+#        value: "10000"
+#    resources:
+#      limits:
+#        memory: 1024Mi
+#      requests:
+#        cpu: 250m
+#        memory: 256Mi
+#    volumeMounts:
+#      - name: dwh-dir
+#        mountPath: /dwh
+#      - name: hive-site-xml
+#        mountPath: /opt/bitnami/spark/conf/hive-site.xml
+#        subPath: hive-site-xml
 
 extraVolumes:
 #  - name: some-name
 #    configMap:
 #      name: '{{ include "fhir-data-pipes.fullname" . }}'
-
 
 extraVolumeMounts:
 #  - mountPath: /app/resources/some-file.json
@@ -165,8 +212,6 @@ extraConfigMaps:
 env:
 #  - name: APP_LOGGING_LEVEL
 #    value: DEBUG
-#  - name: _JAVA_OPTIONS
-#    value: -Dlogging.level.org.springframework=TRACE
 
 pdb:
   enabled: false

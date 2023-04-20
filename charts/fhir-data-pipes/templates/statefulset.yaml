@@ -39,6 +39,11 @@ spec:
         - name: flink-conf-yaml
           configMap:
             name: {{ include "fhir-data-pipes.fullname" . }}
+        {{- if .Values.hiveSiteConfig }}
+        - name: hive-site-xml
+          configMap:
+            name: {{ include "fhir-data-pipes.fullname" . }}
+        {{- end }}
         {{- if .Values.pvc.enabled }}
         - name: dwh-dir
           persistentVolumeClaim:
