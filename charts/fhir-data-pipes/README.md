@@ -101,6 +101,7 @@ The following table lists the configurable parameters of the Fhir-data-pipes cha
 | `pvc.resources.requests.storage`                      |             | `"20Gi"`                                                                                              |
 | `pvc.accessModes`                                     |             | `["ReadWriteOnce"]`                                                                                   |
 | `pvc.selector`                                        |             | `{}`                                                                                                  |
+| `hiveSiteConfig`                                      |             | `null`                                                                                                |
 
 
 ## Spark SQL (Thrift Server) as Sidecar
@@ -162,4 +163,23 @@ service:
       targetPort: hive
       protocol: TCP
       name: hive
+
+hiveSiteConfig: |
+  <?xml version="1.0"?>
+  <?xml-stylesheet type="text/xsl" href="configuration.xsl"?>
+
+  <configuration>
+    <property>
+     <name>hive.server2.authentication</name>
+     <value>LDAP</value>
+     </property>
+    <property>
+      <name>hive.server2.authentication.ldap.url</name>
+      <value>ldap://openldap.default.svc.cluster.local:389</value>
+    </property>
+    <property>
+      <name>hive.server2.authentication.ldap.baseDN</name>
+      <value>ou=users,dc=ldapadmin,dc=labs,dc=example,dc=org</value>
+    </property>
+  </configuration>
 ````
