@@ -53,7 +53,6 @@
     <dependency>
       <groupId>org.springframework.boot</groupId>
       <artifactId>spring-boot-starter-web</artifactId>
-      <version>${spring-boot.version}</version>
       <exclusions>
         <!-- TODO decide whether to exclude log4j as we use logback -->
         <!--exclusion>
@@ -70,14 +69,12 @@
     <dependency>
       <groupId>org.springframework.boot</groupId>
       <artifactId>spring-boot-starter-test</artifactId>
-      <version>${spring-boot.version}</version>
       <scope>test</scope>
     </dependency>
 
     <dependency>
       <groupId>org.springframework.boot</groupId>
       <artifactId>spring-boot-starter-thymeleaf</artifactId>
-      <version>${spring-boot.version}</version>
     </dependency>
 
     <!-- Pipeline dependencies for execution and monitoring -->
@@ -114,6 +111,7 @@
           <groupId>javax.servlet.jsp</groupId>
           <artifactId>javax.servlet.jsp-api</artifactId>
         </exclusion>
+        <!-- This is needed because of javax to jakarta migration in EE 9. -->
         <exclusion>
           <groupId>org.glassfish.web</groupId>
           <artifactId>javax.servlet.jsp</artifactId>
@@ -137,7 +135,6 @@
         <artifactId>spring-boot-maven-plugin</artifactId>
         <!-- The version specification should not be needed but on Cloud-Build
           for some reason it picks 3.0.0 and then fails as it needs Java 17. -->
-        <version>${spring-boot.version}</version>
         <!-- This is for being able to debug from IDE. -->
         <configuration>
           <fork>false</fork>
