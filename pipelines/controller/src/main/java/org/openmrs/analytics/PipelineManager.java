@@ -313,15 +313,13 @@ public class PipelineManager {
   }
 
   /**
-   * This method periodically checks on Thrift server output directory and commands to create
-   * resource tables. The very first run happens over a minute later once controller spins up. And
-   * it's programmed to check on Thrift server every hour in case it went down for unfortunate
-   * reasons.
+   * This method checks upon Controller start checks on Thrift sever to create resource tables if
+   * they don't exist.
    *
    * @throws IOException
    * @throws SQLException
    */
-  @Scheduled(initialDelay = 60000, fixedDelay = 3600000)
+  @PostConstruct
   private void createResourceTablesOnStart() throws IOException, SQLException {
     if (!dataProperties.isCreateHiveResourceTables()) {
       return;
@@ -346,7 +344,7 @@ public class PipelineManager {
     for (Path path : paths) {
       String[] tokens = path.toString().split("/");
       String resource = tokens[tokens.length - 1];
-      if (dataProperties.getResourceList().indexOf(resource) != -1) {
+      if (tokens.length > 0 && dataProperties.getResourceList().indexOf(resource) != -1) {
         if (!snapshots.containsKey(resource)) {
           snapshots.put(resource, new ArrayList<>());
         }
