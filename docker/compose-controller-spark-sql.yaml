@@ -13,7 +13,7 @@
 # limitations under the License.
 
 # This docker-compose configuration is for bringing up a pipeline controller
-# along with a local Spark cluster and a SQL console.
+# along with a local Spark cluster with a JDBC endpoint.
 # The Spark part is partially based on:
 # https://github.com/bitnami/containers/blob/main/bitnami/spark/docker-compose.yml
 
@@ -25,8 +25,19 @@
 # DWH_ROOT: The directory where Parquet files are written. This is shared
 #   between all containers; the pipeline writes to it and Spark ones read.
 #
-# Note if local paths are used, they should start with `./ `or `../`
-
+# Note if local paths are used, they should start with `./ `or `../`. Also the
+# mounted files should be readable by containers, e.g., world-readable.
+#
+# This configuration uses the default embedded Derby database as Metastore for
+# the thriftserver. Some example config lines are provided but commented out
+# that show how to use an external DB instead.
+#
+# Also, in your SQL scripts, if you need to create temporary tables, you should
+# provide a shared directory for `spark-warehouse` as shown below (in comments).
+#
+# Finally, if you want to change Spark default configs, you can mount your
+# config files to /opt/bitnami/spark/conf/
+# https://spark.apache.org/docs/latest/configuration.html
 
 version: '2'
 
@@ -51,6 +62,10 @@ services:
       - '8082:8080'
     volumes:
       - ${DWH_ROOT}:/dwh
+      # If you want to create temporary tables, you need to have a common
+      # spark-warehouse location across Spark nodes; here is an example.
+      # Note this directory need to be writeable by Spark nodes.
+      # - /tmp/spark-warehouse:/opt/bitnami/spark/spark-warehouse
 
   spark-worker:
     image: docker.io/bitnami/spark:3.3
@@ -62,6 +77,8 @@ services:
       - SPARK_WORKER_CORES=20
     volumes:
       - ${DWH_ROOT}:/dwh
+      # See above.
+      # - /tmp/spark-warehouse:/opt/bitnami/spark/spark-warehouse
 
   thriftserver:
     image: docker.io/bitnami/spark:3.3
@@ -77,5 +94,14 @@ services:
       - '4041:4040'
     volumes:
       - ${DWH_ROOT}:/dwh
+      # See above.
+      # - /tmp/spark-warehouse:/opt/bitnami/spark/spark-warehouse
+
+      # NON-EMBEDDED METASTORE CONFIG:
+      # If you want to persist the Metastore data, e.g., table and view
+      # definitions, you can use an external database by adjusting hive-site.xml
+      # - ./hive-site_example.xml:/opt/bitnami/spark/conf/hive-site.xml
+      # Note to use an external DB, you need to provide its driver jar too:
+      # - ./postgresql-42.6.0.jar:/opt/bitnami/spark/jars/postgresql-42.6.0.jar
 
 # TODO add a link to a Jupyter notebook to show how to use JDBC.
