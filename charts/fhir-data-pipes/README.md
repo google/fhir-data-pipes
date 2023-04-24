@@ -6,13 +6,13 @@ An open-source pipeline to transform data from a FHIR server (like HAPI, GCP FHI
 ## TL;DR
 
 ```bash
-$ helm repo add opensrp-fhir-data-pipes https://fhir-data-pipes.helm.smartregister.org
-$ helm install fhir-data-pipes opensp-fhir-data-pipes/fhir-data-pipes
+$ helm repo add google-fhir-data-pipes https://google.github.io/fhir-data-pipes/
+$ helm install fhir-data-pipes google-fhir-data-pipes/fhir-data-pipes
 ```
 
 ## Introduction
 
-This chart bootstraps  [fhir-data-pipes](https://github.com/onaio/fhir-data-pipes) deployment on a [Kubernetes](http://kubernetes.io) cluster using the [Helm](https://helm.sh) package manager.
+This chart bootstraps  [fhir-data-pipes](https://github.com/google/fhir-data-pipes) deployment on a [Kubernetes](http://kubernetes.io) cluster using the [Helm](https://helm.sh) package manager.
 
 ## Prerequisites
 
@@ -26,7 +26,7 @@ The following table lists the configurable parameters of the Fhir-data-pipes cha
 | Parameter                                             | Description | Default                                                                                               |
 |-------------------------------------------------------|-------------|-------------------------------------------------------------------------------------------------------|
 | `replicaCount`                                        |             | `1`                                                                                                   |
-| `image.repository`                                    |             | `"onaio/fhir-data-pipes"`                                                                             |
+| `image.repository`                                    |             | `"google/fhir-data-pipes"`                                                                            |
 | `image.pullPolicy`                                    |             | `"IfNotPresent"`                                                                                      |
 | `image.tag`                                           |             | `"master"`                                                                                            |
 | `imagePullSecrets`                                    |             | `[]`                                                                                                  |
@@ -105,7 +105,7 @@ The following table lists the configurable parameters of the Fhir-data-pipes cha
 
 
 ## Spark SQL (Thrift Server) as Sidecar
-The chart provides the necessary configuration to set up additional containers on the StatefulSet. One such container could be the spark thrift server. Below is how one can set it up.
+The chart provides the necessary configuration to set up additional containers on the StatefulSet. One such container is the spark thrift server. Below is how one can set it up.
 ````yaml
 ---
 sidecars:
@@ -163,6 +163,17 @@ service:
       targetPort: hive
       protocol: TCP
       name: hive
+
+# For LDAP ensure that user has the attribute `uid` on its DN.
+# As of now the hive jdbc credentials are not parsed on the pipeline code, as a workaround append the credentials on the `databaseName` credentials as follows:
+#thriftserver:
+#  hive:
+#    databaseService: "hive2"
+#    databaseHostName: "fhir-data-pipes"
+#    databasePort: "10000"
+#    databaseUser: "user" (not used as of now)
+#    databasePassword: "password" (not used as of now)
+#    databaseName: "default;user=<userid>;password=<password>"
 
 hiveSiteConfig: |
   <?xml version="1.0"?>

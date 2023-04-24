@@ -21,7 +21,7 @@
 replicaCount: 1
 
 image:
-  repository: onaio/fhir-data-pipes
+  repository: google/fhir-data-pipes
   pullPolicy: IfNotPresent
   # Overrides the image tag whose default is the chart appVersion.
   tag: "master"
@@ -146,9 +146,9 @@ applicationConfig:
     fhirServerUrl: ""
     dbConfig: "/app/config/hapi-postgres-config.json"
     dwhRootPrefix: "/dwh/controller_DWH"
-    thriftserverHiveConfig: "/app/config/thrifter-hive-config.json"
+    thriftserverHiveConfig: "/app/config/thriftserver-hive-config.json"
     incrementalSchedule: "* * * * * *"
-    resourceList: "PatientEncounterObservation"
+    resourceList: "Patient,Encounter,Observation"
     maxWorkers: "10"
     createHiveResourceTables: "true"
     hiveJdbcDriver: "org.apache.hive.jdbc.HiveDriver"
