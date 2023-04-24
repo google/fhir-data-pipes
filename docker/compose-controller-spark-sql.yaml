@@ -16,6 +16,14 @@
 # along with a local Spark cluster with a JDBC endpoint.
 # The Spark part is partially based on:
 # https://github.com/bitnami/containers/blob/main/bitnami/spark/docker-compose.yml
+# While all Spark pieces are brought up on the same machine but this config can
+# serve as an example of how to deploy Spark on a cluster environment. Obviously
+# extra configuration is needed when the underlying file-system is distributed.
+# The spark components are:
+# - A master node
+# - A group of worker nodes (in this example just one)
+# - A thriftserver providing JDBC and Metastore functionality.
+# All Spark components share a common spark volume.
 
 # Environment variables:
 #
@@ -27,7 +35,6 @@
 #
 # Note if local paths are used, they should start with `./ `or `../`. Also the
 # mounted files should be readable by containers, e.g., world-readable.
-#
 
 # NOTES ON SPARK VOLUME:
 # In the config below, a `spark` volume is used and mapped to /opt/bitnami/spark
