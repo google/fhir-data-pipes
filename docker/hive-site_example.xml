@@ -1,0 +1,43 @@
+<!--
+This is a sample for hive-site.xml configuration file. Any thriftserver
+config parameters that are related to the Metastore can be set here.
+For example, the following is a minimal set for using a remote database instead
+of the default embedded Derby. When using Bitnami docker images, this file needs
+to be mounted in the default conf dir at /opt/bitnami/spark/conf/hive-site.xml
+Note that extra driver jars need to be supplied to Spark nodes as well, e.g.,
+by placing them in the /opt/bitnami/spark/jars/ directory.
+
+For documentation of parameters see (TODO: find a thriftserver specific source):
+https://cwiki.apache.org/confluence/display/Hive/Configuration+Properties#ConfigurationProperties-MetaStore
+-->
+
+<configuration>
+  <property>
+    <name>javax.jdo.option.ConnectionURL</name>
+    <!-- This setup assumes that custom_metastore_db is already created. -->
+    <!-- The IP address should be adjusted based on how the thriftserver sees
+      the external DB; this example is for a docker image on Linux. -->
+    <value>jdbc:postgresql://172.18.0.1:5432/custom_metastore_db</value>
+    <!-- value>jdbc:postgresql://localhost:5432/custom_metastore_db</value -->
+  </property>
+  <property>
+    <name>javax.jdo.option.ConnectionDriverName</name>
+    <value>org.postgresql.Driver</value>
+  </property>
+  <property>
+    <name>javax.jdo.option.ConnectionUserName</name>
+    <value>admin</value>
+  </property>
+  <property>
+    <name>javax.jdo.option.ConnectionPassword</name>
+    <value>admin</value>
+  </property>
+  <property>
+    <name>datanucleus.schema.autoCreateTables</name>
+    <value>true</value>
+  </property>
+  <property>
+    <name>hive.metastore.schema.verification</name>
+    <value>false</value>
+  </property>
+</configuration>
