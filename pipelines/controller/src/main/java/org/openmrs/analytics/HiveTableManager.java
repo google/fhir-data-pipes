@@ -19,7 +19,6 @@ import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.sql.Statement;
-import org.openmrs.analytics.utils.Constants;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -30,6 +29,8 @@ public class HiveTableManager {
   private final String jdbcUrl;
   private final String user;
   private final String password;
+
+  private static final String THRIFT_CONTAINER_PARQUET_PATH_PREFIX = "/dwh";
 
   public HiveTableManager(String jdbcUrl, String user, String password) {
     this.jdbcUrl = jdbcUrl;
@@ -81,7 +82,7 @@ public class HiveTableManager {
             "CREATE TABLE IF NOT EXISTS default.%s_%s USING PARQUET LOCATION '%s/%s/%s'",
             resource,
             timestamp,
-            Constants.THRIFT_CONTAINER_PARQUET_PATH_PREFIX,
+            THRIFT_CONTAINER_PARQUET_PATH_PREFIX,
             thriftServerParquetPath,
             resource);
     executeSql(connection, sql);
@@ -94,10 +95,7 @@ public class HiveTableManager {
     sql =
         String.format(
             "CREATE TABLE IF NOT EXISTS default.%s USING PARQUET LOCATION '%s/%s/%s'",
-            resource,
-            Constants.THRIFT_CONTAINER_PARQUET_PATH_PREFIX,
-            thriftServerParquetPath,
-            resource);
+            resource, THRIFT_CONTAINER_PARQUET_PATH_PREFIX, thriftServerParquetPath, resource);
     executeSql(connection, sql);
   }
 

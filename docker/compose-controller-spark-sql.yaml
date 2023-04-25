@@ -42,6 +42,8 @@ services:
       - ${DWH_ROOT}:/dwh
     ports:
       - '8090:8080'
+    depends_on:
+      - thriftserver
 
   spark:
     image: docker.io/bitnami/spark:3.3

@@ -20,20 +20,13 @@ import com.cerner.bunsen.FhirContexts;
 import com.google.common.base.Preconditions;
 import java.beans.PropertyVetoException;
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.sql.SQLException;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 import javax.annotation.PostConstruct;
 import org.apache.beam.runners.flink.FlinkPipelineOptions;
 import org.apache.beam.runners.flink.FlinkRunner;
@@ -49,10 +42,11 @@ import org.apache.beam.sdk.options.PipelineOptionsFactory;
 import org.openmrs.analytics.metrics.PipelineMetrics;
 import org.openmrs.analytics.metrics.PipelineMetricsFactory;
 import org.openmrs.analytics.model.DatabaseConfiguration;
-import org.openmrs.analytics.utils.Constants;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.context.event.ApplicationReadyEvent;
+import org.springframework.context.ApplicationListener;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.scheduling.support.CronExpression;
@@ -66,7 +60,7 @@ import org.springframework.stereotype.Component;
  */
 @EnableScheduling
 @Component
-public class PipelineManager {
+public class PipelineManager implements ApplicationListener<ApplicationReadyEvent> {
 
   private static final Logger logger = LoggerFactory.getLogger(PipelineManager.class.getName());
 
@@ -315,56 +309,73 @@ public class PipelineManager {
   /**
    * This method checks upon Controller start checks on Thrift sever to create resource tables if
    * they don't exist.
-   *
-   * @throws IOException
-   * @throws SQLException
    */
-  @PostConstruct
-  private void createResourceTablesOnStart() throws IOException, SQLException {
+  @Override
+  public void onApplicationEvent(ApplicationReadyEvent applicationReadyEvent) {
     if (!dataProperties.isCreateHiveResourceTables()) {
       return;
     }
 
-    DatabaseConfiguration dbConfig =
-        DatabaseConfiguration.createConfigFromFile(dataProperties.getThriftserverHiveConfig());
-
+    DatabaseConfiguration dbConfig;
+    try {
+      dbConfig =
+          DatabaseConfiguration.createConfigFromFile(dataProperties.getThriftserverHiveConfig());
+    } catch (IOException e) {
+      logger.error("Exception while reading thrift hive config.");
+      throw new RuntimeException(e);
+    }
     HiveTableManager hiveTableManager =
         new HiveTableManager(
             dbConfig.makeJdbsUrlFromConfig(),
             dbConfig.getDatabaseUser(),
             dbConfig.getDatabasePassword());
 
-    // Traverse through directories in parquet output directory to collect their names.
-    List<Path> paths;
-    try (Stream<Path> walk =
-        Files.walk(Paths.get(Constants.THRIFT_CONTAINER_PARQUET_PATH_PREFIX))) {
-      paths = walk.filter(Files::isDirectory).collect(Collectors.toList());
-    }
-    Map<String, List<String>> snapshots = new HashMap<>();
-    for (Path path : paths) {
-      String[] tokens = path.toString().split("/");
-      String resource = tokens[tokens.length - 1];
-      if (tokens.length > 0 && dataProperties.getResourceList().indexOf(resource) != -1) {
-        if (!snapshots.containsKey(resource)) {
-          snapshots.put(resource, new ArrayList<>());
+    String rootPrefix = dataProperties.getDwhRootPrefix();
+    Preconditions.checkState(rootPrefix != null && !rootPrefix.isEmpty());
+
+    String prefix = getPrefix(rootPrefix);
+    String baseDir = getBaseDir(rootPrefix);
+    List<ResourceId> paths;
+    try {
+      paths =
+          getAllChildDirectories(baseDir).stream()
+              .filter(dir -> dir.getFilename().startsWith(prefix))
+              .collect(Collectors.toList());
+
+      Preconditions.checkState(paths != null, "Make sure DWH prefix is a valid path!");
+
+      int snapshotCount = 0;
+      for (ResourceId path : paths) {
+        if (!path.getFilename().startsWith(prefix + DataProperties.TIMESTAMP_PREFIX)) {
+          logger.warn(
+              "DWH directory {} does not start with {}",
+              paths,
+              prefix + DataProperties.TIMESTAMP_PREFIX);
         }
-        snapshots.get(resource).add(path.toString());
-
-        // Get timestamp from directory name.
-        String[] snapshotsToken = tokens[tokens.length - 2].split(DataProperties.TIMESTAMP_PREFIX);
-        hiveTableManager.createResourceTable(resource, snapshotsToken[1], path.toString());
+        snapshotCount++;
+        Set<ResourceId> childPaths = getAllChildDirectories(baseDir + "/" + path.getFilename());
+        for (ResourceId resourceId : childPaths) {
+          String resource = resourceId.getFilename();
+          String[] tokens = path.getFilename().split(prefix + DataProperties.TIMESTAMP_PREFIX);
+          if (tokens.length > 1) {
+            String timestamp = tokens[1];
+            String thriftServerParquetPath =
+                baseDir + "/" + path.getFilename() + "/" + resourceId.getFilename();
+            logger.debug("thriftServerParquetPath: ", thriftServerParquetPath);
+            hiveTableManager.createResourceTable(resource, timestamp, thriftServerParquetPath);
+            // Create Canonical table for the latest snapshot.
+            if (snapshotCount == paths.size()) {
+              hiveTableManager.createResourceCanonicalTable(resource, thriftServerParquetPath);
+            }
+          }
+        }
       }
-    }
-
-    // For each resource, create canonical table.
-    for (String resource : snapshots.keySet()) {
-      List<String> resourceSnapShots = snapshots.get(resource);
-      if (resourceSnapShots != null && !resourceSnapShots.isEmpty()) {
-        // Sort the directory names to make sure canonical table is created from the latest
-        // snapshot.
-        resourceSnapShots.sort(Collections.reverseOrder());
-        hiveTableManager.createResourceCanonicalTable(resource, resourceSnapShots.get(0));
-      }
+    } catch (IOException e) {
+      logger.error("Exception while reading thriftserver parquet output directory.");
+      throw new RuntimeException(e);
+    } catch (SQLException e) {
+      logger.error("Exception while creating resource tables on thriftserver.");
+      throw new RuntimeException(e);
     }
   }
 
