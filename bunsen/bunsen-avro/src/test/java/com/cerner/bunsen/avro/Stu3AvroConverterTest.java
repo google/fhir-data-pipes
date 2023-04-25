@@ -21,6 +21,7 @@ import org.hl7.fhir.dstu3.model.CodeableConcept;
 import org.hl7.fhir.dstu3.model.Coding;
 import org.hl7.fhir.dstu3.model.Condition;
 import org.hl7.fhir.dstu3.model.Extension;
+import org.hl7.fhir.dstu3.model.Identifier;
 import org.hl7.fhir.dstu3.model.IntegerType;
 import org.hl7.fhir.dstu3.model.Medication;
 import org.hl7.fhir.dstu3.model.MedicationRequest;
@@ -280,6 +281,15 @@ public class Stu3AvroConverterTest {
 
     Assert.assertEquals(testCondition.getSubject().getReference(),
         testConditionDecoded.getSubject().getReference());
+  }
+
+  @Test
+  public void testManagingOrganizationIdentifier() {
+
+    Identifier identifier = testPatientDecoded.getManagingOrganization().getIdentifier();
+
+    Assert.assertNotNull(identifier);
+    Assert.assertEquals(identifier.getAssigner().getReference(), "Organization/234");
   }
 
   @Test
