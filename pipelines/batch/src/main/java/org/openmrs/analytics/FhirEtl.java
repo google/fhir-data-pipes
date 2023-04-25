@@ -34,8 +34,10 @@ import org.apache.beam.sdk.PipelineResult;
 import org.apache.beam.sdk.coders.CannotProvideCoderException;
 import org.apache.beam.sdk.io.FileIO;
 import org.apache.beam.sdk.io.jdbc.JdbcIO;
+import org.apache.beam.sdk.metrics.Metrics;
 import org.apache.beam.sdk.options.PipelineOptionsFactory;
 import org.apache.beam.sdk.transforms.Create;
+import org.apache.beam.sdk.transforms.DoFn;
 import org.apache.beam.sdk.transforms.Flatten;
 import org.apache.beam.sdk.transforms.ParDo;
 import org.apache.beam.sdk.transforms.Sum;
@@ -124,6 +126,8 @@ public class FhirEtl {
     Map<String, List<SearchSegmentDescriptor>> segmentMap = Maps.newHashMap();
     try {
       // TODO in the activePeriod case, among patientAssociatedResources, only fetch Encounter here.
+      // TODO Capture the total resources to be processed as a metric which can be used to derive
+      //  the stats of how many records has been completed.
       segmentMap = fhirSearchUtil.createSegments(options);
     } catch (IllegalArgumentException e) {
       log.error(
@@ -257,6 +261,19 @@ public class FhirEtl {
     }
   }
 
+  /** A simple DoFn that captures the gauge metric of the given input type */
+  public static class LogAsMetric extends DoFn<KV<String, Long>, Void> {
+
+    @ProcessElement
+    public void processElement(@Element KV<String, Long> input) {
+      Metrics.gauge(
+              MetricsConstants.METRICS_NAMESPACE,
+              MetricsConstants.TOTAL_NO_OF_RESOURCES + input.getKey())
+          .set(input.getValue());
+      log.info("Logging the metric {}, {}", input.getKey(), input.getValue());
+    }
+  }
+
   /**
    * Driver function for running JDBC direct fetch mode with a HAPI source server. The JDBC fetch
    * mode uses Beam JdbcIO to fetch FHIR resources directly from the HAPI server's database and uses
@@ -291,7 +308,18 @@ public class FhirEtl {
       if (numResources == 0) {
         continue;
       }
+
       foundResource = true;
+      // The below metrics are logged at the beginning of the pipeline start so that they can be
+      // used to calculate the progress of the pipeline (ratio of currently completed resources vs
+      // the total resources). These had to be logged via a separate DoFn as it required the
+      // pipeline context (which otherwise could not be tracked if injected during constructor
+      // initialisation for the beginning pipeline stage)
+      PCollection<KV<String, Long>> initialPCollection =
+          pipeline.apply(
+              "Metric parameters for " + resourceType,
+              Create.of(KV.of(resourceType, Long.valueOf(numResources))));
+      initialPCollection.apply(ParDo.of((new LogAsMetric())));
 
       PCollection<QueryParameterDescriptor> queryParameters =
           pipeline.apply(
@@ -304,6 +332,7 @@ public class FhirEtl {
           queryParameters.apply(
               "JdbcIO fetch for " + resourceType,
               new JdbcFetchHapi.FetchRowsJdbcIo(
+                  options.getResourceList(),
                   JdbcIO.DataSourceConfiguration.create(jdbcConnectionUtil.getDataSource()),
                   options.getSince()));
 

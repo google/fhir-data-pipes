@@ -18,6 +18,9 @@ package org.openmrs.analytics;
 import java.beans.PropertyVetoException;
 import java.io.IOException;
 import java.sql.SQLException;
+import org.apache.beam.sdk.metrics.MetricQueryResults;
+import org.openmrs.analytics.metrics.ProgressStats;
+import org.openmrs.analytics.metrics.Stats;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -50,11 +53,19 @@ public class ApiController {
   }
 
   @GetMapping("/status")
-  public String getStatus() {
-    // TODO instead of just a boolean status, we should return progress stats too.
+  public ProgressStats getStatus() {
+    ProgressStats progressStats = new ProgressStats();
     if (pipelineManager.isRunning()) {
-      return "RUNNING";
+      progressStats.setPipelineStatus("RUNNING");
+      progressStats.setStats(getStats());
+    } else {
+      progressStats.setPipelineStatus("IDLE");
     }
-    return "IDLE";
+    return progressStats;
+  }
+
+  private Stats getStats() {
+    MetricQueryResults metricQueryResults = pipelineManager.getMetricQueryResults();
+    return Stats.createStats(metricQueryResults);
   }
 }

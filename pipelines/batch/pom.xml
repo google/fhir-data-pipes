@@ -125,14 +125,6 @@
       <version>${hamcrest.version}</version>
     </dependency>
 
-    <!-- The DirectRunner is needed for unit tests. -->
-    <dependency>
-      <groupId>org.apache.beam</groupId>
-      <artifactId>beam-runners-direct-java</artifactId>
-      <version>${beam.version}</version>
-      <scope>test</scope>
-    </dependency>
-
     <dependency>
       <groupId>ca.uhn.hapi.fhir</groupId>
       <artifactId>hapi-fhir-structures-r4</artifactId>

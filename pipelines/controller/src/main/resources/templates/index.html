@@ -51,6 +51,27 @@
 
   </script>
 
+  <script>
+
+    function showPipelineProgress(stats) {
+      if (stats == null || stats == undefined) {
+        changeVisibility('pipelineRunning', true);
+      } else {
+        adjustProgressBarWidth(stats.percentageCompleted);
+      }
+    }
+
+    function adjustProgressBarWidth(progressBarWidth) {
+      var progress = document.querySelector(".progress");
+      progress.style.display = 'block';
+
+      var bar = document.querySelector(".progress-bar");
+      bar.style.display = 'block';
+      bar.style.width = progressBarWidth + "%";
+      bar.innerText = progressBarWidth + "%";
+    }
+  </script>
+
   <script th:if="${isRunning}">origStatus = "RUNNING"</script>
   <script th:unless="${isRunning}">origStatus = "IDLE"</script>
   <script>
@@ -59,19 +80,25 @@
       xhr.open("GET", '/status', true);
       xhr.onreadystatechange = function() {
         if (this.readyState === XMLHttpRequest.DONE && this.status === 200) {
-          status = this.response;
-          console.log('Received status: ' + status);
+          var data = this.response;
+          var json = JSON.parse(data);
+          status = json.pipelineStatus;
+          stats = json.stats;
+
           if (status != origStatus) {
             if (status == "IDLE") {
               changeVisibility('pipelineRunning', false);
               changeVisibility('pipelineDone', true);
             } else {
               changeVisibility('pipelineSubmit', true);
+              showPipelineProgress(stats)
             }
             setTimeout(function() {
               // Reload the page after 2 seconds
               location.reload();
             }, 2000);
+          } else if (status == "RUNNING") {
+            showPipelineProgress(stats)
           }
         }
         if (this.readyState === XMLHttpRequest.DONE && this.status != 200) {
@@ -83,7 +110,7 @@
     timer = setInterval(
       function() {
         updateStatus();
-      }, 5000);
+      }, 2000);
   </script>
 </head>
 
@@ -106,11 +133,15 @@
     <div class="row">
       <main>
 
-        <div class="alert alert-primary alert-dismissible fade show" role="alert" id="pipelineRunning" th:if="${isRunning}">
-          <!-- TODO add progress data too. -->
-          <!-- TODO replace the spinning GIF with something that uses less CPU for rendering. -->
-          <img width="100px" src="../static/Spinning_wheel_throbber_blue.gif" th:src="@{/Spinning_wheel_throbber_blue.gif}">
-          A pipeline is currently running!
+        <div class="alert alert-primary alert-dismissible fade show" role="alert" th:if="${isRunning}">
+          <div class="progress" style="height:20px; display:none">
+            <div class="progress-bar progress-bar-striped" style="min-width:30px; font-size:medium; display:none"></div>
+          </div>
+          <div class="alert alert-primary alert-dismissible fade show" role="alert" id="pipelineRunning" style="display:none">
+            <!-- TODO replace the spinning GIF with something that uses less CPU for rendering. -->
+            <img width="100px" src="../static/Spinning_wheel_throbber_blue.gif" th:src="@{/Spinning_wheel_throbber_blue.gif}">
+            A pipeline is currently running!
+          </div>
         </div>
 
         <div class="alert alert-primary alert-dismissible fade show" role="alert" id="pipelineDone" style="display:none">

@@ -37,7 +37,10 @@ import org.apache.beam.sdk.io.fs.MatchResult.Metadata;
 import org.apache.beam.sdk.io.fs.MatchResult.Status;
 import org.apache.beam.sdk.io.fs.ResolveOptions.StandardResolveOptions;
 import org.apache.beam.sdk.io.fs.ResourceId;
+import org.apache.beam.sdk.metrics.MetricQueryResults;
 import org.apache.beam.sdk.options.PipelineOptionsFactory;
+import org.openmrs.analytics.metrics.PipelineMetrics;
+import org.openmrs.analytics.metrics.PipelineMetricsFactory;
 import org.openmrs.analytics.model.DatabaseConfiguration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -56,9 +59,12 @@ import org.springframework.stereotype.Component;
 @EnableScheduling
 @Component
 public class PipelineManager {
+
   private static final Logger logger = LoggerFactory.getLogger(PipelineManager.class.getName());
 
   @Autowired private DataProperties dataProperties;
+
+  @Autowired private PipelineMetricsFactory pipelineMetricsFactory;
 
   private PipelineThread currentPipeline;
 
@@ -70,6 +76,19 @@ public class PipelineManager {
 
   // TODO expose this in the web-UI
   private LastRunStatus lastRunStatus = LastRunStatus.NOT_RUN;
+
+  public MetricQueryResults getMetricQueryResults() {
+    // TODO Generate metrics and stats even for incremental run, incremental run has two pipelines
+    //  running one after the other, come up with a strategy to aggregate the metrics and generate
+    //  the stats
+    if (isBatchRun() && isRunning()) {
+      PipelineMetrics pipelineMetrics =
+          pipelineMetricsFactory.getPipelineMetrics(
+              currentPipeline.pipeline.getOptions().getRunner());
+      return pipelineMetrics.getMetricQueryResults();
+    }
+    return null;
+  }
 
   private void setLastRunStatus(LastRunStatus status) {
     lastRunStatus = status;
@@ -178,6 +197,10 @@ public class PipelineManager {
     return prefix;
   }
 
+  synchronized boolean isBatchRun() {
+    return currentPipeline != null && currentPipeline.isBatchRun;
+  }
+
   synchronized boolean isRunning() {
     return currentPipeline != null && currentPipeline.isAlive();
   }
@@ -232,7 +255,7 @@ public class PipelineManager {
       logger.warn("No resources found to be fetched!");
       return;
     } else {
-      currentPipeline = new PipelineThread(pipeline, this, dataProperties, pipelineConfig);
+      currentPipeline = new PipelineThread(pipeline, this, dataProperties, pipelineConfig, true);
     }
     logger.info("Running full pipeline for DWH {}", options.getOutputParquetPath());
     // We will only have one thread for running pipelines hence no need for a thread pool.
@@ -275,7 +298,7 @@ public class PipelineManager {
     } else {
       // Creating a thread for running both pipelines, one after the other.
       currentPipeline =
-          new PipelineThread(pipeline, mergerOptions, this, dataProperties, pipelineConfig);
+          new PipelineThread(pipeline, mergerOptions, this, dataProperties, pipelineConfig, false);
       logger.info("Running incremental pipeline for DWH {} since {}", currentDwh.getRoot(), since);
       currentPipeline.start();
     }
@@ -286,6 +309,7 @@ public class PipelineManager {
   }
 
   private static class PipelineThread extends Thread {
+
     private final Pipeline pipeline;
     private final PipelineManager manager;
     // This is used in the incremental mode only.
@@ -295,16 +319,20 @@ public class PipelineManager {
 
     private final PipelineConfig pipelineConfig;
 
+    private final boolean isBatchRun;
+
     PipelineThread(
         Pipeline pipeline,
         PipelineManager manager,
         DataProperties dataProperties,
-        PipelineConfig pipelineConfig) {
+        PipelineConfig pipelineConfig,
+        boolean isBatchRun) {
       Preconditions.checkArgument(pipeline.getOptions().as(FhirEtlOptions.class) != null);
       this.pipeline = pipeline;
       this.manager = manager;
       this.dataProperties = dataProperties;
       this.pipelineConfig = pipelineConfig;
+      this.isBatchRun = isBatchRun;
       this.mergerOptions = null;
     }
 
@@ -313,13 +341,15 @@ public class PipelineManager {
         ParquetMergerOptions mergerOptions,
         PipelineManager manager,
         DataProperties dataProperties,
-        PipelineConfig pipelineConfig) {
+        PipelineConfig pipelineConfig,
+        boolean isBatchRun) {
       Preconditions.checkArgument(pipeline.getOptions().as(FhirEtlOptions.class) != null);
       this.pipeline = pipeline;
       this.manager = manager;
       this.mergerOptions = mergerOptions;
       this.dataProperties = dataProperties;
       this.pipelineConfig = pipelineConfig;
+      this.isBatchRun = isBatchRun;
     }
 
     @Override
