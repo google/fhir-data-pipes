@@ -23,6 +23,7 @@ import java.io.IOException;
 import java.sql.SQLException;
 import java.time.LocalDateTime;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -347,6 +348,9 @@ public class PipelineManager implements ApplicationListener<ApplicationReadyEven
 
       Preconditions.checkState(paths != null, "Make sure DWH prefix is a valid path!");
 
+      // Sort snapshots directories.
+      Collections.sort(paths, Comparator.comparing(ResourceId::toString));
+
       int snapshotCount = 0;
       for (ResourceId path : paths) {
         if (!path.getFilename().startsWith(prefix + DataProperties.TIMESTAMP_PREFIX)) {
@@ -374,10 +378,10 @@ public class PipelineManager implements ApplicationListener<ApplicationReadyEven
         }
       }
     } catch (IOException e) {
-      logger.error("Exception while reading thriftserver parquet output directory.");
+      logger.error("Exception while reading thriftserver parquet output directory: ", e);
       throw new RuntimeException(e);
     } catch (SQLException e) {
-      logger.error("Exception while creating resource tables on thriftserver.");
+      logger.error("Exception while creating resource tables on thriftserver: ", e);
       throw new RuntimeException(e);
     }
   }
