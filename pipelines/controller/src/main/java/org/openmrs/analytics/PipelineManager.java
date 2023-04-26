@@ -308,7 +308,10 @@ public class PipelineManager implements ApplicationListener<ApplicationReadyEven
 
   /**
    * This method checks upon Controller start checks on Thrift sever to create resource tables if
-   * they don't exist.
+   * they don't exist. There is a @PostConstruct method present in this class which is initDwhStatus
+   * and the reason below code has not been added because dataProperties.getThriftserverHiveConfig()
+   * turns out to be null when used by
+   * DatabaseConfiguration.createConfigFromFile(dataProperties.getThriftserverHiveConfig()).
    */
   @Override
   public void onApplicationEvent(ApplicationReadyEvent applicationReadyEvent) {
