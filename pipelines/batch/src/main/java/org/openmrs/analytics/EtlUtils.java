@@ -57,19 +57,28 @@ class EtlUtils {
     String dwhRoot = options.getOutputParquetPath();
     if (dwhRoot != null && !dwhRoot.isEmpty()) {
       // TODO write pipeline options too such that it  can be validated for incremental runs.
-      DwhFiles.forRoot(dwhRoot).writeTimestampFile();
+      DwhFiles.forRoot(dwhRoot).writeTimestampFile(DwhFiles.TIMESTAMP_FILE_START);
     }
-    return runPipeline(pipeline);
+    PipelineResult pipelineResult = runPipeline(pipeline);
+    if (dwhRoot != null && !dwhRoot.isEmpty()) {
+      DwhFiles.forRoot(dwhRoot).writeTimestampFile(DwhFiles.TIMESTAMP_FILE_END);
+    }
+    return pipelineResult;
   }
 
   /** Similar to {@link #runPipelineWithTimestamp} but for the merge pipeline. */
   static PipelineResult runMergerPipelineWithTimestamp(
       Pipeline pipeline, ParquetMergerOptions options) throws IOException {
-    Instant instant1 = DwhFiles.forRoot(options.getDwh1()).readTimestampFile();
-    Instant instant2 = DwhFiles.forRoot(options.getDwh2()).readTimestampFile();
+    Instant instant1 =
+        DwhFiles.forRoot(options.getDwh1()).readTimestampFile(DwhFiles.TIMESTAMP_FILE_START);
+    Instant instant2 =
+        DwhFiles.forRoot(options.getDwh2()).readTimestampFile(DwhFiles.TIMESTAMP_FILE_START);
     Instant mergedInstant = (instant1.compareTo(instant2) > 0) ? instant1 : instant2;
-    DwhFiles.forRoot(options.getMergedDwh()).writeTimestampFile(mergedInstant);
-    return runPipeline(pipeline);
+    DwhFiles.forRoot(options.getMergedDwh())
+        .writeTimestampFile(mergedInstant, DwhFiles.TIMESTAMP_FILE_START);
+    PipelineResult pipelineResult = runPipeline(pipeline);
+    DwhFiles.forRoot(options.getMergedDwh()).writeTimestampFile(DwhFiles.TIMESTAMP_FILE_END);
+    return pipelineResult;
   }
 
   private static PipelineResult runPipeline(Pipeline pipeline) {

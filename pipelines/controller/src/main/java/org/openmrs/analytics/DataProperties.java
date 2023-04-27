@@ -74,6 +74,10 @@ public class DataProperties {
 
   private String incrementalSchedule;
 
+  private String purgeSchedule;
+
+  private int lastNDWHSnapshotsToRetain;
+
   private String resourceList;
 
   private int maxWorkers;
@@ -134,6 +138,12 @@ public class DataProperties {
         new ConfigFields("fhirdata.fhirServerUrl", fhirServerUrl, "", ""),
         new ConfigFields("fhirdata.dwhRootPrefix", dwhRootPrefix, "", ""),
         new ConfigFields("fhirdata.incrementalSchedule", incrementalSchedule, "", ""),
+        new ConfigFields("fhirdata.purgeSchedule", purgeSchedule, "", ""),
+        new ConfigFields(
+            "fhirdata.lastNDWHSnapshotsToRetain",
+            String.valueOf(lastNDWHSnapshotsToRetain),
+            "",
+            ""),
         new ConfigFields("fhirdata.resourceList", resourceList, "", ""),
         new ConfigFields("fhirdata.maxWorkers", String.valueOf(maxWorkers), "", ""),
         new ConfigFields("fhirdata.dbConfig", dbConfig, "", ""));
