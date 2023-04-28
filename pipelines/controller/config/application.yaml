@@ -15,32 +15,50 @@
 #
 
 fhirdata:
-  # This is the base URL of the FHIR server; 172.17.0.1 is an example docker
-  # network interface address.
+  # The base URL of the FHIR server.
+  # Equivalent to pipeline "fhirServerUrl" parameter.
   fhirServerUrl: "http://172.17.0.1:8091/fhir"
 
+  # Path to a file containing JDBC settings for connecting to the HAPI FHIR
+  # server database.
+  # Equivalent to pipeline "fhirDatabaseConfigPath" parameter.
   dbConfig: "config/hapi-postgres-config.json"
 
-  # for GCS file system the dwhRootPrefix should be of the format
-  # "gs://<bucket>/<baseDirPath>/<prefix>"
-  # for Unix file system the dwhRootPrefix should be of the format "/<baseDirPath>/<prefix>
+  # The path to output Parquet files to. The last portion of the
+  # path is used as a prefix for naming the directory that contains
+  # per-resource directories and a timestamp will be added;
+  # for example, "config/controller_DWH_ORIG" will create something like
+  # ./config/controller_DWH_ORIG_TIMESTAMP_2023-01-27T23-55-39.295824Z
+  # 
+  # For GCS file system dwhRootPrefix should be of the format
+  # "gs://<bucket>/<baseDirPath>/<prefix>".
+  # For Unix file system dwhRootPrefix should be of the format
+  # "/<baseDirPath>/<prefix>" and can be absolute or relative.
   # dwhRootPrefix: "gs://fhir-test-analytics/config/controller_DWH_ORIG"
   dwhRootPrefix: "config/controller_DWH_ORIG"
 
-  thriftserverHiveConfig: "config/thriftserver-hive-config.json"
-
-  # The schedule format is similar to Spring's CronExpression, i.e.,
-  # "second minute hour day-of-the-month month day-of-the-week", e.g.,
+  # The schedule for automatic incremental pipeline runs.
+  # The format is similar to Spring's CronExpression, i.e.,
+  # "second minute hour day-of-the-month month day-of-the-week", so:
   # "0 0 * * * *" means top of every hour;
   # "*/40 * * * * *" means every 40 seconds;
-  # Note a too frequent run might be too resource intensive.
+  # Scheduling very frequent runs might be too resource intensive.
   incrementalSchedule: "0 0 * * * *"
 
-  # Comma separated list of resources to fetch/monitor.
+  # A comma-separated list of FHIR resources to fetch/monitor.
+  # Equivalent to pipeline "resourceList" parameter.
   resourceList: "Patient,Encounter,Observation"
 
+  # The number of Flink workers to use.
   maxWorkers: 10
 
+  # Whether resource tables should be automatically created on a
+  # Hive/Spark server. Primarily meant for single-machine deployment.
   createHiveResourceTables: false
 
+  # Path to a file with the settings used to create tables.
+  # Required if createHiveResourceTables is true.
+  thriftserverHiveConfig: "config/thriftserver-hive-config.json"
+
+  # The JDBC driver to use when creating tables.
   hiveJdbcDriver: "org.apache.hive.jdbc.HiveDriver"
