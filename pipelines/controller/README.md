@@ -68,11 +68,11 @@ specified by `dwhRootPrefix` in the `application.yaml` file.
 The bottom area of the control panel shows the options being used by the FHIR
 Pipelines Controller.
 
-### Main configuration parameters
+#### Main configuration parameters
 
 This section corresponds to the settings in the `application.yml` file.
 
-### Batch pipeline non-default configurations
+#### Batch pipeline non-default configurations
 
 This section calls out FHIR Data Pipes batch pipeline settings that are
 different from their default values. These are also mostly derived from
