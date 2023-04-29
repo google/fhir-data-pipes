@@ -277,7 +277,6 @@ public class PipelineManager {
     options.setOutputParquetPath(incrementalDwhRoot);
     String since = currentDwh.readTimestampFile().toString();
     options.setSince(since);
-    options.setProcessDeletedRecords(Boolean.TRUE);
     Pipeline pipeline = buildJdbcPipeline(options);
 
     // The merger pipeline merges the original full DWH with the new incremental one.
@@ -290,6 +289,9 @@ public class PipelineManager {
     FlinkPipelineOptions flinkOptions = mergerOptions.as(FlinkPipelineOptions.class);
     flinkOptions.setFasterCopy(true);
     flinkOptions.setMaxParallelism(dataProperties.getMaxWorkers());
+    if (dataProperties.getNumThreads() > 0) {
+      flinkOptions.setParallelism(dataProperties.getNumThreads());
+    }
 
     if (pipeline == null) {
       // TODO communicate this to the UI
