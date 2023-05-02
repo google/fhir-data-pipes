@@ -89,7 +89,7 @@ services:
       - '4041:4040'
     volumes:
       - ${DWH_ROOT}:/dwh
-      - ./drivers-build/hive-site_example.xml:/opt/bitnami/spark/conf/hive-site.xml
+      - ./hive-site_example.xml:/opt/bitnami/spark/conf/hive-site.xml
     volumes_from:
       - drivers-build
 
