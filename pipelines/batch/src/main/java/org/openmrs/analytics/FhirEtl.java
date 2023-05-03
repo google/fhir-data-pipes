@@ -250,9 +250,9 @@ public class FhirEtl {
                 + " (--sourceJsonFilePattern)!");
       }
     } else { // options.getSourceJsonFilePattern() is not set.
-      if (options.getFhirServerUrl().isEmpty()) {
+      if (options.getFhirServerUrl().isEmpty() && !options.isJdbcModeHapi()) {
         throw new IllegalArgumentException(
-            "Either --fhirServerUrl or --sourceJsonFilePattern should be set!");
+            "Either --fhirServerUrl or --jdbcModeHapi or --sourceJsonFilePattern should be set!");
       }
     }
 
@@ -379,13 +379,10 @@ public class FhirEtl {
       JdbcResourceWriter.createTables(options);
     }
 
-    if (options.isJdbcModeEnabled()) {
-      if (options.isJdbcModeHapi()) {
-        runHapiJdbcFetch(options, fhirContext);
-      } else {
-        runFhirJdbcFetch(options, fhirContext);
-      }
-
+    if (options.isJdbcModeHapi()) {
+      runHapiJdbcFetch(options, fhirContext);
+    } else if (options.isJdbcModeEnabled()) {
+      runFhirJdbcFetch(options, fhirContext);
     } else if (!options.getSourceJsonFilePattern().isEmpty()) {
       runJsonRead(options);
     } else {
