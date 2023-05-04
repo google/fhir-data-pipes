@@ -92,3 +92,7 @@ nb-configuration.xml
 .ipynb_checkpoints/
 **.pyc
 **__pycache__**
+##############################
+## Data-warehouse files.
+##############################
+docker/dwh/**

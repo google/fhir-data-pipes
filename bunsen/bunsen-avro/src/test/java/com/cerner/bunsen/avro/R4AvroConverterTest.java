@@ -19,6 +19,7 @@ import org.hl7.fhir.exceptions.FHIRException;
 import org.hl7.fhir.r4.model.Coding;
 import org.hl7.fhir.r4.model.Condition;
 import org.hl7.fhir.r4.model.Extension;
+import org.hl7.fhir.r4.model.Identifier;
 import org.hl7.fhir.r4.model.IntegerType;
 import org.hl7.fhir.r4.model.Medication;
 import org.hl7.fhir.r4.model.MedicationRequest;
@@ -283,6 +284,15 @@ public class R4AvroConverterTest {
 
     Assert.assertEquals(testCondition.getSubject().getReference(),
         testConditionDecoded.getSubject().getReference());
+  }
+
+  @Test
+  public void testManagingOrganizationIdentifier() {
+
+    Identifier identifier = testPatientDecoded.getManagingOrganization().getIdentifier();
+
+    Assert.assertNotNull(identifier);
+    Assert.assertEquals(identifier.getAssigner().getReference(), "Organization/234");
   }
 
   @Test

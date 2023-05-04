@@ -94,7 +94,7 @@ public class JdbcFetchHapiTest extends TestCase {
     Mockito.when(resultSet.getString("res_version")).thenReturn("R4");
 
     HapiRowDescriptor rowDescriptor =
-        new JdbcFetchHapi.ResultSetToRowDescriptor().mapRow(resultSet);
+        new JdbcFetchHapi.ResultSetToRowDescriptor(options.getResourceList()).mapRow(resultSet);
 
     assertNotNull(rowDescriptor);
     assertEquals(rowDescriptor.resourceId(), "101");

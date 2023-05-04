@@ -198,9 +198,11 @@ public class TestData {
     patient.setActive(true);
     patient.setMultipleBirth(new IntegerType(1));
 
+    // This is to introduce conflict with managingOrganization identifier
+    // and make sure conflict is resolved.
     Identifier patientIdentifier = new Identifier();
     patientIdentifier.setId("patient123");
-    patientIdentifier.getAssigner().setReference("assigner/123");
+    patientIdentifier.getAssigner().setReference("Organization/123");
     patient.setIdentifier(List.of(patientIdentifier));
 
     patient.setBirthDateElement(new DateType("1945-01-02"));

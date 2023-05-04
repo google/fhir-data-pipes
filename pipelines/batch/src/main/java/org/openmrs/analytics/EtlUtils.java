@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2022 Google LLC
+ * Copyright 2020-2023 Google LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,15 +28,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 class EtlUtils {
-
-  static final String METRICS_NAMESPACE = "PipelineMetrics";
-
   private static final Logger log = LoggerFactory.getLogger(EtlUtils.class);
 
   static MetricQueryResults getMetrics(MetricResults metricResults) {
     return metricResults.queryMetrics(
         MetricsFilter.builder()
-            .addNameFilter(MetricNameFilter.inNamespace(METRICS_NAMESPACE))
+            .addNameFilter(MetricNameFilter.inNamespace(MetricsConstants.METRICS_NAMESPACE))
             .build());
   }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2022 Google LLC
+ * Copyright 2020-2023 Google LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -55,7 +55,8 @@ public class DatabaseConfiguration {
     Preconditions.checkNotNull(getDatabasePort());
     Preconditions.checkNotNull(getDatabaseName());
     return String.format(
-        "jdbc:%s://%s:%s/%s",
+        // For the TLS see: https://stackoverflow.com/questions/67332909
+        "jdbc:%s://%s:%s/%s?enabledTLSProtocols=TLSv1.2",
         getDatabaseService(), getDatabaseHostName(), getDatabasePort(), getDatabaseName());
   }
 

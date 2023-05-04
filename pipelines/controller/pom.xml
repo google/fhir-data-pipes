@@ -29,8 +29,8 @@
   <description>A Spring Boot based controller for FHIR Analytics pipelines</description>
 
   <properties>
-    <java.version>11</java.version>
-    <spring-boot.version>2.7.5</spring-boot.version>
+    <java.version>17</java.version>
+    <spring-boot.version>3.0.5</spring-boot.version>
   </properties>
 
   <dependencyManagement>
@@ -111,6 +111,11 @@
           <groupId>javax.servlet.jsp</groupId>
           <artifactId>javax.servlet.jsp-api</artifactId>
         </exclusion>
+        <!-- This is needed because of javax to jakarta migration in EE 9. -->
+        <exclusion>
+          <groupId>org.glassfish.web</groupId>
+          <artifactId>javax.servlet.jsp</artifactId>
+        </exclusion>
         <exclusion>
           <groupId>org.eclipse.jetty</groupId>
           <artifactId>jetty-runner</artifactId>
@@ -119,6 +124,8 @@
           <groupId>org.apache.parquet</groupId>
           <artifactId>parquet-hadoop-bundle</artifactId>
         </exclusion>
+        <!-- This exclusion is required as it fails to read artifact descriptor for
+             org.glassfish:javax.el:jar:3.0.1-b06-SNAPSHOT when built project at root level. -->
         <exclusion>
           <groupId>org.glassfish</groupId>
           <artifactId>javax.el</artifactId>
@@ -134,7 +141,6 @@
         <artifactId>spring-boot-maven-plugin</artifactId>
         <!-- The version specification should not be needed but on Cloud-Build
           for some reason it picks 3.0.0 and then fails as it needs Java 17. -->
-        <version>${spring-boot.version}</version>
         <!-- This is for being able to debug from IDE. -->
         <configuration>
           <fork>false</fork>

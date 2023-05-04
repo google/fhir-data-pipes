@@ -38,18 +38,14 @@
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <junit.version>4.13.2</junit.version>
-    <!-- We use an older version of logback because that is needed for
-      spring-boot-starter-logging; it uses org.slf4j.impl.StaticLoggerBinder
-      which was removed in 1.3 https://stackoverflow.com/questions/67082351
-      For the same reason, we use an older version of SLF4J too. -->
-    <slf4j.version>1.7.36</slf4j.version>
-    <logback.version>1.2.11</logback.version>
-    <hapifhirVersion>6.4.2</hapifhirVersion>
+    <slf4j.version>2.0.7</slf4j.version>
+    <logback.version>1.4.6</logback.version>
+    <hapifhirVersion>6.4.4</hapifhirVersion>
     <hamcrest.version>2.2</hamcrest.version>
     <openmrsPlatformVersion>2.6.0-SNAPSHOT</openmrsPlatformVersion>
     <mockito.version>5.2.0</mockito.version>
     <jcommander.version>1.82</jcommander.version>
-    <license-maven-plugin.version>4.1</license-maven-plugin.version>
+    <license-maven-plugin.version>4.2</license-maven-plugin.version>
     <beam.version>2.45.0</beam.version>
   </properties>
 
@@ -158,7 +154,7 @@
         <!-- default lifecycle, jar packaging: see https://maven.apache.org/ref/current/maven-core/default-bindings.html#Plugin_bindings_for_jar_packaging -->
         <plugin>
           <artifactId>maven-resources-plugin</artifactId>
-          <version>3.3.0</version>
+          <version>3.3.1</version>
         </plugin>
         <plugin>
           <artifactId>maven-compiler-plugin</artifactId>
@@ -182,11 +178,11 @@
         </plugin>
         <plugin>
           <artifactId>maven-install-plugin</artifactId>
-          <version>3.1.0</version>
+          <version>3.1.1</version>
         </plugin>
         <plugin>
           <artifactId>maven-deploy-plugin</artifactId>
-          <version>3.1.0</version>
+          <version>3.1.1</version>
         </plugin>
         <!-- site lifecycle, see https://maven.apache.org/ref/current/maven-core/lifecycles.html#site_Lifecycle -->
         <plugin>
@@ -263,7 +259,7 @@
 
               <!-- apply a specific flavor of google-java-format and reflow long strings -->
               <googleJavaFormat>
-                <version>1.11.0</version>
+                <version>1.15.0</version>
                 <style>GOOGLE</style>
                 <reflowLongStrings>true</reflowLongStrings>
               </googleJavaFormat>
@@ -345,7 +341,7 @@
           <!-- This is added for Codecov. -->
           <groupId>org.jacoco</groupId>
           <artifactId>jacoco-maven-plugin</artifactId>
-          <version>0.8.8</version>
+          <version>0.8.9</version>
           <executions>
             <execution>
               <goals>

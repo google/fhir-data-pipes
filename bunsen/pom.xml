@@ -21,7 +21,7 @@
 
     <compile.source>11</compile.source>
 
-    <hapi.fhir.version>6.4.3</hapi.fhir.version>
+    <hapi.fhir.version>6.4.4</hapi.fhir.version>
     <avro.version>1.11.1</avro.version>
     <junit.version>4.13.2</junit.version>
     <hamcrest.version>2.2</hamcrest.version>
@@ -208,7 +208,7 @@
 
         <plugin>
           <artifactId>maven-resources-plugin</artifactId>
-          <version>3.3.0</version>
+          <version>3.3.1</version>
         </plugin>
 
         <plugin>
@@ -236,7 +236,7 @@
 
         <plugin>
           <artifactId>maven-release-plugin</artifactId>
-          <version>2.5.3</version>
+          <version>3.0.0</version>
           <configuration>
               <tagNameFormat>@{project.version}</tagNameFormat>
           </configuration>
@@ -651,7 +651,7 @@
       <dependency>
         <groupId> org.apache.hadoop</groupId>
         <artifactId>hadoop-client</artifactId>
-        <version>3.3.4</version>
+        <version>3.3.5</version>
       </dependency>
 
     </dependencies>
