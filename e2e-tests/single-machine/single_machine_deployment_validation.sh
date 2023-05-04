@@ -256,8 +256,8 @@ function validate_resource_tables() {
   fi
 
   # Check for canonical tables.
-  if grep -q patient hive_resource_tables.csv && grep -q encounter hive_resource_tables.csv \
-      && grep -q observation hive_resource_tables.csv
+  if grep -w patient hive_resource_tables.csv && grep -w encounter hive_resource_tables.csv \
+      && grep -w observation hive_resource_tables.csv
   then
     print_message "Canonical tables creation verified successfully."
   else
