@@ -117,7 +117,8 @@ public class DataProperties {
 
   PipelineConfig createBatchOptions() {
     FhirEtlOptions options = PipelineOptionsFactory.as(FhirEtlOptions.class);
-    logger.info("Converting options for fhirServerUrl {} and DB config", fhirServerUrl, dbConfig);
+    logger.info(
+        "Converting options for fhirServerUrl {} and DB config {}", fhirServerUrl, dbConfig);
     options.setFhirServerUrl(fhirServerUrl);
     options.setFhirDatabaseConfigPath(dbConfig);
     options.setResourceList(resourceList);
