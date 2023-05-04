@@ -250,9 +250,9 @@ public class FhirEtl {
                 + " (--sourceJsonFilePattern)!");
       }
     } else { // options.getSourceJsonFilePattern() is not set.
-      if (options.getFhirServerUrl().isEmpty()) {
+      if (options.getFhirServerUrl().isEmpty() && !options.isJdbcModeHapi()) {
         throw new IllegalArgumentException(
-            "Either --fhirServerUrl or --sourceJsonFilePattern should be set!");
+            "Either --fhirServerUrl or --jdbcModeHapi or --sourceJsonFilePattern should be set!");
       }
     }
 
@@ -288,20 +288,9 @@ public class FhirEtl {
     Pipeline pipeline = Pipeline.create(options);
     JdbcConnectionUtil jdbcConnectionUtil = createJdbcConnection(options, dbConfig);
 
-    Map<String, Integer> resourceCount = null;
-    // The Fhir Search APIs does not consider the deleted records, hence use this mode if deleted
-    // records need to be ignored.
-    if (!options.getProcessDeletedRecords()) {
-      FhirSearchUtil fhirSearchUtil = createFhirSearchUtil(options, fhirContext);
-      // Get the resource count for each resource type and distribute the query workload based on
-      // batch size.
-      resourceCount =
-          fhirSearchUtil.searchResourceCounts(options.getResourceList(), options.getSince());
-    } else {
-      JdbcFetchHapi jdbcFetchHapi = new JdbcFetchHapi(jdbcConnectionUtil);
-      resourceCount =
-          jdbcFetchHapi.searchResourceCounts(options.getResourceList(), options.getSince());
-    }
+    JdbcFetchHapi jdbcFetchHapi = new JdbcFetchHapi(jdbcConnectionUtil);
+    Map<String, Integer> resourceCount =
+        jdbcFetchHapi.searchResourceCounts(options.getResourceList(), options.getSince());
 
     for (String resourceType : options.getResourceList().split(",")) {
       int numResources = resourceCount.get(resourceType);
@@ -390,13 +379,10 @@ public class FhirEtl {
       JdbcResourceWriter.createTables(options);
     }
 
-    if (options.isJdbcModeEnabled()) {
-      if (options.isJdbcModeHapi()) {
-        runHapiJdbcFetch(options, fhirContext);
-      } else {
-        runFhirJdbcFetch(options, fhirContext);
-      }
-
+    if (options.isJdbcModeHapi()) {
+      runHapiJdbcFetch(options, fhirContext);
+    } else if (options.isJdbcModeEnabled()) {
+      runFhirJdbcFetch(options, fhirContext);
     } else if (!options.getSourceJsonFilePattern().isEmpty()) {
       runJsonRead(options);
     } else {
