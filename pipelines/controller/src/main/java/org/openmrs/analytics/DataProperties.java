@@ -76,7 +76,7 @@ public class DataProperties {
 
   private String purgeSchedule;
 
-  private int lastNDWHSnapshotsToRetain;
+  private int numOfDwhSnapshotsToRetain;
 
   private String resourceList;
 
@@ -140,8 +140,8 @@ public class DataProperties {
         new ConfigFields("fhirdata.incrementalSchedule", incrementalSchedule, "", ""),
         new ConfigFields("fhirdata.purgeSchedule", purgeSchedule, "", ""),
         new ConfigFields(
-            "fhirdata.lastNDWHSnapshotsToRetain",
-            String.valueOf(lastNDWHSnapshotsToRetain),
+            "fhirdata.numOfDwhSnapshotsToRetain",
+            String.valueOf(numOfDwhSnapshotsToRetain),
             "",
             ""),
         new ConfigFields("fhirdata.resourceList", resourceList, "", ""),

@@ -60,7 +60,7 @@ public class PipelineManager {
 
   @Autowired private PipelineMetricsFactory pipelineMetricsFactory;
 
-  @Autowired private DWHFilesManager dwhFilesManager;
+  @Autowired private DwhFilesManager dwhFilesManager;
 
   private PipelineThread currentPipeline;
 
@@ -116,7 +116,7 @@ public class PipelineManager {
 
       for (ResourceId path : paths) {
         // Do not consider if the DWH is not completely created earlier.
-        if (!dwhFilesManager.isDWHComplete(path)) {
+        if (!dwhFilesManager.isDwhComplete(path)) {
           continue;
         }
         if (!path.getFilename().startsWith(prefix + DataProperties.TIMESTAMP_PREFIX)) {

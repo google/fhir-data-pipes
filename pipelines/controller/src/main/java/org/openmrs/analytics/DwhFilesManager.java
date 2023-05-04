@@ -48,7 +48,7 @@ import org.springframework.stereotype.Component;
  */
 @EnableScheduling
 @Component
-public class DWHFilesManager {
+public class DwhFilesManager {
 
   @Autowired private DataProperties dataProperties;
 
@@ -58,38 +58,32 @@ public class DWHFilesManager {
 
   private volatile boolean isPurgeJobRunning;
 
-  private static final Logger logger = LoggerFactory.getLogger(DWHFilesManager.class.getName());
+  private String dwhRootPrefix;
+  private int numOfDwhSnapshotsToRetain;
+
+  private static final Logger logger = LoggerFactory.getLogger(DwhFilesManager.class.getName());
 
   @PostConstruct
   public void init() {
     purgeCron = CronExpression.parse(dataProperties.getPurgeSchedule());
-  }
-
-  private void setLastPurgeRunStatus(PurgeRunStatus status) {
-    if (status == PurgeRunStatus.SUCCESS) {
-      lastPurgeRunEnd = LocalDateTime.now();
-    }
-  }
-
-  private boolean isPurgeJobRunning() {
-    return isPurgeJobRunning;
-  }
-
-  private void setPurgeJobRunning(boolean isPurgeJobRunning) {
-    this.isPurgeJobRunning = isPurgeJobRunning;
+    dwhRootPrefix = dataProperties.getDwhRootPrefix();
+    Preconditions.checkState(dwhRootPrefix != null && !dwhRootPrefix.isEmpty());
+    numOfDwhSnapshotsToRetain = dataProperties.getNumOfDwhSnapshotsToRetain();
+    Preconditions.checkState(
+        numOfDwhSnapshotsToRetain > 0, "numOfDwhSnapshotsToRetain should be positive value");
   }
 
   private synchronized boolean lockPurgeJob() {
-    if (isPurgeJobRunning()) {
+    if (isPurgeJobRunning) {
       // Already the job is running so lock can't be acquired.
       return false;
     }
-    setPurgeJobRunning(true);
+    isPurgeJobRunning = true;
     return true;
   }
 
   private synchronized void releasePurgeJob() {
-    setPurgeJobRunning(false);
+    isPurgeJobRunning = false;
   }
 
   /**
@@ -113,7 +107,7 @@ public class DWHFilesManager {
       logger.info("Last purge run was at {} next run is at {}", lastPurgeRunEnd, next);
       if (next.compareTo(LocalDateTime.now()) <= 0) {
         logger.info("Purge run triggered at {}", LocalDateTime.now());
-        purgeDWHFiles();
+        purgeDwhFiles();
         logger.info("Purge run completed at {}", LocalDateTime.now());
       }
     } finally {
@@ -127,27 +121,20 @@ public class DWHFilesManager {
    * ones. Any incomplete snapshots will not be purged by this job and will have to be manually
    * verified and acted upon.
    */
-  private void purgeDWHFiles() {
-    String rootPrefix = dataProperties.getDwhRootPrefix();
-    Preconditions.checkState(rootPrefix != null && !rootPrefix.isEmpty());
-
-    int lastNSnapshotsToRetain = dataProperties.getLastNDWHSnapshotsToRetain();
-    Preconditions.checkState(
-        lastNSnapshotsToRetain > 0, "lastNSnapshotsToRetain should be positive value");
-    String baseDir = getBaseDir(rootPrefix);
+  private void purgeDwhFiles() {
+    String baseDir = getBaseDir(dwhRootPrefix);
     try {
-      String prefix = getPrefix(rootPrefix);
+      String prefix = getPrefix(dwhRootPrefix);
       List<ResourceId> paths =
           getAllChildDirectories(baseDir).stream()
               .filter(dir -> dir.getFilename().startsWith(prefix))
               .collect(Collectors.toList());
 
       TreeSet<String> recentSnapshotsToBeRetained =
-          getRecentSnapshots(paths, lastNSnapshotsToRetain);
+          getRecentSnapshots(paths, numOfDwhSnapshotsToRetain);
       deleteOlderSnapshots(paths, recentSnapshotsToBeRetained);
-      setLastPurgeRunStatus(PurgeRunStatus.SUCCESS);
+      lastPurgeRunEnd = LocalDateTime.now();
     } catch (IOException e) {
-      setLastPurgeRunStatus(PurgeRunStatus.FAILURE);
       logger.error("Error occurred while purging older snapshots", e);
     }
   }
@@ -155,7 +142,7 @@ public class DWHFilesManager {
   private void deleteOlderSnapshots(
       List<ResourceId> allPaths, TreeSet<String> recentSnapshotsToBeRetained) throws IOException {
     for (ResourceId path : allPaths) {
-      if (!recentSnapshotsToBeRetained.contains(path.getFilename()) && isDWHComplete(path)) {
+      if (!recentSnapshotsToBeRetained.contains(path.getFilename()) && isDwhComplete(path)) {
         deleteDirectoryAndFiles(path);
       }
     }
@@ -169,7 +156,7 @@ public class DWHFilesManager {
    * @param rootDirectory which needs to be deleted
    * @throws IOException
    */
-  public void deleteDirectoryAndFiles(ResourceId rootDirectory) throws IOException {
+  private void deleteDirectoryAndFiles(ResourceId rootDirectory) throws IOException {
     ResourceId filesResourceToBeMatched =
         rootDirectory.resolve("**", StandardResolveOptions.RESOLVE_FILE);
     List<MatchResult> matchedFilesResultList =
@@ -202,6 +189,10 @@ public class DWHFilesManager {
       }
     }
     List<String> allDirectoryPathList = new ArrayList<>(allDirectoryPathSet);
+    // Sorting the directories in reverse order will make sure that the child directories will
+    // appear before their corresponding parent directories in the list and the deletion will happen
+    // in the same order i.e. start with the leaf child node and then with their respective parent
+    // directories.
     allDirectoryPathList.sort(Collections.reverseOrder());
     List<ResourceId> directoryResourceIdList =
         allDirectoryPathList.stream()
@@ -225,7 +216,7 @@ public class DWHFilesManager {
     TreeSet<String> treeSet = new TreeSet<>();
     for (ResourceId resourceId : paths) {
       // Ignore incomplete DWH snapshots
-      if (!isDWHComplete(resourceId)) {
+      if (!isDwhComplete(resourceId)) {
         continue;
       }
       // Keep only the recent snapshots
@@ -240,15 +231,15 @@ public class DWHFilesManager {
   }
 
   /**
-   * This method tells us whether the DWH snapshot has been successfully completed by the pipeline.
+   * This method tells us whether the dwh snapshot has been successfully completed by the pipeline.
    * This is determined by checking the existence of both the timestamp files which needs to be
    * created at the start and end of the pipeline runs.
    *
    * @param dwhResource The dwh resource path which needs to be checked for completeness
-   * @return the status of DWH completeness.
+   * @return the status of dwh completeness.
    * @throws IOException
    */
-  public boolean isDWHComplete(ResourceId dwhResource) throws IOException {
+  public boolean isDwhComplete(ResourceId dwhResource) throws IOException {
     ResourceId startTimestampResource =
         dwhResource.resolve(DwhFiles.TIMESTAMP_FILE_START, StandardResolveOptions.RESOLVE_FILE);
     ResourceId endTimestampResource =
@@ -343,11 +334,5 @@ public class DWHFilesManager {
     }
     logger.info("Child directories : {}", childDirectories);
     return childDirectories;
-  }
-
-  public enum PurgeRunStatus {
-    NOT_RUN,
-    SUCCESS,
-    FAILURE
   }
 }
