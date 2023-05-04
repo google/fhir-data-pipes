@@ -28,7 +28,6 @@ ENV FHIR_DEBEZIUM_CONFIG_PATH="/workspace/utils/dbz_event_to_fhir_config.json"
 ENV JDBC_FETCH_SIZE=10000
 ENV JDBC_MAX_POOL_SIZE=50
 ENV JDBC_INITIAL_POOL_SIZE=10
-ENV JDBC_DRIVER_CLASS="com.mysql.cj.jdbc.Driver"
 ENV SECONDS_TO_FLUSH_PARQUET_FILES=3600
 
 ENTRYPOINT java -jar /usr/src/Main/app.jar \
@@ -40,7 +39,6 @@ ENTRYPOINT java -jar /usr/src/Main/app.jar \
            --sinkPassword=${SINK_PASSWORD} \
            --outputParquetPath=${PARQUET_PATH} \
            --fhirDebeziumConfigPath=${FHIR_DEBEZIUM_CONFIG_PATH} \
-           --jdbcDriverClass=${JDBC_DRIVER_CLASS} \
            --jdbcMaxPoolSize=${JDBC_MAX_POOL_SIZE} \
            --jdbcInitialPoolSize=${JDBC_INITIAL_POOL_SIZE} \
            --secondsToFlushParquetFiles=${SECONDS_TO_FLUSH_PARQUET_FILES}

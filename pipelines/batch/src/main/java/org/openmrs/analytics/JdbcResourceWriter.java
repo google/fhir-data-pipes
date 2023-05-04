@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2022 Google LLC
+ * Copyright 2020-2023 Google LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,12 +18,16 @@ package org.openmrs.analytics;
 import ca.uhn.fhir.context.FhirContext;
 import ca.uhn.fhir.parser.IParser;
 import com.google.common.base.Preconditions;
+import com.google.common.base.Strings;
 import java.beans.PropertyVetoException;
+import java.io.IOException;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import javax.sql.DataSource;
 import org.hl7.fhir.r4.model.Resource;
+import org.openmrs.analytics.JdbcConnectionPools.DataSourceConfig;
+import org.openmrs.analytics.model.DatabaseConfiguration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -64,24 +68,22 @@ public class JdbcResourceWriter {
     }
   }
 
-  static void createTables(FhirEtlOptions options) throws PropertyVetoException, SQLException {
+  static void createTables(FhirEtlOptions options)
+      throws PropertyVetoException, IOException, SQLException {
     // This should not be triggered in pipeline workers because concurrent CREATEs lead to failures:
     // https://stackoverflow.com/questions/54351783/duplicate-key-value-violates-unique-constraint
-    //
+    Preconditions.checkArgument(!Strings.nullToEmpty(options.getSinkDbConfigPath()).isEmpty());
     Preconditions.checkArgument(
         !options.getSinkDbTablePrefix().isEmpty() || !options.getUseSingleSinkTable());
+    DataSourceConfig dbConfig =
+        JdbcConnectionPools.dbConfigToDataSourceConfig(
+            DatabaseConfiguration.createConfigFromFile(options.getSinkDbConfigPath()));
+    DataSource jdbcSource =
+        JdbcConnectionPools.getPooledDataSource(
+            dbConfig, options.getJdbcInitialPoolSize(), options.getJdbcMaxPoolSize());
     log.info(
         String.format(
-            "Connecting to DB url %s with user %s.",
-            options.getSinkDbUrl(), options.getSinkDbUsername()));
-    JdbcConnectionUtil connectionUtil =
-        new JdbcConnectionUtil(
-            options.getJdbcDriverClass(),
-            options.getSinkDbUrl(),
-            options.getSinkDbPassword(),
-            options.getSinkDbPassword(),
-            options.getJdbcInitialPoolSize(),
-            options.getJdbcMaxPoolSize());
+            "Connecting to DB url %s with user %s.", dbConfig.jdbcUrl(), dbConfig.dbUser()));
     if (options.getUseSingleSinkTable()) {
       // For CREATE statements we cannot (and don't need to) use a placeholder for table name, i.e.,
       // we don't need to use PreparedStatement with '?'.
@@ -89,7 +91,7 @@ public class JdbcResourceWriter {
           "CREATE TABLE IF NOT EXISTS %s (id VARCHAR(100) NOT NULL, "
               + "type VARCHAR(50) NOT NULL, datab JSONB, PRIMARY KEY (id, type) );";
       String createStatement = String.format(tableCreate, options.getSinkDbTablePrefix());
-      createSingleTable(connectionUtil.getDataSource(), createStatement);
+      createSingleTable(jdbcSource, createStatement);
     } else {
       for (String resourceType : options.getResourceList().split(",")) {
         String tableCreate =
@@ -97,7 +99,7 @@ public class JdbcResourceWriter {
                 + "datab JSONB, PRIMARY KEY (id) );";
         String createStatement =
             String.format(tableCreate, options.getSinkDbTablePrefix() + resourceType);
-        createSingleTable(connectionUtil.getDataSource(), createStatement);
+        createSingleTable(jdbcSource, createStatement);
       }
     }
   }

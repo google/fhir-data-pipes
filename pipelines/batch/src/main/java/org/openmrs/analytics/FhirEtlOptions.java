@@ -96,12 +96,6 @@ public interface FhirEtlOptions extends PipelineOptions {
 
   void setOutputParquetPath(String value);
 
-  @Description("JDBC driver class")
-  @Default.String("com.mysql.cj.jdbc.Driver")
-  String getJdbcDriverClass();
-
-  void setJdbcDriverClass(String value);
-
   @Description("JDBC maximum pool size")
   @Default.Integer(50)
   int getJdbcMaxPoolSize();
@@ -186,31 +180,18 @@ public interface FhirEtlOptions extends PipelineOptions {
 
   void setSince(String value);
 
-  // TODO: Consolidate these options with source DB config that we read from file; in general
-  //   it would be nice to have a file based approach for configuring pipeline options.
-  @Description("If set, it is the JDBC URL of the sink database.")
+  // NOTE: Sink DB options are experimental.
+  @Description("Path to the sink database config; if not set, no sink DB is used [experimental].")
   @Default.String("")
-  String getSinkDbUrl();
+  String getSinkDbConfigPath();
 
-  void setSinkDbUrl(String value);
+  void setSinkDbConfigPath(String value);
 
   @Description("The name prefix for the sink DB tables.")
   @Default.String("")
   String getSinkDbTablePrefix();
 
   void setSinkDbTablePrefix(String value);
-
-  @Description("The username for JDBC sink connection.")
-  @Default.String("")
-  String getSinkDbUsername();
-
-  void setSinkDbUsername(String value);
-
-  @Description("The password for the JDBC sink connection.")
-  @Default.String("")
-  String getSinkDbPassword();
-
-  void setSinkDbPassword(String value);
 
   @Description(
       "If enabled all json resources are stored in the same table; by default a separate "

@@ -32,6 +32,7 @@ import lombok.Setter;
 public class DatabaseConfiguration {
 
   // General configuration parameters that needs to be exposed beyond Debezium.
+  private String jdbcDriverClass;
   private String databaseService;
   private String databaseHostName;
   private String databasePort;

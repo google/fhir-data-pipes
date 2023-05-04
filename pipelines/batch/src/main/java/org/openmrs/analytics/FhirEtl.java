@@ -29,6 +29,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import javax.sql.DataSource;
 import org.apache.beam.sdk.Pipeline;
 import org.apache.beam.sdk.PipelineResult;
 import org.apache.beam.sdk.coders.CannotProvideCoderException;
@@ -157,13 +158,10 @@ public class FhirEtl {
     EtlUtils.runPipelineWithTimestamp(pipeline, options);
   }
 
-  private static JdbcConnectionUtil createJdbcConnection(
+  private static DataSource createJdbcPooledDataSource(
       FhirEtlOptions options, DatabaseConfiguration dbConfig) throws PropertyVetoException {
-    return new JdbcConnectionUtil(
-        options.getJdbcDriverClass(),
-        dbConfig.makeJdbsUrlFromConfig(),
-        dbConfig.getDatabaseUser(),
-        dbConfig.getDatabasePassword(),
+    return JdbcConnectionPools.getPooledDataSource(
+        JdbcConnectionPools.dbConfigToDataSourceConfig(dbConfig),
         options.getJdbcInitialPoolSize(),
         options.getJdbcMaxPoolSize());
   }
@@ -174,8 +172,8 @@ public class FhirEtl {
     Pipeline pipeline = Pipeline.create(options);
     DatabaseConfiguration dbConfig =
         DatabaseConfiguration.createConfigFromFile(options.getFhirDatabaseConfigPath());
-    JdbcConnectionUtil jdbcConnectionUtil = createJdbcConnection(options, dbConfig);
-    JdbcFetchOpenMrs jdbcUtil = new JdbcFetchOpenMrs(jdbcConnectionUtil);
+    DataSource jdbcSource = createJdbcPooledDataSource(options, dbConfig);
+    JdbcFetchOpenMrs jdbcUtil = new JdbcFetchOpenMrs(jdbcSource);
     int batchSize =
         Math.min(
             options.getBatchSize(), 170); // batch size > 200 will result in HTTP 400 Bad Request
@@ -220,7 +218,7 @@ public class FhirEtl {
   }
 
   private static void validateOptions(FhirEtlOptions options)
-      throws SQLException, PropertyVetoException {
+      throws SQLException, PropertyVetoException, IOException {
     if (!options.getActivePeriod().isEmpty()) {
       Set<String> resourceSet = Sets.newHashSet(options.getResourceList().split(","));
       if (resourceSet.contains("Patient")) {
@@ -256,7 +254,7 @@ public class FhirEtl {
       }
     }
 
-    if (!options.getSinkDbUrl().isEmpty()) {
+    if (!options.getSinkDbConfigPath().isEmpty()) {
       JdbcResourceWriter.createTables(options);
     }
   }
@@ -286,9 +284,9 @@ public class FhirEtl {
       throws PropertyVetoException, SQLException {
     boolean foundResource = false;
     Pipeline pipeline = Pipeline.create(options);
-    JdbcConnectionUtil jdbcConnectionUtil = createJdbcConnection(options, dbConfig);
+    DataSource jdbcSource = createJdbcPooledDataSource(options, dbConfig);
 
-    JdbcFetchHapi jdbcFetchHapi = new JdbcFetchHapi(jdbcConnectionUtil);
+    JdbcFetchHapi jdbcFetchHapi = new JdbcFetchHapi(jdbcSource);
     Map<String, Integer> resourceCount =
         jdbcFetchHapi.searchResourceCounts(options.getResourceList(), options.getSince());
 
@@ -314,7 +312,7 @@ public class FhirEtl {
           pipeline.apply(
               "Generate query parameters for " + resourceType,
               Create.of(
-                  new JdbcFetchHapi(jdbcConnectionUtil)
+                  new JdbcFetchHapi(jdbcSource)
                       .generateQueryParameters(options, resourceType, numResources)));
 
       PCollection<HapiRowDescriptor> payload =
@@ -322,7 +320,7 @@ public class FhirEtl {
               "JdbcIO fetch for " + resourceType,
               new JdbcFetchHapi.FetchRowsJdbcIo(
                   options.getResourceList(),
-                  JdbcIO.DataSourceConfiguration.create(jdbcConnectionUtil.getDataSource()),
+                  JdbcIO.DataSourceConfiguration.create(jdbcSource),
                   options.getSince()));
 
       payload.apply(
@@ -375,7 +373,7 @@ public class FhirEtl {
     // TODO: Check if we can use some sort of dependency-injection (e.g., `@Autowired`).
     FhirContext fhirContext = FhirContexts.forR4();
 
-    if (!options.getSinkDbUrl().isEmpty()) {
+    if (!options.getSinkDbConfigPath().isEmpty()) {
       JdbcResourceWriter.createTables(options);
     }
 

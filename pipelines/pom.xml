@@ -47,6 +47,7 @@
     <jcommander.version>1.82</jcommander.version>
     <license-maven-plugin.version>4.2</license-maven-plugin.version>
     <beam.version>2.45.0</beam.version>
+    <auto-value.version>1.10.1</auto-value.version>
   </properties>
 
   <dependencyManagement>
@@ -140,6 +141,20 @@
       <groupId>org.mockito</groupId>
       <artifactId>mockito-inline</artifactId>
     </dependency>
+
+    <!-- Using AutoValue for POJOs used in PCollections and elsewhere. -->
+    <dependency>
+      <groupId>com.google.auto.value</groupId>
+      <artifactId>auto-value-annotations</artifactId>
+      <version>${auto-value.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>com.google.auto.value</groupId>
+      <artifactId>auto-value</artifactId>
+      <version>${auto-value.version}</version>
+      <optional>true</optional>
+    </dependency>
+
   </dependencies>
 
   <build>
