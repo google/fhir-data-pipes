@@ -53,7 +53,10 @@ steps:
   entrypoint: /bin/bash
   args:
   - -c
-  - cd e2e-tests; docker build -t ${_REPOSITORY}/e2e-tests:${_TAG} .
+  - |
+    cd e2e-tests
+    docker build -t ${_REPOSITORY}/e2e-tests:${_TAG} .
+    docker build -t ${_REPOSITORY}/e2e-tests/single-machine:${_TAG} ./single-machine/.
 
 - name: '${_REPOSITORY}/synthea-uploader:${_TAG}'
   id: 'Upload to HAPI'
@@ -81,6 +84,7 @@ steps:
   - SINK_PATH=http://sink-server:8080/fhir
   - SINK_USERNAME=hapi
   - SINK_PASSWORD=hapi
+  - BATCH_SIZE=100
 
 - name: '${_REPOSITORY}/e2e-tests:${_TAG}'
   id: 'Run E2E Test for FHIR-search mode with HAPI source'
@@ -107,14 +111,16 @@ steps:
     - PARQUET_SUBDIR=JDBC_HAPI
     - DOCKER_NETWORK=--use_docker_network
 
-# TODO also run full and incremental pipelines and run Spark SQL queries.
 - name: 'docker/compose'
   id: 'Bring up controller and Spark containers'
   env:
-    - PIPELINE_CONFIG=/workspace/pipelines/controller/config
-    - DWH_ROOT=/workspace/DWH_ROOT
+    - PIPELINE_CONFIG=/workspace/docker/config
+    - DWH_ROOT=/workspace/e2e-tests/single-machine/dwh
   args: [ '-f', './docker/compose-controller-spark-sql.yaml', 'up',
           '--force-recreate', '-d' ]
+
+- name: '${_REPOSITORY}/e2e-tests/single-machine:${_TAG}'
+  id: 'Run E2E Test for Single Machine'
 
 - name: 'docker/compose'
   id: 'Bring down controller and Spark containers'
@@ -139,7 +145,7 @@ steps:
 - name: '${_REPOSITORY}/e2e-tests:${_TAG}'
   id: 'Launch Streaming Pipeline'
   entrypoint: /bin/bash
-  args: 
+  args:
     - -c
     -  e2e-tests/wait_for_streaming.sh --use_docker_network
 
