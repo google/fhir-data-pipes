@@ -77,6 +77,15 @@
       <groupId>mysql</groupId>
       <artifactId>mysql-connector-java</artifactId>
       <version>${mysql.driver.version}</version>
+      <!-- We need to exclude this to avoid the clash with the same dependency under the artifact
+      org.apache.beam:beam-sdks-java-io-google-cloud-platform so that it does not end up in
+      incompatible version with com.google.api.grpc:proto-google-common-proto -->
+      <exclusions>
+        <exclusion>
+          <groupId>com.google.protobuf</groupId>
+          <artifactId>protobuf-java</artifactId>
+        </exclusion>
+      </exclusions>
     </dependency>
 
     <dependency>
