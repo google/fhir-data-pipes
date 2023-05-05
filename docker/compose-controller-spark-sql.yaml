@@ -13,9 +13,17 @@
 # limitations under the License.
 
 # This docker-compose configuration is for bringing up a pipeline controller
-# along with a local Spark cluster and a SQL console.
+# along with a local Spark cluster with a JDBC endpoint.
 # The Spark part is partially based on:
 # https://github.com/bitnami/containers/blob/main/bitnami/spark/docker-compose.yml
+# While all Spark pieces are brought up on the same machine but this config can
+# serve as an example of how to deploy Spark on a cluster environment. Obviously
+# extra configuration is needed when the underlying file-system is distributed.
+# The spark components are:
+# - A master node
+# - A group of worker nodes (in this example just one)
+# - A thriftserver providing JDBC and Metastore functionality.
+# All Spark components share a common spark volume.
 
 # Environment variables:
 #
@@ -25,8 +33,28 @@
 # DWH_ROOT: The directory where Parquet files are written. This is shared
 #   between all containers; the pipeline writes to it and Spark ones read.
 #
-# Note if local paths are used, they should start with `./ `or `../`
+# Note if local paths are used, they should start with `./ `or `../`. Also the
+# mounted files should be readable by containers, e.g., world-readable.
 
+# NOTES ON SPARK VOLUME:
+# In the config below, a `spark` volume is used and mapped to /opt/bitnami/spark
+# which is the default WORKDIR of spark containers below. On creation, the
+# content of this directory is copied _from_ the container to the host volume,
+# including file permissions.
+#
+# This volume mapping is done to persist temporary tables and Metastore data. If
+# you don't use temporary tables and don't care about Metastore persistence, you
+# can remove that volume.
+
+# NOTES ON METASTORE:
+# This configuration uses the default embedded Derby database as Metastore for
+# the thriftserver. Example config lines are provided (but commented out) that
+# show how to use an external DB instead.
+
+# OTHER CONFIGS:
+# If you want to change Spark default configs, you can mount your config files
+# to /opt/bitnami/spark/conf/
+# https://spark.apache.org/docs/latest/configuration.html
 
 version: '2'
 
@@ -54,6 +82,17 @@ services:
       - '8082:8080'
     volumes:
       - ${DWH_ROOT}:/dwh
+      # The data for temporary tables, ends up in the spark-warehouse sub-dir of
+      # this volume. This needs to be shared between all spark nodes if temp
+      # tables are needed.
+      - spark:/opt/bitnami/spark
+
+      # NON-EMBEDDED METASTORE CONFIG:
+      # If you want to persist the Metastore data, e.g., table and view
+      # definitions, you can use an external database by adjusting hive-site.xml
+      #- ./hive-site_example.xml:/opt/bitnami/spark/conf/hive-site.xml
+      # Note to use an external DB, you need to provide its driver jar too:
+      #- ./postgresql-42.6.0.jar:/opt/bitnami/spark/jars/postgresql-42.6.0.jar
 
   spark-worker:
     image: docker.io/bitnami/spark:3.3
@@ -65,6 +104,8 @@ services:
       - SPARK_WORKER_CORES=20
     volumes:
       - ${DWH_ROOT}:/dwh
+    volumes_from:
+      - spark
 
   thriftserver:
     image: docker.io/bitnami/spark:3.3
@@ -80,5 +121,11 @@ services:
       - '4041:4040'
     volumes:
       - ${DWH_ROOT}:/dwh
+
+    volumes_from:
+      - spark
+
+volumes:
+  spark:
 
 # TODO add a link to a Jupyter notebook to show how to use JDBC.

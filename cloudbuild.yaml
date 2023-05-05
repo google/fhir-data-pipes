@@ -26,7 +26,7 @@ steps:
 # Note license checking will fail on Cloud Build because of .git dependencies
 # and there is not much point updating license headers at this stage anyway.
 # Ditto for Spotless (fails because of NPM dep).
-- name: 'adoptopenjdk/maven-openjdk11'
+- name: 'maven:3.8.5-openjdk-17'
   id: 'Compile Bunsen and Pipeline'
   entrypoint: /bin/bash
   args:

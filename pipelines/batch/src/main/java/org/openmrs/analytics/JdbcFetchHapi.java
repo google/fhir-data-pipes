@@ -329,7 +329,9 @@ public class JdbcFetchHapi {
     for (String resourceType : resourceTypes) {
       StringBuilder builder = new StringBuilder();
       builder.append("SELECT count(*) FROM hfj_resource res where res.res_type = ?");
-      if (!Strings.isNullOrEmpty(since)) {
+      if (Strings.isNullOrEmpty(since)) { // full mode
+        builder.append(" AND res.res_deleted_at IS NULL ");
+      } else { // incremental mode
         builder.append(" AND res.res_updated > '").append(since).append("'");
       }
       try (Connection connection = jdbcConnectionUtil.getDataSource().getConnection();
@@ -339,6 +341,7 @@ public class JdbcFetchHapi {
         resultSet.next();
         int count = resultSet.getInt("count");
         resourceCountMap.put(resourceType, count);
+        log.info("Number of {} resources in DB = {}", resourceType, count);
       }
     }
     return resourceCountMap;

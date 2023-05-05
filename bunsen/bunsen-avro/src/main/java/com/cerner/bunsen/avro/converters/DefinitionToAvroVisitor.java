@@ -555,8 +555,10 @@ public class DefinitionToAvroVisitor implements DefinitionVisitor<HapiConverter<
       List<String> referenceTypes,
       List<StructureField<HapiConverter<Schema>>> children) {
 
-    // Generate a record name based on the type of references it can contain.
-    String recordName = referenceTypes.stream().collect(Collectors.joining()) + "Reference";
+    // Generate a record name based on the element name.
+    String recordName = elementName + "Reference";
+    // Remove extension type [x] as this creates issue while identifying schema.
+    recordName = recordName.replaceAll("\\[x\\]", "");
 
     String fullName = basePackage + "." + recordName;
 

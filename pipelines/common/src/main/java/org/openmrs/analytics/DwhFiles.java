@@ -129,7 +129,9 @@ public class DwhFiles {
     return incPath;
   }
 
-  /** @return true iff there is already an incremental run subdirectory in this DWH. */
+  /**
+   * @return true iff there is already an incremental run subdirectory in this DWH.
+   */
   public boolean hasIncrementalDir() throws IOException {
     List<MatchResult> matches =
         FileSystems.matchResources(Collections.singletonList(getIncrementalRunPath()));

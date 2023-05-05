@@ -15,7 +15,7 @@
 # This creates a docker image for running the controller web-app. It is expected
 # that in real use-cases, the config dir will be mounted to the host machine.
 
-FROM maven:3.8.5-openjdk-11 as build
+FROM maven:3.8.7-eclipse-temurin-17-focal as build
 
 RUN apt-get update && apt-get install -y nodejs npm
 RUN npm cache clean -f && npm install -g n && n stable
@@ -31,7 +31,7 @@ COPY ./utils ./utils
 # Note this build can be faster by excluding some uber-jars we don't copy.
 RUN mvn --batch-mode clean package -Dlicense.skip=true
 
-FROM eclipse-temurin:11-jdk-focal as main
+FROM eclipse-temurin:17-jdk-focal as main
 
 WORKDIR /app
 

@@ -167,6 +167,9 @@ public abstract class HapiCompositeConverter<T> extends HapiConverter<T> {
       StructureField<HapiConverter<T>> schemaEntry = schemaIterator.next();
       // We do not want id in nested elements or sub-elements.
       // https://github.com/FHIR/sql-on-fhir/blob/master/sql-on-fhir.md#id-fields-omitted
+      // So, there can be schema elements where id is not present in which case we should
+      // check whether field name is id; if yes, proceed accordingly and set the iterator
+      // for meta element and if not then the field is going to be meta element.
       if (schemaEntry.fieldName().equals("id")) {
         // Id element.
         values[0] = schemaEntry.result().fromHapi(((IAnyResource) composite).getIdElement());

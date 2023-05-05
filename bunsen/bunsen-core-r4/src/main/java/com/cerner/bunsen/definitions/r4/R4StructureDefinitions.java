@@ -620,7 +620,7 @@ public class R4StructureDefinitions extends StructureDefinitions {
           .sorted()
           .collect(Collectors.toList());
 
-      return visitor.visitReference(rootName, referenceTypes, childElements);
+      return visitor.visitReference(parentElement.toString(), referenceTypes, childElements);
 
     } else {
 
