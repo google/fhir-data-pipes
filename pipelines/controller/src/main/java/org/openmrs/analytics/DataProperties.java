@@ -95,13 +95,15 @@ public class DataProperties {
         !Strings.isNullOrEmpty(fhirServerUrl) || !Strings.isNullOrEmpty(dbConfig),
         "At least one of fhirServerUrl or dbConfig should be set!");
 
-    if (!Strings.isNullOrEmpty(dbConfig) && !Strings.isNullOrEmpty(fhirServerUrl)) {
-      logger.warn("Both fhirServerUrl and dbConfig are set; ignoring fhirServerUrl!");
-    }
-    if (Strings.isNullOrEmpty(dbConfig) && !Strings.isNullOrEmpty(fhirServerUrl)) {
-      // TODO implement search mode: https://github.com/google/fhir-data-pipes/issues/494
-      logger.error("FHIR-search mode is not yet supported for the incremental merge!");
-      throw new IllegalArgumentException("dbConfig should be set");
+    if (!Strings.isNullOrEmpty(dbConfig)) {
+      if (!Strings.isNullOrEmpty(fhirServerUrl)) {
+        logger.warn("Both fhirServerUrl and dbConfig are set; ignoring fhirServerUrl!");
+      }
+      logger.info("Using JDBC mode since dbConfig is set.");
+    } else {
+      // This should always be true because of the first Precondition.
+      Preconditions.checkArgument(!Strings.isNullOrEmpty(fhirServerUrl));
+      logger.info("Using FHIR-search mode since dbConfig is not set.");
     }
 
     if (createHiveResourceTables) {
@@ -117,10 +119,15 @@ public class DataProperties {
 
   PipelineConfig createBatchOptions() {
     FhirEtlOptions options = PipelineOptionsFactory.as(FhirEtlOptions.class);
-    logger.info(
-        "Converting options for fhirServerUrl {} and DB config {}", fhirServerUrl, dbConfig);
-    options.setFhirServerUrl(fhirServerUrl);
-    options.setFhirDatabaseConfigPath(dbConfig);
+    logger.info("Converting options for fhirServerUrl {} and dbConfig {}", fhirServerUrl, dbConfig);
+    if (!Strings.isNullOrEmpty(dbConfig)) {
+      // TODO add OpenMRS support too; it should be easy but we want to make it explicit, such that
+      //  if accidentally both `dbConfig` and `fhirServerUrl` are set, OpenMRS is not assumed.
+      options.setJdbcModeHapi(true);
+      options.setFhirDatabaseConfigPath(dbConfig);
+    } else {
+      options.setFhirServerUrl(fhirServerUrl);
+    }
     options.setResourceList(resourceList);
 
     PipelineConfig.PipelineConfigBuilder pipelineConfigBuilder = PipelineConfig.builder();

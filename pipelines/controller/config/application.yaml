@@ -18,11 +18,11 @@ fhirdata:
   # This is the base URL of the FHIR server; 172.17.0.1 is an example docker
   # network interface address. If `dbConfig` is not set, resources are fetched
   # through the FHIR search API.
-  fhirServerUrl: ""
+  fhirServerUrl: "http://172.17.0.1:8091/fhir"
 
   # If this is set, resources are fetched directly from the HAPI database. In
   # this case the value of `fhirServerUrl` is ignored.
-  dbConfig: "config/hapi-postgres-config.json"
+  # dbConfig: "config/hapi-postgres-config.json"
 
   # for GCS file system the dwhRootPrefix should be of the format
   # "gs://<bucket>/<baseDirPath>/<prefix>"

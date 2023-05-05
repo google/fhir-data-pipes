@@ -237,20 +237,11 @@ public class PipelineManager {
     }
   }
 
-  private Pipeline buildJdbcPipeline(FhirEtlOptions options)
-      throws IOException, PropertyVetoException, SQLException {
-    DatabaseConfiguration dbConfig =
-        DatabaseConfiguration.createConfigFromFile(options.getFhirDatabaseConfigPath());
-    FhirContext fhirContext = FhirContexts.forR4();
-    logger.info("Creating HAPI JDBC pipeline with options {}", options);
-    return FhirEtl.buildHapiJdbcFetch(options, dbConfig, fhirContext);
-  }
-
   synchronized void runBatchPipeline() throws IOException, PropertyVetoException, SQLException {
     Preconditions.checkState(!isRunning(), "cannot start a pipeline while another one is running");
     PipelineConfig pipelineConfig = dataProperties.createBatchOptions();
     FhirEtlOptions options = pipelineConfig.getFhirEtlOptions();
-    Pipeline pipeline = buildJdbcPipeline(options);
+    Pipeline pipeline = FhirEtl.buildPipeline(options);
     if (pipeline == null) {
       logger.warn("No resources found to be fetched!");
       return;
@@ -277,7 +268,7 @@ public class PipelineManager {
     options.setOutputParquetPath(incrementalDwhRoot);
     String since = currentDwh.readTimestampFile().toString();
     options.setSince(since);
-    Pipeline pipeline = buildJdbcPipeline(options);
+    Pipeline pipeline = FhirEtl.buildPipeline(options);
 
     // The merger pipeline merges the original full DWH with the new incremental one.
     ParquetMergerOptions mergerOptions = PipelineOptionsFactory.as(ParquetMergerOptions.class);
