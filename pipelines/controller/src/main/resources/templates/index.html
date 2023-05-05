@@ -111,6 +111,18 @@
       function() {
         updateStatus();
       }, 2000);
+
+    function createResourceTables() {
+      var xhr = new XMLHttpRequest();
+      xhr.open("POST", '/tables', true);
+      xhr.send();
+      success.style.display = "block";
+    }
+
+    setInterval(() => {
+      success.style.display = "none";
+    }, 4000);
+
   </script>
 </head>
 
@@ -205,6 +217,12 @@
           <h3>List of DWH snapshots</h3>
           <div class="alert alert-secondary alert-dismissible fade show">
             <b>Latest:</b> [[${dwh}]]
+            <div style="float:right;">
+              <button type="submit" name="mode" class="button btn btn-primary" style="margin: -7;"
+                      th:classappend="${hasDwh ? '' : 'disabled'}" onclick="createResourceTables()">
+                Create Resource Tables
+              </button>
+            </div>
           </div>
           <!-- TODO add the list of DWH snapshots once the API is implemented
           <div class="accordion" id="accordionDWH">
@@ -231,6 +249,9 @@
               </div>
             </div>
           </div-->
+        </div>
+        <div class="alert alert-success" style="float:right;display:none;" id="success">
+          Request for resource tables creation sent successfully.
         </div>
         <div style="margin-top: 50px">
           <h3>Configuration Settings</h3>

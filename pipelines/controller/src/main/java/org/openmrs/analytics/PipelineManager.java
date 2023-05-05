@@ -309,6 +309,11 @@ public class PipelineManager implements ApplicationListener<ApplicationReadyEven
     }
   }
 
+  @Override
+  public void onApplicationEvent(ApplicationReadyEvent applicationReadyEvent) {
+    createResourceTablesOnApplicationStart();
+  }
+
   /**
    * This method checks upon Controller start checks on Thrift sever to create resource tables if
    * they don't exist. There is a @PostConstruct method present in this class which is initDwhStatus
@@ -316,8 +321,7 @@ public class PipelineManager implements ApplicationListener<ApplicationReadyEven
    * turns out to be null when used by
    * DatabaseConfiguration.createConfigFromFile(dataProperties.getThriftserverHiveConfig()).
    */
-  @Override
-  public void onApplicationEvent(ApplicationReadyEvent applicationReadyEvent) {
+  public void createResourceTablesOnApplicationStart() {
     if (!dataProperties.isCreateHiveResourceTables()) {
       return;
     }
@@ -325,28 +329,28 @@ public class PipelineManager implements ApplicationListener<ApplicationReadyEven
     DatabaseConfiguration dbConfig;
     try {
       dbConfig =
-          DatabaseConfiguration.createConfigFromFile(dataProperties.getThriftserverHiveConfig());
+              DatabaseConfiguration.createConfigFromFile(dataProperties.getThriftserverHiveConfig());
     } catch (IOException e) {
       logger.error("Exception while reading thrift hive config.");
       throw new RuntimeException(e);
     }
     HiveTableManager hiveTableManager =
-        new HiveTableManager(
-            dbConfig.makeJdbsUrlFromConfig(),
-            dbConfig.getDatabaseUser(),
-            dbConfig.getDatabasePassword());
+            new HiveTableManager(
+                    dbConfig.makeJdbsUrlFromConfig(),
+                    dbConfig.getDatabaseUser(),
+                    dbConfig.getDatabasePassword());
 
     String rootPrefix = dataProperties.getDwhRootPrefix();
     Preconditions.checkState(rootPrefix != null && !rootPrefix.isEmpty());
 
     String prefix = getPrefix(rootPrefix);
     String baseDir = getBaseDir(rootPrefix);
-    List<ResourceId> paths;
+
     try {
-      paths =
-          getAllChildDirectories(baseDir).stream()
-              .filter(dir -> dir.getFilename().startsWith(prefix))
-              .collect(Collectors.toList());
+      List<ResourceId> paths =
+              getAllChildDirectories(baseDir).stream()
+                      .filter(dir -> dir.getFilename().startsWith(prefix + DataProperties.TIMESTAMP_PREFIX))
+                      .collect(Collectors.toList());
 
       Preconditions.checkState(paths != null, "Make sure DWH prefix is a valid path!");
 
@@ -355,12 +359,6 @@ public class PipelineManager implements ApplicationListener<ApplicationReadyEven
 
       int snapshotCount = 0;
       for (ResourceId path : paths) {
-        if (!path.getFilename().startsWith(prefix + DataProperties.TIMESTAMP_PREFIX)) {
-          logger.warn(
-              "DWH directory {} does not start with {}",
-              paths,
-              prefix + DataProperties.TIMESTAMP_PREFIX);
-        }
         snapshotCount++;
         Set<ResourceId> childPaths = getAllChildDirectories(baseDir + "/" + path.getFilename());
         for (ResourceId resourceId : childPaths) {
@@ -369,7 +367,7 @@ public class PipelineManager implements ApplicationListener<ApplicationReadyEven
           if (tokens.length > 1) {
             String timestamp = tokens[1];
             String thriftServerParquetPath =
-                baseDir + "/" + path.getFilename() + "/" + resourceId.getFilename();
+                    baseDir + "/" + path.getFilename() + "/" + resourceId.getFilename();
             logger.debug("thriftServerParquetPath: ", thriftServerParquetPath);
             hiveTableManager.createResourceTable(resource, timestamp, thriftServerParquetPath);
             // Create Canonical table for the latest snapshot.

@@ -56,7 +56,7 @@
 # to /opt/bitnami/spark/conf/
 # https://spark.apache.org/docs/latest/configuration.html
 
-version: '2'
+version: '3.9'
 
 services:
   pipeline-controller:
@@ -71,7 +71,8 @@ services:
     ports:
       - '8090:8080'
     depends_on:
-      - thriftserver
+      thriftserver:
+        condition: service_healthy
 
   spark:
     image: docker.io/bitnami/spark:3.3
@@ -121,9 +122,14 @@ services:
       - '4041:4040'
     volumes:
       - ${DWH_ROOT}:/dwh
-
     volumes_from:
       - spark
+    healthcheck:
+      test: beeline -u jdbc:hive2://localhost:10000 -n hive -e 'show tables;' || exit 1
+      interval: 30s
+      retries: 5
+      start_period: 10s
+      timeout: 10s
 
 volumes:
   spark:
