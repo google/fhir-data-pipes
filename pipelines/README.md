@@ -9,29 +9,28 @@ deployment options depending on your use case.
 There are a few ways to run FHIR Data Pipes; see these pages to learn more about
 them:
 
-- [FHIR Data Pipes Pipelines](https://github.com/google/fhir-data-pipes/tree/master/pipelines)
-  is a Java JAR which moves and transforms data from a FHIR server to Apache
-  Parquet files for data analysis or another FHIR server for data integration.
-  Pipelines is built using Apache Beam and can run on a single machine or
-  cluster.
+- [FHIR Data Pipes Pipelines](pipelines/batch) is a Java JAR which moves and
+  transforms data from a FHIR server to Apache Parquet files for data analysis
+  or another FHIR server for data integration. Pipelines is built using Apache
+  Beam and can run on a single machine or cluster.
 
-- [The Pipelines Controller module](https://github.com/google/fhir-data-pipes/tree/master/pipelines/controller)
-  transforms data from a HAPI FHIR server to an Apache Parquet data warehouse.
-  You can schedule periodic incremental updates or use a control panel to start
-  the pipeline manually. The Pipelines Controller is built on top of pipelines
-  and shares many of the same settings.
+- [The Pipelines Controller module](pipelines/controller) is a user-interface
+  wrapper for the above pipelines, integrating "full", "incremental", and
+  "merger" pipelines together. You can schedule periodic incremental updates or
+  use a control panel to start the pipeline manually. The Pipelines Controller
+  is built on top of pipelines and shares many of the same settings.
 
 - [The single machine Docker Compose configuration](https://github.com/google/fhir-data-pipes/wiki/Analytics-on-a-single-machine-using-Docker)
   runs the Pipelines Controller plus a Spark Thrift server so you can more
   easily run Spark SQL queries on the Parquet files output by the Pipelines
   Controller. It can automatically create and update tables on the Spark Thrift
   server each time the Pipelines Controller runs the data pipeline, simplifying
-  data analysis or dashboard creation.
+  data analysis or dashboard creation. This configuration also serves as a very
+  simple example of how to integrate the Parquet output of Pipelines in a Spark
+  cluster environment.
 
-- The legacy
-  [streaming pipeline](https://github.com/google/fhir-data-pipes/tree/master/pipelines/streaming)
-  continuously listens for changes to an underlying OpenMRS MySQL database using
-  Debezium.
+- The legacy [streaming pipeline](pipelines/streaming) continuously listens for
+  changes to an underlying OpenMRS MySQL database using Debezium.
 
 [See the wiki](https://github.com/google/fhir-data-pipes/wiki) for guides and
 tutorials.

@@ -1,7 +1,12 @@
+# OpenMRS Streaming Pipeline
+
+Note: This pipeline is in maintenance mode and not actively developed. There are
+known issues with duplicated resources in Parquet files.
+
 The
 [streaming](https://github.com/google/fhir-data-pipes/tree/master/pipelines/streaming)
 directory contains code to continuously listen for changes to an underlying
-OpenMRS MySQL database using
+OpenMRS database using
 [Debezium](https://debezium.io/documentation/reference/1.2/connectors/mysql.html).
 
 The Debezium-based streaming mode provides real-time downstream consumption of
@@ -44,11 +49,11 @@ planned.
     to match your environment. See the documentation on
     [Debezium MySQL Connector properties](https://debezium.io/documentation/reference/connectors/mysql.html#mysql-property-name)
     for more information.
-1.  Build binaries with `mvn clean install`.
+1.  Build binaries from the repo root with `mvn clean package`.
 1.  Run the pipeline to a FHIR server and Parquet files:
 
     ```shell
-    $ java -cp ./pipelines/streaming/target/streaming-bundled-0.1.0-SNAPSHOT.jar \
+    $ java -jar ./pipelines/streaming/target/streaming-bundled-0.1.0-SNAPSHOT.jar \
       org.openmrs.analytics.Runner \
       --fhirServerUrl=http://localhost:8099/openmrs/ws/fhir2/R4 \
         --fhirServerUserName=admin --fhirServerPassword=Admin123 \
@@ -61,7 +66,7 @@ planned.
     Or to a GCP FHIR store:
 
     ```shell
-    $ java -cp ./pipelines/streaming/target/streaming-bundled-0.1.0-SNAPSHOT.jar \
+    $ java -jar ./pipelines/streaming/target/streaming-bundled-0.1.0-SNAPSHOT.jar \
       org.openmrs.analytics.Runner \
       --fhirServerUrl=http://localhost:8099/openmrs/ws/fhir2/R4 \
         --fhirServerUserName=admin --fhirServerPassword=Admin123 \

@@ -1,6 +1,7 @@
-The
-[pipelines](https://github.com/google/fhir-data-pipes/blob/master/pipelines/)
-directory contains code to transform data from a FHIR server to either
+# FHIR Data Pipes Pipelines
+
+The [batch](pipelines/batch) directory contains code for a Java JAR which
+transforms data from a FHIR server to either
 [Apache Parquet files](https://parquet.apache.org) for analysis or another FHIR
 store for data integration.
 
@@ -8,11 +9,13 @@ There are two options for reading the source FHIR server (input):
 
 - _FHIR-Search_: This mode uses FHIR Search APIs to select resources to copy,
   retrieves them as FHIR resources, and transfers the data via FHIR APIs or
-  Parquet files. This mode should work with any FHIR server.
+  Parquet files. This mode should work with most FHIR servers and has been
+  tested with HAPI FHIR server and GCP FHIR store.
 - _JDBC_: This mode uses the
   [Java Database Connectivity (JDBC) API](https://docs.oracle.com/javase/8/docs/technotes/guides/jdbc/)
-  to read FHIR resources directly from the database of a
-  [HAPI FHIR server configured to use a PostgreSQL database](https://github.com/hapifhir/hapi-fhir-jpaserver-starter#postgresql-configuration)
+  to read FHIR resources directly from the database of a FHIR server. It's
+  tested with
+  [HAPI FHIR server using PostgreSQL database](https://github.com/hapifhir/hapi-fhir-jpaserver-starter#postgresql-configuration)
   or an [OpenMRS](https://openmrs.org/) instance using MySQL. Note: JDBC support
   beyond HAPI FHIR and OpenMRS is not currently planned. Our long-term approach
   for a generic high-throughput alternative is to use the
@@ -38,9 +41,10 @@ There are two options for transforming the data (output):
 Run the pipeline directly using the `java` command:
 
 ```
-java -cp ./pipelines/batch/target/batch-bundled-0.1.0-SNAPSHOT.jar \
+java -jar ./pipelines/batch/target/batch-bundled-0.1.0-SNAPSHOT.jar \
     org.openmrs.analytics.FhirEtl \
     --fhirServerUrl=http://example.org/fhir \
+    --outputParquetPath=/tmp/parquet/
     --[see additional parameters below]
 ```
 
@@ -53,25 +57,24 @@ required parameters for both.
 
 This section documents the parameters used by the various pipelines. For more
 information on parameters, see
-[`FhirEtlOptions`](https://github.com/google/fhir-data-pipes/blob/master/pipelines/batch/src/main/java/org/openmrs/analytics/FhirEtlOptions.java).
+[`FhirEtlOptions`](https://github.com/google/fhir-data-pipes/blob/master/pipelines/batch/src/main/java/org/openmrs/analytics/FhirEtlOptions.java)
+or run the pipeline with the `help` option:
+`java -jar ./batch/target/batch-bundled-0.1.0-SNAPSHOT.jar --help=FhirEtlOptions`.
 
 ### Common parameters
 
 These parameters are used regardless of other pipeline options.
 
-- `fhirServerUrl` - The base URL of the source FHIR server. Required.
-- `fhirServerUserName` - The HTTP Basic Auth username to access the FHIR server
-  APIs. Default: `admin`
-- `fhirServerPassword` - The HTTP Basic Auth password to access the FHIR server
-  APIs. Default: `Admin123`
 - `resourceList` - A comma-separated list of
   [FHIR resources](https://www.hl7.org/fhir/resourcelist.html) to include in the
   pipeline. Default: `Patient,Encounter,Observation`
 - `runner` -
   [The Apache Beam Runner](https://beam.apache.org/documentation/runners/capability-matrix/)
-  to use. Pipelines supports DirectRunner and FlinkRunner by default; other
+  to use. Pipelines supports `DirectRunner` and `FlinkRunner` by default; other
   runners can be enabled by Maven profiles, e.g.,
   [DataflowRunner](https://github.com/google/fhir-data-pipes/blob/16fcc255cef4d2708b9941a854e6c638b2533d45/pipelines/batch/pom.xml#L257).
+  See also
+  [A note about Beam runners](pipelines/batch/README.md#a-note-about-beam-runners).
   Default: `DirectRunner`
 
 ### FHIR-Search input parameters
@@ -79,34 +82,43 @@ These parameters are used regardless of other pipeline options.
 The pipeline will use FHIR-Search to fetch data as long as `jdbcModeEnabled` is
 unset or false.
 
+- `fhirServerUrl` - The base URL of the source FHIR server. Required.
+- `fhirServerUserName` - The HTTP Basic Auth username to access the FHIR server
+  APIs. Default: `admin`
+- `fhirServerPassword` - The HTTP Basic Auth password to access the FHIR server
+  APIs. Default: `Admin123`
 - `batchSize` - The number of resources to fetch in each API call. Default:
   `100`
 
 ### JDBC input parameters
 
-JDBC mode is used if `jdbcModeEnabled=true`.
+JDBC mode is used if a JDBC flag is `true`.
 
-To use JDBC mode, first create a copy of
+To use JDBC mode:
+
+1: Create a copy of
 [hapi-postgres-config.json](https://github.com/google/fhir-data-pipes/blob/master/utils/hapi-postgres-config.json)
 and edit the values to match your database server.
 
-Next, include the following parameters:
+2: Enable JDBC mode for your source server:
 
-- `jdbcModeEnabled=true`
+- OpenMRS
+  - `jdbcModeEnabled=true`
+- HAPI FHIR server
+  - `jdbcModeHapi=true`
+  - `jdbcDriverClass=org.postgresql.Driver`
+
+3: Specify the path to your config file.
+
 - `fhirDatabaseConfigPath=./path/to/config.json`
-
-If you are using a HAPI FHIR server, also include:
-
-- `jdbcModeHapi=true`
-- `jdbcDriverClass=org.postgresql.Driver`
 
 All JDBC parameters:
 
-- `jdbcModeEnabled` - If true, uses JDBC mode. Default: `false`
+- `jdbcModeHapi` - If true, uses JDBC mode for HAPI FHIR server. Default:
+  `false`
+- `jdbcModeEnabled` - If true, uses JDBC mode for OpenMRS. Default: `false`
 - `fhirDatabaseConfigPath` - Path to the FHIR database config for JDBC mode.
   Default: `../utils/hapi-postgres-config.json`
-- `jdbcModeHapi` - If true (with `jdbcModeEnabled`), uses JDBC mode for a HAPI
-  source server. Default: `false`
 - `jdbcFetchSize` - The fetch size of each JDBC database query. Default: `10000`
 - `jdbcMaxPoolSize` - The maximum number of database connections. Default: `50`
 - `jdbcDriverClass` - The JDBC driver to use. Should be set to
@@ -146,10 +158,11 @@ field is set.
 ### A note about Beam runners
 
 If the pipeline is run on a single machine (i.e., not on a distributed cluster),
-for large datasets consider using a production grade runner like Flink. This can
-be done by adding the parameter `--runner=FlinkRunner` (use `--maxParallelism`
-and `--parallelism` to control parallelism). This should not give a significant
-run time improvement but may avoid some of the memory issues of `DirectRunner`.
+for large datasets consider using a production grade runner like
+[Flink](https://beam.apache.org/documentation/runners/flink/). This can be done
+by adding the parameter `--runner=FlinkRunner` (use `--maxParallelism` and
+`--parallelism` to control parallelism). This may avoid some of the memory
+issues of `DirectRunner`.
 
 ## Example configurations
 
