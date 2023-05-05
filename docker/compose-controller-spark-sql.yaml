@@ -56,7 +56,7 @@
 # to /opt/bitnami/spark/conf/
 # https://spark.apache.org/docs/latest/configuration.html
 
-version: '3.9'
+version: '3.3'
 
 services:
   pipeline-controller:
