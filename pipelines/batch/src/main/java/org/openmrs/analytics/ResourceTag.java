@@ -20,6 +20,8 @@ import lombok.Builder;
 import lombok.Data;
 import org.apache.beam.sdk.coders.DefaultCoder;
 import org.apache.beam.sdk.coders.SerializableCoder;
+import org.apache.commons.lang3.ObjectUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.hl7.fhir.r4.model.Coding;
 
 @DefaultCoder(SerializableCoder.class)
@@ -44,8 +46,22 @@ public class ResourceTag implements Serializable {
     }
 
     ResourceTag resourceTag = (ResourceTag) other;
-    return coding.equalsDeep(resourceTag.coding)
-        && resourceId.equals(resourceTag.resourceId)
-        && tagType.equals((resourceTag.tagType));
+
+    return coding != null
+        && coding.equalsDeep(resourceTag.coding)
+        && StringUtils.compare(resourceId, resourceTag.getResourceId()) == 0
+        && ObjectUtils.compare(tagType, resourceTag.getTagType()) == 0;
+  }
+
+  @Override
+  public int hashCode() {
+    int h$ = 1;
+    h$ *= 1000003;
+    h$ ^= coding.hashCode();
+    h$ *= 1000003;
+    h$ ^= resourceId.hashCode();
+    h$ *= 1000003;
+    h$ ^= tagType.hashCode();
+    return h$;
   }
 }

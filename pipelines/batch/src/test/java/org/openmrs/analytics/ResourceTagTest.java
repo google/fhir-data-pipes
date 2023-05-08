@@ -30,7 +30,8 @@ public class ResourceTagTest {
     coding.setId("123");
     coding.setDisplay("display123");
     coding.setSystem("system123");
-    ResourceTag resourceTag = new ResourceTag(coding, "resourceId", 1);
+    ResourceTag resourceTag =
+        ResourceTag.builder().coding(coding).resourceId("resourceId").tagType(1).build();
 
     byte[] bytes = SerializationUtils.serialize(resourceTag);
     ResourceTag deserializedResourceTag = SerializationUtils.deserialize(bytes);
@@ -43,6 +44,64 @@ public class ResourceTagTest {
     assertThat(
         resourceTag.getCoding().getSystem(),
         equalTo(deserializedResourceTag.getCoding().getSystem()));
+    assertThat(resourceTag.getResourceId(), equalTo(deserializedResourceTag.getResourceId()));
+    assertThat(resourceTag.getTagType(), equalTo(deserializedResourceTag.getTagType()));
+  }
+
+  @Test
+  public void testResourceTagSerializationWithoutResourceId() {
+    Coding coding = new Coding();
+    coding.setId("123");
+    coding.setDisplay("display123");
+    coding.setSystem("system123");
+    ResourceTag resourceTag = ResourceTag.builder().coding(coding).tagType(1).build();
+
+    byte[] bytes = SerializationUtils.serialize(resourceTag);
+    ResourceTag deserializedResourceTag = SerializationUtils.deserialize(bytes);
+
+    assertThat(
+        resourceTag.getCoding().getId(), equalTo(deserializedResourceTag.getCoding().getId()));
+    assertThat(
+        resourceTag.getCoding().getDisplay(),
+        equalTo(deserializedResourceTag.getCoding().getDisplay()));
+    assertThat(
+        resourceTag.getCoding().getSystem(),
+        equalTo(deserializedResourceTag.getCoding().getSystem()));
+    assertThat(resourceTag.getResourceId(), equalTo(deserializedResourceTag.getResourceId()));
+    assertThat(resourceTag.getTagType(), equalTo(deserializedResourceTag.getTagType()));
+  }
+
+  @Test
+  public void testResourceTagSerializationWithoutTagType() {
+    Coding coding = new Coding();
+    coding.setId("123");
+    coding.setDisplay("display123");
+    coding.setSystem("system123");
+    ResourceTag resourceTag = ResourceTag.builder().coding(coding).resourceId("resourceId").build();
+
+    byte[] bytes = SerializationUtils.serialize(resourceTag);
+    ResourceTag deserializedResourceTag = SerializationUtils.deserialize(bytes);
+
+    assertThat(
+        resourceTag.getCoding().getId(), equalTo(deserializedResourceTag.getCoding().getId()));
+    assertThat(
+        resourceTag.getCoding().getDisplay(),
+        equalTo(deserializedResourceTag.getCoding().getDisplay()));
+    assertThat(
+        resourceTag.getCoding().getSystem(),
+        equalTo(deserializedResourceTag.getCoding().getSystem()));
+    assertThat(resourceTag.getResourceId(), equalTo(deserializedResourceTag.getResourceId()));
+    assertThat(resourceTag.getTagType(), equalTo(deserializedResourceTag.getTagType()));
+  }
+
+  @Test
+  public void testResourceTagSerializationWithoutCoding() {
+
+    ResourceTag resourceTag = ResourceTag.builder().resourceId("resourceId").build();
+
+    byte[] bytes = SerializationUtils.serialize(resourceTag);
+    ResourceTag deserializedResourceTag = SerializationUtils.deserialize(bytes);
+
     assertThat(resourceTag.getResourceId(), equalTo(deserializedResourceTag.getResourceId()));
     assertThat(resourceTag.getTagType(), equalTo(deserializedResourceTag.getTagType()));
   }
