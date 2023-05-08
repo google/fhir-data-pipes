@@ -64,7 +64,6 @@ services:
     build:
       context: ..
     container_name: pipeline-controller
-    restart: on-failure
     volumes:
       - ${PIPELINE_CONFIG}:/app/config:ro
       - ${DWH_ROOT}:/dwh
