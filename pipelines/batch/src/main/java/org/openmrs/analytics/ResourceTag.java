@@ -32,4 +32,20 @@ public class ResourceTag implements Serializable {
   Coding coding;
   String resourceId;
   Integer tagType;
+
+  @Override
+  public boolean equals(Object other) {
+    if (other == this) {
+      return true;
+    }
+
+    if (!(other instanceof ResourceTag)) {
+      return false;
+    }
+
+    ResourceTag resourceTag = (ResourceTag) other;
+    return coding.equalsDeep(resourceTag.coding)
+        && resourceId.equals(resourceTag.resourceId)
+        && tagType.equals((resourceTag.tagType));
+  }
 }
