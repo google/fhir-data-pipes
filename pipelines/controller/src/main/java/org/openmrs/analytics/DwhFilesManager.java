@@ -15,6 +15,8 @@
  */
 package org.openmrs.analytics;
 
+import static org.apache.beam.sdk.io.FileSystems.DEFAULT_SCHEME;
+
 import com.google.common.base.Preconditions;
 import java.io.IOException;
 import java.nio.file.DirectoryNotEmptyException;
@@ -25,8 +27,11 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.TreeSet;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import javax.annotation.PostConstruct;
+import org.apache.beam.sdk.extensions.gcp.util.gcsfs.GcsPath;
 import org.apache.beam.sdk.io.FileSystems;
 import org.apache.beam.sdk.io.fs.MatchResult;
 import org.apache.beam.sdk.io.fs.MatchResult.Metadata;
@@ -50,7 +55,7 @@ import org.springframework.stereotype.Component;
 @Component
 public class DwhFilesManager {
 
-  @Autowired private DataProperties dataProperties;
+  private final DataProperties dataProperties;
 
   private CronExpression purgeCron;
 
@@ -61,7 +66,15 @@ public class DwhFilesManager {
   private String dwhRootPrefix;
   private int numOfDwhSnapshotsToRetain;
 
+  private static final Pattern FILE_SCHEME_PATTERN =
+      Pattern.compile("(?<scheme>[a-zA-Z][-a-zA-Z0-9+.]*):/.*");
+
   private static final Logger logger = LoggerFactory.getLogger(DwhFilesManager.class.getName());
+
+  @Autowired
+  public DwhFilesManager(DataProperties dataProperties) {
+    this.dataProperties = dataProperties;
+  }
 
   @PostConstruct
   public void init() {
@@ -96,9 +109,9 @@ public class DwhFilesManager {
     return purgeCron.next(lastPurgeRunEnd);
   }
 
-  // Every 30 seconds, check if the purge job needs to be triggered.
-  @Scheduled(fixedDelay = 30000)
-  private void checkPurgeSchedule() {
+  // Every 5 minutes, check if the purge job needs to be triggered.
+  @Scheduled(fixedDelay = 300000)
+  public void checkPurgeScheduleAndTrigger() {
     try {
       if (!lockPurgeJob()) {
         return;
@@ -275,7 +288,7 @@ public class DwhFilesManager {
    * @return the base directory name
    */
   public String getBaseDir(String dwhRootPrefix) {
-    int index = dwhRootPrefix.lastIndexOf("/");
+    int index = getLastIndexOfSlash(dwhRootPrefix);
     if (index <= 0) {
       String errorMessage =
           "dwhRootPrefix should be configured with a non-empty base directory. It should be of the"
@@ -295,7 +308,15 @@ public class DwhFilesManager {
    * @return the prefix name
    */
   public String getPrefix(String dwhRootPrefix) {
-    int index = dwhRootPrefix.lastIndexOf("/");
+    int index = getLastIndexOfSlash(dwhRootPrefix);
+    if (index <= 0) {
+      String errorMessage =
+          "dwhRootPrefix should be configured with a non-empty base directory. It should be of the"
+              + " format <baseDir>/<prefix>";
+      logger.error(errorMessage);
+      throw new IllegalArgumentException(errorMessage);
+    }
+
     String prefix = dwhRootPrefix.substring(index + 1);
     if (prefix == null || prefix.isBlank()) {
       String errorMessage =
@@ -334,5 +355,40 @@ public class DwhFilesManager {
     }
     logger.info("Child directories : {}", childDirectories);
     return childDirectories;
+  }
+
+  private int getLastIndexOfSlash(String dwhRootPrefix) {
+    String scheme = parseScheme(dwhRootPrefix);
+    int index = -1;
+    switch (scheme) {
+      case DEFAULT_SCHEME:
+        index = dwhRootPrefix.lastIndexOf("/");
+        break;
+      case GcsPath.SCHEME:
+        String gcsObject = GcsPath.fromUri(dwhRootPrefix).getObject();
+        int position = gcsObject.lastIndexOf("/");
+        if (position != -1) index = dwhRootPrefix.indexOf(gcsObject) + position;
+        break;
+      default:
+        String errorMessage = String.format("File system scheme=%s is not yet supported", scheme);
+        logger.error(errorMessage);
+        throw new IllegalArgumentException(errorMessage);
+    }
+    return index;
+  }
+
+  private static String parseScheme(String spec) {
+    // The spec is almost, but not quite, a URI. In particular,
+    // the reserved characters '[', ']', and '?' have meanings that differ
+    // from their use in the URI spec. ('*' is not reserved).
+    // Here, we just need the scheme, which is so circumscribed as to be
+    // very easy to extract with a regex.
+    Matcher matcher = FILE_SCHEME_PATTERN.matcher(spec);
+
+    if (!matcher.matches()) {
+      return DEFAULT_SCHEME;
+    } else {
+      return matcher.group("scheme").toLowerCase();
+    }
   }
 }
