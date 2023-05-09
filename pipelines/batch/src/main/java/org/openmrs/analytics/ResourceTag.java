@@ -29,6 +29,8 @@ import org.hl7.fhir.r4.model.Coding;
 @Builder
 public class ResourceTag implements Serializable {
 
+  private static final int prime = 1000003;
+
   private static final long serialVersionUID = 1L;
 
   Coding coding;
@@ -55,13 +57,13 @@ public class ResourceTag implements Serializable {
 
   @Override
   public int hashCode() {
-    int h$ = 1;
-    h$ *= 1000003;
-    h$ ^= coding.hashCode();
-    h$ *= 1000003;
-    h$ ^= resourceId.hashCode();
-    h$ *= 1000003;
-    h$ ^= tagType.hashCode();
-    return h$;
+    int hash = 1;
+    hash *= prime;
+    hash ^= coding.hashCode();
+    hash *= prime;
+    hash ^= resourceId.hashCode();
+    hash *= prime;
+    hash ^= tagType.hashCode();
+    return hash;
   }
 }

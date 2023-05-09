@@ -20,6 +20,7 @@ import static org.hamcrest.Matchers.equalTo;
 
 import org.apache.commons.lang3.SerializationUtils;
 import org.hl7.fhir.r4.model.Coding;
+import org.junit.Assert;
 import org.junit.Test;
 
 public class ResourceTagTest {
@@ -97,12 +98,27 @@ public class ResourceTagTest {
   @Test
   public void testResourceTagSerializationWithoutCoding() {
 
-    ResourceTag resourceTag = ResourceTag.builder().resourceId("resourceId").build();
+    ResourceTag resourceTag = ResourceTag.builder().resourceId("resourceId").tagType(1).build();
 
     byte[] bytes = SerializationUtils.serialize(resourceTag);
     ResourceTag deserializedResourceTag = SerializationUtils.deserialize(bytes);
 
     assertThat(resourceTag.getResourceId(), equalTo(deserializedResourceTag.getResourceId()));
     assertThat(resourceTag.getTagType(), equalTo(deserializedResourceTag.getTagType()));
+  }
+
+  @Test
+  public void testResourceTagEqualsAndHashCode() {
+    Coding coding = new Coding();
+    coding.setId("123");
+    coding.setDisplay("display123");
+    coding.setSystem("system123");
+    ResourceTag resourceTag1 =
+        ResourceTag.builder().coding(coding).resourceId("resourceId").tagType(1).build();
+    ResourceTag resourceTag2 =
+        ResourceTag.builder().coding(coding).resourceId("resourceId").tagType(1).build();
+
+    Assert.assertTrue(resourceTag1.equals(resourceTag2) && resourceTag2.equals(resourceTag1));
+    Assert.assertTrue(resourceTag1.hashCode() == resourceTag2.hashCode());
   }
 }
