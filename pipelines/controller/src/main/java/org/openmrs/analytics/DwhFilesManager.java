@@ -18,7 +18,9 @@ package org.openmrs.analytics;
 import static org.apache.beam.sdk.io.FileSystems.DEFAULT_SCHEME;
 
 import com.google.common.base.Preconditions;
+import com.google.common.base.Strings;
 import java.io.IOException;
+import java.net.URI;
 import java.nio.file.DirectoryNotEmptyException;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -27,8 +29,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.TreeSet;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import javax.annotation.PostConstruct;
 import org.apache.beam.sdk.extensions.gcp.util.gcsfs.GcsPath;
@@ -61,13 +61,10 @@ public class DwhFilesManager {
 
   private LocalDateTime lastPurgeRunEnd;
 
-  private volatile boolean isPurgeJobRunning;
+  private boolean isPurgeJobRunning;
 
   private String dwhRootPrefix;
   private int numOfDwhSnapshotsToRetain;
-
-  private static final Pattern FILE_SCHEME_PATTERN =
-      Pattern.compile("(?<scheme>[a-zA-Z][-a-zA-Z0-9+.]*):/.*");
 
   private static final Logger logger = LoggerFactory.getLogger(DwhFilesManager.class.getName());
 
@@ -111,7 +108,7 @@ public class DwhFilesManager {
 
   // Every 5 minutes, check if the purge job needs to be triggered.
   @Scheduled(fixedDelay = 300000)
-  public void checkPurgeScheduleAndTrigger() {
+  void checkPurgeScheduleAndTrigger() {
     try {
       if (!lockPurgeJob()) {
         return;
@@ -244,15 +241,15 @@ public class DwhFilesManager {
   }
 
   /**
-   * This method tells us whether the dwh snapshot has been successfully completed by the pipeline.
+   * This method tells us whether the DWH snapshot has been successfully completed by the pipeline.
    * This is determined by checking the existence of both the timestamp files which needs to be
    * created at the start and end of the pipeline runs.
    *
-   * @param dwhResource The dwh resource path which needs to be checked for completeness
-   * @return the status of dwh completeness.
+   * @param dwhResource The DWH resource path which needs to be checked for completeness
+   * @return the status of DWH completeness.
    * @throws IOException
    */
-  public boolean isDwhComplete(ResourceId dwhResource) throws IOException {
+  boolean isDwhComplete(ResourceId dwhResource) throws IOException {
     ResourceId startTimestampResource =
         dwhResource.resolve(DwhFiles.TIMESTAMP_FILE_START, StandardResolveOptions.RESOLVE_FILE);
     ResourceId endTimestampResource =
@@ -287,7 +284,7 @@ public class DwhFilesManager {
    * @param dwhRootPrefix
    * @return the base directory name
    */
-  public String getBaseDir(String dwhRootPrefix) {
+  String getBaseDir(String dwhRootPrefix) {
     int index = getLastIndexOfSlash(dwhRootPrefix);
     if (index <= 0) {
       String errorMessage =
@@ -307,7 +304,7 @@ public class DwhFilesManager {
    * @param dwhRootPrefix
    * @return the prefix name
    */
-  public String getPrefix(String dwhRootPrefix) {
+  String getPrefix(String dwhRootPrefix) {
     int index = getLastIndexOfSlash(dwhRootPrefix);
     if (index <= 0) {
       String errorMessage =
@@ -335,7 +332,7 @@ public class DwhFilesManager {
    * @return The list of all child directories under the base directory
    * @throws IOException
    */
-  public Set<ResourceId> getAllChildDirectories(String baseDir) throws IOException {
+  Set<ResourceId> getAllChildDirectories(String baseDir) throws IOException {
     ResourceId resourceId =
         FileSystems.matchNewResource(baseDir, true)
             .resolve("*/*", StandardResolveOptions.RESOLVE_FILE);
@@ -378,17 +375,7 @@ public class DwhFilesManager {
   }
 
   private static String parseScheme(String spec) {
-    // The spec is almost, but not quite, a URI. In particular,
-    // the reserved characters '[', ']', and '?' have meanings that differ
-    // from their use in the URI spec. ('*' is not reserved).
-    // Here, we just need the scheme, which is so circumscribed as to be
-    // very easy to extract with a regex.
-    Matcher matcher = FILE_SCHEME_PATTERN.matcher(spec);
-
-    if (!matcher.matches()) {
-      return DEFAULT_SCHEME;
-    } else {
-      return matcher.group("scheme").toLowerCase();
-    }
+    URI uri = URI.create(spec);
+    return Strings.isNullOrEmpty(uri.getScheme()) ? DEFAULT_SCHEME : uri.getScheme();
   }
 }

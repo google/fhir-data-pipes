@@ -68,7 +68,7 @@ public class GcsDwhFilesManagerTest {
   }
 
   @Test
-  public void testIsDWHComplete_True() throws IOException {
+  public void testIsDwhComplete_True() throws IOException {
     String timestampStartFile = "gs://testbucket/testdirectory/timestamp_start.txt";
     List<StorageObjectOrIOException> startItems = new ArrayList<>();
     // Files within the directory
@@ -94,7 +94,7 @@ public class GcsDwhFilesManagerTest {
   }
 
   @Test
-  public void testIsDWHComplete_False() throws IOException {
+  public void testIsDwhComplete_False() throws IOException {
     String timestampStartFile = "gs://testbucket/testdirectory/timestamp_start.txt";
     List<StorageObjectOrIOException> startItems = new ArrayList<>();
     // Files within the directory
@@ -178,7 +178,8 @@ public class GcsDwhFilesManagerTest {
   @Test(expected = IllegalArgumentException.class)
   public void testPrefixForInvalidPath() {
     DwhFilesManager dwhFilesManager = new DwhFilesManager(dataProperties);
-    dwhFilesManager.getPrefix("gs://test-bucket/");
+    // GCS path should be of the format gs://<bucket>/baseDir>/<prefix>
+    dwhFilesManager.getPrefix("gs://test-bucket/prefix");
   }
 
   private StorageObject createStorageObject(String gcsFilename, long fileSize) {

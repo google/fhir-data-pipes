@@ -76,7 +76,7 @@ public class LocalDwhFilesManagerTest {
   }
 
   @Test
-  public void testIsDWHComplete_True() throws IOException {
+  public void testIsDwhComplete_True() throws IOException {
     File root = testFolder.newFolder("DWH_SOURCE_TEST");
     Path startTimestampPath = Paths.get(root.getPath(), "timestamp_start.txt");
     createFile(startTimestampPath, Instant.now().toString().getBytes(StandardCharsets.UTF_8));
@@ -88,7 +88,7 @@ public class LocalDwhFilesManagerTest {
   }
 
   @Test
-  public void testIsDWHComplete_False() throws IOException {
+  public void testIsDwhComplete_False() throws IOException {
     File root = testFolder.newFolder("DWH_SOURCE_TEST");
     Path startTimestampPath = Paths.get(root.getPath(), "timestamp_start.txt");
     createFile(startTimestampPath, Instant.now().toString().getBytes(StandardCharsets.UTF_8));
