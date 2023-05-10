@@ -165,7 +165,7 @@ public class GcsDwhFilesTest {
 
   @Test
   public void writeTimestampFile_FileAlreadyExists_ThrowsError() throws IOException {
-    String gcsFileName = "gs://testbucket/testdirectory/timestamp.txt";
+    String gcsFileName = "gs://testbucket/testdirectory/timestamp_start.txt";
     List<StorageObjectOrIOException> items = new ArrayList<>();
     // Files within the directory
     items.add(
@@ -173,12 +173,14 @@ public class GcsDwhFilesTest {
     Mockito.when(mockGcsUtil.getObjects(List.of(GcsPath.fromUri(gcsFileName)))).thenReturn(items);
 
     DwhFiles dwhFiles = new DwhFiles("gs://testbucket/testdirectory", FhirContext.forR4Cached());
-    Assert.assertThrows(FileAlreadyExistsException.class, () -> dwhFiles.writeTimestampFile());
+    Assert.assertThrows(
+        FileAlreadyExistsException.class,
+        () -> dwhFiles.writeTimestampFile(DwhFiles.TIMESTAMP_FILE_START));
   }
 
   @Test
   public void writeTimestampFile_FileDoesNotExist_CreatesFile() throws IOException {
-    String gcsFileName = "gs://testbucket/testdirectory/timestamp.txt";
+    String gcsFileName = "gs://testbucket/testdirectory/timestamp_start.txt";
     // Empty directory
     List<StorageObjectOrIOException> items = new ArrayList<>();
     items.add(StorageObjectOrIOException.create(new FileNotFoundException()));
@@ -192,7 +194,7 @@ public class GcsDwhFilesTest {
         .thenReturn(writableByteChannel);
 
     DwhFiles dwhFiles = new DwhFiles("gs://testbucket/testdirectory", FhirContext.forR4Cached());
-    dwhFiles.writeTimestampFile();
+    dwhFiles.writeTimestampFile(DwhFiles.TIMESTAMP_FILE_START);
 
     Mockito.verify(mockGcsUtil, Mockito.times(1)).getObjects(List.of(GcsPath.fromUri(gcsFileName)));
     Mockito.verify(mockGcsUtil, Mockito.times(1))
@@ -203,12 +205,12 @@ public class GcsDwhFilesTest {
 
   @Test
   public void readTimestampFile() throws IOException {
-    String gcsFileName = "gs://testbucket/testdirectory/timestamp.txt";
+    String gcsFileName = "gs://testbucket/testdirectory/timestamp_start.txt";
     Instant currentInstant = Instant.now();
     mockFileRead(gcsFileName, currentInstant);
 
     DwhFiles dwhFiles = new DwhFiles("gs://testbucket/testdirectory", FhirContext.forR4Cached());
-    Instant actualInstant = dwhFiles.readTimestampFile();
+    Instant actualInstant = dwhFiles.readTimestampFile(DwhFiles.TIMESTAMP_FILE_START);
 
     Assert.assertEquals(currentInstant.getEpochSecond(), actualInstant.getEpochSecond());
     Mockito.verify(mockGcsUtil, Mockito.times(1)).open(GcsPath.fromUri(gcsFileName));
