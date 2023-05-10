@@ -362,9 +362,18 @@ public class DwhFilesManager {
         index = dwhRootPrefix.lastIndexOf("/");
         break;
       case GcsPath.SCHEME:
-        String gcsObject = GcsPath.fromUri(dwhRootPrefix).getObject();
+        // Fetch the last index position of the character '/' after the bucket name in the gcs path.
+        GcsPath gcsPath = GcsPath.fromUri(dwhRootPrefix);
+        String gcsObject = gcsPath.getObject();
+        if (Strings.isNullOrEmpty(gcsObject)) {
+          break;
+        }
         int position = gcsObject.lastIndexOf("/");
-        if (position != -1) index = dwhRootPrefix.indexOf(gcsObject) + position;
+        if (position == -1) {
+          index = dwhRootPrefix.lastIndexOf(gcsObject) - 1;
+        } else {
+          index = dwhRootPrefix.lastIndexOf(gcsObject) + position;
+        }
         break;
       default:
         String errorMessage = String.format("File system scheme=%s is not yet supported", scheme);

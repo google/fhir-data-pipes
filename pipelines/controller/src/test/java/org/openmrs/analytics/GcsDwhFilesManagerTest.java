@@ -168,18 +168,23 @@ public class GcsDwhFilesManagerTest {
   @Test
   public void testPrefix() {
     DwhFilesManager dwhFilesManager = new DwhFilesManager(dataProperties);
-    String prefix1 = dwhFilesManager.getPrefix("gs://test-bucket/baseDir/prefix");
+
+    String prefix1 = dwhFilesManager.getPrefix("gs://test-bucket/prefix");
     assertThat(prefix1, equalTo("prefix"));
 
-    String prefix2 = dwhFilesManager.getPrefix("gs://test-bucket/baseDir/childDir/prefix");
+    String prefix2 = dwhFilesManager.getPrefix("gs://test-bucket/baseDir/prefix");
     assertThat(prefix2, equalTo("prefix"));
+
+    String prefix3 = dwhFilesManager.getPrefix("gs://test-bucket/baseDir/childDir/prefix");
+    assertThat(prefix3, equalTo("prefix"));
   }
 
   @Test(expected = IllegalArgumentException.class)
   public void testPrefixForInvalidPath() {
     DwhFilesManager dwhFilesManager = new DwhFilesManager(dataProperties);
-    // GCS path should be of the format gs://<bucket>/baseDir>/<prefix>
-    dwhFilesManager.getPrefix("gs://test-bucket/prefix");
+    // GCS Path should end with a non-empty suffix string after the last occurrence of the
+    // character '/'
+    dwhFilesManager.getPrefix("gs://test-bucket/baseDir/");
   }
 
   private StorageObject createStorageObject(String gcsFilename, long fileSize) {
