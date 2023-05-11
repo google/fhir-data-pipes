@@ -380,7 +380,7 @@ public class FhirEtl {
       return buildHapiJdbcPipeline(options);
     } else if (options.isJdbcModeEnabled()) {
       return buildOpenmrsJdbcPipeline(options, fhirContext);
-    } else if (!options.getSourceJsonFilePattern().isEmpty()) {
+    } else if (!Strings.isNullOrEmpty(options.getSourceJsonFilePattern())) {
       return buildJsonReadPipeline(options);
     } else {
       return buildFhirSearchPipeline(options, fhirContext);
@@ -402,7 +402,11 @@ public class FhirEtl {
     }
 
     Pipeline pipeline = buildPipeline(options);
-    EtlUtils.runPipelineWithTimestamp(pipeline, options);
+    if (pipeline != null) {
+      EtlUtils.runPipelineWithTimestamp(pipeline, options);
+    } else {
+      log.warn("No pipeline to run!");
+    }
 
     log.info("DONE!");
   }
