@@ -19,8 +19,8 @@ import com.google.auto.value.AutoValue;
 import com.google.common.base.Preconditions;
 import com.mchange.v2.c3p0.ComboPooledDataSource;
 import java.beans.PropertyVetoException;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
+import java.util.HashMap;
+import java.util.Map;
 import javax.sql.DataSource;
 import org.openmrs.analytics.model.DatabaseConfiguration;
 import org.slf4j.Logger;
@@ -29,8 +29,7 @@ import org.slf4j.LoggerFactory;
 public class JdbcConnectionPools {
   private static final Logger log = LoggerFactory.getLogger(JdbcConnectionPools.class);
 
-  private static final ConcurrentMap<DataSourceConfig, DataSource> dataSources =
-      new ConcurrentHashMap<>();
+  private static final Map<DataSourceConfig, DataSource> dataSources = new HashMap<>();
 
   // This class should not be instantiated!
   private JdbcConnectionPools() {}
