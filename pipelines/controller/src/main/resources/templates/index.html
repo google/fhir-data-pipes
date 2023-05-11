@@ -116,11 +116,23 @@
       var xhr = new XMLHttpRequest();
       xhr.open("POST", '/tables', true);
       xhr.send();
-      success.style.display = "block";
+      xhr.onreadystatechange = function() {
+        if (this.readyState === XMLHttpRequest.DONE && this.status === 200) {
+          console.log('Tables creation request submitted successfully.');
+          success.style.display = "block";
+        }
+        // Handle errors.
+        if (this.readyState === XMLHttpRequest.DONE && this.status != 200) {
+          console.log('Creation of tables failed: ' + this.response);
+          failure.style.display = "block";
+        }
+      }
+
     }
 
     setInterval(() => {
       success.style.display = "none";
+      failure.style.display = "none";
     }, 4000);
 
   </script>
@@ -252,6 +264,9 @@
         </div>
         <div class="alert alert-success" style="float:right;display:none;" id="success">
           Request for resource tables creation sent successfully.
+        </div>
+        <div class="alert alert-danger" style="float:right;display:none;" id="failure">
+          Something went wrong while creating resource tables.
         </div>
         <div style="margin-top: 50px">
           <h3>Configuration Settings</h3>

@@ -311,7 +311,7 @@ public class PipelineManager implements ApplicationListener<ApplicationReadyEven
 
   @Override
   public void onApplicationEvent(ApplicationReadyEvent applicationReadyEvent) {
-    createResourceTablesOnApplicationStart();
+    createResourceTables();
   }
 
   /**
@@ -321,7 +321,7 @@ public class PipelineManager implements ApplicationListener<ApplicationReadyEven
    * turns out to be null when used by
    * DatabaseConfiguration.createConfigFromFile(dataProperties.getThriftserverHiveConfig()).
    */
-  public void createResourceTablesOnApplicationStart() {
+  public void createResourceTables() {
     if (!dataProperties.isCreateHiveResourceTables()) {
       return;
     }

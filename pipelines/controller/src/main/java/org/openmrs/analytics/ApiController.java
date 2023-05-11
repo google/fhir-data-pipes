@@ -65,12 +65,13 @@ public class ApiController {
   }
 
   @PostMapping("/tables")
-  public void createResourceTables() {
+  public String createResourceTables() {
     if (pipelineManager.isRunning()) {
-      throw new IllegalStateException("Another pipeline is running!");
+      throw new IllegalStateException("Cannot create tables because another pipeline is running!");
     }
     logger.info("Received request to create request tables ...");
-    pipelineManager.createResourceTablesOnApplicationStart();
+    pipelineManager.createResourceTables();
+    return "SUCCESS";
   }
 
   private Stats getStats() {
