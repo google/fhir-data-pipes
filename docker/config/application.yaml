@@ -40,6 +40,10 @@ fhirdata:
   # "*/30 * * * * *" means in the middle of each minute;
   # Note a too frequent run might be too resource intensive.
   incrementalSchedule: "0 0 * * * *"
+  # cron expression to trigger the purge job which handles the ttl of dwh snapshots
+  purgeSchedule: "0 30 * * * *"
+  # The number of dwh snapshots to be retained when the purge job runs
+  numOfDwhSnapshotsToRetain: 2
   # Comma separated list of resources to fetch/monitor.
   resourceList: "Patient,Encounter,Observation"
   maxWorkers: 10

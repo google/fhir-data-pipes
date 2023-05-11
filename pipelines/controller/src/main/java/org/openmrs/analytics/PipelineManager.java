@@ -22,19 +22,13 @@ import java.beans.PropertyVetoException;
 import java.io.IOException;
 import java.sql.SQLException;
 import java.time.LocalDateTime;
-import java.util.Collections;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 import java.util.stream.Collectors;
 import javax.annotation.PostConstruct;
 import org.apache.beam.runners.flink.FlinkPipelineOptions;
 import org.apache.beam.runners.flink.FlinkRunner;
 import org.apache.beam.sdk.Pipeline;
 import org.apache.beam.sdk.io.FileSystems;
-import org.apache.beam.sdk.io.fs.MatchResult;
-import org.apache.beam.sdk.io.fs.MatchResult.Metadata;
-import org.apache.beam.sdk.io.fs.MatchResult.Status;
 import org.apache.beam.sdk.io.fs.ResolveOptions.StandardResolveOptions;
 import org.apache.beam.sdk.io.fs.ResourceId;
 import org.apache.beam.sdk.metrics.MetricQueryResults;
@@ -65,6 +59,8 @@ public class PipelineManager {
   @Autowired private DataProperties dataProperties;
 
   @Autowired private PipelineMetricsFactory pipelineMetricsFactory;
+
+  @Autowired private DwhFilesManager dwhFilesManager;
 
   private PipelineThread currentPipeline;
 
@@ -108,17 +104,21 @@ public class PipelineManager {
     Preconditions.checkState(rootPrefix != null && !rootPrefix.isEmpty());
 
     String lastDwh = "";
-    String baseDir = getBaseDir(rootPrefix);
+    String baseDir = dwhFilesManager.getBaseDir(rootPrefix);
     try {
-      String prefix = getPrefix(rootPrefix);
+      String prefix = dwhFilesManager.getPrefix(rootPrefix);
       List<ResourceId> paths =
-          getAllChildDirectories(baseDir).stream()
+          dwhFilesManager.getAllChildDirectories(baseDir).stream()
               .filter(dir -> dir.getFilename().startsWith(prefix))
               .collect(Collectors.toList());
 
       Preconditions.checkState(paths != null, "Make sure DWH prefix is a valid path!");
 
       for (ResourceId path : paths) {
+        // Do not consider if the DWH is not completely created earlier.
+        if (!dwhFilesManager.isDwhComplete(path)) {
+          continue;
+        }
         if (!path.getFilename().startsWith(prefix + DataProperties.TIMESTAMP_PREFIX)) {
           // This is not necessarily an error; the user may want to bootstrap from an already
           // created DWH outside the control-panel framework, e.g., by running the batch pipeline
@@ -149,52 +149,6 @@ public class PipelineManager {
       // There exists a DWH from before, so we set the scheduler to continue updating the DWH.
       lastRunEnd = LocalDateTime.now();
     }
-  }
-
-  private Set<ResourceId> getAllChildDirectories(String baseDir) throws IOException {
-    ResourceId resourceId =
-        FileSystems.matchNewResource(baseDir, true)
-            .resolve("*/*", StandardResolveOptions.RESOLVE_FILE);
-    List<MatchResult> matchResultList =
-        FileSystems.matchResources(Collections.singletonList(resourceId));
-    Set<ResourceId> childDirectories = new HashSet<>();
-    for (MatchResult matchResult : matchResultList) {
-      if (matchResult.status() == Status.OK && !matchResult.metadata().isEmpty()) {
-        for (Metadata metadata : matchResult.metadata()) {
-          childDirectories.add(metadata.resourceId().getCurrentDirectory());
-        }
-      } else if (matchResult.status() == Status.ERROR) {
-        logger.error("Error matching resource types under {} ", baseDir);
-        throw new IOException(String.format("Error matching resource types under %s", baseDir));
-      }
-    }
-    logger.info("Child resources : {}", childDirectories);
-    return childDirectories;
-  }
-
-  private String getBaseDir(String dwhRootPrefix) {
-    int index = dwhRootPrefix.lastIndexOf("/");
-    if (index <= 0) {
-      String errorMessage =
-          "dwhRootPrefix should be configured with a non-empty base directory. It should be of the"
-              + " format <baseDir>/<prefix>";
-      logger.error(errorMessage);
-      throw new IllegalArgumentException(errorMessage);
-    }
-    return dwhRootPrefix.substring(0, index);
-  }
-
-  private String getPrefix(String dwhRootPrefix) {
-    int index = dwhRootPrefix.lastIndexOf("/");
-    String prefix = dwhRootPrefix.substring(index + 1);
-    if (prefix == null || prefix.isBlank()) {
-      String errorMessage =
-          "dwhRootPrefix should be configured with a non-empty suffix string after the last"
-              + " occurrence of the character '/'";
-      logger.error(errorMessage);
-      throw new IllegalArgumentException(errorMessage);
-    }
-    return prefix;
   }
 
   synchronized boolean isBatchRun() {
@@ -266,7 +220,7 @@ public class PipelineManager {
     // TODO move old incremental_run dir if there is one
     String incrementalDwhRoot = currentDwh.newIncrementalRunPath().toString();
     options.setOutputParquetPath(incrementalDwhRoot);
-    String since = currentDwh.readTimestampFile().toString();
+    String since = currentDwh.readTimestampFile(DwhFiles.TIMESTAMP_FILE_START).toString();
     options.setSince(since);
     Pipeline pipeline = FhirEtl.buildPipeline(options);
 
