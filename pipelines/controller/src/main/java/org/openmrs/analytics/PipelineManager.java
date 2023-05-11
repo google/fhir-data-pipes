@@ -24,8 +24,8 @@ import java.sql.SQLException;
 import java.time.LocalDateTime;
 import java.util.Collections;
 import java.util.Comparator;
-import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 import javax.annotation.PostConstruct;
 import org.apache.beam.runners.flink.FlinkPipelineOptions;
@@ -285,28 +285,28 @@ public class PipelineManager implements ApplicationListener<ApplicationReadyEven
     DatabaseConfiguration dbConfig;
     try {
       dbConfig =
-              DatabaseConfiguration.createConfigFromFile(dataProperties.getThriftserverHiveConfig());
+          DatabaseConfiguration.createConfigFromFile(dataProperties.getThriftserverHiveConfig());
     } catch (IOException e) {
       logger.error("Exception while reading thrift hive config.");
       throw new RuntimeException(e);
     }
     HiveTableManager hiveTableManager =
-            new HiveTableManager(
-                    dbConfig.makeJdbsUrlFromConfig(),
-                    dbConfig.getDatabaseUser(),
-                    dbConfig.getDatabasePassword());
+        new HiveTableManager(
+            dbConfig.makeJdbsUrlFromConfig(),
+            dbConfig.getDatabaseUser(),
+            dbConfig.getDatabasePassword());
 
     String rootPrefix = dataProperties.getDwhRootPrefix();
     Preconditions.checkState(rootPrefix != null && !rootPrefix.isEmpty());
 
-    String prefix = getPrefix(rootPrefix);
-    String baseDir = getBaseDir(rootPrefix);
+    String prefix = dwhFilesManager.getPrefix(rootPrefix);
+    String baseDir = dwhFilesManager.getBaseDir(rootPrefix);
 
     try {
       List<ResourceId> paths =
-              getAllChildDirectories(baseDir).stream()
-                      .filter(dir -> dir.getFilename().startsWith(prefix + DataProperties.TIMESTAMP_PREFIX))
-                      .collect(Collectors.toList());
+          dwhFilesManager.getAllChildDirectories(baseDir).stream()
+              .filter(dir -> dir.getFilename().startsWith(prefix + DataProperties.TIMESTAMP_PREFIX))
+              .collect(Collectors.toList());
 
       Preconditions.checkState(paths != null, "Make sure DWH prefix is a valid path!");
 
@@ -316,14 +316,15 @@ public class PipelineManager implements ApplicationListener<ApplicationReadyEven
       int snapshotCount = 0;
       for (ResourceId path : paths) {
         snapshotCount++;
-        Set<ResourceId> childPaths = getAllChildDirectories(baseDir + "/" + path.getFilename());
+        Set<ResourceId> childPaths =
+            dwhFilesManager.getAllChildDirectories(baseDir + "/" + path.getFilename());
         for (ResourceId resourceId : childPaths) {
           String resource = resourceId.getFilename();
           String[] tokens = path.getFilename().split(prefix + DataProperties.TIMESTAMP_PREFIX);
           if (tokens.length > 1) {
             String timestamp = tokens[1];
             String thriftServerParquetPath =
-                    baseDir + "/" + path.getFilename() + "/" + resourceId.getFilename();
+                baseDir + "/" + path.getFilename() + "/" + resourceId.getFilename();
             logger.debug("thriftServerParquetPath: ", thriftServerParquetPath);
             hiveTableManager.createResourceTable(resource, timestamp, thriftServerParquetPath);
             // Create Canonical table for the latest snapshot.
