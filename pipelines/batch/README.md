@@ -79,8 +79,8 @@ These parameters are used regardless of other pipeline options.
 
 ### FHIR-Search input parameters
 
-The pipeline will use FHIR-Search to fetch data as long as `jdbcModeEnabled` is
-unset or false.
+The pipeline will use FHIR-Search to fetch data as long as `jdbcModeEnabled` and
+`jdbcModeHapi` are unset or false.
 
 - `fhirServerUrl` - The base URL of the source FHIR server. Required.
 - `fhirServerUserName` - The HTTP Basic Auth username to access the FHIR server
@@ -106,7 +106,6 @@ and edit the values to match your database server.
   - `jdbcModeEnabled=true`
 - HAPI FHIR server
   - `jdbcModeHapi=true`
-  - `jdbcDriverClass=org.postgresql.Driver`
 
 3: Specify the path to your config file.
 
@@ -121,9 +120,6 @@ All JDBC parameters:
   Default: `../utils/hapi-postgres-config.json`
 - `jdbcFetchSize` - The fetch size of each JDBC database query. Default: `10000`
 - `jdbcMaxPoolSize` - The maximum number of database connections. Default: `50`
-- `jdbcDriverClass` - The JDBC driver to use. Should be set to
-  `org.postgresql.Driver` for HAPI FHIR Postgres access. Default:
-  `com.mysql.cj.jdbc.Driver`
 
 ### Parquet output parameters
 

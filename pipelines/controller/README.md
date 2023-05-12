@@ -2,10 +2,10 @@
 
 The FHIR Pipelines Controller helps you schedule and manage the continuous
 transformation of data from a [HAPI FHIR server](https://hapifhir.io/) to a
-collection of Apache Parquet files. It uses the FHIR Data Pipes JDBC pipeline to
-run either full or incremental transformations to a Parquet data warehouse.
+collection of Apache Parquet files. It uses the FHIR Data Pipes pipeline to run
+either full or incremental transformations to a Parquet data warehouse.
 
-The FHIR Pipelines Controller only works with HAPI FHIR servers using Postgres.
+The JDBC mode of FHIR Pipelines Controller only works with HAPI FHIR servers.
 You can see
 [an example of configuring a HAPI FHIR server to use Postgres here](https://github.com/hapifhir/hapi-fhir-jpaserver-starter#postgresql-configuration).
 
