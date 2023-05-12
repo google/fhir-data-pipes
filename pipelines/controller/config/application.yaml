@@ -16,9 +16,12 @@
 
 fhirdata:
   # This is the base URL of the FHIR server; 172.17.0.1 is an example docker
-  # network interface address.
-  fhirServerUrl: "http://172.17.0.1:8091/fhir"
+  # network interface address. If `dbConfig` is not set, resources are fetched
+  # through the FHIR search API.
+  fhirServerUrl: ""
 
+  # If this is set, resources are fetched directly from the HAPI database. In
+  # this case the value of `fhirServerUrl` is ignored.
   dbConfig: "config/hapi-postgres-config.json"
 
   # for GCS file system the dwhRootPrefix should be of the format
@@ -36,10 +39,21 @@ fhirdata:
   # Note a too frequent run might be too resource intensive.
   incrementalSchedule: "0 0 * * * *"
 
+  # cron expression to trigger the purge job which handles the ttl of dwh snapshots
+  purgeSchedule: "0 30 * * * *"
+
+  # The number of dwh snapshots to be retained when the purge job runs
+  numOfDwhSnapshotsToRetain: 2
+
   # Comma separated list of resources to fetch/monitor.
   resourceList: "Patient,Encounter,Observation"
 
-  maxWorkers: 10
+  # Maximum number of workers. Each worker may have numThreads parallel threads.
+  maxWorkers: 1
+
+  # If this is set to a positive number, that many threads are used per worker,
+  # otherwise, number of threads would be equal to the number of cores.
+  numThreads: -1
 
   createHiveResourceTables: false
 

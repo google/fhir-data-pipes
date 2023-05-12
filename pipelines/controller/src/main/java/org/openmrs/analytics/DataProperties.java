@@ -16,6 +16,7 @@
 package org.openmrs.analytics;
 
 import com.google.common.base.Preconditions;
+import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import java.lang.reflect.InvocationTargetException;
@@ -74,9 +75,15 @@ public class DataProperties {
 
   private String incrementalSchedule;
 
+  private String purgeSchedule;
+
+  private int numOfDwhSnapshotsToRetain;
+
   private String resourceList;
 
   private int maxWorkers;
+
+  private int numThreads;
 
   private String thriftserverHiveConfig;
 
@@ -87,6 +94,19 @@ public class DataProperties {
   @PostConstruct
   void validateProperties() throws ClassNotFoundException {
     CronExpression.parse(incrementalSchedule);
+
+    Preconditions.checkArgument(
+        !Strings.isNullOrEmpty(fhirServerUrl) || !Strings.isNullOrEmpty(dbConfig),
+        "At least one of fhirServerUrl or dbConfig should be set!");
+
+    if (!Strings.isNullOrEmpty(dbConfig) && !Strings.isNullOrEmpty(fhirServerUrl)) {
+      logger.warn("Both fhirServerUrl and dbConfig are set; ignoring fhirServerUrl!");
+    }
+    if (Strings.isNullOrEmpty(dbConfig) && !Strings.isNullOrEmpty(fhirServerUrl)) {
+      // TODO implement search mode: https://github.com/google/fhir-data-pipes/issues/494
+      logger.error("FHIR-search mode is not yet supported for the incremental merge!");
+      throw new IllegalArgumentException("dbConfig should be set");
+    }
 
     if (createHiveResourceTables) {
       try {
@@ -101,7 +121,8 @@ public class DataProperties {
 
   PipelineConfig createBatchOptions() {
     FhirEtlOptions options = PipelineOptionsFactory.as(FhirEtlOptions.class);
-    logger.info("Converting options for fhirServerUrl {}", fhirServerUrl);
+    logger.info(
+        "Converting options for fhirServerUrl {} and DB config {}", fhirServerUrl, dbConfig);
     options.setFhirServerUrl(fhirServerUrl);
     options.setFhirDatabaseConfigPath(dbConfig);
     options.setResourceList(resourceList);
@@ -123,6 +144,9 @@ public class DataProperties {
     options.setRunner(FlinkRunner.class);
     FlinkPipelineOptions flinkOptions = options.as(FlinkPipelineOptions.class);
     flinkOptions.setMaxParallelism(getMaxWorkers());
+    if (numThreads > 0) {
+      flinkOptions.setParallelism(numThreads);
+    }
 
     pipelineConfigBuilder.fhirEtlOptions(options);
     return pipelineConfigBuilder.build();
@@ -134,6 +158,12 @@ public class DataProperties {
         new ConfigFields("fhirdata.fhirServerUrl", fhirServerUrl, "", ""),
         new ConfigFields("fhirdata.dwhRootPrefix", dwhRootPrefix, "", ""),
         new ConfigFields("fhirdata.incrementalSchedule", incrementalSchedule, "", ""),
+        new ConfigFields("fhirdata.purgeSchedule", purgeSchedule, "", ""),
+        new ConfigFields(
+            "fhirdata.numOfDwhSnapshotsToRetain",
+            String.valueOf(numOfDwhSnapshotsToRetain),
+            "",
+            ""),
         new ConfigFields("fhirdata.resourceList", resourceList, "", ""),
         new ConfigFields("fhirdata.maxWorkers", String.valueOf(maxWorkers), "", ""),
         new ConfigFields("fhirdata.dbConfig", dbConfig, "", ""));
