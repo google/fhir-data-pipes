@@ -19,43 +19,58 @@ import com.google.auto.value.AutoValue;
 import com.google.common.base.Preconditions;
 import com.mchange.v2.c3p0.ComboPooledDataSource;
 import java.beans.PropertyVetoException;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 import javax.sql.DataSource;
 import org.openmrs.analytics.model.DatabaseConfiguration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/**
+ * This is a Singleton that is intended for managing all JDBC connection pools. It guarantees that
+ * for each DB config, we only have one pool per JVM.
+ */
 public class JdbcConnectionPools {
   private static final Logger log = LoggerFactory.getLogger(JdbcConnectionPools.class);
 
-  private static final Map<DataSourceConfig, DataSource> dataSources = new HashMap<>();
+  private static JdbcConnectionPools instance = null;
+
+  private final ConcurrentMap<DataSourceConfig, DataSource> dataSources = new ConcurrentHashMap<>();
 
   // This class should not be instantiated!
   private JdbcConnectionPools() {}
+
+  public static synchronized JdbcConnectionPools getInstance() {
+    if (instance == null) {
+      instance = new JdbcConnectionPools();
+    }
+    return instance;
+  }
 
   /**
    * Creates a new connection pool for the given config or return an already created one if one
    * exists. The pool size parameters are just hints and won't be used if a pool already exists for
    * the given configuration. This method is to impose a Singleton pattern for each config.
    *
+   * <p>Note in the context of our Beam pipelines, we only serialize `DataSourceConfig` objects and
+   * create `DataSource` from them when necessary; i.e., do not serialize the returned `DataSource`
+   * in our code. Some Beam libraries like JdbcIO may serialize `DataSource` but they should
+   * properly handle the singleton pattern needed for pooled data-sources.
+   *
    * @param config the JDBC connection information
    * @param initialPoolSize initial pool size if a new pool is created.
    * @param jdbcMaxPoolSize maximum pool size if a new pool is created.
-   * @return
+   * @return a pooling DataSource for the given DB config
    */
-  public static synchronized DataSource getPooledDataSource(
+  public DataSource getPooledDataSource(
       DataSourceConfig config, int initialPoolSize, int jdbcMaxPoolSize)
       throws PropertyVetoException {
-    if (!dataSources.containsKey(config)) {
-      dataSources.put(config, createNewPool(config, initialPoolSize, jdbcMaxPoolSize));
-    }
+    dataSources.computeIfAbsent(config, c -> createNewPool(c, initialPoolSize, jdbcMaxPoolSize));
     return dataSources.get(config);
   }
 
   private static DataSource createNewPool(
-      DataSourceConfig config, int initialPoolSize, int jdbcMaxPoolSize)
-      throws PropertyVetoException {
+      DataSourceConfig config, int initialPoolSize, int jdbcMaxPoolSize) {
     log.info(
         "Creating a JDBC connection pool for "
             + config.jdbcUrl()
@@ -71,7 +86,13 @@ public class JdbcConnectionPools {
     // connections (and memory) as its threads are not killed and can hold those objects; this was
     // the case even with `setNumHelperThreads(0)`.
     ComboPooledDataSource comboPooledDataSource = new ComboPooledDataSource();
-    comboPooledDataSource.setDriverClass(config.jdbcDriverClass());
+    try {
+      comboPooledDataSource.setDriverClass(config.jdbcDriverClass());
+    } catch (PropertyVetoException e) {
+      String errorMes = "Error in setting the JDBC driver class " + config.jdbcDriverClass();
+      log.error(errorMes);
+      throw new IllegalArgumentException(errorMes, e);
+    }
     comboPooledDataSource.setJdbcUrl(config.jdbcUrl());
     comboPooledDataSource.setUser(config.dbUser());
     comboPooledDataSource.setPassword(config.dbPassword());

@@ -103,11 +103,6 @@ abstract class FetchSearchPageFn<T> extends DoFn<T, KV<String, Integer>> {
 
   protected FhirContext fhirContext;
 
-  protected DatabaseConfiguration dbConfig;
-
-  // We create only one instance of this in setup.
-  private DataSource jdbcSource = null;
-
   FetchSearchPageFn(FhirEtlOptions options, String stageIdentifier) {
     this.sinkPath = options.getFhirSinkPath();
     this.sinkUsername = options.getSinkUserName();
@@ -186,10 +181,11 @@ abstract class FetchSearchPageFn<T> extends DoFn<T, KV<String, Integer>> {
             rowGroupSize,
             stageIdentifier + "_");
     if (sinkDbConfig != null) {
-      jdbcSource =
-          JdbcConnectionPools.getPooledDataSource(sinkDbConfig, initialPoolSize, maxPoolSize);
+      DataSource jdbcSink =
+          JdbcConnectionPools.getInstance()
+              .getPooledDataSource(sinkDbConfig, initialPoolSize, maxPoolSize);
       jdbcWriter =
-          new JdbcResourceWriter(jdbcSource, sinkDbTableName, useSingleSinkDbTable, fhirContext);
+          new JdbcResourceWriter(jdbcSink, sinkDbTableName, useSingleSinkDbTable, fhirContext);
     }
   }
 

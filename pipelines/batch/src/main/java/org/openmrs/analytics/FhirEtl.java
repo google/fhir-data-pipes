@@ -160,10 +160,11 @@ public class FhirEtl {
 
   private static DataSource createJdbcPooledDataSource(
       FhirEtlOptions options, DatabaseConfiguration dbConfig) throws PropertyVetoException {
-    return JdbcConnectionPools.getPooledDataSource(
-        JdbcConnectionPools.dbConfigToDataSourceConfig(dbConfig),
-        options.getJdbcInitialPoolSize(),
-        options.getJdbcMaxPoolSize());
+    return JdbcConnectionPools.getInstance()
+        .getPooledDataSource(
+            JdbcConnectionPools.dbConfigToDataSourceConfig(dbConfig),
+            options.getJdbcInitialPoolSize(),
+            options.getJdbcMaxPoolSize());
   }
 
   private static Pipeline buildOpenmrsJdbcPipeline(FhirEtlOptions options, FhirContext fhirContext)
