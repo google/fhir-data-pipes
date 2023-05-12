@@ -31,6 +31,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import javax.sql.DataSource;
 import org.apache.beam.sdk.io.jdbc.JdbcIO;
 import org.apache.beam.sdk.metrics.Counter;
 import org.apache.beam.sdk.metrics.Metrics;
@@ -52,10 +53,10 @@ public class JdbcFetchHapi {
 
   private static final Logger log = LoggerFactory.getLogger(JdbcFetchHapi.class);
 
-  private JdbcConnectionUtil jdbcConnectionUtil;
+  private DataSource jdbcSource;
 
-  JdbcFetchHapi(JdbcConnectionUtil jdbcConnectionUtil) {
-    this.jdbcConnectionUtil = jdbcConnectionUtil;
+  JdbcFetchHapi(DataSource jdbcSource) {
+    this.jdbcSource = jdbcSource;
   }
 
   /**
@@ -334,7 +335,7 @@ public class JdbcFetchHapi {
       } else { // incremental mode
         builder.append(" AND res.res_updated > '").append(since).append("'");
       }
-      try (Connection connection = jdbcConnectionUtil.getDataSource().getConnection();
+      try (Connection connection = jdbcSource.getConnection();
           PreparedStatement statement =
               createPreparedStatement(connection, builder.toString(), resourceType);
           ResultSet resultSet = statement.executeQuery()) {

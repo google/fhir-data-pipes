@@ -136,7 +136,7 @@ public class ConvertResourceFn extends FetchSearchPageFn<HapiRowDescriptor> {
       fhirStoreUtil.uploadResource(resource);
       totalPushTimeMillisMap.get(resourceType).inc(System.currentTimeMillis() - startTime);
     }
-    if (!this.sinkDbUrl.isEmpty()) {
+    if (this.sinkDbConfig != null) {
       // TODO : Remove the deleted resources from the sink database
       // https://github.com/google/fhir-data-pipes/issues/588
       jdbcWriter.writeResource(resource);
