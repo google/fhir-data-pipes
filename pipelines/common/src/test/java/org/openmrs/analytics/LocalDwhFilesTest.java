@@ -109,11 +109,13 @@ public class LocalDwhFilesTest {
   @Test
   public void writeTimestampFile_FileAlreadyExists_ThrowsError() throws IOException {
     Path root = Files.createTempDirectory("DWH_FILES_TEST");
-    Path timestampPath = Paths.get(root.toString(), "timestamp.txt");
+    Path timestampPath = Paths.get(root.toString(), "timestamp_start.txt");
     createFile(timestampPath, Instant.now().toString().getBytes(StandardCharsets.UTF_8));
     DwhFiles dwhFiles = new DwhFiles(root.toString(), FhirContext.forR4Cached());
 
-    Assert.assertThrows(FileAlreadyExistsException.class, () -> dwhFiles.writeTimestampFile());
+    Assert.assertThrows(
+        FileAlreadyExistsException.class,
+        () -> dwhFiles.writeTimestampFile(DwhFiles.TIMESTAMP_FILE_START));
 
     Files.delete(timestampPath);
     Files.delete(root);
@@ -124,11 +126,12 @@ public class LocalDwhFilesTest {
     Path root = Files.createTempDirectory("DWH_FILES_TEST");
     DwhFiles dwhFiles = new DwhFiles(root.toString(), FhirContext.forR4Cached());
 
-    dwhFiles.writeTimestampFile();
+    dwhFiles.writeTimestampFile(DwhFiles.TIMESTAMP_FILE_START);
 
     List<Path> destFiles = Files.list(root).collect(Collectors.toList());
     assertThat(destFiles.size(), equalTo(1));
-    assertThat(destFiles.get(0).toString(), equalTo(root.resolve("timestamp.txt").toString()));
+    assertThat(
+        destFiles.get(0).toString(), equalTo(root.resolve("timestamp_start.txt").toString()));
 
     Files.delete(destFiles.get(0));
     Files.delete(root);
@@ -138,11 +141,11 @@ public class LocalDwhFilesTest {
   public void readTimestampFile() throws IOException {
     Path root = Files.createTempDirectory("DWH_FILES_TEST");
     Instant currentInstant = Instant.now();
-    Path timestampPath = Paths.get(root.toString(), "timestamp.txt");
+    Path timestampPath = Paths.get(root.toString(), "timestamp_start.txt");
     createFile(timestampPath, currentInstant.toString().getBytes(StandardCharsets.UTF_8));
     DwhFiles dwhFiles = new DwhFiles(root.toString(), FhirContext.forR4Cached());
 
-    Instant actualInstant = dwhFiles.readTimestampFile();
+    Instant actualInstant = dwhFiles.readTimestampFile(DwhFiles.TIMESTAMP_FILE_START);
 
     Assert.assertEquals(currentInstant.getEpochSecond(), actualInstant.getEpochSecond());
 

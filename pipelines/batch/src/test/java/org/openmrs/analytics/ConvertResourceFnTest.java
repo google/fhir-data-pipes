@@ -92,9 +92,9 @@ public class ConvertResourceFnTest {
   }
 
   @Test
-  public void testProcessDeletedPatientResourceWithFlagFalse()
+  public void testProcessDeletedPatientResourceFullMode()
       throws SQLException, IOException, ParseException, PropertyVetoException {
-    String[] args = {"--outputParquetPath=SOME_PATH", "--processDeletedRecords=false"};
+    String[] args = {"--outputParquetPath=SOME_PATH", "--since="};
     setUp(args);
     // Deleted Patient resource
     HapiRowDescriptor element =
@@ -105,9 +105,9 @@ public class ConvertResourceFnTest {
   }
 
   @Test
-  public void testProcessDeletedPatientResourceWithFlagTrue()
+  public void testProcessDeletedPatientResourceIncrementalMode()
       throws SQLException, IOException, ParseException, PropertyVetoException {
-    String[] args = {"--outputParquetPath=SOME_PATH", "--processDeletedRecords=true"};
+    String[] args = {"--outputParquetPath=SOME_PATH", "--since=NON-EMPTY"};
     setUp(args);
     // Deleted Patient resource
     HapiRowDescriptor element =
