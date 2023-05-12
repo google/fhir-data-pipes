@@ -16,10 +16,24 @@
 
 # This config is meant to work with `compose-controller-spark-sql.yaml`.
 fhirdata:
-  fhirServerUrl: "http://hapi-server:8080/fhir"
+  # This is the base URL of the FHIR server; 172.17.0.1 is an example docker
+  # network interface address; `hapi-server` is another docker example where
+  # a container with that name is running on the same docker network.
+  # If `dbConfig` is not set, resources are fetched through the FHIR search API.
+  # fhirServerUrl: "http://172.17.0.1:8091/fhir"
+  # fhirServerUrl: "http://hapi-server:8080/fhir"
+
+  # If this is set, resources are fetched directly from the HAPI database. In
+  # this case the value of `fhirServerUrl` is ignored.
   dbConfig: "config/hapi-postgres-config_local.json"
+
+  # For GCS file system the dwhRootPrefix should be of the format
+  # "gs://<bucket>/<baseDirPath>/<prefix>". For Unix file system the
+  # dwhRootPrefix should be of the format "/<baseDirPath>/<prefix>".
   dwhRootPrefix: "/dwh/controller_DWH"
+
   thriftserverHiveConfig: "config/thriftserver-hive-config_local.json"
+
   # The schedule format is similar to Spring's CronExpression, i.e.,
   # "second minute hour day-of-the-month month day-of-the-week", e.g.,
   # "0 0 * * * *" means top of every hour;

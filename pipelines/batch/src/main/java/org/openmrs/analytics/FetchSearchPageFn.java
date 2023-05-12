@@ -163,7 +163,7 @@ abstract class FetchSearchPageFn<T> extends DoFn<T, KV<String, Integer>> {
         // Note `IIdType.getIdPart` extracts only the logical ID part when exporting but that code
         // path does not work for URNs (e.g., when importing files).
         new ParserOptions().setOverrideResourceIdWithBundleEntryFullUrl(false));
-    fhirContext.getRestfulClientFactory().setSocketTimeout(20000);
+    fhirContext.getRestfulClientFactory().setSocketTimeout(40000);
     // Note this parser is not used when fetching resources from a HAPI server. That's why we need
     // to change the `setOverrideResourceIdWithBundleEntryFullUrl` globally above such that the
     // parsers used in the HAPI client code is impacted too.

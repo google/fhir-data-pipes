@@ -18,6 +18,7 @@ package org.openmrs.analytics;
 import ca.uhn.fhir.context.FhirContext;
 import com.cerner.bunsen.FhirContexts;
 import com.google.common.base.Preconditions;
+import com.google.common.base.Strings;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
@@ -31,7 +32,6 @@ import java.util.Map;
 import java.util.Set;
 import javax.sql.DataSource;
 import org.apache.beam.sdk.Pipeline;
-import org.apache.beam.sdk.PipelineResult;
 import org.apache.beam.sdk.coders.CannotProvideCoderException;
 import org.apache.beam.sdk.io.FileIO;
 import org.apache.beam.sdk.io.jdbc.JdbcIO;
@@ -122,7 +122,7 @@ public class FhirEtl {
     }
   }
 
-  static void runFhirFetch(FhirEtlOptions options, FhirContext fhirContext) throws IOException {
+  private static Pipeline buildFhirSearchPipeline(FhirEtlOptions options, FhirContext fhirContext) {
     FhirSearchUtil fhirSearchUtil = createFhirSearchUtil(options, fhirContext);
     Map<String, List<SearchSegmentDescriptor>> segmentMap = Maps.newHashMap();
     try {
@@ -138,7 +138,7 @@ public class FhirEtl {
       throw e;
     }
     if (segmentMap.isEmpty()) {
-      return;
+      return null;
     }
 
     Pipeline pipeline = Pipeline.create(options);
@@ -155,7 +155,7 @@ public class FhirEtl {
       fetchPatientHistory(
           pipeline, allPatientIds, patientAssociatedResources, options, fhirContext);
     }
-    EtlUtils.runPipelineWithTimestamp(pipeline, options);
+    return pipeline;
   }
 
   private static DataSource createJdbcPooledDataSource(
@@ -167,8 +167,10 @@ public class FhirEtl {
             options.getJdbcMaxPoolSize());
   }
 
-  static void runFhirJdbcFetch(FhirEtlOptions options, FhirContext fhirContext)
-      throws PropertyVetoException, IOException, SQLException, CannotProvideCoderException {
+  private static Pipeline buildOpenmrsJdbcPipeline(FhirEtlOptions options, FhirContext fhirContext)
+      throws PropertyVetoException, IOException, SQLException {
+    // TODO add incremental support.
+    Preconditions.checkArgument(Strings.isNullOrEmpty(options.getSince()));
     FhirSearchUtil fhirSearchUtil = createFhirSearchUtil(options, fhirContext);
     Pipeline pipeline = Pipeline.create(options);
     DatabaseConfiguration dbConfig =
@@ -195,9 +197,16 @@ public class FhirEtl {
         }
         uuids = jdbcUtil.fetchAllUuids(pipeline, tableName, options.getJdbcFetchSize());
       } else {
-        uuids =
-            jdbcUtil.fetchUuidsByDate(
-                pipeline, tableName, tableDateColumn.get(tableName), options.getActivePeriod());
+        try {
+          uuids =
+              jdbcUtil.fetchUuidsByDate(
+                  pipeline, tableName, tableDateColumn.get(tableName), options.getActivePeriod());
+        } catch (CannotProvideCoderException e) {
+          // This should never happen!
+          String error = "Cannot provide coder for String! " + e.getMessage();
+          log.error("{} {}", error, e);
+          throw new IllegalStateException(error);
+        }
       }
       for (String resourceType : entry.getValue()) {
         resourceTypes.add(resourceType);
@@ -215,7 +224,7 @@ public class FhirEtl {
       fetchPatientHistory(
           pipeline, allPatientIds, patientAssociatedResources, options, fhirContext);
     }
-    EtlUtils.runPipelineWithTimestamp(pipeline, options);
+    return pipeline;
   }
 
   private static void validateOptions(FhirEtlOptions options)
@@ -273,16 +282,12 @@ public class FhirEtl {
     }
   }
 
-  /**
-   * Driver function for running JDBC direct fetch mode with a HAPI source server. The JDBC fetch
-   * mode uses Beam JdbcIO to fetch FHIR resources directly from the HAPI server's database and uses
-   * the ParquetUtil to write resources.
-   */
-  // TODO: Implement active period feature for JDBC mode with a HAPI source server (Github issue
-  // #278).
-  static Pipeline buildHapiJdbcFetch(
-      FhirEtlOptions options, DatabaseConfiguration dbConfig, FhirContext fhirContext)
-      throws PropertyVetoException, SQLException {
+  // TODO: Implement active period feature for JDBC mode with a HAPI source server (issue #278).
+  private static Pipeline buildHapiJdbcPipeline(FhirEtlOptions options)
+      throws PropertyVetoException, SQLException, IOException {
+    Preconditions.checkArgument(!Strings.isNullOrEmpty(options.getFhirDatabaseConfigPath()));
+    DatabaseConfiguration dbConfig =
+        DatabaseConfiguration.createConfigFromFile(options.getFhirDatabaseConfigPath());
     boolean foundResource = false;
     Pipeline pipeline = Pipeline.create(options);
     DataSource jdbcSource = createJdbcPooledDataSource(options, dbConfig);
@@ -335,18 +340,8 @@ public class FhirEtl {
     return null;
   }
 
-  static PipelineResult runHapiJdbcFetch(FhirEtlOptions options, FhirContext fhirContext)
-      throws PropertyVetoException, IOException, SQLException {
-    DatabaseConfiguration dbConfig =
-        DatabaseConfiguration.createConfigFromFile(options.getFhirDatabaseConfigPath());
-    Pipeline pipeline = buildHapiJdbcFetch(options, dbConfig, fhirContext);
-    if (pipeline != null) {
-      return EtlUtils.runPipelineWithTimestamp(pipeline, options);
-    }
-    return null;
-  }
-
-  static void runJsonRead(FhirEtlOptions options) throws IOException {
+  private static Pipeline buildJsonReadPipeline(FhirEtlOptions options) throws IOException {
+    Preconditions.checkArgument(Strings.isNullOrEmpty(options.getSince()));
     Preconditions.checkArgument(!options.getSourceJsonFilePattern().isEmpty());
     Preconditions.checkArgument(!options.isJdbcModeEnabled());
     Preconditions.checkArgument(options.getActivePeriod().isEmpty());
@@ -358,11 +353,42 @@ public class FhirEtl {
             .apply(FileIO.readMatches());
     files.apply("Read JSON files", ParDo.of(new ReadJsonFilesFn(options)));
 
-    EtlUtils.runPipelineWithTimestamp(pipeline, options);
+    return pipeline;
   }
 
-  public static void main(String[] args)
-      throws CannotProvideCoderException, PropertyVetoException, IOException, SQLException {
+  /**
+   * Pipeline builder for fetching resources from a FHIR server. The mode of the pipeline is decided
+   * based on the given `options`. There are currently four modes in this priority order:
+   *
+   * <p>1) Fetching directly from the HAPI database if `options.isJdbcModeHapi()` is set.
+   *
+   * <p>2) A combination of direct DB and OpenMRS FHIR API access if `options.isJdbcModeEnabled()`.
+   *
+   * <p>3) Reading from input JSON files if `options.getSourceJsonFilePattern()` is set.
+   *
+   * <p>4) Using FHIR search API if none of the above options are set.
+   *
+   * <p>Depending on the options, the created pipeline may write into Parquet files, push resources
+   * to another FHIR server, write into another database, etc.
+   *
+   * @param options the pipeline options to be used.
+   * @return the created Pipeline instance or null if nothing needs to be done.
+   */
+  static Pipeline buildPipeline(FhirEtlOptions options)
+      throws PropertyVetoException, IOException, SQLException {
+    FhirContext fhirContext = FhirContexts.forR4();
+    if (options.isJdbcModeHapi()) {
+      return buildHapiJdbcPipeline(options);
+    } else if (options.isJdbcModeEnabled()) {
+      return buildOpenmrsJdbcPipeline(options, fhirContext);
+    } else if (!Strings.isNullOrEmpty(options.getSourceJsonFilePattern())) {
+      return buildJsonReadPipeline(options);
+    } else {
+      return buildFhirSearchPipeline(options, fhirContext);
+    }
+  }
+
+  public static void main(String[] args) throws PropertyVetoException, IOException, SQLException {
 
     ParquetUtil.initializeAvroConverters();
 
@@ -371,22 +397,18 @@ public class FhirEtl {
         PipelineOptionsFactory.fromArgs(args).withValidation().as(FhirEtlOptions.class);
     log.info("Flags: " + options);
     validateOptions(options);
-    // TODO: Check if we can use some sort of dependency-injection (e.g., `@Autowired`).
-    FhirContext fhirContext = FhirContexts.forR4();
 
     if (!options.getSinkDbConfigPath().isEmpty()) {
       JdbcResourceWriter.createTables(options);
     }
 
-    if (options.isJdbcModeHapi()) {
-      runHapiJdbcFetch(options, fhirContext);
-    } else if (options.isJdbcModeEnabled()) {
-      runFhirJdbcFetch(options, fhirContext);
-    } else if (!options.getSourceJsonFilePattern().isEmpty()) {
-      runJsonRead(options);
+    Pipeline pipeline = buildPipeline(options);
+    if (pipeline != null) {
+      EtlUtils.runPipelineWithTimestamp(pipeline, options);
     } else {
-      runFhirFetch(options, fhirContext);
+      log.warn("No pipeline to run!");
     }
+
     log.info("DONE!");
   }
 }
