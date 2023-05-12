@@ -37,7 +37,6 @@
     <hamcrest.version>2.2</hamcrest.version>
     <jackson.version>2.14.2</jackson.version>
     <pubsub.version>v1-rev20220904-2.0.0</pubsub.version>
-    <auto-value.version>1.10.1</auto-value.version>
     <spark.version>2.4.8</spark.version>
     <maven-surefire-plugin.version>3.0.0</maven-surefire-plugin.version>
     <nemo.version>0.1</nemo.version>
@@ -105,19 +104,6 @@
       <groupId>org.apache.beam</groupId>
       <artifactId>beam-sdks-java-io-google-cloud-platform</artifactId>
       <version>${beam.version}</version>
-    </dependency>
-
-    <!-- Using AutoValue for POJOs used in PCollections. -->
-    <dependency>
-      <groupId>com.google.auto.value</groupId>
-      <artifactId>auto-value-annotations</artifactId>
-      <version>${auto-value.version}</version>
-    </dependency>
-    <dependency>
-      <groupId>com.google.auto.value</groupId>
-      <artifactId>auto-value</artifactId>
-      <version>${auto-value.version}</version>
-      <optional>true</optional>
     </dependency>
 
     <!-- Hamcrest and JUnit are required dependencies of PAssert,

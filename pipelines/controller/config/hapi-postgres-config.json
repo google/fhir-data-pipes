@@ -1,4 +1,5 @@
 {
+  "jdbcDriverClass": "org.postgresql.Driver",
   "databaseService" : "postgresql",
   "databaseHostName" : "172.17.0.1",
   "databasePort" : "5432",

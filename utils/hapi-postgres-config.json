@@ -1,4 +1,5 @@
 {
+  "jdbcDriverClass" : "org.postgresql.Driver",
   "databaseService" : "postgresql",
   "databaseHostName" : "hapi-fhir-db",
   "databasePort" : "5432",

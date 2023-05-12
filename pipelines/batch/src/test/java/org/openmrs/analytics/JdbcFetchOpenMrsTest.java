@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2022 Google LLC
+ * Copyright 2020-2023 Google LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@ package org.openmrs.analytics;
 
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.withSettings;
 
 import ca.uhn.fhir.context.FhirContext;
 import ca.uhn.fhir.parser.IParser;
@@ -26,6 +27,7 @@ import java.io.File;
 import java.io.IOException;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
+import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
@@ -34,6 +36,7 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import javax.sql.DataSource;
 import junit.framework.TestCase;
 import org.apache.beam.sdk.coders.CannotProvideCoderException;
 import org.apache.beam.sdk.io.jdbc.JdbcIO;
@@ -50,6 +53,7 @@ import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnitRunner;
 import org.openmrs.analytics.model.DatabaseConfiguration;
 
@@ -70,6 +74,8 @@ public class JdbcFetchOpenMrsTest extends TestCase {
 
   private String basePath = "/tmp/JUNIT/Parquet/TEST/";
 
+  private DataSource mockedDataSource;
+
   private DatabaseConfiguration dbConfig;
 
   @Before
@@ -88,17 +94,8 @@ public class JdbcFetchOpenMrsTest extends TestCase {
     dbConfig =
         DatabaseConfiguration.createConfigFromFile("../../utils/dbz_event_to_fhir_config.json");
 
-    JdbcConnectionUtil jdbcConnectionUtil =
-        new JdbcConnectionUtil(
-            options.getJdbcDriverClass(),
-            dbConfig.makeJdbsUrlFromConfig(),
-            dbConfig.getDatabaseUser(),
-            dbConfig.getDatabasePassword(),
-            options.getJdbcInitialPoolSize(),
-            options.getJdbcMaxPoolSize());
-    // TODO jdbcConnectionUtil should be replaced by a mocked JdbcConnectionUtil which does not
-    // depend on options either, since we don't need real DB connections for unit-testing.
-    jdbcFetchUtil = new JdbcFetchOpenMrs(jdbcConnectionUtil);
+    mockedDataSource = mock(DataSource.class, withSettings().serializable());
+    jdbcFetchUtil = new JdbcFetchOpenMrs(mockedDataSource);
     parquetUtil = new ParquetUtil(fhirContext.getVersion().getVersion(), basePath);
     // clean up if folder exists
     File file = new File(basePath);
@@ -179,12 +176,13 @@ public class JdbcFetchOpenMrsTest extends TestCase {
   @Test
   public void testFetchAllUuidUtilonEmptyTable() throws SQLException, CannotProvideCoderException {
     JdbcFetchOpenMrs mockedJdbcFetchUtil = mock(JdbcFetchOpenMrs.class);
-    JdbcConnectionUtil mockedJdbcConnectionUtil = mock(JdbcConnectionUtil.class);
     Statement mockedStatement = mock(Statement.class);
     ResultSet mockedResultSet = mock(ResultSet.class);
-    mockedJdbcFetchUtil = new JdbcFetchOpenMrs(mockedJdbcConnectionUtil);
+    mockedJdbcFetchUtil = new JdbcFetchOpenMrs(mockedDataSource);
 
-    when(mockedJdbcConnectionUtil.createStatement()).thenReturn(mockedStatement);
+    Connection mockedConnection = Mockito.mock(Connection.class);
+    when(mockedDataSource.getConnection()).thenReturn(mockedConnection);
+    when(mockedConnection.createStatement()).thenReturn(mockedStatement);
     when(mockedStatement.executeQuery("SELECT MAX(`obs_id`) as max_id FROM obs"))
         .thenReturn(mockedResultSet);
     when(mockedResultSet.getInt("max_id")).thenReturn(0);
