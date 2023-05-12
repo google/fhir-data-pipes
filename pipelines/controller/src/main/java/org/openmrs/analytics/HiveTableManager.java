@@ -60,7 +60,7 @@ public class HiveTableManager {
     //  (https://github.com/google/fhir-data-pipes/issues/483)
     try (Connection connection = DriverManager.getConnection(jdbcUrl)) {
       for (String resource : resources) {
-        createResourceTable(connection, resource, timestamp, thriftServerParquetPath);
+        createResourceAndCanonicalTables(connection, resource, timestamp, thriftServerParquetPath);
       }
     }
   }
@@ -73,29 +73,75 @@ public class HiveTableManager {
    * files, thriftServerParquetPath is the exact path for parquet files and resource shall be the
    * respective resource name e.g. Patient
    */
-  private void createResourceTable(
+  private void createResourceAndCanonicalTables(
       Connection connection, String resource, String timestamp, String thriftServerParquetPath)
       throws SQLException {
+
+    String sql =
+        String.format(
+            "CREATE TABLE IF NOT EXISTS default.%s_%s USING PARQUET LOCATION '%s/%s/%s'",
+            resource,
+            timestamp,
+            THRIFT_CONTAINER_PARQUET_PATH_PREFIX,
+            thriftServerParquetPath,
+            resource);
+    executeSql(connection, sql);
+
+    // Drop canonical table if exists.
+    sql = String.format("DROP TABLE IF EXISTS default.%s", resource);
+    executeSql(connection, sql);
+
+    // Create canonical table with latest parquet files.
+    sql =
+        String.format(
+            "CREATE TABLE IF NOT EXISTS default.%s USING PARQUET LOCATION '%s/%s/%s'",
+            resource, THRIFT_CONTAINER_PARQUET_PATH_PREFIX, thriftServerParquetPath, resource);
+    executeSql(connection, sql);
+  }
+
+  /**
+   * The method creates resource tables with names suffixed with given timestamp if not present. It
+   * excepts complete parquet files path.
+   *
+   * @param resource FHIR resource type.
+   * @param timestamp timestamp string to be used for resource table name.
+   * @param thriftServerParquetPath directory path having output parquet files.
+   * @throws SQLException
+   */
+  public void createResourceTable(String resource, String timestamp, String thriftServerParquetPath)
+      throws SQLException {
+
+    String sql =
+        String.format(
+            "CREATE TABLE IF NOT EXISTS default.%s_%s USING PARQUET LOCATION '%s'",
+            resource, timestamp, thriftServerParquetPath);
+    try (Connection connection = DriverManager.getConnection(jdbcUrl)) {
+      executeSql(connection, sql);
+    }
+  }
+
+  /**
+   * This method creates canonical resource tables if not present. It excepts complete parquet files
+   * path.
+   *
+   * @param resource FHIR resource type.
+   * @param thriftServerParquetPath directory path having output parquet files.
+   * @throws SQLException
+   */
+  public void createResourceCanonicalTable(String resource, String thriftServerParquetPath)
+      throws SQLException {
+
+    String sql =
+        String.format(
+            "CREATE TABLE IF NOT EXISTS default.%s USING PARQUET LOCATION '%s'",
+            resource, thriftServerParquetPath);
+    try (Connection connection = DriverManager.getConnection(jdbcUrl)) {
+      executeSql(connection, sql);
+    }
+  }
+
+  private void executeSql(Connection connection, String sql) throws SQLException {
     try (Statement statement = connection.createStatement()) {
-      String sql =
-          String.format(
-              "CREATE TABLE IF NOT EXISTS default.%s_%s USING PARQUET LOCATION '%s/%s/%s'",
-              resource,
-              timestamp,
-              THRIFT_CONTAINER_PARQUET_PATH_PREFIX,
-              thriftServerParquetPath,
-              resource);
-      statement.execute(sql);
-
-      // Drop canonical table if exists.
-      sql = String.format("DROP TABLE IF EXISTS default.%s", resource);
-      statement.execute(sql);
-
-      // Create canonical table with latest parquet files.
-      sql =
-          String.format(
-              "CREATE TABLE IF NOT EXISTS default.%s USING PARQUET LOCATION '%s/%s/%s'",
-              resource, THRIFT_CONTAINER_PARQUET_PATH_PREFIX, thriftServerParquetPath, resource);
       statement.execute(sql);
     }
   }

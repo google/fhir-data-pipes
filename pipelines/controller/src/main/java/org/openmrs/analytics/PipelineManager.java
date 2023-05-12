@@ -22,7 +22,10 @@ import java.beans.PropertyVetoException;
 import java.io.IOException;
 import java.sql.SQLException;
 import java.time.LocalDateTime;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 import javax.annotation.PostConstruct;
 import org.apache.beam.runners.flink.FlinkPipelineOptions;
@@ -39,6 +42,8 @@ import org.openmrs.analytics.model.DatabaseConfiguration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.context.event.ApplicationReadyEvent;
+import org.springframework.context.ApplicationListener;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.scheduling.support.CronExpression;
@@ -52,7 +57,7 @@ import org.springframework.stereotype.Component;
  */
 @EnableScheduling
 @Component
-public class PipelineManager {
+public class PipelineManager implements ApplicationListener<ApplicationReadyEvent> {
 
   private static final Logger logger = LoggerFactory.getLogger(PipelineManager.class.getName());
 
@@ -257,6 +262,84 @@ public class PipelineManager {
           new PipelineThread(pipeline, mergerOptions, this, dataProperties, pipelineConfig, false);
       logger.info("Running incremental pipeline for DWH {} since {}", currentDwh.getRoot(), since);
       currentPipeline.start();
+    }
+  }
+
+  @Override
+  public void onApplicationEvent(ApplicationReadyEvent applicationReadyEvent) {
+    createResourceTables();
+  }
+
+  /**
+   * This method checks upon Controller start checks on Thrift sever to create resource tables if
+   * they don't exist. There is a @PostConstruct method present in this class which is initDwhStatus
+   * and the reason below code has not been added because dataProperties.getThriftserverHiveConfig()
+   * turns out to be null when used by
+   * DatabaseConfiguration.createConfigFromFile(dataProperties.getThriftserverHiveConfig()).
+   */
+  public void createResourceTables() {
+    if (!dataProperties.isCreateHiveResourceTables()) {
+      return;
+    }
+
+    DatabaseConfiguration dbConfig;
+    try {
+      dbConfig =
+          DatabaseConfiguration.createConfigFromFile(dataProperties.getThriftserverHiveConfig());
+    } catch (IOException e) {
+      logger.error("Exception while reading thrift hive config.");
+      throw new RuntimeException(e);
+    }
+    HiveTableManager hiveTableManager =
+        new HiveTableManager(
+            dbConfig.makeJdbsUrlFromConfig(),
+            dbConfig.getDatabaseUser(),
+            dbConfig.getDatabasePassword());
+
+    String rootPrefix = dataProperties.getDwhRootPrefix();
+    Preconditions.checkState(rootPrefix != null && !rootPrefix.isEmpty());
+
+    String prefix = dwhFilesManager.getPrefix(rootPrefix);
+    String baseDir = dwhFilesManager.getBaseDir(rootPrefix);
+
+    try {
+      List<ResourceId> paths =
+          dwhFilesManager.getAllChildDirectories(baseDir).stream()
+              .filter(dir -> dir.getFilename().startsWith(prefix + DataProperties.TIMESTAMP_PREFIX))
+              .collect(Collectors.toList());
+
+      Preconditions.checkState(paths != null, "Make sure DWH prefix is a valid path!");
+
+      // Sort snapshots directories.
+      Collections.sort(paths, Comparator.comparing(ResourceId::toString));
+
+      int snapshotCount = 0;
+      for (ResourceId path : paths) {
+        snapshotCount++;
+        Set<ResourceId> childPaths =
+            dwhFilesManager.getAllChildDirectories(baseDir + "/" + path.getFilename());
+        for (ResourceId resourceId : childPaths) {
+          String resource = resourceId.getFilename();
+          String[] tokens = path.getFilename().split(prefix + DataProperties.TIMESTAMP_PREFIX);
+          if (tokens.length > 1) {
+            String timestamp = tokens[1];
+            String thriftServerParquetPath =
+                baseDir + "/" + path.getFilename() + "/" + resourceId.getFilename();
+            logger.debug("thriftServerParquetPath: ", thriftServerParquetPath);
+            hiveTableManager.createResourceTable(resource, timestamp, thriftServerParquetPath);
+            // Create Canonical table for the latest snapshot.
+            if (snapshotCount == paths.size()) {
+              hiveTableManager.createResourceCanonicalTable(resource, thriftServerParquetPath);
+            }
+          }
+        }
+      }
+    } catch (IOException e) {
+      logger.error("Exception while reading thriftserver parquet output directory: ", e);
+      throw new RuntimeException(e);
+    } catch (SQLException e) {
+      logger.error("Exception while creating resource tables on thriftserver: ", e);
+      throw new RuntimeException(e);
     }
   }
 
