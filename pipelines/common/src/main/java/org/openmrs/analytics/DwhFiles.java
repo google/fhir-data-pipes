@@ -56,7 +56,9 @@ public class DwhFiles {
 
   private static final Logger log = LoggerFactory.getLogger(DwhFiles.class);
 
-  private static final String TIMESTAMP_FILE = "timestamp.txt";
+  public static final String TIMESTAMP_FILE_START = "timestamp_start.txt";
+
+  public static final String TIMESTAMP_FILE_END = "timestamp_end.txt";
 
   private static final String INCREMENTAL_DIR = "incremental_run";
 
@@ -229,14 +231,14 @@ public class DwhFiles {
     FileSystems.copy(sourceResourceIdList, destResourceIdList);
   }
 
-  public void writeTimestampFile() throws IOException {
-    writeTimestampFile(Instant.now());
+  public void writeTimestampFile(String fileName) throws IOException {
+    writeTimestampFile(Instant.now(), fileName);
   }
 
-  public void writeTimestampFile(Instant instant) throws IOException {
+  public void writeTimestampFile(Instant instant, String fileName) throws IOException {
     ResourceId resourceId =
         FileSystems.matchNewResource(getRoot(), true)
-            .resolve(TIMESTAMP_FILE, StandardResolveOptions.RESOLVE_FILE);
+            .resolve(fileName, StandardResolveOptions.RESOLVE_FILE);
     List<MatchResult> matches = FileSystems.matchResources(Collections.singletonList(resourceId));
     MatchResult matchResult = Iterables.getOnlyElement(matches);
 
@@ -244,7 +246,7 @@ public class DwhFiles {
       String errorMessage =
           String.format(
               "Attempting to write to the timestamp file %s which already exists",
-              getRoot() + "/" + TIMESTAMP_FILE);
+              getRoot() + "/" + fileName);
       log.error(errorMessage);
       throw new FileAlreadyExistsException(errorMessage);
     } else if (matchResult.status() == Status.NOT_FOUND) {
@@ -256,16 +258,16 @@ public class DwhFiles {
       String errorMessage =
           String.format(
               "Error matching file spec %s: status %s",
-              getRoot() + "/" + TIMESTAMP_FILE, matchResult.status());
+              getRoot() + "/" + fileName, matchResult.status());
       log.error(errorMessage);
       throw new IOException(errorMessage);
     }
   }
 
-  public Instant readTimestampFile() throws IOException {
+  public Instant readTimestampFile(String fileName) throws IOException {
     ResourceId resourceId =
         FileSystems.matchNewResource(getRoot(), true)
-            .resolve(TIMESTAMP_FILE, StandardResolveOptions.RESOLVE_FILE);
+            .resolve(fileName, StandardResolveOptions.RESOLVE_FILE);
     List<String> result = new ArrayList<>();
     ReadableByteChannel channel = FileSystems.open(resourceId);
     try (InputStream stream = Channels.newInputStream(channel)) {
@@ -278,7 +280,7 @@ public class DwhFiles {
     }
     if (result.isEmpty()) {
       String errorMessage =
-          String.format("The timestamp file %s is empty", getRoot() + "/" + TIMESTAMP_FILE);
+          String.format("The timestamp file %s is empty", getRoot() + "/" + fileName);
       log.error(errorMessage);
       throw new IllegalStateException(errorMessage);
     }

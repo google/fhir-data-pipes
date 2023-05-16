@@ -23,7 +23,7 @@ import java.io.IOException;
 import java.sql.SQLException;
 import java.time.LocalDateTime;
 import java.util.Collections;
-import java.util.HashSet;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -32,9 +32,6 @@ import org.apache.beam.runners.flink.FlinkPipelineOptions;
 import org.apache.beam.runners.flink.FlinkRunner;
 import org.apache.beam.sdk.Pipeline;
 import org.apache.beam.sdk.io.FileSystems;
-import org.apache.beam.sdk.io.fs.MatchResult;
-import org.apache.beam.sdk.io.fs.MatchResult.Metadata;
-import org.apache.beam.sdk.io.fs.MatchResult.Status;
 import org.apache.beam.sdk.io.fs.ResolveOptions.StandardResolveOptions;
 import org.apache.beam.sdk.io.fs.ResourceId;
 import org.apache.beam.sdk.metrics.MetricQueryResults;
@@ -45,6 +42,8 @@ import org.openmrs.analytics.model.DatabaseConfiguration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.context.event.ApplicationReadyEvent;
+import org.springframework.context.ApplicationListener;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.scheduling.support.CronExpression;
@@ -58,13 +57,15 @@ import org.springframework.stereotype.Component;
  */
 @EnableScheduling
 @Component
-public class PipelineManager {
+public class PipelineManager implements ApplicationListener<ApplicationReadyEvent> {
 
   private static final Logger logger = LoggerFactory.getLogger(PipelineManager.class.getName());
 
   @Autowired private DataProperties dataProperties;
 
   @Autowired private PipelineMetricsFactory pipelineMetricsFactory;
+
+  @Autowired private DwhFilesManager dwhFilesManager;
 
   private PipelineThread currentPipeline;
 
@@ -108,17 +109,21 @@ public class PipelineManager {
     Preconditions.checkState(rootPrefix != null && !rootPrefix.isEmpty());
 
     String lastDwh = "";
-    String baseDir = getBaseDir(rootPrefix);
+    String baseDir = dwhFilesManager.getBaseDir(rootPrefix);
     try {
-      String prefix = getPrefix(rootPrefix);
+      String prefix = dwhFilesManager.getPrefix(rootPrefix);
       List<ResourceId> paths =
-          getAllChildDirectories(baseDir).stream()
+          dwhFilesManager.getAllChildDirectories(baseDir).stream()
               .filter(dir -> dir.getFilename().startsWith(prefix))
               .collect(Collectors.toList());
 
       Preconditions.checkState(paths != null, "Make sure DWH prefix is a valid path!");
 
       for (ResourceId path : paths) {
+        // Do not consider if the DWH is not completely created earlier.
+        if (!dwhFilesManager.isDwhComplete(path)) {
+          continue;
+        }
         if (!path.getFilename().startsWith(prefix + DataProperties.TIMESTAMP_PREFIX)) {
           // This is not necessarily an error; the user may want to bootstrap from an already
           // created DWH outside the control-panel framework, e.g., by running the batch pipeline
@@ -149,52 +154,6 @@ public class PipelineManager {
       // There exists a DWH from before, so we set the scheduler to continue updating the DWH.
       lastRunEnd = LocalDateTime.now();
     }
-  }
-
-  private Set<ResourceId> getAllChildDirectories(String baseDir) throws IOException {
-    ResourceId resourceId =
-        FileSystems.matchNewResource(baseDir, true)
-            .resolve("*/*", StandardResolveOptions.RESOLVE_FILE);
-    List<MatchResult> matchResultList =
-        FileSystems.matchResources(Collections.singletonList(resourceId));
-    Set<ResourceId> childDirectories = new HashSet<>();
-    for (MatchResult matchResult : matchResultList) {
-      if (matchResult.status() == Status.OK && !matchResult.metadata().isEmpty()) {
-        for (Metadata metadata : matchResult.metadata()) {
-          childDirectories.add(metadata.resourceId().getCurrentDirectory());
-        }
-      } else if (matchResult.status() == Status.ERROR) {
-        logger.error("Error matching resource types under {} ", baseDir);
-        throw new IOException(String.format("Error matching resource types under %s", baseDir));
-      }
-    }
-    logger.info("Child resources : {}", childDirectories);
-    return childDirectories;
-  }
-
-  private String getBaseDir(String dwhRootPrefix) {
-    int index = dwhRootPrefix.lastIndexOf("/");
-    if (index <= 0) {
-      String errorMessage =
-          "dwhRootPrefix should be configured with a non-empty base directory. It should be of the"
-              + " format <baseDir>/<prefix>";
-      logger.error(errorMessage);
-      throw new IllegalArgumentException(errorMessage);
-    }
-    return dwhRootPrefix.substring(0, index);
-  }
-
-  private String getPrefix(String dwhRootPrefix) {
-    int index = dwhRootPrefix.lastIndexOf("/");
-    String prefix = dwhRootPrefix.substring(index + 1);
-    if (prefix == null || prefix.isBlank()) {
-      String errorMessage =
-          "dwhRootPrefix should be configured with a non-empty suffix string after the last"
-              + " occurrence of the character '/'";
-      logger.error(errorMessage);
-      throw new IllegalArgumentException(errorMessage);
-    }
-    return prefix;
   }
 
   synchronized boolean isBatchRun() {
@@ -237,20 +196,11 @@ public class PipelineManager {
     }
   }
 
-  private Pipeline buildJdbcPipeline(FhirEtlOptions options)
-      throws IOException, PropertyVetoException, SQLException {
-    DatabaseConfiguration dbConfig =
-        DatabaseConfiguration.createConfigFromFile(options.getFhirDatabaseConfigPath());
-    FhirContext fhirContext = FhirContexts.forR4();
-    logger.info("Creating HAPI JDBC pipeline with options {}", options);
-    return FhirEtl.buildHapiJdbcFetch(options, dbConfig, fhirContext);
-  }
-
   synchronized void runBatchPipeline() throws IOException, PropertyVetoException, SQLException {
     Preconditions.checkState(!isRunning(), "cannot start a pipeline while another one is running");
     PipelineConfig pipelineConfig = dataProperties.createBatchOptions();
     FhirEtlOptions options = pipelineConfig.getFhirEtlOptions();
-    Pipeline pipeline = buildJdbcPipeline(options);
+    Pipeline pipeline = FhirEtl.buildPipeline(options);
     if (pipeline == null) {
       logger.warn("No resources found to be fetched!");
       return;
@@ -275,10 +225,9 @@ public class PipelineManager {
     // TODO move old incremental_run dir if there is one
     String incrementalDwhRoot = currentDwh.newIncrementalRunPath().toString();
     options.setOutputParquetPath(incrementalDwhRoot);
-    String since = currentDwh.readTimestampFile().toString();
+    String since = currentDwh.readTimestampFile(DwhFiles.TIMESTAMP_FILE_START).toString();
     options.setSince(since);
-    options.setProcessDeletedRecords(Boolean.TRUE);
-    Pipeline pipeline = buildJdbcPipeline(options);
+    Pipeline pipeline = FhirEtl.buildPipeline(options);
 
     // The merger pipeline merges the original full DWH with the new incremental one.
     ParquetMergerOptions mergerOptions = PipelineOptionsFactory.as(ParquetMergerOptions.class);
@@ -290,6 +239,9 @@ public class PipelineManager {
     FlinkPipelineOptions flinkOptions = mergerOptions.as(FlinkPipelineOptions.class);
     flinkOptions.setFasterCopy(true);
     flinkOptions.setMaxParallelism(dataProperties.getMaxWorkers());
+    if (dataProperties.getNumThreads() > 0) {
+      flinkOptions.setParallelism(dataProperties.getNumThreads());
+    }
 
     if (pipeline == null) {
       // TODO communicate this to the UI
@@ -301,6 +253,84 @@ public class PipelineManager {
           new PipelineThread(pipeline, mergerOptions, this, dataProperties, pipelineConfig, false);
       logger.info("Running incremental pipeline for DWH {} since {}", currentDwh.getRoot(), since);
       currentPipeline.start();
+    }
+  }
+
+  @Override
+  public void onApplicationEvent(ApplicationReadyEvent applicationReadyEvent) {
+    createResourceTables();
+  }
+
+  /**
+   * This method checks upon Controller start checks on Thrift sever to create resource tables if
+   * they don't exist. There is a @PostConstruct method present in this class which is initDwhStatus
+   * and the reason below code has not been added because dataProperties.getThriftserverHiveConfig()
+   * turns out to be null when used by
+   * DatabaseConfiguration.createConfigFromFile(dataProperties.getThriftserverHiveConfig()).
+   */
+  public void createResourceTables() {
+    if (!dataProperties.isCreateHiveResourceTables()) {
+      return;
+    }
+
+    DatabaseConfiguration dbConfig;
+    try {
+      dbConfig =
+          DatabaseConfiguration.createConfigFromFile(dataProperties.getThriftserverHiveConfig());
+    } catch (IOException e) {
+      logger.error("Exception while reading thrift hive config.");
+      throw new RuntimeException(e);
+    }
+    HiveTableManager hiveTableManager =
+        new HiveTableManager(
+            dbConfig.makeJdbsUrlFromConfig(),
+            dbConfig.getDatabaseUser(),
+            dbConfig.getDatabasePassword());
+
+    String rootPrefix = dataProperties.getDwhRootPrefix();
+    Preconditions.checkState(rootPrefix != null && !rootPrefix.isEmpty());
+
+    String prefix = dwhFilesManager.getPrefix(rootPrefix);
+    String baseDir = dwhFilesManager.getBaseDir(rootPrefix);
+
+    try {
+      List<ResourceId> paths =
+          dwhFilesManager.getAllChildDirectories(baseDir).stream()
+              .filter(dir -> dir.getFilename().startsWith(prefix + DataProperties.TIMESTAMP_PREFIX))
+              .collect(Collectors.toList());
+
+      Preconditions.checkState(paths != null, "Make sure DWH prefix is a valid path!");
+
+      // Sort snapshots directories.
+      Collections.sort(paths, Comparator.comparing(ResourceId::toString));
+
+      int snapshotCount = 0;
+      for (ResourceId path : paths) {
+        snapshotCount++;
+        Set<ResourceId> childPaths =
+            dwhFilesManager.getAllChildDirectories(baseDir + "/" + path.getFilename());
+        for (ResourceId resourceId : childPaths) {
+          String resource = resourceId.getFilename();
+          String[] tokens = path.getFilename().split(prefix + DataProperties.TIMESTAMP_PREFIX);
+          if (tokens.length > 1) {
+            String timestamp = tokens[1];
+            String thriftServerParquetPath =
+                baseDir + "/" + path.getFilename() + "/" + resourceId.getFilename();
+            logger.debug("thriftServerParquetPath: ", thriftServerParquetPath);
+            hiveTableManager.createResourceTable(resource, timestamp, thriftServerParquetPath);
+            // Create Canonical table for the latest snapshot.
+            if (snapshotCount == paths.size()) {
+              hiveTableManager.createResourceCanonicalTable(resource, thriftServerParquetPath);
+            }
+          }
+        }
+      }
+    } catch (IOException e) {
+      logger.error("Exception while reading thriftserver parquet output directory: ", e);
+      throw new RuntimeException(e);
+    } catch (SQLException e) {
+      logger.error("Exception while creating resource tables on thriftserver: ", e);
+      throw new RuntimeException(e);
     }
   }
 

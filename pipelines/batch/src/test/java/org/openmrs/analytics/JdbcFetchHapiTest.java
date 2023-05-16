@@ -18,7 +18,6 @@ package org.openmrs.analytics;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 
-import com.mchange.v2.c3p0.ComboPooledDataSource;
 import java.beans.PropertyVetoException;
 import java.io.IOException;
 import java.sql.Connection;
@@ -27,6 +26,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.List;
 import java.util.Map;
+import javax.sql.DataSource;
 import junit.framework.TestCase;
 import org.apache.beam.sdk.options.PipelineOptionsFactory;
 import org.apache.beam.sdk.testing.TestPipeline;
@@ -44,6 +44,8 @@ public class JdbcFetchHapiTest extends TestCase {
 
   @Rule public transient TestPipeline testPipeline = TestPipeline.create();
 
+  @Mock private DataSource mockedDataSource;
+
   @Mock private ResultSet resultSet;
 
   private FhirEtlOptions options;
@@ -57,16 +59,7 @@ public class JdbcFetchHapiTest extends TestCase {
     String[] args = {"--jdbcModeHapi=true", "--jdbcMaxPoolSize=48", "--jdbcFetchSize=10000"};
     options = PipelineOptionsFactory.fromArgs(args).withValidation().as(FhirEtlOptions.class);
     dbConfig = DatabaseConfiguration.createConfigFromFile("../../utils/hapi-postgres-config.json");
-    JdbcConnectionUtil jdbcConnectionUtil =
-        new JdbcConnectionUtil(
-            options.getJdbcDriverClass(),
-            dbConfig.makeJdbsUrlFromConfig(),
-            dbConfig.getDatabaseUser(),
-            dbConfig.getDatabasePassword(),
-            options.getJdbcInitialPoolSize(),
-            options.getJdbcMaxPoolSize());
-
-    jdbcFetchHapi = new JdbcFetchHapi(jdbcConnectionUtil);
+    jdbcFetchHapi = new JdbcFetchHapi(mockedDataSource);
   }
 
   @Test
@@ -110,10 +103,6 @@ public class JdbcFetchHapiTest extends TestCase {
     String resourceList = "Patient,Encounter,Observation";
     String since = "2002-03-12T10:09:20.123456Z";
 
-    JdbcConnectionUtil mockedJdbcConnectionUtil = Mockito.mock(JdbcConnectionUtil.class);
-    ComboPooledDataSource mockedDataSource = Mockito.mock(ComboPooledDataSource.class);
-    Mockito.when(mockedJdbcConnectionUtil.getDataSource()).thenReturn(mockedDataSource);
-    JdbcFetchHapi jdbcFetchHapi1 = new JdbcFetchHapi(mockedJdbcConnectionUtil);
     Connection mockedConnection = Mockito.mock(Connection.class);
     PreparedStatement mockedPreparedStatement = Mockito.mock(PreparedStatement.class);
     ResultSet mockedResultSet = Mockito.mock(ResultSet.class);
@@ -128,8 +117,7 @@ public class JdbcFetchHapiTest extends TestCase {
                     + "'"))
         .thenReturn(mockedPreparedStatement);
 
-    Map<String, Integer> resourceCountMap =
-        jdbcFetchHapi1.searchResourceCounts(resourceList, since);
+    Map<String, Integer> resourceCountMap = jdbcFetchHapi.searchResourceCounts(resourceList, since);
 
     assertThat(resourceCountMap.get("Patient"), equalTo(100));
     assertThat(resourceCountMap.get("Encounter"), equalTo(100));

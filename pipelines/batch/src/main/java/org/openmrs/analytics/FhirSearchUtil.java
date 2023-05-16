@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2022 Google LLC
+ * Copyright 2020-2023 Google LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,6 +24,7 @@ import ca.uhn.fhir.rest.gclient.ReferenceClientParam;
 import ca.uhn.fhir.rest.param.DateRangeParam;
 import ca.uhn.fhir.rest.server.exceptions.InvalidRequestException;
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Strings;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import java.net.URI;
@@ -181,7 +182,7 @@ public class FhirSearchUtil {
 
   private IQuery<Bundle> makeQueryWithDate(String resourceType, FhirEtlOptions options) {
     IQuery<Bundle> searchQuery = makeQueryForResource(resourceType, options.getBatchSize());
-    if (!options.getActivePeriod().isEmpty()) {
+    if (!Strings.isNullOrEmpty(options.getActivePeriod())) {
       List<String> dateRange = getDateRange(options.getActivePeriod());
       searchQuery = searchQuery.where(new DateClientParam("date").after().second(dateRange.get(0)));
       if (dateRange.size() > 1) {
@@ -197,6 +198,9 @@ public class FhirSearchUtil {
             String.format("Fetching all %s resources after %s", resourceType, dateRange.get(0)));
       }
     }
+    if (!Strings.isNullOrEmpty(options.getSince())) {
+      searchQuery.lastUpdated(new DateRangeParam(options.getSince(), null));
+    }
     return searchQuery;
   }
 
@@ -204,15 +208,14 @@ public class FhirSearchUtil {
     if (options.getBatchSize() > 100) {
       // TODO: Probe this value from the server and set the maximum automatically.
       log.warn(
-          "NOTE batchSize flag is higher than 100; make sure that `fhir2.paging.maximum` "
-              + "is set accordingly on the OpenMRS server.");
+          "NOTE batchSize flag is higher than 100; make sure that the FHIR server supports "
+              + "search page sizes that large (the default maximum is sometime 100).");
     }
     Map<String, List<SearchSegmentDescriptor>> segmentMap = new HashMap<>();
 
     boolean anyResourceWithDate = false;
     for (String resourceType : options.getResourceList().split(",")) {
       List<SearchSegmentDescriptor> segments = new ArrayList<>();
-      segmentMap.put(resourceType, segments);
       IQuery<Bundle> searchQuery = makeQueryWithDate(resourceType, options);
       log.info(String.format("Fetching first batch of %s", resourceType));
       Bundle searchBundle = null;
@@ -233,11 +236,16 @@ public class FhirSearchUtil {
       }
       int total = searchBundle.getTotal();
       log.info(String.format("Number of resources for %s search is %d", resourceType, total));
+      if (total == 0) {
+        continue; // Nothing to be done for this resource type.
+      }
       if (searchBundle.getEntry().size() >= total) {
         // No parallelism is needed in this case; we get all resources in one bundle.
         segments.add(
             SearchSegmentDescriptor.create(findSelfUrl(searchBundle), options.getBatchSize()));
       } else {
+        // TODO: This is HAPI specific and should be generalized:
+        //  https://github.com/google/fhir-data-pipes/issues/533
         String baseUrl = findBaseSearchUrl(searchBundle) + "&_getpagesoffset=";
         for (int offset = 0; offset < total; offset += options.getBatchSize()) {
           String pageSearchUrl = baseUrl + offset;
@@ -247,6 +255,7 @@ public class FhirSearchUtil {
             String.format(
                 "Total number of segments for resource %s is %d", resourceType, segments.size()));
       }
+      segmentMap.put(resourceType, segments);
     }
     if (!options.getActivePeriod().isEmpty() && !anyResourceWithDate) {
       throw new IllegalArgumentException(

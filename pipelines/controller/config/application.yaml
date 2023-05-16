@@ -15,14 +15,16 @@
 #
 
 fhirdata:
-  # The base URL of the FHIR server.
-  # Equivalent to pipeline "fhirServerUrl" parameter.
+  # The base URL of the source FHIR server. If `dbConfig` is not set, resources
+  # are fetched from this URL through the FHIR Search API.
+  # Equivalent to the pipeline `fhirServerUrl` parameter.
   fhirServerUrl: "http://172.17.0.1:8091/fhir"
 
-  # Path to a file containing JDBC settings for connecting to the HAPI FHIR
-  # server database.
+  # The path to the file containing JDBC settings for connecting to a HAPI FHIR
+  # server database. If this is set, resources are fetched directly from the
+  # database and `fhirServerUrl` is ignored.
   # Equivalent to pipeline "fhirDatabaseConfigPath" parameter.
-  dbConfig: "config/hapi-postgres-config.json"
+  # dbConfig: "config/hapi-postgres-config.json"
 
   # The path to output Parquet files to. The last portion of the
   # path is used as a prefix for naming the directory that contains
@@ -38,19 +40,33 @@ fhirdata:
   dwhRootPrefix: "config/controller_DWH_ORIG"
 
   # The schedule for automatic incremental pipeline runs.
-  # The format is similar to Spring's CronExpression, i.e.,
+  # Uses the Spring CronExpression format, i.e.,
   # "second minute hour day-of-the-month month day-of-the-week", so:
   # "0 0 * * * *" means top of every hour;
   # "*/40 * * * * *" means every 40 seconds;
-  # Scheduling very frequent runs might be too resource intensive.
+  # Scheduling very frequent runs is resource intensive.
   incrementalSchedule: "0 0 * * * *"
 
-  # A comma-separated list of FHIR resources to fetch/monitor.
+
+  # The schedule for automatic DWH snapshot purging. There is no benefit
+  # to scheduling the purge job more frequently than incremental runs.
+  # Uses the Spring CronExpression format.
+  purgeSchedule: "0 30 * * * *"
+
+  # The number of DWH snapshots to retain when the purge job runs.
+  numOfDwhSnapshotsToRetain: 2
+
+  # The comma-separated list of FHIR resources to fetch/monitor.
   # Equivalent to pipeline "resourceList" parameter.
   resourceList: "Patient,Encounter,Observation"
 
-  # The number of Flink workers to use.
-  maxWorkers: 10
+  # The maximum number of Flink workers to use. Each worker may have 
+  # `numThreads` parallel threads.
+  maxWorkers: 1
+
+  # If a positive number, the number of threads to use per worker.
+  # Otherwise, the number of threads is equal to the number of cores.
+  numThreads: -1
 
   # Whether resource tables should be automatically created on a
   # Hive/Spark server. Primarily meant for single-machine deployment.

@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2022 Google LLC
+ * Copyright 2020-2023 Google LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,42 +13,36 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.openmrs.analytics;
 
+import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import javax.sql.DataSource;
 
 public class UuidUtil {
 
-  private final JdbcConnectionUtil jdbcConnectionUtil;
+  private final DataSource jdbcSource;
 
-  private Statement stmt;
-
-  private ResultSet rs;
-
-  public UuidUtil(JdbcConnectionUtil jdbcConnectionUtil) {
-    this.jdbcConnectionUtil = jdbcConnectionUtil;
+  public UuidUtil(DataSource jdbcSource) {
+    this.jdbcSource = jdbcSource;
   }
 
   public String getUuid(String table, String keyColumn, String keyValue) throws SQLException {
-    try {
-      stmt = jdbcConnectionUtil.createStatement();
+    String sql = String.format("SELECT uuid FROM %s WHERE %s = %s", table, keyColumn, keyValue);
+    try (Connection connection = jdbcSource.getConnection();
+        Statement statement = connection.createStatement();
+        ResultSet resultSet = statement.executeQuery(sql)) {
       String uuidResultFromSql = null;
-      String sql = String.format("SELECT uuid FROM %s WHERE %s = %s", table, keyColumn, keyValue);
-
-      rs = stmt.executeQuery(sql);
-      while (rs.next()) {
-        uuidResultFromSql = rs.getString("uuid");
+      while (resultSet.next()) {
+        uuidResultFromSql = resultSet.getString("uuid");
       }
       if (uuidResultFromSql == null) {
         throw new SQLException("Could not find the uuid in the DB");
       } else {
         return uuidResultFromSql;
       }
-    } finally {
-      jdbcConnectionUtil.closeConnection(stmt);
     }
   }
 }

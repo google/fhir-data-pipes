@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2022 Google LLC
+ * Copyright 2020-2023 Google LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package org.openmrs.analytics;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
+import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -26,6 +27,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import javax.sql.DataSource;
 import org.apache.beam.sdk.Pipeline;
 import org.apache.beam.sdk.coders.CannotProvideCoderException;
 import org.apache.beam.sdk.coders.NullableCoder;
@@ -47,10 +49,10 @@ public class JdbcFetchOpenMrs {
 
   private static final Logger log = LoggerFactory.getLogger(JdbcFetchOpenMrs.class);
 
-  private JdbcConnectionUtil jdbcConnectionUtil;
+  private DataSource jdbcSource;
 
-  JdbcFetchOpenMrs(JdbcConnectionUtil jdbcConnectionUtil) {
-    this.jdbcConnectionUtil = jdbcConnectionUtil;
+  JdbcFetchOpenMrs(DataSource jdbcSource) {
+    this.jdbcSource = jdbcSource;
   }
 
   public static class FetchUuids
@@ -181,16 +183,16 @@ public class JdbcFetchOpenMrs {
         constraint = String.format(" WHERE %s ", upperConstraint);
       }
     }
-    Statement statement = jdbcConnectionUtil.createStatement();
-    ResultSet resultSet;
     final String query = String.format("SELECT uuid FROM %s %s", tableName, constraint);
     log.info("SQL query: " + query);
-    resultSet = statement.executeQuery(query);
     List<String> uuids = Lists.newArrayList();
-    while (resultSet.next()) {
-      uuids.add(resultSet.getString("uuid"));
+    try (Connection connection = jdbcSource.getConnection();
+        Statement statement = connection.createStatement();
+        ResultSet resultSet = statement.executeQuery(query)) {
+      while (resultSet.next()) {
+        uuids.add(resultSet.getString("uuid"));
+      }
     }
-    jdbcConnectionUtil.closeConnection(statement);
     log.info(
         String.format(
             "Will fetch %d rows matching activePeriod in table %s", uuids.size(), tableName));
@@ -214,19 +216,19 @@ public class JdbcFetchOpenMrs {
 
   private Integer fetchMaxId(String tableName) throws SQLException {
     String tableId = tableName + "_id";
-    Statement statement = jdbcConnectionUtil.createStatement();
-    ResultSet resultSet =
-        statement.executeQuery(
-            String.format("SELECT MAX(`%s`) as max_id FROM %s", tableId, tableName));
-    resultSet.first();
-    int maxId = resultSet.getInt("max_id");
-    jdbcConnectionUtil.closeConnection(statement);
-    return maxId;
+    String query = String.format("SELECT MAX(`%s`) as max_id FROM %s", tableId, tableName);
+    try (Connection connection = jdbcSource.getConnection();
+        Statement statement = connection.createStatement();
+        ResultSet resultSet = statement.executeQuery(query)) {
+      resultSet.first();
+      int maxId = resultSet.getInt("max_id");
+      return maxId;
+    }
   }
 
   @VisibleForTesting
   JdbcIO.DataSourceConfiguration getJdbcConfig() {
-    return JdbcIO.DataSourceConfiguration.create(this.jdbcConnectionUtil.getDataSource());
+    return JdbcIO.DataSourceConfiguration.create(this.jdbcSource);
   }
 
   @VisibleForTesting

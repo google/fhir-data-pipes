@@ -1,4 +1,5 @@
 {
+  "jdbcDriverClass" : "com.mysql.cj.jdbc.Driver",
   "databaseService" : "mysql",
   "databaseHostName" : "openmrs-fhir-mysql",
   "databasePort" : "3306",

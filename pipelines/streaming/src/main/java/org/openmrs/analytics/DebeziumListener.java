@@ -26,10 +26,12 @@ import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Map;
+import javax.sql.DataSource;
 import org.apache.camel.CamelContext;
 import org.apache.camel.LoggingLevel;
 import org.apache.camel.Service;
 import org.apache.camel.builder.RouteBuilder;
+import org.openmrs.analytics.JdbcConnectionPools.DataSourceConfig;
 import org.openmrs.analytics.model.DatabaseConfiguration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -84,15 +86,17 @@ public class DebeziumListener extends RouteBuilder {
             params.secondsToFlushParquetFiles,
             params.rowGroupSizeForParquetFiles,
             "streaming_");
-    JdbcConnectionUtil jdbcConnectionUtil =
-        new JdbcConnectionUtil(
-            params.jdbcDriverClass,
-            this.databaseConfiguration.makeJdbsUrlFromConfig(),
-            this.databaseConfiguration.getDatabaseUser(),
-            this.databaseConfiguration.getDatabasePassword(),
-            params.initialPoolSize,
-            params.jdbcMaxPoolSize);
-    UuidUtil uuidUtil = new UuidUtil(jdbcConnectionUtil);
+    DataSource jdbcSource =
+        JdbcConnectionPools.getInstance()
+            .getPooledDataSource(
+                DataSourceConfig.create(
+                    databaseConfiguration.getJdbcDriverClass(),
+                    databaseConfiguration.makeJdbsUrlFromConfig(),
+                    databaseConfiguration.getDatabaseUser(),
+                    databaseConfiguration.getDatabasePassword()),
+                params.initialPoolSize,
+                params.jdbcMaxPoolSize);
+    UuidUtil uuidUtil = new UuidUtil(jdbcSource);
     camelContext.addService(new ParquetService(parquetUtil), true);
     StatusServer statusServer = new StatusServer(params.statusPort);
     // TODO: Improve this `start` signal to make sure every resource after this time are fetched;
@@ -178,11 +182,6 @@ public class DebeziumListener extends RouteBuilder {
         names = {"--fhirDebeziumConfigPath"},
         description = "Google cloud FHIR store")
     public String fhirDebeziumConfigPath = "../utils/dbz_event_to_fhir_config.json";
-
-    @Parameter(
-        names = {"--jdbcDriverClass"},
-        description = "JDBC MySQL driver class")
-    public String jdbcDriverClass = "com.mysql.cj.jdbc.Driver";
 
     @Parameter(
         names = {"--jdbcMaxPoolSize"},

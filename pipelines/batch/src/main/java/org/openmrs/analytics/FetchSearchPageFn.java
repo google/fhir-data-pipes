@@ -33,6 +33,8 @@ import org.apache.beam.sdk.values.KV;
 import org.hl7.fhir.r4.model.Bundle;
 import org.hl7.fhir.r4.model.Bundle.BundleEntryComponent;
 import org.hl7.fhir.r4.model.Resource;
+import org.openmrs.analytics.JdbcConnectionPools.DataSourceConfig;
+import org.openmrs.analytics.model.DatabaseConfiguration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -77,17 +79,11 @@ abstract class FetchSearchPageFn<T> extends DoFn<T, KV<String, Integer>> {
 
   private final int rowGroupSize;
 
-  protected final String sinkDbUrl;
-
-  private final String sinkDbUsername;
-
-  private final String sinkDbPassword;
+  protected final DataSourceConfig sinkDbConfig;
 
   private final String sinkDbTableName;
 
   private final boolean useSingleSinkDbTable;
-
-  private final String jdbcDriverClass;
 
   private final int initialPoolSize;
 
@@ -107,26 +103,6 @@ abstract class FetchSearchPageFn<T> extends DoFn<T, KV<String, Integer>> {
 
   protected FhirContext fhirContext;
 
-  private static JdbcConnectionUtil jdbcConnectionUtil = null;
-
-  // This is to enforce the Singleton pattern for JdbcConnectionUtil used by all workers running
-  // this DoFn on the same VM; hence sharing connections.
-  private static synchronized JdbcConnectionUtil getJdbcConnectionUtil(
-      String jdbcDriverClass,
-      String jdbcUrl,
-      String dbUser,
-      String dbPassword,
-      int initialPoolSize,
-      int jdbcMaxPoolSize)
-      throws PropertyVetoException {
-    if (jdbcConnectionUtil == null) {
-      jdbcConnectionUtil =
-          new JdbcConnectionUtil(
-              jdbcDriverClass, jdbcUrl, dbUser, dbPassword, initialPoolSize, jdbcMaxPoolSize);
-    }
-    return jdbcConnectionUtil;
-  }
-
   FetchSearchPageFn(FhirEtlOptions options, String stageIdentifier) {
     this.sinkPath = options.getFhirSinkPath();
     this.sinkUsername = options.getSinkUserName();
@@ -138,15 +114,23 @@ abstract class FetchSearchPageFn<T> extends DoFn<T, KV<String, Integer>> {
     this.parquetFile = options.getOutputParquetPath();
     this.secondsToFlush = options.getSecondsToFlushParquetFiles();
     this.rowGroupSize = options.getRowGroupSizeForParquetFiles();
-    this.sinkDbUrl = options.getSinkDbUrl();
     this.sinkDbTableName = options.getSinkDbTablePrefix();
-    this.sinkDbUsername = options.getSinkDbUsername();
-    this.sinkDbPassword = options.getSinkDbPassword();
+    if (options.getSinkDbConfigPath().isEmpty()) {
+      this.sinkDbConfig = null;
+    } else {
+      try {
+        this.sinkDbConfig =
+            JdbcConnectionPools.dbConfigToDataSourceConfig(
+                DatabaseConfiguration.createConfigFromFile(options.getSinkDbConfigPath()));
+      } catch (IOException e) {
+        String error = "Cannot access file " + options.getSinkDbConfigPath();
+        log.error(error);
+        throw new IllegalArgumentException(error);
+      }
+    }
     this.useSingleSinkDbTable = options.getUseSingleSinkTable();
     this.initialPoolSize = options.getJdbcInitialPoolSize();
     this.maxPoolSize = options.getJdbcMaxPoolSize();
-    // We are assuming that the potential source and sink DBs are the same type.
-    this.jdbcDriverClass = options.getJdbcDriverClass();
     this.numFetchedResources =
         Metrics.counter(
             MetricsConstants.METRICS_NAMESPACE,
@@ -179,7 +163,7 @@ abstract class FetchSearchPageFn<T> extends DoFn<T, KV<String, Integer>> {
         // Note `IIdType.getIdPart` extracts only the logical ID part when exporting but that code
         // path does not work for URNs (e.g., when importing files).
         new ParserOptions().setOverrideResourceIdWithBundleEntryFullUrl(false));
-    fhirContext.getRestfulClientFactory().setSocketTimeout(20000);
+    fhirContext.getRestfulClientFactory().setSocketTimeout(40000);
     // Note this parser is not used when fetching resources from a HAPI server. That's why we need
     // to change the `setOverrideResourceIdWithBundleEntryFullUrl` globally above such that the
     // parsers used in the HAPI client code is impacted too.
@@ -196,18 +180,12 @@ abstract class FetchSearchPageFn<T> extends DoFn<T, KV<String, Integer>> {
             secondsToFlush,
             rowGroupSize,
             stageIdentifier + "_");
-    if (!sinkDbUrl.isEmpty()) {
-      DataSource dataSource =
-          getJdbcConnectionUtil(
-                  jdbcDriverClass,
-                  sinkDbUrl,
-                  sinkDbUsername,
-                  sinkDbPassword,
-                  initialPoolSize,
-                  maxPoolSize)
-              .getDataSource();
+    if (sinkDbConfig != null) {
+      DataSource jdbcSink =
+          JdbcConnectionPools.getInstance()
+              .getPooledDataSource(sinkDbConfig, initialPoolSize, maxPoolSize);
       jdbcWriter =
-          new JdbcResourceWriter(dataSource, sinkDbTableName, useSingleSinkDbTable, fhirContext);
+          new JdbcResourceWriter(jdbcSink, sinkDbTableName, useSingleSinkDbTable, fhirContext);
     }
   }
 
@@ -239,7 +217,7 @@ abstract class FetchSearchPageFn<T> extends DoFn<T, KV<String, Integer>> {
         fhirStoreUtil.uploadBundle(bundle);
         totalPushTimeMillis.inc(System.currentTimeMillis() - pushStartTime);
       }
-      if (!this.sinkDbUrl.isEmpty()) {
+      if (sinkDbConfig != null) {
         if (bundle.getEntry() == null) {
           return;
         }
