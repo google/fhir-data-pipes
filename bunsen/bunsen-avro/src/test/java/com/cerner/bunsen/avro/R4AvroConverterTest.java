@@ -2,11 +2,13 @@ package com.cerner.bunsen.avro;
 
 import com.cerner.bunsen.FhirContexts;
 import com.cerner.bunsen.r4.TestData;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
@@ -16,6 +18,7 @@ import org.apache.avro.Schema;
 import org.apache.avro.compiler.specific.SpecificCompiler;
 import org.apache.avro.generic.GenericData.Record;
 import org.hl7.fhir.exceptions.FHIRException;
+import org.hl7.fhir.r4.model.CodeableConcept;
 import org.hl7.fhir.r4.model.Coding;
 import org.hl7.fhir.r4.model.Condition;
 import org.hl7.fhir.r4.model.Extension;
@@ -127,8 +130,8 @@ public class R4AvroConverterTest {
     testMedicationDecoded = (Medication) medicationConverter.avroToResource(avroMedication);
 
     AvroConverter medicationRequestConverter = AvroConverter.forResource(FhirContexts.forR4(),
-        "MedicationRequest" /* TODO TestData.US_CORE_MEDICATION_REQUEST,
-        Arrays.asList(TestData.US_CORE_MEDICATION, TestData.PROVENANCE) */);
+        TestData.US_CORE_MEDICATION_REQUEST,
+        Arrays.asList(TestData.US_CORE_MEDICATION, TestData.PROVENANCE));
 
     avroMedicationRequest = (Record) medicationRequestConverter
         .resourceToAvro(testMedicationRequest);
@@ -414,55 +417,51 @@ public class R4AvroConverterTest {
     Assert.assertEquals(testText, ethnicityRecord.get("text"));
   }
 
-  // TODO fix this regression for R4: https://github.com/google/fhir-data-pipes/issues/495
-  // @Test
-  // public void testContainedResources() throws FHIRException {
+  @Test
+  public void testContainedResources() throws FHIRException {
 
-  //   Medication testMedicationOne = (Medication) testMedicationRequest.getContained().get(0);
-  //   String testMedicationOneId = testMedicationOne.getId();
-  //   CodeableConcept testMedicationIngredientItem = testMedicationOne.getIngredientFirstRep()
-  //       .getItemCodeableConcept();
+    Medication testMedicationOne = (Medication) testMedicationRequest.getContained().get(0);
+    String testMedicationOneId = testMedicationOne.getId();
+    CodeableConcept testMedicationIngredientItem = testMedicationOne.getIngredientFirstRep()
+        .getItemCodeableConcept();
 
-  //   Medication decodedMedicationOne = (Medication) testMedicationRequestDecoded.getContained()
-  //       .get(0);
-  //   String decodedMedicationOneId = decodedMedicationOne.getId();
-  //   CodeableConcept decodedMedicationOneIngredientItem = decodedMedicationOne
-  //       .getIngredientFirstRep()
-  //       .getItemCodeableConcept();
+    Medication decodedMedicationOne = (Medication) testMedicationRequestDecoded.getContained()
+        .get(0);
+    String decodedMedicationOneId = decodedMedicationOne.getId();
+    CodeableConcept decodedMedicationOneIngredientItem = decodedMedicationOne
+        .getIngredientFirstRep()
+        .getItemCodeableConcept();
 
-  //   Assert.assertEquals(testMedicationOneId, decodedMedicationOneId);
-  //   Assert.assertTrue(decodedMedicationOneIngredientItem.equalsDeep(
-  //       testMedicationIngredientItem));
+    Assert.assertEquals(testMedicationOneId, decodedMedicationOneId);
+    Assert.assertTrue(decodedMedicationOneIngredientItem.equalsDeep(
+        testMedicationIngredientItem));
 
-  //   Provenance testProvenance = (Provenance) testMedicationRequest.getContained().get(1);
-  //   String testProvenanceId = testProvenance.getId();
+    Provenance testProvenance = (Provenance) testMedicationRequest.getContained().get(1);
+    String testProvenanceId = testProvenance.getId();
 
-  //   Provenance decodedProvenance =
-  //       (Provenance) testMedicationRequestDecoded.getContained().get(1);
-  //   String decodedProvenanceId = decodedProvenance.getId();
+    Provenance decodedProvenance =
+        (Provenance) testMedicationRequestDecoded.getContained().get(1);
+    String decodedProvenanceId = decodedProvenance.getId();
 
-  //   Assert.assertEquals(testProvenanceId, decodedProvenanceId);
+    Assert.assertEquals(testProvenanceId, decodedProvenanceId);
 
-  //   Medication testMedicationTwo = (Medication) testMedicationRequest.getContained().get(2);
-  //   String testMedicationTwoId = testMedicationTwo.getId();
+    Medication testMedicationTwo = (Medication) testMedicationRequest.getContained().get(2);
+    String testMedicationTwoId = testMedicationTwo.getId();
 
-  //   Medication decodedMedicationTwo = (Medication) testMedicationRequestDecoded.getContained()
-  //       .get(2);
-  //   String decodedMedicationTwoId = decodedMedicationTwo.getId();
+    Medication decodedMedicationTwo = (Medication) testMedicationRequestDecoded.getContained()
+        .get(2);
+    String decodedMedicationTwoId = decodedMedicationTwo.getId();
 
-  //   Assert.assertEquals(testMedicationTwoId, decodedMedicationTwoId);
-  // }
+    Assert.assertEquals(testMedicationTwoId, decodedMedicationTwoId);
+  }
 
   @Test
   public void testCompile() throws IOException {
 
     List<Schema> schemas = AvroConverter.generateSchemas(FhirContexts.forR4(),
         ImmutableMap.of(TestData.US_CORE_PATIENT, Collections.emptyList(),
-            TestData.VALUE_SET, Collections.emptyList()
-    // TODO check why this complains about duplicate `category`; there are two elements
-    // in the StructureDefinition with `"path": "MedicationRequest.category"`
-    // TestData.US_CORE_MEDICATION_REQUEST, ImmutableList.of(TestData.US_CORE_MEDICATION)
-    ));
+            TestData.VALUE_SET, Collections.emptyList(),
+            TestData.US_CORE_MEDICATION_REQUEST, ImmutableList.of(TestData.US_CORE_MEDICATION)));
 
     // Wrap the schemas in a protocol to simplify the invocation of the compiler.
     Protocol protocol = new Protocol("fhir-test",
@@ -501,10 +500,9 @@ public class R4AvroConverterTest {
     // Choice types include each choice that could be used.
     Assert.assertTrue(javaFiles.contains("com/cerner/bunsen/r4/avro/ChoiceBooleanInteger.java"));
 
-    // TODO check/fix why this fails!
     // Contained types created.
-    // Assert.assertTrue(javaFiles.contains(
-    //    "com/cerner/bunsen/r4/avro/us/core/MedicationRequestContained.java"));
+    Assert.assertTrue(javaFiles.contains(
+        "com/cerner/bunsen/r4/avro/us/core/MedicationRequestContained.java"));
   }
 
   // TODO add test profile for R4: https://github.com/google/fhir-data-pipes/issues/558
