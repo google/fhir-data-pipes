@@ -17,11 +17,11 @@ package org.openmrs.analytics;
 
 import org.junit.Assert;
 import org.junit.jupiter.api.Test;
+import org.openmrs.analytics.metrics.BaseApplicationTest;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
 
-@SpringBootTest
-public class DataPropertiesTest {
+public class DataPropertiesTest extends BaseApplicationTest {
+
   @Autowired private DataProperties dataProperties;
 
   @Test

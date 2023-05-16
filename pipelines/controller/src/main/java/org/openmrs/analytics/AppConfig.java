@@ -15,11 +15,16 @@
  */
 package org.openmrs.analytics;
 
-import org.junit.jupiter.api.Test;
-import org.openmrs.analytics.metrics.BaseApplicationTest;
+import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.composite.CompositeMeterRegistry;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
 
-class ControlPanelApplicationTests extends BaseApplicationTest {
-
-  @Test
-  void contextLoads() {}
+@Configuration
+public class AppConfig {
+  @Bean
+  public MeterRegistry getMeterRegistry() {
+    MeterRegistry meterRegistry = new CompositeMeterRegistry();
+    return meterRegistry;
+  }
 }
