@@ -16,6 +16,7 @@
 package org.openmrs.analytics;
 
 import com.google.common.base.Preconditions;
+import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import java.lang.reflect.InvocationTargetException;
@@ -74,9 +75,15 @@ public class DataProperties {
 
   private String incrementalSchedule;
 
+  private String purgeSchedule;
+
+  private int numOfDwhSnapshotsToRetain;
+
   private String resourceList;
 
   private int maxWorkers;
+
+  private int numThreads;
 
   private String thriftserverHiveConfig;
 
@@ -87,6 +94,21 @@ public class DataProperties {
   @PostConstruct
   void validateProperties() throws ClassNotFoundException {
     CronExpression.parse(incrementalSchedule);
+
+    Preconditions.checkArgument(
+        !Strings.isNullOrEmpty(fhirServerUrl) || !Strings.isNullOrEmpty(dbConfig),
+        "At least one of fhirServerUrl or dbConfig should be set!");
+
+    if (!Strings.isNullOrEmpty(dbConfig)) {
+      if (!Strings.isNullOrEmpty(fhirServerUrl)) {
+        logger.warn("Both fhirServerUrl and dbConfig are set; ignoring fhirServerUrl!");
+      }
+      logger.info("Using JDBC mode since dbConfig is set.");
+    } else {
+      // This should always be true because of the first Precondition.
+      Preconditions.checkArgument(!Strings.isNullOrEmpty(fhirServerUrl));
+      logger.info("Using FHIR-search mode since dbConfig is not set.");
+    }
 
     if (createHiveResourceTables) {
       try {
@@ -101,9 +123,15 @@ public class DataProperties {
 
   PipelineConfig createBatchOptions() {
     FhirEtlOptions options = PipelineOptionsFactory.as(FhirEtlOptions.class);
-    logger.info("Converting options for fhirServerUrl {}", fhirServerUrl);
-    options.setFhirServerUrl(fhirServerUrl);
-    options.setFhirDatabaseConfigPath(dbConfig);
+    logger.info("Converting options for fhirServerUrl {} and dbConfig {}", fhirServerUrl, dbConfig);
+    if (!Strings.isNullOrEmpty(dbConfig)) {
+      // TODO add OpenMRS support too; it should be easy but we want to make it explicit, such that
+      //  if accidentally both `dbConfig` and `fhirServerUrl` are set, OpenMRS is not assumed.
+      options.setJdbcModeHapi(true);
+      options.setFhirDatabaseConfigPath(dbConfig);
+    } else {
+      options.setFhirServerUrl(fhirServerUrl);
+    }
     options.setResourceList(resourceList);
 
     PipelineConfig.PipelineConfigBuilder pipelineConfigBuilder = PipelineConfig.builder();
@@ -123,6 +151,9 @@ public class DataProperties {
     options.setRunner(FlinkRunner.class);
     FlinkPipelineOptions flinkOptions = options.as(FlinkPipelineOptions.class);
     flinkOptions.setMaxParallelism(getMaxWorkers());
+    if (numThreads > 0) {
+      flinkOptions.setParallelism(numThreads);
+    }
 
     pipelineConfigBuilder.fhirEtlOptions(options);
     return pipelineConfigBuilder.build();
@@ -134,6 +165,12 @@ public class DataProperties {
         new ConfigFields("fhirdata.fhirServerUrl", fhirServerUrl, "", ""),
         new ConfigFields("fhirdata.dwhRootPrefix", dwhRootPrefix, "", ""),
         new ConfigFields("fhirdata.incrementalSchedule", incrementalSchedule, "", ""),
+        new ConfigFields("fhirdata.purgeSchedule", purgeSchedule, "", ""),
+        new ConfigFields(
+            "fhirdata.numOfDwhSnapshotsToRetain",
+            String.valueOf(numOfDwhSnapshotsToRetain),
+            "",
+            ""),
         new ConfigFields("fhirdata.resourceList", resourceList, "", ""),
         new ConfigFields("fhirdata.maxWorkers", String.valueOf(maxWorkers), "", ""),
         new ConfigFields("fhirdata.dbConfig", dbConfig, "", ""));

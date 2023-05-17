@@ -39,7 +39,6 @@ ENV BATCH_SIZE=10
 ENV TARGET_PARALLELISM=10
 ENV PARQUET_PATH="/tmp/"
 ENV JDBC_MODE_ENABLED=false
-ENV JDBC_DRIVER_CLASS="com.mysql.cj.jdbc.Driver"
 ENV JDBC_FETCH_SIZE=10000
 ENV JDBC_MAX_POOL_SIZE=50
 ENV JDBC_INITIAL_POOL_SIZE=10
@@ -53,7 +52,7 @@ ENTRYPOINT java -jar /usr/src/Main/app.jar  \
            --fhirServerUrl=${FHIR_SERVER_URL} --fhirServerUserName=${FHIR_SERVER_USERNAME} --fhirServerPassword=${FHIR_SERVER_PASSWORD} \
            --resourceList=${RESOURCE_LIST} --batchSize=${BATCH_SIZE} --targetParallelism=${TARGET_PARALLELISM} \
            --fhirSinkPath=${SINK_PATH}  --sinkUserName=${SINK_USERNAME} --sinkPassword=${SINK_PASSWORD} \
-           --outputParquetPath=${PARQUET_PATH} --jdbcModeEnabled=${JDBC_MODE_ENABLED} --jdbcDriverClass=${JDBC_DRIVER_CLASS} \
+           --outputParquetPath=${PARQUET_PATH} --jdbcModeEnabled=${JDBC_MODE_ENABLED} \
            --jdbcMaxPoolSize=${JDBC_MAX_POOL_SIZE} \
            --fhirDatabaseConfigPath=${FHIR_DATABASE_CONFIG_PATH} --jdbcInitialPoolSize=${JDBC_INITIAL_POOL_SIZE} \
            --jdbcFetchSize=${JDBC_FETCH_SIZE} --jdbcModeHapi=${JDBC_MODE_HAPI} --runner=${RUNNER}

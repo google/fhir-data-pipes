@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2022 Google LLC
+ * Copyright 2020-2023 Google LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,14 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.openmrs.analytics;
 
 import static org.mockito.Mockito.when;
 
+import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import javax.sql.DataSource;
 import junit.framework.TestCase;
 import org.junit.Before;
 import org.junit.Test;
@@ -31,10 +32,9 @@ import org.mockito.junit.MockitoJUnitRunner;
 @RunWith(MockitoJUnitRunner.class)
 public class UuidUtilTest extends TestCase {
 
-  @Mock private JdbcConnectionUtil jdbcConnectionUtil;
-
+  @Mock private DataSource jdbcSource;
+  @Mock private Connection connection;
   @Mock private Statement statement;
-
   @Mock private ResultSet resultset;
 
   private String uuid;
@@ -54,7 +54,8 @@ public class UuidUtilTest extends TestCase {
 
     String sql = String.format("SELECT uuid FROM %s WHERE %s = %s", table, keyColumn, keyValue);
 
-    when(jdbcConnectionUtil.createStatement()).thenReturn(statement);
+    when(jdbcSource.getConnection()).thenReturn(connection);
+    when(connection.createStatement()).thenReturn(statement);
     when(statement.executeQuery(sql)).thenReturn(resultset);
     when(resultset.next()).thenReturn(true).thenReturn(false);
     when(resultset.getString("uuid")).thenReturn(uuid);
@@ -63,7 +64,7 @@ public class UuidUtilTest extends TestCase {
   @Test
   public void shouldReturnValidUuid() throws SQLException {
 
-    UuidUtil uuidUtil = new UuidUtil(jdbcConnectionUtil);
+    UuidUtil uuidUtil = new UuidUtil(jdbcSource);
     String uuid = uuidUtil.getUuid(table, keyColumn, keyValue);
 
     assertNotNull(uuid);
