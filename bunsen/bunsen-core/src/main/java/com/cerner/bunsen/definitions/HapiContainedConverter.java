@@ -7,7 +7,6 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-import org.hl7.fhir.dstu3.model.DomainResource;
 import org.hl7.fhir.instance.model.api.IBase;
 
 /**
@@ -104,7 +103,7 @@ public abstract class HapiContainedConverter<T> extends HapiConverter<T> {
 
     for (int valueIndex = 0; valueIndex < containedList.size(); ++valueIndex) {
 
-      DomainResource composite = (DomainResource) containedList.get(valueIndex);
+      IBase composite = (IBase) containedList.get(valueIndex);
       StructureField<HapiConverter<T>> schemaEntry = contained.get(composite.fhirType());
 
       values[valueIndex] = schemaEntry.result().fromHapi(composite);
