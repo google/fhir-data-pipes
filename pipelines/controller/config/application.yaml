@@ -54,6 +54,8 @@ fhirdata:
   purgeSchedule: "0 30 * * * *"
 
   # The number of DWH snapshots to retain when the purge job runs.
+  # This must be > 0 or the job will not run. If a pipeline run fails
+  # for any reason, any partial output must be manually removed.
   numOfDwhSnapshotsToRetain: 2
 
   # The comma-separated list of FHIR resources to fetch/monitor.
