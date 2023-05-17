@@ -56,7 +56,8 @@ function validate_args() {
   fi
 
   echo "Checking if the Parquet-tools JAR exists..."
-  if [[ -n $( find "${1}/controller-spark -name parquet-tools*.jar") ]] then
+  if [[ -n $( find "${1}/controller-spark" -name parquet-tools*.jar) ]]
+  then
     echo "Parquet-tools JAR exists in ${1}/controller-spark"
   else
     echo "Parquet-tools JAR not found in ${1}/controller-spark"
