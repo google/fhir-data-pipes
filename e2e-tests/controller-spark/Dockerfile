@@ -1,4 +1,4 @@
-# Copyright 2021 Google LLC
+# Copyright 2023 Google LLC
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -12,18 +12,16 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-FROM adoptopenjdk/maven-openjdk11
+FROM bitnami/spark:3.3
 
-RUN apt-get update && apt-get install -y jq  python3.7 python3-pip 
-RUN update-alternatives --install /usr/bin/python3 python3 /usr/bin/python3.7 1
+USER root
+RUN apt-get update && apt-get install -y jq curl python3 python3-pip
 RUN pip3 install virtualenv google-auth requests
 
-COPY pipeline_validation.sh pipeline_validation.sh
-COPY controller-spark/parquet-tools-1.11.1.jar  parquet-tools-1.11.1.jar
-ENV PARQUET_SUBDIR="NON_JDBC"
+COPY controller_spark_sql_validation.sh controller_spark_sql_validation.sh
+COPY parquet-tools-1.11.1.jar  parquet-tools-1.11.1.jar
+ENV PARQUET_SUBDIR="dwh"
 ENV DOCKER_NETWORK="--use_docker_network"
-ENV STREAMING_TEST=""
-ENV OPENMRS_TEST=""
-ENV HOME_DIR="/workspace/e2e-tests"
+ENV HOME_DIR="/workspace/e2e-tests/controller-spark"
 
-ENTRYPOINT cd ${HOME_DIR}; ./pipeline_validation.sh ${HOME_DIR} ${PARQUET_SUBDIR} ${DOCKER_NETWORK} ${STREAMING_TEST} ${OPENMRS_TEST}
+ENTRYPOINT cd ${HOME_DIR}; ./controller_spark_sql_validation.sh ${HOME_DIR} ${PARQUET_SUBDIR} ${DOCKER_NETWORK}
