@@ -56,6 +56,8 @@
 # to /opt/bitnami/spark/conf/
 # https://spark.apache.org/docs/latest/configuration.html
 
+
+# Version 2.4 supports healthcheck feature.
 version: '2.4'
 
 services:
@@ -72,6 +74,9 @@ services:
     networks:
       - cloudbuild
       - default
+    depends_on:
+      thriftserver:
+        condition: service_healthy
 
   spark:
     image: docker.io/bitnami/spark:3.3
@@ -132,6 +137,12 @@ services:
     networks:
       - cloudbuild
       - default
+    healthcheck:
+      test: beeline -u jdbc:hive2://localhost:10000 -n hive -e 'show tables;' || exit 1
+      interval: 30s
+      retries: 5
+      start_period: 10s
+      timeout: 10s
 
 volumes:
   spark:

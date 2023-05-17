@@ -16,6 +16,7 @@
 package org.openmrs.analytics;
 
 import ca.uhn.fhir.context.FhirVersionEnum;
+import com.google.common.base.Strings;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.sql.SQLException;
@@ -59,7 +60,8 @@ public class ConvertResourceFn extends FetchSearchPageFn<HapiRowDescriptor> {
     this.totalParseTimeMillisMap = new HashMap<String, Counter>();
     this.totalGenerateTimeMillisMap = new HashMap<String, Counter>();
     this.totalPushTimeMillisMap = new HashMap<String, Counter>();
-    this.processDeletedRecords = options.getProcessDeletedRecords();
+    // Only in the incremental mode we process deleted resources.
+    this.processDeletedRecords = !Strings.isNullOrEmpty(options.getSince());
     List<String> resourceTypes = Arrays.asList(options.getResourceList().split(","));
     for (String resourceType : resourceTypes) {
       this.numFetchedResourcesMap.put(
@@ -134,7 +136,7 @@ public class ConvertResourceFn extends FetchSearchPageFn<HapiRowDescriptor> {
       fhirStoreUtil.uploadResource(resource);
       totalPushTimeMillisMap.get(resourceType).inc(System.currentTimeMillis() - startTime);
     }
-    if (!this.sinkDbUrl.isEmpty()) {
+    if (this.sinkDbConfig != null) {
       // TODO : Remove the deleted resources from the sink database
       // https://github.com/google/fhir-data-pipes/issues/588
       jdbcWriter.writeResource(resource);
