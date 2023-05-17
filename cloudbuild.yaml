@@ -56,7 +56,7 @@ steps:
   - |
     cd e2e-tests
     docker build -t ${_REPOSITORY}/e2e-tests:${_TAG} .
-    docker build -t ${_REPOSITORY}/e2e-tests/single-machine:${_TAG} ./single-machine/.
+    docker build -t ${_REPOSITORY}/e2e-tests/controller-spark:${_TAG} ./controller-spark/.
 
 - name: '${_REPOSITORY}/synthea-uploader:${_TAG}'
   id: 'Upload to HAPI'
@@ -84,7 +84,6 @@ steps:
   - SINK_PATH=http://sink-server:8080/fhir
   - SINK_USERNAME=hapi
   - SINK_PASSWORD=hapi
-  - BATCH_SIZE=100
 
 - name: '${_REPOSITORY}/e2e-tests:${_TAG}'
   id: 'Run E2E Test for FHIR-search mode with HAPI source'
@@ -115,12 +114,12 @@ steps:
   id: 'Bring up controller and Spark containers'
   env:
     - PIPELINE_CONFIG=/workspace/docker/config
-    - DWH_ROOT=/workspace/e2e-tests/single-machine/dwh
+    - DWH_ROOT=/workspace/e2e-tests/controller-spark/dwh
   args: [ '-f', './docker/compose-controller-spark-sql.yaml', 'up',
           '--force-recreate', '-d' ]
 
-- name: '${_REPOSITORY}/e2e-tests/single-machine:${_TAG}'
-  id: 'Run E2E Test for Single Machine'
+- name: '${_REPOSITORY}/e2e-tests/controller-spark:${_TAG}'
+  id: 'Run E2E Test for Dockerized Controller and Spark Thriftserver'
 
 - name: 'docker/compose'
   id: 'Bring down controller and Spark containers'

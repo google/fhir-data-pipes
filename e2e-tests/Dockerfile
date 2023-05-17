@@ -19,7 +19,7 @@ RUN update-alternatives --install /usr/bin/python3 python3 /usr/bin/python3.7 1
 RUN pip3 install virtualenv google-auth requests
 
 COPY pipeline_validation.sh pipeline_validation.sh
-COPY parquet-tools-1.11.1.jar  parquet-tools-1.11.1.jar
+COPY controller-spark/parquet-tools-1.11.1.jar  parquet-tools-1.11.1.jar
 ENV PARQUET_SUBDIR="NON_JDBC"
 ENV DOCKER_NETWORK="--use_docker_network"
 ENV STREAMING_TEST=""

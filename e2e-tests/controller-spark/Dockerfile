@@ -18,10 +18,10 @@ USER root
 RUN apt-get update && apt-get install -y jq curl python3 python3-pip
 RUN pip3 install virtualenv google-auth requests
 
-COPY single_machine_deployment_validation.sh single_machine_deployment_validation.sh
+COPY controller_spark_sql_validation.sh controller_spark_sql_validation.sh
 COPY parquet-tools-1.11.1.jar  parquet-tools-1.11.1.jar
 ENV PARQUET_SUBDIR="dwh"
 ENV DOCKER_NETWORK="--use_docker_network"
-ENV HOME_DIR="/workspace/e2e-tests/single-machine"
+ENV HOME_DIR="/workspace/e2e-tests/controller-spark"
 
-ENTRYPOINT cd ${HOME_DIR}; ./single_machine_deployment_validation.sh ${HOME_DIR} ${PARQUET_SUBDIR} ${DOCKER_NETWORK}
+ENTRYPOINT cd ${HOME_DIR}; ./controller_spark_sql_validation.sh ${HOME_DIR} ${PARQUET_SUBDIR} ${DOCKER_NETWORK}
