@@ -23,7 +23,7 @@ fhirdata:
   # The path to the file containing JDBC settings for connecting to a HAPI FHIR
   # server database. If this is set, resources are fetched directly from the
   # database and `fhirServerUrl` is ignored.
-  # Equivalent to pipeline "fhirDatabaseConfigPath" parameter.
+  # Equivalent to pipeline `fhirDatabaseConfigPath` parameter.
   # dbConfig: "config/hapi-postgres-config.json"
 
   # The path to output Parquet files to. The last portion of the
@@ -31,6 +31,7 @@ fhirdata:
   # per-resource directories and a timestamp will be added;
   # for example, "config/controller_DWH_ORIG" will create something like
   # ./config/controller_DWH_ORIG_TIMESTAMP_2023-01-27T23-55-39.295824Z
+  # Similar to the pipeline `outputParquetPath` parameter.
   # 
   # For GCS file system dwhRootPrefix should be of the format
   # "gs://<bucket>/<baseDirPath>/<prefix>".
@@ -47,7 +48,6 @@ fhirdata:
   # Scheduling very frequent runs is resource intensive.
   incrementalSchedule: "0 0 * * * *"
 
-
   # The schedule for automatic DWH snapshot purging. There is no benefit
   # to scheduling the purge job more frequently than incremental runs.
   # Uses the Spring CronExpression format.
@@ -57,7 +57,7 @@ fhirdata:
   numOfDwhSnapshotsToRetain: 2
 
   # The comma-separated list of FHIR resources to fetch/monitor.
-  # Equivalent to pipeline "resourceList" parameter.
+  # Equivalent to pipeline `resourceList` parameter.
   resourceList: "Patient,Encounter,Observation"
 
   # The maximum number of Flink workers to use. Each worker may have 
@@ -73,7 +73,7 @@ fhirdata:
   createHiveResourceTables: false
 
   # Path to a file with the settings used to create tables.
-  # Required if createHiveResourceTables is true.
+  # Required if createHiveResourceTables is `true`.
   thriftserverHiveConfig: "config/thriftserver-hive-config.json"
 
   # The JDBC driver to use when creating tables.
