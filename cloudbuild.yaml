@@ -32,7 +32,16 @@ steps:
   args:
   - -c
   - mvn --no-transfer-progress -e install -Dlicense.skip=true -Dspotless.apply.skip=true
-  waitFor: ['-'] 
+  waitFor: ['-']
+
+- name: 'gcr.io/cloud-builders/docker'
+  id: 'Upload coverage reports to codecov.io'
+  entrypoint: /bin/bash
+  args:
+  - -c
+  - curl -Os https://uploader.codecov.io/latest/linux/codecov;
+  - chmod u+x codecov;
+  - ./codecov -t 9bd99f32-01bd-4c60-9581-a522a752c75d;
 
 - name: 'gcr.io/cloud-builders/docker'
   id: 'Build Uploader Image'
@@ -46,7 +55,7 @@ steps:
   entrypoint: /bin/bash
   args:
   - -c
-  - cd /uploader; python -m unittest discover  -p '*_test.py' 
+  - cd /uploader; python -m unittest discover  -p '*_test.py'
 
 - name: 'gcr.io/cloud-builders/docker'
   id: 'Build E2E Image'
@@ -70,9 +79,9 @@ steps:
   entrypoint: /bin/bash
   args:
   - -c
-  - cd pipelines/batch; 
+  - cd pipelines/batch;
     docker build -t ${_REPOSITORY}/batch-pipeline:${_TAG} .;
-    cd ../streaming-binlog; 
+    cd ../streaming-binlog;
     docker build -t ${_REPOSITORY}/streaming-pipeline:${_TAG} .;
 
 - name: '${_REPOSITORY}/batch-pipeline:${_TAG}'
