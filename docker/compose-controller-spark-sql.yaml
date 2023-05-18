@@ -121,6 +121,8 @@ services:
   thriftserver:
     image: docker.io/bitnami/spark:3.3
     container_name: spark-thriftserver
+    depends_on:
+      - spark
     command:
       - sbin/start-thriftserver.sh
       - --master
