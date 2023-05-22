@@ -78,7 +78,7 @@ services:
       thriftserver:
         condition: service_healthy
 
-  spark:
+  spark-master:
     image: docker.io/bitnami/spark:3.3
     container_name: spark-master
     environment:
@@ -90,7 +90,7 @@ services:
       # The data for temporary tables, ends up in the spark-warehouse sub-dir of
       # this volume. This needs to be shared between all spark nodes if temp
       # tables are needed.
-      - spark:/opt/bitnami/spark
+      - spark_vol:/opt/bitnami/spark
 
       # NON-EMBEDDED METASTORE CONFIG:
       # If you want to persist the Metastore data, e.g., table and view
@@ -107,13 +107,13 @@ services:
     container_name: spark-worker
     environment:
       - SPARK_MODE=worker
-      - SPARK_MASTER_URL=spark://spark:7077
+      - SPARK_MASTER_URL=spark://spark-master:7077
       - SPARK_WORKER_MEMORY=20G
       - SPARK_WORKER_CORES=20
     volumes:
       - ${DWH_ROOT}:/dwh
     volumes_from:
-      - spark
+      - spark-master
     networks:
       - cloudbuild
       - default
@@ -122,11 +122,11 @@ services:
     image: docker.io/bitnami/spark:3.3
     container_name: spark-thriftserver
     depends_on:
-      - spark
+      - spark-master
     command:
       - sbin/start-thriftserver.sh
       - --master
-      - spark://spark:7077
+      - spark://spark-master:7077
     environment:
       - HIVE_SERVER2_THRIFT_PORT=10000
     ports:
@@ -135,7 +135,7 @@ services:
     volumes:
       - ${DWH_ROOT}:/dwh
     volumes_from:
-      - spark
+      - spark-master
     networks:
       - cloudbuild
       - default
@@ -147,7 +147,7 @@ services:
       timeout: 60s
 
 volumes:
-  spark:
+  spark_vol:
 
 networks:
   cloudbuild:
