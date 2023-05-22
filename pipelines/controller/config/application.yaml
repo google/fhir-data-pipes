@@ -33,10 +33,13 @@ fhirdata:
   # ./config/controller_DWH_ORIG_TIMESTAMP_2023-01-27T23-55-39.295824Z
   # Similar to the pipeline `outputParquetPath` parameter.
   # 
-  # For GCS file system dwhRootPrefix should be of the format
-  # "gs://<bucket>/<baseDirPath>/<prefix>".
-  # For Unix file system dwhRootPrefix should be of the format
-  # "/<baseDirPath>/<prefix>" and can be absolute or relative.
+  # For GCS buckets, dwhRootPrefix must be of the format
+  # "gs://<bucket>/<baseDirPath>/<prefix>". <baseDirPath> is optional
+  # for GCS buckets and may contain 0 or more directory names.
+  #
+  # For *nix file systems, dwhRootPrefix must be of the format
+  # "/<baseDirPath>/<prefix>" and can be absolute or relative. <baseDirPath>
+  # is required for *nix, and must contain 1 or more directory names.
   # dwhRootPrefix: "gs://fhir-test-analytics/config/controller_DWH_ORIG"
   dwhRootPrefix: "config/controller_DWH_ORIG"
 
@@ -54,7 +57,7 @@ fhirdata:
   purgeSchedule: "0 30 * * * *"
 
   # The number of DWH snapshots to retain when the purge job runs.
-  # This must be > 0 or the job will not run. If a pipeline run fails
+  # This must be > 0 or the purge job will not run. If a pipeline run fails
   # for any reason, any partial output must be manually removed.
   numOfDwhSnapshotsToRetain: 2
 
