@@ -43,7 +43,7 @@ steps:
     - 'VCS_BRANCH_NAME=$BRANCH_NAME'
     - 'VCS_PULL_REQUEST=$_PR_NUMBER'
     - 'CI_BUILD_ID=$BUILD_ID'
-    - 'CODECOV_TOKEN=$_CODECOV_TOKEN'
+    - 'CODECOV_TOKEN=$_CODECOV_TOKEN' # This token is generated when you setup your repo on codecov: https://docs.codecov.com/docs
 
 - name: 'gcr.io/cloud-builders/docker'
   id: 'Build Uploader Image'
