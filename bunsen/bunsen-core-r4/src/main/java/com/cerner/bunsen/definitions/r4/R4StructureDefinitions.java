@@ -215,10 +215,11 @@ public class R4StructureDefinitions extends StructureDefinitions {
       List<ElementDefinition> extensionDefinitions,
       ElementDefinition extensionRoot) {
 
+    // For extensions, we need to process slices to separate them into individual fields.
     List<ElementDefinition> children = getChildren(extensionRoot, extensionDefinitions);
 
     // Extensions may contain either additional extensions or a value field, but not both.
-
+    // So if it has a child element with a slice name, it has additional extensions.
     List<ElementDefinition> childExtensions = children.stream()
         .filter(element -> element.getSliceName() != null)
         .collect(Collectors.toList());
@@ -305,6 +306,11 @@ public class R4StructureDefinitions extends StructureDefinitions {
     } else if ("Extension".equals(element.getTypeFirstRep().getCode())) {
 
       return extensionElementToFields(visitor, rootDefinition, element, definitions, stack);
+
+    } else if (element.getSliceName() != null) {
+
+      // Drop slices for non-extension fields; otherwise we will end up with duplicated fields.
+      return Collections.emptyList();
 
     } else if (element.getType().size() == 1
         && PRIMITIVE_TYPES.contains(element.getTypeFirstRep().getCode())) {
@@ -667,6 +673,7 @@ public class R4StructureDefinitions extends StructureDefinitions {
           root);
 
       // Replace default StructureField with constructed Resource Container StructureField
+      // TODO make this future proof instead of using a hard-coded index for `contained`.
       childElements.set(5, containedElement);
     }
 

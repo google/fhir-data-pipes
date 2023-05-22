@@ -26,19 +26,19 @@ Next, configure the FHIR Pipelines Controller. The FHIR Pipelines Controller
 relies on several configuration files to run. Edit them to match your
 environment and requirements.
 
-- [`pipelines/controller/config/application.yaml`](pipelines/controller/config/application.yaml)
+- [`pipelines/controller/config/application.yaml`](config/application.yaml)
   - The main settings for the FHIR Pipelines Controller. Edit the values to
     match your HAPI FHIR server and use case.
-- [`pipelines/controller/config/hapi-postgres-config.json`](pipelines/controller/config/hapi-postgres-config.json)
+- [`pipelines/controller/config/hapi-postgres-config.json`](config/hapi-postgres-config.json)
   - JDBC settings. Edit the values to match the Postgres database of your HAPI
     FHIR server.
-- [`pipelines/controller/config/flink-conf.yaml`](pipelines/controller/config/flink-conf.yaml)
+- [`pipelines/controller/config/flink-conf.yaml`](config/flink-conf.yaml)
   - Customized FlinkRunner settings. To use this file, set the
     [`FLINK_CONF_DIR` environmental variable](https://nightlies.apache.org/flink/flink-docs-master/docs/deployment/config/):
     `export FLINK_CONF_DIR=[PATH]/flink-conf.yaml`. Changing
     `taskmanager.memory.network.max` is necessary to avoid memory errors for
     large datasets or when running on machines with limited memory.
-- [`pipelines/controller/config/thriftserver-hive-config.json`](pipelines/controller/config/thriftserver-hive-config.json)
+- [`pipelines/controller/config/thriftserver-hive-config.json`](config/thriftserver-hive-config.json)
   - Settings used to connect to a Spark server when `createHiveResourceTables`
     is set to `true`. Edit the values to match your Spark server if necessary.
 
