@@ -15,7 +15,6 @@
  */
 package org.openmrs.analytics.metrics;
 
-import autovalue.shaded.com.google.common.base.Preconditions;
 import org.apache.flink.api.common.JobExecutionResult;
 import org.apache.flink.core.execution.JobClient;
 import org.apache.flink.core.execution.JobListener;
@@ -47,7 +46,9 @@ public class FlinkJobListener implements JobListener {
       return;
     }
 
-    Preconditions.checkState(jobExecutionResult != null, "Job Execution Result cannot be empty.");
+    if (jobExecutionResult == null) {
+      throw new IllegalStateException("Job Execution Result cannot be empty.");
+    }
 
     logger.info(
         "Clearing the job with ID {}, jobExecutionResult={}",

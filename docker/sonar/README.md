@@ -17,16 +17,17 @@ folder. For sonar to use the coverage, you can add this to controller's pom.xml 
     <sonar.password>admin</sonar.password>
     <sonar.java.binaries>target/classes</sonar.java.binaries>
 ```
-Build the package:
-
-```
-    mvn clean package
-```
 
 Bring up SonarQube docker container. Like if you are at root, run the following:
 
 ```
     docker-compose -f docker/sonar/sonarqube-compose.yaml up
+```
+
+Build the package:
+
+```
+    mvn clean package
 ```
 
 Then run the maven sonar command where you added sonar properties, lets say controller:
@@ -39,4 +40,11 @@ Once the above command runs successfully, you should be able to see the analysis
 
 ```
     http://localhost:9000
+```
+
+For any subsequent change, just run clean package and sonar and refresh the browser to verify your fix:
+
+```
+    mvn clean package
+    mvn sonar:sonat
 ```
