@@ -21,8 +21,12 @@ import org.hamcrest.MatcherAssert;
 import org.hamcrest.Matchers;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.actuate.observability.AutoConfigureObservability;
+import org.springframework.boot.test.context.SpringBootTest;
 
-public class PipelineMetricsFactoryTest extends BaseApplicationTest {
+@SpringBootTest
+@AutoConfigureObservability
+public class PipelineMetricsFactoryTest {
 
   @Autowired private PipelineMetricsFactory pipelineMetricsFactory;
 

@@ -18,7 +18,6 @@ package org.openmrs.analytics;
 import ca.uhn.fhir.context.FhirContext;
 import com.cerner.bunsen.FhirContexts;
 import com.google.common.base.Preconditions;
-import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.MeterRegistry;
 import java.beans.PropertyVetoException;
 import java.io.IOException;
@@ -90,18 +89,16 @@ public class PipelineManager implements ApplicationListener<ApplicationReadyEven
    * This method publishes the beam pipeline metrics to the spring boot actuator. Previous metrics
    * are removed from the actuator before publishing the latest metrics
    *
-   * @param metricResults
+   * @param metricResults The pipeline metrics that needs to be pushed
    */
   void publishPipelineMetrics(MetricResults metricResults) {
-    removePipelineMetrics();
     MetricQueryResults metricQueryResults = EtlUtils.getMetrics(metricResults);
     for (MetricResult<Long> metricCounterResult : metricQueryResults.getCounters()) {
-      Counter counter =
-          meterRegistry.counter(
-              metricCounterResult.getName().getNamespace()
-                  + "_"
-                  + metricCounterResult.getName().getName());
-      counter.increment(metricCounterResult.getAttempted());
+      meterRegistry.gauge(
+          metricCounterResult.getName().getNamespace()
+              + "_"
+              + metricCounterResult.getName().getName(),
+          metricCounterResult.getAttempted());
     }
     for (MetricResult<GaugeResult> metricGaugeResult : metricQueryResults.getGauges()) {
       meterRegistry.gauge(
@@ -110,7 +107,7 @@ public class PipelineManager implements ApplicationListener<ApplicationReadyEven
     }
   }
 
-  private void removePipelineMetrics() {
+  void removePipelineMetrics() {
     meterRegistry
         .getMeters()
         .forEach(
@@ -430,6 +427,8 @@ public class PipelineManager implements ApplicationListener<ApplicationReadyEven
       try {
         FhirEtlOptions options = pipeline.getOptions().as(FhirEtlOptions.class);
         PipelineResult pipelineResult = EtlUtils.runPipelineWithTimestamp(pipeline, options);
+        // Remove the metrics of the previous pipeline and register the new metrics
+        manager.removePipelineMetrics();
         manager.publishPipelineMetrics(pipelineResult.metrics());
         if (mergerOptions == null) { // Do not update DWH yet if this was an incremental run.
           manager.updateDwh(options.getOutputParquetPath());

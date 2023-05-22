@@ -137,11 +137,15 @@
 
     function fetchLatestMetrics() {
       var xhr = new XMLHttpRequest();
-      xhr.open("GET", '/actuator/prometheus', true);
+      xhr.open("GET", '/actuator/pipeline-metrics', true);
       xhr.onreadystatechange = function() {
         if (this.readyState === XMLHttpRequest.DONE && this.status === 200) {
           metricsBody.style.display = "block";
-          metricsBody.innerHTML = "<pre>" + this.response + "</pre>";
+          if (this.response) {
+            metricsBody.innerHTML = "<pre>" + this.response + "</pre>";
+          } else {
+            metricsBody.innerHTML = "Pipeline metrics are not available";
+          }
         }
         if (this.readyState === XMLHttpRequest.DONE && this.status != 200) {
           console.log('Error in fetching metrics: ' + this.response);
@@ -426,7 +430,8 @@
           <div class="card md-5 rounded-3 shadow-sm">
             <div class="card-header py-3">
               Fetch the latest application and system metrics
-                <button type="submit" style="float: right; margin: -7;" class="button btn btn-primary" onclick="fetchLatestMetrics()">
+                <button type="submit" style="float: right; margin: -7;"
+                        class="button btn btn-primary" onclick="fetchLatestMetrics()">
                   Fetch Latest Metrics
                 </button>
             </div>

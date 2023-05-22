@@ -16,9 +16,12 @@
 package org.openmrs.analytics;
 
 import org.junit.jupiter.api.Test;
-import org.openmrs.analytics.metrics.BaseApplicationTest;
+import org.springframework.boot.test.autoconfigure.actuate.observability.AutoConfigureObservability;
+import org.springframework.boot.test.context.SpringBootTest;
 
-class ControlPanelApplicationTests extends BaseApplicationTest {
+@SpringBootTest
+@AutoConfigureObservability
+class ControlPanelApplicationTests {
 
   @Test
   void contextLoads() {}
