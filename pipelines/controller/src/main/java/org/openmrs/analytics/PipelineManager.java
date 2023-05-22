@@ -311,6 +311,10 @@ public class PipelineManager implements ApplicationListener<ApplicationReadyEven
             dwhFilesManager.getAllChildDirectories(baseDir + "/" + path.getFilename());
         for (ResourceId resourceId : childPaths) {
           String resource = resourceId.getFilename();
+          // Ignore if you encounter folders like incremental_run.
+          if (dataProperties.getResourceList().indexOf(resourceId.getFilename()) == -1)  {
+            continue;
+          }
           String[] tokens = path.getFilename().split(prefix + DataProperties.TIMESTAMP_PREFIX);
           if (tokens.length > 1) {
             String timestamp = tokens[1];
