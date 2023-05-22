@@ -32,7 +32,18 @@ steps:
   args:
   - -c
   - mvn --no-transfer-progress -e install -Dlicense.skip=true -Dspotless.apply.skip=true
-  waitFor: ['-'] 
+  waitFor: ['-']
+
+- name: 'gcr.io/cloud-builders/curl'
+  id: 'Upload coverage reports to codecov.io'
+  entrypoint: bash
+  args: ['-c', 'bash <(curl -s https://codecov.io/bash)']
+  env:
+    - 'VCS_COMMIT_ID=$COMMIT_SHA'
+    - 'VCS_BRANCH_NAME=$BRANCH_NAME'
+    - 'VCS_PULL_REQUEST=$_PR_NUMBER'
+    - 'CI_BUILD_ID=$BUILD_ID'
+    - 'CODECOV_TOKEN=$_CODECOV_TOKEN' # This token is generated when you setup your repo on codecov: https://docs.codecov.com/docs
 
 - name: 'gcr.io/cloud-builders/docker'
   id: 'Build Uploader Image'
@@ -46,7 +57,7 @@ steps:
   entrypoint: /bin/bash
   args:
   - -c
-  - cd /uploader; python -m unittest discover  -p '*_test.py' 
+  - cd /uploader; python -m unittest discover  -p '*_test.py'
 
 - name: 'gcr.io/cloud-builders/docker'
   id: 'Build E2E Image'
@@ -70,9 +81,9 @@ steps:
   entrypoint: /bin/bash
   args:
   - -c
-  - cd pipelines/batch; 
+  - cd pipelines/batch;
     docker build -t ${_REPOSITORY}/batch-pipeline:${_TAG} .;
-    cd ../streaming-binlog; 
+    cd ../streaming-binlog;
     docker build -t ${_REPOSITORY}/streaming-pipeline:${_TAG} .;
 
 - name: '${_REPOSITORY}/batch-pipeline:${_TAG}'
