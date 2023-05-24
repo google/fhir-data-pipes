@@ -269,19 +269,6 @@ public class FhirEtl {
     }
   }
 
-  /** A simple DoFn that captures the gauge metric of the given input type */
-  public static class LogAsMetric extends DoFn<KV<String, Long>, Void> {
-
-    @ProcessElement
-    public void processElement(@Element KV<String, Long> input) {
-      Metrics.gauge(
-              MetricsConstants.METRICS_NAMESPACE,
-              MetricsConstants.TOTAL_NO_OF_RESOURCES + input.getKey())
-          .set(input.getValue());
-      log.info("Logging the metric {}, {}", input.getKey(), input.getValue());
-    }
-  }
-
   // TODO: Implement active period feature for JDBC mode with a HAPI source server (issue #278).
   private static Pipeline buildHapiJdbcPipeline(FhirEtlOptions options)
       throws PropertyVetoException, SQLException, IOException {
@@ -303,24 +290,33 @@ public class FhirEtl {
       }
 
       foundResource = true;
-      // The below metrics are logged at the beginning of the pipeline start so that they can be
-      // used to calculate the progress of the pipeline (ratio of currently completed resources vs
-      // the total resources). These had to be logged via a separate DoFn as it required the
-      // pipeline context (which otherwise could not be tracked if injected during constructor
-      // initialisation for the beginning pipeline stage)
-      PCollection<KV<String, Long>> initialPCollection =
-          pipeline.apply(
-              "Metric parameters for " + resourceType,
-              Create.of(KV.of(resourceType, Long.valueOf(numResources))));
-      initialPCollection.apply(ParDo.of((new LogAsMetric())));
-
       PCollection<QueryParameterDescriptor> queryParameters =
-          pipeline.apply(
-              "Generate query parameters for " + resourceType,
-              Create.of(
-                  new JdbcFetchHapi(jdbcSource)
-                      .generateQueryParameters(options, resourceType, numResources)));
-
+          pipeline
+              .apply(
+                  "Generate query parameters for " + resourceType,
+                  Create.of(
+                      new JdbcFetchHapi(jdbcSource)
+                          .generateQueryParameters(options, resourceType, numResources)))
+              .apply(
+                  ParDo.of(
+                      // The metrics captured below will be used to calculate the progress of the
+                      // pipeline run. The metric might be captured multiple times depending on the
+                      // number of QueryParameterDescriptor's for each resourceType, but this should
+                      // not be issue since they will be replaced. This is done this way because if
+                      // the metric capturing is done separately to avoid duplicate logging then the
+                      // beam bifurcates the resources and allocates lesser number of resources for
+                      // the core operations.
+                      new DoFn<QueryParameterDescriptor, QueryParameterDescriptor>() {
+                        @ProcessElement
+                        public void processElement(ProcessContext context) {
+                          QueryParameterDescriptor input = context.element();
+                          Metrics.gauge(
+                                  MetricsConstants.METRICS_NAMESPACE,
+                                  MetricsConstants.TOTAL_NO_OF_RESOURCES + resourceType)
+                              .set(numResources);
+                          context.output(input);
+                        }
+                      }));
       PCollection<HapiRowDescriptor> payload =
           queryParameters.apply(
               "JdbcIO fetch for " + resourceType,
