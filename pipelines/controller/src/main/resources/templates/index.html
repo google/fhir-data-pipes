@@ -39,7 +39,8 @@
         // Handle errors.
         if (this.readyState === XMLHttpRequest.DONE && this.status != 200) {
           console.log('Starting the pipeline failed: ' + this.response);
-          // TODO display the error message too.
+          changeVisibility('pipelineWait', false);
+          document.getElementById('submitError').innerHTML += ' ' + this.response;
           changeVisibility('submitError', true);
         }
       }
