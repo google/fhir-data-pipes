@@ -101,10 +101,19 @@ services:
     networks:
       - cloudbuild
       - default
+    healthcheck:
+      test: bin/spark-shell || exit 1
+      interval: 30s
+      retries: 10
+      start_period: 10s
+      timeout: 60s
 
   spark-worker:
     image: docker.io/bitnami/spark:3.3
     container_name: spark-worker
+    depends_on:
+      spark-master:
+        condition: service_healthy
     environment:
       - SPARK_MODE=worker
       - SPARK_MASTER_URL=spark://spark-master:7077
@@ -122,7 +131,8 @@ services:
     image: docker.io/bitnami/spark:3.3
     container_name: spark-thriftserver
     depends_on:
-      - spark-master
+      spark-master:
+        condition: service_healthy
     command:
       - sbin/start-thriftserver.sh
       - --master

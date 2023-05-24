@@ -355,6 +355,7 @@ clear
 
 add_resource
 update_resource
+sleep 10
 # Incremental run.
 run_pipeline false
 check_parquet true
