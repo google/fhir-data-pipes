@@ -46,5 +46,5 @@ For any subsequent change, just run clean package and sonar and refresh the brow
 
 ```
     mvn clean package
-    mvn sonar:sonat
+    mvn sonar:sonar
 ```
