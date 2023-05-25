@@ -55,13 +55,13 @@
     <dependency>
       <groupId>com.google.auth</groupId>
       <artifactId>google-auth-library-oauth2-http</artifactId>
-      <version>1.16.0</version>
+      <version>1.17.0</version>
     </dependency>
 
     <dependency>
       <groupId>com.google.apis</groupId>
       <artifactId>google-api-services-healthcare</artifactId>
-      <version>v1-rev20230321-2.0.0</version>
+      <version>v1-rev20230509-2.0.0</version>
     </dependency>
 
     <dependency>
@@ -105,7 +105,7 @@
     <dependency>
       <groupId>org.apache.parquet</groupId>
       <artifactId>parquet-avro</artifactId>
-      <version>1.13.0</version>
+      <version>1.13.1</version>
     </dependency>
 
     <!-- TODO: This is in the dependencies of the above with "provided" scope.
