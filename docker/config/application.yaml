@@ -29,7 +29,7 @@ fhirdata:
   purgeSchedule: "0 30 * * * *"
   numOfDwhSnapshotsToRetain: 2
   resourceList: "Patient,Encounter,Observation"
-  maxWorkers: 2
+  maxWorkers: 1
   numThreads: -1
   createHiveResourceTables: true
   thriftserverHiveConfig: "config/thriftserver-hive-config.json"
