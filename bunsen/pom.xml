@@ -335,8 +335,8 @@
               <groupId>com.puppycrawl.tools</groupId>
               <artifactId>checkstyle</artifactId>
               <!-- Dependabot bumps this version which throws bunch of issues in which case
-                   revert to 8.29 -->
-              <version>8.29</version>
+                   revert to 10.11.0 -->
+              <version>10.11.0</version>
             </dependency>
           </dependencies>
           <configuration>
