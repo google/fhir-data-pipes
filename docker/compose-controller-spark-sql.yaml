@@ -56,6 +56,7 @@
 # to /opt/bitnami/spark/conf/
 # https://spark.apache.org/docs/latest/configuration.html
 
+
 # Version 2.4 supports healthcheck feature.
 version: '2.4'
 
@@ -70,11 +71,14 @@ services:
       - ${DWH_ROOT}:/dwh
     ports:
       - '8090:8080'
+    networks:
+      - cloudbuild
+      - default
     depends_on:
       thriftserver:
         condition: service_healthy
 
-  spark:
+  spark-master:
     image: docker.io/bitnami/spark:3.3
     container_name: spark-master
     environment:
@@ -86,7 +90,7 @@ services:
       # The data for temporary tables, ends up in the spark-warehouse sub-dir of
       # this volume. This needs to be shared between all spark nodes if temp
       # tables are needed.
-      - spark:/opt/bitnami/spark
+      - spark_vol:/opt/bitnami/spark
 
       # NON-EMBEDDED METASTORE CONFIG:
       # If you want to persist the Metastore data, e.g., table and view
@@ -94,27 +98,45 @@ services:
       #- ./hive-site_example.xml:/opt/bitnami/spark/conf/hive-site.xml
       # Note to use an external DB, you need to provide its driver jar too:
       #- ./postgresql-42.6.0.jar:/opt/bitnami/spark/jars/postgresql-42.6.0.jar
+    networks:
+      - cloudbuild
+      - default
+    healthcheck:
+      test: bin/spark-shell || exit 1
+      interval: 30s
+      retries: 10
+      start_period: 10s
+      timeout: 60s
 
   spark-worker:
     image: docker.io/bitnami/spark:3.3
     container_name: spark-worker
+    depends_on:
+      spark-master:
+        condition: service_healthy
     environment:
       - SPARK_MODE=worker
-      - SPARK_MASTER_URL=spark://spark:7077
+      - SPARK_MASTER_URL=spark://spark-master:7077
       - SPARK_WORKER_MEMORY=20G
       - SPARK_WORKER_CORES=20
     volumes:
       - ${DWH_ROOT}:/dwh
     volumes_from:
-      - spark
+      - spark-master
+    networks:
+      - cloudbuild
+      - default
 
   thriftserver:
     image: docker.io/bitnami/spark:3.3
     container_name: spark-thriftserver
+    depends_on:
+      spark-master:
+        condition: service_healthy
     command:
       - sbin/start-thriftserver.sh
       - --master
-      - spark://spark:7077
+      - spark://spark-master:7077
     environment:
       - HIVE_SERVER2_THRIFT_PORT=10000
     ports:
@@ -123,15 +145,23 @@ services:
     volumes:
       - ${DWH_ROOT}:/dwh
     volumes_from:
-      - spark
+      - spark-master
+    networks:
+      - cloudbuild
+      - default
     healthcheck:
       test: beeline -u jdbc:hive2://localhost:10000 -n hive -e 'show tables;' || exit 1
       interval: 30s
-      retries: 5
+      retries: 10
       start_period: 10s
-      timeout: 10s
+      timeout: 60s
 
 volumes:
-  spark:
+  spark_vol:
+
+networks:
+  cloudbuild:
+    external: true
+    name: cloudbuild # Needed for Continuous integration
 
 # TODO add a link to a Jupyter notebook to show how to use JDBC.

@@ -29,6 +29,8 @@
 
   <properties>
     <mysql.init.timeout>30000</mysql.init.timeout>
+    <!--  Dependabot keeps bumping this camel version which causes compilation error
+          in which case revert it back to 3.2.0 -->
     <version.camel>3.2.0</version.camel>
     <version.debezium>1.0.0.Final</version.debezium>
     <version.debezium.tag>1.0</version.debezium.tag>

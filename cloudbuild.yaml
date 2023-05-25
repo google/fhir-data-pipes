@@ -32,7 +32,18 @@ steps:
   args:
   - -c
   - mvn --no-transfer-progress -e install -Dlicense.skip=true -Dspotless.apply.skip=true
-  waitFor: ['-'] 
+  waitFor: ['-']
+
+- name: 'gcr.io/cloud-builders/curl'
+  id: 'Upload coverage reports to codecov.io'
+  entrypoint: bash
+  args: ['-c', 'bash <(curl -s https://codecov.io/bash)']
+  env:
+    - 'VCS_COMMIT_ID=$COMMIT_SHA'
+    - 'VCS_BRANCH_NAME=$BRANCH_NAME'
+    - 'VCS_PULL_REQUEST=$_PR_NUMBER'
+    - 'CI_BUILD_ID=$BUILD_ID'
+    - 'CODECOV_TOKEN=$_CODECOV_TOKEN' # This token is generated when you setup your repo on codecov: https://docs.codecov.com/docs
 
 - name: 'gcr.io/cloud-builders/docker'
   id: 'Build Uploader Image'
@@ -46,14 +57,16 @@ steps:
   entrypoint: /bin/bash
   args:
   - -c
-  - cd /uploader; python -m unittest discover  -p '*_test.py' 
+  - cd /uploader; python -m unittest discover  -p '*_test.py'
 
 - name: 'gcr.io/cloud-builders/docker'
   id: 'Build E2E Image'
   entrypoint: /bin/bash
   args:
   - -c
-  - cd e2e-tests; docker build -t ${_REPOSITORY}/e2e-tests:${_TAG} .
+  - cd e2e-tests;
+    docker build -t ${_REPOSITORY}/e2e-tests:${_TAG} .;
+    docker build -t ${_REPOSITORY}/e2e-tests/controller-spark:${_TAG} ./controller-spark/.;
 
 - name: '${_REPOSITORY}/synthea-uploader:${_TAG}'
   id: 'Upload to HAPI'
@@ -68,9 +81,9 @@ steps:
   entrypoint: /bin/bash
   args:
   - -c
-  - cd pipelines/batch; 
+  - cd pipelines/batch;
     docker build -t ${_REPOSITORY}/batch-pipeline:${_TAG} .;
-    cd ../streaming-binlog; 
+    cd ../streaming-binlog;
     docker build -t ${_REPOSITORY}/streaming-pipeline:${_TAG} .;
 
 - name: '${_REPOSITORY}/batch-pipeline:${_TAG}'
@@ -107,14 +120,16 @@ steps:
     - PARQUET_SUBDIR=JDBC_HAPI
     - DOCKER_NETWORK=--use_docker_network
 
-# TODO also run full and incremental pipelines and run Spark SQL queries.
 - name: 'docker/compose'
   id: 'Bring up controller and Spark containers'
   env:
-    - PIPELINE_CONFIG=/workspace/pipelines/controller/config
-    - DWH_ROOT=/workspace/DWH_ROOT
+    - PIPELINE_CONFIG=/workspace/docker/config
+    - DWH_ROOT=/workspace/e2e-tests/controller-spark/dwh
   args: [ '-f', './docker/compose-controller-spark-sql.yaml', 'up',
           '--force-recreate', '-d' ]
+
+- name: '${_REPOSITORY}/e2e-tests/controller-spark:${_TAG}'
+  id: 'Run E2E Test for Dockerized Controller and Spark Thriftserver'
 
 - name: 'docker/compose'
   id: 'Bring down controller and Spark containers'
@@ -139,7 +154,7 @@ steps:
 - name: '${_REPOSITORY}/e2e-tests:${_TAG}'
   id: 'Launch Streaming Pipeline'
   entrypoint: /bin/bash
-  args: 
+  args:
     - -c
     -  e2e-tests/wait_for_streaming.sh --use_docker_network
 

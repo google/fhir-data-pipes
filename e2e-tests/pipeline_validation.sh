@@ -56,10 +56,11 @@ function validate_args() {
   fi
 
   echo "Checking if the Parquet-tools JAR exists..."
-  if compgen -G "${1}/parquet-tools*.jar" > /dev/null; then
-    echo "Parquet-tools JAR exists in ${1}"
+  if [[ -n $( find "${1}/controller-spark" -name parquet-tools*.jar) ]]
+  then
+    echo "Parquet-tools JAR exists in ${1}/controller-spark"
   else
-    echo "Parquet-tools JAR not found in ${1}"
+    echo "Parquet-tools JAR not found in ${1}/controller-spark"
     usage
     exit 1
   fi
@@ -163,7 +164,8 @@ function fhir_source_query() {
   fi
 
   curl -L -X GET -u $fhir_username:$fhir_password --connect-timeout 5 --max-time 20 \
-  "${SOURCE_FHIR_SERVER_URL}${fhir_url_extension}/Patient${patient_query_param}" 2>/dev/null >>"${HOME_PATH}/${PARQUET_SUBDIR}/patients.json"
+  "${SOURCE_FHIR_SERVER_URL}${fhir_url_extension}/Patient${patient_query_param}" 2>/dev/null \
+  >>"${HOME_PATH}/${PARQUET_SUBDIR}/patients.json"
   TOTAL_TEST_PATIENTS=$(jq '.total' "${HOME_PATH}/${PARQUET_SUBDIR}/patients.json")
   print_message "Total FHIR source test patients ---> ${TOTAL_TEST_PATIENTS}"
 
@@ -194,11 +196,16 @@ function fhir_source_query() {
 #################################################
 function test_parquet_sink() {
   print_message "Counting number of patients, encounters and obs sinked to parquet files"
-  total_patients_streamed=$(java -jar ./parquet-tools-1.11.1.jar rowcount "${HOME_PATH}/${PARQUET_SUBDIR}/Patient/" | awk '{print $3}')
+  local total_patients_streamed=$(java -jar ./controller-spark/parquet-tools-1.11.1.jar rowcount \
+  "${HOME_PATH}/${PARQUET_SUBDIR}/Patient/" | awk '{print $3}')
   print_message "Total patients synced to parquet ---> ${total_patients_streamed}"
-  total_encounters_streamed=$(java -jar ./parquet-tools-1.11.1.jar rowcount "${HOME_PATH}/${PARQUET_SUBDIR}/Encounter/" | awk '{print $3}')
+
+  local total_encounters_streamed=$(java -jar ./controller-spark/parquet-tools-1.11.1.jar rowcount \
+  "${HOME_PATH}/${PARQUET_SUBDIR}/Encounter/" | awk '{print $3}')
   print_message "Total encounters synced to parquet ---> ${total_encounters_streamed}"
-  total_obs_streamed=$(java -jar ./parquet-tools-1.11.1.jar rowcount "${HOME_PATH}/${PARQUET_SUBDIR}/Observation/" | awk '{print $3}')
+
+  local total_obs_streamed=$(java -jar ./controller-spark/parquet-tools-1.11.1.jar rowcount \
+  "${HOME_PATH}/${PARQUET_SUBDIR}/Observation/" | awk '{print $3}')
   print_message "Total obs synced to parquet ---> ${total_obs_streamed}"
 
   if [[ "${total_patients_streamed}" == "${TOTAL_TEST_PATIENTS}" && "${total_encounters_streamed}" \
@@ -246,13 +253,13 @@ function test_fhir_sink() {
 
   print_message "Counting number of patients, encounters and obs sinked to fhir files"
 
-  total_patients_sinked_fhir=$(jq '.total' "${HOME_PATH}/fhir/patients.json")
+  local total_patients_sinked_fhir=$(jq '.total' "${HOME_PATH}/fhir/patients.json")
   print_message "Total patients sinked to fhir ---> ${total_patients_sinked_fhir}"
 
-  total_encounters_sinked_fhir=$(jq '.total' "${HOME_PATH}/fhir/encounters.json")
+  local total_encounters_sinked_fhir=$(jq '.total' "${HOME_PATH}/fhir/encounters.json")
   print_message "Total encounters sinked to fhir ---> ${total_encounters_sinked_fhir}"
 
-  total_obs_sinked_fhir=$(jq '.total' "${HOME_PATH}/fhir/obs.json")
+  local total_obs_sinked_fhir=$(jq '.total' "${HOME_PATH}/fhir/obs.json")
   print_message "Total observations sinked to fhir ---> ${total_obs_sinked_fhir}"
 
   if [[ "${total_patients_sinked_fhir}" == "${TOTAL_TEST_PATIENTS}" && "${total_encounters_sinked_fhir}" \
