@@ -17,7 +17,6 @@ package org.openmrs.analytics.metrics;
 
 import io.prometheus.client.Collector.MetricFamilySamples;
 import io.prometheus.client.CollectorRegistry;
-import io.prometheus.client.exporter.common.TextFormat;
 import java.io.IOException;
 import java.io.StringWriter;
 import java.io.Writer;
@@ -79,12 +78,10 @@ public class PipelineMetricsEndpoint {
   }
 
   public enum TextOutputFormat implements Producible<TextOutputFormat> {
-
-    /** Prometheus text version 0.0.4. */
-    CONTENT_TYPE_004(TextFormat.CONTENT_TYPE_004) {
+    CONTENT_TYPE_001(TextFormat.CONTENT_TYPE_001) {
       @Override
       void write(Writer writer, Enumeration<MetricFamilySamples> samples) throws IOException {
-        TextFormat.write004(writer, samples);
+        TextFormat.write(writer, samples);
       }
 
       @Override
