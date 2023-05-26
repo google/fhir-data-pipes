@@ -41,7 +41,7 @@ public class ApiController {
   public ResponseEntity<String> runBatch(
       @RequestParam(name = "isFullRun", required = true) boolean isFullRun) {
     if (pipelineManager.isRunning()) {
-      return new ResponseEntity<>("Another pipeline is running.", HttpStatus.BAD_REQUEST);
+      return new ResponseEntity<>("Another pipeline is running.", HttpStatus.INTERNAL_SERVER_ERROR);
     }
     logger.info("Received request to start the pipeline ...");
     try {
