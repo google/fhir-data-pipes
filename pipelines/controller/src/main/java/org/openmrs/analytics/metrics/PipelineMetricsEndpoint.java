@@ -21,15 +21,12 @@ import java.io.IOException;
 import java.io.StringWriter;
 import java.io.Writer;
 import java.util.Enumeration;
-import java.util.Set;
-import java.util.stream.Collectors;
 import org.openmrs.analytics.MetricsConstants;
 import org.springframework.boot.actuate.endpoint.Producible;
 import org.springframework.boot.actuate.endpoint.annotation.Endpoint;
 import org.springframework.boot.actuate.endpoint.annotation.ReadOperation;
 import org.springframework.boot.actuate.endpoint.web.WebEndpointResponse;
 import org.springframework.boot.actuate.endpoint.web.annotation.WebEndpoint;
-import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Component;
 import org.springframework.util.MimeType;
 import org.springframework.util.MimeTypeUtils;
@@ -53,18 +50,12 @@ public class PipelineMetricsEndpoint {
   }
 
   @ReadOperation(producesFrom = TextOutputFormat.class)
-  public WebEndpointResponse<String> scrape(
-      TextOutputFormat format, @Nullable Set<String> includedNames) {
+  public WebEndpointResponse<String> scrape(TextOutputFormat format) {
     try {
       Writer writer = new StringWriter(this.nextMetricsScrapeSize);
       Enumeration<MetricFamilySamples> samples =
-          (includedNames != null)
-              ? this.collectorRegistry.filteredMetricFamilySamples(
-                  includedNames.stream()
-                      .filter(sample -> sample.startsWith(MetricsConstants.METRICS_NAMESPACE))
-                      .collect(Collectors.toSet()))
-              : this.collectorRegistry.filteredMetricFamilySamples(
-                  sample -> sample.startsWith(MetricsConstants.METRICS_NAMESPACE));
+          this.collectorRegistry.filteredMetricFamilySamples(
+              sample -> sample.startsWith(MetricsConstants.METRICS_NAMESPACE));
       format.write(writer, samples);
 
       String scrapePage = writer.toString();

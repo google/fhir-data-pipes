@@ -21,27 +21,19 @@ import java.io.IOException;
 import java.io.Writer;
 import java.util.Enumeration;
 
-public class TextFormat {
+class TextFormat {
 
   /** Content-type for Data Pipes text version 0.0.1. */
   public static final String CONTENT_TYPE_001 = "text/plain; version=0.0.1; charset=utf-8";
 
-  /** Write out the text version of the given MetricFamilySamples. */
+  /**
+   * Write out the text version of the given MetricFamilySamples. This is inspired from the
+   * prometheus implementation <a
+   * href="https://github.com/prometheus/client_java/blob/main/simpleclient_common/src/main/java/io/prometheus/client/exporter/common/TextFormat.java#L66">TextFormat</a>
+   */
   public static void write(Writer writer, Enumeration<MetricFamilySamples> mfs) throws IOException {
     while (mfs.hasMoreElements()) {
       Collector.MetricFamilySamples metricFamilySamples = mfs.nextElement();
-      String name = metricFamilySamples.name;
-      writer.write("# TYPE ");
-      writer.write(name);
-      if (metricFamilySamples.type == Collector.Type.COUNTER) {
-        writer.write("_total");
-      }
-      if (metricFamilySamples.type == Collector.Type.INFO) {
-        writer.write("_info");
-      }
-      writer.write(' ');
-      writer.write(typeString(metricFamilySamples.type));
-      writer.write('\n');
       for (Collector.MetricFamilySamples.Sample sample : metricFamilySamples.samples) {
         writer.write(sample.name);
         if (sample.labelNames.size() > 0) {
@@ -56,10 +48,6 @@ public class TextFormat {
         }
         writer.write(' ');
         writer.write(Collector.doubleToGoString(sample.value));
-        if (sample.timestampMs != null) {
-          writer.write(' ');
-          writer.write(sample.timestampMs.toString());
-        }
         writer.write('\n');
       }
     }
@@ -81,27 +69,6 @@ public class TextFormat {
         default:
           writer.append(c);
       }
-    }
-  }
-
-  private static String typeString(Collector.Type t) {
-    switch (t) {
-      case GAUGE:
-        return "gauge";
-      case COUNTER:
-        return "counter";
-      case SUMMARY:
-        return "summary";
-      case HISTOGRAM:
-        return "histogram";
-      case GAUGE_HISTOGRAM:
-        return "histogram";
-      case STATE_SET:
-        return "gauge";
-      case INFO:
-        return "gauge";
-      default:
-        return "untyped";
     }
   }
 }

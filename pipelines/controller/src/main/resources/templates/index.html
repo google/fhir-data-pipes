@@ -139,18 +139,19 @@
       var xhr = new XMLHttpRequest();
       xhr.open("GET", '/actuator/pipeline-metrics', true);
       xhr.onreadystatechange = function() {
+        var metricsBodyElement = document.getElementById('metricsBody');
         if (this.readyState === XMLHttpRequest.DONE && this.status === 200) {
-          metricsBody.style.display = "block";
+          metricsBodyElement.style.display = "block";
           if (this.response) {
-            metricsBody.innerHTML = "<pre>" + this.response + "</pre>";
+            metricsBodyElement.innerHTML = "<pre>" + this.response + "</pre>";
           } else {
-            metricsBody.innerHTML = "Pipeline metrics are not available";
+            metricsBodyElement.innerHTML = "Pipeline metrics are not available";
           }
         }
         if (this.readyState === XMLHttpRequest.DONE && this.status != 200) {
           console.log('Error in fetching metrics: ' + this.response);
-          metricsBody.style.display = "block";
-          metricsBody.innerHTML = "Error occurred while fetching metrics";
+          metricsBodyElement.style.display = "block";
+          metricsBodyElement.innerHTML = "Error occurred while fetching metrics";
         }
       }
       xhr.send();
