@@ -14,38 +14,23 @@
 # limitations under the License.
 #
 
-# This config is meant to work with `compose-controller-spark-sql.yaml`.
+# See `pipelines/controller/config/application.yaml` for full documentation
+# of these options.
+# This config is meant to be used by `compose-controller-spark-sql.yaml`.
 fhirdata:
-  # This is the base URL of the FHIR server; 172.17.0.1 is an example docker
-  # network interface address; `hapi-server` is another docker example where
-  # a container with that name is running on the same docker network.
-  # If `dbConfig` is not set, resources are fetched through the FHIR search API.
+  # 172.17.0.1 is an example docker network interface ip address;
+  # `hapi-server` is another docker example where a container with that name is
+  # running on the same docker network.
   # fhirServerUrl: "http://172.17.0.1:8091/fhir"
   # fhirServerUrl: "http://hapi-server:8080/fhir"
-
-  # If this is set, resources are fetched directly from the HAPI database. In
-  # this case the value of `fhirServerUrl` is ignored.
   dbConfig: "config/hapi-postgres-config_local.json"
-
-  # For GCS file system the dwhRootPrefix should be of the format
-  # "gs://<bucket>/<baseDirPath>/<prefix>". For Unix file system the
-  # dwhRootPrefix should be of the format "/<baseDirPath>/<prefix>".
   dwhRootPrefix: "/dwh/controller_DWH"
-
-  thriftserverHiveConfig: "config/thriftserver-hive-config_local.json"
-
-  # The schedule format is similar to Spring's CronExpression, i.e.,
-  # "second minute hour day-of-the-month month day-of-the-week", e.g.,
-  # "0 0 * * * *" means top of every hour;
-  # "*/30 * * * * *" means in the middle of each minute;
-  # Note a too frequent run might be too resource intensive.
   incrementalSchedule: "0 0 * * * *"
-  # cron expression to trigger the purge job which handles the ttl of dwh snapshots
   purgeSchedule: "0 30 * * * *"
-  # The number of dwh snapshots to be retained when the purge job runs
   numOfDwhSnapshotsToRetain: 2
-  # Comma separated list of resources to fetch/monitor.
   resourceList: "Patient,Encounter,Observation"
-  maxWorkers: 10
+  maxWorkers: 1
+  numThreads: -1
   createHiveResourceTables: true
+  thriftserverHiveConfig: "config/thriftserver-hive-config.json"
   hiveJdbcDriver: "org.apache.hive.jdbc.HiveDriver"
