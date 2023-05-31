@@ -32,5 +32,5 @@ fhirdata:
   maxWorkers: 1
   numThreads: -1
   createHiveResourceTables: true
-  thriftserverHiveConfig: "config/thriftserver-hive-config.json"
+  thriftserverHiveConfig: "config/thriftserver-hive-config_local.json"
   hiveJdbcDriver: "org.apache.hive.jdbc.HiveDriver"

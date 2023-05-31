@@ -46,7 +46,7 @@
 # to /opt/bitnami/spark/conf/
 # https://spark.apache.org/docs/latest/configuration.html
 
-version: '2'
+version: '2.4'
 
 services:
   pipeline-controller:
@@ -59,6 +59,12 @@ services:
       - ${DWH_ROOT}:/dwh
     ports:
       - '8090:8080'
+    networks:
+      - cloudbuild
+      - default
+    depends_on:
+      spark:
+        condition: service_healthy
 
   spark:
     image: docker.io/bitnami/spark:3.3
@@ -78,3 +84,17 @@ services:
       #- ./hive-site_example.xml:/opt/bitnami/spark/conf/hive-site.xml
       # Note to use an external DB, you need to provide its driver jar too:
       #- ./postgresql-42.6.0.jar:/opt/bitnami/spark/jars/postgresql-42.6.0.jar
+    networks:
+      - cloudbuild
+      - default
+    healthcheck:
+      test: beeline -u jdbc:hive2://localhost:10000 -n hive -e 'show tables;' || exit 1
+      interval: 30s
+      retries: 10
+      start_period: 10s
+      timeout: 60s
+
+networks:
+  cloudbuild:
+    external: true
+    name: cloudbuild # Needed for Continuous integration
