@@ -294,7 +294,7 @@
 
         <plugin>
           <artifactId>maven-dependency-plugin</artifactId>
-          <version>3.5.0</version>
+          <version>3.6.0</version>
         </plugin>
 
         <plugin>
@@ -329,7 +329,7 @@
         <plugin> <!-- Upgrading Checkstyle at Runtime -->
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-checkstyle-plugin</artifactId>
-          <version>3.2.2</version>
+          <version>3.3.0</version>
           <dependencies>
             <dependency>
               <groupId>com.puppycrawl.tools</groupId>
