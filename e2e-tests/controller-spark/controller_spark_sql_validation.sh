@@ -93,7 +93,7 @@ function setup() {
   if [[ $3 = "--use_docker_network" ]]; then
     SOURCE_FHIR_SERVER_URL='http://hapi-server:8080'
     PIPELINE_CONTROLLER_URL='http://pipeline-controller:8080'
-    THRIFTSERVER_URL='thriftserver:10000'
+    THRIFTSERVER_URL='spark:10000'
   fi
 }
 
