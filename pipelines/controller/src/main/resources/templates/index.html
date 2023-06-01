@@ -14,6 +14,28 @@
           th:src="@{/bootstrap-5.0.2-dist/js/bootstrap.min.js}"></script>
 
   <script>
+    function openLogs(logPath) {
+      var xhr = new XMLHttpRequest();
+      xhr.open("GET", '/download?path='+logPath, true);
+      xhr.send();
+      xhr.onreadystatechange = function() {
+        if (this.readyState === XMLHttpRequest.DONE && this.status === 200) {
+          console.log('Logs fetched.');
+          const blob = new Blob([xhr.response], { type: "" });
+          const a = document.createElement('a');
+          a.setAttribute('target', '_blank');
+          a.href = URL.createObjectURL(blob);
+          a.click();
+          URL.revokeObjectURL(a.href);
+        }
+      }
+      // Handle errors.
+      if (this.readyState === XMLHttpRequest.DONE && this.status != 200) {
+        console.log('Fetching logs failed: ' + this.response);
+        changeVisibility('errorFetchingRawLogs', true);
+      }
+    }
+
     function changeVisibility(elemId, makeVisible) {
       var elem = document.getElementById(elemId);
       if (makeVisible) {
@@ -186,6 +208,22 @@
         <div class="alert alert-danger alert-dismissible fade show" id="submitError" style="display:none; color:red">
           Error in starting the pipeline!
           <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+
+        <div class="alert alert-danger alert-dismissible fade show"
+             th:if="${lastRunDetails ne null AND lastRunDetails.status == T(org.openmrs.analytics.PipelineManager.Status).FAILURE}"
+             style="color:red">
+          Last run failed! Please find error logs here
+          <button type="submit"
+                  class="button btn btn-primary" th:onclick="openLogs([[${lastRunDetails.logFilePath}]])">
+            View Raw Logs
+          </button>
+        </div>
+        <div class="alert alert-danger alert-dismissible fade show" id="errorFetchingRawLogs"
+             style="display:none; color:red">
+          Error in fetching raw logs!
+          <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close">
+          </button>
         </div>
 
         <div th:attr="class=${isRunning ? 'disabled' : ''}">

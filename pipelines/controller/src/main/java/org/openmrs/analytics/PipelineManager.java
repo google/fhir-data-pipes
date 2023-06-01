@@ -18,8 +18,10 @@ package org.openmrs.analytics;
 import ca.uhn.fhir.context.FhirContext;
 import com.cerner.bunsen.FhirContexts;
 import com.google.common.base.Preconditions;
+import com.google.common.base.Strings;
 import java.beans.PropertyVetoException;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.sql.SQLException;
 import java.time.LocalDateTime;
 import java.util.Collections;
@@ -28,6 +30,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 import javax.annotation.PostConstruct;
+import lombok.Data;
 import org.apache.beam.runners.flink.FlinkPipelineOptions;
 import org.apache.beam.runners.flink.FlinkRunner;
 import org.apache.beam.sdk.Pipeline;
@@ -36,6 +39,7 @@ import org.apache.beam.sdk.io.fs.ResolveOptions.StandardResolveOptions;
 import org.apache.beam.sdk.io.fs.ResourceId;
 import org.apache.beam.sdk.metrics.MetricQueryResults;
 import org.apache.beam.sdk.options.PipelineOptionsFactory;
+import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.openmrs.analytics.metrics.PipelineMetrics;
 import org.openmrs.analytics.metrics.PipelineMetricsFactory;
 import org.openmrs.analytics.model.DatabaseConfiguration;
@@ -78,6 +82,10 @@ public class PipelineManager implements ApplicationListener<ApplicationReadyEven
   // TODO expose this in the web-UI
   private LastRunStatus lastRunStatus = LastRunStatus.NOT_RUN;
 
+  private DwhRunDetails lastRunDetails;
+
+  private static final String ERROR_FILE_NAME = "error.log";
+
   public MetricQueryResults getMetricQueryResults() {
     // TODO Generate metrics and stats even for incremental run, incremental run has two pipelines
     //  running one after the other, come up with a strategy to aggregate the metrics and generate
@@ -108,6 +116,7 @@ public class PipelineManager implements ApplicationListener<ApplicationReadyEven
     String rootPrefix = dataProperties.getDwhRootPrefix();
     Preconditions.checkState(rootPrefix != null && !rootPrefix.isEmpty());
 
+    String lastCompletedDwh = "";
     String lastDwh = "";
     String baseDir = dwhFilesManager.getBaseDir(rootPrefix);
     try {
@@ -120,10 +129,6 @@ public class PipelineManager implements ApplicationListener<ApplicationReadyEven
       Preconditions.checkState(paths != null, "Make sure DWH prefix is a valid path!");
 
       for (ResourceId path : paths) {
-        // Do not consider if the DWH is not completely created earlier.
-        if (!dwhFilesManager.isDwhComplete(path)) {
-          continue;
-        }
         if (!path.getFilename().startsWith(prefix + DataProperties.TIMESTAMP_PREFIX)) {
           // This is not necessarily an error; the user may want to bootstrap from an already
           // created DWH outside the control-panel framework, e.g., by running the batch pipeline
@@ -137,22 +142,68 @@ public class PipelineManager implements ApplicationListener<ApplicationReadyEven
           logger.debug("Found a more recent DWH {}", path.getFilename());
           lastDwh = path.getFilename();
         }
+        // Do not consider if the DWH is not completely created earlier.
+        if (!dwhFilesManager.isDwhComplete(path)) {
+          continue;
+        }
+        if (lastCompletedDwh.isEmpty() || lastCompletedDwh.compareTo(path.getFilename()) < 0) {
+          logger.debug("Found a more recent completed DWH {}", path.getFilename());
+          lastCompletedDwh = path.getFilename();
+        }
       }
     } catch (IOException e) {
       throw new RuntimeException(e);
     }
-    if (lastDwh.isEmpty()) {
+    if (lastCompletedDwh.isEmpty()) {
       logger.info("No DWH found; it should be created by running a full pipeline");
       currentDwh = null;
       lastRunEnd = null;
     } else {
-      logger.info("Initializing with most recent DWH {}", lastDwh);
+      logger.info("Initializing with most recent DWH {}", lastCompletedDwh);
       ResourceId resourceId =
           FileSystems.matchNewResource(baseDir, true)
-              .resolve(lastDwh, StandardResolveOptions.RESOLVE_DIRECTORY);
+              .resolve(lastCompletedDwh, StandardResolveOptions.RESOLVE_DIRECTORY);
       currentDwh = DwhFiles.forRoot(resourceId.toString());
       // There exists a DWH from before, so we set the scheduler to continue updating the DWH.
       lastRunEnd = LocalDateTime.now();
+    }
+    if (!lastDwh.isEmpty()) {
+      initialiseLastRunDetails(baseDir, lastDwh);
+    }
+  }
+
+  /**
+   * This method initialises the lastRunDetails based on the dwh snapshot created recently. In case
+   * an incremental run exists in the snapshot, the status is set based on the incremental run.
+   */
+  private void initialiseLastRunDetails(String baseDir, String dwhDirectory) {
+    try {
+      List<ResourceId> paths =
+          dwhFilesManager.getAllChildDirectories(baseDir + "/" + dwhDirectory).stream()
+              .collect(Collectors.toList());
+      for (ResourceId path : paths) {
+        // In case the incremental run exists, then the status is set according to that.
+        if (path.getFilename().equalsIgnoreCase(DwhFiles.INCREMENTAL_DIR)) {
+          if (dwhFilesManager.isDwhComplete(path)) {
+            setLastRunDetails(path.toString(), Status.SUCCESS);
+          } else {
+            setLastRunDetails(path.toString(), Status.FAILURE);
+          }
+          return;
+        }
+      }
+      // In case of no incremental run, the status is set based on the dwhDirectory snapshot.
+      ResourceId resourceId =
+          FileSystems.matchNewResource(baseDir, true)
+              .resolve(dwhDirectory, StandardResolveOptions.RESOLVE_DIRECTORY);
+      if (dwhFilesManager.isDwhComplete(resourceId)) {
+        setLastRunDetails(resourceId.toString(), Status.SUCCESS);
+      } else {
+        setLastRunDetails(resourceId.toString(), Status.FAILURE);
+      }
+    } catch (IOException e) {
+      logger.error("Error while initialising last run details", e);
+      throw new RuntimeException(e);
     }
   }
 
@@ -180,6 +231,10 @@ public class PipelineManager implements ApplicationListener<ApplicationReadyEven
       return null;
     }
     return cron.next(lastRunEnd);
+  }
+
+  DwhRunDetails getLastRunDetails() {
+    return lastRunDetails;
   }
 
   // Every 30 seconds, check for pipeline status and incremental pipeline schedule.
@@ -388,17 +443,20 @@ public class PipelineManager implements ApplicationListener<ApplicationReadyEven
 
     @Override
     public void run() {
+      String currentDwhRoot = null;
       try {
         FhirEtlOptions options = pipeline.getOptions().as(FhirEtlOptions.class);
+        currentDwhRoot = options.getOutputParquetPath();
         EtlUtils.runPipelineWithTimestamp(pipeline, options);
         if (mergerOptions == null) { // Do not update DWH yet if this was an incremental run.
-          manager.updateDwh(options.getOutputParquetPath());
+          manager.updateDwh(currentDwhRoot);
         } else {
+          currentDwhRoot = mergerOptions.getMergedDwh();
           FhirContext fhirContext = FhirContexts.forR4();
           Pipeline mergerPipeline = ParquetMerger.createMergerPipeline(mergerOptions, fhirContext);
           logger.info("Merger options are {}", mergerOptions);
           EtlUtils.runMergerPipelineWithTimestamp(mergerPipeline, mergerOptions);
-          manager.updateDwh(mergerOptions.getMergedDwh());
+          manager.updateDwh(currentDwhRoot);
         }
         if (dataProperties.isCreateHiveResourceTables()) {
           createHiveResourceTables(
@@ -407,8 +465,11 @@ public class PipelineManager implements ApplicationListener<ApplicationReadyEven
               pipelineConfig.getThriftServerParquetPath());
         }
         manager.setLastRunStatus(LastRunStatus.SUCCESS);
+        manager.setLastRunDetails(currentDwhRoot, Status.SUCCESS);
       } catch (Exception e) {
         logger.error("exception while running pipeline: ", e);
+        manager.captureError(currentDwhRoot, e);
+        manager.setLastRunDetails(currentDwhRoot, Status.FAILURE);
         manager.setLastRunStatus(LastRunStatus.FAILURE);
       }
     }
@@ -432,8 +493,59 @@ public class PipelineManager implements ApplicationListener<ApplicationReadyEven
     }
   }
 
+  /** This method captures the given exception into a file rooted at the dwhRoot location. */
+  void captureError(String dwhRoot, Exception e) {
+    try {
+      if (!Strings.isNullOrEmpty(dwhRoot)) {
+        String stackTrace = ExceptionUtils.getStackTrace(e);
+        DwhFiles.forRoot(dwhRoot)
+            .writeToFile(ERROR_FILE_NAME, stackTrace.getBytes(StandardCharsets.UTF_8));
+      }
+    } catch (IOException ex) {
+      logger.error("Error while capturing error to a file", ex);
+    }
+  }
+
+  /** Sets the details of the last pipeline run with the given dwhRoot as the snapshot location. */
+  void setLastRunDetails(String dwhRoot, Status status) {
+    DwhRunDetails dwhRunDetails = new DwhRunDetails();
+    try {
+      DwhFiles dwhFiles = DwhFiles.forRoot(dwhRoot);
+      String startTime = dwhFiles.readTimestampFile(DwhFiles.TIMESTAMP_FILE_START).toString();
+      dwhRunDetails.setStartTime(startTime);
+      if (status == Status.SUCCESS) {
+        String endTime = dwhFiles.readTimestampFile(DwhFiles.TIMESTAMP_FILE_END).toString();
+        dwhRunDetails.setEndTime(endTime);
+      } else {
+        dwhRoot = dwhRoot.endsWith("/") ? dwhRoot : dwhRoot + "/";
+        dwhRunDetails.setLogFilePath(dwhRoot + ERROR_FILE_NAME);
+      }
+      dwhRunDetails.setStatus(status);
+      dwhRunDetails.setParquetPath(dwhRoot);
+      this.lastRunDetails = dwhRunDetails;
+    } catch (IOException e) {
+      logger.error("Error in reading timestamp files", e);
+      throw new RuntimeException(e);
+    }
+  }
+
   public enum LastRunStatus {
     NOT_RUN,
+    SUCCESS,
+    FAILURE
+  }
+
+  @Data
+  public class DwhRunDetails {
+
+    private String startTime;
+    private String endTime;
+    private Status status;
+    private String parquetPath;
+    private String logFilePath;
+  }
+
+  public enum Status {
     SUCCESS,
     FAILURE
   }
