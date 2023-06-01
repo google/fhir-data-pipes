@@ -46,6 +46,7 @@
 # to /opt/bitnami/spark/conf/
 # https://spark.apache.org/docs/latest/configuration.html
 
+# Version 2.4 supports healthcheck feature.
 version: '2.4'
 
 services:
@@ -84,6 +85,7 @@ services:
       #- ./hive-site_example.xml:/opt/bitnami/spark/conf/hive-site.xml
       # Note to use an external DB, you need to provide its driver jar too:
       #- ./postgresql-42.6.0.jar:/opt/bitnami/spark/jars/postgresql-42.6.0.jar
+      - spark_vol_single:/opt/bitnami/spark
     networks:
       - cloudbuild
       - default
@@ -93,6 +95,10 @@ services:
       retries: 10
       start_period: 10s
       timeout: 60s
+
+
+volumes:
+  spark_vol_single:
 
 networks:
   cloudbuild:
