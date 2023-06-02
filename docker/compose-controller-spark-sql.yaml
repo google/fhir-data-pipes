@@ -24,6 +24,8 @@
 # - A group of worker nodes (in this example just one)
 # - A thriftserver providing JDBC and Metastore functionality.
 # All Spark components share a common spark volume.
+# If you need a simpler single-process deployment, see:
+#  compose-controller-spark-sql-single.yaml.
 
 # Environment variables:
 #
