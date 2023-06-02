@@ -27,9 +27,8 @@ class TextFormat {
   public static final String CONTENT_TYPE_001 = "text/plain; version=0.0.1; charset=utf-8";
 
   /**
-   * Write out the text version of the given MetricFamilySamples. This is inspired from the
-   * prometheus implementation <a
-   * href="https://github.com/prometheus/client_java/blob/main/simpleclient_common/src/main/java/io/prometheus/client/exporter/common/TextFormat.java#L66">TextFormat</a>
+   * Write out the text version of the given MetricFamilySamples. Inspired from the TextFormat
+   * implementation in <a href="https://github.com/prometheus/client_java">Prometheus Client</a>
    */
   public static void write(Writer writer, Enumeration<MetricFamilySamples> mfs) throws IOException {
     while (mfs.hasMoreElements()) {
