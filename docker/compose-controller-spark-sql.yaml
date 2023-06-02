@@ -152,10 +152,10 @@ services:
       - cloudbuild
       - default
     healthcheck:
-      test: beeline -u jdbc:hive2://localhost:10000 -n hive -e 'show tables;' || exit 1
-      interval: 30s
+      test: beeline help || exit 1
+      interval: 10s
       retries: 10
-      start_period: 10s
+      start_period: 5s
       timeout: 60s
 
 volumes:
