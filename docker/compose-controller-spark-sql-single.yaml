@@ -72,6 +72,9 @@ services:
     container_name: spark-thriftserver
     command:
       - sbin/start-thriftserver.sh
+      - --driver-memory
+      # You may need to increase this if your queries/data are too large.
+      - 5g
     environment:
       - HIVE_SERVER2_THRIFT_PORT=10000
     ports:
