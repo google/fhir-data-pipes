@@ -103,9 +103,6 @@ public class JdbcConnectionPools {
     // Lowering the minimum pool size to limit the number of connections if multiple pools are
     // created for the same DB.
     comboPooledDataSource.setMinPoolSize(1);
-    // Reducing acquire retry attempts value so that the clients waiting on the connections fail
-    // sooner, but keeping it sufficient to increase the successful connection.
-    comboPooledDataSource.setAcquireRetryAttempts(10);
     return comboPooledDataSource;
   }
 

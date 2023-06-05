@@ -18,6 +18,7 @@ package org.openmrs.analytics;
 import ca.uhn.fhir.context.FhirContext;
 import com.cerner.bunsen.FhirContexts;
 import com.google.common.base.Preconditions;
+import com.google.common.base.Strings;
 import java.beans.PropertyVetoException;
 import java.io.IOException;
 import java.sql.SQLException;
@@ -103,6 +104,7 @@ public class PipelineManager implements ApplicationListener<ApplicationReadyEven
 
     PipelineConfig pipelineConfig = dataProperties.createBatchOptions();
     FileSystems.setDefaultPipelineOptions(pipelineConfig.getFhirEtlOptions());
+    validateFhirSourceConfiguration(pipelineConfig.getFhirEtlOptions());
 
     cron = CronExpression.parse(dataProperties.getIncrementalSchedule());
     String rootPrefix = dataProperties.getDwhRootPrefix();
@@ -154,6 +156,46 @@ public class PipelineManager implements ApplicationListener<ApplicationReadyEven
       // There exists a DWH from before, so we set the scheduler to continue updating the DWH.
       lastRunEnd = LocalDateTime.now();
     }
+  }
+
+  /**
+   * Validate the FHIR source configuration parameters during the launch of the application. This is
+   * to detect any mis-configurations earlier enough and avoid failures during pipeline runs.
+   */
+  void validateFhirSourceConfiguration(FhirEtlOptions options) {
+    if (options.isJdbcModeHapi()) {
+      validateDbConfigParameters(options.getFhirDatabaseConfigPath());
+    } else if (!Strings.isNullOrEmpty(options.getFhirServerUrl())) {
+      validateFhirSearchParameters(options);
+    }
+  }
+
+  private void validateDbConfigParameters(String dbConfigPath) {
+    try {
+      DatabaseConfiguration dbConfiguration =
+          DatabaseConfiguration.createConfigFromFile(dbConfigPath);
+      boolean isValid =
+          JdbcConnectionUtil.validateJdbcDetails(
+              dbConfiguration.getJdbcDriverClass(),
+              dbConfiguration.makeJdbsUrlFromConfig(),
+              dbConfiguration.getDatabaseUser(),
+              dbConfiguration.getDatabasePassword());
+      Preconditions.checkArgument(isValid);
+    } catch (IOException | SQLException | ClassNotFoundException e) {
+      logger.error("Error occurred while validating jdbc details", e);
+      throw new RuntimeException(e);
+    }
+  }
+
+  private void validateFhirSearchParameters(FhirEtlOptions options) {
+    FhirSearchUtil fhirSearchUtil =
+        new FhirSearchUtil(
+            new OpenmrsUtil(
+                options.getFhirServerUrl(),
+                options.getFhirServerUserName(),
+                options.getFhirServerPassword(),
+                FhirContext.forR4()));
+    fhirSearchUtil.testFhirConnection();
   }
 
   synchronized boolean isBatchRun() {
