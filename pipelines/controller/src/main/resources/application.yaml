@@ -34,13 +34,6 @@ data:
   numOfDwhSnapshotsToRetain: 2
   # Comma separated list of resources to fetch/monitor.
   resourceList: "Patient,Encounter,Observation"
-# Enable spring boot actuator end points, use "*" to expose all endpoints, or a comma-separated
-# list to expose selected ones
-management:
-  endpoints:
-    web:
-      exposure:
-        include: health,info,metrics,prometheus,pipeline-metrics
 
 
 
