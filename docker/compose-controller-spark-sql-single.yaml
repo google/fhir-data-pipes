@@ -46,7 +46,8 @@
 # to /opt/bitnami/spark/conf/
 # https://spark.apache.org/docs/latest/configuration.html
 
-version: '2'
+# Version 2.4 supports healthcheck feature.
+version: '2.4'
 
 services:
   pipeline-controller:
@@ -59,12 +60,21 @@ services:
       - ${DWH_ROOT}:/dwh
     ports:
       - '8090:8080'
+    networks:
+      - cloudbuild
+      - default
+    depends_on:
+      spark:
+        condition: service_healthy
 
   spark:
     image: docker.io/bitnami/spark:3.3
     container_name: spark-thriftserver
     command:
       - sbin/start-thriftserver.sh
+      - --driver-memory
+      # You may need to increase this if your queries/data are too large.
+      - 5g
     environment:
       - HIVE_SERVER2_THRIFT_PORT=10000
     ports:
@@ -78,3 +88,22 @@ services:
       #- ./hive-site_example.xml:/opt/bitnami/spark/conf/hive-site.xml
       # Note to use an external DB, you need to provide its driver jar too:
       #- ./postgresql-42.6.0.jar:/opt/bitnami/spark/jars/postgresql-42.6.0.jar
+      - spark_vol_single:/opt/bitnami/spark
+    networks:
+      - cloudbuild
+      - default
+    healthcheck:
+      test: beeline help || exit 1
+      interval: 10s
+      retries: 10
+      start_period: 5s
+      timeout: 60s
+
+
+volumes:
+  spark_vol_single:
+
+networks:
+  cloudbuild:
+    external: true
+    name: cloudbuild # Needed for Continuous integration

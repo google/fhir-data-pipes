@@ -125,7 +125,7 @@ steps:
   env:
     - PIPELINE_CONFIG=/workspace/docker/config
     - DWH_ROOT=/workspace/e2e-tests/controller-spark/dwh
-  args: [ '-f', './docker/compose-controller-spark-sql.yaml', 'up',
+  args: [ '-f', './docker/compose-controller-spark-sql-single.yaml', 'up',
           '--force-recreate', '-d' ]
 
 - name: '${_REPOSITORY}/e2e-tests/controller-spark:${_TAG}'
@@ -133,7 +133,7 @@ steps:
 
 - name: 'docker/compose'
   id: 'Bring down controller and Spark containers'
-  args: [ '-f', './docker/compose-controller-spark-sql.yaml', 'down' ]
+  args: [ '-f', './docker/compose-controller-spark-sql-single.yaml', 'down' ]
 
 - name: 'docker/compose'
   id: 'Turn down HAPI Source and Sink Servers'

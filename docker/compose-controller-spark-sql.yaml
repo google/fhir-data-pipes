@@ -24,6 +24,8 @@
 # - A group of worker nodes (in this example just one)
 # - A thriftserver providing JDBC and Metastore functionality.
 # All Spark components share a common spark volume.
+# If you need a simpler single-process deployment, see:
+#  compose-controller-spark-sql-single.yaml.
 
 # Environment variables:
 #
@@ -150,10 +152,10 @@ services:
       - cloudbuild
       - default
     healthcheck:
-      test: beeline -u jdbc:hive2://localhost:10000 -n hive -e 'show tables;' || exit 1
-      interval: 30s
+      test: beeline help || exit 1
+      interval: 10s
       retries: 10
-      start_period: 10s
+      start_period: 5s
       timeout: 60s
 
 volumes:
