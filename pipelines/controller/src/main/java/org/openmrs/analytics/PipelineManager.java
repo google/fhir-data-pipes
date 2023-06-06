@@ -18,8 +18,8 @@ package org.openmrs.analytics;
 import ca.uhn.fhir.context.FhirContext;
 import com.cerner.bunsen.FhirContexts;
 import com.google.common.base.Preconditions;
-import io.micrometer.core.instrument.MeterRegistry;
 import com.google.common.base.Strings;
+import io.micrometer.core.instrument.MeterRegistry;
 import java.beans.PropertyVetoException;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -525,7 +525,6 @@ public class PipelineManager implements ApplicationListener<ApplicationReadyEven
       try {
         FhirEtlOptions options = pipeline.getOptions().as(FhirEtlOptions.class);
         currentDwhRoot = options.getOutputParquetPath();
-        EtlUtils.runPipelineWithTimestamp(pipeline, options);
         PipelineResult pipelineResult = EtlUtils.runPipelineWithTimestamp(pipeline, options);
         // Remove the metrics of the previous pipeline and register the new metrics
         manager.removePipelineMetrics();
@@ -537,12 +536,10 @@ public class PipelineManager implements ApplicationListener<ApplicationReadyEven
           FhirContext fhirContext = FhirContexts.forR4();
           Pipeline mergerPipeline = ParquetMerger.createMergerPipeline(mergerOptions, fhirContext);
           logger.info("Merger options are {}", mergerOptions);
-          EtlUtils.runMergerPipelineWithTimestamp(mergerPipeline, mergerOptions);
-          manager.updateDwh(currentDwhRoot);
           PipelineResult mergerPipelineResult =
               EtlUtils.runMergerPipelineWithTimestamp(mergerPipeline, mergerOptions);
           manager.publishPipelineMetrics(mergerPipelineResult.metrics());
-          manager.updateDwh(mergerOptions.getMergedDwh());
+          manager.updateDwh(currentDwhRoot);
         }
         if (dataProperties.isCreateHiveResourceTables()) {
           createHiveResourceTables(
