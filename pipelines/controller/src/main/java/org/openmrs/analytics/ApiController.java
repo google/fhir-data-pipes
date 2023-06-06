@@ -15,14 +15,25 @@
  */
 package org.openmrs.analytics;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.nio.channels.Channels;
+import java.nio.channels.ReadableByteChannel;
+import java.util.Arrays;
+import org.apache.beam.sdk.io.FileSystems;
+import org.apache.beam.sdk.io.fs.ResourceId;
 import org.apache.beam.sdk.metrics.MetricQueryResults;
 import org.openmrs.analytics.metrics.ProgressStats;
 import org.openmrs.analytics.metrics.Stats;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.io.InputStreamResource;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.util.MultiValueMap;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -83,5 +94,19 @@ public class ApiController {
   private Stats getStats() {
     MetricQueryResults metricQueryResults = pipelineManager.getMetricQueryResults();
     return Stats.createStats(metricQueryResults);
+  }
+
+  @GetMapping(
+      value = "/download",
+      produces = {MediaType.TEXT_PLAIN_VALUE})
+  public ResponseEntity<InputStreamResource> download(@RequestParam(name = "path") String path)
+      throws IOException {
+    ResourceId resourceId = FileSystems.matchNewResource(path, false);
+    ReadableByteChannel channel = FileSystems.open(resourceId);
+    InputStream stream = Channels.newInputStream(channel);
+    InputStreamResource inputStreamResource = new InputStreamResource(stream);
+    MultiValueMap<String, String> headers = new HttpHeaders();
+    headers.put("Content-type", Arrays.asList(MediaType.TEXT_PLAIN_VALUE));
+    return new ResponseEntity<>(inputStreamResource, headers, HttpStatus.OK);
   }
 }
