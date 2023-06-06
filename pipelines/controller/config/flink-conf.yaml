@@ -8,4 +8,5 @@ taskmanager.memory.network.max: 5gb
 # this is overwritten in `local` mode: https://stackoverflow.com/a/74416240
 execution.attached: false
 
+# This is required to track the pipeline metrics when FlinkRunner is used.
 execution.job-listeners: org.openmrs.analytics.metrics.FlinkJobListener
