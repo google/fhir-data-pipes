@@ -71,6 +71,7 @@ public class MainController {
     model.addAttribute(
         "defConfigs",
         pipelineConfigs.stream().filter(c -> c.def.equals(c.value)).collect(Collectors.toList()));
+    model.addAttribute("lastRunDetails", pipelineManager.getLastRunDetails());
     logger.info("Done serving /");
     return HTML_INDEX_PAGE;
   }

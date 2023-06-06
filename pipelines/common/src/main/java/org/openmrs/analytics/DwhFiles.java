@@ -286,4 +286,33 @@ public class DwhFiles {
     }
     return Instant.parse(result.get(0));
   }
+
+  public void writeToFile(String fileName, byte[] content) throws IOException {
+    ResourceId resourceId =
+        FileSystems.matchNewResource(getRoot(), true)
+            .resolve(fileName, StandardResolveOptions.RESOLVE_FILE);
+
+    List<MatchResult> matches = FileSystems.matchResources(Collections.singletonList(resourceId));
+    MatchResult matchResult = Iterables.getOnlyElement(matches);
+
+    if (matchResult.status() == Status.OK) {
+      String errorMessage =
+          String.format(
+              "Attempting to write to the file %s which already exists",
+              getRoot() + "/" + fileName);
+      log.error(errorMessage);
+      throw new FileAlreadyExistsException(errorMessage);
+    } else if (matchResult.status() == Status.NOT_FOUND) {
+      WritableByteChannel writableByteChannel = FileSystems.create(resourceId, MimeTypes.BINARY);
+      writableByteChannel.write(ByteBuffer.wrap(content));
+      writableByteChannel.close();
+    } else {
+      String errorMessage =
+          String.format(
+              "Error matching file spec %s: status %s",
+              getRoot() + "/" + fileName, matchResult.status());
+      log.error(errorMessage);
+      throw new IOException(errorMessage);
+    }
+  }
 }
