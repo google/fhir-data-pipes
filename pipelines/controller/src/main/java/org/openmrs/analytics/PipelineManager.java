@@ -85,6 +85,8 @@ public class PipelineManager implements ApplicationListener<ApplicationReadyEven
   private DwhRunDetails lastRunDetails;
 
   private static final String ERROR_FILE_NAME = "error.log";
+  private static final String SUCCESS = "SUCCESS";
+  private static final String FAILURE = "FAILURE";
 
   public MetricQueryResults getMetricQueryResults() {
     // TODO Generate metrics and stats even for incremental run, incremental run has two pipelines
@@ -179,32 +181,27 @@ public class PipelineManager implements ApplicationListener<ApplicationReadyEven
    */
   private void initialiseLastRunDetails(String baseDir, String dwhDirectory) {
     try {
-      List<ResourceId> paths =
-          dwhFilesManager.getAllChildDirectories(baseDir + "/" + dwhDirectory).stream()
-              .collect(Collectors.toList());
-      for (ResourceId path : paths) {
-        // In case the incremental run exists, then the status is set according to that.
-        if (path.getFilename().equalsIgnoreCase(DwhFiles.INCREMENTAL_DIR)) {
-          if (dwhFilesManager.isDwhComplete(path)) {
-            setLastRunDetails(path.toString(), Status.SUCCESS);
-          } else {
-            setLastRunDetails(path.toString(), Status.FAILURE);
-          }
-          return;
-        }
-      }
-      // In case of no incremental run, the status is set based on the dwhDirectory snapshot.
-      ResourceId resourceId =
+      ResourceId dwhDirectoryPath =
           FileSystems.matchNewResource(baseDir, true)
               .resolve(dwhDirectory, StandardResolveOptions.RESOLVE_DIRECTORY);
-      if (dwhFilesManager.isDwhComplete(resourceId)) {
-        setLastRunDetails(resourceId.toString(), Status.SUCCESS);
-      } else {
-        setLastRunDetails(resourceId.toString(), Status.FAILURE);
+      DwhFiles dwhFiles = DwhFiles.forRoot(dwhDirectoryPath.toString());
+      if (dwhFiles.hasIncrementalDir()) {
+        updateLastRunDetails(dwhFiles.getIncrementalRunPath());
+        return;
       }
+      // In case of no incremental run, the status is set based on the dwhDirectory snapshot.
+      updateLastRunDetails(dwhDirectoryPath);
     } catch (IOException e) {
       logger.error("Error while initialising last run details", e);
       throw new RuntimeException(e);
+    }
+  }
+
+  private void updateLastRunDetails(ResourceId dwhDirectoryPath) throws IOException {
+    if (dwhFilesManager.isDwhComplete(dwhDirectoryPath)) {
+      setLastRunDetails(dwhDirectoryPath.toString(), SUCCESS);
+    } else {
+      setLastRunDetails(dwhDirectoryPath.toString(), FAILURE);
     }
   }
 
@@ -506,11 +503,11 @@ public class PipelineManager implements ApplicationListener<ApplicationReadyEven
               pipelineConfig.getThriftServerParquetPath());
         }
         manager.setLastRunStatus(LastRunStatus.SUCCESS);
-        manager.setLastRunDetails(currentDwhRoot, Status.SUCCESS);
+        manager.setLastRunDetails(currentDwhRoot, SUCCESS);
       } catch (Exception e) {
         logger.error("exception while running pipeline: ", e);
         manager.captureError(currentDwhRoot, e);
-        manager.setLastRunDetails(currentDwhRoot, Status.FAILURE);
+        manager.setLastRunDetails(currentDwhRoot, FAILURE);
         manager.setLastRunStatus(LastRunStatus.FAILURE);
       }
     }
@@ -548,13 +545,13 @@ public class PipelineManager implements ApplicationListener<ApplicationReadyEven
   }
 
   /** Sets the details of the last pipeline run with the given dwhRoot as the snapshot location. */
-  void setLastRunDetails(String dwhRoot, Status status) {
+  void setLastRunDetails(String dwhRoot, String status) {
     DwhRunDetails dwhRunDetails = new DwhRunDetails();
     try {
       DwhFiles dwhFiles = DwhFiles.forRoot(dwhRoot);
       String startTime = dwhFiles.readTimestampFile(DwhFiles.TIMESTAMP_FILE_START).toString();
       dwhRunDetails.setStartTime(startTime);
-      if (status == Status.SUCCESS) {
+      if (!Strings.isNullOrEmpty(status) && status.equalsIgnoreCase(SUCCESS)) {
         String endTime = dwhFiles.readTimestampFile(DwhFiles.TIMESTAMP_FILE_END).toString();
         dwhRunDetails.setEndTime(endTime);
       } else {
@@ -562,7 +559,6 @@ public class PipelineManager implements ApplicationListener<ApplicationReadyEven
         dwhRunDetails.setLogFilePath(dwhRoot + ERROR_FILE_NAME);
       }
       dwhRunDetails.setStatus(status);
-      dwhRunDetails.setParquetPath(dwhRoot);
       this.lastRunDetails = dwhRunDetails;
     } catch (IOException e) {
       logger.error("Error in reading timestamp files", e);
@@ -581,13 +577,7 @@ public class PipelineManager implements ApplicationListener<ApplicationReadyEven
 
     private String startTime;
     private String endTime;
-    private Status status;
-    private String parquetPath;
+    private String status;
     private String logFilePath;
-  }
-
-  public enum Status {
-    SUCCESS,
-    FAILURE
   }
 }

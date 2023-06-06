@@ -15,12 +15,10 @@
  */
 package org.openmrs.analytics;
 
-import java.beans.PropertyVetoException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.channels.Channels;
 import java.nio.channels.ReadableByteChannel;
-import java.sql.SQLException;
 import java.util.Arrays;
 import org.apache.beam.sdk.io.FileSystems;
 import org.apache.beam.sdk.io.fs.ResourceId;
@@ -36,8 +34,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.util.MultiValueMap;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -102,7 +98,7 @@ public class ApiController {
 
   @GetMapping(
       value = "/download",
-      produces = {MediaType.APPLICATION_OCTET_STREAM_VALUE})
+      produces = {MediaType.TEXT_PLAIN_VALUE})
   public ResponseEntity<InputStreamResource> download(@RequestParam(name = "path") String path)
       throws IOException {
     ResourceId resourceId = FileSystems.matchNewResource(path, false);
@@ -110,10 +106,7 @@ public class ApiController {
     InputStream stream = Channels.newInputStream(channel);
     InputStreamResource inputStreamResource = new InputStreamResource(stream);
     MultiValueMap<String, String> headers = new HttpHeaders();
-    headers.put(
-        "Content-Disposition",
-        Arrays.asList("inline; filename=\"" + resourceId.getFilename() + "\""));
-    headers.put("Content-type", Arrays.asList(MediaType.APPLICATION_OCTET_STREAM_VALUE));
+    headers.put("Content-type", Arrays.asList(MediaType.TEXT_PLAIN_VALUE));
     return new ResponseEntity<>(inputStreamResource, headers, HttpStatus.OK);
   }
 }

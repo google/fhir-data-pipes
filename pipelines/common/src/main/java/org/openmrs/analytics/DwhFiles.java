@@ -60,7 +60,7 @@ public class DwhFiles {
 
   public static final String TIMESTAMP_FILE_END = "timestamp_end.txt";
 
-  public static final String INCREMENTAL_DIR = "incremental_run";
+  private static final String INCREMENTAL_DIR = "incremental_run";
 
   private final String dwhRoot;
 

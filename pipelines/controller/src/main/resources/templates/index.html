@@ -15,25 +15,7 @@
 
   <script>
     function openLogs(logPath) {
-      var xhr = new XMLHttpRequest();
-      xhr.open("GET", '/download?path='+logPath, true);
-      xhr.send();
-      xhr.onreadystatechange = function() {
-        if (this.readyState === XMLHttpRequest.DONE && this.status === 200) {
-          console.log('Logs fetched.');
-          const blob = new Blob([xhr.response], { type: "" });
-          const a = document.createElement('a');
-          a.setAttribute('target', '_blank');
-          a.href = URL.createObjectURL(blob);
-          a.click();
-          URL.revokeObjectURL(a.href);
-        }
-      }
-      // Handle errors.
-      if (this.readyState === XMLHttpRequest.DONE && this.status != 200) {
-        console.log('Fetching logs failed: ' + this.response);
-        changeVisibility('errorFetchingRawLogs', true);
-      }
+      window.open('/download?path='+logPath, '_blank').focus();
     }
 
     function changeVisibility(elemId, makeVisible) {
@@ -212,7 +194,7 @@
         </div>
 
         <div class="alert alert-danger alert-dismissible fade show"
-             th:if="${lastRunDetails ne null AND lastRunDetails.status == T(org.openmrs.analytics.PipelineManager.Status).FAILURE}"
+             th:if="${lastRunDetails ne null AND lastRunDetails.status == 'FAILURE'}"
              style="color:red">
           Last run failed! Please find error logs here
           <button type="submit"
