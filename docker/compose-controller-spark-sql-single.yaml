@@ -72,6 +72,9 @@ services:
     container_name: spark-thriftserver
     command:
       - sbin/start-thriftserver.sh
+      - --driver-memory
+      # You may need to increase this if your queries/data are too large.
+      - 5g
     environment:
       - HIVE_SERVER2_THRIFT_PORT=10000
     ports:
@@ -90,10 +93,10 @@ services:
       - cloudbuild
       - default
     healthcheck:
-      test: beeline -u jdbc:hive2://localhost:10000 -n hive -e 'show tables;' || exit 1
-      interval: 30s
+      test: beeline help || exit 1
+      interval: 10s
       retries: 10
-      start_period: 10s
+      start_period: 5s
       timeout: 60s
 
 

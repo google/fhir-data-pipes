@@ -36,6 +36,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.util.MultiValueMap;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -43,6 +45,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 public class ApiController {
+
   private static final Logger logger = LoggerFactory.getLogger(ApiController.class.getName());
 
   private static final String SUCCESS = "SUCCESS";
@@ -50,18 +53,24 @@ public class ApiController {
   @Autowired private PipelineManager pipelineManager;
 
   @PostMapping("/run")
-  public String runBatch(@RequestParam(name = "isFullRun", required = true) boolean isFullRun)
-      throws IOException, PropertyVetoException, SQLException {
+  public ResponseEntity<String> runBatch(
+      @RequestParam(name = "isFullRun", required = true) boolean isFullRun) {
     if (pipelineManager.isRunning()) {
-      throw new IllegalStateException("Another pipeline is running!");
+      return new ResponseEntity<>("Another pipeline is running.", HttpStatus.INTERNAL_SERVER_ERROR);
     }
     logger.info("Received request to start the pipeline ...");
-    if (isFullRun) {
-      pipelineManager.runBatchPipeline();
-    } else {
-      pipelineManager.runIncrementalPipeline();
+    try {
+      if (isFullRun) {
+        pipelineManager.runBatchPipeline();
+      } else {
+        pipelineManager.runIncrementalPipeline();
+      }
+    } catch (Exception e) {
+      logger.error("Error in starting the pipeline", e);
+      return new ResponseEntity<>(
+          "An unknown error has occurred.", HttpStatus.INTERNAL_SERVER_ERROR);
     }
-    return "SUCCESS";
+    return new ResponseEntity<>(SUCCESS, HttpStatus.OK);
   }
 
   @GetMapping("/status")
@@ -83,7 +92,7 @@ public class ApiController {
     }
     logger.info("Received request to create request tables ...");
     pipelineManager.createResourceTables();
-    return "SUCCESS";
+    return SUCCESS;
   }
 
   private Stats getStats() {
