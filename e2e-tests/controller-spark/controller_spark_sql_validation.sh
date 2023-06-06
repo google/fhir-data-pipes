@@ -347,7 +347,7 @@ validate_args  "$@"
 setup "$@"
 print_message "---- STARTING TEST ----"
 fhir_source_query
-sleep 5
+sleep 50
 run_pipeline true
 check_parquet false
 

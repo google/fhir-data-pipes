@@ -40,6 +40,7 @@ import java.util.Set;
 import org.apache.http.NameValuePair;
 import org.apache.http.client.utils.URLEncodedUtils;
 import org.hl7.fhir.r4.model.Bundle;
+import org.hl7.fhir.r4.model.Patient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -314,5 +315,23 @@ public class FhirSearchUtil {
             .where(new ReferenceClientParam("patient").hasId(patientId))
             .where(new DateClientParam("date").beforeOrEquals().second(lastDate));
     return query.execute();
+  }
+
+  /**
+   * Validates if a connection can be established to the FHIR server by executing a search query.
+   */
+  void testFhirConnection() {
+    log.info("Validating FHIR connection");
+    IGenericClient client = openmrsUtil.getSourceClient();
+    IQuery<Bundle> query =
+        client
+            .search()
+            .forResource(Patient.class)
+            .summaryMode(SummaryEnum.COUNT)
+            .totalMode(SearchTotalModeEnum.ACCURATE)
+            .returnBundle(Bundle.class);
+    // The query is executed and checked for any errors during the connection, the result is ignored
+    query.execute();
+    log.info("Validating FHIR connection successful");
   }
 }

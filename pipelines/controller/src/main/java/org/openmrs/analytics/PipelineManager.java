@@ -18,6 +18,8 @@ package org.openmrs.analytics;
 import ca.uhn.fhir.context.FhirContext;
 import com.cerner.bunsen.FhirContexts;
 import com.google.common.base.Preconditions;
+import io.micrometer.core.instrument.MeterRegistry;
+import com.google.common.base.Strings;
 import java.beans.PropertyVetoException;
 import java.io.IOException;
 import java.sql.SQLException;
@@ -31,10 +33,14 @@ import javax.annotation.PostConstruct;
 import org.apache.beam.runners.flink.FlinkPipelineOptions;
 import org.apache.beam.runners.flink.FlinkRunner;
 import org.apache.beam.sdk.Pipeline;
+import org.apache.beam.sdk.PipelineResult;
 import org.apache.beam.sdk.io.FileSystems;
 import org.apache.beam.sdk.io.fs.ResolveOptions.StandardResolveOptions;
 import org.apache.beam.sdk.io.fs.ResourceId;
+import org.apache.beam.sdk.metrics.GaugeResult;
 import org.apache.beam.sdk.metrics.MetricQueryResults;
+import org.apache.beam.sdk.metrics.MetricResult;
+import org.apache.beam.sdk.metrics.MetricResults;
 import org.apache.beam.sdk.options.PipelineOptionsFactory;
 import org.openmrs.analytics.metrics.PipelineMetrics;
 import org.openmrs.analytics.metrics.PipelineMetricsFactory;
@@ -67,6 +73,8 @@ public class PipelineManager implements ApplicationListener<ApplicationReadyEven
 
   @Autowired private DwhFilesManager dwhFilesManager;
 
+  @Autowired private MeterRegistry meterRegistry;
+
   private PipelineThread currentPipeline;
 
   private DwhFiles currentDwh;
@@ -77,6 +85,39 @@ public class PipelineManager implements ApplicationListener<ApplicationReadyEven
 
   // TODO expose this in the web-UI
   private LastRunStatus lastRunStatus = LastRunStatus.NOT_RUN;
+
+  /**
+   * This method publishes the beam pipeline metrics to the spring boot actuator. Previous metrics
+   * are removed from the actuator before publishing the latest metrics
+   *
+   * @param metricResults The pipeline metrics that needs to be pushed
+   */
+  void publishPipelineMetrics(MetricResults metricResults) {
+    MetricQueryResults metricQueryResults = EtlUtils.getMetrics(metricResults);
+    for (MetricResult<Long> metricCounterResult : metricQueryResults.getCounters()) {
+      meterRegistry.gauge(
+          metricCounterResult.getName().getNamespace()
+              + "_"
+              + metricCounterResult.getName().getName(),
+          metricCounterResult.getAttempted());
+    }
+    for (MetricResult<GaugeResult> metricGaugeResult : metricQueryResults.getGauges()) {
+      meterRegistry.gauge(
+          metricGaugeResult.getName().getNamespace() + "_" + metricGaugeResult.getName().getName(),
+          metricGaugeResult.getAttempted().getValue());
+    }
+  }
+
+  void removePipelineMetrics() {
+    meterRegistry
+        .getMeters()
+        .forEach(
+            meter -> {
+              if (meter.getId().getName().startsWith(MetricsConstants.METRICS_NAMESPACE)) {
+                meterRegistry.remove(meter);
+              }
+            });
+  }
 
   public MetricQueryResults getMetricQueryResults() {
     // TODO Generate metrics and stats even for incremental run, incremental run has two pipelines
@@ -103,6 +144,7 @@ public class PipelineManager implements ApplicationListener<ApplicationReadyEven
 
     PipelineConfig pipelineConfig = dataProperties.createBatchOptions();
     FileSystems.setDefaultPipelineOptions(pipelineConfig.getFhirEtlOptions());
+    validateFhirSourceConfiguration(pipelineConfig.getFhirEtlOptions());
 
     cron = CronExpression.parse(dataProperties.getIncrementalSchedule());
     String rootPrefix = dataProperties.getDwhRootPrefix();
@@ -154,6 +196,46 @@ public class PipelineManager implements ApplicationListener<ApplicationReadyEven
       // There exists a DWH from before, so we set the scheduler to continue updating the DWH.
       lastRunEnd = LocalDateTime.now();
     }
+  }
+
+  /**
+   * Validate the FHIR source configuration parameters during the launch of the application. This is
+   * to detect any mis-configurations earlier enough and avoid failures during pipeline runs.
+   */
+  void validateFhirSourceConfiguration(FhirEtlOptions options) {
+    if (options.isJdbcModeHapi()) {
+      validateDbConfigParameters(options.getFhirDatabaseConfigPath());
+    } else if (!Strings.isNullOrEmpty(options.getFhirServerUrl())) {
+      validateFhirSearchParameters(options);
+    }
+  }
+
+  private void validateDbConfigParameters(String dbConfigPath) {
+    try {
+      DatabaseConfiguration dbConfiguration =
+          DatabaseConfiguration.createConfigFromFile(dbConfigPath);
+      boolean isValid =
+          JdbcConnectionUtil.validateJdbcDetails(
+              dbConfiguration.getJdbcDriverClass(),
+              dbConfiguration.makeJdbsUrlFromConfig(),
+              dbConfiguration.getDatabaseUser(),
+              dbConfiguration.getDatabasePassword());
+      Preconditions.checkArgument(isValid);
+    } catch (IOException | SQLException | ClassNotFoundException e) {
+      logger.error("Error occurred while validating jdbc details", e);
+      throw new RuntimeException(e);
+    }
+  }
+
+  private void validateFhirSearchParameters(FhirEtlOptions options) {
+    FhirSearchUtil fhirSearchUtil =
+        new FhirSearchUtil(
+            new OpenmrsUtil(
+                options.getFhirServerUrl(),
+                options.getFhirServerUserName(),
+                options.getFhirServerPassword(),
+                FhirContext.forR4()));
+    fhirSearchUtil.testFhirConnection();
   }
 
   synchronized boolean isBatchRun() {
@@ -390,14 +472,19 @@ public class PipelineManager implements ApplicationListener<ApplicationReadyEven
     public void run() {
       try {
         FhirEtlOptions options = pipeline.getOptions().as(FhirEtlOptions.class);
-        EtlUtils.runPipelineWithTimestamp(pipeline, options);
+        PipelineResult pipelineResult = EtlUtils.runPipelineWithTimestamp(pipeline, options);
+        // Remove the metrics of the previous pipeline and register the new metrics
+        manager.removePipelineMetrics();
+        manager.publishPipelineMetrics(pipelineResult.metrics());
         if (mergerOptions == null) { // Do not update DWH yet if this was an incremental run.
           manager.updateDwh(options.getOutputParquetPath());
         } else {
           FhirContext fhirContext = FhirContexts.forR4();
           Pipeline mergerPipeline = ParquetMerger.createMergerPipeline(mergerOptions, fhirContext);
           logger.info("Merger options are {}", mergerOptions);
-          EtlUtils.runMergerPipelineWithTimestamp(mergerPipeline, mergerOptions);
+          PipelineResult mergerPipelineResult =
+              EtlUtils.runMergerPipelineWithTimestamp(mergerPipeline, mergerOptions);
+          manager.publishPipelineMetrics(mergerPipelineResult.metrics());
           manager.updateDwh(mergerOptions.getMergedDwh());
         }
         if (dataProperties.isCreateHiveResourceTables()) {
