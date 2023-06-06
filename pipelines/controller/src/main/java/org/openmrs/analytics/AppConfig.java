@@ -15,14 +15,16 @@
  */
 package org.openmrs.analytics;
 
-import org.junit.jupiter.api.Test;
-import org.springframework.boot.test.autoconfigure.actuate.observability.AutoConfigureObservability;
-import org.springframework.boot.test.context.SpringBootTest;
+import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.composite.CompositeMeterRegistry;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
 
-@SpringBootTest
-@AutoConfigureObservability
-class ControlPanelApplicationTests {
-
-  @Test
-  void contextLoads() {}
+@Configuration
+public class AppConfig {
+  @Bean
+  public MeterRegistry getMeterRegistry() {
+    MeterRegistry meterRegistry = new CompositeMeterRegistry();
+    return meterRegistry;
+  }
 }

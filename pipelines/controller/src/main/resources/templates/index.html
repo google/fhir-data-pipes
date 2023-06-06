@@ -140,6 +140,27 @@
       failure.style.display = "none";
     }, 4000);
 
+    function fetchLatestMetrics() {
+      var xhr = new XMLHttpRequest();
+      xhr.open("GET", '/actuator/pipeline-metrics', true);
+      xhr.onreadystatechange = function() {
+        var metricsBodyElement = document.getElementById('metricsBody');
+        if (this.readyState === XMLHttpRequest.DONE && this.status === 200) {
+          metricsBodyElement.style.display = "block";
+          if (this.response) {
+            metricsBodyElement.innerHTML = "<pre>" + this.response + "</pre>";
+          } else {
+            metricsBodyElement.innerHTML = "Pipeline metrics are not available";
+          }
+        }
+        if (this.readyState === XMLHttpRequest.DONE && this.status != 200) {
+          console.log('Error in fetching metrics: ' + this.response);
+          metricsBodyElement.style.display = "block";
+          metricsBodyElement.innerHTML = "Error occurred while fetching metrics";
+        }
+      }
+      xhr.send();
+    }
   </script>
 </head>
 
@@ -248,6 +269,7 @@
         </div>
         <div style="margin-top: 50px">
           <h3>List of DWH snapshots</h3>
+          <p>Refresh icon: <span class="glyphicon glyphicon-refresh"></span></p>
           <div class="alert alert-secondary alert-dismissible fade show">
             <b>Latest:</b> [[${dwh}]]
             <div style="float:right;">
@@ -422,6 +444,20 @@
                   </table>
                 </div>
               </div>
+            </div>
+          </div>
+        </div>
+        <div style="margin-top: 50px">
+          <h3>Pipeline Metrics</h3>
+          <div class="card md-5 rounded-3 shadow-sm">
+            <div class="card-header py-3">
+              Fetch the latest pipeline metrics
+                <button type="submit" style="float: right; margin: -7;"
+                        class="button btn btn-primary" onclick="fetchLatestMetrics()">
+                  Fetch Latest Metrics
+                </button>
+            </div>
+            <div class="card-body" id="metricsBody" style="display:none;">
             </div>
           </div>
         </div>

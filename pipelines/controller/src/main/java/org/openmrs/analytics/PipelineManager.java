@@ -18,6 +18,7 @@ package org.openmrs.analytics;
 import ca.uhn.fhir.context.FhirContext;
 import com.cerner.bunsen.FhirContexts;
 import com.google.common.base.Preconditions;
+import io.micrometer.core.instrument.MeterRegistry;
 import com.google.common.base.Strings;
 import java.beans.PropertyVetoException;
 import java.io.IOException;
@@ -34,10 +35,14 @@ import lombok.Data;
 import org.apache.beam.runners.flink.FlinkPipelineOptions;
 import org.apache.beam.runners.flink.FlinkRunner;
 import org.apache.beam.sdk.Pipeline;
+import org.apache.beam.sdk.PipelineResult;
 import org.apache.beam.sdk.io.FileSystems;
 import org.apache.beam.sdk.io.fs.ResolveOptions.StandardResolveOptions;
 import org.apache.beam.sdk.io.fs.ResourceId;
+import org.apache.beam.sdk.metrics.GaugeResult;
 import org.apache.beam.sdk.metrics.MetricQueryResults;
+import org.apache.beam.sdk.metrics.MetricResult;
+import org.apache.beam.sdk.metrics.MetricResults;
 import org.apache.beam.sdk.options.PipelineOptionsFactory;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.openmrs.analytics.metrics.PipelineMetrics;
@@ -71,6 +76,8 @@ public class PipelineManager implements ApplicationListener<ApplicationReadyEven
 
   @Autowired private DwhFilesManager dwhFilesManager;
 
+  @Autowired private MeterRegistry meterRegistry;
+
   private PipelineThread currentPipeline;
 
   private DwhFiles currentDwh;
@@ -87,6 +94,39 @@ public class PipelineManager implements ApplicationListener<ApplicationReadyEven
   private static final String ERROR_FILE_NAME = "error.log";
   private static final String SUCCESS = "SUCCESS";
   private static final String FAILURE = "FAILURE";
+
+  /**
+   * This method publishes the beam pipeline metrics to the spring boot actuator. Previous metrics
+   * are removed from the actuator before publishing the latest metrics
+   *
+   * @param metricResults The pipeline metrics that needs to be pushed
+   */
+  void publishPipelineMetrics(MetricResults metricResults) {
+    MetricQueryResults metricQueryResults = EtlUtils.getMetrics(metricResults);
+    for (MetricResult<Long> metricCounterResult : metricQueryResults.getCounters()) {
+      meterRegistry.gauge(
+          metricCounterResult.getName().getNamespace()
+              + "_"
+              + metricCounterResult.getName().getName(),
+          metricCounterResult.getAttempted());
+    }
+    for (MetricResult<GaugeResult> metricGaugeResult : metricQueryResults.getGauges()) {
+      meterRegistry.gauge(
+          metricGaugeResult.getName().getNamespace() + "_" + metricGaugeResult.getName().getName(),
+          metricGaugeResult.getAttempted().getValue());
+    }
+  }
+
+  void removePipelineMetrics() {
+    meterRegistry
+        .getMeters()
+        .forEach(
+            meter -> {
+              if (meter.getId().getName().startsWith(MetricsConstants.METRICS_NAMESPACE)) {
+                meterRegistry.remove(meter);
+              }
+            });
+  }
 
   public MetricQueryResults getMetricQueryResults() {
     // TODO Generate metrics and stats even for incremental run, incremental run has two pipelines
@@ -486,6 +526,10 @@ public class PipelineManager implements ApplicationListener<ApplicationReadyEven
         FhirEtlOptions options = pipeline.getOptions().as(FhirEtlOptions.class);
         currentDwhRoot = options.getOutputParquetPath();
         EtlUtils.runPipelineWithTimestamp(pipeline, options);
+        PipelineResult pipelineResult = EtlUtils.runPipelineWithTimestamp(pipeline, options);
+        // Remove the metrics of the previous pipeline and register the new metrics
+        manager.removePipelineMetrics();
+        manager.publishPipelineMetrics(pipelineResult.metrics());
         if (mergerOptions == null) { // Do not update DWH yet if this was an incremental run.
           manager.updateDwh(currentDwhRoot);
         } else {
@@ -495,6 +539,10 @@ public class PipelineManager implements ApplicationListener<ApplicationReadyEven
           logger.info("Merger options are {}", mergerOptions);
           EtlUtils.runMergerPipelineWithTimestamp(mergerPipeline, mergerOptions);
           manager.updateDwh(currentDwhRoot);
+          PipelineResult mergerPipelineResult =
+              EtlUtils.runMergerPipelineWithTimestamp(mergerPipeline, mergerOptions);
+          manager.publishPipelineMetrics(mergerPipelineResult.metrics());
+          manager.updateDwh(mergerOptions.getMergedDwh());
         }
         if (dataProperties.isCreateHiveResourceTables()) {
           createHiveResourceTables(

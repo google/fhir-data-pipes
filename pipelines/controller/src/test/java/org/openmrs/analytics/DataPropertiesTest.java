@@ -18,10 +18,13 @@ package org.openmrs.analytics;
 import org.junit.Assert;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.actuate.observability.AutoConfigureObservability;
 import org.springframework.boot.test.context.SpringBootTest;
 
 @SpringBootTest
+@AutoConfigureObservability
 public class DataPropertiesTest {
+
   @Autowired private DataProperties dataProperties;
 
   @Test
