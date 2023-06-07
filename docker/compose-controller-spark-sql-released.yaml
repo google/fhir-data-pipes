@@ -54,7 +54,6 @@ version: '2.4'
 
 services:
   pipeline-controller:
-    # to force a build use `--build` option of `docker-compose up`.
     image: us-docker.pkg.dev/cloud-build-fhir/fhir-analytics/main:latest
     container_name: pipeline-controller
     volumes:
