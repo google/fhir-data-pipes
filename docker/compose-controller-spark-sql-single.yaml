@@ -54,6 +54,8 @@ services:
     # to force a build use `--build` option of `docker-compose up`.
     build:
       context: ..
+    # To use a released image instead, replace the above two lines with this:
+    # image: us-docker.pkg.dev/cloud-build-fhir/fhir-analytics/main:latest
     container_name: pipeline-controller
     volumes:
       - ${PIPELINE_CONFIG}:/app/config:ro
