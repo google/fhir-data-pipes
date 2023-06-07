@@ -15,22 +15,19 @@
  */
 package org.openmrs.analytics;
 
+import com.google.common.base.Preconditions;
+import com.google.common.io.Resources;
 import java.io.IOException;
-import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
-import java.util.Objects;
 import okhttp3.mockwebserver.MockResponse;
-import org.apache.commons.io.IOUtils;
 import org.apache.http.entity.ContentType;
 
 public class MockUtil {
 
   public static MockResponse getMockResponse(String filePath) throws IOException {
-    Objects.requireNonNull(filePath);
-    InputStream stream = ClassLoader.getSystemResourceAsStream(filePath);
-    assert stream != null;
+    Preconditions.checkNotNull(filePath);
     return new MockResponse()
-        .setBody(IOUtils.toString(stream, StandardCharsets.UTF_8))
+        .setBody(Resources.toString(Resources.getResource(filePath), StandardCharsets.UTF_8))
         .addHeader("Content-Type", ContentType.APPLICATION_JSON.getMimeType());
   }
 }
