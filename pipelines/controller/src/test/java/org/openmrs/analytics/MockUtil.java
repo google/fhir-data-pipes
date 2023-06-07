@@ -18,19 +18,19 @@ package org.openmrs.analytics;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
+import java.util.Objects;
 import okhttp3.mockwebserver.MockResponse;
-import okhttp3.mockwebserver.MockWebServer;
 import org.apache.commons.io.IOUtils;
 import org.apache.http.entity.ContentType;
 
 public class MockUtil {
 
-  public static void mockResponse(MockWebServer mockWebServer, String filePath) throws IOException {
+  public static MockResponse getMockResponse(String filePath) throws IOException {
+    Objects.requireNonNull(filePath);
     InputStream stream = ClassLoader.getSystemResourceAsStream(filePath);
     assert stream != null;
-    mockWebServer.enqueue(
-        new MockResponse()
-            .setBody(IOUtils.toString(stream, StandardCharsets.UTF_8))
-            .addHeader("Content-Type", ContentType.APPLICATION_JSON.getMimeType()));
+    return new MockResponse()
+        .setBody(IOUtils.toString(stream, StandardCharsets.UTF_8))
+        .addHeader("Content-Type", ContentType.APPLICATION_JSON.getMimeType());
   }
 }
