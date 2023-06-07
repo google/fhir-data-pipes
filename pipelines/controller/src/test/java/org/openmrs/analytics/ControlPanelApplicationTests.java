@@ -15,14 +15,35 @@
  */
 package org.openmrs.analytics;
 
+import java.io.IOException;
+import okhttp3.mockwebserver.MockWebServer;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.autoconfigure.actuate.observability.AutoConfigureObservability;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.context.TestPropertySource;
 
 @SpringBootTest
 @AutoConfigureObservability
+@TestPropertySource("classpath:application-test.properties")
 class ControlPanelApplicationTests {
+
+  private static MockWebServer mockFhirServer;
+
+  @BeforeAll
+  public static void setUp() throws IOException {
+    mockFhirServer = new MockWebServer();
+    mockFhirServer.start(9091);
+    MockUtil.mockResponse(mockFhirServer, "data/fhir-metadata-sample.json");
+    MockUtil.mockResponse(mockFhirServer, "data/patient-count-sample.json");
+  }
 
   @Test
   void contextLoads() {}
+
+  @AfterAll
+  public static void tearDown() throws IOException {
+    mockFhirServer.shutdown();
+  }
 }

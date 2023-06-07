@@ -42,13 +42,15 @@ import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.actuate.observability.AutoConfigureObservability;
+import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit4.SpringRunner;
 
 @RunWith(SpringRunner.class)
-@SpringBootTest
-@AutoConfigureObservability
+@SpringBootTest(classes = DataProperties.class)
+@TestPropertySource("classpath:application-test.properties")
+@EnableConfigurationProperties(value = DataProperties.class)
 public class GcsDwhFilesManagerTest {
 
   @Mock private GcsUtil mockGcsUtil;
