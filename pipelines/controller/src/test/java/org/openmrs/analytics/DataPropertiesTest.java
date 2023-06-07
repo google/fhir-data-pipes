@@ -15,17 +15,33 @@
  */
 package org.openmrs.analytics;
 
+import java.io.IOException;
+import okhttp3.mockwebserver.MockWebServer;
 import org.junit.Assert;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.actuate.observability.AutoConfigureObservability;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.context.TestPropertySource;
 
 @SpringBootTest
 @AutoConfigureObservability
+@TestPropertySource("classpath:application-test.properties")
 public class DataPropertiesTest {
 
   @Autowired private DataProperties dataProperties;
+
+  private static MockWebServer mockFhirServer;
+
+  @BeforeAll
+  public static void setUp() throws IOException {
+    mockFhirServer = new MockWebServer();
+    mockFhirServer.start(9091);
+    mockFhirServer.enqueue(MockUtil.getMockResponse("data/fhir-metadata-sample.json"));
+    mockFhirServer.enqueue(MockUtil.getMockResponse("data/patient-count-sample.json"));
+  }
 
   @Test
   void outputParquetFilePath_has_allUnderscores() {
@@ -49,5 +65,10 @@ public class DataPropertiesTest {
     PipelineConfig pipelineConfig = dataProperties.createBatchOptions();
     String timestampSuffix = pipelineConfig.getTimestampSuffix();
     Assert.assertTrue(pipelineConfig.getThriftServerParquetPath().contains(timestampSuffix));
+  }
+
+  @AfterAll
+  public static void tearDown() throws IOException {
+    mockFhirServer.shutdown();
   }
 }

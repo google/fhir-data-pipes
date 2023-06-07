@@ -1,0 +1,29 @@
+{
+  "resourceType": "CapabilityStatement",
+  "id": "519d9017-a38f-41b6-843c-b7b4cd7beeac",
+  "name": "RestServer",
+  "status": "active",
+  "date": "2022-08-25T19:10:25Z",
+  "publisher": "Not provided",
+  "kind": "instance",
+  "software": {
+    "name": "HAPI FHIR Server",
+    "version": "6.1.0"
+  },
+  "implementation": {
+    "description": "HAPI FHIR R4 Server",
+    "url": "http://localhost:8091/fhir"
+  },
+  "fhirVersion": "4.0.1",
+  "format": [
+    "application/fhir+xml",
+    "xml",
+    "application/fhir+json",
+    "json",
+    "application/x-turtle",
+    "ttl",
+    "html/json",
+    "html/xml",
+    "html/turtle"
+  ]
+}
