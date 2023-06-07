@@ -111,7 +111,7 @@ public class JdbcFetchHapiTest extends TestCase {
     Mockito.when(mockedDataSource.getConnection()).thenReturn(mockedConnection);
     Mockito.when(
             mockedConnection.prepareStatement(
-                "SELECT count(*) FROM hfj_resource res where res.res_type = ? AND res.res_updated >"
+                "SELECT count(*) as count FROM hfj_resource res where res.res_type = ? AND res.res_updated >"
                     + " '"
                     + since
                     + "'"))

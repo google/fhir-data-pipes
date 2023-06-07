@@ -329,7 +329,7 @@ public class JdbcFetchHapi {
     Map<String, Integer> resourceCountMap = new HashMap<>();
     for (String resourceType : resourceTypes) {
       StringBuilder builder = new StringBuilder();
-      builder.append("SELECT count(*) FROM hfj_resource res where res.res_type = ?");
+      builder.append("SELECT count(*) as count FROM hfj_resource res where res.res_type = ?");
       if (Strings.isNullOrEmpty(since)) { // full mode
         builder.append(" AND res.res_deleted_at IS NULL ");
       } else { // incremental mode
