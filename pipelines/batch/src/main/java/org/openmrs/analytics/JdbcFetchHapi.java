@@ -99,13 +99,14 @@ public class JdbcFetchHapi {
       }
 
       String resourceId = resultSet.getString("res_id");
+      String forcedId = resultSet.getString("forced_id");
       String resourceType = resultSet.getString("res_type");
       String lastUpdated = resultSet.getString("res_updated");
       String fhirVersion = resultSet.getString("res_version");
       String resourceVersion = resultSet.getString("res_ver");
       numMappedResourcesMap.get(resourceType).inc();
       return HapiRowDescriptor.create(
-          resourceId, resourceType, lastUpdated, fhirVersion, resourceVersion, jsonResource);
+          resourceId, forcedId, resourceType, lastUpdated, fhirVersion, resourceVersion, jsonResource);
     }
   }
 
@@ -148,11 +149,12 @@ public class JdbcFetchHapi {
       this.dataSourceConfig = dataSourceConfig;
       // Note the constraint on `res.res_ver` ensures we only pick the latest version.
       StringBuilder builder =
-          new StringBuilder(
-              "SELECT res.res_id, res.res_type, res.res_updated, res.res_version, res.res_ver, "
-                  + "ver.res_encoding, ver.res_text FROM hfj_resource res, hfj_res_ver ver "
-                  + "WHERE res.res_type = ? AND res.res_id = ver.res_id AND "
-                  + "res.res_ver = ver.res_ver AND res.res_id % ? = ? ");
+              new StringBuilder(
+                      "SELECT res.res_id, hfi.forced_id, res.res_type, res.res_updated, res.res_ver,"
+                              + " ver.res_encoding, ver.res_text FROM hfj_resource res, hfj_res_ver ver,"
+                              + " hfj_forced_id hfi WHERE res.res_type=? AND res.res_id = ver.res_id AND  "
+                              + " res.res_ver = ver.res_ver AND res.res_id % ? = ? AND hfi.resource_pid ="
+                              + " res.res_id AND ver.res_encoding != 'DEL'");
       // TODO do date sanity-checking on `since` (note this is partly done by HAPI client call).
       if (since != null && !since.isEmpty()) {
         builder.append(" AND res.res_updated > '").append(since).append("'");

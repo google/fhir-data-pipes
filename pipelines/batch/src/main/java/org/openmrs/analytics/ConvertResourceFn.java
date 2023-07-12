@@ -91,6 +91,7 @@ public class ConvertResourceFn extends FetchSearchPageFn<HapiRowDescriptor> {
   public void writeResource(HapiRowDescriptor element)
       throws IOException, ParseException, SQLException {
     String resourceId = element.resourceId();
+    String forcedId = element.forcedId();
     String resourceType = element.resourceType();
     Meta meta =
         new Meta()
@@ -119,7 +120,11 @@ public class ConvertResourceFn extends FetchSearchPageFn<HapiRowDescriptor> {
       resource = (Resource) parser.parseResource(jsonResource);
     }
     totalParseTimeMillisMap.get(resourceType).inc(System.currentTimeMillis() - startTime);
-    resource.setId(resourceId);
+    if (forcedId == null || forcedId.equals("")) {
+      resource.setId(resourceId);
+    } else {
+      resource.setId(forcedId);
+    }
     resource.setMeta(meta);
 
     numFetchedResourcesMap.get(resourceType).inc(1);

@@ -76,7 +76,7 @@ public class ConvertResourceFnTest {
         Resources.toString(Resources.getResource("patient.json"), StandardCharsets.UTF_8);
     HapiRowDescriptor element =
         HapiRowDescriptor.create(
-            "123", "Patient", "2020-09-19 12:09:23", "R4", "1", patientResourceStr);
+            "123","forced-id-123", "Patient", "2020-09-19 12:09:23", "R4", "1", patientResourceStr);
     convertResourceFn.writeResource(element);
 
     // Verify the resource is sent to the writer.
@@ -98,7 +98,7 @@ public class ConvertResourceFnTest {
     setUp(args);
     // Deleted Patient resource
     HapiRowDescriptor element =
-        HapiRowDescriptor.create("123", "Patient", "2020-09-19 12:09:23", "R4", "2", "");
+        HapiRowDescriptor.create("123", "forced-id-123", "Patient", "2020-09-19 12:09:23", "R4", "2", "");
     convertResourceFn.writeResource(element);
     // Verify that the ParquetUtil writer is not invoked for the deleted resource.
     verify(mockParquetUtil, times(0)).write(Mockito.any());
@@ -111,7 +111,7 @@ public class ConvertResourceFnTest {
     setUp(args);
     // Deleted Patient resource
     HapiRowDescriptor element =
-        HapiRowDescriptor.create("123", "Patient", "2020-09-19 12:09:23", "R4", "2", "");
+        HapiRowDescriptor.create("123", "forced-id-123","Patient", "2020-09-19 12:09:23", "R4", "2", "");
     convertResourceFn.writeResource(element);
 
     // Verify the deleted resource is sent to the writer.
@@ -135,7 +135,7 @@ public class ConvertResourceFnTest {
         Resources.toString(Resources.getResource("patient.json"), StandardCharsets.UTF_8);
     HapiRowDescriptor element =
         HapiRowDescriptor.create(
-            "123", "Patient", "2020-09-19 12:09:23", "R4", "1", patientResourceStr);
+            "123", "forced-id-123","Patient", "2020-09-19 12:09:23", "R4", "1", patientResourceStr);
     // Set Tag of HAPI FHIR tag type 0
     Coding coding0 = new Coding("system0", "code0", "display0");
     ResourceTag tag0 = new ResourceTag(coding0, "123", 0);
