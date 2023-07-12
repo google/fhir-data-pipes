@@ -16,6 +16,7 @@
 package org.openmrs.analytics;
 
 import ca.uhn.fhir.context.FhirVersionEnum;
+import ca.uhn.fhir.parser.DataFormatException;
 import com.google.common.base.Strings;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
@@ -116,7 +117,13 @@ public class ConvertResourceFn extends FetchSearchPageFn<HapiRowDescriptor> {
       meta.addTag(
           new Coding(removeAction.getSystem(), removeAction.toCode(), removeAction.getDisplay()));
     } else {
-      resource = (Resource) parser.parseResource(jsonResource);
+      try {
+        resource = (Resource) parser.parseResource(jsonResource);
+      }
+      catch (DataFormatException e) {
+        e.printStackTrace();
+        return;
+      }
     }
     totalParseTimeMillisMap.get(resourceType).inc(System.currentTimeMillis() - startTime);
     resource.setId(resourceId);
