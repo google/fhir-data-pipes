@@ -1,8 +1,10 @@
 package com.cerner.bunsen.definitions;
 
 import java.util.Arrays;
+import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 import org.apache.commons.lang3.StringUtils;
 
 /**
@@ -14,6 +16,7 @@ public class DefinitionVisitorsUtil {
   private static final Pattern STRUCTURE_URL_PATTERN =
       Pattern.compile("http:\\/\\/hl7.org\\/fhir(\\/.*)?\\/StructureDefinition\\/([^\\/]*)$");
 
+  private static final String CHILDREN_TOKEN = "_CHILDREN_";
 
   /**
    * Helper method to convert a given element path that's delimited by period to a concatenated
@@ -28,6 +31,20 @@ public class DefinitionVisitorsUtil {
         .map(StringUtils::capitalize)
         .reduce(String::concat)
         .get();
+  }
+
+  public static <T> String recordNameFor(String elementPath, List<StructureField<T>> children) {
+    return recordNameFor(elementPath)
+        + CHILDREN_TOKEN + children.stream().map(
+            c -> c.fieldName()).collect(Collectors.joining("_"));
+  }
+
+  public static String getBaseName(String name) {
+    int tokenInd = name.indexOf(CHILDREN_TOKEN);
+    if (tokenInd >= 0) {
+      return name.substring(0, tokenInd);
+    }
+    return name;
   }
 
   /**

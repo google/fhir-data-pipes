@@ -30,7 +30,7 @@
     <python.version>3.5.3</python.version>
     <maven-javadoc.plugin.version>3.5.0</maven-javadoc.plugin.version>
     <maven-project-info-reports.plugin.version>3.4.3</maven-project-info-reports.plugin.version>
-    <slf4j.version>1.7.36</slf4j.version>
+    <slf4j.version>2.0.7</slf4j.version>
     <logback.version>1.4.7</logback.version>
   </properties>
 
