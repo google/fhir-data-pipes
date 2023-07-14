@@ -18,6 +18,11 @@
 # exceptions when running the merger on large input with many workers.
 taskmanager.memory.network.max: 5gb
 
+# This is needed to be able to process large resources, otherwise in JDBC
+# mode we may get the following exception:
+# "The record exceeds the maximum size of a sort buffer ..."
+taskmanager.memory.managed.size: 2gb
+
 # This is to make pipeline.run() non-blocking with FlinkRunner; unfortunately
 # this is overwritten in `local` mode: https://stackoverflow.com/a/74416240
 execution.attached: false

@@ -3,6 +3,7 @@ package com.cerner.bunsen.definitions.r4;
 import ca.uhn.fhir.context.FhirContext;
 import ca.uhn.fhir.context.support.IValidationSupport;
 import com.cerner.bunsen.definitions.DefinitionVisitor;
+import com.cerner.bunsen.definitions.DefinitionVisitorsUtil;
 import com.cerner.bunsen.definitions.FhirConversionSupport;
 import com.cerner.bunsen.definitions.QualifiedPath;
 import com.cerner.bunsen.definitions.StructureDefinitions;
@@ -68,15 +69,6 @@ public class R4StructureDefinitions extends StructureDefinitions {
         .filter(definition -> definition.getId().startsWith(startsWith)
             && definition.getId().indexOf('.', startsWith.length()) < 0)
         .collect(Collectors.toList());
-  }
-
-  private String elementName(ElementDefinition element) {
-
-    String suffix = element.getPath().substring(element.getPath().lastIndexOf('.') + 1);
-
-    return suffix.endsWith("[x]")
-        ? suffix.substring(0, suffix.length() - 3)
-        : suffix;
   }
 
   private StructureDefinition getDefinition(ElementDefinition element) {
@@ -292,7 +284,7 @@ public class R4StructureDefinitions extends StructureDefinitions {
       List<ElementDefinition> definitions,
       Deque<QualifiedPath> stack) {
 
-    String elementName = elementName(element);
+    String elementName = DefinitionVisitorsUtil.elementName(element.getPath());
 
     if (shouldTerminateRecursive(visitor, rootDefinition, element, stack)) {
 
@@ -386,7 +378,7 @@ public class R4StructureDefinitions extends StructureDefinitions {
             rootDefinition, definitions, stack, element);
 
         T result = visitor.visitComposite(elementName,
-            element.getPath(),
+            DefinitionVisitorsUtil.pathFromStack(elementName, stack),
             elementName,
             rootDefinition.getUrl(),
             childElements);
@@ -417,7 +409,7 @@ public class R4StructureDefinitions extends StructureDefinitions {
       } else {
         T type = transform(visitor, element, definition, stack);
 
-        return singleField(elementName(element), type);
+        return singleField(DefinitionVisitorsUtil.elementName(element.getPath()), type);
       }
 
     } else {
@@ -493,7 +485,7 @@ public class R4StructureDefinitions extends StructureDefinitions {
 
       stack.pop();
 
-      String rootName = elementName(containedRootElement);
+      String rootName = DefinitionVisitorsUtil.elementName(containedRootElement.getPath());
 
       T result = visitor.visitComposite(rootName,
           containedRootElement.getPath(),
@@ -603,7 +595,7 @@ public class R4StructureDefinitions extends StructureDefinitions {
     if ("Reference".equals(definition.getType())) {
 
       // TODO: if this is in an option there may be other non-reference types here?
-      String rootName = elementName(root);
+      String rootName = DefinitionVisitorsUtil.elementName(root.getPath());
 
       List<String> referenceTypes = parentElement.getType()
           .stream()
@@ -630,7 +622,7 @@ public class R4StructureDefinitions extends StructureDefinitions {
 
     } else {
 
-      String rootName = elementName(root);
+      String rootName = DefinitionVisitorsUtil.elementName(root.getPath());
 
       // We don't want 'id' to be present in nested fields to make it consistent with SQL-on-FHIR.
       // https://github.com/FHIR/sql-on-fhir/blob/master/sql-on-fhir.md#id-fields-omitted
@@ -679,7 +671,7 @@ public class R4StructureDefinitions extends StructureDefinitions {
 
     stack.pop();
 
-    String rootName = elementName(root);
+    String rootName = DefinitionVisitorsUtil.elementName(root.getPath());
 
     return visitor.visitComposite(rootName,
         rootName,

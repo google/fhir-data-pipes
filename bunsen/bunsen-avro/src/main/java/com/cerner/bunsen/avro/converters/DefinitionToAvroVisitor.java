@@ -743,6 +743,8 @@ public class DefinitionToAvroVisitor implements DefinitionVisitor<HapiConverter<
 
   @Override
   public int getMaxDepth(String elementTypeUrl, String path) {
+    // should be an odd number!
+    // return 3;
     return 1;
   }
 }
