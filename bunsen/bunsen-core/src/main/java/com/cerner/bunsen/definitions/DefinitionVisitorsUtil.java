@@ -77,10 +77,11 @@ public class DefinitionVisitorsUtil {
    * Both of these are `item` with "element path" being `QuestionnaireResponse.item` but the
    * `answer` field might have been dropped in the second one because of recursion limits.
    *
-   * @param stack the current traversal stack
-   * @return the full path
+   * @param elemName the name of the target element
+   * @param stack the current traversal stack leading to `elemName`
+   * @return the full path for `elemName` created using element names on the stack
    */
-  public static String pathFromStack(String elementName, Deque<QualifiedPath> stack) {
+  public static String pathFromStack(String elemName, Deque<QualifiedPath> stack) {
     // TODO add unit-tests for this method.
     List<String> fullPath = new ArrayList<>();
     Iterator<QualifiedPath> iter = stack.descendingIterator();
@@ -88,7 +89,7 @@ public class DefinitionVisitorsUtil {
       String path = iter.next().getElementPath();
       fullPath.add(elementName(path));
     }
-    fullPath.add(elementName);
+    fullPath.add(elemName);
     return fullPath.stream().collect(Collectors.joining("."));
   }
 
