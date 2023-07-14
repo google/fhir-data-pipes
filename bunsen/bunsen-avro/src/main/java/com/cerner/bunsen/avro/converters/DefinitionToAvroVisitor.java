@@ -243,7 +243,7 @@ public class DefinitionToAvroVisitor implements DefinitionVisitor<HapiConverter<
           if (resourceContainer.get(j) != null) {
 
             IndexedRecord record = (IndexedRecord) resourceContainer.get(j);
-            String recordType = DefinitionVisitorsUtil.getBaseName(record.getSchema().getName());
+            String recordType = record.getSchema().getName();
 
             containedEntries.add(new ContainerEntry(recordType, record));
 
@@ -265,8 +265,7 @@ public class DefinitionToAvroVisitor implements DefinitionVisitor<HapiConverter<
       for (Object containedEntry: contained) {
 
         IndexedRecord containedRecord = (IndexedRecord) avroData.newRecord(null, containerType);
-        String recordName = DefinitionVisitorsUtil.getBaseName(
-            ((IndexedRecord) containedEntry).getSchema().getName());
+        String recordName = ((IndexedRecord) containedEntry).getSchema().getName();
 
         List<Field> fields = containerType.getFields();
 
@@ -453,11 +452,7 @@ public class DefinitionToAvroVisitor implements DefinitionVisitor<HapiConverter<
       String elementTypeUrl,
       List<StructureField<HapiConverter<Schema>>> children) {
 
-    // The reason for adding children is to differentiate between same types at different
-    // recursion levels, e.g., when a child is dropped because of recursion max-depth while
-    // in a different traversal (for the same type) that child is present.
-    // NOTE this solution is not complete and can still miss legitimate recursions!
-    String recordName = DefinitionVisitorsUtil.recordNameFor(elementPath, children);
+    String recordName = DefinitionVisitorsUtil.recordNameFor(elementPath);
     String recordNamespace = DefinitionVisitorsUtil.namespaceFor(basePackage, elementTypeUrl);
     String fullName = recordNamespace + "." + recordName;
 
@@ -749,7 +744,7 @@ public class DefinitionToAvroVisitor implements DefinitionVisitor<HapiConverter<
   @Override
   public int getMaxDepth(String elementTypeUrl, String path) {
     // should be an odd number!
-    return 5;
-    // return 1;
+    // return 3;
+    return 1;
   }
 }
