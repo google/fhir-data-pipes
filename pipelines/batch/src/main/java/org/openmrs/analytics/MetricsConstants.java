@@ -21,6 +21,7 @@ public class MetricsConstants {
   public static final String NUM_FETCHED_RESOURCES = "numFetchedResources_";
   public static final String NUM_OUTPUT_RECORDS = "numOutputRecords";
   public static final String NUM_DUPLICATES = "numDuplicates";
+  public static final String DATA_FORMAT_EXCEPTION_ERROR = "numDataFormatExceptionErrors_";
   public static final String TOTAL_FETCH_TIME_MILLIS = "totalFetchTimeMillis_";
   public static final String TOTAL_GENERATE_TIME_MILLIS = "totalGenerateTimeMillis_";
   public static final String TOTAL_PUSH_TIME_MILLIS = "totalPushTimeMillis_";

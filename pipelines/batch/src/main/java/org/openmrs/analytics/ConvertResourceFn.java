@@ -16,6 +16,7 @@
 package org.openmrs.analytics;
 
 import ca.uhn.fhir.context.FhirVersionEnum;
+import ca.uhn.fhir.parser.DataFormatException;
 import com.google.common.base.Strings;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
@@ -53,6 +54,8 @@ public class ConvertResourceFn extends FetchSearchPageFn<HapiRowDescriptor> {
   private final HashMap<String, Counter> totalPushTimeMillisMap;
 
   private final Boolean processDeletedRecords;
+
+  Counter counter = Metrics.counter(MetricsConstants.METRICS_NAMESPACE, MetricsConstants.DATA_FORMAT_EXCEPTION_ERROR);
 
   ConvertResourceFn(FhirEtlOptions options, String stageIdentifier) {
     super(options, stageIdentifier);
@@ -116,7 +119,14 @@ public class ConvertResourceFn extends FetchSearchPageFn<HapiRowDescriptor> {
       meta.addTag(
           new Coding(removeAction.getSystem(), removeAction.toCode(), removeAction.getDisplay()));
     } else {
-      resource = (Resource) parser.parseResource(jsonResource);
+      try {
+        resource = (Resource) parser.parseResource(jsonResource);
+      }
+      catch (DataFormatException e) {
+        log.error("DataFormatException Error occurred", e);
+        counter.inc();
+        return;
+      }
     }
     totalParseTimeMillisMap.get(resourceType).inc(System.currentTimeMillis() - startTime);
     resource.setId(resourceId);
