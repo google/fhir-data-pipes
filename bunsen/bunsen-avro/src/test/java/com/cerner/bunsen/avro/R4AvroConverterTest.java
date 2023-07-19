@@ -488,7 +488,7 @@ public class R4AvroConverterTest {
 
     // Ensure common types were generated
     Assert.assertTrue(javaFiles.contains("com/cerner/bunsen/r4/avro/Period.java"));
-    Assert.assertTrue(javaFiles.contains("com/cerner/bunsen/r4/avro/Coding.java"));
+    Assert.assertTrue(javaFiles.contains("com/cerner/bunsen/r4/avro/PatientCoding.java"));
     Assert.assertTrue(javaFiles.contains("com/cerner/bunsen/r4/avro/ValueSet.java"));
 
     // The specific profile should be created in the expecter4b-package.

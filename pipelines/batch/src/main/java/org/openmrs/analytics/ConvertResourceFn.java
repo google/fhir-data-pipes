@@ -55,7 +55,9 @@ public class ConvertResourceFn extends FetchSearchPageFn<HapiRowDescriptor> {
 
   private final Boolean processDeletedRecords;
 
-  Counter counter = Metrics.counter(MetricsConstants.METRICS_NAMESPACE, MetricsConstants.DATA_FORMAT_EXCEPTION_ERROR);
+  Counter counter =
+      Metrics.counter(
+          MetricsConstants.METRICS_NAMESPACE, MetricsConstants.DATA_FORMAT_EXCEPTION_ERROR);
 
   ConvertResourceFn(FhirEtlOptions options, String stageIdentifier) {
     super(options, stageIdentifier);
@@ -121,8 +123,7 @@ public class ConvertResourceFn extends FetchSearchPageFn<HapiRowDescriptor> {
     } else {
       try {
         resource = (Resource) parser.parseResource(jsonResource);
-      }
-      catch (DataFormatException e) {
+      } catch (DataFormatException e) {
         log.error("DataFormatException Error occurred", e);
         counter.inc();
         return;

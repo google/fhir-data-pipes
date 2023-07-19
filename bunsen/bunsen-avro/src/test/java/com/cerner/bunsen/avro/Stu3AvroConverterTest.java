@@ -485,7 +485,7 @@ public class Stu3AvroConverterTest {
 
     // Ensure common types were generated
     Assert.assertTrue(javaFiles.contains("com/cerner/bunsen/stu3/avro/Period.java"));
-    Assert.assertTrue(javaFiles.contains("com/cerner/bunsen/stu3/avro/Coding.java"));
+    Assert.assertTrue(javaFiles.contains("com/cerner/bunsen/stu3/avro/PatientCoding.java"));
     Assert.assertTrue(javaFiles.contains("com/cerner/bunsen/stu3/avro/ValueSet.java"));
 
     // The specific profile should be created in the expected sub-package.
