@@ -106,7 +106,13 @@ public class JdbcFetchHapi {
       String resourceVersion = resultSet.getString("res_ver");
       numMappedResourcesMap.get(resourceType).inc();
       return HapiRowDescriptor.create(
-          resourceId, forcedId, resourceType, lastUpdated, fhirVersion, resourceVersion, jsonResource);
+          resourceId,
+          forcedId,
+          resourceType,
+          lastUpdated,
+          fhirVersion,
+          resourceVersion,
+          jsonResource);
     }
   }
 
@@ -149,12 +155,13 @@ public class JdbcFetchHapi {
       this.dataSourceConfig = dataSourceConfig;
       // Note the constraint on `res.res_ver` ensures we only pick the latest version.
       StringBuilder builder =
-              new StringBuilder(
-                      "SELECT res.res_id, hfi.forced_id, res.res_type, res.res_updated, res.res_ver,"
-                              + " ver.res_encoding, ver.res_text FROM hfj_resource res, hfj_res_ver ver,"
-                              + " hfj_forced_id hfi WHERE res.res_type=? AND res.res_id = ver.res_id AND  "
-                              + " res.res_ver = ver.res_ver AND res.res_id % ? = ? AND hfi.resource_pid ="
-                              + " res.res_id AND ver.res_encoding != 'DEL'");
+          new StringBuilder(
+              "SELECT res.res_id, hfi.forced_id, res.res_type, res.res_updated, res.res_ver,"
+                  + " res.res_version, ver.res_encoding, ver.res_text  FROM hfj_resource res JOIN"
+                  + " hfj_res_ver ver ON res.res_id = ver.res_id AND res.res_ver = ver.res_ver  "
+                  + " LEFT JOIN hfj_forced_id hfi ON res.res_id = hfi.resource_pid WHERE"
+                  + " res.res_type = ? AND res.res_id % ? = ? AND res.res_type = 'Patient' AND"
+                  + " ver.res_encoding != 'DEL'");
       // TODO do date sanity-checking on `since` (note this is partly done by HAPI client call).
       if (since != null && !since.isEmpty()) {
         builder.append(" AND res.res_updated > '").append(since).append("'");

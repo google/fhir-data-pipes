@@ -18,6 +18,7 @@ package org.openmrs.analytics;
 import com.google.auto.value.AutoValue;
 import java.io.Serializable;
 import java.util.List;
+import javax.annotation.Nullable;
 import lombok.Data;
 import org.apache.beam.sdk.coders.DefaultCoder;
 import org.apache.beam.sdk.coders.SerializableCoder;
@@ -38,11 +39,18 @@ abstract class HapiRowDescriptor implements Serializable {
       String resourceVersion,
       String jsonResource) {
     return new AutoValue_HapiRowDescriptor(
-        resourceId, forcedId, resourceType, lastUpdated, fhirVersion, resourceVersion, jsonResource);
+        resourceId,
+        forcedId,
+        resourceType,
+        lastUpdated,
+        fhirVersion,
+        resourceVersion,
+        jsonResource);
   }
 
   abstract String resourceId();
 
+  @Nullable
   abstract String forcedId();
 
   abstract String resourceType();
