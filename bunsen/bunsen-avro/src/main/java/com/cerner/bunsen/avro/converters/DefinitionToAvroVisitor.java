@@ -452,6 +452,7 @@ public class DefinitionToAvroVisitor implements DefinitionVisitor<HapiConverter<
       String elementTypeUrl,
       List<StructureField<HapiConverter<Schema>>> children) {
 
+    Preconditions.checkArgument(!children.isEmpty());
     String recordName = DefinitionVisitorsUtil.recordNameFor(elementPath);
     String recordNamespace = DefinitionVisitorsUtil.namespaceFor(basePackage, elementTypeUrl);
     String fullName = recordNamespace + "." + recordName;
@@ -743,8 +744,7 @@ public class DefinitionToAvroVisitor implements DefinitionVisitor<HapiConverter<
 
   @Override
   public int getMaxDepth(String elementTypeUrl, String path) {
-    // should be an odd number!
-    // return 3;
+    // return 2;
     return 1;
   }
 }
