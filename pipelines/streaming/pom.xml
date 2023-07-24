@@ -34,7 +34,7 @@
     <version.camel>3.2.0</version.camel>
     <version.debezium>1.0.0.Final</version.debezium>
     <version.debezium.tag>1.0</version.debezium.tag>
-    <version.mysql.driver>8.0.16</version.mysql.driver>
+    <version.mysql.driver>8.0.30</version.mysql.driver>
     <version.quarkus>1.2.0.Final</version.quarkus>
     <version.jackson>2.9.1</version.jackson>
     <version.kafka>2.4.0</version.kafka>
