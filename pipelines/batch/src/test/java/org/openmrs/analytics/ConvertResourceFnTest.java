@@ -162,7 +162,11 @@ public class ConvertResourceFnTest {
         equalTo(org.hl7.fhir.r4.model.Patient.class.getName()));
   }
 
-  public void testResourceMetaTags() throws IOException, java.text.ParseException, SQLException {
+  @Test
+  public void testResourceMetaTags()
+      throws IOException, java.text.ParseException, SQLException, PropertyVetoException {
+    String[] args = {"--outputParquetPath=SOME_PATH", "--since="};
+    setUp(args);
     String patientResourceStr =
         Resources.toString(Resources.getResource("patient.json"), StandardCharsets.UTF_8);
     HapiRowDescriptor element =
@@ -189,7 +193,7 @@ public class ConvertResourceFnTest {
     // Verify the resource is sent to the writer.
     verify(mockParquetUtil).write(resourceCaptor.capture());
     Resource capturedResource = resourceCaptor.getValue();
-    assertThat(capturedResource.getId(), equalTo("123"));
+    assertThat(capturedResource.getId(), equalTo("forced-id-123"));
     assertThat(capturedResource.getMeta().getVersionId(), equalTo("1"));
     assertThat(
         capturedResource.getMeta().getLastUpdated(),
