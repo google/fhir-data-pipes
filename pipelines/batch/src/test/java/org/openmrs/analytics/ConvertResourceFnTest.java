@@ -68,7 +68,7 @@ public class ConvertResourceFnTest {
   }
 
   @Test
-  public void testProcessPatientResource()
+  public void testProcessPatientResource_withoutForcedId()
       throws IOException, java.text.ParseException, SQLException, PropertyVetoException {
     String[] args = {"--outputParquetPath=SOME_PATH"};
     setUp(args);
@@ -76,7 +76,7 @@ public class ConvertResourceFnTest {
         Resources.toString(Resources.getResource("patient.json"), StandardCharsets.UTF_8);
     HapiRowDescriptor element =
         HapiRowDescriptor.create(
-            "123", "Patient", "2020-09-19 12:09:23", "R4", "1", patientResourceStr);
+            "123", null, "Patient", "2020-09-19 12:09:23", "R4", "1", patientResourceStr);
     convertResourceFn.writeResource(element);
 
     // Verify the resource is sent to the writer.
@@ -92,13 +92,44 @@ public class ConvertResourceFnTest {
   }
 
   @Test
+  public void testProcessPatientResource_withForcedId()
+      throws IOException, java.text.ParseException, SQLException, PropertyVetoException {
+    String[] args = {"--outputParquetPath=SOME_PATH"};
+    setUp(args);
+    String patientResourceStr =
+        Resources.toString(Resources.getResource("patient.json"), StandardCharsets.UTF_8);
+    HapiRowDescriptor element =
+        HapiRowDescriptor.create(
+            "123",
+            "forced-id-123",
+            "Patient",
+            "2020-09-19 12:09:23",
+            "R4",
+            "1",
+            patientResourceStr);
+    convertResourceFn.writeResource(element);
+
+    // Verify the resource is sent to the writer.
+    verify(mockParquetUtil).write(resourceCaptor.capture());
+    Resource capturedResource = resourceCaptor.getValue();
+    assertThat(capturedResource.getId(), equalTo("forced-id-123"));
+    assertThat(capturedResource.getMeta().getVersionId(), equalTo("1"));
+    assertThat(
+        capturedResource.getMeta().getLastUpdated(),
+        equalTo(new SimpleDateFormat("yyyy-MM-dd hh:mm:ss").parse("2020-09-19 12:09:23")));
+    assertThat(capturedResource.getResourceType().toString(), equalTo("Patient"));
+    assertThat(((Patient) capturedResource).getGender().toString(), equalTo("MALE"));
+  }
+
+  @Test
   public void testProcessDeletedPatientResourceFullMode()
       throws SQLException, IOException, ParseException, PropertyVetoException {
     String[] args = {"--outputParquetPath=SOME_PATH", "--since="};
     setUp(args);
     // Deleted Patient resource
     HapiRowDescriptor element =
-        HapiRowDescriptor.create("123", "Patient", "2020-09-19 12:09:23", "R4", "2", "");
+        HapiRowDescriptor.create(
+            "123", "forced-id-123", "Patient", "2020-09-19 12:09:23", "R4", "2", "");
     convertResourceFn.writeResource(element);
     // Verify that the ParquetUtil writer is not invoked for the deleted resource.
     verify(mockParquetUtil, times(0)).write(Mockito.any());
@@ -111,13 +142,14 @@ public class ConvertResourceFnTest {
     setUp(args);
     // Deleted Patient resource
     HapiRowDescriptor element =
-        HapiRowDescriptor.create("123", "Patient", "2020-09-19 12:09:23", "R4", "2", "");
+        HapiRowDescriptor.create(
+            "123", "forced-id-123", "Patient", "2020-09-19 12:09:23", "R4", "2", "");
     convertResourceFn.writeResource(element);
 
     // Verify the deleted resource is sent to the writer.
     verify(mockParquetUtil).write(resourceCaptor.capture());
     Resource capturedResource = resourceCaptor.getValue();
-    assertThat(capturedResource.getId(), equalTo("123"));
+    assertThat(capturedResource.getId(), equalTo("forced-id-123"));
     assertThat(capturedResource.getMeta().getVersionId(), equalTo("2"));
     assertThat(
         capturedResource
@@ -130,12 +162,22 @@ public class ConvertResourceFnTest {
         equalTo(org.hl7.fhir.r4.model.Patient.class.getName()));
   }
 
-  public void testResourceMetaTags() throws IOException, java.text.ParseException, SQLException {
+  @Test
+  public void testResourceMetaTags()
+      throws IOException, java.text.ParseException, SQLException, PropertyVetoException {
+    String[] args = {"--outputParquetPath=SOME_PATH", "--since="};
+    setUp(args);
     String patientResourceStr =
         Resources.toString(Resources.getResource("patient.json"), StandardCharsets.UTF_8);
     HapiRowDescriptor element =
         HapiRowDescriptor.create(
-            "123", "Patient", "2020-09-19 12:09:23", "R4", "1", patientResourceStr);
+            "123",
+            "forced-id-123",
+            "Patient",
+            "2020-09-19 12:09:23",
+            "R4",
+            "1",
+            patientResourceStr);
     // Set Tag of HAPI FHIR tag type 0
     Coding coding0 = new Coding("system0", "code0", "display0");
     ResourceTag tag0 = new ResourceTag(coding0, "123", 0);
@@ -151,7 +193,7 @@ public class ConvertResourceFnTest {
     // Verify the resource is sent to the writer.
     verify(mockParquetUtil).write(resourceCaptor.capture());
     Resource capturedResource = resourceCaptor.getValue();
-    assertThat(capturedResource.getId(), equalTo("123"));
+    assertThat(capturedResource.getId(), equalTo("forced-id-123"));
     assertThat(capturedResource.getMeta().getVersionId(), equalTo("1"));
     assertThat(
         capturedResource.getMeta().getLastUpdated(),
