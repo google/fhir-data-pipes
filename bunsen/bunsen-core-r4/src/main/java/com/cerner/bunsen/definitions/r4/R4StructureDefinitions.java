@@ -3,10 +3,12 @@ package com.cerner.bunsen.definitions.r4;
 import ca.uhn.fhir.context.FhirContext;
 import ca.uhn.fhir.context.support.IValidationSupport;
 import com.cerner.bunsen.definitions.DefinitionVisitor;
+import com.cerner.bunsen.definitions.DefinitionVisitorsUtil;
 import com.cerner.bunsen.definitions.FhirConversionSupport;
 import com.cerner.bunsen.definitions.QualifiedPath;
 import com.cerner.bunsen.definitions.StructureDefinitions;
 import com.cerner.bunsen.definitions.StructureField;
+import com.google.common.base.Verify;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -17,6 +19,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
+import javax.annotation.Nullable;
 import org.hl7.fhir.r4.model.CanonicalType;
 import org.hl7.fhir.r4.model.ElementDefinition;
 import org.hl7.fhir.r4.model.ElementDefinition.TypeRefComponent;
@@ -70,15 +73,6 @@ public class R4StructureDefinitions extends StructureDefinitions {
         .collect(Collectors.toList());
   }
 
-  private String elementName(ElementDefinition element) {
-
-    String suffix = element.getPath().substring(element.getPath().lastIndexOf('.') + 1);
-
-    return suffix.endsWith("[x]")
-        ? suffix.substring(0, suffix.length() - 3)
-        : suffix;
-  }
-
   private StructureDefinition getDefinition(ElementDefinition element) {
 
     return element.getTypeFirstRep() == null
@@ -91,32 +85,23 @@ public class R4StructureDefinitions extends StructureDefinitions {
   }
 
   private <T> List<StructureField<T>> singleField(String elementName, T result) {
-
+    if (result == null) {
+      return Collections.emptyList();
+    }
     return Collections.singletonList(StructureField.property(elementName, result));
-  }
-
-  private boolean shouldTerminateRecursive(DefinitionVisitor visitor,
-      StructureDefinition structureDefinition,
-      Deque<QualifiedPath> stack) {
-
-    ElementDefinition definitionRootElement = structureDefinition.getSnapshot().getElement().get(0);
-
-    return shouldTerminateRecursive(visitor, structureDefinition, definitionRootElement, stack);
-  }
-
-  private boolean shouldTerminateRecursive(DefinitionVisitor visitor,
-      StructureDefinition rootDefinition,
-      ElementDefinition elementDefinition, Deque<QualifiedPath> stack) {
-
-
-    return shouldTerminateRecursive(visitor,
-        new QualifiedPath(rootDefinition.getUrl(), elementDefinition.getPath()),
-        stack);
   }
 
   private boolean shouldTerminateRecursive(DefinitionVisitor visitor,
       QualifiedPath newPath,
       Deque<QualifiedPath> stack) {
+
+    // TODO we should add configuration parameters for exceptional paths
+    //  that require deeper recursion; this is where to apply that logic:
+    // String elementPath = DefinitionVisitorsUtil.pathFromStack(
+    //    DefinitionVisitorsUtil.elementName(newPath.getElementPath()), stack);
+    // if ("QuestionnaireResponse.item.item.item.item.item.item".startsWith(elementPath)) {
+    //   return false;
+    // }
 
     int maxDepth = visitor.getMaxDepth(newPath.getParentTypeUrl(), newPath.getElementPath());
 
@@ -157,26 +142,17 @@ public class R4StructureDefinitions extends StructureDefinitions {
 
     if (definition != null) {
 
-      if (shouldTerminateRecursive(visitor,
-          new QualifiedPath(definition.getUrl(), element.getPath()),
-          stack)) {
+      List<ElementDefinition> extensionDefinitions = definition.getSnapshot().getElement();
 
-        return Collections.emptyList();
+      ElementDefinition extensionRoot = extensionDefinitions.get(0);
 
-      } else {
-
-        List<ElementDefinition> extensionDefinitions = definition.getSnapshot().getElement();
-
-        ElementDefinition extensionRoot = extensionDefinitions.get(0);
-
-        extensions = visitExtensionDefinition(visitor,
-            rootDefinition,
-            element.getSliceName(),
-            stack,
-            definition.getUrl(),
-            extensionDefinitions,
-            extensionRoot);
-      }
+      extensions = visitExtensionDefinition(visitor,
+          rootDefinition,
+          element.getSliceName(),
+          stack,
+          definition.getUrl(),
+          extensionDefinitions,
+          extensionRoot);
 
     } else {
 
@@ -292,13 +268,9 @@ public class R4StructureDefinitions extends StructureDefinitions {
       List<ElementDefinition> definitions,
       Deque<QualifiedPath> stack) {
 
-    String elementName = elementName(element);
+    String elementName = DefinitionVisitorsUtil.elementName(element.getPath());
 
-    if (shouldTerminateRecursive(visitor, rootDefinition, element, stack)) {
-
-      return Collections.emptyList();
-
-    } else if (element.getMax().equals("0")) {
+    if (element.getMax().equals("0")) {
 
       // Fields with max of zero are omitted.
       return Collections.emptyList();
@@ -346,8 +318,12 @@ public class R4StructureDefinitions extends StructureDefinitions {
               (StructureDefinition) validationSupport
                   .fetchStructureDefinition(typeRef.getCode());
 
+          // TODO document why we are resetting the stack here; it is not clear
+          //  why this cannot lead to infinite recursion for choice types. If
+          //  we don't reset the stack, then we should handle null returns.
           T child = transform(visitor, element, structureDefinition, new ArrayDeque<>());
-
+          Verify.verify(child != null,
+              "Unexpected null choice type {} for element {}", typeRef, element);
           choiceTypes.put(typeRef.getCode(), child);
         }
       }
@@ -368,25 +344,22 @@ public class R4StructureDefinitions extends StructureDefinitions {
         // Handle defined data types.
         StructureDefinition definition = getDefinition(element);
 
-        if (shouldTerminateRecursive(visitor, definition, stack)) {
+        T type = transform(visitor, element, definition, stack);
 
-          return Collections.emptyList();
-
-        } else {
-
-          T type = transform(visitor, element, definition, stack);
-
-          return singleField(elementName,
-              visitor.visitMultiValued(elementName, type));
-        }
+        return singleField(elementName,
+            visitor.visitMultiValued(elementName, type));
 
       } else {
 
         List<StructureField<T>> childElements = transformChildren(visitor,
             rootDefinition, definitions, stack, element);
+        if (childElements.isEmpty()) {
+          // All children were dropped because of recursion depth limit.
+          return  Collections.emptyList();
+        }
 
         T result = visitor.visitComposite(elementName,
-            element.getPath(),
+            DefinitionVisitorsUtil.pathFromStack(elementName, stack),
             elementName,
             rootDefinition.getUrl(),
             childElements);
@@ -407,27 +380,26 @@ public class R4StructureDefinitions extends StructureDefinitions {
 
     } else if (getDefinition(element) != null) {
 
+      // TODO refactor this and the similar block above for handling defined data types.
       // Handle defined data types.
       StructureDefinition definition = getDefinition(element);
 
-      if (shouldTerminateRecursive(visitor, definition, stack)) {
+      T type = transform(visitor, element, definition, stack);
 
-        return Collections.emptyList();
-
-      } else {
-        T type = transform(visitor, element, definition, stack);
-
-        return singleField(elementName(element), type);
-      }
+      return singleField(DefinitionVisitorsUtil.elementName(element.getPath()), type);
 
     } else {
 
       // Handle composite type
       List<StructureField<T>> childElements = transformChildren(visitor, rootDefinition,
           definitions, stack, element);
+      if (childElements.isEmpty()) {
+        // All children were dropped because of recursion depth limit.
+        return  Collections.emptyList();
+      }
 
       T result = visitor.visitComposite(elementName,
-          element.getPath(),
+          DefinitionVisitorsUtil.pathFromStack(elementName, stack),
           elementName,
           rootDefinition.getUrl(),
           childElements);
@@ -436,6 +408,12 @@ public class R4StructureDefinitions extends StructureDefinitions {
     }
   }
 
+  /**
+   * Goes through the list of children of the given `element` and convert each
+   * of those `ElementDefinision`s to `StructureField`s.
+   * NOTE: This is the only place where the traversal stack can grow. It is also
+   * best if this is the only place where `shouldTerminateRecursive` is called.
+   */
   private <T> List<StructureField<T>> transformChildren(DefinitionVisitor<T> visitor,
       StructureDefinition rootDefinition,
       List<ElementDefinition> definitions,
@@ -483,17 +461,15 @@ public class R4StructureDefinitions extends StructureDefinitions {
 
       List<ElementDefinition> childDefinitions = containedDefinition.getSnapshot().getElement();
 
-      stack.push(new QualifiedPath(containedDefinition.getUrl(), containedRootElement.getPath()));
-
       List<StructureField<T>> childElements = transformChildren(visitor,
           containedDefinition,
           childDefinitions,
           stack,
           containedRootElement);
+      // At this level no child should be dropped because of recursion limit.
+      Verify.verify(!childElements.isEmpty());
 
-      stack.pop();
-
-      String rootName = elementName(containedRootElement);
+      String rootName = DefinitionVisitorsUtil.elementName(containedRootElement.getPath());
 
       T result = visitor.visitComposite(rootName,
           containedRootElement.getPath(),
@@ -519,26 +495,7 @@ public class R4StructureDefinitions extends StructureDefinitions {
 
   @Override
   public <T> T transform(DefinitionVisitor<T> visitor, String resourceTypeUrl) {
-
-    StructureDefinition definition = (StructureDefinition) context.getValidationSupport()
-        .fetchStructureDefinition(resourceTypeUrl);
-
-    if (definition == null) {
-
-      throw new IllegalArgumentException("Unable to find definition for " + resourceTypeUrl);
-    }
-
-    return transform(visitor, definition);
-  }
-
-  /**
-   * Returns the Spark struct type used to encode the given FHIR composite.
-   *
-   * @return The schema as a Spark StructType
-   */
-  public <T> T transform(DefinitionVisitor<T> visitor, StructureDefinition definition) {
-
-    return transform(visitor, null, definition, new ArrayDeque<>());
+    return transform(visitor, resourceTypeUrl, Collections.emptyList());
   }
 
   @Override
@@ -570,9 +527,10 @@ public class R4StructureDefinitions extends StructureDefinitions {
         })
         .collect(Collectors.toList());
 
-    return transformRoot(visitor, definition, containedDefinitions, new ArrayDeque<>());
+    return transformRoot(visitor, definition, containedDefinitions);
   }
 
+  // TODO make the separation between this and `elementToFields` more clear.
   /**
    * Transforms the given FHIR structure definition.
    *
@@ -584,6 +542,7 @@ public class R4StructureDefinitions extends StructureDefinitions {
    *
    * @return the transformed structure, or null if it should not be included in the parent.
    */
+  @Nullable
   private <T> T transform(DefinitionVisitor<T> visitor,
       ElementDefinition parentElement,
       StructureDefinition definition,
@@ -593,17 +552,13 @@ public class R4StructureDefinitions extends StructureDefinitions {
 
     ElementDefinition root = definitions.get(0);
 
-    stack.push(new QualifiedPath(definition.getUrl(), root.getPath()));
-
     List<StructureField<T>> childElements = transformChildren(visitor, definition,
         definitions, stack, root);
-
-    stack.pop();
 
     if ("Reference".equals(definition.getType())) {
 
       // TODO: if this is in an option there may be other non-reference types here?
-      String rootName = elementName(root);
+      String rootName = DefinitionVisitorsUtil.elementName(root.getPath());
 
       List<String> referenceTypes = parentElement.getType()
           .stream()
@@ -630,14 +585,18 @@ public class R4StructureDefinitions extends StructureDefinitions {
 
     } else {
 
-      String rootName = elementName(root);
+      String rootName = DefinitionVisitorsUtil.elementName(root.getPath());
 
       // We don't want 'id' to be present in nested fields to make it consistent with SQL-on-FHIR.
       // https://github.com/FHIR/sql-on-fhir/blob/master/sql-on-fhir.md#id-fields-omitted
       childElements.removeIf(field -> field.fieldName().equals("id"));
 
+      if (childElements.isEmpty()) {
+        // All children were dropped because of recursion depth limit.
+        return null;
+      }
       return visitor.visitComposite(rootName,
-          rootName,
+          DefinitionVisitorsUtil.pathFromStack(root.getPath(), stack),
           rootName,
           definition.getUrl(),
           childElements);
@@ -646,22 +605,22 @@ public class R4StructureDefinitions extends StructureDefinitions {
 
   private <T> T transformRoot(DefinitionVisitor<T> visitor,
       StructureDefinition definition,
-      List<StructureDefinition> containedDefinitions,
-      Deque<QualifiedPath> stack) {
+      List<StructureDefinition> containedDefinitions) {
 
     ElementDefinition definitionRootElement = definition.getSnapshot().getElementFirstRep();
 
     List<ElementDefinition> definitions = definition.getSnapshot().getElement();
 
-    ElementDefinition root = definitions.get(0);
-
-    stack.push(new QualifiedPath(definition.getUrl(), definitionRootElement.getPath()));
+    Deque<QualifiedPath> stack = new ArrayDeque<>();
 
     List<StructureField<T>> childElements = transformChildren(visitor,
         definition,
         definitions,
         stack,
-        root);
+        definitionRootElement);
+    // At this level no child should be dropped because of recursion limit.
+    Verify.verify(!childElements.isEmpty());
+    Verify.verify(stack.isEmpty());
 
     // If there are contained definitions, create a Resource Container StructureField
     if (containedDefinitions.size() > 0) {
@@ -670,16 +629,14 @@ public class R4StructureDefinitions extends StructureDefinitions {
           definition,
           containedDefinitions,
           stack,
-          root);
+          definitionRootElement);
 
       // Replace default StructureField with constructed Resource Container StructureField
       // TODO make this future proof instead of using a hard-coded index for `contained`.
       childElements.set(5, containedElement);
     }
 
-    stack.pop();
-
-    String rootName = elementName(root);
+    String rootName = DefinitionVisitorsUtil.elementName(definitionRootElement.getPath());
 
     return visitor.visitComposite(rootName,
         rootName,

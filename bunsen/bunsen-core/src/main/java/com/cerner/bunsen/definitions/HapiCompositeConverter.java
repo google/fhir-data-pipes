@@ -4,6 +4,7 @@ import ca.uhn.fhir.context.BaseRuntimeChildDefinition;
 import ca.uhn.fhir.context.BaseRuntimeElementCompositeDefinition;
 import ca.uhn.fhir.context.BaseRuntimeElementDefinition;
 import ca.uhn.fhir.context.RuntimeElemContainedResourceList;
+import com.google.common.base.Preconditions;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -144,7 +145,8 @@ public abstract class HapiCompositeConverter<T> extends HapiConverter<T> {
       T structType,
       FhirConversionSupport fhirSupport,
       String extensionUrl) {
-
+    // A composite type should have at least one child.
+    Preconditions.checkArgument(!children.isEmpty());
     this.elementType = elementType;
     this.children = children;
     this.structType = structType;
