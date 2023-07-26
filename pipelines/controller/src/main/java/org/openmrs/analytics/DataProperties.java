@@ -84,6 +84,10 @@ public class DataProperties {
 
   private boolean createHiveResourceTables;
 
+  private String fhirServerPassword;
+
+  private String fhirServerUserName;
+
   @PostConstruct
   void validateProperties() throws ClassNotFoundException {
     CronExpression.parse(incrementalSchedule);
@@ -103,6 +107,8 @@ public class DataProperties {
     FhirEtlOptions options = PipelineOptionsFactory.as(FhirEtlOptions.class);
     logger.info("Converting options for fhirServerUrl {}", fhirServerUrl);
     options.setFhirServerUrl(fhirServerUrl);
+    options.setFhirServerPassword(fhirServerPassword);
+    options.setFhirServerUserName(fhirServerUserName);
     options.setFhirDatabaseConfigPath(dbConfig);
     options.setResourceList(resourceList);
 
