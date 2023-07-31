@@ -27,9 +27,6 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Strings;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -37,8 +34,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import org.apache.http.NameValuePair;
-import org.apache.http.client.utils.URLEncodedUtils;
 import org.hl7.fhir.r4.model.Bundle;
 import org.hl7.fhir.r4.model.Patient;
 import org.slf4j.Logger;
@@ -120,26 +115,7 @@ public class FhirSearchUtil {
       throw new IllegalArgumentException(
           String.format("No proper link information in bundle %s", searchBundle));
     }
-
-    try {
-      URI searchUri = new URI(searchLink);
-      NameValuePair pagesParam = null;
-      for (NameValuePair pair : URLEncodedUtils.parse(searchUri, StandardCharsets.UTF_8)) {
-        if (pair.getName().equals("_getpages")) {
-          pagesParam = pair;
-        }
-      }
-      if (pagesParam == null) {
-        throw new IllegalArgumentException(
-            String.format("No _getpages parameter found in search link %s", searchLink));
-      }
-      return openmrsUtil.getSourceFhirUrl() + "?" + pagesParam.toString();
-    } catch (URISyntaxException e) {
-      throw new IllegalArgumentException(
-          String.format(
-              "Malformed link information with error %s in bundle %s",
-              e.getMessage(), searchBundle));
-    }
+    return searchLink;
   }
 
   public String findSelfUrl(Bundle searchBundle) {
@@ -245,13 +221,9 @@ public class FhirSearchUtil {
         segments.add(
             SearchSegmentDescriptor.create(findSelfUrl(searchBundle), options.getBatchSize()));
       } else {
-        // TODO: This is HAPI specific and should be generalized:
-        //  https://github.com/google/fhir-data-pipes/issues/533
-        String baseUrl = findBaseSearchUrl(searchBundle) + "&_getpagesoffset=";
-        for (int offset = 0; offset < total; offset += options.getBatchSize()) {
-          String pageSearchUrl = baseUrl + offset;
-          segments.add(SearchSegmentDescriptor.create(pageSearchUrl, options.getBatchSize()));
-        }
+        String baseUrl = findBaseSearchUrl(searchBundle);
+        segments.add(SearchSegmentDescriptor.create(baseUrl, options.getBatchSize()));
+
         log.info(
             String.format(
                 "Total number of segments for resource %s is %d", resourceType, segments.size()));

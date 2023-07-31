@@ -19,10 +19,10 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.nullValue;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -54,11 +54,17 @@ import org.mockito.junit.MockitoJUnitRunner;
 @RunWith(MockitoJUnitRunner.class)
 public class FhirSearchUtilTest {
 
-  private static final String PAGE_URL_PARAM = "_getpages=861af9b4-d847-4831-b945-ab1f6f08f03e";
-
   private static final String BASE_URL = "http://localhost:9020/openmrs/ws/fhir2/R4";
 
   private static final String SEARCH_URL = "Patient?given=TEST";
+
+  private static final String OFFSET_PARAM = "_offset=15";
+
+  private static final String COUNT_PARAM = "_count=15";
+
+  private static final String SUMMARY_PARAM = "_summary=data";
+
+  private static final String GIVEN_PARAM = "given=Bashir";
 
   @Mock private OpenmrsUtil openmrsUtil;
 
@@ -86,7 +92,6 @@ public class FhirSearchUtilTest {
     IParser parser = fhirContext.newJsonParser();
     bundle = parser.parseResource(Bundle.class, bundleStr);
     fhirSearchUtil = new FhirSearchUtil(openmrsUtil);
-    when(openmrsUtil.getSourceFhirUrl()).thenReturn(BASE_URL);
     when(openmrsUtil.getSourceClient()).thenReturn(genericClient);
     when(openmrsUtil.getSourceClient(anyBoolean())).thenReturn(genericClient);
     when(genericClient.search()).thenReturn(untypedQuery);
@@ -102,7 +107,18 @@ public class FhirSearchUtilTest {
   @Test
   public void testFindBaseSearchUrl() {
     String baseUrl = fhirSearchUtil.findBaseSearchUrl(bundle);
-    assertThat(baseUrl, equalTo(BASE_URL + "?" + PAGE_URL_PARAM));
+    assertThat(
+        baseUrl,
+        equalTo(
+            BASE_URL
+                + "?"
+                + OFFSET_PARAM
+                + "&"
+                + COUNT_PARAM
+                + "&"
+                + SUMMARY_PARAM
+                + "&"
+                + GIVEN_PARAM));
   }
 
   @Test
@@ -140,7 +156,7 @@ public class FhirSearchUtilTest {
     options.setBatchSize(15);
     Map<String, List<SearchSegmentDescriptor>> segmentMap = fhirSearchUtil.createSegments(options);
     assertThat(segmentMap.size(), equalTo(1));
-    assertThat(segmentMap.get("Patient").size(), equalTo(4));
+    assertThat(segmentMap.get("Patient").size(), equalTo(1));
   }
 
   @Test
@@ -152,7 +168,7 @@ public class FhirSearchUtilTest {
     when(query.lastUpdated(any())).thenReturn(query);
     Map<String, List<SearchSegmentDescriptor>> segmentMap = fhirSearchUtil.createSegments(options);
     assertThat(segmentMap.size(), equalTo(1));
-    assertThat(segmentMap.get("Patient").size(), equalTo(4));
+    assertThat(segmentMap.get("Patient").size(), equalTo(1));
     ArgumentCaptor<DateRangeParam> dateCaptor = ArgumentCaptor.forClass(DateRangeParam.class);
     verify(query).lastUpdated(dateCaptor.capture());
     DateRangeParam value = dateCaptor.getValue();
