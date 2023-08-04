@@ -501,10 +501,6 @@ public abstract class StructureDefinitions {
         snapshotDefinitions, stack, root);
 
     if ("Reference".equals(definition.getType())) {
-
-      // TODO: if this is in an option there may be other non-reference types here?
-      String rootName = DefinitionVisitorsUtil.elementName(root.getPath());
-
       List<String> referenceProfiles = parentElement.getReferenceTargetProfiles();
       List<String> referenceTypes = referenceProfiles.stream()
           .map(profile -> getStructureDefinition(profile).getType())
@@ -553,7 +549,6 @@ public abstract class StructureDefinitions {
           containedDefinitions,
           stack,
           rootElement);
-
       // Replace default StructureField with constructed Resource Container StructureField
       // TODO make this future proof instead of using a hard-coded index for `contained`.
       childElements.set(5, containedElement);
