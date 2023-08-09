@@ -18,9 +18,7 @@ import org.slf4j.LoggerFactory;
 // This is non-trivial because FHIR ElementDefinition objects do not share the same interface for
 // different FHIR versions.
 
-/**
- * {@link StructureDefinitions} implementation for FHIR R4.
- */
+/** {@link StructureDefinitions} implementation for FHIR R4. */
 public class R4StructureDefinitions extends StructureDefinitions {
 
   private static final Logger log = LoggerFactory.getLogger(R4StructureDefinitions.class);
@@ -70,8 +68,9 @@ public class R4StructureDefinitions extends StructureDefinitions {
 
     @Override
     public List<IElementDefinition> getSnapshotDefinitions() {
-      return structureDefinition.getSnapshot().getElement().stream().map(
-          d -> new ElementDefinitionWrapper(d)).collect(Collectors.toList());
+      return structureDefinition.getSnapshot().getElement().stream()
+          .map(d -> new ElementDefinitionWrapper(d))
+          .collect(Collectors.toList());
     }
   }
 
@@ -114,8 +113,9 @@ public class R4StructureDefinitions extends StructureDefinitions {
 
     @Override
     public List<String> getAllTypeCodes() {
-      return elementDefinition.getType().stream().map(
-          t -> t.getCode()).collect(Collectors.toList());
+      return elementDefinition.getType().stream()
+          .map(t -> t.getCode())
+          .collect(Collectors.toList());
     }
 
     @Override
@@ -138,8 +138,7 @@ public class R4StructureDefinitions extends StructureDefinitions {
 
     @Override
     public List<String> getReferenceTargetProfiles() {
-      return elementDefinition.getType()
-          .stream()
+      return elementDefinition.getType().stream()
           .filter(type -> "Reference".equals(type.getCode()))
           .filter(type -> type.getTargetProfile() != null)
           .map(type -> type.getTargetProfile())
@@ -155,7 +154,7 @@ public class R4StructureDefinitions extends StructureDefinitions {
     public String getFirstTypeProfile() {
       List<CanonicalType> profiles = elementDefinition.getTypeFirstRep().getProfile();
       if (profiles == null || profiles.isEmpty()) {
-        return  null;
+        return null;
       }
       return profiles.get(0).getValue();
     }
@@ -164,7 +163,5 @@ public class R4StructureDefinitions extends StructureDefinitions {
     public String toString() {
       return elementDefinition.toString();
     }
-
   }
-
 }

@@ -5,7 +5,6 @@ import com.cerner.bunsen.definitions.FhirConversionSupport;
 import com.cerner.bunsen.definitions.IElementDefinition;
 import com.cerner.bunsen.definitions.IStructureDefinition;
 import com.cerner.bunsen.definitions.StructureDefinitions;
-import java.util.Collection;
 import java.util.List;
 import java.util.stream.Collectors;
 import org.hl7.fhir.dstu3.model.ElementDefinition;
@@ -13,9 +12,7 @@ import org.hl7.fhir.dstu3.model.StructureDefinition;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-/**
- * {@link StructureDefinitions} implementation for FHIR STU3.
- */
+/** {@link StructureDefinitions} implementation for FHIR STU3. */
 public class Stu3StructureDefinitions extends StructureDefinitions {
 
   private static final Logger log = LoggerFactory.getLogger(Stu3StructureDefinitions.class);
@@ -65,8 +62,9 @@ public class Stu3StructureDefinitions extends StructureDefinitions {
 
     @Override
     public List<IElementDefinition> getSnapshotDefinitions() {
-      return structureDefinition.getSnapshot().getElement().stream().map(
-          d -> new ElementDefinitionWrapper(d)).collect(Collectors.toList());
+      return structureDefinition.getSnapshot().getElement().stream()
+          .map(d -> new ElementDefinitionWrapper(d))
+          .collect(Collectors.toList());
     }
   }
 
@@ -109,8 +107,9 @@ public class Stu3StructureDefinitions extends StructureDefinitions {
 
     @Override
     public List<String> getAllTypeCodes() {
-      return elementDefinition.getType().stream().map(
-          t -> t.getCode()).collect(Collectors.toList());
+      return elementDefinition.getType().stream()
+          .map(t -> t.getCode())
+          .collect(Collectors.toList());
     }
 
     @Override
@@ -133,8 +132,7 @@ public class Stu3StructureDefinitions extends StructureDefinitions {
 
     @Override
     public List<String> getReferenceTargetProfiles() {
-      return elementDefinition.getType()
-          .stream()
+      return elementDefinition.getType().stream()
           .filter(type -> "Reference".equals(type.getCode()))
           .filter(type -> type.getTargetProfile() != null)
           .map(type -> type.getTargetProfile())
@@ -150,7 +148,5 @@ public class Stu3StructureDefinitions extends StructureDefinitions {
     public String toString() {
       return elementDefinition.toString();
     }
-
   }
-
 }

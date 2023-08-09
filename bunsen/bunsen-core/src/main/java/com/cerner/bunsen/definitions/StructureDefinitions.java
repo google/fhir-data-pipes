@@ -2,13 +2,11 @@ package com.cerner.bunsen.definitions;
 
 import ca.uhn.fhir.context.FhirContext;
 import ca.uhn.fhir.context.FhirVersionEnum;
-import ca.uhn.fhir.context.support.IValidationSupport;
 import com.google.common.base.Verify;
 import com.google.common.collect.ImmutableSet;
 import java.lang.reflect.Constructor;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.Deque;
 import java.util.LinkedHashMap;
@@ -18,45 +16,43 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
-import org.hl7.fhir.r4.model.StructureDefinition;
 
-/**
- * Abstract base class to visit FHIR structure definitions.
- */
+/** Abstract base class to visit FHIR structure definitions. */
 public abstract class StructureDefinitions {
 
   // TODO make this FHIR version specific and hide it under an abstract method.
-  protected static final Set<String> PRIMITIVE_TYPES =  ImmutableSet.<String>builder()
-      .add("id")
-      .add("boolean")
-      .add("code")
-      .add("markdown")
-      .add("date")
-      .add("instant")
-      .add("datetime")
-      .add("dateTime")
-      .add("time")
-      .add("oid")
-      .add("string")
-      .add("decimal")
-      .add("integer")
-      .add("xhtml")
-      .add("unsignedInt")
-      .add("positiveInt")
-      .add("base64Binary")
-      .add("uri")
-      // TODO: Figure out why these are added to R4 resource definitions.
-      .add("http://hl7.org/fhirpath/System.Boolean")
-      .add("http://hl7.org/fhirpath/System.String")
-      .add("http://hl7.org/fhirpath/System.Integer")
-      .add("http://hl7.org/fhirpath/System.Long")
-      .add("http://hl7.org/fhirpath/System.Decimal")
-      .add("http://hl7.org/fhirpath/System.DateTime")
-      .add("http://hl7.org/fhirpath/System.Time")
-      .add("http://hl7.org/fhirpath/System.Quantity")
-      .add("canonical")
-      .add("url")
-      .build();
+  protected static final Set<String> PRIMITIVE_TYPES =
+      ImmutableSet.<String>builder()
+          .add("id")
+          .add("boolean")
+          .add("code")
+          .add("markdown")
+          .add("date")
+          .add("instant")
+          .add("datetime")
+          .add("dateTime")
+          .add("time")
+          .add("oid")
+          .add("string")
+          .add("decimal")
+          .add("integer")
+          .add("xhtml")
+          .add("unsignedInt")
+          .add("positiveInt")
+          .add("base64Binary")
+          .add("uri")
+          // TODO: Figure out why these are added to R4 resource definitions.
+          .add("http://hl7.org/fhirpath/System.Boolean")
+          .add("http://hl7.org/fhirpath/System.String")
+          .add("http://hl7.org/fhirpath/System.Integer")
+          .add("http://hl7.org/fhirpath/System.Long")
+          .add("http://hl7.org/fhirpath/System.Decimal")
+          .add("http://hl7.org/fhirpath/System.DateTime")
+          .add("http://hl7.org/fhirpath/System.Time")
+          .add("http://hl7.org/fhirpath/System.Quantity")
+          .add("canonical")
+          .add("url")
+          .build();
 
   private static final String STU3_DEFINITIONS_CLASS =
       "com.cerner.bunsen.definitions.stu3.Stu3StructureDefinitions";
@@ -77,8 +73,8 @@ public abstract class StructureDefinitions {
 
   // TODO the current order of methods reflects previous refactored files to make code review
   //  process simpler; we should probably change this in future and move public methods to the top.
-  private List<IElementDefinition> getChildren(IElementDefinition parent,
-      List<IElementDefinition> definitions) {
+  private List<IElementDefinition> getChildren(
+      IElementDefinition parent, List<IElementDefinition> definitions) {
 
     if (parent.getContentReference() != null) {
       if (!parent.getContentReference().startsWith("#")) {
@@ -89,17 +85,20 @@ public abstract class StructureDefinitions {
       String referencedType = parent.getContentReference().substring(1);
 
       // Find the actual type to use.
-      parent = definitions.stream()
-          .filter(definition -> definition.getPath().equals(referencedType))
-          .findFirst()
-          .orElseThrow(() -> new IllegalArgumentException("Expected a reference type"));
+      parent =
+          definitions.stream()
+              .filter(definition -> definition.getPath().equals(referencedType))
+              .findFirst()
+              .orElseThrow(() -> new IllegalArgumentException("Expected a reference type"));
     }
 
     String startsWith = parent.getId() + ".";
 
     return definitions.stream()
-        .filter(definition -> definition.getId().startsWith(startsWith)
-            && definition.getId().indexOf('.', startsWith.length()) < 0)
+        .filter(
+            definition ->
+                definition.getId().startsWith(startsWith)
+                    && definition.getId().indexOf('.', startsWith.length()) < 0)
         .collect(Collectors.toList());
   }
 
@@ -110,9 +109,8 @@ public abstract class StructureDefinitions {
     return Collections.singletonList(StructureField.property(elementName, result));
   }
 
-  private boolean shouldTerminateRecursive(DefinitionVisitor visitor,
-      QualifiedPath newPath,
-      Deque<QualifiedPath> stack) {
+  private boolean shouldTerminateRecursive(
+      DefinitionVisitor visitor, QualifiedPath newPath, Deque<QualifiedPath> stack) {
 
     // TODO we should add configuration parameters for exceptional paths
     //  that require deeper recursion; this is where to apply that logic:
@@ -127,7 +125,8 @@ public abstract class StructureDefinitions {
     return stack.stream().filter(path -> path.equals(newPath)).count() > maxDepth;
   }
 
-  private <T> List<StructureField<T>> extensionElementToFields(DefinitionVisitor<T> visitor,
+  private <T> List<StructureField<T>> extensionElementToFields(
+      DefinitionVisitor<T> visitor,
       IStructureDefinition rootDefinition,
       IElementDefinition element,
       List<IElementDefinition> snapshotDefinitions,
@@ -145,40 +144,46 @@ public abstract class StructureDefinitions {
     if (definition != null) {
       List<IElementDefinition> extensionDefinitions = definition.getSnapshotDefinitions();
       IElementDefinition extensionRoot = extensionDefinitions.get(0);
-      extensions = visitExtensionDefinition(visitor,
-          rootDefinition,
-          element.getSliceName(),
-          stack,
-          definition.getUrl(),
-          extensionDefinitions,
-          extensionRoot);
+      extensions =
+          visitExtensionDefinition(
+              visitor,
+              rootDefinition,
+              element.getSliceName(),
+              stack,
+              definition.getUrl(),
+              extensionDefinitions,
+              extensionRoot);
     } else {
       if (element.getSliceName() == null) {
         return Collections.emptyList();
       }
-      extensions = visitExtensionDefinition(visitor,
-          rootDefinition,
-          element.getSliceName(),
-          stack,
-          element.getFirstTypeProfile(),
-          snapshotDefinitions,
-          element);
+      extensions =
+          visitExtensionDefinition(
+              visitor,
+              rootDefinition,
+              element.getSliceName(),
+              stack,
+              element.getFirstTypeProfile(),
+              snapshotDefinitions,
+              element);
     }
 
     if (!element.getMax().equals("1") && extensions.size() > 0) {
       // the nested extension element has max: *
-      return Collections.singletonList(StructureField.extension(
-          extensions.get(0).fieldName(),
-          extensions.get(0).extensionUrl(),
-          extensions.get(0).isModifier(),
-          visitor.visitMultiValued(extensions.get(0).fieldName(), extensions.get(0).result())));
+      return Collections.singletonList(
+          StructureField.extension(
+              extensions.get(0).fieldName(),
+              extensions.get(0).extensionUrl(),
+              extensions.get(0).isModifier(),
+              visitor.visitMultiValued(extensions.get(0).fieldName(), extensions.get(0).result())));
 
     } else {
       return extensions;
     }
   }
 
-  private <T> List<StructureField<T>> visitExtensionDefinition(DefinitionVisitor<T> visitor,
+  private <T> List<StructureField<T>> visitExtensionDefinition(
+      DefinitionVisitor<T> visitor,
       IStructureDefinition rootDefinition,
       String sliceName,
       Deque<QualifiedPath> stack,
@@ -191,61 +196,54 @@ public abstract class StructureDefinitions {
 
     // Extensions may contain either additional extensions or a value field, but not both.
     // So if it has a child element with a slice name, it has additional extensions.
-    List<IElementDefinition> childExtensions = children.stream()
-        .filter(element -> element.getSliceName() != null)
-        .collect(Collectors.toList());
+    List<IElementDefinition> childExtensions =
+        children.stream()
+            .filter(element -> element.getSliceName() != null)
+            .collect(Collectors.toList());
 
     if (!childExtensions.isEmpty()) {
       List<StructureField<T>> childFields = new ArrayList<>();
 
-      for (IElementDefinition childExtension: childExtensions) {
-        List<StructureField<T>> childField = extensionElementToFields(visitor,
-            rootDefinition, childExtension, extensionDefinitions, stack);
+      for (IElementDefinition childExtension : childExtensions) {
+        List<StructureField<T>> childField =
+            extensionElementToFields(
+                visitor, rootDefinition, childExtension, extensionDefinitions, stack);
         childFields.addAll(childField);
       }
 
-      T result = visitor.visitParentExtension(sliceName,
-          url,
-          childFields);
+      T result = visitor.visitParentExtension(sliceName, url, childFields);
 
       if (result == null) {
         return Collections.emptyList();
       } else {
         return Collections.singletonList(
-            StructureField.extension(sliceName,
-                url,
-                extensionRoot.getIsModifier(),
-                result));
+            StructureField.extension(sliceName, url, extensionRoot.getIsModifier(), result));
       }
     } else {
       // The extension has no children, so produce its value.
-      Optional<IElementDefinition> valueElement = children.stream()
-          .filter(e -> e.getPath().contains("value"))
-          .findFirst();
+      Optional<IElementDefinition> valueElement =
+          children.stream().filter(e -> e.getPath().contains("value")).findFirst();
       // FIXME: get the extension URL.
-      Optional<IElementDefinition> urlElement = children.stream()
-          .filter(e -> e.getPath().endsWith("url"))
-          .findFirst();
+      Optional<IElementDefinition> urlElement =
+          children.stream().filter(e -> e.getPath().endsWith("url")).findFirst();
       String extensionUrl = urlElement.get().getFixedPrimitiveValue();
-      List<StructureField<T>> childField = elementToFields(visitor, rootDefinition,
-          valueElement.get(), extensionDefinitions, stack);
-      T result = visitor.visitLeafExtension(sliceName,
-          extensionUrl,
-          childField.iterator().next().result());
+      List<StructureField<T>> childField =
+          elementToFields(visitor, rootDefinition, valueElement.get(), extensionDefinitions, stack);
+      T result =
+          visitor.visitLeafExtension(
+              sliceName, extensionUrl, childField.iterator().next().result());
       return Collections.singletonList(
-          StructureField.extension(sliceName,
-              extensionUrl,
-              extensionRoot.getIsModifier(),
-              result));
+          StructureField.extension(sliceName, extensionUrl, extensionRoot.getIsModifier(), result));
     }
   }
 
   /**
-   * Returns the fields for the given element. The returned stream can be empty
-   * (e.g., for elements with max of zero), or have multiple values (for elements
-   * that generate fields with additional data in siblings.)
+   * Returns the fields for the given element. The returned stream can be empty (e.g., for elements
+   * with max of zero), or have multiple values (for elements that generate fields with additional
+   * data in siblings.)
    */
-  private <T> List<StructureField<T>> elementToFields(DefinitionVisitor<T> visitor,
+  private <T> List<StructureField<T>> elementToFields(
+      DefinitionVisitor<T> visitor,
       IStructureDefinition rootDefinition,
       IElementDefinition element,
       List<IElementDefinition> snapshotDefinitions,
@@ -262,8 +260,7 @@ public abstract class StructureDefinitions {
       // Drop slices for non-extension fields; otherwise we will end up with duplicated fields.
       return Collections.emptyList();
     } else if (element.hasSingleType() && PRIMITIVE_TYPES.contains(element.getFirstTypeCode())) {
-      T primitiveConverter = visitor
-          .visitPrimitive(elementName, element.getFirstTypeCode());
+      T primitiveConverter = visitor.visitPrimitive(elementName, element.getFirstTypeCode());
       if (!element.getMax().equals("1")) {
         return singleField(elementName, visitor.visitMultiValued(elementName, primitiveConverter));
       } else {
@@ -288,49 +285,51 @@ public abstract class StructureDefinitions {
           //  why this cannot lead to infinite recursion for choice types. If
           //  we don't reset the stack, then we should handle null returns.
           T child = transform(visitor, element, structureDefinition, new ArrayDeque<>());
-          Verify.verify(child != null,
-              "Unexpected null choice type {} for element {}", typeCode, element);
+          Verify.verify(
+              child != null, "Unexpected null choice type {} for element {}", typeCode, element);
           choiceTypes.put(typeCode, child);
         }
       }
 
-      StructureField<T> field = new StructureField<>(elementName,
-          elementName,
-          null,
-          false,
-          true,
-          visitor.visitChoice(elementName, choiceTypes));
+      StructureField<T> field =
+          new StructureField<>(
+              elementName,
+              elementName,
+              null,
+              false,
+              true,
+              visitor.visitChoice(elementName, choiceTypes));
       return Collections.singletonList(field);
     } else if (!element.getMax().equals("1")) {
       if (getDefinition(element) != null) {
         // Handle defined data types.
         IStructureDefinition definition = getDefinition(element);
         T type = transform(visitor, element, definition, stack);
-        return singleField(elementName,
-            visitor.visitMultiValued(elementName, type));
+        return singleField(elementName, visitor.visitMultiValued(elementName, type));
       } else {
-        List<StructureField<T>> childElements = transformChildren(visitor,
-            rootDefinition, snapshotDefinitions, stack, element);
+        List<StructureField<T>> childElements =
+            transformChildren(visitor, rootDefinition, snapshotDefinitions, stack, element);
         if (childElements.isEmpty()) {
           // All children were dropped because of recursion depth limit.
-          return  Collections.emptyList();
+          return Collections.emptyList();
         }
-        T result = visitor.visitComposite(elementName,
-            DefinitionVisitorsUtil.pathFromStack(elementName, stack),
-            elementName,
-            rootDefinition.getUrl(),
-            childElements);
+        T result =
+            visitor.visitComposite(
+                elementName,
+                DefinitionVisitorsUtil.pathFromStack(elementName, stack),
+                elementName,
+                rootDefinition.getUrl(),
+                childElements);
         List<StructureField<T>> composite = singleField(elementName, result);
         // Array types should produce only a single element.
         if (composite.size() != 1) {
-          throw new IllegalStateException("Array type in "
-              + element.getPath()
-              + " must map to a single structure.");
+          throw new IllegalStateException(
+              "Array type in " + element.getPath() + " must map to a single structure.");
         }
 
         // Wrap the item in the corresponding multi-valued type.
-        return singleField(elementName,
-            visitor.visitMultiValued(elementName, composite.get(0).result()));
+        return singleField(
+            elementName, visitor.visitMultiValued(elementName, composite.get(0).result()));
       }
 
     } else if (getDefinition(element) != null) {
@@ -343,36 +342,39 @@ public abstract class StructureDefinitions {
     } else {
 
       // Handle composite type
-      List<StructureField<T>> childElements = transformChildren(visitor, rootDefinition,
-          snapshotDefinitions, stack, element);
+      List<StructureField<T>> childElements =
+          transformChildren(visitor, rootDefinition, snapshotDefinitions, stack, element);
       if (childElements.isEmpty()) {
         // All children were dropped because of recursion depth limit.
-        return  Collections.emptyList();
+        return Collections.emptyList();
       }
 
-      T result = visitor.visitComposite(elementName,
-          DefinitionVisitorsUtil.pathFromStack(elementName, stack),
-          elementName,
-          rootDefinition.getUrl(),
-          childElements);
+      T result =
+          visitor.visitComposite(
+              elementName,
+              DefinitionVisitorsUtil.pathFromStack(elementName, stack),
+              elementName,
+              rootDefinition.getUrl(),
+              childElements);
 
       return singleField(elementName, result);
     }
   }
 
   /**
-   * Goes through the list of children of the given `element` and convert each
-   * of those `ElementDefinision`s to `StructureField`s.
-   * NOTE: This is the only place where the traversal stack can grow. It is also
-   * best if this is the only place where `shouldTerminateRecursive` is called.
+   * Goes through the list of children of the given `element` and convert each of those
+   * `ElementDefinision`s to `StructureField`s. NOTE: This is the only place where the traversal
+   * stack can grow. It is also best if this is the only place where `shouldTerminateRecursive` is
+   * called.
    */
-  private <T> List<StructureField<T>> transformChildren(DefinitionVisitor<T> visitor,
+  private <T> List<StructureField<T>> transformChildren(
+      DefinitionVisitor<T> visitor,
       IStructureDefinition rootDefinition,
       List<IElementDefinition> snapshotDefinitions,
       Deque<QualifiedPath> stack,
       IElementDefinition element) {
 
-    QualifiedPath qualifiedPath = new QualifiedPath(rootDefinition.getUrl(),  element.getPath());
+    QualifiedPath qualifiedPath = new QualifiedPath(rootDefinition.getUrl(), element.getPath());
 
     if (shouldTerminateRecursive(visitor, qualifiedPath, stack)) {
       return Collections.emptyList();
@@ -382,9 +384,9 @@ public abstract class StructureDefinitions {
       // Handle composite type
       List<StructureField<T>> childElements = new ArrayList<>();
 
-      for (IElementDefinition child: getChildren(element, snapshotDefinitions)) {
-        List<StructureField<T>> childFields = elementToFields(visitor, rootDefinition,
-            child, snapshotDefinitions, stack);
+      for (IElementDefinition child : getChildren(element, snapshotDefinitions)) {
+        List<StructureField<T>> childFields =
+            elementToFields(visitor, rootDefinition, child, snapshotDefinitions, stack);
         childElements.addAll(childFields);
       }
 
@@ -394,7 +396,8 @@ public abstract class StructureDefinitions {
     }
   }
 
-  private <T> StructureField<T> transformContained(DefinitionVisitor<T> visitor,
+  private <T> StructureField<T> transformContained(
+      DefinitionVisitor<T> visitor,
       IStructureDefinition rootDefinition,
       List<IStructureDefinition> containedDefinitions,
       Deque<QualifiedPath> stack,
@@ -402,28 +405,28 @@ public abstract class StructureDefinitions {
 
     Map<String, StructureField<T>> containedElements = new LinkedHashMap<>();
 
-    for (IStructureDefinition containedDefinition: containedDefinitions) {
+    for (IStructureDefinition containedDefinition : containedDefinitions) {
       IElementDefinition containedRootElement = containedDefinition.getRootDefinition();
       List<IElementDefinition> snapshotDefinitions = containedDefinition.getSnapshotDefinitions();
-      List<StructureField<T>> childElements = transformChildren(visitor,
-          containedDefinition,
-          snapshotDefinitions,
-          stack,
-          containedRootElement);
+      List<StructureField<T>> childElements =
+          transformChildren(
+              visitor, containedDefinition, snapshotDefinitions, stack, containedRootElement);
       // At this level no child should be dropped because of recursion limit.
       Verify.verify(!childElements.isEmpty());
       String rootName = DefinitionVisitorsUtil.elementName(containedRootElement.getPath());
-      T result = visitor.visitComposite(rootName,
-          containedRootElement.getPath(),
-          rootName,
-          containedDefinition.getUrl(),
-          childElements);
+      T result =
+          visitor.visitComposite(
+              rootName,
+              containedRootElement.getPath(),
+              rootName,
+              containedDefinition.getUrl(),
+              childElements);
       containedElements.put(rootName, StructureField.property(rootName, result));
     }
 
-    T result = visitor.visitContained(element.getPath() + ".contained",
-        rootDefinition.getUrl(),
-        containedElements);
+    T result =
+        visitor.visitContained(
+            element.getPath() + ".contained", rootDefinition.getUrl(), containedElements);
 
     return StructureField.property("contained", result);
   }
@@ -442,14 +445,16 @@ public abstract class StructureDefinitions {
 
   /**
    * Transforms a FHIR resource to a type defined by the visitor.
+   *
    * @param visitor a visitor class to recursively transform the structure.
    * @param resourceTypeUrl the URL defining the resource type or profile.
    * @param containedResourceTypeUrls the URLs defining the resource types or profiles to be
-   *        contained to the given resource.
+   *     contained to the given resource.
    * @param <T> the return type of the visitor.
    * @return the transformed result.
    */
-  public <T> T transform(DefinitionVisitor<T> visitor,
+  public <T> T transform(
+      DefinitionVisitor<T> visitor,
       String resourceTypeUrl,
       List<String> containedResourceTypeUrls) {
 
@@ -459,19 +464,21 @@ public abstract class StructureDefinitions {
       throw new IllegalArgumentException("Unable to find definition for " + resourceTypeUrl);
     }
 
-    List<IStructureDefinition> containedDefinitions = containedResourceTypeUrls.stream()
-        .map(containedResourceTypeUrl -> {
-          IStructureDefinition containedDefinition =
-              getStructureDefinition(containedResourceTypeUrl);
+    List<IStructureDefinition> containedDefinitions =
+        containedResourceTypeUrls.stream()
+            .map(
+                containedResourceTypeUrl -> {
+                  IStructureDefinition containedDefinition =
+                      getStructureDefinition(containedResourceTypeUrl);
 
-          if (containedDefinition == null) {
-            throw new IllegalArgumentException("Unable to find definition for "
-                + containedResourceTypeUrl);
-          }
+                  if (containedDefinition == null) {
+                    throw new IllegalArgumentException(
+                        "Unable to find definition for " + containedResourceTypeUrl);
+                  }
 
-          return containedDefinition;
-        })
-        .collect(Collectors.toList());
+                  return containedDefinition;
+                })
+            .collect(Collectors.toList());
 
     return transformRoot(visitor, definition, containedDefinitions);
   }
@@ -481,15 +488,15 @@ public abstract class StructureDefinitions {
    * Transforms the given FHIR structure definition.
    *
    * @param visitor the visitor performing the transformation
-   * @param parentElement the element containing this definition for additional type information,
-   *     or null if it is not contained in a parent element.
+   * @param parentElement the element containing this definition for additional type information, or
+   *     null if it is not contained in a parent element.
    * @param definition the FHIR structure definition to be converted
    * @param stack a stack of FHIR type URLs to detect recursive definitions.
-   *
    * @return the transformed structure, or null if it should not be included in the parent.
    */
   @Nullable
-  private <T> T transform(DefinitionVisitor<T> visitor,
+  private <T> T transform(
+      DefinitionVisitor<T> visitor,
       IElementDefinition parentElement,
       IStructureDefinition definition,
       Deque<QualifiedPath> stack) {
@@ -497,15 +504,16 @@ public abstract class StructureDefinitions {
     List<IElementDefinition> snapshotDefinitions = definition.getSnapshotDefinitions();
     IElementDefinition root = definition.getRootDefinition();
 
-    List<StructureField<T>> childElements = transformChildren(visitor, definition,
-        snapshotDefinitions, stack, root);
+    List<StructureField<T>> childElements =
+        transformChildren(visitor, definition, snapshotDefinitions, stack, root);
 
     if ("Reference".equals(definition.getType())) {
       List<String> referenceProfiles = parentElement.getReferenceTargetProfiles();
-      List<String> referenceTypes = referenceProfiles.stream()
-          .map(profile -> getStructureDefinition(profile).getType())
-          .sorted()
-          .collect(Collectors.toList());
+      List<String> referenceTypes =
+          referenceProfiles.stream()
+              .map(profile -> getStructureDefinition(profile).getType())
+              .sorted()
+              .collect(Collectors.toList());
       return visitor.visitReference(parentElement.toString(), referenceTypes, childElements);
     } else {
       String rootName = DefinitionVisitorsUtil.elementName(root.getPath());
@@ -518,7 +526,8 @@ public abstract class StructureDefinitions {
         // All children were dropped because of recursion depth limit.
         return null;
       }
-      return visitor.visitComposite(rootName,
+      return visitor.visitComposite(
+          rootName,
           DefinitionVisitorsUtil.pathFromStack(root.getPath(), stack),
           rootName,
           definition.getUrl(),
@@ -526,29 +535,24 @@ public abstract class StructureDefinitions {
     }
   }
 
-  private <T> T transformRoot(DefinitionVisitor<T> visitor,
+  private <T> T transformRoot(
+      DefinitionVisitor<T> visitor,
       IStructureDefinition definition,
       List<IStructureDefinition> containedDefinitions) {
 
     IElementDefinition rootElement = definition.getRootDefinition();
     List<IElementDefinition> snapshotDefinitions = definition.getSnapshotDefinitions();
     Deque<QualifiedPath> stack = new ArrayDeque<>();
-    List<StructureField<T>> childElements = transformChildren(visitor,
-        definition,
-        snapshotDefinitions,
-        stack,
-        rootElement);
+    List<StructureField<T>> childElements =
+        transformChildren(visitor, definition, snapshotDefinitions, stack, rootElement);
     // At this level no child should be dropped because of recursion limit.
     Verify.verify(!childElements.isEmpty());
     Verify.verify(stack.isEmpty());
 
     // If there are contained definitions, create a Resource Container StructureField
     if (containedDefinitions.size() > 0) {
-      StructureField<T> containedElement = transformContained(visitor,
-          definition,
-          containedDefinitions,
-          stack,
-          rootElement);
+      StructureField<T> containedElement =
+          transformContained(visitor, definition, containedDefinitions, stack, rootElement);
       // Replace default StructureField with constructed Resource Container StructureField
       // TODO make this future proof instead of using a hard-coded index for `contained`.
       childElements.set(5, containedElement);
@@ -556,11 +560,7 @@ public abstract class StructureDefinitions {
 
     String rootName = DefinitionVisitorsUtil.elementName(rootElement.getPath());
 
-    return visitor.visitComposite(rootName,
-        rootName,
-        rootName,
-        definition.getUrl(),
-        childElements);
+    return visitor.visitComposite(rootName, rootName, rootName, definition.getUrl(), childElements);
   }
 
   /**
@@ -573,19 +573,17 @@ public abstract class StructureDefinitions {
 
   /**
    * Returns the structure definition interface corresponding to the given element.
+   *
    * @param element the target element
    * @return the structure definition or null if the given element has no type code.
    */
   @Nullable
   private IStructureDefinition getDefinition(IElementDefinition element) {
     String typeCode = element.getFirstTypeCode();
-    return typeCode == null
-        || typeCode.equals("BackboneElement")
-        || typeCode.equals("Element")
+    return typeCode == null || typeCode.equals("BackboneElement") || typeCode.equals("Element")
         ? null
         : getStructureDefinition(typeCode);
   }
-
 
   /**
    * Returns supporting functions to make FHIR conversion work independent of version.
@@ -593,7 +591,6 @@ public abstract class StructureDefinitions {
    * @return functions supporting FHIR conversion.
    */
   public abstract FhirConversionSupport conversionSupport();
-
 
   /**
    * Create a new instance of this class for the given version of FHIR.
@@ -629,5 +626,4 @@ public abstract class StructureDefinitions {
       throw new IllegalStateException(exception);
     }
   }
-
 }
