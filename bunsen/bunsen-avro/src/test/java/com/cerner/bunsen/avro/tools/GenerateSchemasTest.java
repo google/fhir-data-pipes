@@ -11,6 +11,7 @@ import java.util.StringJoiner;
 import org.junit.Assert;
 import org.junit.Test;
 
+// TODO duplicate these tests for R4 as well.
 public class GenerateSchemasTest {
 
   private static final String BASE_TEST_URL = "http://test.org/test_resource";
