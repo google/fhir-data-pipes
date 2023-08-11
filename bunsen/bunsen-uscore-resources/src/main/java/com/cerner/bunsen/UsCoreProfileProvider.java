@@ -15,19 +15,15 @@ import org.hl7.fhir.instance.model.api.IBaseResource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-/**
- * SPI implementation to load profile resources for US Core.
- */
+/** SPI implementation to load profile resources for US Core. */
 public class UsCoreProfileProvider implements ProfileProvider {
   private static final Logger log = LoggerFactory.getLogger(UsCoreProfileProvider.class);
 
-  private static void load(PrePopulatedValidationSupport support,
-      IParser jsonParser,
-      String resource) {
+  private static void load(
+      PrePopulatedValidationSupport support, IParser jsonParser, String resource) {
 
-    try (InputStream input = UsCoreProfileProvider.class
-        .getClassLoader()
-        .getResourceAsStream(resource)) {
+    try (InputStream input =
+        UsCoreProfileProvider.class.getClassLoader().getResourceAsStream(resource)) {
       IBaseResource definition = jsonParser.parseResource(new InputStreamReader(input));
       support.addStructureDefinition(definition);
     } catch (IOException exception) {
@@ -148,10 +144,11 @@ public class UsCoreProfileProvider implements ProfileProvider {
     load(support, parser, "definitions-r4/StructureDefinition-us-core-vital-signs.json");
   }
 
-  private static void addUsCoreDefinitions(PrePopulatedValidationSupport support,
-      FhirContext context) {
-    Preconditions.checkArgument(context.getVersion().getVersion() == FhirVersionEnum.DSTU3
-        || context.getVersion().getVersion() == FhirVersionEnum.R4);
+  private static void addUsCoreDefinitions(
+      PrePopulatedValidationSupport support, FhirContext context) {
+    Preconditions.checkArgument(
+        context.getVersion().getVersion() == FhirVersionEnum.DSTU3
+            || context.getVersion().getVersion() == FhirVersionEnum.R4);
 
     if (context.getVersion().getVersion() == FhirVersionEnum.DSTU3) {
       addUsCoreDefinitionsForDstu3(support, context);
@@ -179,7 +176,7 @@ public class UsCoreProfileProvider implements ProfileProvider {
     IValidationSupport defaultSupport = context.getValidationSupport();
     PrePopulatedValidationSupport support = new PrePopulatedValidationSupport(context);
     List<IBaseResource> defaultDefinitions = defaultSupport.fetchAllStructureDefinitions();
-    for (IBaseResource definition:  defaultDefinitions) {
+    for (IBaseResource definition : defaultDefinitions) {
       support.addStructureDefinition(definition);
     }
 
