@@ -36,16 +36,14 @@ import org.hl7.fhir.dstu3.model.Timing.TimingRepeatComponent;
 import org.hl7.fhir.utilities.xhtml.NodeType;
 import org.hl7.fhir.utilities.xhtml.XhtmlNode;
 
-/**
- * Common test resources for Bunsen STU3 usage.
- */
+/** Common test resources for Bunsen STU3 usage. */
 public class TestData {
 
-  public static final String US_CORE_BIRTHSEX
-      = "http://hl7.org/fhir/us/core/StructureDefinition/us-core-birthsex";
+  public static final String US_CORE_BIRTHSEX =
+      "http://hl7.org/fhir/us/core/StructureDefinition/us-core-birthsex";
 
-  public static final String US_CORE_ETHNICITY
-      = "http://hl7.org/fhir/us/core/StructureDefinition/us-core-ethnicity";
+  public static final String US_CORE_ETHNICITY =
+      "http://hl7.org/fhir/us/core/StructureDefinition/us-core-ethnicity";
 
   public static final String US_CORE_PATIENT =
       "http://hl7.org/fhir/us/core/StructureDefinition/us-core-patient";
@@ -62,11 +60,9 @@ public class TestData {
   public static final String US_CORE_MEDICATION_REQUEST =
       "http://hl7.org/fhir/us/core/StructureDefinition/us-core-medicationrequest";
 
-  public static final String PROVENANCE =
-      "http://hl7.org/fhir/StructureDefinition/Provenance";
+  public static final String PROVENANCE = "http://hl7.org/fhir/StructureDefinition/Provenance";
 
-  public static final String VALUE_SET =
-      "http://hl7.org/fhir/StructureDefinition/ValueSet";
+  public static final String VALUE_SET = "http://hl7.org/fhir/StructureDefinition/ValueSet";
 
   public static final String BUNSEN_TEST_PATIENT =
       "http://hl7.org/fhir/bunsen/test/StructureDefinition/bunsen-test-patient";
@@ -123,15 +119,13 @@ public class TestData {
 
     // Condition code
     CodeableConcept code = new CodeableConcept();
-    code.addCoding()
-        .setSystem("http://snomed.info/sct")
-        .setCode("39065001")
-        .setDisplay("Severe");
+    code.addCoding().setSystem("http://snomed.info/sct").setCode("39065001").setDisplay("Severe");
     condition.setSeverity(code);
 
     // Severity code
     CodeableConcept severity = new CodeableConcept();
-    severity.addCoding()
+    severity
+        .addCoding()
         .setSystem("http://snomed.info/sct")
         .setCode("24484000")
         .setDisplay("Burn of ear")
@@ -174,10 +168,8 @@ public class TestData {
 
     ObservationComponentComponent component = observation.addComponent();
 
-    CodeableConcept code = new CodeableConcept()
-        .addCoding(new Coding()
-            .setCode("abc")
-            .setSystem("PLACEHOLDER"));
+    CodeableConcept code =
+        new CodeableConcept().addCoding(new Coding().setCode("abc").setSystem("PLACEHOLDER"));
 
     component.setCode(code);
 
@@ -279,7 +271,6 @@ public class TestData {
     humanName.setId("name123");
     patient.addName(humanName);
 
-
     Meta meta = new Meta();
 
     List<Coding> tag = meta.getTag();
@@ -307,7 +298,8 @@ public class TestData {
     medication.setId(id);
 
     CodeableConcept itemCodeableConcept = new CodeableConcept();
-    itemCodeableConcept.addCoding()
+    itemCodeableConcept
+        .addCoding()
         .setSystem("http://www.nlm.nih.gov/research/umls/rxnorm")
         .setCode("103109")
         .setDisplay("Vitamin E 3 MG Oral Tablet [Ephynal]")
@@ -344,7 +336,8 @@ public class TestData {
     medicationRequest.setId("test-medication-request");
 
     CodeableConcept itemCodeableConcept = new CodeableConcept();
-    itemCodeableConcept.addCoding()
+    itemCodeableConcept
+        .addCoding()
         .setSystem("http://www.nlm.nih.gov/research/umls/rxnorm")
         .setCode("103109")
         .setDisplay("Vitamin E 3 MG Oral Tablet [Ephynal]")
@@ -352,14 +345,16 @@ public class TestData {
 
     medicationRequest.setMedication(itemCodeableConcept);
 
-    medicationRequest
-        .setSubject(new Reference("Patient/12345").setDisplay("Here is a display for you."));
+    medicationRequest.setSubject(
+        new Reference("Patient/12345").setDisplay("Here is a display for you."));
 
-    medicationRequest.setDosageInstruction(ImmutableList.of(
-        new Dosage().setTiming(new Timing().setRepeat(new TimingRepeatComponent().setCount(10)))));
+    medicationRequest.setDosageInstruction(
+        ImmutableList.of(
+            new Dosage()
+                .setTiming(new Timing().setRepeat(new TimingRepeatComponent().setCount(10)))));
 
-    medicationRequest
-        .setSubstitution(new MedicationRequestSubstitutionComponent().setAllowed(true));
+    medicationRequest.setSubstitution(
+        new MedicationRequestSubstitutionComponent().setAllowed(true));
 
     return medicationRequest;
   }
@@ -434,21 +429,24 @@ public class TestData {
 
     // add multiple codeableConcept extensions to nestedExtension
     final CodeableConcept codeableconcept1 = new CodeableConcept();
-    codeableconcept1.addCoding()
+    codeableconcept1
+        .addCoding()
         .setSystem("http://snomed.info/sct")
         .setCode("CC1")
         .setDisplay("CC1 - Codeable Concept Extension")
         .setUserSelected(true);
 
     final CodeableConcept codeableconcept2 = new CodeableConcept();
-    codeableconcept2.addCoding()
+    codeableconcept2
+        .addCoding()
         .setSystem("http://snomed.info/sct")
         .setCode("CC2")
         .setDisplay("CC2 - Codeable Concept Extension")
         .setUserSelected(true);
 
     final CodeableConcept codeableconcept3 = new CodeableConcept();
-    codeableconcept3.addCoding()
+    codeableconcept3
+        .addCoding()
         .setSystem("http://snomed.info/sct")
         .setCode("CC3")
         .setDisplay("CC3 - Codeable Concept Extension")
@@ -472,7 +470,8 @@ public class TestData {
     stringModifierExtension.setValue(new StringType("test string modifier value"));
 
     CodeableConcept concept1 = new CodeableConcept();
-    concept1.addCoding()
+    concept1
+        .addCoding()
         .setSystem("http://snomed.info/sct")
         .setCode("C-1")
         .setDisplay("C-1 Codeable Concept Modifier Extension")
@@ -483,7 +482,8 @@ public class TestData {
     codeableConceptField.setValue(concept1);
 
     CodeableConcept concept2 = new CodeableConcept();
-    concept2.addCoding()
+    concept2
+        .addCoding()
         .setSystem("http://snomed.info/sct")
         .setCode("C-2")
         .setDisplay("C-2 Codeable Concept Modifier Extension")
