@@ -22,9 +22,7 @@ public class NoOpConverter extends HapiConverter<Schema> {
   private static class FieldSetter implements HapiFieldSetter, HapiObjectConverter {
 
     @Override
-    public void setField(IBase parentObject, BaseRuntimeChildDefinition fieldToSet, Object value) {
-
-    }
+    public void setField(IBase parentObject, BaseRuntimeChildDefinition fieldToSet, Object value) {}
 
     @Override
     public IBase toHapi(Object input) {

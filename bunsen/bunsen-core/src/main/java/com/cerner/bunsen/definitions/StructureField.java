@@ -1,9 +1,8 @@
 package com.cerner.bunsen.definitions;
 
 /**
- * This is a container for a field in a FHIR composite type
- * that defines the field, its FHIR property, and a transformed result produced
- * by the visitor itself.
+ * This is a container for a field in a FHIR composite type that defines the field, its FHIR
+ * property, and a transformed result produced by the visitor itself.
  *
  * @param <T> the type produced by the visitor.
  */
@@ -31,7 +30,8 @@ public class StructureField<T> {
    * @param isChoice flag indicating whether this is a choice type
    * @param visitorResult the result of the visitor.
    */
-  public StructureField(String propertyName,
+  public StructureField(
+      String propertyName,
       String fieldName,
       String extensionUrl,
       boolean isModifier,
@@ -57,9 +57,8 @@ public class StructureField<T> {
   }
 
   /**
-   * The field name of the converted result. This generally be the same
-   * as the FHIR property name, only changing for special cases like
-   * fields generated to directly represent extensions.
+   * The field name of the converted result. This generally be the same as the FHIR property name,
+   * only changing for special cases like fields generated to directly represent extensions.
    *
    * @return the field name
    */
@@ -131,10 +130,8 @@ public class StructureField<T> {
    * @param <T> the return type of the visitor.
    * @return the StructField for the given extension.
    */
-  public static <T> StructureField<T> extension(String fieldName,
-      String extensionUrl,
-      boolean isModifier,
-      T visitorResult) {
+  public static <T> StructureField<T> extension(
+      String fieldName, String extensionUrl, boolean isModifier, T visitorResult) {
     return new StructureField<>(null, fieldName, extensionUrl, isModifier, false, visitorResult);
   }
 }
