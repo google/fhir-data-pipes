@@ -19,6 +19,12 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
 
+  <parent>
+    <groupId>com.google.fhir.analytics</groupId>
+    <artifactId>root</artifactId>
+    <version>0.1.0-SNAPSHOT</version>
+  </parent>
+
   <groupId>com.google.fhir.analytics</groupId>
   <artifactId>pipelines</artifactId>
   <version>0.1.0-SNAPSHOT</version>
@@ -207,87 +213,6 @@
         <plugin>
           <artifactId>maven-project-info-reports-plugin</artifactId>
           <version>3.4.3</version>
-        </plugin>
-        <!-- Code formatter -->
-        <plugin>
-          <groupId>com.diffplug.spotless</groupId>
-          <artifactId>spotless-maven-plugin</artifactId>
-          <version>2.37.0</version>
-          <configuration>
-            <pom>
-              <sortPom>
-                <expandEmptyElements>false</expandEmptyElements>
-              </sortPom>
-              <trimTrailingWhitespace/>
-              <endWithNewline/>
-              <indent>
-                <spaces>true</spaces>
-              </indent>
-            </pom>
-            <formats>
-              <!-- you can define as many formats as you want, each is independent -->
-              <format>
-                <!-- define the files to apply to -->
-                <includes>
-                  <include>**/*.sh</include>
-                  <include>**/*.xml</include>
-                  <include>.gitignore</include>
-                </includes>
-                <!-- ignore build files -->
-                <excludes>
-                  <exclude>.idea/**</exclude>
-                  <exclude>.settings/**</exclude>
-                  <exclude>**/target/**</exclude>
-                  <exclude>bin/**</exclude>
-                  <exclude>tmp/**</exclude>
-                </excludes>
-                <trimTrailingWhitespace/>
-                <endWithNewline/>
-                <indent>
-                  <spaces>true</spaces>
-                </indent>
-              </format>
-              <format>
-                <includes>
-                  <include>**/*.md</include>
-                </includes>
-                <excludes>
-                  <exclude>**/target/**</exclude>
-                </excludes>
-                <prettier>
-                  <!-- Formatter that Spotless supports and can format Markdown:
-                       https://github.com/diffplug/spotless/tree/main/plugin-maven#prettier
-                     Only Spotless-supported formatter that can be configured to
-                     force line wrap -->
-                  <config>
-                    <proseWrap>always</proseWrap>
-                  </config>
-                </prettier>
-              </format>
-            </formats>
-            <!-- define a language-specific format -->
-            <java>
-              <importOrder/>
-              <!-- standard import order -->
-
-              <removeUnusedImports/>
-
-              <!-- apply a specific flavor of google-java-format and reflow long strings -->
-              <googleJavaFormat>
-                <version>1.15.0</version>
-                <style>GOOGLE</style>
-                <reflowLongStrings>true</reflowLongStrings>
-              </googleJavaFormat>
-            </java>
-          </configuration>
-          <executions>
-            <execution>
-              <goals>
-                <goal>apply</goal>
-              </goals>
-              <phase>compile</phase>
-            </execution>
-          </executions>
         </plugin>
         <!-- this is for finding files at the root ${main.basedir} easier -->
         <plugin>

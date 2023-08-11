@@ -12,9 +12,7 @@ import org.hl7.fhir.instance.model.api.IBase;
 import org.hl7.fhir.instance.model.api.IBaseBundle;
 import org.hl7.fhir.instance.model.api.IBaseResource;
 
-/**
- * Conversion support for translating STU3 FHIR resources.
- */
+/** Conversion support for translating STU3 FHIR resources. */
 public class Stu3FhirConversionSupport extends FhirConversionSupport {
 
   @Override
@@ -38,9 +36,8 @@ public class Stu3FhirConversionSupport extends FhirConversionSupport {
       return children.stream()
           .filter(property -> property.hasValues())
           .collect(
-              Collectors.toMap(Property::getName,
-                  property -> property.getValues(),
-                  (first, second) -> first));
+              Collectors.toMap(
+                  Property::getName, property -> property.getValues(), (first, second) -> first));
     }
   }
 
@@ -49,11 +46,13 @@ public class Stu3FhirConversionSupport extends FhirConversionSupport {
 
     Bundle stu3Bundle = (Bundle) bundle;
 
-    List<IBaseResource> items = stu3Bundle.getEntry().stream()
+    List<IBaseResource> items =
+        stu3Bundle.getEntry().stream()
             .map(BundleEntryComponent::getResource)
-            .filter(resource ->
-                resource != null
-                    && resourceName.equalsIgnoreCase(resource.getResourceType().name()))
+            .filter(
+                resource ->
+                    resource != null
+                        && resourceName.equalsIgnoreCase(resource.getResourceType().name()))
             .collect(Collectors.toList());
 
     return items;

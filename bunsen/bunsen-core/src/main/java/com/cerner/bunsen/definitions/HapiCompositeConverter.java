@@ -38,17 +38,12 @@ public abstract class HapiCompositeConverter<T> extends HapiConverter<T> {
 
   protected abstract boolean isMultiValued(T schemaType);
 
-  /**
-   * Field setter that does nothing for synthetic or unsupported field types.
-   */
-  private static final class NoOpFieldSetter implements HapiFieldSetter,
-      HapiObjectConverter {
+  /** Field setter that does nothing for synthetic or unsupported field types. */
+  private static final class NoOpFieldSetter implements HapiFieldSetter, HapiObjectConverter {
 
     @Override
-    public void setField(IBase parentObject, BaseRuntimeChildDefinition fieldToSet,
-        Object sourceObject) {
-
-    }
+    public void setField(
+        IBase parentObject, BaseRuntimeChildDefinition fieldToSet, Object sourceObject) {}
 
     @Override
     public IBase toHapi(Object input) {
@@ -58,14 +53,14 @@ public abstract class HapiCompositeConverter<T> extends HapiConverter<T> {
 
   private static final HapiFieldSetter NOOP_FIELD_SETTER = new NoOpFieldSetter();
 
-  protected final class CompositeFieldSetter implements HapiFieldSetter,
-      HapiObjectConverter {
+  protected final class CompositeFieldSetter implements HapiFieldSetter, HapiObjectConverter {
 
     private final List<StructureField<HapiFieldSetter>> children;
 
     private final BaseRuntimeElementCompositeDefinition compositeDefinition;
 
-    CompositeFieldSetter(BaseRuntimeElementCompositeDefinition compositeDefinition,
+    CompositeFieldSetter(
+        BaseRuntimeElementCompositeDefinition compositeDefinition,
         List<StructureField<HapiFieldSetter>> children) {
 
       this.compositeDefinition = compositeDefinition;
@@ -94,23 +89,22 @@ public abstract class HapiCompositeConverter<T> extends HapiConverter<T> {
 
           if (child.extensionUrl() != null) {
 
-            BaseRuntimeChildDefinition childDefinition = child.isModifier()
-                ? compositeDefinition.getChildByName("modifierExtension")
-                : compositeDefinition.getChildByName("extension");
+            BaseRuntimeChildDefinition childDefinition =
+                child.isModifier()
+                    ? compositeDefinition.getChildByName("modifierExtension")
+                    : compositeDefinition.getChildByName("extension");
 
             child.result().setField(fhirObject, childDefinition, fieldValue);
 
           } else {
 
-            String propertyName = child.isChoice()
-                ? child.propertyName() + "[x]"
-                : child.propertyName();
+            String propertyName =
+                child.isChoice() ? child.propertyName() + "[x]" : child.propertyName();
 
             BaseRuntimeChildDefinition childDefinition =
                 compositeDefinition.getChildByName(propertyName);
 
             child.result().setField(fhirObject, childDefinition, fieldValue);
-
           }
         }
       }
@@ -124,9 +118,8 @@ public abstract class HapiCompositeConverter<T> extends HapiConverter<T> {
     }
 
     @Override
-    public void setField(IBase parentObject,
-        BaseRuntimeChildDefinition fieldToSet,
-        Object sourceObject) {
+    public void setField(
+        IBase parentObject, BaseRuntimeChildDefinition fieldToSet, Object sourceObject) {
 
       IBase fhirObject = toHapi(sourceObject);
 
@@ -140,7 +133,8 @@ public abstract class HapiCompositeConverter<T> extends HapiConverter<T> {
     }
   }
 
-  protected HapiCompositeConverter(String elementType,
+  protected HapiCompositeConverter(
+      String elementType,
       List<StructureField<HapiConverter<T>>> children,
       T structType,
       FhirConversionSupport fhirSupport,
@@ -214,11 +208,12 @@ public abstract class HapiCompositeConverter<T> extends HapiConverter<T> {
       } else if (converter.extensionUrl() != null) {
 
         // No corresponding property for the name, so see if it is an Extension or ModifierExtention
-        List<? extends IBaseExtension> extensions = schemaEntry.isModifier()
-            ? ((IBaseHasModifierExtensions) composite).getModifierExtension()
-            : ((IBaseHasExtensions) composite).getExtension();
+        List<? extends IBaseExtension> extensions =
+            schemaEntry.isModifier()
+                ? ((IBaseHasModifierExtensions) composite).getModifierExtension()
+                : ((IBaseHasExtensions) composite).getExtension();
 
-        for (IBaseExtension extension: extensions) {
+        for (IBaseExtension extension : extensions) {
 
           if (extension.getUrl().equals(converter.extensionUrl())) {
 
@@ -227,18 +222,20 @@ public abstract class HapiCompositeConverter<T> extends HapiConverter<T> {
         }
 
       } else if (converter instanceof MultiValueConverter
-          && ((MultiValueConverter)converter).getElementConverter().extensionUrl() != null) {
+          && ((MultiValueConverter) converter).getElementConverter().extensionUrl() != null) {
 
         final String extensionUrl =
             ((MultiValueConverter) converter).getElementConverter().extensionUrl();
 
-        List<? extends IBaseExtension> extensions = schemaEntry.isModifier()
-            ? ((IBaseHasModifierExtensions) composite).getModifierExtension()
-            : ((IBaseHasExtensions) composite).getExtension();
+        List<? extends IBaseExtension> extensions =
+            schemaEntry.isModifier()
+                ? ((IBaseHasModifierExtensions) composite).getModifierExtension()
+                : ((IBaseHasExtensions) composite).getExtension();
 
-        final List<? extends IBaseExtension> extensionList = extensions.stream()
-            .filter(extension -> extension.getUrl().equals(extensionUrl))
-            .collect(Collectors.toList());
+        final List<? extends IBaseExtension> extensionList =
+            extensions.stream()
+                .filter(extension -> extension.getUrl().equals(extensionUrl))
+                .collect(Collectors.toList());
 
         if (extensionList.size() > 0) {
           values[valueIndex] = schemaEntry.result().fromHapi(extensionList);
@@ -261,107 +258,111 @@ public abstract class HapiCompositeConverter<T> extends HapiConverter<T> {
     }
 
     if (!(elementDefinition instanceof BaseRuntimeElementCompositeDefinition)) {
-      throw new IllegalArgumentException("Composite converter must be given a "
-          + "single composite element, received: "
-          + elementDefinition.getName());
+      throw new IllegalArgumentException(
+          "Composite converter must be given a "
+              + "single composite element, received: "
+              + elementDefinition.getName());
     }
 
     BaseRuntimeElementCompositeDefinition compositeDefinition =
         (BaseRuntimeElementCompositeDefinition) elementDefinition;
 
-    List<StructureField<HapiFieldSetter>> toHapiChildren = children.stream().map(child -> {
+    List<StructureField<HapiFieldSetter>> toHapiChildren =
+        children.stream()
+            .map(
+                child -> {
+                  HapiFieldSetter childConverter;
 
-      HapiFieldSetter childConverter;
+                  if ("contained".equals(child.propertyName())) {
 
-      if ("contained".equals(child.propertyName())) {
+                    // Handle contained resources.
+                    HapiFieldSetter containedFieldSetter = NOOP_FIELD_SETTER;
 
-        // Handle contained resources.
-        HapiFieldSetter containedFieldSetter = NOOP_FIELD_SETTER;
+                    if (elementDefinitions.length > 1) {
 
-        if (elementDefinitions.length > 1) {
+                      BaseRuntimeElementDefinition containedDefinition =
+                          compositeDefinition
+                              .getChildByName("contained")
+                              .getChildByName("contained");
 
-          BaseRuntimeElementDefinition containedDefinition = compositeDefinition
-              .getChildByName("contained")
-              .getChildByName("contained");
+                      BaseRuntimeElementDefinition[] containedDefinitions =
+                          new BaseRuntimeElementDefinition[elementDefinitions.length];
 
-          BaseRuntimeElementDefinition[] containedDefinitions =
-              new BaseRuntimeElementDefinition[elementDefinitions.length];
+                      containedDefinitions[0] = containedDefinition;
 
-          containedDefinitions[0] = containedDefinition;
+                      System.arraycopy(
+                          elementDefinitions,
+                          1,
+                          containedDefinitions,
+                          1,
+                          containedDefinitions.length - 1);
 
-          System.arraycopy(elementDefinitions,
-              1,
-              containedDefinitions,
-              1,
-              containedDefinitions.length - 1);
+                      containedFieldSetter = child.result().toHapiConverter(containedDefinitions);
+                    }
 
-          containedFieldSetter = child.result().toHapiConverter(containedDefinitions);
-        }
+                    return new StructureField<>(
+                        "contained", "contained", null, false, false, containedFieldSetter);
 
-        return new StructureField<>("contained",
-            "contained",
-            null,
-            false,
-            false,
-            containedFieldSetter);
+                  } else if (child.extensionUrl() != null) {
 
-      } else if (child.extensionUrl() != null) {
+                    // Handle extensions.
+                    BaseRuntimeChildDefinition childDefinition =
+                        compositeDefinition.getChildByName("extension");
 
-        // Handle extensions.
-        BaseRuntimeChildDefinition childDefinition =
-            compositeDefinition.getChildByName("extension");
+                    childConverter =
+                        child.result().toHapiConverter(childDefinition.getChildByName("extension"));
 
-        childConverter = child.result()
-            .toHapiConverter(childDefinition.getChildByName("extension"));
+                  } else {
 
-      } else {
+                    String propertyName = child.propertyName();
 
-        String propertyName = child.propertyName();
+                    // Append the [x] suffix for choice properties.
+                    if (child.isChoice()) {
 
-        // Append the [x] suffix for choice properties.
-        if (child.isChoice()) {
+                      propertyName = propertyName + "[x]";
+                    }
 
-          propertyName = propertyName + "[x]";
-        }
+                    BaseRuntimeChildDefinition childDefinition =
+                        compositeDefinition.getChildByName(propertyName);
 
-        BaseRuntimeChildDefinition childDefinition =
-            compositeDefinition.getChildByName(propertyName);
+                    BaseRuntimeElementDefinition[] childElementDefinitions;
 
-        BaseRuntimeElementDefinition[] childElementDefinitions;
+                    if (child.isChoice()) {
 
-        if (child.isChoice()) {
+                      int childCount = childDefinition.getValidChildNames().size();
 
-          int childCount = childDefinition.getValidChildNames().size();
+                      childElementDefinitions = new BaseRuntimeElementDefinition[childCount];
 
-          childElementDefinitions = new BaseRuntimeElementDefinition[childCount];
+                      int index = 0;
 
-          int index = 0;
+                      for (String childName : childDefinition.getValidChildNames()) {
 
-          for (String childName: childDefinition.getValidChildNames()) {
+                        childDefinition.getChildByName(childName);
 
-            childDefinition.getChildByName(childName);
+                        childElementDefinitions[index++] =
+                            childDefinition.getChildByName(childName);
+                      }
 
-            childElementDefinitions[index++] = childDefinition.getChildByName(childName);
-          }
+                    } else {
 
-        } else {
+                      childElementDefinitions =
+                          new BaseRuntimeElementDefinition[] {
+                            childDefinition.getChildByName(propertyName)
+                          };
+                    }
 
-          childElementDefinitions = new BaseRuntimeElementDefinition[] {
-              childDefinition.getChildByName(propertyName)
-          };
-        }
+                    childConverter = child.result().toHapiConverter(childElementDefinitions);
+                  }
 
-        childConverter = child.result().toHapiConverter(childElementDefinitions);
-      }
-
-      return new StructureField<>(child.propertyName(),
-          child.fieldName(),
-          child.extensionUrl(),
-          child.isModifier(),
-          child.isChoice(),
-          childConverter);
-
-    }).collect(Collectors.toList());
+                  return new StructureField<>(
+                      child.propertyName(),
+                      child.fieldName(),
+                      child.extensionUrl(),
+                      child.isModifier(),
+                      child.isChoice(),
+                      childConverter);
+                })
+            .collect(Collectors.toList());
 
     return new CompositeFieldSetter(compositeDefinition, toHapiChildren);
   }

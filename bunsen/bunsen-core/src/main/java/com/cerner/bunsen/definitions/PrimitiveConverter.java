@@ -16,12 +16,11 @@ public abstract class PrimitiveConverter<T> extends HapiConverter<T> {
     }
 
     @Override
-    public void setField(IBase parentObject,
-        BaseRuntimeChildDefinition fieldToSet,
-        Object object) {
+    public void setField(IBase parentObject, BaseRuntimeChildDefinition fieldToSet, Object object) {
 
-      IPrimitiveType element = (IPrimitiveType) elementDefinition
-          .newInstance(fieldToSet.getInstanceConstructorArguments());
+      IPrimitiveType element =
+          (IPrimitiveType)
+              elementDefinition.newInstance(fieldToSet.getInstanceConstructorArguments());
 
       PrimitiveConverter.this.toHapi(object, element);
 
@@ -47,6 +46,7 @@ public abstract class PrimitiveConverter<T> extends HapiConverter<T> {
 
   /**
    * Helper method that will set the HAPI value.
+   *
    * @param input the input object
    * @param primitive the FHIR primitive to set
    */
