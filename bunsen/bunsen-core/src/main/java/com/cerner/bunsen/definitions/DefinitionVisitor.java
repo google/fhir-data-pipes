@@ -6,7 +6,7 @@ import java.util.Map;
 /**
  * Visitor for each field in a FHIR StructureDefinition.
  *
- * @param <T> the type produced by the visitor.   
+ * @param <T> the type produced by the visitor.
  */
 public interface DefinitionVisitor<T> {
 
@@ -17,8 +17,7 @@ public interface DefinitionVisitor<T> {
    * @param primitiveType the FHIR type of the primitive.
    * @return the visitor result.
    */
-  T visitPrimitive(String elementName,
-      String primitiveType);
+  T visitPrimitive(String elementName, String primitiveType);
 
   /**
    * Visits a composite type.
@@ -30,7 +29,8 @@ public interface DefinitionVisitor<T> {
    * @param children the composite type's children.
    * @return the visitor result.
    */
-  T visitComposite(String elementName,
+  T visitComposite(
+      String elementName,
       String elementPath,
       String baseType,
       String elementTypeUrl,
@@ -44,24 +44,20 @@ public interface DefinitionVisitor<T> {
    * @param contained the map of types to their contained elements.
    * @return the visitor result.
    */
-  T visitContained(String elementPath,
-      String baseType,
-      Map<String, StructureField<T>> contained);
+  T visitContained(String elementPath, String baseType, Map<String, StructureField<T>> contained);
 
   /**
-   * Visits a reference type.
-   * The element name in itself is not sufficient as similar element names at
-   * different places cause conflict and hence we would need full schema path
-   * to differentiate between such conflicting reference names.
+   * Visits a reference type. The element name in itself is not sufficient as similar element names
+   * at different places cause conflict and hence we would need full schema path to differentiate
+   * between such conflicting reference names.
    *
    * @param elementName the full schema path of element which needs to be visited.
    * @param referenceTypes the types of resource that can be referenced
    * @param children the child fields of the reference
    * @return the visitor result.
    */
-  T visitReference(String elementName,
-      List<String> referenceTypes,
-      List<StructureField<T>> children);
+  T visitReference(
+      String elementName, List<String> referenceTypes, List<StructureField<T>> children);
 
   /**
    * Visits a non-leaf extension.
@@ -71,9 +67,7 @@ public interface DefinitionVisitor<T> {
    * @param children the children of the extension
    * @return the visitor result.
    */
-  T visitParentExtension(String elementName,
-      String extensionUrl,
-      List<StructureField<T>> children);
+  T visitParentExtension(String elementName, String extensionUrl, List<StructureField<T>> children);
 
   /**
    * Visits a leaf extension, which contains some value.
@@ -83,9 +77,7 @@ public interface DefinitionVisitor<T> {
    * @param element the children of the extension.
    * @return the visitor result.
    */
-  T visitLeafExtension(String elementName,
-      String extensionUrl,
-      T element);
+  T visitLeafExtension(String elementName, String extensionUrl, T element);
 
   /**
    * Visits a multi-valued element.
@@ -94,8 +86,7 @@ public interface DefinitionVisitor<T> {
    * @param arrayElement the visitor result for a single element of the array.
    * @return the visitor result.
    */
-  T visitMultiValued(String elementName,
-      T arrayElement);
+  T visitMultiValued(String elementName, T arrayElement);
 
   /**
    * Visits a choice type.
@@ -104,8 +95,7 @@ public interface DefinitionVisitor<T> {
    * @param fhirToChoiceTypes a map of the choice type with the returned children.
    * @return the visitor result.
    */
-  T visitChoice(String elementName,
-      Map<String,T> fhirToChoiceTypes);
+  T visitChoice(String elementName, Map<String, T> fhirToChoiceTypes);
 
   /**
    * Returns the maximum depth to use for recursive structures of the given type.
