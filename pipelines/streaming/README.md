@@ -54,7 +54,7 @@ planned.
 
     ```shell
     $ java -jar ./pipelines/streaming/target/streaming-bundled-0.1.0-SNAPSHOT.jar \
-      org.openmrs.analytics.Runner \
+      com.google.fhir.analytics.Runner \
       --fhirServerUrl=http://localhost:8099/openmrs/ws/fhir2/R4 \
         --fhirServerUserName=admin --fhirServerPassword=Admin123 \
         --fhirSinkPath=http://localhost:8098/fhir \
@@ -67,7 +67,7 @@ planned.
 
     ```shell
     $ java -jar ./pipelines/streaming/target/streaming-bundled-0.1.0-SNAPSHOT.jar \
-      org.openmrs.analytics.Runner \
+      com.google.fhir.analytics.Runner \
       --fhirServerUrl=http://localhost:8099/openmrs/ws/fhir2/R4 \
         --fhirServerUserName=admin --fhirServerPassword=Admin123 \
         --fhirSinkPath=projects/PROJECT/locations/LOCATION/datasets/DATASET/fhirStores/FHIRSTORENAME \

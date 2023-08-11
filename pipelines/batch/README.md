@@ -42,7 +42,7 @@ Run the pipeline directly using the `java` command:
 
 ```
 java -jar ./pipelines/batch/target/batch-bundled-0.1.0-SNAPSHOT.jar \
-    org.openmrs.analytics.FhirEtl \
+    com.google.fhir.analytics.FhirEtl \
     --fhirServerUrl=http://example.org/fhir \
     --outputParquetPath=/tmp/parquet/
     --[see additional parameters below]
@@ -57,7 +57,7 @@ required parameters for both.
 
 This section documents the parameters used by the various pipelines. For more
 information on parameters, see
-[`FhirEtlOptions`](https://github.com/google/fhir-data-pipes/blob/master/pipelines/batch/src/main/java/org/openmrs/analytics/FhirEtlOptions.java)
+[`FhirEtlOptions`](https://github.com/google/fhir-data-pipes/blob/master/pipelines/batch/src/main/java/com/google/fhir/analytics/FhirEtlOptions.java)
 or run the pipeline with the `help` option:
 `java -jar ./batch/target/batch-bundled-0.1.0-SNAPSHOT.jar --help=FhirEtlOptions`.
 
@@ -171,7 +171,7 @@ Example run:
 
 ```shell
 java -cp ./pipelines/batch/target/batch-bundled-0.1.0-SNAPSHOT.jar \
-    org.openmrs.analytics.FhirEtl \
+    com.google.fhir.analytics.FhirEtl \
     --fhirServerUrl=http://localhost:8091/fhir \
     --outputParquetPath=/tmp/TEST/ \
     --resourceList=Patient,Encounter,Observation
@@ -183,7 +183,7 @@ Example run:
 
 ```shell
 java -cp ./pipelines/batch/target/batch-bundled-0.1.0-SNAPSHOT.jar \
-    org.openmrs.analytics.FhirEtl \
+    com.google.fhir.analytics.FhirEtl \
     --fhirServerUrl=http://localhost:8091/fhir \
     --resourceList=Patient,Encounter,Observation \
     --fhirDatabaseConfigPath=./utils/hapi-postgres-config.json \

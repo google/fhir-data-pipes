@@ -31,7 +31,7 @@ db_monitor_pid=$!
 echo "Starting batch job with $1 parallel proc."
 cd .. 
 cd ..
-java -cp pipelines/batch/target/batch-bundled-0.1.0-SNAPSHOT.jar org.openmrs.analytics.FhirEtl --fhirServerUrl=http://localhost:8098/fhir --fhirServerUserName=hapi --fhirServerPassword=hapi --outputParquetPath=$3 --resourceList=Patient,Encounter,Observation --batchSize=20 --targetParallelism=$1 2>&1 & 
+java -cp pipelines/batch/target/batch-bundled-0.1.0-SNAPSHOT.jar com.google.fhir.analytics.FhirEtl --fhirServerUrl=http://localhost:8098/fhir --fhirServerUserName=hapi --fhirServerPassword=hapi --outputParquetPath=$3 --resourceList=Patient,Encounter,Observation --batchSize=20 --targetParallelism=$1 2>&1 & 
 pidstat 1 -r -u -d -h -p $! > $4$2/raw/pipeline_stats_$1_proc.txt
 
 #Stop all pidstat jobs 

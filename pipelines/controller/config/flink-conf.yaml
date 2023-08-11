@@ -9,4 +9,4 @@ taskmanager.memory.network.max: 5gb
 execution.attached: false
 
 # This is required to track the pipeline metrics when FlinkRunner is used.
-execution.job-listeners: org.openmrs.analytics.metrics.FlinkJobListener
+execution.job-listeners: com.google.fhir.analytics.metrics.FlinkJobListener
