@@ -7,8 +7,7 @@ import com.cerner.bunsen.definitions.HapiConverter.HapiObjectConverter;
 import org.hl7.fhir.instance.model.api.IBase;
 import org.hl7.fhir.instance.model.api.IPrimitiveType;
 
-public class StringToHapiSetter implements HapiFieldSetter,
-    HapiObjectConverter {
+public class StringToHapiSetter implements HapiFieldSetter, HapiObjectConverter {
 
   private final BaseRuntimeElementDefinition elementDefinition;
 
@@ -17,9 +16,8 @@ public class StringToHapiSetter implements HapiFieldSetter,
   }
 
   @Override
-  public void setField(IBase parentObject,
-      BaseRuntimeChildDefinition fieldToSet,
-      Object sparkObject) {
+  public void setField(
+      IBase parentObject, BaseRuntimeChildDefinition fieldToSet, Object sparkObject) {
     fieldToSet.getMutator().setValue(parentObject, toHapi(sparkObject));
   }
 
