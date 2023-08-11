@@ -25,7 +25,7 @@
     </encoder>
   </appender>
   <!-- We can set this to "debug" to see our debug log messages. -->
-  <logger name="org.openmrs.analytics" level="info" />
+  <logger name="com.google.fhir.analytics" level="info" />
   <logger name="ca.uhn.fhir" level="info" />
   <logger name="com.cerner.bunsen" level="info" />
   <!-- This is too noisy because of "long DoFn name" warnings. -->
