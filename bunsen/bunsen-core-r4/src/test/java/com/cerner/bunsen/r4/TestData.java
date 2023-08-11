@@ -34,17 +34,14 @@ import org.hl7.fhir.r4.model.Timing.TimingRepeatComponent;
 import org.hl7.fhir.utilities.xhtml.NodeType;
 import org.hl7.fhir.utilities.xhtml.XhtmlNode;
 
-
-/**
- * Common test resources for Bunsen R4 usage.
- */
+/** Common test resources for Bunsen R4 usage. */
 public class TestData {
 
-  public static final String US_CORE_BIRTHSEX
-      = "http://hl7.org/fhir/us/core/StructureDefinition/us-core-birthsex";
+  public static final String US_CORE_BIRTHSEX =
+      "http://hl7.org/fhir/us/core/StructureDefinition/us-core-birthsex";
 
-  public static final String US_CORE_ETHNICITY
-      = "http://hl7.org/fhir/us/core/StructureDefinition/us-core-ethnicity";
+  public static final String US_CORE_ETHNICITY =
+      "http://hl7.org/fhir/us/core/StructureDefinition/us-core-ethnicity";
 
   public static final String US_CORE_PATIENT =
       "http://hl7.org/fhir/us/core/StructureDefinition/us-core-patient";
@@ -61,11 +58,9 @@ public class TestData {
   public static final String US_CORE_MEDICATION_REQUEST =
       "http://hl7.org/fhir/us/core/StructureDefinition/us-core-medicationrequest";
 
-  public static final String PROVENANCE =
-      "http://hl7.org/fhir/StructureDefinition/Provenance";
+  public static final String PROVENANCE = "http://hl7.org/fhir/StructureDefinition/Provenance";
 
-  public static final String VALUE_SET =
-      "http://hl7.org/fhir/StructureDefinition/ValueSet";
+  public static final String VALUE_SET = "http://hl7.org/fhir/StructureDefinition/ValueSet";
 
   // TODO add test profile for R4: https://github.com/google/fhir-data-pipes/issues/558
   // public static final String BUNSEN_TEST_PATIENT =
@@ -84,7 +79,8 @@ public class TestData {
   //     "http://hl7.org/fhir/bunsen/test/StructureDefinition/bunsen-test-nested-extension";
 
   // public static final String BUNSEN_TEST_CODEABLE_CONCEPT_EXT_FIELD =
-  //     "http://hl7.org/fhir/bunsen/test/StructureDefinition/bunsen-test-codeableConcept-extension";
+  //
+  // "http://hl7.org/fhir/bunsen/test/StructureDefinition/bunsen-test-codeableConcept-extension";
 
   // public static final String BUNSEN_TEST_CODEABLE_CONCEPT_MODIFIER_EXT_FIELD =
   //     "http://hl7.org/fhir/bunsen/test/StructureDefinition/"
@@ -122,21 +118,21 @@ public class TestData {
     // TODO
     // condition.setVerificationStatus(Condition.ConditionVerificationStatus.CONFIRMED);
     CodeableConcept verStatus = new CodeableConcept();
-    verStatus.addCoding().setSystem("http://terminology.hl7.org/CodeSystem/condition-ver-status")
-            .setCode("confirmed");
+    verStatus
+        .addCoding()
+        .setSystem("http://terminology.hl7.org/CodeSystem/condition-ver-status")
+        .setCode("confirmed");
     condition.setVerificationStatus(verStatus);
 
     // Condition code
     CodeableConcept code = new CodeableConcept();
-    code.addCoding()
-        .setSystem("http://snomed.info/sct")
-        .setCode("39065001")
-        .setDisplay("Severe");
+    code.addCoding().setSystem("http://snomed.info/sct").setCode("39065001").setDisplay("Severe");
     condition.setSeverity(code);
 
     // Severity code
     CodeableConcept severity = new CodeableConcept();
-    severity.addCoding()
+    severity
+        .addCoding()
         .setSystem("http://snomed.info/sct")
         .setCode("24484000")
         .setDisplay("Burn of ear")
@@ -179,10 +175,8 @@ public class TestData {
 
     ObservationComponentComponent component = observation.addComponent();
 
-    CodeableConcept code = new CodeableConcept()
-        .addCoding(new Coding()
-            .setCode("abc")
-            .setSystem("PLACEHOLDER"));
+    CodeableConcept code =
+        new CodeableConcept().addCoding(new Coding().setCode("abc").setSystem("PLACEHOLDER"));
 
     component.setCode(code);
 
@@ -281,7 +275,6 @@ public class TestData {
     humanName.addGiven("middle_name");
     patient.addName(humanName);
 
-
     Meta meta = new Meta();
 
     List<Coding> tag = meta.getTag();
@@ -309,7 +302,8 @@ public class TestData {
     medication.setId(id);
 
     CodeableConcept itemCodeableConcept = new CodeableConcept();
-    itemCodeableConcept.addCoding()
+    itemCodeableConcept
+        .addCoding()
         .setSystem("http://www.nlm.nih.gov/research/umls/rxnorm")
         .setCode("103109")
         .setDisplay("Vitamin E 3 MG Oral Tablet [Ephynal]")
@@ -348,7 +342,8 @@ public class TestData {
     medicationRequest.setId("test-medication-request");
 
     CodeableConcept itemCodeableConcept = new CodeableConcept();
-    itemCodeableConcept.addCoding()
+    itemCodeableConcept
+        .addCoding()
         .setSystem("http://www.nlm.nih.gov/research/umls/rxnorm")
         .setCode("103109")
         .setDisplay("Vitamin E 3 MG Oral Tablet [Ephynal]")
@@ -356,11 +351,13 @@ public class TestData {
 
     medicationRequest.setMedication(itemCodeableConcept);
 
-    medicationRequest
-        .setSubject(new Reference("Patient/12345").setDisplay("Here is a display for you."));
+    medicationRequest.setSubject(
+        new Reference("Patient/12345").setDisplay("Here is a display for you."));
 
-    medicationRequest.setDosageInstruction(ImmutableList.of(
-        new Dosage().setTiming(new Timing().setRepeat(new TimingRepeatComponent().setCount(10)))));
+    medicationRequest.setDosageInstruction(
+        ImmutableList.of(
+            new Dosage()
+                .setTiming(new Timing().setRepeat(new TimingRepeatComponent().setCount(10)))));
 
     medicationRequest.setSubstitution(
         new MedicationRequestSubstitutionComponent().setAllowed(new BooleanType(true)));
