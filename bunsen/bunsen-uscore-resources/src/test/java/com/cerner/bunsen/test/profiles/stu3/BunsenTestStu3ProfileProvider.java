@@ -13,19 +13,17 @@ import org.hl7.fhir.common.hapi.validation.support.PrePopulatedValidationSupport
 import org.hl7.fhir.dstu3.model.StructureDefinition;
 
 // TODO make this generic for R4: https://github.com/google/fhir-data-pipes/issues/558
-/**
- * {@link ProfileProvider} implementation to load resources required for Bunsen Testing.
- */
+/** {@link ProfileProvider} implementation to load resources required for Bunsen Testing. */
 public class BunsenTestStu3ProfileProvider implements ProfileProvider {
 
-  private static void load(PrePopulatedValidationSupport support, IParser jsonParser,
-      String resource) {
+  private static void load(
+      PrePopulatedValidationSupport support, IParser jsonParser, String resource) {
 
-    try (InputStream input = BunsenTestStu3ProfileProvider.class.getClassLoader()
-        .getResourceAsStream(resource)) {
+    try (InputStream input =
+        BunsenTestStu3ProfileProvider.class.getClassLoader().getResourceAsStream(resource)) {
 
-      StructureDefinition definition = (StructureDefinition) jsonParser
-          .parseResource(new InputStreamReader(input));
+      StructureDefinition definition =
+          (StructureDefinition) jsonParser.parseResource(new InputStreamReader(input));
 
       support.addStructureDefinition(definition);
 
@@ -35,24 +33,31 @@ public class BunsenTestStu3ProfileProvider implements ProfileProvider {
     }
   }
 
-  private static void addBunsenTestStu3ProfileDefinitions(PrePopulatedValidationSupport support,
-      FhirContext context) {
+  private static void addBunsenTestStu3ProfileDefinitions(
+      PrePopulatedValidationSupport support, FhirContext context) {
 
     IParser parser = context.newJsonParser();
 
     load(support, parser, "definitions/StructureDefinition-bunsen-test-profile-booleanfield.json");
     load(support, parser, "definitions/StructureDefinition-bunsen-test-profile-integerfield.json");
     load(support, parser, "definitions/StructureDefinition-bunsen-test-profile-Patient.json");
-    load(support, parser,
+    load(
+        support,
+        parser,
         "definitions/StructureDefinition-bunsen-test-profile-integerArrayField.json");
-    load(support, parser,
+    load(
+        support,
+        parser,
         "definitions/StructureDefinition-bunsen-test-profile-nested-extension.json");
-    load(support, parser,
+    load(
+        support,
+        parser,
         "definitions/StructureDefinition-bunsen-test-profile-codeableconcept-ext.json");
-    load(support, parser,
+    load(
+        support,
+        parser,
         "definitions/StructureDefinition-bunsen-test-codeableConcept-modifierExt.json");
-    load(support, parser,
-        "definitions/StructureDefinition-bunsen-test-string-modifierExt.json");
+    load(support, parser, "definitions/StructureDefinition-bunsen-test-string-modifierExt.json");
   }
 
   @Override
@@ -72,7 +77,6 @@ public class BunsenTestStu3ProfileProvider implements ProfileProvider {
     for (StructureDefinition definition : defaultDefinitions) {
 
       support.addStructureDefinition(definition);
-
     }
 
     addBunsenTestStu3ProfileDefinitions(support, context);

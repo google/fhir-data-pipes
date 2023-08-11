@@ -298,7 +298,7 @@ common_params="\
   --sinkUserName=${SINK_USERNAME} \
   --sinkPassword=${SINK_PASSWORD}
 "
-streaming_command="java -cp ${STREAMING_JAR} org.openmrs.analytics.Runner \
+streaming_command="java -cp ${STREAMING_JAR} com.google.fhir.analytics.Runner \
   ${common_params} --secondsToFlushParquetFiles=${FLUSH_STREAMING}"
 
 echo "About to run the streaming pipeline first:"
@@ -327,7 +327,7 @@ echo "The streaming pipeline started at ${start_time}"
 
 if [[ -n ${ENABLE_BATCH} ]]; then
   # TODO: Add --resourceList to script after improving its interaction  with the --activePeriod.
-  batch_command="java -cp ${BATCH_JAR} org.openmrs.analytics.FhirEtl ${common_params} \
+  batch_command="java -cp ${BATCH_JAR} com.google.fhir.analytics.FhirEtl ${common_params} \
     --secondsToFlushParquetFiles=${FLUSH_BATCH} --activePeriod=${PERIOD_START}_${start_time} \
     --jdbcModeEnabled --resourceList=Encounter,Observation"
 

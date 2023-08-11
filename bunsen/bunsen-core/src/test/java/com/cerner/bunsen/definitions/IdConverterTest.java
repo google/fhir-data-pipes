@@ -33,8 +33,5 @@ public class IdConverterTest {
 
   // In real scenarios this would be the specific type to/from which the HAPI conversion happens,
   // e.g., an Avro Schema when the conversion is to/from Avro records.
-  private static class ArbitraryDataType {
-
-  }
-
+  private static class ArbitraryDataType {}
 }

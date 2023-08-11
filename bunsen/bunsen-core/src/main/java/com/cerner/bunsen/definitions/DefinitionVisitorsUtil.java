@@ -66,16 +66,15 @@ public class DefinitionVisitorsUtil {
   }
 
   /**
-   * This is to extract the full path of an element based on the element traversal stack.
-   * The reason for using the full path from stack is to differentiate between same types at
-   * different recursion levels, e.g., when a child is dropped because of recursion max-depth
-   * while in a different traversal (for the same type) that child is present. Note in both those
-   * cases the element name and path would be the same hence we need to rely on the full traversal
-   * stack. As an example consider these two fields:
-   * QuestionnaireResponse.item.answer.item
-   * QuestionnaireResponse.item.answer.item.answer.item
-   * Both of these are `item` with "element path" being `QuestionnaireResponse.item` but the
-   * `answer` field might have been dropped in the second one because of recursion limits.
+   * This is to extract the full path of an element based on the element traversal stack. The reason
+   * for using the full path from stack is to differentiate between same types at different
+   * recursion levels, e.g., when a child is dropped because of recursion max-depth while in a
+   * different traversal (for the same type) that child is present. Note in both those cases the
+   * element name and path would be the same hence we need to rely on the full traversal stack. As
+   * an example consider these two fields: QuestionnaireResponse.item.answer.item
+   * QuestionnaireResponse.item.answer.item.answer.item Both of these are `item` with "element path"
+   * being `QuestionnaireResponse.item` but the `answer` field might have been dropped in the second
+   * one because of recursion limits.
    *
    * @param elemName the name of the target element
    * @param stack the current traversal stack leading to `elemName`
@@ -93,16 +92,11 @@ public class DefinitionVisitorsUtil {
     return fullPath.stream().collect(Collectors.joining("."));
   }
 
-  /**
-   * Creates a canonical element name from the element path.
-   */
+  /** Creates a canonical element name from the element path. */
   public static String elementName(String elementPath) {
 
     String suffix = elementPath.substring(elementPath.lastIndexOf('.') + 1);
 
-    return suffix.endsWith("[x]")
-        ? suffix.substring(0, suffix.length() - 3)
-        : suffix;
+    return suffix.endsWith("[x]") ? suffix.substring(0, suffix.length() - 3) : suffix;
   }
-
 }
