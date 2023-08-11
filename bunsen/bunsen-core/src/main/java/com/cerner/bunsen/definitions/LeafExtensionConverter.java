@@ -21,7 +21,8 @@ public class LeafExtensionConverter<T> extends HapiConverter<T> {
 
     private final BaseRuntimeElementCompositeDefinition elementDefinition;
 
-    LeafExensionFieldSetter(BaseRuntimeElementCompositeDefinition elementDefinition,
+    LeafExensionFieldSetter(
+        BaseRuntimeElementCompositeDefinition elementDefinition,
         HapiObjectConverter valuetoHapiConverter) {
 
       this.elementDefinition = elementDefinition;
@@ -29,9 +30,8 @@ public class LeafExtensionConverter<T> extends HapiConverter<T> {
     }
 
     @Override
-    public void setField(IBase parentObject,
-        BaseRuntimeChildDefinition fieldToSet,
-        Object sparkObject) {
+    public void setField(
+        IBase parentObject, BaseRuntimeChildDefinition fieldToSet, Object sparkObject) {
 
       IBase hapiObject = valuetoHapiConverter.toHapi(sparkObject);
 
@@ -60,7 +60,6 @@ public class LeafExtensionConverter<T> extends HapiConverter<T> {
       return extension;
     }
   }
-
 
   private final String extensionUrl;
 
@@ -97,8 +96,8 @@ public class LeafExtensionConverter<T> extends HapiConverter<T> {
 
   private BaseRuntimeElementDefinition fetchElementDefinitionForField(
       String valueField, RuntimeCompositeDatatypeDefinition definition) {
-    BaseRuntimeElementDefinition valueDefinition = definition.getChildByName(valueField)
-        .getChildByName(valueField);
+    BaseRuntimeElementDefinition valueDefinition =
+        definition.getChildByName(valueField).getChildByName(valueField);
     return valueDefinition;
   }
 

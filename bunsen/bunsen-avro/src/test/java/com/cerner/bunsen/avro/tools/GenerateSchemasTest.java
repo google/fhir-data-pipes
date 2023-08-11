@@ -11,6 +11,7 @@ import java.util.StringJoiner;
 import org.junit.Assert;
 import org.junit.Test;
 
+// TODO duplicate these tests for R4 as well.
 public class GenerateSchemasTest {
 
   private static final String BASE_TEST_URL = "http://test.org/test_resource";
@@ -24,12 +25,15 @@ public class GenerateSchemasTest {
 
     Path outputFile = generatedCodePath.resolve("out.asvc");
 
-    int result = GenerateSchemas.main(new String[]
-        {outputFile.toString(),
-            TestData.US_CORE_PATIENT,
-            TestData.US_CORE_CONDITION,
-            TestData.US_CORE_MEDICATION,
-            TestData.US_CORE_MEDICATION_REQUEST});
+    int result =
+        GenerateSchemas.main(
+            new String[] {
+              outputFile.toString(),
+              TestData.US_CORE_PATIENT,
+              TestData.US_CORE_CONDITION,
+              TestData.US_CORE_MEDICATION,
+              TestData.US_CORE_MEDICATION_REQUEST
+            });
 
     Assert.assertEquals(0, result);
 
@@ -44,15 +48,15 @@ public class GenerateSchemasTest {
   @Test
   public void testGenerateContainedUrlsWithStringWithoutSemicolonReturnsEmptyList() {
     String testResource = BASE_TEST_URL;
-    Assert.assertEquals(Collections.emptyList(), 
-        GenerateSchemas.generateContainedUrls(testResource));
+    Assert.assertEquals(
+        Collections.emptyList(), GenerateSchemas.generateContainedUrls(testResource));
   }
 
   @Test
   public void testGenerateContainedUrlsWithStringWithOneContainedResource() {
-    String testResourceWithContained = 
+    String testResourceWithContained =
         BASE_TEST_URL + GenerateSchemas.DELIMITER + "http://test.org/test_contained";
-    List<String> testContainedList = 
+    List<String> testContainedList =
         GenerateSchemas.generateContainedUrls(testResourceWithContained);
 
     Assert.assertEquals(1, testContainedList.size());
@@ -71,8 +75,7 @@ public class GenerateSchemasTest {
       joiner.add(curr);
     }
 
-    List<String> testContainedList =
-        GenerateSchemas.generateContainedUrls(joiner.toString());
+    List<String> testContainedList = GenerateSchemas.generateContainedUrls(joiner.toString());
 
     Assert.assertEquals(Arrays.asList(originalList), testContainedList);
   }
