@@ -44,8 +44,8 @@ public class R4AvroConverterTest {
 
   private static Observation testObservationDecoded;
 
-  private static final Observation testObservationNullStatus = TestData.newObservation()
-      .setStatus(Observation.ObservationStatus.NULL);
+  private static final Observation testObservationNullStatus =
+      TestData.newObservation().setStatus(Observation.ObservationStatus.NULL);
 
   private static Record avroObservationNullStatus;
 
@@ -72,10 +72,11 @@ public class R4AvroConverterTest {
   private static final Provenance testProvenance = TestData.newProvenance();
 
   private static final MedicationRequest testMedicationRequest =
-      (MedicationRequest) TestData.newMedicationRequest()
-          .addContained(testMedicationOne)
-          .addContained(testProvenance)
-          .addContained(testMedicationTwo);
+      (MedicationRequest)
+          TestData.newMedicationRequest()
+              .addContained(testMedicationOne)
+              .addContained(testProvenance)
+              .addContained(testMedicationTwo);
 
   private static Record avroMedicationRequest;
 
@@ -89,55 +90,56 @@ public class R4AvroConverterTest {
 
   private static Patient testBunsenTestProfilePatientDecoded;
 
-  /**
-   * Initialize test data.
-   */
+  /** Initialize test data. */
   @BeforeClass
   public static void convertTestData() throws IOException {
 
-    AvroConverter observationConverter = AvroConverter.forResource(FhirContexts.forR4(),
-        "Observation");
+    AvroConverter observationConverter =
+        AvroConverter.forResource(FhirContexts.forR4(), "Observation");
 
     avroObservation = (Record) observationConverter.resourceToAvro(testObservation);
 
     testObservationDecoded = (Observation) observationConverter.avroToResource(avroObservation);
 
-    avroObservationNullStatus = (Record) observationConverter
-        .resourceToAvro(testObservationNullStatus);
+    avroObservationNullStatus =
+        (Record) observationConverter.resourceToAvro(testObservationNullStatus);
 
-    testObservationDecodedNullStatus = (Observation) observationConverter
-        .avroToResource(avroObservationNullStatus);
+    testObservationDecodedNullStatus =
+        (Observation) observationConverter.avroToResource(avroObservationNullStatus);
 
-    AvroConverter patientConverter = AvroConverter.forResource(FhirContexts.forR4(),
-        TestData.US_CORE_PATIENT);
+    AvroConverter patientConverter =
+        AvroConverter.forResource(FhirContexts.forR4(), TestData.US_CORE_PATIENT);
 
     avroPatient = (Record) patientConverter.resourceToAvro(testPatient);
 
     testPatientDecoded = (Patient) patientConverter.avroToResource(avroPatient);
 
-    AvroConverter conditionConverter = AvroConverter.forResource(FhirContexts.forR4(),
-        "Condition" /* TODO TestData.US_CORE_CONDITION */);
+    AvroConverter conditionConverter =
+        AvroConverter.forResource(
+            FhirContexts.forR4(), "Condition" /* TODO TestData.US_CORE_CONDITION */);
 
     avroCondition = (Record) conditionConverter.resourceToAvro(testCondition);
 
     testConditionDecoded = (Condition) conditionConverter.avroToResource(avroCondition);
 
-    AvroConverter medicationConverter = AvroConverter.forResource(FhirContexts.forR4(),
-        TestData.US_CORE_MEDICATION);
+    AvroConverter medicationConverter =
+        AvroConverter.forResource(FhirContexts.forR4(), TestData.US_CORE_MEDICATION);
 
     Record avroMedication = (Record) medicationConverter.resourceToAvro(testMedicationOne);
 
     testMedicationDecoded = (Medication) medicationConverter.avroToResource(avroMedication);
 
-    AvroConverter medicationRequestConverter = AvroConverter.forResource(FhirContexts.forR4(),
-        TestData.US_CORE_MEDICATION_REQUEST,
-        Arrays.asList(TestData.US_CORE_MEDICATION, TestData.PROVENANCE));
+    AvroConverter medicationRequestConverter =
+        AvroConverter.forResource(
+            FhirContexts.forR4(),
+            TestData.US_CORE_MEDICATION_REQUEST,
+            Arrays.asList(TestData.US_CORE_MEDICATION, TestData.PROVENANCE));
 
-    avroMedicationRequest = (Record) medicationRequestConverter
-        .resourceToAvro(testMedicationRequest);
+    avroMedicationRequest =
+        (Record) medicationRequestConverter.resourceToAvro(testMedicationRequest);
 
-    testMedicationRequestDecoded = (MedicationRequest) medicationRequestConverter
-        .avroToResource(avroMedicationRequest);
+    testMedicationRequestDecoded =
+        (MedicationRequest) medicationRequestConverter.avroToResource(avroMedicationRequest);
 
     // TODO add test profile for R4: https://github.com/google/fhir-data-pipes/issues/558
     // AvroConverter converterBunsenTestProfilePatient = AvroConverter
@@ -156,36 +158,49 @@ public class R4AvroConverterTest {
     BigDecimal originalDecimal = ((Quantity) testObservation.getValue()).getValue();
 
     // Decode the Avro decimal to ensure the expected value is there.
-    BigDecimal avroDecimal  = (BigDecimal) ((Record)
-        ((Record) avroObservation.get("value"))
-        .get("quantity"))
-        .get("value");
+    BigDecimal avroDecimal =
+        (BigDecimal)
+            ((Record) ((Record) avroObservation.get("value")).get("quantity")).get("value");
 
     Assert.assertEquals(originalDecimal.compareTo(avroDecimal), 0);
 
-    Assert.assertEquals(originalDecimal.compareTo(
-        ((Quantity) testObservationDecoded
-            .getValue())
-            .getValue()), 0);
+    Assert.assertEquals(
+        originalDecimal.compareTo(((Quantity) testObservationDecoded.getValue()).getValue()), 0);
   }
 
   @Test
   public void testPrimitiveMultiplicity() {
 
-    Assert.assertTrue(testPatient.getName().get(0).getFamily()
-        .equalsIgnoreCase(testPatientDecoded.getName().get(0).getFamily()));
-    Assert.assertTrue(testPatient.getName().get(0).getGiven().get(0).getValueAsString()
-        .equals(testPatientDecoded.getName().get(0).getGiven().get(0).getValueAsString()));
-    Assert.assertTrue(testPatient.getName().get(0).getGiven().get(1).getValueAsString()
-        .equals(testPatientDecoded.getName().get(0).getGiven().get(1).getValueAsString()));
+    Assert.assertTrue(
+        testPatient
+            .getName()
+            .get(0)
+            .getFamily()
+            .equalsIgnoreCase(testPatientDecoded.getName().get(0).getFamily()));
+    Assert.assertTrue(
+        testPatient
+            .getName()
+            .get(0)
+            .getGiven()
+            .get(0)
+            .getValueAsString()
+            .equals(testPatientDecoded.getName().get(0).getGiven().get(0).getValueAsString()));
+    Assert.assertTrue(
+        testPatient
+            .getName()
+            .get(0)
+            .getGiven()
+            .get(1)
+            .getValueAsString()
+            .equals(testPatientDecoded.getName().get(0).getGiven().get(1).getValueAsString()));
   }
 
   @Test
   public void testChoice() throws FHIRException {
 
     // Ensure that a decoded choice type matches the original
-    Assert.assertTrue(testPatient.getMultipleBirth()
-        .equalsDeep(testPatientDecoded.getMultipleBirth()));
+    Assert.assertTrue(
+        testPatient.getMultipleBirth().equalsDeep(testPatientDecoded.getMultipleBirth()));
   }
 
   @Test
@@ -205,8 +220,10 @@ public class R4AvroConverterTest {
   @Test
   public void testIdenticalChoicesTypes() {
 
-    Assert.assertTrue(testMedicationOne.getIngredientFirstRep()
-        .equalsDeep(testMedicationDecoded.getIngredientFirstRep()));
+    Assert.assertTrue(
+        testMedicationOne
+            .getIngredientFirstRep()
+            .equalsDeep(testMedicationDecoded.getIngredientFirstRep()));
 
     // TODO
     // Assert.assertTrue(testMedicationOne.getPackage().getContentFirstRep()
@@ -219,21 +236,19 @@ public class R4AvroConverterTest {
 
     Integer expectedMultipleBirth = ((IntegerType) testPatient.getMultipleBirth()).getValue();
 
-    Assert.assertEquals(expectedMultipleBirth,
-        ((IntegerType) testPatientDecoded.getMultipleBirth()).getValue());
+    Assert.assertEquals(
+        expectedMultipleBirth, ((IntegerType) testPatientDecoded.getMultipleBirth()).getValue());
 
-    Assert.assertEquals(expectedMultipleBirth,
-        ((Record) avroPatient.get("multipleBirth")).get("integer"));
+    Assert.assertEquals(
+        expectedMultipleBirth, ((Record) avroPatient.get("multipleBirth")).get("integer"));
   }
 
   @Test
   public void testBoundCode() {
 
-    Assert.assertEquals(testObservation.getStatus().toCode(),
-        avroObservation.get("status"));
+    Assert.assertEquals(testObservation.getStatus().toCode(), avroObservation.get("status"));
 
-    Assert.assertEquals(testObservation.getStatus(),
-        testObservationDecoded.getStatus());
+    Assert.assertEquals(testObservation.getStatus(), testObservationDecoded.getStatus());
   }
 
   @Test
@@ -250,29 +265,21 @@ public class R4AvroConverterTest {
     Coding testCoding = testCondition.getSeverity().getCodingFirstRep();
     Coding decodedCoding = testConditionDecoded.getSeverity().getCodingFirstRep();
 
-    List<Record> severityCodings = (List) ((Record)  avroCondition.get("severity")).get("coding");
+    List<Record> severityCodings = (List) ((Record) avroCondition.get("severity")).get("coding");
 
     Record severityCoding = severityCodings.get(0);
 
-    Assert.assertEquals(testCoding.getCode(),
-        severityCoding.get("code"));
-    Assert.assertEquals(testCoding.getCode(),
-        decodedCoding.getCode());
+    Assert.assertEquals(testCoding.getCode(), severityCoding.get("code"));
+    Assert.assertEquals(testCoding.getCode(), decodedCoding.getCode());
 
-    Assert.assertEquals(testCoding.getSystem(),
-        severityCoding.get("system"));
-    Assert.assertEquals(testCoding.getSystem(),
-        decodedCoding.getSystem());
+    Assert.assertEquals(testCoding.getSystem(), severityCoding.get("system"));
+    Assert.assertEquals(testCoding.getSystem(), decodedCoding.getSystem());
 
-    Assert.assertEquals(testCoding.getUserSelected(),
-        severityCoding.get("userSelected"));
-    Assert.assertEquals(testCoding.getUserSelected(),
-        decodedCoding.getUserSelected());
+    Assert.assertEquals(testCoding.getUserSelected(), severityCoding.get("userSelected"));
+    Assert.assertEquals(testCoding.getUserSelected(), decodedCoding.getUserSelected());
 
-    Assert.assertEquals(testCoding.getDisplay(),
-        severityCoding.get("display"));
-    Assert.assertEquals(testCoding.getDisplay(),
-        decodedCoding.getDisplay());
+    Assert.assertEquals(testCoding.getDisplay(), severityCoding.get("display"));
+    Assert.assertEquals(testCoding.getDisplay(), decodedCoding.getDisplay());
   }
 
   @Test
@@ -280,12 +287,12 @@ public class R4AvroConverterTest {
 
     Record subject = (Record) avroCondition.get("subject");
 
-    Assert.assertEquals(testCondition.getSubject().getReference(),
-        subject.get("reference"));
+    Assert.assertEquals(testCondition.getSubject().getReference(), subject.get("reference"));
 
-    Assert.assertEquals("12345",  subject.get("patientId"));
+    Assert.assertEquals("12345", subject.get("patientId"));
 
-    Assert.assertEquals(testCondition.getSubject().getReference(),
+    Assert.assertEquals(
+        testCondition.getSubject().getReference(),
         testConditionDecoded.getSubject().getReference());
   }
 
@@ -310,86 +317,66 @@ public class R4AvroConverterTest {
     Assert.assertNull(organizationId);
 
     // The field with the expected prefix should match the original data.
-    Assert.assertEquals(testPatient.getGeneralPractitionerFirstRep().getReference(),
+    Assert.assertEquals(
+        testPatient.getGeneralPractitionerFirstRep().getReference(),
         "Practitioner/" + practitionerId);
 
-    Assert.assertEquals(testCondition.getSubject().getReference(),
+    Assert.assertEquals(
+        testCondition.getSubject().getReference(),
         testConditionDecoded.getSubject().getReference());
   }
 
   @Test
   public void testSimpleExtension() {
 
-    String testBirthSex = testPatient
-        .getExtensionsByUrl(TestData.US_CORE_BIRTHSEX)
-        .get(0)
-        .getValueAsPrimitive()
-        .getValueAsString();
+    String testBirthSex =
+        testPatient
+            .getExtensionsByUrl(TestData.US_CORE_BIRTHSEX)
+            .get(0)
+            .getValueAsPrimitive()
+            .getValueAsString();
 
-    String decodedBirthSex = testPatientDecoded
-        .getExtensionsByUrl(TestData.US_CORE_BIRTHSEX)
-        .get(0)
-        .getValueAsPrimitive()
-        .getValueAsString();
+    String decodedBirthSex =
+        testPatientDecoded
+            .getExtensionsByUrl(TestData.US_CORE_BIRTHSEX)
+            .get(0)
+            .getValueAsPrimitive()
+            .getValueAsString();
 
     Assert.assertEquals(testBirthSex, decodedBirthSex);
 
-    Assert.assertEquals(testBirthSex,
-        ((Record) avroPatient).get("birthsex"));
+    Assert.assertEquals(testBirthSex, ((Record) avroPatient).get("birthsex"));
   }
 
   @Test
   public void testNestedExtension() {
 
-    Extension testEthnicity = testPatient
-        .getExtensionsByUrl(TestData.US_CORE_ETHNICITY)
-        .get(0);
+    Extension testEthnicity = testPatient.getExtensionsByUrl(TestData.US_CORE_ETHNICITY).get(0);
 
-    Coding testOmbCategory = (Coding) testEthnicity
-        .getExtensionsByUrl("ombCategory")
-        .get(0)
-        .getValue();
+    Coding testOmbCategory =
+        (Coding) testEthnicity.getExtensionsByUrl("ombCategory").get(0).getValue();
 
-    Coding testDetailed1 = (Coding) testEthnicity
-        .getExtensionsByUrl("detailed")
-        .get(0)
-        .getValue();
+    Coding testDetailed1 = (Coding) testEthnicity.getExtensionsByUrl("detailed").get(0).getValue();
 
-    Coding testDetailed2 = (Coding) testEthnicity
-        .getExtensionsByUrl("detailed")
-        .get(1)
-        .getValue();
+    Coding testDetailed2 = (Coding) testEthnicity.getExtensionsByUrl("detailed").get(1).getValue();
 
-    String testText = testEthnicity
-        .getExtensionsByUrl("text")
-        .get(0)
-        .getValueAsPrimitive()
-        .getValueAsString();
+    String testText =
+        testEthnicity.getExtensionsByUrl("text").get(0).getValueAsPrimitive().getValueAsString();
 
-    Extension decodedEthnicity = testPatientDecoded
-        .getExtensionsByUrl(TestData.US_CORE_ETHNICITY)
-        .get(0);
+    Extension decodedEthnicity =
+        testPatientDecoded.getExtensionsByUrl(TestData.US_CORE_ETHNICITY).get(0);
 
-    Coding decodedOmbCategory = (Coding) decodedEthnicity
-        .getExtensionsByUrl("ombCategory")
-        .get(0)
-        .getValue();
+    Coding decodedOmbCategory =
+        (Coding) decodedEthnicity.getExtensionsByUrl("ombCategory").get(0).getValue();
 
-    Coding decodedDetailed1 = (Coding) decodedEthnicity
-        .getExtensionsByUrl("detailed")
-        .get(0)
-        .getValue();
+    Coding decodedDetailed1 =
+        (Coding) decodedEthnicity.getExtensionsByUrl("detailed").get(0).getValue();
 
-    Coding decodedDetailed2 = (Coding) decodedEthnicity
-        .getExtensionsByUrl("detailed")
-        .get(1)
-        .getValue();
+    Coding decodedDetailed2 =
+        (Coding) decodedEthnicity.getExtensionsByUrl("detailed").get(1).getValue();
 
-    String decodedText = decodedEthnicity
-        .getExtensionsByUrl("text")
-        .get(0)
-        .getValueAsPrimitive()
-        .getValueAsString();
+    String decodedText =
+        decodedEthnicity.getExtensionsByUrl("text").get(0).getValueAsPrimitive().getValueAsString();
 
     Assert.assertTrue(testOmbCategory.equalsDeep(decodedOmbCategory));
     Assert.assertTrue(testDetailed1.equalsDeep(decodedDetailed1));
@@ -398,9 +385,9 @@ public class R4AvroConverterTest {
 
     Record ethnicityRecord = (Record) avroPatient.get("ethnicity");
 
-    Record ombCategoryRecord =  (Record) ethnicityRecord.get("ombCategory");
+    Record ombCategoryRecord = (Record) ethnicityRecord.get("ombCategory");
 
-    List<Record> detailedRecord =  (List<Record>) ethnicityRecord.get("detailed");
+    List<Record> detailedRecord = (List<Record>) ethnicityRecord.get("detailed");
 
     Assert.assertEquals(testOmbCategory.getSystem(), ombCategoryRecord.get("system"));
     Assert.assertEquals(testOmbCategory.getCode(), ombCategoryRecord.get("code"));
@@ -422,25 +409,22 @@ public class R4AvroConverterTest {
 
     Medication testMedicationOne = (Medication) testMedicationRequest.getContained().get(0);
     String testMedicationOneId = testMedicationOne.getId();
-    CodeableConcept testMedicationIngredientItem = testMedicationOne.getIngredientFirstRep()
-        .getItemCodeableConcept();
+    CodeableConcept testMedicationIngredientItem =
+        testMedicationOne.getIngredientFirstRep().getItemCodeableConcept();
 
-    Medication decodedMedicationOne = (Medication) testMedicationRequestDecoded.getContained()
-        .get(0);
+    Medication decodedMedicationOne =
+        (Medication) testMedicationRequestDecoded.getContained().get(0);
     String decodedMedicationOneId = decodedMedicationOne.getId();
-    CodeableConcept decodedMedicationOneIngredientItem = decodedMedicationOne
-        .getIngredientFirstRep()
-        .getItemCodeableConcept();
+    CodeableConcept decodedMedicationOneIngredientItem =
+        decodedMedicationOne.getIngredientFirstRep().getItemCodeableConcept();
 
     Assert.assertEquals(testMedicationOneId, decodedMedicationOneId);
-    Assert.assertTrue(decodedMedicationOneIngredientItem.equalsDeep(
-        testMedicationIngredientItem));
+    Assert.assertTrue(decodedMedicationOneIngredientItem.equalsDeep(testMedicationIngredientItem));
 
     Provenance testProvenance = (Provenance) testMedicationRequest.getContained().get(1);
     String testProvenanceId = testProvenance.getId();
 
-    Provenance decodedProvenance =
-        (Provenance) testMedicationRequestDecoded.getContained().get(1);
+    Provenance decodedProvenance = (Provenance) testMedicationRequestDecoded.getContained().get(1);
     String decodedProvenanceId = decodedProvenance.getId();
 
     Assert.assertEquals(testProvenanceId, decodedProvenanceId);
@@ -448,8 +432,8 @@ public class R4AvroConverterTest {
     Medication testMedicationTwo = (Medication) testMedicationRequest.getContained().get(2);
     String testMedicationTwoId = testMedicationTwo.getId();
 
-    Medication decodedMedicationTwo = (Medication) testMedicationRequestDecoded.getContained()
-        .get(2);
+    Medication decodedMedicationTwo =
+        (Medication) testMedicationRequestDecoded.getContained().get(2);
     String decodedMedicationTwoId = decodedMedicationTwo.getId();
 
     Assert.assertEquals(testMedicationTwoId, decodedMedicationTwoId);
@@ -458,15 +442,19 @@ public class R4AvroConverterTest {
   @Test
   public void testCompile() throws IOException {
 
-    List<Schema> schemas = AvroConverter.generateSchemas(FhirContexts.forR4(),
-        ImmutableMap.of(TestData.US_CORE_PATIENT, Collections.emptyList(),
-            TestData.VALUE_SET, Collections.emptyList(),
-            TestData.US_CORE_MEDICATION_REQUEST, ImmutableList.of(TestData.US_CORE_MEDICATION)));
+    List<Schema> schemas =
+        AvroConverter.generateSchemas(
+            FhirContexts.forR4(),
+            ImmutableMap.of(
+                TestData.US_CORE_PATIENT,
+                Collections.emptyList(),
+                TestData.VALUE_SET,
+                Collections.emptyList(),
+                TestData.US_CORE_MEDICATION_REQUEST,
+                ImmutableList.of(TestData.US_CORE_MEDICATION)));
 
     // Wrap the schemas in a protocol to simplify the invocation of the compiler.
-    Protocol protocol = new Protocol("fhir-test",
-        "FHIR Resources for Testing",
-        null);
+    Protocol protocol = new Protocol("fhir-test", "FHIR Resources for Testing", null);
 
     protocol.setTypes(schemas);
 
@@ -479,12 +467,11 @@ public class R4AvroConverterTest {
     compiler.compileToDestination(null, generatedCodePath.toFile());
 
     // Check that java files were created as expected.
-    Set<String> javaFiles = Files.find(generatedCodePath,
-        10,
-        (path, basicFileAttributes) -> true)
-        .map(path -> generatedCodePath.relativize(path))
-        .map(Object::toString)
-        .collect(Collectors.toSet());
+    Set<String> javaFiles =
+        Files.find(generatedCodePath, 10, (path, basicFileAttributes) -> true)
+            .map(path -> generatedCodePath.relativize(path))
+            .map(Object::toString)
+            .collect(Collectors.toSet());
 
     // Ensure common types were generated
     Assert.assertTrue(javaFiles.contains("com/cerner/bunsen/r4/avro/Period.java"));
@@ -501,8 +488,8 @@ public class R4AvroConverterTest {
     Assert.assertTrue(javaFiles.contains("com/cerner/bunsen/r4/avro/ChoiceBooleanInteger.java"));
 
     // Contained types created.
-    Assert.assertTrue(javaFiles.contains(
-        "com/cerner/bunsen/r4/avro/us/core/MedicationRequestContained.java"));
+    Assert.assertTrue(
+        javaFiles.contains("com/cerner/bunsen/r4/avro/us/core/MedicationRequestContained.java"));
   }
 
   // TODO add test profile for R4: https://github.com/google/fhir-data-pipes/issues/558
@@ -741,15 +728,15 @@ public class R4AvroConverterTest {
   @Test
   public void testMetaElement() {
 
-    String id =  testPatient.getId();
+    String id = testPatient.getId();
     Meta meta = testPatient.getMeta();
 
     Assert.assertEquals(id, testPatientDecoded.getId());
 
     Assert.assertEquals(meta.getTag().size(), testPatientDecoded.getMeta().getTag().size());
-    Assert.assertEquals(meta.getTag().get(0).getCode(),
-        testPatientDecoded.getMeta().getTag().get(0).getCode());
-    Assert.assertEquals(meta.getTag().get(0).getSystem(),
-        testPatientDecoded.getMeta().getTag().get(0).getSystem());
+    Assert.assertEquals(
+        meta.getTag().get(0).getCode(), testPatientDecoded.getMeta().getTag().get(0).getCode());
+    Assert.assertEquals(
+        meta.getTag().get(0).getSystem(), testPatientDecoded.getMeta().getTag().get(0).getSystem());
   }
 }
