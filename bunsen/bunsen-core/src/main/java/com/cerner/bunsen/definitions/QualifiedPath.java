@@ -1,9 +1,6 @@
 package com.cerner.bunsen.definitions;
 
-/**
- * Simple immutable container for a path to an element qualified by the
- * structure type.
- */
+/** Simple immutable container for a path to an element qualified by the structure type. */
 public class QualifiedPath {
 
   private final String parentTypeUrl;
@@ -11,8 +8,7 @@ public class QualifiedPath {
   private final String elementPath;
 
   /**
-   * Constructs a qualified path for the given element within the given
-   * parent type.
+   * Constructs a qualified path for the given element within the given parent type.
    *
    * @param parentTypeUrl the parent type containing the element.
    * @param elementPath the path of the element itself.
@@ -49,9 +45,7 @@ public class QualifiedPath {
   @Override
   public int hashCode() {
 
-    return 37
-        * parentTypeUrl.hashCode()
-        * elementPath.hashCode();
+    return 37 * parentTypeUrl.hashCode() * elementPath.hashCode();
   }
 
   @Override
@@ -66,5 +60,4 @@ public class QualifiedPath {
     return this.parentTypeUrl.equals(that.parentTypeUrl)
         && this.elementPath.equals(that.elementPath);
   }
-
 }

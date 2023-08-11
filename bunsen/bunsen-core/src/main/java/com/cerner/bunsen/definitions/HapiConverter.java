@@ -5,14 +5,12 @@ import ca.uhn.fhir.context.BaseRuntimeElementDefinition;
 import org.hl7.fhir.instance.model.api.IBase;
 
 /**
- * Base class for converting HAPI resources to an alternative object model,
- * such as Spark rows or Avro objects.
+ * Base class for converting HAPI resources to an alternative object model, such as Spark rows or
+ * Avro objects.
  */
 public abstract class HapiConverter<T> {
 
-  /**
-   * Supporting interface to convert and set a field on a HAPI object.
-   */
+  /** Supporting interface to convert and set a field on a HAPI object. */
   public interface HapiFieldSetter {
 
     /**
@@ -22,18 +20,15 @@ public abstract class HapiConverter<T> {
      * @param fieldToSet the runtime definition of the field to set.
      * @param value the value to be converted and set on the FHIR object.
      */
-    void setField(IBase parentObject,
-        BaseRuntimeChildDefinition fieldToSet,
-        Object value);
+    void setField(IBase parentObject, BaseRuntimeChildDefinition fieldToSet, Object value);
   }
 
   /**
-   * Supporting interface to convert an object from a different data model
-   * to a HAPI object. This interface is separated because not all
-   * HAPI objects can be created with a simple function. In some cases
-   * additional context is needed, such as the HAPI parent object which defines
-   * the enumerated values in a given field. This is why this interface is
-   * separate from the {@link HapiFieldSetter} interface.
+   * Supporting interface to convert an object from a different data model to a HAPI object. This
+   * interface is separated because not all HAPI objects can be created with a simple function. In
+   * some cases additional context is needed, such as the HAPI parent object which defines the
+   * enumerated values in a given field. This is why this interface is separate from the {@link
+   * HapiFieldSetter} interface.
    */
   public interface HapiObjectConverter {
 
@@ -55,8 +50,7 @@ public abstract class HapiConverter<T> {
   }
 
   /**
-   * Converts a HAPI object or list of objects to the equivalent
-   * in the alternative data model.
+   * Converts a HAPI object or list of objects to the equivalent in the alternative data model.
    *
    * @param input a HAPI object.
    * @return the data model-specific equivalent.
@@ -80,8 +74,8 @@ public abstract class HapiConverter<T> {
   }
 
   /**
-   * The FHIR type of the element to be converted, or null
-   * if there is no FHIR type, such as within a FHIR backbone element.
+   * The FHIR type of the element to be converted, or null if there is no FHIR type, such as within
+   * a FHIR backbone element.
    *
    * @return FHIR type of the element to be converted.
    */
@@ -90,9 +84,9 @@ public abstract class HapiConverter<T> {
   }
 
   /**
-   * Returns a field setter to be used when converting an object of an
-   * alternative model to HAPI. Choice types may have multiple element
-   * definitions, but in the common case there will be only one.
+   * Returns a field setter to be used when converting an object of an alternative model to HAPI.
+   * Choice types may have multiple element definitions, but in the common case there will be only
+   * one.
    *
    * @param elementDefinitions the set of element definitions that the element can be.
    * @return the field setter.

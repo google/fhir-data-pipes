@@ -20,7 +20,7 @@
   <modelVersion>4.0.0</modelVersion>
 
   <parent>
-    <groupId>org.openmrs.analytics</groupId>
+    <groupId>com.google.fhir.analytics</groupId>
     <artifactId>pipelines</artifactId>
     <version>0.1.0-SNAPSHOT</version>
   </parent>
@@ -124,7 +124,7 @@
             <manifest>
               <addClasspath>true</addClasspath>
               <classpathPrefix>lib/</classpathPrefix>
-              <mainClass>org.openmrs.analytics.Runner</mainClass>
+              <mainClass>com.google.fhir.analytics.Runner</mainClass>
             </manifest>
           </archive>
         </configuration>
@@ -165,7 +165,7 @@
         <groupId>org.codehaus.mojo</groupId>
         <artifactId>exec-maven-plugin</artifactId>
         <configuration>
-          <mainClass>org.openmrs.analytics.Runner</mainClass>
+          <mainClass>com.google.fhir.analytics.Runner</mainClass>
           <includePluginDependencies>false</includePluginDependencies>
         </configuration>
       </plugin>
