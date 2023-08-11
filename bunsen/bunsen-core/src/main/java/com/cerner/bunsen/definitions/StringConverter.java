@@ -21,13 +21,9 @@ public class StringConverter<T> extends PrimitiveConverter<T> {
     return primitive.getValueAsString();
   }
 
-
   @Override
   public T getDataType() {
 
     return dataType;
   }
-
 }
-
-

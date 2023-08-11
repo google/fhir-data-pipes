@@ -10,15 +10,13 @@ import org.hl7.fhir.instance.model.api.IBaseBundle;
 import org.hl7.fhir.instance.model.api.IBaseResource;
 
 /**
- * Helper functions to allow code to convert FHIR resources
- * independently of the FHIR version. Typically an implementation specific
- * to a FHIR version is provided at runtime.
+ * Helper functions to allow code to convert FHIR resources independently of the FHIR version.
+ * Typically an implementation specific to a FHIR version is provided at runtime.
  */
 public abstract class FhirConversionSupport implements Serializable {
 
   private static final String STU3_SUPPORT_CLASS =
       "com.cerner.bunsen.definitions.stu3.Stu3FhirConversionSupport";
-
 
   /**
    * Returns the type of a given FHIR object, such as "Condition" or "Observation".
@@ -29,9 +27,9 @@ public abstract class FhirConversionSupport implements Serializable {
   public abstract String fhirType(IBase base);
 
   /**
-   * Returns a map of the fields in a composite type to the corresponding values. Since
-   * FHIR fields may have multiple values a list is returned, and single-valued items
-   * will have a singleton list.
+   * Returns a map of the fields in a composite type to the corresponding values. Since FHIR fields
+   * may have multiple values a list is returned, and single-valued items will have a singleton
+   * list.
    *
    * @param composite a FHIR composite type
    * @return a map of field names to the values.
@@ -45,14 +43,11 @@ public abstract class FhirConversionSupport implements Serializable {
    * @param resourceType the resource type name, such as "Condition" or "Observation"
    * @return the resources of the specified type.
    */
-  public abstract java.util.List<IBaseResource> extractEntryFromBundle(IBaseBundle bundle,
-      String resourceType);
+  public abstract java.util.List<IBaseResource> extractEntryFromBundle(
+      IBaseBundle bundle, String resourceType);
 
-  /**
-   * Cache of FHIR contexts.
-   */
+  /** Cache of FHIR contexts. */
   private static final Map<FhirVersionEnum, FhirConversionSupport> FHIR_SUPPORT = new HashMap();
-
 
   private static FhirConversionSupport newInstance(FhirVersionEnum fhirVersion) {
 
@@ -66,7 +61,6 @@ public abstract class FhirConversionSupport implements Serializable {
       } catch (ClassNotFoundException exception) {
 
         throw new IllegalStateException(exception);
-
       }
 
     } else {
@@ -84,8 +78,8 @@ public abstract class FhirConversionSupport implements Serializable {
   }
 
   /**
-   * Returns the FHIR context for the given version. This is effectively a cache
-   * so consuming code does not need to recreate the context repeatedly.
+   * Returns the FHIR context for the given version. This is effectively a cache so consuming code
+   * does not need to recreate the context repeatedly.
    *
    * @param fhirVersion the version of FHIR to use
    * @return the FhirContext
@@ -93,7 +87,6 @@ public abstract class FhirConversionSupport implements Serializable {
   public static FhirConversionSupport supportFor(FhirVersionEnum fhirVersion) {
 
     synchronized (FHIR_SUPPORT) {
-
       FhirConversionSupport support = FHIR_SUPPORT.get(fhirVersion);
 
       if (support == null) {
