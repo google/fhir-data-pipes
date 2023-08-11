@@ -28,7 +28,7 @@
     <compile.source>11</compile.source>
 
     <hapi.fhir.version>6.4.4</hapi.fhir.version>
-    <avro.version>1.11.1</avro.version>
+    <avro.version>1.11.2</avro.version>
     <junit.version>4.13.2</junit.version>
     <hamcrest.version>2.2</hamcrest.version>
     <scm.url>http://github.com/cerner/bunsen/tree/master/</scm.url>
@@ -204,12 +204,12 @@
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-shade-plugin</artifactId>
-          <version>3.4.1</version>
+          <version>3.5.0</version>
         </plugin>
 
         <plugin>
           <artifactId>maven-release-plugin</artifactId>
-          <version>3.0.0</version>
+          <version>3.0.1</version>
           <configuration>
               <tagNameFormat>@{project.version}</tagNameFormat>
           </configuration>
@@ -302,7 +302,7 @@
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-surefire-plugin</artifactId>
-          <version>3.1.0</version>
+          <version>3.1.2</version>
         </plugin>
 
         <plugin>
