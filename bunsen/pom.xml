@@ -2,6 +2,12 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
   <modelVersion>4.0.0</modelVersion>
 
+  <parent>
+    <groupId>com.google.fhir.analytics</groupId>
+    <artifactId>root</artifactId>
+    <version>0.1.0-SNAPSHOT</version>
+  </parent>
+
   <groupId>com.cerner.bunsen</groupId>
   <artifactId>bunsen-parent</artifactId>
   <packaging>pom</packaging>
@@ -22,7 +28,7 @@
     <compile.source>11</compile.source>
 
     <hapi.fhir.version>6.4.4</hapi.fhir.version>
-    <avro.version>1.11.1</avro.version>
+    <avro.version>1.11.2</avro.version>
     <junit.version>4.13.2</junit.version>
     <hamcrest.version>2.2</hamcrest.version>
     <scm.url>http://github.com/cerner/bunsen/tree/master/</scm.url>
@@ -30,7 +36,7 @@
     <python.version>3.5.3</python.version>
     <maven-javadoc.plugin.version>3.5.0</maven-javadoc.plugin.version>
     <maven-project-info-reports.plugin.version>3.4.3</maven-project-info-reports.plugin.version>
-    <slf4j.version>1.7.36</slf4j.version>
+    <slf4j.version>2.0.7</slf4j.version>
     <logback.version>1.4.8</logback.version>
   </properties>
 
@@ -164,41 +170,8 @@
       </plugin>
 
       <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-checkstyle-plugin</artifactId>
-        <executions>
-          <execution>
-
-            <id>verify_checkstyleReport</id>
-            <phase>verify</phase>
-            <goals>
-              <goal>checkstyle</goal>
-            </goals>
-            <configuration>
-              <configLocation>google_checks.xml</configLocation>
-              <consoleOutput>false</consoleOutput>
-              <enableRulesSummary>true</enableRulesSummary>
-              <enableFilesSummary>true</enableFilesSummary>
-              <includeTestSourceDirectory>true</includeTestSourceDirectory>
-              <linkXRef>true</linkXRef>
-            </configuration>
-          </execution>
-          <execution>
-
-            <id>verify_checkstyleCheck</id>
-            <goals>
-              <goal>check</goal>
-            </goals>
-            <configuration>
-              <configLocation>google_checks.xml</configLocation>
-              <consoleOutput>true</consoleOutput>
-              <failOnViolation>true</failOnViolation>
-              <includeTestSourceDirectory>true</includeTestSourceDirectory>
-              <violationSeverity>warning</violationSeverity>
-              <maxAllowedViolations>0</maxAllowedViolations>
-            </configuration>
-          </execution>
-        </executions>
+        <groupId>com.diffplug.spotless</groupId>
+        <artifactId>spotless-maven-plugin</artifactId>
       </plugin>
 
     </plugins>
@@ -231,12 +204,12 @@
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-shade-plugin</artifactId>
-          <version>3.4.1</version>
+          <version>3.5.0</version>
         </plugin>
 
         <plugin>
           <artifactId>maven-release-plugin</artifactId>
-          <version>3.0.0</version>
+          <version>3.0.1</version>
           <configuration>
               <tagNameFormat>@{project.version}</tagNameFormat>
           </configuration>
@@ -326,35 +299,16 @@
           </executions>
         </plugin>
 
-        <plugin> <!-- Upgrading Checkstyle at Runtime -->
-          <groupId>org.apache.maven.plugins</groupId>
-          <artifactId>maven-checkstyle-plugin</artifactId>
-          <version>3.3.0</version>
-          <dependencies>
-            <dependency>
-              <groupId>com.puppycrawl.tools</groupId>
-              <artifactId>checkstyle</artifactId>
-              <!-- Dependabot bumps this version which throws bunch of issues in which case
-                   revert to 8.29 -->
-              <version>8.29</version>
-            </dependency>
-          </dependencies>
-          <configuration>
-            <configLocation>/google_checks.xml</configLocation>
-            <enableFilesSummary>true</enableFilesSummary>
-          </configuration>
-        </plugin>
-
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-surefire-plugin</artifactId>
-          <version>3.1.0</version>
+          <version>3.1.2</version>
         </plugin>
 
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-surefire-report-plugin</artifactId>
-          <version>3.1.0</version>
+          <version>3.1.2</version>
         </plugin>
 
         <plugin>
@@ -417,20 +371,6 @@
 
   <reporting>
     <plugins>
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-checkstyle-plugin</artifactId>
-        <configuration>
-          <configLocation>google_checks.xml</configLocation>
-        </configuration>
-        <reportSets>
-          <reportSet>
-            <reports>
-              <report>checkstyle</report>
-            </reports>
-          </reportSet>
-        </reportSets>
-      </plugin>
 
       <plugin>
         <artifactId>maven-javadoc-plugin</artifactId>
@@ -673,7 +613,7 @@
       <dependency>
         <groupId> org.apache.hadoop</groupId>
         <artifactId>hadoop-client</artifactId>
-        <version>3.3.5</version>
+        <version>3.3.6</version>
       </dependency>
 
     </dependencies>

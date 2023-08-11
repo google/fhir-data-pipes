@@ -23,8 +23,6 @@ public class EnumConverter<T> extends StringConverter<T> {
   @Override
   protected Object fromHapi(IPrimitiveType primitive) {
 
-    return "?".equals(primitive.getValueAsString())
-        ? null
-        : primitive.getValueAsString();
+    return "?".equals(primitive.getValueAsString()) ? null : primitive.getValueAsString();
   }
 }

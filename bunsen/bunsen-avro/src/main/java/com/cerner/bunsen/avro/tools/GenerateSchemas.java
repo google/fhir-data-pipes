@@ -2,7 +2,6 @@ package com.cerner.bunsen.avro.tools;
 
 import com.cerner.bunsen.FhirContexts;
 import com.cerner.bunsen.avro.AvroConverter;
-import com.google.common.collect.ImmutableList;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -10,14 +9,11 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 import org.apache.avro.Protocol;
 import org.apache.avro.Schema;
 
-/**
- * Simple utility class to generate avro schemas for a given set of resource types.
- */
+/** Simple utility class to generate avro schemas for a given set of resource types. */
 public class GenerateSchemas {
 
   public static final String DELIMITER = ";";
@@ -34,13 +30,15 @@ public class GenerateSchemas {
       System.out.println("Usage: GenerateSchemas <output file> resourceTypeUrls...");
       System.out.println("Example:");
 
-      System.out.println("  GenerateSchemas my_schemas.avsc "
-          + "http://hl7.org/fhir/us/core/StructureDefinition/us-core-patient "
-          + "http://hl7.org/fhir/us/core/StructureDefinition/us-core-condition");
+      System.out.println(
+          "  GenerateSchemas my_schemas.avsc "
+              + "http://hl7.org/fhir/us/core/StructureDefinition/us-core-patient "
+              + "http://hl7.org/fhir/us/core/StructureDefinition/us-core-condition");
 
       System.out.println();
-      System.out.println("The resulting avsc file then can be used to generate Java classes "
-          + "using avro-tools, for example:");
+      System.out.println(
+          "The resulting avsc file then can be used to generate Java classes "
+              + "using avro-tools, for example:");
       System.out.println("  avro-tools compile protocol my_schemas.avsc <target_directory>");
 
       return 1;
@@ -54,17 +52,21 @@ public class GenerateSchemas {
       return 1;
     }
 
-    Map<String, List<String>> resourceTypeUrls = Arrays.stream(args)
-        .skip(1)
-        .collect(Collectors.toMap(item -> item.split(DELIMITER)[0],
-            item -> generateContainedUrls(item)));
+    Map<String, List<String>> resourceTypeUrls =
+        Arrays.stream(args)
+            .skip(1)
+            .collect(
+                Collectors.toMap(
+                    item -> item.split(DELIMITER)[0], item -> generateContainedUrls(item)));
 
     List<Schema> schemas = AvroConverter.generateSchemas(FhirContexts.forStu3(), resourceTypeUrls);
 
     // Wrap the schemas in a protocol to simplify the invocation of the compiler.
-    Protocol protocol = new Protocol("FhirGeneratedSchemas",
-        "Avro schemas generated from FHIR StructureDefinitions",
-        "com.cerner.bunsen.avro");
+    Protocol protocol =
+        new Protocol(
+            "FhirGeneratedSchemas",
+            "Avro schemas generated from FHIR StructureDefinitions",
+            "com.cerner.bunsen.avro");
 
     protocol.setTypes(schemas);
 
@@ -84,7 +86,7 @@ public class GenerateSchemas {
 
   /**
    * Helper function to extract contained resources from resource string.
-   * 
+   *
    * @param key the string containing resource url(s)
    * @return the list of contained urls
    */
