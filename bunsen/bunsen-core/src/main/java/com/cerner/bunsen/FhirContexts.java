@@ -11,32 +11,26 @@ import java.util.Map;
 import java.util.ServiceLoader;
 
 /**
- * Loader for FHIR contexts. Unlike the provided {@link FhirContext} loader,
- * this implementation caches the contexts for reuse, and also loads profiles
- * that implement the {@link ProfileProvider} SPI.
+ * Loader for FHIR contexts. Unlike the provided {@link FhirContext} loader, this implementation
+ * caches the contexts for reuse, and also loads profiles that implement the {@link ProfileProvider}
+ * SPI.
  */
 public class FhirContexts {
 
-  /**
-   * Cache of FHIR contexts.
-   */
+  /** Cache of FHIR contexts. */
   private static final Map<FhirVersionEnum, FhirContext> FHIR_CONTEXTS = new HashMap();
 
-  /**
-   * Loads structure definitions for supported profiles.
-   */
+  /** Loads structure definitions for supported profiles. */
   private static void loadProfiles(FhirContext context) {
 
     ServiceLoader<ProfileProvider> loader = ServiceLoader.load(ProfileProvider.class);
 
-    loader.forEach(provider ->
-        provider.loadStructureDefinitions(context));
-
+    loader.forEach(provider -> provider.loadStructureDefinitions(context));
   }
 
   /**
-   * Returns the FHIR context for the given version. This is effectively a cache
-   * so consuming code does not need to recreate the context repeatedly.
+   * Returns the FHIR context for the given version. This is effectively a cache so consuming code
+   * does not need to recreate the context repeatedly.
    *
    * @param fhirVersion the version of FHIR to use
    * @return the FhirContext
@@ -44,7 +38,6 @@ public class FhirContexts {
   public static FhirContext contextFor(FhirVersionEnum fhirVersion) {
 
     synchronized (FHIR_CONTEXTS) {
-
       FhirContext context = FHIR_CONTEXTS.get(fhirVersion);
 
       if (context == null) {
@@ -61,8 +54,7 @@ public class FhirContexts {
   }
 
   /**
-   * Returns a builder to create encoders
-   * for FHIR STU3.
+   * Returns a builder to create encoders for FHIR STU3.
    *
    * @return a builder for encoders.
    */
@@ -72,8 +64,7 @@ public class FhirContexts {
   }
 
   /**
-   * Returns a builder to create encoders
-   * for FHIR R4.
+   * Returns a builder to create encoders for FHIR R4.
    *
    * @return a builder for encoders.
    */
@@ -81,5 +72,4 @@ public class FhirContexts {
 
     return contextFor(R4);
   }
-
 }
