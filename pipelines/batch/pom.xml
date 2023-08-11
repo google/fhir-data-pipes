@@ -38,7 +38,7 @@
     <jackson.version>2.15.1</jackson.version>
     <pubsub.version>v1-rev20220904-2.0.0</pubsub.version>
     <spark.version>2.4.8</spark.version>
-    <maven-surefire-plugin.version>3.1.0</maven-surefire-plugin.version>
+    <maven-surefire-plugin.version>3.1.2</maven-surefire-plugin.version>
     <nemo.version>0.1</nemo.version>
     <flink.artifact.name>beam-runners-flink-1.14</flink.artifact.name>
     <mysql.driver.version>8.0.30</mysql.driver.version>
@@ -67,7 +67,7 @@
     <dependency>
       <groupId>org.apache.avro</groupId>
       <artifactId>avro</artifactId>
-      <version>1.11.1</version>
+      <version>1.11.2</version>
     </dependency>
 
     <!--JDBC specific dependencies-->
