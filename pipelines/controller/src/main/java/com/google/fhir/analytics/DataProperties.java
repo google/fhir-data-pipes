@@ -91,6 +91,10 @@ public class DataProperties {
 
   private boolean createHiveResourceTables;
 
+  private String fhirServerPassword;
+
+  private String fhirServerUserName;
+
   @PostConstruct
   void validateProperties() throws ClassNotFoundException {
     CronExpression.parse(incrementalSchedule);
@@ -131,6 +135,8 @@ public class DataProperties {
       options.setFhirDatabaseConfigPath(dbConfig);
     } else {
       options.setFhirServerUrl(fhirServerUrl);
+      options.setFhirServerPassword(fhirServerPassword);
+      options.setFhirServerUserName(fhirServerUserName);
     }
     options.setResourceList(resourceList);
 

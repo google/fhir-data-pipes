@@ -67,6 +67,13 @@ public class DataPropertiesTest {
     Assert.assertTrue(pipelineConfig.getThriftServerParquetPath().contains(timestampSuffix));
   }
 
+  @Test
+  void fhirCredentials_are_set() {
+    PipelineConfig pipelineConfig = dataProperties.createBatchOptions();
+    Assert.assertEquals(pipelineConfig.getFhirEtlOptions().getFhirServerPassword(), "Admin123");
+    Assert.assertEquals(pipelineConfig.getFhirEtlOptions().getFhirServerUserName(), "Admin");
+  }
+
   @AfterAll
   public static void tearDown() throws IOException {
     mockFhirServer.shutdown();
