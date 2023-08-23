@@ -247,7 +247,7 @@ public class FhirSearchUtil {
       Bundle searchBundle) {
     String baseUrl = findBaseSearchUrl(searchBundle);
     for (int offset = 0; offset < searchBundle.getTotal(); offset += options.getBatchSize()) {
-      String pagedUrl = baseUrl.replaceFirst("&offset=\\d+", "&offset=" + offset);
+      String pagedUrl = baseUrl.replaceFirst("&_offset=\\d+", "&_offset=" + offset);
       log.debug(String.format("Generating paged url of %s", pagedUrl));
       segments.add(SearchSegmentDescriptor.create(pagedUrl, options.getBatchSize()));
     }
