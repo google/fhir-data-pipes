@@ -245,6 +245,8 @@ public class FhirSearchUtil {
       String resourceType,
       List<SearchSegmentDescriptor> segments,
       Bundle searchBundle) {
+    // TODO: This is still not 100% to FHIR specifications and only some APIs will support _offset
+    //  https://github.com/google/fhir-data-pipes/issues/533
     String baseUrl = findBaseSearchUrl(searchBundle);
     for (int offset = 0; offset < searchBundle.getTotal(); offset += options.getBatchSize()) {
       String pagedUrl = baseUrl.replaceFirst("&_offset=\\d+", "&_offset=" + offset);
