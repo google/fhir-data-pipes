@@ -98,6 +98,7 @@ public class FhirSearchUtilTest {
     when(untypedQuery.byUrl(SEARCH_URL)).thenReturn(query);
     when(untypedQuery.forResource(anyString())).thenReturn(query);
     when(query.count(anyInt())).thenReturn(query);
+    when(query.offset(anyInt())).thenReturn(query);
     when(query.totalMode(any(SearchTotalModeEnum.class))).thenReturn(query);
     when(query.summaryMode(any(SummaryEnum.class))).thenReturn(query);
     when(query.returnBundle(any())).thenReturn(query);
@@ -156,7 +157,7 @@ public class FhirSearchUtilTest {
     options.setBatchSize(15);
     Map<String, List<SearchSegmentDescriptor>> segmentMap = fhirSearchUtil.createSegments(options);
     assertThat(segmentMap.size(), equalTo(1));
-    assertThat(segmentMap.get("Patient").size(), equalTo(1));
+    assertThat(segmentMap.get("Patient").size(), equalTo(4));
   }
 
   @Test
@@ -168,7 +169,7 @@ public class FhirSearchUtilTest {
     when(query.lastUpdated(any())).thenReturn(query);
     Map<String, List<SearchSegmentDescriptor>> segmentMap = fhirSearchUtil.createSegments(options);
     assertThat(segmentMap.size(), equalTo(1));
-    assertThat(segmentMap.get("Patient").size(), equalTo(1));
+    assertThat(segmentMap.get("Patient").size(), equalTo(4));
     ArgumentCaptor<DateRangeParam> dateCaptor = ArgumentCaptor.forClass(DateRangeParam.class);
     verify(query).lastUpdated(dateCaptor.capture());
     DateRangeParam value = dateCaptor.getValue();

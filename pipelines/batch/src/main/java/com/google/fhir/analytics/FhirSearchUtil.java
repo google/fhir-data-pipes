@@ -132,13 +132,14 @@ public class FhirSearchUtil {
     return selfLink;
   }
 
-  private IQuery<Bundle> makeQueryForResource(String resourceType, int count) {
+  private IQuery<Bundle> makeQueryForResource(String resourceType, int count, int offset) {
     IGenericClient client = openmrsUtil.getSourceClient(true);
     return client
         .search()
         .forResource(resourceType)
         .totalMode(SearchTotalModeEnum.ACCURATE)
         .count(count)
+        .offset(offset)
         .summaryMode(SummaryEnum.DATA)
         .returnBundle(Bundle.class);
   }
@@ -157,8 +158,9 @@ public class FhirSearchUtil {
     return Lists.newArrayList(dateRange);
   }
 
-  private IQuery<Bundle> makeQueryWithDate(String resourceType, FhirEtlOptions options) {
-    IQuery<Bundle> searchQuery = makeQueryForResource(resourceType, options.getBatchSize());
+  private IQuery<Bundle> makeQueryWithDate(
+      String resourceType, FhirEtlOptions options, int offset) {
+    IQuery<Bundle> searchQuery = makeQueryForResource(resourceType, options.getBatchSize(), offset);
     if (!Strings.isNullOrEmpty(options.getActivePeriod())) {
       List<String> dateRange = getDateRange(options.getActivePeriod());
       searchQuery = searchQuery.where(new DateClientParam("date").after().second(dateRange.get(0)));
@@ -193,8 +195,11 @@ public class FhirSearchUtil {
     boolean anyResourceWithDate = false;
     for (String resourceType : options.getResourceList().split(",")) {
       List<SearchSegmentDescriptor> segments = new ArrayList<>();
-      IQuery<Bundle> searchQuery = makeQueryWithDate(resourceType, options);
+
+      int offset = 0;
+      IQuery<Bundle> searchQuery = makeQueryWithDate(resourceType, options, offset);
       log.info(String.format("Fetching first batch of %s", resourceType));
+
       Bundle searchBundle = null;
       try {
         searchBundle = searchQuery.execute();
@@ -205,7 +210,7 @@ public class FhirSearchUtil {
                 "While searching for resource %s with date, caught exception %s",
                 resourceType, e.toString()));
         log.info("Trying without date for resource " + resourceType);
-        searchBundle = makeQueryForResource(resourceType, options.getBatchSize()).execute();
+        searchBundle = makeQueryForResource(resourceType, options.getBatchSize(), offset).execute();
       }
       if (searchBundle == null) {
         log.error("Failed searching for resource " + resourceType);
@@ -221,12 +226,7 @@ public class FhirSearchUtil {
         segments.add(
             SearchSegmentDescriptor.create(findSelfUrl(searchBundle), options.getBatchSize()));
       } else {
-        String baseUrl = findBaseSearchUrl(searchBundle);
-        segments.add(SearchSegmentDescriptor.create(baseUrl, options.getBatchSize()));
-
-        log.info(
-            String.format(
-                "Total number of segments for resource %s is %d", resourceType, segments.size()));
+        createPagedSegments(options, resourceType, segments, searchBundle);
       }
       segmentMap.put(resourceType, segments);
     }
@@ -238,6 +238,23 @@ public class FhirSearchUtil {
               options.getResourceList(), options.getActivePeriod()));
     }
     return segmentMap;
+  }
+
+  private void createPagedSegments(
+      FhirEtlOptions options,
+      String resourceType,
+      List<SearchSegmentDescriptor> segments,
+      Bundle searchBundle) {
+    String baseUrl = findBaseSearchUrl(searchBundle);
+    for (int offset = 0; offset < searchBundle.getTotal(); offset += options.getBatchSize()) {
+      String pagedUrl = baseUrl.replaceFirst("&offset=\\d+", "&offset=" + offset);
+      log.debug(String.format("Generating paged url of %s", pagedUrl));
+      segments.add(SearchSegmentDescriptor.create(pagedUrl, options.getBatchSize()));
+    }
+
+    log.info(
+        String.format(
+            "Total number of segments for resource %s is %d", resourceType, segments.size()));
   }
 
   public Set<String> findPatientAssociatedResources(Set<String> resourceTypes) {
