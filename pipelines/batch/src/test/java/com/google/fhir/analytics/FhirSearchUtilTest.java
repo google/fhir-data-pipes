@@ -29,6 +29,7 @@ import static org.mockito.Mockito.when;
 import ca.uhn.fhir.context.FhirContext;
 import ca.uhn.fhir.parser.IParser;
 import ca.uhn.fhir.rest.api.SearchTotalModeEnum;
+import ca.uhn.fhir.rest.api.SortSpec;
 import ca.uhn.fhir.rest.api.SummaryEnum;
 import ca.uhn.fhir.rest.client.api.IGenericClient;
 import ca.uhn.fhir.rest.gclient.IQuery;
@@ -61,6 +62,8 @@ public class FhirSearchUtilTest {
   private static final String OFFSET_PARAM = "_offset=15";
 
   private static final String COUNT_PARAM = "_count=15";
+
+  private static final String SORT_PARAM = "_sort=_id";
 
   private static final String SUMMARY_PARAM = "_summary=data";
 
@@ -99,6 +102,7 @@ public class FhirSearchUtilTest {
     when(untypedQuery.forResource(anyString())).thenReturn(query);
     when(query.count(anyInt())).thenReturn(query);
     when(query.offset(anyInt())).thenReturn(query);
+    when(query.sort(any(SortSpec.class))).thenReturn(query);
     when(query.totalMode(any(SearchTotalModeEnum.class))).thenReturn(query);
     when(query.summaryMode(any(SummaryEnum.class))).thenReturn(query);
     when(query.returnBundle(any())).thenReturn(query);
@@ -116,6 +120,8 @@ public class FhirSearchUtilTest {
                 + OFFSET_PARAM
                 + "&"
                 + COUNT_PARAM
+                + "&"
+                + SORT_PARAM
                 + "&"
                 + SUMMARY_PARAM
                 + "&"
