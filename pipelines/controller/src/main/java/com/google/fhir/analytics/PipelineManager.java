@@ -521,6 +521,8 @@ public class PipelineManager implements ApplicationListener<ApplicationReadyEven
 
     @Override
     public void run() {
+      // The number of threads may increase after a few runs, but it should eventually go down.
+      logger.info("Starting a new thread; number of threads is {}", Thread.activeCount());
       String currentDwhRoot = null;
       try {
         FhirEtlOptions options = pipeline.getOptions().as(FhirEtlOptions.class);
@@ -555,6 +557,7 @@ public class PipelineManager implements ApplicationListener<ApplicationReadyEven
         manager.setLastRunDetails(currentDwhRoot, FAILURE);
         manager.setLastRunStatus(LastRunStatus.FAILURE);
       } finally {
+        // See https://github.com/google/fhir-data-pipes/issues/777#issuecomment-1703142297
         System.gc();
       }
     }
