@@ -554,6 +554,8 @@ public class PipelineManager implements ApplicationListener<ApplicationReadyEven
         manager.captureError(currentDwhRoot, e);
         manager.setLastRunDetails(currentDwhRoot, FAILURE);
         manager.setLastRunStatus(LastRunStatus.FAILURE);
+      } finally {
+        System.gc();
       }
     }
 
