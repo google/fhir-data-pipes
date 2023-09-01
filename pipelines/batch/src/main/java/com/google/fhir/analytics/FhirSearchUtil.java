@@ -16,6 +16,7 @@
 package com.google.fhir.analytics;
 
 import ca.uhn.fhir.rest.api.SearchTotalModeEnum;
+import ca.uhn.fhir.rest.api.SortSpec;
 import ca.uhn.fhir.rest.api.SummaryEnum;
 import ca.uhn.fhir.rest.client.api.IGenericClient;
 import ca.uhn.fhir.rest.gclient.DateClientParam;
@@ -140,6 +141,7 @@ public class FhirSearchUtil {
         .totalMode(SearchTotalModeEnum.ACCURATE)
         .count(count)
         .offset(offset)
+        .sort(new SortSpec("_id"))
         .summaryMode(SummaryEnum.DATA)
         .returnBundle(Bundle.class);
   }

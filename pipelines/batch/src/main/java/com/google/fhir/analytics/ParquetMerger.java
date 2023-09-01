@@ -63,7 +63,7 @@ public class ParquetMerger {
   private static String CODE_KEY = "code";
 
   private static PCollection<KV<String, GenericRecord>> readAndMapToId(
-      Pipeline pipeline, DwhFiles dwh, String resourceType) {
+      Pipeline pipeline, DwhFiles dwh, String resourceType, Counter numInputRecords) {
     PCollection<GenericRecord> records =
         pipeline.apply(
             ParquetIO.read(ParquetUtil.getResourceSchema(resourceType, FhirVersionEnum.R4))
@@ -84,6 +84,7 @@ public class ParquetMerger {
                   throw new IllegalArgumentException(
                       String.format("No %s key found in %s", ID_KEY, record));
                 }
+                numInputRecords.inc();
                 out.output(KV.of(id, record));
               }
             }));
@@ -147,7 +148,7 @@ public class ParquetMerger {
       numDuplicates.inc();
     }
     if (numRec > 2) {
-      log.warn("Record with ID {} repeated more than twice!", lastRecord.get(ID_KEY));
+      log.warn("Record with ID {} repeated more than twice! ({})", lastRecord.get(ID_KEY), numRec);
     }
     return lastRecord;
   }
@@ -157,11 +158,6 @@ public class ParquetMerger {
     Preconditions.checkArgument(!options.getDwh1().isEmpty());
     Preconditions.checkArgument(!options.getDwh2().isEmpty());
     Preconditions.checkArgument(!options.getMergedDwh().isEmpty());
-
-    Counter numOutputRecords =
-        Metrics.counter(MetricsConstants.METRICS_NAMESPACE, MetricsConstants.NUM_OUTPUT_RECORDS);
-    Counter numDuplicates =
-        Metrics.counter(MetricsConstants.METRICS_NAMESPACE, MetricsConstants.NUM_DUPLICATES);
 
     String dwh1 = options.getDwh1();
     String dwh2 = options.getDwh2();
@@ -184,9 +180,22 @@ public class ParquetMerger {
       if (!resourceTypes2.contains(type)) {
         continue;
       }
+
+      Counter numInputRecords =
+          Metrics.counter(
+              MetricsConstants.METRICS_NAMESPACE, MetricsConstants.NUM_INPUT_RECORDS + type);
+      Counter numOutputRecords =
+          Metrics.counter(
+              MetricsConstants.METRICS_NAMESPACE, MetricsConstants.NUM_OUTPUT_RECORDS + type);
+      Counter numDuplicates =
+          Metrics.counter(
+              MetricsConstants.METRICS_NAMESPACE, MetricsConstants.NUM_DUPLICATES + type);
+
       log.info("Merging resource type {}", type);
-      PCollection<KV<String, GenericRecord>> firstKVs = readAndMapToId(pipeline, dwhFiles1, type);
-      PCollection<KV<String, GenericRecord>> secondKVs = readAndMapToId(pipeline, dwhFiles2, type);
+      PCollection<KV<String, GenericRecord>> firstKVs =
+          readAndMapToId(pipeline, dwhFiles1, type, numInputRecords);
+      PCollection<KV<String, GenericRecord>> secondKVs =
+          readAndMapToId(pipeline, dwhFiles2, type, numInputRecords);
       final TupleTag<GenericRecord> tag1 = new TupleTag<>();
       final TupleTag<GenericRecord> tag2 = new TupleTag<>();
       PCollection<KV<String, CoGbkResult>> join =
@@ -216,7 +225,7 @@ public class ParquetMerger {
                   ParquetIO.sink(ParquetUtil.getResourceSchema(type, fhirContext))
                       .withCompressionCodec(CompressionCodecName.SNAPPY))
               .to(mergedDwhFiles.getResourcePath(type).toString())
-              .withSuffix(".parquet")
+              .withSuffix(ParquetUtil.PARQUET_EXTENSION)
               // TODO if we don't set this, DirectRunner works fine but FlinkRunner only writes
               //   ~10% of the records. This is not specific to Parquet or GenericRecord; it even
               //   happens for TextIO. We should investigate this further and possibly file a bug.
