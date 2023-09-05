@@ -1,0 +1,32 @@
+{
+  "resourceType": "Bundle",
+  "id": "937f1ff1-d26f-43df-a57f-88eabf42b02a",
+  "meta": {
+    "lastUpdated": "2020-09-30T10:23:35.190-04:00",
+    "tag": [
+      {
+        "system": "http://hl7.org/fhir/v3/ObservationValue",
+        "code": "SUBSETTED",
+        "display": "Resource encoded in summary mode"
+      }
+    ]
+  },
+  "type": "searchset",
+  "total": 50,
+  "link": [
+    {
+      "relation": "self",
+      "url": "http://localhost:9020/openmrs/ws/fhir2/R4/Patient?_count=15&_getpagesoffset=0&_summary=data&given=Bashir"
+    },
+    {
+      "relation": "next",
+      "url": "http://localhost:9020/openmrs/ws/fhir2/R4?_getpages=861af9b4-d847-4831-b945-ab1f6f08f03e&_getpagesoffset=15&_count=15&_bundletype=searchset"
+    }
+  ],
+  "entry": [
+    {
+      "resourceType": "Patient",
+      "id": "dafljdlkjfa423423423"
+    }
+  ]
+}
