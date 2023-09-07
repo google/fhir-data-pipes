@@ -31,7 +31,6 @@ import java.time.LocalDateTime;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
-import java.util.Set;
 import java.util.stream.Collectors;
 import javax.annotation.PostConstruct;
 import lombok.Data;
@@ -338,7 +337,8 @@ public class PipelineManager implements ApplicationListener<ApplicationReadyEven
       logger.warn("No resources found to be fetched!");
       return;
     } else {
-      currentPipeline = new PipelineThread(pipeline, this, dataProperties, pipelineConfig, true);
+      currentPipeline =
+          new PipelineThread(pipeline, this, dwhFilesManager, dataProperties, pipelineConfig, true);
     }
     logger.info("Running full pipeline for DWH {}", options.getOutputParquetPath());
     // We will only have one thread for running pipelines hence no need for a thread pool.
@@ -383,7 +383,14 @@ public class PipelineManager implements ApplicationListener<ApplicationReadyEven
     } else {
       // Creating a thread for running both pipelines, one after the other.
       currentPipeline =
-          new PipelineThread(pipeline, mergerOptions, this, dataProperties, pipelineConfig, false);
+          new PipelineThread(
+              pipeline,
+              mergerOptions,
+              this,
+              dwhFilesManager,
+              dataProperties,
+              pipelineConfig,
+              false);
       logger.info("Running incremental pipeline for DWH {} since {}", currentDwh.getRoot(), since);
       currentPipeline.start();
     }
@@ -391,18 +398,22 @@ public class PipelineManager implements ApplicationListener<ApplicationReadyEven
 
   @Override
   public void onApplicationEvent(ApplicationReadyEvent applicationReadyEvent) {
-    createResourceTables();
+    createResourceTables(true);
   }
 
   /**
-   * This method checks upon Controller start checks on Thrift sever to create resource tables if
-   * they don't exist. There is a @PostConstruct method present in this class which is initDwhStatus
-   * and the reason below code has not been added because dataProperties.getThriftserverHiveConfig()
+   * This method, upon Controller start, checks on Thrift sever to create resource tables if they
+   * don't exist. There is a @PostConstruct method present in this class which is initDwhStatus and
+   * the reason below code has not been added because dataProperties.getThriftserverHiveConfig()
    * turns out to be null when used by
    * DatabaseConfiguration.createConfigFromFile(dataProperties.getThriftserverHiveConfig()).
+   *
+   * @param init whether this is the initial call or not. For the first run, extra sanity checks are
+   *     done to make sure we can connect to the Hive server.
    */
-  public void createResourceTables() {
+  public void createResourceTables(boolean init) {
     if (!dataProperties.isCreateHiveResourceTables()) {
+      logger.info("createHiveResourceTables is false; skipping Hive table creation.");
       return;
     }
 
@@ -419,6 +430,15 @@ public class PipelineManager implements ApplicationListener<ApplicationReadyEven
             dbConfig.makeJdbsUrlFromConfig(),
             dbConfig.getDatabaseUser(),
             dbConfig.getDatabasePassword());
+
+    if (init) {
+      try {
+        hiveTableManager.showTables();
+      } catch (SQLException e) {
+        logger.error("Exception while querying the thriftserver: ", e);
+        throw new RuntimeException(e);
+      }
+    }
 
     String rootPrefix = dataProperties.getDwhRootPrefix();
     Preconditions.checkState(rootPrefix != null && !rootPrefix.isEmpty());
@@ -437,37 +457,22 @@ public class PipelineManager implements ApplicationListener<ApplicationReadyEven
       // Sort snapshots directories.
       Collections.sort(paths, Comparator.comparing(ResourceId::toString));
 
-      int snapshotCount = 0;
       for (ResourceId path : paths) {
-        snapshotCount++;
-        Set<ResourceId> childPaths =
-            dwhFilesManager.getAllChildDirectories(baseDir + "/" + path.getFilename());
-        for (ResourceId resourceId : childPaths) {
-          String resource = resourceId.getFilename();
-          // Ignore if you encounter folders like incremental_run.
-          if (dataProperties.getResourceList().indexOf(resourceId.getFilename()) == -1) {
-            continue;
-          }
-          String[] tokens = path.getFilename().split(prefix + DataProperties.TIMESTAMP_PREFIX);
-          if (tokens.length > 1) {
-            String timestamp = tokens[1];
-            String thriftServerParquetPath =
-                baseDir + "/" + path.getFilename() + "/" + resourceId.getFilename();
-            logger.debug("thriftServerParquetPath: ", thriftServerParquetPath);
-            hiveTableManager.createResourceTable(resource, timestamp, thriftServerParquetPath);
-            // Create Canonical table for the latest snapshot.
-            if (snapshotCount == paths.size()) {
-              hiveTableManager.createResourceCanonicalTable(resource, thriftServerParquetPath);
-            }
-          }
+        String[] tokens = path.getFilename().split(prefix + DataProperties.TIMESTAMP_PREFIX);
+        if (tokens.length > 1) {
+          String timestamp = tokens[1];
+          logger.info("Creating resource tables for relative path {}", path.getFilename());
+          List<String> existingResources =
+              dwhFilesManager.findExistingResources(baseDir + "/" + path.getFilename());
+          hiveTableManager.createResourceAndCanonicalTables(
+              existingResources, timestamp, path.getFilename());
         }
       }
     } catch (IOException e) {
+      // In case of exceptions at this stage, we just log the exception.
       logger.error("Exception while reading thriftserver parquet output directory: ", e);
-      throw new RuntimeException(e);
     } catch (SQLException e) {
       logger.error("Exception while creating resource tables on thriftserver: ", e);
-      throw new RuntimeException(e);
     }
   }
 
@@ -479,6 +484,7 @@ public class PipelineManager implements ApplicationListener<ApplicationReadyEven
 
     private final Pipeline pipeline;
     private final PipelineManager manager;
+    private final DwhFilesManager dwhFilesManager;
     // This is used in the incremental mode only.
     private final ParquetMergerOptions mergerOptions;
 
@@ -491,12 +497,14 @@ public class PipelineManager implements ApplicationListener<ApplicationReadyEven
     PipelineThread(
         Pipeline pipeline,
         PipelineManager manager,
+        DwhFilesManager dwhFilesManager,
         DataProperties dataProperties,
         PipelineConfig pipelineConfig,
         boolean isBatchRun) {
       Preconditions.checkArgument(pipeline.getOptions().as(FhirEtlOptions.class) != null);
       this.pipeline = pipeline;
       this.manager = manager;
+      this.dwhFilesManager = dwhFilesManager;
       this.dataProperties = dataProperties;
       this.pipelineConfig = pipelineConfig;
       this.isBatchRun = isBatchRun;
@@ -507,12 +515,14 @@ public class PipelineManager implements ApplicationListener<ApplicationReadyEven
         Pipeline pipeline,
         ParquetMergerOptions mergerOptions,
         PipelineManager manager,
+        DwhFilesManager dwhFilesManager,
         DataProperties dataProperties,
         PipelineConfig pipelineConfig,
         boolean isBatchRun) {
       Preconditions.checkArgument(pipeline.getOptions().as(FhirEtlOptions.class) != null);
       this.pipeline = pipeline;
       this.manager = manager;
+      this.dwhFilesManager = dwhFilesManager;
       this.mergerOptions = mergerOptions;
       this.dataProperties = dataProperties;
       this.pipelineConfig = pipelineConfig;
@@ -544,8 +554,9 @@ public class PipelineManager implements ApplicationListener<ApplicationReadyEven
           manager.updateDwh(currentDwhRoot);
         }
         if (dataProperties.isCreateHiveResourceTables()) {
+          List<String> existingResources = dwhFilesManager.findExistingResources(currentDwhRoot);
           createHiveResourceTables(
-              options.getResourceList(),
+              existingResources,
               pipelineConfig.getTimestampSuffix(),
               pipelineConfig.getThriftServerParquetPath());
         }
@@ -562,21 +573,23 @@ public class PipelineManager implements ApplicationListener<ApplicationReadyEven
       }
     }
 
+    // TODO fix the potential race condition here; for example if the pipeline finishes
+    //   at the same time that a `POST /tables` request is being handled by the controller.
     private void createHiveResourceTables(
-        String resourceList, String timestampSuffix, String thriftServerParquetPath)
+        List<String> resourceList, String timestampSuffix, String thriftServerParquetPath)
         throws IOException, SQLException {
-
       logger.info("Establishing connection to Thrift server Hive");
       DatabaseConfiguration dbConfig =
           DatabaseConfiguration.createConfigFromFile(dataProperties.getThriftserverHiveConfig());
 
-      logger.info("Creating resources on Thrift server Hive");
+      logger.info("Creating resources on Hive server for resources: {}", resourceList);
       HiveTableManager hiveTableManager =
           new HiveTableManager(
               dbConfig.makeJdbsUrlFromConfig(),
               dbConfig.getDatabaseUser(),
               dbConfig.getDatabasePassword());
-      hiveTableManager.createResourceTables(resourceList, timestampSuffix, thriftServerParquetPath);
+      hiveTableManager.createResourceAndCanonicalTables(
+          resourceList, timestampSuffix, thriftServerParquetPath);
       logger.info("Created resources on Thrift server Hive");
     }
   }

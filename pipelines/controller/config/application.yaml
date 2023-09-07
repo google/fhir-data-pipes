@@ -63,7 +63,9 @@ fhirdata:
 
   # The comma-separated list of FHIR resources to fetch/monitor.
   # Equivalent to pipeline `resourceList` parameter.
-  resourceList: "Patient,Encounter,Observation"
+  # Note there is no Questionnaire in our test FHIR server, but it is okay; see
+  # https://github.com/google/fhir-data-pipes/issues/785.
+  resourceList: "Patient,Encounter,Observation,Questionnaire"
 
   # The maximum number of Flink workers to use. Each worker may have 
   # `numThreads` parallel threads.
@@ -75,7 +77,7 @@ fhirdata:
 
   # Whether resource tables should be automatically created on a
   # Hive/Spark server. Primarily meant for single-machine deployment.
-  createHiveResourceTables: false
+  createHiveResourceTables: true
 
   # Path to a file with the settings used to create tables.
   # Required if createHiveResourceTables is `true`.

@@ -17,8 +17,10 @@ package com.google.fhir.analytics;
 
 import java.sql.Connection;
 import java.sql.DriverManager;
+import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -30,7 +32,7 @@ public class HiveTableManager {
   private final String user;
   private final String password;
 
-  private static final String THRIFT_CONTAINER_PARQUET_PATH_PREFIX = "/dwh";
+  private static final String THRIFT_CONTAINER_PARQUET_DIR = "/dwh";
 
   public HiveTableManager(String jdbcUrl, String user, String password) {
     this.jdbcUrl = jdbcUrl;
@@ -39,20 +41,21 @@ public class HiveTableManager {
   }
 
   /**
-   * Method to create resources on Thrift Server Hive.
+   * Method to create tables on [Thrift] Hive server. This creates a timestamped table for each
+   * resource and also updates the "canonical table", i.e., the table name with no timestamp, to
+   * point to the given set of files.
    *
-   * @param resourceList Comma separated list of resources such as Patient, Observation, Encounter
+   * @param resources list of resources such as Patient, Observation, and Encounter; the directories
+   *     corresponding to these resources are assumed to exist and have valid Parquet files.
    * @param timestamp Timestamp suffix to be used in table name.
-   * @param thriftServerParquetPath location of parquet files in Thrift Server
+   * @param thriftServerParquetPath location of parquet files in Thrift Server; this is relative to
+   *     the THRIFT_CONTAINER_PARQUET_DIR directory.
    * @throws SQLException
    */
-  public void createResourceTables(
-      String resourceList, String timestamp, String thriftServerParquetPath) throws SQLException {
-    if (resourceList == null || resourceList.isEmpty()) {
-      return;
-    }
-    String[] resources = resourceList.split(",");
-    if (resources == null || resources.length == 0) {
+  public void createResourceAndCanonicalTables(
+      List<String> resources, String timestamp, String thriftServerParquetPath)
+      throws SQLException {
+    if (resources == null || resources.isEmpty()) {
       return;
     }
 
@@ -60,7 +63,7 @@ public class HiveTableManager {
     //  (https://github.com/google/fhir-data-pipes/issues/483)
     try (Connection connection = DriverManager.getConnection(jdbcUrl)) {
       for (String resource : resources) {
-        createResourceAndCanonicalTables(connection, resource, timestamp, thriftServerParquetPath);
+        createTablesForResource(connection, resource, timestamp, thriftServerParquetPath);
       }
     }
   }
@@ -69,22 +72,18 @@ public class HiveTableManager {
    * This method will create table 'encounter_2023_01_24t18_42_54_302111z' if the given resource is
    * Encounter and the timestamp suffix is 2023_01_24t18_42_54_302111z
    *
-   * <p>wrt PARQUET LOCATION, THRIFT_CONTAINER_PARQUET_PATH_PREFIX is the directory hosting parquet
-   * files, thriftServerParquetPath is the exact path for parquet files and resource shall be the
+   * <p>wrt PARQUET LOCATION, THRIFT_CONTAINER_PARQUET_DIR is the directory hosting parquet files,
+   * thriftServerParquetPath is the exact path for parquet files and resource shall be the
    * respective resource name e.g. Patient
    */
-  private void createResourceAndCanonicalTables(
+  private void createTablesForResource(
       Connection connection, String resource, String timestamp, String thriftServerParquetPath)
       throws SQLException {
 
     String sql =
         String.format(
             "CREATE TABLE IF NOT EXISTS default.%s_%s USING PARQUET LOCATION '%s/%s/%s'",
-            resource,
-            timestamp,
-            THRIFT_CONTAINER_PARQUET_PATH_PREFIX,
-            thriftServerParquetPath,
-            resource);
+            resource, timestamp, THRIFT_CONTAINER_PARQUET_DIR, thriftServerParquetPath, resource);
     executeSql(connection, sql);
 
     // Drop canonical table if exists.
@@ -95,52 +94,26 @@ public class HiveTableManager {
     sql =
         String.format(
             "CREATE TABLE IF NOT EXISTS default.%s USING PARQUET LOCATION '%s/%s/%s'",
-            resource, THRIFT_CONTAINER_PARQUET_PATH_PREFIX, thriftServerParquetPath, resource);
+            resource, THRIFT_CONTAINER_PARQUET_DIR, thriftServerParquetPath, resource);
     executeSql(connection, sql);
   }
 
-  /**
-   * The method creates resource tables with names suffixed with given timestamp if not present. It
-   * excepts complete parquet files path.
-   *
-   * @param resource FHIR resource type.
-   * @param timestamp timestamp string to be used for resource table name.
-   * @param thriftServerParquetPath directory path having output parquet files.
-   * @throws SQLException
-   */
-  public void createResourceTable(String resource, String timestamp, String thriftServerParquetPath)
-      throws SQLException {
-
-    String sql =
-        String.format(
-            "CREATE TABLE IF NOT EXISTS default.%s_%s USING PARQUET LOCATION '%s'",
-            resource, timestamp, thriftServerParquetPath);
-    try (Connection connection = DriverManager.getConnection(jdbcUrl)) {
-      executeSql(connection, sql);
-    }
-  }
-
-  /**
-   * This method creates canonical resource tables if not present. It excepts complete parquet files
-   * path.
-   *
-   * @param resource FHIR resource type.
-   * @param thriftServerParquetPath directory path having output parquet files.
-   * @throws SQLException
-   */
-  public void createResourceCanonicalTable(String resource, String thriftServerParquetPath)
-      throws SQLException {
-
-    String sql =
-        String.format(
-            "CREATE TABLE IF NOT EXISTS default.%s USING PARQUET LOCATION '%s'",
-            resource, thriftServerParquetPath);
-    try (Connection connection = DriverManager.getConnection(jdbcUrl)) {
-      executeSql(connection, sql);
+  public void showTables() throws SQLException {
+    logger.info("List of Hive tables:");
+    String sql = "SHOW TABLES;";
+    try (Connection connection = DriverManager.getConnection(jdbcUrl);
+        Statement statement = connection.createStatement();
+        ResultSet resultSet = statement.executeQuery(sql)) {
+      if (resultSet != null && resultSet.next()) {
+        do {
+          logger.info(resultSet.getString("namespace") + '.' + resultSet.getString("tableName"));
+        } while (resultSet.next());
+      }
     }
   }
 
   private void executeSql(Connection connection, String sql) throws SQLException {
+    logger.info("Executing SQL query: {}", sql);
     try (Statement statement = connection.createStatement()) {
       statement.execute(sql);
     }

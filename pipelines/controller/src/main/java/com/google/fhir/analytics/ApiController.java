@@ -87,7 +87,7 @@ public class ApiController {
       throw new IllegalStateException("Cannot create tables because another pipeline is running!");
     }
     logger.info("Received request to create request tables ...");
-    pipelineManager.createResourceTables();
+    pipelineManager.createResourceTables(false);
     return SUCCESS;
   }
 
