@@ -33,6 +33,8 @@ RUN mvn --batch-mode clean package -Dlicense.skip=true
 
 FROM eclipse-temurin:17-jdk-focal as main
 
+RUN apt-get update && apt-get install -y libjemalloc-dev
+
 WORKDIR /app
 
 COPY --from=build \
@@ -44,7 +46,6 @@ COPY ./docker/config ./config
 # Flink will read the flink-conf.yaml file from this directory.
 ENV FLINK_CONF_DIR=/app/config
 
-# The -Xmx value is to make sure there is a minimum amount of memory; it can be
-# increased if more memory is avaialble and is desired to be used by pipelines.
-# Note this is retald to memory config in the above flink-conf.yaml too.
-ENTRYPOINT java -Xms6g -Xmx6g -jar /app/controller.jar
+COPY docker-entrypoint.sh /
+RUN chmod +x /docker-entrypoint.sh
+ENTRYPOINT ["/docker-entrypoint.sh"]
