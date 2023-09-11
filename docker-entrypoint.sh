@@ -20,7 +20,7 @@
 # This is inspired from the flink-docker repo -
 # https://github.com/apache/flink-docker/blob/45c6d230407d89aa83b0d170dd056d6868cf808e/1.17/scala_2.12-java11-ubuntu/docker-entrypoint.sh#L92
 #
-# Refer https://github.com/google/fhir-data-pipes/issues/777 for more details.
+# Refer to https://github.com/google/fhir-data-pipes/issues/777 for more details.
 #######################################
 enable_jemalloc() {
   # Supports multiple processor architectures like x86_64, arm64 etc.
