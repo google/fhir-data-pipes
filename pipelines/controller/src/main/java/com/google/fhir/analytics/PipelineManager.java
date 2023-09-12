@@ -77,6 +77,8 @@ public class PipelineManager implements ApplicationListener<ApplicationReadyEven
 
   @Autowired private MeterRegistry meterRegistry;
 
+  private HiveTableManager hiveTableManager;
+
   private PipelineThread currentPipeline;
 
   private DwhFiles currentDwh;
@@ -398,25 +400,10 @@ public class PipelineManager implements ApplicationListener<ApplicationReadyEven
 
   @Override
   public void onApplicationEvent(ApplicationReadyEvent applicationReadyEvent) {
-    createResourceTables(true);
-  }
-
-  /**
-   * This method, upon Controller start, checks on Thrift sever to create resource tables if they
-   * don't exist. There is a @PostConstruct method present in this class which is initDwhStatus and
-   * the reason below code has not been added because dataProperties.getThriftserverHiveConfig()
-   * turns out to be null when used by
-   * DatabaseConfiguration.createConfigFromFile(dataProperties.getThriftserverHiveConfig()).
-   *
-   * @param init whether this is the initial call or not. For the first run, extra sanity checks are
-   *     done to make sure we can connect to the Hive server.
-   */
-  public void createResourceTables(boolean init) {
     if (!dataProperties.isCreateHiveResourceTables()) {
       logger.info("createHiveResourceTables is false; skipping Hive table creation.");
       return;
     }
-
     DatabaseConfiguration dbConfig;
     try {
       dbConfig =
@@ -425,21 +412,29 @@ public class PipelineManager implements ApplicationListener<ApplicationReadyEven
       logger.error("Exception while reading thrift hive config.");
       throw new RuntimeException(e);
     }
-    HiveTableManager hiveTableManager =
-        new HiveTableManager(
-            dbConfig.makeJdbsUrlFromConfig(),
-            dbConfig.getDatabaseUser(),
-            dbConfig.getDatabasePassword());
-
-    if (init) {
-      try {
-        hiveTableManager.showTables();
-      } catch (SQLException e) {
-        logger.error("Exception while querying the thriftserver: ", e);
-        throw new RuntimeException(e);
-      }
+    try {
+      hiveTableManager = new HiveTableManager(dbConfig);
+      hiveTableManager.showTables();
+    } catch (PropertyVetoException | SQLException e) {
+      logger.error("Exception while querying the thriftserver: ", e);
+      throw new RuntimeException(e);
     }
 
+    // Making sure that the tables for the current DWH files are created.
+    createResourceTables();
+  }
+
+  /**
+   * This method, upon Controller start, checks on Thrift sever to create resource tables if they
+   * don't exist. There is a @PostConstruct method present in this class which is initDwhStatus and
+   * the reason below code has not been added because dataProperties.getThriftserverHiveConfig()
+   * turns out to be null there.
+   */
+  public void createResourceTables() {
+    if (!dataProperties.isCreateHiveResourceTables()) {
+      logger.info("createHiveResourceTables is false; skipping Hive table creation.");
+      return;
+    }
     String rootPrefix = dataProperties.getDwhRootPrefix();
     Preconditions.checkState(rootPrefix != null && !rootPrefix.isEmpty());
 
@@ -474,6 +469,10 @@ public class PipelineManager implements ApplicationListener<ApplicationReadyEven
     } catch (SQLException e) {
       logger.error("Exception while creating resource tables on thriftserver: ", e);
     }
+  }
+
+  HiveTableManager getHiveTableManager() {
+    return hiveTableManager;
   }
 
   private synchronized void updateDwh(String newRoot) {
@@ -583,13 +582,9 @@ public class PipelineManager implements ApplicationListener<ApplicationReadyEven
           DatabaseConfiguration.createConfigFromFile(dataProperties.getThriftserverHiveConfig());
 
       logger.info("Creating resources on Hive server for resources: {}", resourceList);
-      HiveTableManager hiveTableManager =
-          new HiveTableManager(
-              dbConfig.makeJdbsUrlFromConfig(),
-              dbConfig.getDatabaseUser(),
-              dbConfig.getDatabasePassword());
-      hiveTableManager.createResourceAndCanonicalTables(
-          resourceList, timestampSuffix, thriftServerParquetPath);
+      manager
+          .getHiveTableManager()
+          .createResourceAndCanonicalTables(resourceList, timestampSuffix, thriftServerParquetPath);
       logger.info("Created resources on Thrift server Hive");
     }
   }

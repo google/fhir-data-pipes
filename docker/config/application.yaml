@@ -36,7 +36,6 @@ fhirdata:
   numThreads: -1
   createHiveResourceTables: true
   thriftserverHiveConfig: "config/thriftserver-hive-config_local.json"
-  hiveJdbcDriver: "org.apache.hive.jdbc.HiveDriver"
 # Enable spring boot actuator end points, use "*" to expose all endpoints, or a comma-separated
 # list to expose selected ones
 management:
