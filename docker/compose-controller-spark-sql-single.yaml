@@ -107,5 +107,5 @@ volumes:
 
 networks:
   cloudbuild:
-    external: true
+#    external: true
     name: cloudbuild # Needed for Continuous integration
