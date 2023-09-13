@@ -17,8 +17,6 @@ package com.google.fhir.analytics;
 
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableSet;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.time.Instant;
@@ -59,7 +57,7 @@ public class DataProperties {
   private static final String GET_PREFIX = "get";
 
   private static final Set<String> EXCLUDED_ARGS =
-      ImmutableSet.of("jobName", "optionsId", "stableUniqueNames", "userAgent");
+      Set.of("jobName", "optionsId", "stableUniqueNames", "userAgent");
 
   // TODO check if there is a better way to avoid this list; currently this is the list of all
   //   default annotations we use on pipeline options.
@@ -144,7 +142,7 @@ public class DataProperties {
 
     // Using underscore for suffix as hyphens are discouraged in hive table names.
     String timestampSuffix =
-        Instant.now().toString().replaceAll(":", "-").replaceAll("-", "_").replaceAll("\\.", "_");
+        Instant.now().toString().replace(":", "-").replace("-", "_").replace(".", "_");
     options.setOutputParquetPath(dwhRootPrefix + TIMESTAMP_PREFIX + timestampSuffix);
 
     // Get hold of thrift server parquet directory from dwhRootPrefix config.
@@ -167,7 +165,7 @@ public class DataProperties {
 
   List<ConfigFields> getConfigParams() {
     // TODO automate generation of this list.
-    return ImmutableList.of(
+    return List.of(
         new ConfigFields("fhirdata.fhirServerUrl", fhirServerUrl, "", ""),
         new ConfigFields("fhirdata.dwhRootPrefix", dwhRootPrefix, "", ""),
         new ConfigFields("fhirdata.incrementalSchedule", incrementalSchedule, "", ""),
@@ -236,9 +234,9 @@ public class DataProperties {
     }
 
     // We need to make these public as they need to be accessed when creating the UI model.
-    public String name;
-    public String value;
-    public String description;
-    public String def;
+    public final String name;
+    public final String value;
+    public final String description;
+    public final String def;
   }
 }

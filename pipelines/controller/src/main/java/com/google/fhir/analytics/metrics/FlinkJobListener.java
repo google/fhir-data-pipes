@@ -33,7 +33,7 @@ public class FlinkJobListener implements JobListener {
       return;
     }
 
-    logger.info("Submitting the job with ID toString {} ", this.toString());
+    logger.info("Submitting the job with ID {} ", this);
     FlinkPipelineMetrics.setJobClient(jobClient);
   }
 
@@ -41,7 +41,8 @@ public class FlinkJobListener implements JobListener {
   public void onJobExecuted(
       @Nullable JobExecutionResult jobExecutionResult, @Nullable Throwable throwable) {
 
-    if (throwable != null) {
+    // Exactly one of `jobExecutionResult` should be null according to the contract.
+    if (throwable != null || jobExecutionResult == null) {
       logger.error("Error while executing the job", throwable);
       return;
     }
