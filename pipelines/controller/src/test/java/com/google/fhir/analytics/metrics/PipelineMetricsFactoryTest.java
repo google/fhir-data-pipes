@@ -41,6 +41,8 @@ public class PipelineMetricsFactoryTest {
 
   @BeforeAll
   public static void setUp() throws IOException {
+    // We need to start a mock FHIR server on the specified port in application-test.properties as
+    // PipelineManager's @PostConstruct method validates FHIR server connection.
     mockFhirServer = new MockWebServer();
     mockFhirServer.start(9091);
     mockFhirServer.enqueue(MockUtil.getMockResponse("data/fhir-metadata-sample.json"));
