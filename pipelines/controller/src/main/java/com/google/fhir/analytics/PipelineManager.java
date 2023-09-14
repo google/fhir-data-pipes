@@ -572,8 +572,6 @@ public class PipelineManager implements ApplicationListener<ApplicationReadyEven
       }
     }
 
-    // TODO fix the potential race condition here; for example if the pipeline finishes
-    //   at the same time that a `POST /tables` request is being handled by the controller.
     private void createHiveResourceTables(
         List<String> resourceList, String timestampSuffix, String thriftServerParquetPath)
         throws IOException, SQLException {
