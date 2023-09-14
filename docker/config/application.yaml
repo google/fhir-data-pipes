@@ -28,12 +28,14 @@ fhirdata:
   incrementalSchedule: "0 0 * * * *"
   purgeSchedule: "0 30 * * * *"
   numOfDwhSnapshotsToRetain: 2
-  resourceList: "Patient,Encounter,Observation"
+  # There is no Questionnaire in our test FHIR server, but it is added to
+  # prevent regression of https://github.com/google/fhir-data-pipes/issues/785.
+  # TODO: add resource table creation to e2e tests.
+  resourceList: "Patient,Encounter,Observation,Questionnaire"
   maxWorkers: 1
   numThreads: -1
   createHiveResourceTables: true
   thriftserverHiveConfig: "config/thriftserver-hive-config_local.json"
-  hiveJdbcDriver: "org.apache.hive.jdbc.HiveDriver"
 # Enable spring boot actuator end points, use "*" to expose all endpoints, or a comma-separated
 # list to expose selected ones
 management:
