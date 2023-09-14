@@ -15,12 +15,14 @@
  */
 package com.google.fhir.analytics;
 
+import com.google.fhir.analytics.model.DatabaseConfiguration;
+import java.beans.PropertyVetoException;
 import java.sql.Connection;
-import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.List;
+import javax.sql.DataSource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -28,16 +30,21 @@ import org.slf4j.LoggerFactory;
 public class HiveTableManager {
 
   private static final Logger logger = LoggerFactory.getLogger(HiveTableManager.class.getName());
-  private final String jdbcUrl;
-  private final String user;
-  private final String password;
+
+  // We don't expect many Hive queries hence choosing a fixed/low number of connections.
+  private static final int CONNECTION_POOL_SIZE = 3;
+
+  private final DataSource dataSource;
 
   private static final String THRIFT_CONTAINER_PARQUET_DIR = "/dwh";
 
-  public HiveTableManager(String jdbcUrl, String user, String password) {
-    this.jdbcUrl = jdbcUrl;
-    this.user = user;
-    this.password = password;
+  public HiveTableManager(DatabaseConfiguration hiveDbConfig) throws PropertyVetoException {
+    this.dataSource =
+        JdbcConnectionPools.getInstance()
+            .getPooledDataSource(
+                JdbcConnectionPools.dbConfigToDataSourceConfig(hiveDbConfig),
+                CONNECTION_POOL_SIZE,
+                CONNECTION_POOL_SIZE);
   }
 
   /**
@@ -52,16 +59,14 @@ public class HiveTableManager {
    *     the THRIFT_CONTAINER_PARQUET_DIR directory.
    * @throws SQLException
    */
-  public void createResourceAndCanonicalTables(
+  public synchronized void createResourceAndCanonicalTables(
       List<String> resources, String timestamp, String thriftServerParquetPath)
       throws SQLException {
     if (resources == null || resources.isEmpty()) {
       return;
     }
 
-    // TODO: Make use of JdbcConnectionUtil to create jdbc connection
-    //  (https://github.com/google/fhir-data-pipes/issues/483)
-    try (Connection connection = DriverManager.getConnection(jdbcUrl)) {
+    try (Connection connection = dataSource.getConnection()) {
       for (String resource : resources) {
         createTablesForResource(connection, resource, timestamp, thriftServerParquetPath);
       }
@@ -76,7 +81,7 @@ public class HiveTableManager {
    * thriftServerParquetPath is the exact path for parquet files and resource shall be the
    * respective resource name e.g. Patient
    */
-  private void createTablesForResource(
+  private synchronized void createTablesForResource(
       Connection connection, String resource, String timestamp, String thriftServerParquetPath)
       throws SQLException {
 
@@ -101,7 +106,7 @@ public class HiveTableManager {
   public void showTables() throws SQLException {
     logger.info("List of Hive tables:");
     String sql = "SHOW TABLES;";
-    try (Connection connection = DriverManager.getConnection(jdbcUrl);
+    try (Connection connection = dataSource.getConnection();
         Statement statement = connection.createStatement();
         ResultSet resultSet = statement.executeQuery(sql)) {
       if (resultSet != null && resultSet.next()) {
