@@ -39,6 +39,7 @@ public class DatabaseConfiguration {
   private String databaseUser;
   private String databasePassword;
   private String databaseName;
+  private String databaseSchema;
 
   private LinkedHashMap<String, EventConfiguration> eventConfigurations;
 
@@ -55,10 +56,15 @@ public class DatabaseConfiguration {
     Preconditions.checkNotNull(getDatabaseHostName());
     Preconditions.checkNotNull(getDatabasePort());
     Preconditions.checkNotNull(getDatabaseName());
+
+    if(getDatabaseService() == null) {
+      setDatabaseService("public");
+    }
+
     return String.format(
         // For the TLS see: https://stackoverflow.com/questions/67332909
-        "jdbc:%s://%s:%s/%s?enabledTLSProtocols=TLSv1.2",
-        getDatabaseService(), getDatabaseHostName(), getDatabasePort(), getDatabaseName());
+        "jdbc:%s://%s:%s/%s?enabledTLSProtocols=TLSv1.2&currentSchema=%s",
+        getDatabaseService(), getDatabaseHostName(), getDatabasePort(), getDatabaseName(), getDatabaseSchema());
   }
 
   /**

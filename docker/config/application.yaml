@@ -21,14 +21,17 @@ fhirdata:
   # 172.17.0.1 is an example docker network interface ip address;
   # `hapi-server` is another docker example where a container with that name is
   # running on the same docker network.
-  # fhirServerUrl: "http://172.17.0.1:8091/fhir"
+  #fhirServerUrl: "http://hapi-server:8080/fhir"
   fhirServerUrl: "https://hub.openelis-global.org:5000/fhir"
+  fhirServerPassword: "pipeline"
+  fhirServerUserName: "pipeline"
+  #dbConfig: "config/hapi-postgres-config_local.json"
   dbConfig: "config/_config.json"
   dwhRootPrefix: "/dwh/controller_DWH"
   incrementalSchedule: "0 0 * * * *"
   purgeSchedule: "0 30 * * * *"
   numOfDwhSnapshotsToRetain: 2
-  resourceList: "Patient,Encounter,Observation,Task,ServiceRequest"
+  resourceList: "Patient,Encounter,Observation"
   maxWorkers: 1
   numThreads: -1
   createHiveResourceTables: true
