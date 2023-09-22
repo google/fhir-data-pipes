@@ -1,3 +1,11 @@
+**NOTE**: This is the old query library (and examples) which is in maintenance
+mode and will be deprecated in the future. The new approach (under development)
+is based on
+[FHIR-views](https://github.com/google/fhir-py/tree/main/google-fhir-views)
+and eventually
+[SQL-on-FHIR v2 spec](https://build.fhir.org/ig/FHIR/sql-on-fhir-v2/).
+Please see the [query](../query) directory for details of the new approach.
+
 # How to query the data warehouse
 
 This directory contains a [query library](query_lib.py) for easy querying of
