@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0
+    http://maven.apache.org/maven-v4_0_0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>org.openmrs.analytics</groupId>
+        <artifactId>root</artifactId>
+        <version>0.1.0-SNAPSHOT</version>
+    </parent>
+
+    <groupId>org.openmrs.analytics</groupId>
+    <artifactId>coverage</artifactId>
+    <name>coverage</name>
+    <description>Compute aggregated test code coverage</description>
+    <packaging>pom</packaging>
+
+    <properties>
+        <maven.deploy.skip>true</maven.deploy.skip>
+    </properties>
+
+    <dependencies>
+        <dependency>
+            <groupId>com.cerner.bunsen</groupId>
+            <artifactId>bunsen-avro</artifactId>
+            <version>0.5.14-SNAPSHOT</version>
+        </dependency>
+
+        <dependency>
+            <groupId>com.cerner.bunsen</groupId>
+            <artifactId>bunsen-core</artifactId>
+            <version>0.5.14-SNAPSHOT</version>
+        </dependency>
+
+        <dependency>
+            <groupId>com.cerner.bunsen</groupId>
+            <artifactId>bunsen-core-r4</artifactId>
+            <version>0.5.14-SNAPSHOT</version>
+        </dependency>
+
+        <dependency>
+            <groupId>com.cerner.bunsen</groupId>
+            <artifactId>bunsen-core-stu3</artifactId>
+            <version>0.5.14-SNAPSHOT</version>
+        </dependency>
+
+        <dependency>
+            <groupId>com.cerner.bunsen</groupId>
+            <artifactId>bunsen-uscore-resources</artifactId>
+            <version>0.5.14-SNAPSHOT</version>
+        </dependency>
+        <dependency>
+            <groupId>org.openmrs.analytics</groupId>
+            <artifactId>batch</artifactId>
+            <version>0.1.0-SNAPSHOT</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.openmrs.analytics</groupId>
+            <artifactId>common</artifactId>
+            <version>0.1.0-SNAPSHOT</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.openmrs.analytics</groupId>
+            <artifactId>controller</artifactId>
+            <version>0.1.0-SNAPSHOT</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.openmrs.analytics</groupId>
+            <artifactId>streaming</artifactId>
+            <version>0.1.0-SNAPSHOT</version>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.jacoco</groupId>
+                <artifactId>jacoco-maven-plugin</artifactId>
+                <version>0.8.5</version>
+                <executions>
+                    <execution>
+                        <id>report-aggregate</id>
+                        <phase>verify</phase>
+                        <goals>
+                            <goal>report-aggregate</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
+
+</project>
