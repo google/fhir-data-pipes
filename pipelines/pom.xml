@@ -285,26 +285,6 @@
           <artifactId>exec-maven-plugin</artifactId>
           <version>3.1.0</version>
         </plugin>
-        <plugin>
-          <!-- This is added for Codecov. -->
-          <groupId>org.jacoco</groupId>
-          <artifactId>jacoco-maven-plugin</artifactId>
-          <version>0.8.10</version>
-          <executions>
-            <execution>
-              <goals>
-                <goal>prepare-agent</goal>
-              </goals>
-            </execution>
-            <execution>
-              <id>report</id>
-              <goals>
-                <goal>report</goal>
-              </goals>
-              <phase>prepare-package</phase>
-            </execution>
-          </executions>
-        </plugin>
       </plugins>
     </pluginManagement>
 
@@ -328,10 +308,6 @@
         <configuration>
           <release>11</release>
         </configuration>
-      </plugin>
-      <plugin>
-        <groupId>org.jacoco</groupId>
-        <artifactId>jacoco-maven-plugin</artifactId>
       </plugin>
     </plugins>
   </build>
