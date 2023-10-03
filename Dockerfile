@@ -24,6 +24,7 @@ WORKDIR /app
 
 COPY ./bunsen ./bunsen
 COPY ./pipelines ./pipelines
+COPY ./coverage ./coverage
 COPY ./pom.xml ./pom.xml
 COPY ./utils ./utils
 
