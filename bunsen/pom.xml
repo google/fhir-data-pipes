@@ -28,16 +28,16 @@
     <compile.source>11</compile.source>
 
     <hapi.fhir.version>6.6.2</hapi.fhir.version>
-    <avro.version>1.11.2</avro.version>
+    <avro.version>1.11.3</avro.version>
     <junit.version>4.13.2</junit.version>
     <hamcrest.version>2.2</hamcrest.version>
     <scm.url>http://github.com/cerner/bunsen/tree/master/</scm.url>
     <scm.connection>scm:git:git@github.com/cerner/bunsen.git</scm.connection>
     <python.version>3.5.3</python.version>
-    <maven-javadoc.plugin.version>3.5.0</maven-javadoc.plugin.version>
+    <maven-javadoc.plugin.version>3.6.0</maven-javadoc.plugin.version>
     <maven-project-info-reports.plugin.version>3.4.5</maven-project-info-reports.plugin.version>
     <slf4j.version>2.0.9</slf4j.version>
-    <logback.version>1.4.8</logback.version>
+    <logback.version>1.4.11</logback.version>
   </properties>
 
   <modules>
@@ -204,7 +204,7 @@
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-shade-plugin</artifactId>
-          <version>3.5.0</version>
+          <version>3.5.1</version>
         </plugin>
 
         <plugin>
@@ -218,7 +218,7 @@
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-javadoc-plugin</artifactId>
-          <version>3.5.0</version>
+          <version>3.6.0</version>
         </plugin>
 
         <plugin>

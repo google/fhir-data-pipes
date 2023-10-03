@@ -24,6 +24,7 @@ import java.net.URI;
 import java.nio.file.DirectoryNotEmptyException;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
@@ -320,6 +321,16 @@ public class DwhFilesManager {
       throw new IllegalArgumentException(errorMessage);
     }
     return prefix;
+  }
+
+  List<String> findExistingResources(String dwhRoot) throws IOException {
+    Set<ResourceId> childPaths = getAllChildDirectories(dwhRoot);
+    Set<String> configuredSet =
+        new HashSet<>(Arrays.asList(dataProperties.getResourceList().split(",")));
+    return childPaths.stream()
+        .map(r -> r.getFilename())
+        .filter(r -> configuredSet.contains(r))
+        .collect(Collectors.toList());
   }
 
   /**

@@ -1,4 +1,5 @@
 {
+  "jdbcDriverClass" : "org.apache.hive.jdbc.HiveDriver",
   "databaseService" : "hive2",
   "databaseHostName" : "spark-thriftserver",
   "databasePort" : "10000",

@@ -85,8 +85,6 @@ public class DataProperties {
 
   private String thriftserverHiveConfig;
 
-  private String hiveJdbcDriver;
-
   private boolean createHiveResourceTables;
 
   private String fhirServerPassword;
@@ -94,7 +92,7 @@ public class DataProperties {
   private String fhirServerUserName;
 
   @PostConstruct
-  void validateProperties() throws ClassNotFoundException {
+  void validateProperties() {
     CronExpression.parse(incrementalSchedule);
 
     Preconditions.checkArgument(
@@ -110,16 +108,6 @@ public class DataProperties {
       // This should always be true because of the first Precondition.
       Preconditions.checkArgument(!Strings.isNullOrEmpty(fhirServerUrl));
       logger.info("Using FHIR-search mode since dbConfig is not set.");
-    }
-
-    if (createHiveResourceTables) {
-      try {
-        Class.forName(hiveJdbcDriver);
-      } catch (ClassNotFoundException e) {
-        String hiveJdbcDriverError = "Unable to locate Hive JDBC driver: " + hiveJdbcDriver;
-        logger.error(hiveJdbcDriverError);
-        throw new ClassNotFoundException(hiveJdbcDriverError);
-      }
     }
   }
 

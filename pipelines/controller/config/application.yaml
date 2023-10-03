@@ -41,7 +41,11 @@ fhirdata:
   # "/<baseDirPath>/<prefix>" and can be absolute or relative. <baseDirPath>
   # is required for *nix, and must contain 1 or more directory names.
   # dwhRootPrefix: "gs://fhir-test-analytics/config/controller_DWH_ORIG"
-  dwhRootPrefix: "config/controller_DWH_ORIG"
+  #
+  # Note for developers: You can make a symlink of `[repo_root]/docker/dwh` here
+  # such that the Thrift Server of `compose-controller-spark-sql-single.yaml`
+  # config can easily be used in dev env. too.
+  dwhRootPrefix: "dwh/controller_DWH_DEV"
 
   # The schedule for automatic incremental pipeline runs.
   # Uses the Spring CronExpression format, i.e.,
@@ -63,7 +67,9 @@ fhirdata:
 
   # The comma-separated list of FHIR resources to fetch/monitor.
   # Equivalent to pipeline `resourceList` parameter.
-  resourceList: "Patient,Encounter,Observation"
+  # Note there is no Questionnaire in our test FHIR server, but it is okay; see
+  # https://github.com/google/fhir-data-pipes/issues/785.
+  resourceList: "Patient,Encounter,Observation,Questionnaire"
 
   # The maximum number of Flink workers to use. Each worker may have 
   # `numThreads` parallel threads.
@@ -75,14 +81,11 @@ fhirdata:
 
   # Whether resource tables should be automatically created on a
   # Hive/Spark server. Primarily meant for single-machine deployment.
-  createHiveResourceTables: false
+  createHiveResourceTables: true
 
   # Path to a file with the settings used to create tables.
   # Required if createHiveResourceTables is `true`.
   thriftserverHiveConfig: "config/thriftserver-hive-config.json"
-
-  # The JDBC driver to use when creating tables.
-  hiveJdbcDriver: "org.apache.hive.jdbc.HiveDriver"
 
 # Enable spring boot actuator end points, use "*" to expose all endpoints, or a comma-separated
 # list to expose selected ones
