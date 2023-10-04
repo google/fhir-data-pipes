@@ -29,9 +29,44 @@
     <module>pipelines</module>
   </modules>
 
+  <properties>
+    <!-- Sonar configuration -->
+    <sonar.java.coveragePlugin>jacoco</sonar.java.coveragePlugin>
+    <sonar.dynamicAnalysis>reuseReports</sonar.dynamicAnalysis>
+    <sonar.jacoco.reportPath>${project.basedir}/target/jacoco.exec
+    </sonar.jacoco.reportPath>
+    <sonar.language>java</sonar.language>
+    <sonar.host.url>http://localhost:9000</sonar.host.url>
+    <sonar.projectName>fhir-data-pipes</sonar.projectName>
+    <sonar.login>admin</sonar.login>
+    <sonar.password>admin</sonar.password>
+    <sonar.java.binaries>target/classes</sonar.java.binaries>
+  </properties>
+
   <build>
     <pluginManagement>
       <plugins>
+        <plugin>
+          <!-- for code coverage -->
+          <groupId>org.jacoco</groupId>
+          <artifactId>jacoco-maven-plugin</artifactId>
+          <version>0.8.10</version>
+          <executions>
+            <execution>
+              <goals>
+                <goal>prepare-agent</goal>
+              </goals>
+            </execution>
+            <execution>
+              <id>report</id>
+              <goals>
+                <goal>report</goal>
+              </goals>
+              <phase>prepare-package</phase>
+            </execution>
+          </executions>
+        </plugin>
+
         <!-- Code formatter -->
         <plugin>
           <groupId>com.diffplug.spotless</groupId>
@@ -115,6 +150,13 @@
         </plugin>
       </plugins>
     </pluginManagement>
+
+    <plugins>
+      <plugin>
+        <groupId>org.jacoco</groupId>
+        <artifactId>jacoco-maven-plugin</artifactId>
+      </plugin>
+    </plugins>
 
   </build>
 

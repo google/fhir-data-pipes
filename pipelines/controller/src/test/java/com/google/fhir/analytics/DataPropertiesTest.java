@@ -17,8 +17,8 @@ package com.google.fhir.analytics;
 
 import java.io.IOException;
 import okhttp3.mockwebserver.MockWebServer;
-import org.junit.Assert;
 import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -46,17 +46,17 @@ public class DataPropertiesTest {
   @Test
   void outputParquetFilePath_has_allUnderscores() {
     PipelineConfig pipelineConfig = dataProperties.createBatchOptions();
-    Assert.assertEquals(pipelineConfig.getThriftServerParquetPath().indexOf(":"), -1);
-    Assert.assertEquals(pipelineConfig.getThriftServerParquetPath().indexOf("-"), -1);
-    Assert.assertEquals(pipelineConfig.getThriftServerParquetPath().indexOf("."), -1);
-    Assert.assertNotEquals(pipelineConfig.getThriftServerParquetPath().indexOf("_"), -1);
+    Assertions.assertEquals(pipelineConfig.getThriftServerParquetPath().indexOf(":"), -1);
+    Assertions.assertEquals(pipelineConfig.getThriftServerParquetPath().indexOf("-"), -1);
+    Assertions.assertEquals(pipelineConfig.getThriftServerParquetPath().indexOf("."), -1);
+    Assertions.assertNotEquals(pipelineConfig.getThriftServerParquetPath().indexOf("_"), -1);
   }
 
   @Test
   void outputParquetFilePath_has_rightTimestampSuffix() {
     PipelineConfig pipelineConfig = dataProperties.createBatchOptions();
     String timestampSuffix = pipelineConfig.getTimestampSuffix();
-    Assert.assertTrue(
+    Assertions.assertTrue(
         pipelineConfig.getFhirEtlOptions().getOutputParquetPath().contains(timestampSuffix));
   }
 
@@ -64,14 +64,14 @@ public class DataPropertiesTest {
   void thriftServerParquetFilePath_has_rightTimestampSuffix() {
     PipelineConfig pipelineConfig = dataProperties.createBatchOptions();
     String timestampSuffix = pipelineConfig.getTimestampSuffix();
-    Assert.assertTrue(pipelineConfig.getThriftServerParquetPath().contains(timestampSuffix));
+    Assertions.assertTrue(pipelineConfig.getThriftServerParquetPath().contains(timestampSuffix));
   }
 
   @Test
   void fhirCredentials_are_set() {
     PipelineConfig pipelineConfig = dataProperties.createBatchOptions();
-    Assert.assertEquals(pipelineConfig.getFhirEtlOptions().getFhirServerPassword(), "Admin123");
-    Assert.assertEquals(pipelineConfig.getFhirEtlOptions().getFhirServerUserName(), "Admin");
+    Assertions.assertEquals("Admin123", pipelineConfig.getFhirEtlOptions().getFhirServerPassword());
+    Assertions.assertEquals("Admin", pipelineConfig.getFhirEtlOptions().getFhirServerUserName());
   }
 
   @AfterAll

@@ -24,7 +24,6 @@ import org.springframework.context.annotation.Configuration;
 public class AppConfig {
   @Bean
   public MeterRegistry getMeterRegistry() {
-    MeterRegistry meterRegistry = new CompositeMeterRegistry();
-    return meterRegistry;
+    return new CompositeMeterRegistry();
   }
 }
