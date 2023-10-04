@@ -27,6 +27,7 @@
   <modules>
     <module>bunsen</module>
     <module>pipelines</module>
+    <module>coverage</module>
   </modules>
 
   <build>
