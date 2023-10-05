@@ -40,14 +40,13 @@ public class PipelineMetricsFactory {
    */
   @Nullable
   public PipelineMetrics getPipelineMetrics(Class<? extends PipelineRunner> pipelineRunner) {
-    switch (pipelineRunner.getSimpleName()) {
-      case FLINK_RUNNER:
-        return flinkPipelineMetrics;
-      default:
-        logger.warn(
-            "Metrics is not supported for the pipeline runner {}",
-            pipelineRunner.getClass().getSimpleName());
-        return null;
+    if (FLINK_RUNNER.equals(pipelineRunner.getSimpleName())) {
+      return flinkPipelineMetrics;
+    } else {
+      logger.warn(
+          "Metrics is not supported for the pipeline runner {}",
+          pipelineRunner.getClass().getSimpleName());
+      return null;
     }
   }
 }

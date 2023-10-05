@@ -170,17 +170,16 @@ public class PipelineManager implements ApplicationListener<ApplicationReadyEven
               .filter(dir -> dir.getFilename().startsWith(prefix))
               .collect(Collectors.toList());
 
-      Preconditions.checkState(paths != null, "Make sure DWH prefix is a valid path!");
-
       for (ResourceId path : paths) {
         if (!path.getFilename().startsWith(prefix + DataProperties.TIMESTAMP_PREFIX)) {
           // This is not necessarily an error; the user may want to bootstrap from an already
           // created DWH outside the control-panel framework, e.g., by running the batch pipeline
           // directly.
           logger.warn(
-              "DWH directory {} does not start with {}",
+              "DWH directory {} does not start with {}{}",
               paths,
-              prefix + DataProperties.TIMESTAMP_PREFIX);
+              prefix,
+              DataProperties.TIMESTAMP_PREFIX);
         }
         if (lastDwh.isEmpty() || lastDwh.compareTo(path.getFilename()) < 0) {
           logger.debug("Found a more recent DWH {}", path.getFilename());
@@ -196,6 +195,7 @@ public class PipelineManager implements ApplicationListener<ApplicationReadyEven
         }
       }
     } catch (IOException e) {
+      logger.error("IOException while initializing DWH: ", e);
       throw new RuntimeException(e);
     }
     if (lastCompletedDwh.isEmpty()) {
@@ -233,7 +233,7 @@ public class PipelineManager implements ApplicationListener<ApplicationReadyEven
       // In case of no incremental run, the status is set based on the dwhDirectory snapshot.
       updateLastRunDetails(dwhDirectoryPath);
     } catch (IOException e) {
-      logger.error("Error while initialising last run details", e);
+      logger.error("IOException while initialising last run details ", e);
       throw new RuntimeException(e);
     }
   }
@@ -251,7 +251,7 @@ public class PipelineManager implements ApplicationListener<ApplicationReadyEven
    * to detect any mis-configurations earlier enough and avoid failures during pipeline runs.
    */
   void validateFhirSourceConfiguration(FhirEtlOptions options) {
-    if (options.isJdbcModeHapi()) {
+    if (Boolean.TRUE.equals(options.isJdbcModeHapi())) {
       validateDbConfigParameters(options.getFhirDatabaseConfigPath());
     } else if (!Strings.isNullOrEmpty(options.getFhirServerUrl())) {
       validateFhirSearchParameters(options);
