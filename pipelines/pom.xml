@@ -51,7 +51,7 @@
     <openmrsPlatformVersion>2.6.0-SNAPSHOT</openmrsPlatformVersion>
     <mockito.version>5.2.0</mockito.version>
     <jcommander.version>1.82</jcommander.version>
-    <license-maven-plugin.version>4.2</license-maven-plugin.version>
+    <license-maven-plugin.version>4.3</license-maven-plugin.version>
     <beam.version>2.49.0</beam.version>
     <auto-value.version>1.10.4</auto-value.version>
   </properties>
@@ -126,7 +126,7 @@
     <dependency>
       <groupId>org.projectlombok</groupId>
       <artifactId>lombok</artifactId>
-      <version>1.18.28</version>
+      <version>1.18.30</version>
     </dependency>
 
     <dependency>
@@ -199,7 +199,7 @@
          -->
         <plugin>
           <artifactId>maven-shade-plugin</artifactId>
-          <version>3.5.0</version>
+          <version>3.5.1</version>
         </plugin>
         <plugin>
           <artifactId>maven-jar-plugin</artifactId>
@@ -285,26 +285,6 @@
           <artifactId>exec-maven-plugin</artifactId>
           <version>3.1.0</version>
         </plugin>
-        <plugin>
-          <!-- This is added for Codecov. -->
-          <groupId>org.jacoco</groupId>
-          <artifactId>jacoco-maven-plugin</artifactId>
-          <version>0.8.10</version>
-          <executions>
-            <execution>
-              <goals>
-                <goal>prepare-agent</goal>
-              </goals>
-            </execution>
-            <execution>
-              <id>report</id>
-              <goals>
-                <goal>report</goal>
-              </goals>
-              <phase>prepare-package</phase>
-            </execution>
-          </executions>
-        </plugin>
       </plugins>
     </pluginManagement>
 
@@ -328,10 +308,6 @@
         <configuration>
           <release>11</release>
         </configuration>
-      </plugin>
-      <plugin>
-        <groupId>org.jacoco</groupId>
-        <artifactId>jacoco-maven-plugin</artifactId>
       </plugin>
     </plugins>
   </build>

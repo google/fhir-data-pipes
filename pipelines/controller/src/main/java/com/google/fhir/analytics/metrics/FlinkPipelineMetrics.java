@@ -35,7 +35,7 @@ public class FlinkPipelineMetrics implements PipelineMetrics {
 
   private static final Logger logger = LoggerFactory.getLogger(FlinkPipelineMetrics.class);
 
-  private static volatile JobClient jobClient;
+  private static JobClient jobClient;
 
   /**
    * This method returns the MetricQueryResults for the currently running pipeline. The current
@@ -45,7 +45,7 @@ public class FlinkPipelineMetrics implements PipelineMetrics {
    * @return MetricQueryResults
    */
   @Override
-  public MetricQueryResults getMetricQueryResults() {
+  public synchronized MetricQueryResults getMetricQueryResults() {
     if (jobClient == null) {
       return getEmptyMetricQueryResults();
     }
@@ -71,7 +71,8 @@ public class FlinkPipelineMetrics implements PipelineMetrics {
                 .build());
       }
     } catch (InterruptedException | ExecutionException e) {
-      throw new RuntimeException(e);
+      logger.error("Caught an exception; interrupting! ", e);
+      Thread.currentThread().interrupt();
     }
     return getEmptyMetricQueryResults();
   }

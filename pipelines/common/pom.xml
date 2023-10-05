@@ -61,7 +61,7 @@
     <dependency>
       <groupId>com.google.apis</groupId>
       <artifactId>google-api-services-healthcare</artifactId>
-      <version>v1-rev20230830-2.0.0</version>
+      <version>v1-rev20230921-2.0.0</version>
     </dependency>
 
     <dependency>
@@ -99,7 +99,7 @@
     <dependency>
       <groupId>org.apache.avro</groupId>
       <artifactId>avro</artifactId>
-      <version>1.11.2</version>
+      <version>1.11.3</version>
     </dependency>
 
     <dependency>

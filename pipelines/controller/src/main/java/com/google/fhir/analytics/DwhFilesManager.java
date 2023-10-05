@@ -255,10 +255,7 @@ public class DwhFilesManager {
         dwhResource.resolve(DwhFiles.TIMESTAMP_FILE_START, StandardResolveOptions.RESOLVE_FILE);
     ResourceId endTimestampResource =
         dwhResource.resolve(DwhFiles.TIMESTAMP_FILE_END, StandardResolveOptions.RESOLVE_FILE);
-    if (doesFileExist(startTimestampResource) && doesFileExist(endTimestampResource)) {
-      return true;
-    }
-    return false;
+    return (doesFileExist(startTimestampResource) && doesFileExist(endTimestampResource));
   }
 
   private boolean doesFileExist(ResourceId resourceId) throws IOException {
@@ -344,6 +341,7 @@ public class DwhFilesManager {
    * @throws IOException
    */
   Set<ResourceId> getAllChildDirectories(String baseDir) throws IOException {
+    // TODO avoid using `/` in resolve.
     ResourceId resourceId =
         FileSystems.matchNewResource(baseDir, true)
             .resolve("*/*", StandardResolveOptions.RESOLVE_FILE);

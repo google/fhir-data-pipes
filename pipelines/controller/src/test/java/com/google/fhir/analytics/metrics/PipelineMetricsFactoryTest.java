@@ -50,13 +50,13 @@ public class PipelineMetricsFactoryTest {
   }
 
   @Test
-  public void testFlinkRunner() {
+  void testFlinkRunner() {
     PipelineMetrics pipelineMetrics = pipelineMetricsFactory.getPipelineMetrics(FlinkRunner.class);
     MatcherAssert.assertThat(pipelineMetrics, Matchers.instanceOf(FlinkPipelineMetrics.class));
   }
 
   @Test
-  public void testDirectRunner() {
+  void testDirectRunner() {
     PipelineMetrics pipelineMetrics = pipelineMetricsFactory.getPipelineMetrics(DirectRunner.class);
     MatcherAssert.assertThat(pipelineMetrics, Matchers.nullValue());
   }

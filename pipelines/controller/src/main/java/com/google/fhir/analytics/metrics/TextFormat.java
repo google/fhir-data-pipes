@@ -23,6 +23,9 @@ import java.util.Enumeration;
 
 class TextFormat {
 
+  // This class is not expected to be instantiated.
+  private TextFormat() {}
+
   /** Content-type for Data Pipes text version 0.0.1. */
   public static final String CONTENT_TYPE_001 = "text/plain; version=0.0.1; charset=utf-8";
 
@@ -35,7 +38,7 @@ class TextFormat {
       Collector.MetricFamilySamples metricFamilySamples = mfs.nextElement();
       for (Collector.MetricFamilySamples.Sample sample : metricFamilySamples.samples) {
         writer.write(sample.name);
-        if (sample.labelNames.size() > 0) {
+        if (!sample.labelNames.isEmpty()) {
           writer.write('{');
           for (int i = 0; i < sample.labelNames.size(); ++i) {
             writer.write(sample.labelNames.get(i));
