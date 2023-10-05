@@ -18,7 +18,7 @@
 # We need to use the 3.10 version because google-fhir-views requirest <3.11.
 FROM jupyter/scipy-notebook:python-3.10
 
-COPY --chown=jovyan:users using_fhir_views.ipynb .
+COPY --chown=jovyan:users queries_and_views.ipynb .
 COPY --chown=jovyan:users requirements.txt .
 
 RUN pip install -r requirements.txt
