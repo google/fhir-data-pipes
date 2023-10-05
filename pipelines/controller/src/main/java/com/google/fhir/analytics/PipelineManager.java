@@ -32,10 +32,11 @@ import java.time.LocalDateTime;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
-import java.util.concurrent.Executor;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.stream.Collectors;
 import javax.annotation.PostConstruct;
+import javax.annotation.PreDestroy;
 import lombok.Data;
 import org.apache.beam.runners.flink.FlinkPipelineOptions;
 import org.apache.beam.runners.flink.FlinkRunner;
@@ -78,7 +79,7 @@ public class PipelineManager implements ApplicationListener<ApplicationReadyEven
 
   @Autowired private MeterRegistry meterRegistry;
 
-  private Executor executor;
+  private ExecutorService executor;
 
   private HiveTableManager hiveTableManager;
 
@@ -638,6 +639,14 @@ public class PipelineManager implements ApplicationListener<ApplicationReadyEven
     } catch (IOException e) {
       logger.error("Error in reading timestamp files", e);
       throw new RuntimeException(e);
+    }
+  }
+
+  /** Release resources before destroying the instance of the class */
+  @PreDestroy
+  private void destroy() {
+    if (executor != null) {
+      executor.shutdown();
     }
   }
 

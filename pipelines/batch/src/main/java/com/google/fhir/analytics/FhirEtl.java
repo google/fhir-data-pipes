@@ -35,7 +35,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.Executor;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import javax.sql.DataSource;
 import org.apache.beam.sdk.Pipeline;
@@ -347,8 +347,10 @@ public class FhirEtl {
     if (foundResource) { // Otherwise, there is nothing to be done!
       PipelineMetrics pipelineMetrics =
           PipelineMetricsFactory.getPipelineMetrics(options.getRunner());
-      pipelineMetrics.clearAllMetrics();
-      pipelineMetrics.setTotalNoOfResources(totalNoOfResources);
+      if (pipelineMetrics != null) {
+        pipelineMetrics.clearAllMetrics();
+        pipelineMetrics.setTotalNoOfResources(totalNoOfResources);
+      }
       return pipelines;
     }
     return null;
@@ -418,8 +420,15 @@ public class FhirEtl {
 
     List<Pipeline> pipelines = buildPipelines(options);
     if (pipelines != null && !pipelines.isEmpty()) {
-      Executor executor = Executors.newFixedThreadPool(2);
-      EtlUtils.runMultiplePipelinesWithTimestamp(pipelines, options, executor);
+      ExecutorService executor = null;
+      try {
+        executor = Executors.newFixedThreadPool(2);
+        EtlUtils.runMultiplePipelinesWithTimestamp(pipelines, options, executor);
+      } finally {
+        if (executor != null) {
+          executor.shutdown();
+        }
+      }
     } else {
       log.warn("No pipeline to run!");
     }
