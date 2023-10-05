@@ -15,14 +15,22 @@
  */
 package com.google.fhir.analytics.metrics;
 
-import org.apache.beam.sdk.metrics.MetricQueryResults;
-
 public interface PipelineMetrics {
 
   /**
-   * Fetch the MetricQueryResults object for the currently running pipeline.
+   * Fetch the CumulativeMetrics object for the currently running batch of pipelines.
    *
-   * @return MetricQueryResults
+   * @return CumulativeMetrics total metrics of the currently running pipeline
    */
-  MetricQueryResults getMetricQueryResults();
+  CumulativeMetrics getCumulativeMetricsForOngoingBatch();
+
+  /** Clears all the metrics */
+  void clearAllMetrics();
+
+  /**
+   * Sets the total number of resources
+   *
+   * @param totalNoOfResources
+   */
+  void setTotalNoOfResources(long totalNoOfResources);
 }

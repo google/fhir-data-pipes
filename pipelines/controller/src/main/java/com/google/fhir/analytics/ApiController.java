@@ -15,6 +15,7 @@
  */
 package com.google.fhir.analytics;
 
+import com.google.fhir.analytics.metrics.CumulativeMetrics;
 import com.google.fhir.analytics.metrics.ProgressStats;
 import com.google.fhir.analytics.metrics.Stats;
 import java.io.IOException;
@@ -24,7 +25,6 @@ import java.nio.channels.ReadableByteChannel;
 import java.util.Arrays;
 import org.apache.beam.sdk.io.FileSystems;
 import org.apache.beam.sdk.io.fs.ResourceId;
-import org.apache.beam.sdk.metrics.MetricQueryResults;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -92,8 +92,8 @@ public class ApiController {
   }
 
   private Stats getStats() {
-    MetricQueryResults metricQueryResults = pipelineManager.getMetricQueryResults();
-    return Stats.createStats(metricQueryResults);
+    CumulativeMetrics cumulativeMetrics = pipelineManager.getCumulativeMetrics();
+    return Stats.createStats(cumulativeMetrics);
   }
 
   @GetMapping(

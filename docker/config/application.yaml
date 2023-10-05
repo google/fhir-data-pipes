@@ -34,6 +34,7 @@ fhirdata:
   resourceList: "Patient,Encounter,Observation,Questionnaire"
   maxWorkers: 1
   numThreads: -1
+  maxParallelPipelineStreams: 2
   createHiveResourceTables: true
   thriftserverHiveConfig: "config/thriftserver-hive-config_local.json"
 # Enable spring boot actuator end points, use "*" to expose all endpoints, or a comma-separated

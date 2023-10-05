@@ -22,15 +22,21 @@ import com.google.common.base.Strings;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
+import com.google.fhir.analytics.metrics.PipelineMetrics;
+import com.google.fhir.analytics.metrics.PipelineMetricsFactory;
 import com.google.fhir.analytics.model.DatabaseConfiguration;
 import java.beans.PropertyVetoException;
 import java.io.IOException;
 import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.Executor;
+import java.util.concurrent.Executors;
 import javax.sql.DataSource;
 import org.apache.beam.sdk.Pipeline;
 import org.apache.beam.sdk.coders.CannotProvideCoderException;
@@ -122,7 +128,8 @@ public class FhirEtl {
     }
   }
 
-  private static Pipeline buildFhirSearchPipeline(FhirEtlOptions options, FhirContext fhirContext) {
+  private static List<Pipeline> buildFhirSearchPipeline(
+      FhirEtlOptions options, FhirContext fhirContext) {
     FhirSearchUtil fhirSearchUtil = createFhirSearchUtil(options, fhirContext);
     Map<String, List<SearchSegmentDescriptor>> segmentMap = Maps.newHashMap();
     try {
@@ -155,7 +162,7 @@ public class FhirEtl {
       fetchPatientHistory(
           pipeline, allPatientIds, patientAssociatedResources, options, fhirContext);
     }
-    return pipeline;
+    return Arrays.asList(pipeline);
   }
 
   private static DataSource createJdbcPooledDataSource(
@@ -167,12 +174,15 @@ public class FhirEtl {
             options.getJdbcMaxPoolSize());
   }
 
-  private static Pipeline buildOpenmrsJdbcPipeline(FhirEtlOptions options, FhirContext fhirContext)
+  private static List<Pipeline> buildOpenmrsJdbcPipeline(
+      FhirEtlOptions options, FhirContext fhirContext)
       throws PropertyVetoException, IOException, SQLException {
     // TODO add incremental support.
     Preconditions.checkArgument(Strings.isNullOrEmpty(options.getSince()));
     FhirSearchUtil fhirSearchUtil = createFhirSearchUtil(options, fhirContext);
+    List<Pipeline> pipelines = new ArrayList<>();
     Pipeline pipeline = Pipeline.create(options);
+    pipelines.add(pipeline);
     DatabaseConfiguration dbConfig =
         DatabaseConfiguration.createConfigFromFile(options.getFhirDatabaseConfigPath());
     DataSource jdbcSource = createJdbcPooledDataSource(options, dbConfig);
@@ -224,7 +234,7 @@ public class FhirEtl {
       fetchPatientHistory(
           pipeline, allPatientIds, patientAssociatedResources, options, fhirContext);
     }
-    return pipeline;
+    return pipelines;
   }
 
   private static void validateOptions(FhirEtlOptions options)
@@ -270,26 +280,29 @@ public class FhirEtl {
   }
 
   // TODO: Implement active period feature for JDBC mode with a HAPI source server (issue #278).
-  private static Pipeline buildHapiJdbcPipeline(FhirEtlOptions options)
+  private static List<Pipeline> buildHapiJdbcPipeline(FhirEtlOptions options)
       throws PropertyVetoException, SQLException, IOException {
     Preconditions.checkArgument(!Strings.isNullOrEmpty(options.getFhirDatabaseConfigPath()));
     DatabaseConfiguration dbConfig =
         DatabaseConfiguration.createConfigFromFile(options.getFhirDatabaseConfigPath());
     boolean foundResource = false;
-    Pipeline pipeline = Pipeline.create(options);
     DataSource jdbcSource = createJdbcPooledDataSource(options, dbConfig);
 
     JdbcFetchHapi jdbcFetchHapi = new JdbcFetchHapi(jdbcSource);
     Map<String, Integer> resourceCount =
         jdbcFetchHapi.searchResourceCounts(options.getResourceList(), options.getSince());
 
+    List<Pipeline> pipelines = new ArrayList<>();
+    long totalNoOfResources = 0l;
     for (String resourceType : options.getResourceList().split(",")) {
       int numResources = resourceCount.get(resourceType);
       if (numResources == 0) {
         continue;
       }
 
+      totalNoOfResources += numResources;
       foundResource = true;
+      Pipeline pipeline = Pipeline.create(options);
       PCollection<QueryParameterDescriptor> queryParameters =
           pipeline
               .apply(
@@ -328,15 +341,20 @@ public class FhirEtl {
       payload.apply(
           "Convert to parquet for " + resourceType,
           ParDo.of(new ConvertResourceFn(options, "ConvertResourceFn")));
+      pipelines.add(pipeline);
     }
 
     if (foundResource) { // Otherwise, there is nothing to be done!
-      return pipeline;
+      PipelineMetrics pipelineMetrics =
+          PipelineMetricsFactory.getPipelineMetrics(options.getRunner());
+      pipelineMetrics.clearAllMetrics();
+      pipelineMetrics.setTotalNoOfResources(totalNoOfResources);
+      return pipelines;
     }
     return null;
   }
 
-  private static Pipeline buildJsonReadPipeline(FhirEtlOptions options) throws IOException {
+  private static List<Pipeline> buildJsonReadPipeline(FhirEtlOptions options) throws IOException {
     Preconditions.checkArgument(Strings.isNullOrEmpty(options.getSince()));
     Preconditions.checkArgument(!options.getSourceJsonFilePattern().isEmpty());
     Preconditions.checkArgument(!options.isJdbcModeEnabled());
@@ -349,7 +367,7 @@ public class FhirEtl {
             .apply(FileIO.readMatches());
     files.apply("Read JSON files", ParDo.of(new ReadJsonFilesFn(options)));
 
-    return pipeline;
+    return Arrays.asList(pipeline);
   }
 
   /**
@@ -370,7 +388,7 @@ public class FhirEtl {
    * @param options the pipeline options to be used.
    * @return the created Pipeline instance or null if nothing needs to be done.
    */
-  static Pipeline buildPipeline(FhirEtlOptions options)
+  static List<Pipeline> buildPipelines(FhirEtlOptions options)
       throws PropertyVetoException, IOException, SQLException {
     FhirContext fhirContext = FhirContexts.forR4();
     if (options.isJdbcModeHapi()) {
@@ -398,9 +416,10 @@ public class FhirEtl {
       JdbcResourceWriter.createTables(options);
     }
 
-    Pipeline pipeline = buildPipeline(options);
-    if (pipeline != null) {
-      EtlUtils.runPipelineWithTimestamp(pipeline, options);
+    List<Pipeline> pipelines = buildPipelines(options);
+    if (pipelines != null && !pipelines.isEmpty()) {
+      Executor executor = Executors.newFixedThreadPool(2);
+      EtlUtils.runMultiplePipelinesWithTimestamp(pipelines, options, executor);
     } else {
       log.warn("No pipeline to run!");
     }

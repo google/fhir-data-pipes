@@ -21,9 +21,13 @@ import com.cerner.bunsen.FhirContexts;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Sets;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Set;
+import java.util.concurrent.Executor;
+import java.util.concurrent.Executors;
 import org.apache.avro.generic.GenericRecord;
 import org.apache.beam.sdk.Pipeline;
 import org.apache.beam.sdk.coders.AvroCoder;
@@ -152,7 +156,7 @@ public class ParquetMerger {
     return lastRecord;
   }
 
-  static Pipeline createMergerPipeline(ParquetMergerOptions options, FhirContext fhirContext)
+  static List<Pipeline> createMergerPipelines(ParquetMergerOptions options, FhirContext fhirContext)
       throws IOException {
     Preconditions.checkArgument(!options.getDwh1().isEmpty());
     Preconditions.checkArgument(!options.getDwh2().isEmpty());
@@ -179,11 +183,13 @@ public class ParquetMerger {
     for (String resourceType : Sets.difference(resourceTypes2, resourceTypes1)) {
       dwhFiles2.copyResourcesToDwh(resourceType, mergedDwhFiles);
     }
-    Pipeline pipeline = Pipeline.create(options);
+    List<Pipeline> pipelines = new ArrayList<>();
     for (String type : resourceTypes1) {
       if (!resourceTypes2.contains(type)) {
         continue;
       }
+      Pipeline pipeline = Pipeline.create(options);
+      pipelines.add(pipeline);
       log.info("Merging resource type {}", type);
       PCollection<KV<String, GenericRecord>> firstKVs = readAndMapToId(pipeline, dwhFiles1, type);
       PCollection<KV<String, GenericRecord>> secondKVs = readAndMapToId(pipeline, dwhFiles2, type);
@@ -222,7 +228,7 @@ public class ParquetMerger {
               //   happens for TextIO. We should investigate this further and possibly file a bug.
               .withNumShards(options.getNumShards()));
     }
-    return pipeline;
+    return pipelines;
   }
 
   public static void main(String[] args) throws IOException {
@@ -239,8 +245,13 @@ public class ParquetMerger {
       throw new IllegalArgumentException("All of --dwh1, --dwh2, and --mergedDwh should be set!");
     }
 
-    Pipeline pipeline = createMergerPipeline(options, fhirContext);
-    EtlUtils.runMergerPipelineWithTimestamp(pipeline, options);
+    List<Pipeline> pipelines = createMergerPipelines(options, fhirContext);
+    if (pipelines != null && !pipelines.isEmpty()) {
+      Executor executor = Executors.newFixedThreadPool(2);
+      EtlUtils.runMultipleMergerPipelinesWithTimestamp(pipelines, options, executor);
+    } else {
+      log.warn("No pipeline to run");
+    }
 
     log.info("DONE!");
   }

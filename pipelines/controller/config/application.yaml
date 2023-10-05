@@ -79,6 +79,11 @@ fhirdata:
   # Otherwise, the number of threads is equal to the number of cores.
   numThreads: -1
 
+  # In the batch/incremental runs, a separate beam pipeline is created for every
+  # FHIR resource type. This parameter defines the maximum number of beam
+  # pipelines that should be executed in parallel.
+  maxParallelPipelineStreams: 2
+
   # Whether resource tables should be automatically created on a
   # Hive/Spark server. Primarily meant for single-machine deployment.
   createHiveResourceTables: true
