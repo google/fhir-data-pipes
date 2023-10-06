@@ -1,7 +1,7 @@
 # Query FHIR Data and Views
 This directory contains our new (under development) approach for querying
-transformed FHIR data which is replacing the [old approach](../dwh). The new
-approach is currently based on pure SQL queries but will gradually move to
+transformed FHIR data. The new approach is currently based on pure SQL queries
+but will gradually move to
 [FHIR-views](https://github.com/google/fhir-py/tree/main/google-fhir-views)
 and eventually
 [SQL-on-FHIR v2 spec](https://build.fhir.org/ig/FHIR/sql-on-fhir-v2/).
