@@ -35,8 +35,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import javax.sql.DataSource;
 import org.apache.beam.sdk.Pipeline;
 import org.apache.beam.sdk.coders.CannotProvideCoderException;
@@ -419,20 +417,7 @@ public class FhirEtl {
     }
 
     List<Pipeline> pipelines = buildPipelines(options);
-    if (pipelines != null && !pipelines.isEmpty()) {
-      ExecutorService executor = null;
-      try {
-        executor = Executors.newFixedThreadPool(2);
-        EtlUtils.runMultiplePipelinesWithTimestamp(pipelines, options, executor);
-      } finally {
-        if (executor != null) {
-          executor.shutdown();
-        }
-      }
-    } else {
-      log.warn("No pipeline to run!");
-    }
-
+    EtlUtils.runMultiplePipelines(pipelines, options);
     log.info("DONE!");
   }
 }

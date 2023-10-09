@@ -15,26 +15,13 @@
  */
 package com.google.fhir.analytics.metrics;
 
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+
+@AllArgsConstructor
+@Getter
 public final class CumulativeMetrics {
   private final long totalResources;
   private final long fetchedResources;
   private final long mappedResources;
-
-  public CumulativeMetrics(long totalResources, long fetchedResources, long mappedResources) {
-    this.totalResources = totalResources;
-    this.fetchedResources = fetchedResources;
-    this.mappedResources = mappedResources;
-  }
-
-  public long getTotalResources() {
-    return totalResources;
-  }
-
-  public long getFetchedResources() {
-    return fetchedResources;
-  }
-
-  public long getMappedResources() {
-    return mappedResources;
-  }
 }

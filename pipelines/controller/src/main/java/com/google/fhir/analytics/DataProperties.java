@@ -91,8 +91,6 @@ public class DataProperties {
 
   private String fhirServerUserName;
 
-  private int maxParallelPipelineStreams;
-
   @PostConstruct
   void validateProperties() {
     CronExpression.parse(incrementalSchedule);
@@ -167,11 +165,6 @@ public class DataProperties {
             ""),
         new ConfigFields("fhirdata.resourceList", resourceList, "", ""),
         new ConfigFields("fhirdata.maxWorkers", String.valueOf(maxWorkers), "", ""),
-        new ConfigFields(
-            "fhirdata.maxParallelPipelineStreams",
-            String.valueOf(maxParallelPipelineStreams),
-            "",
-            ""),
         new ConfigFields("fhirdata.dbConfig", dbConfig, "", ""));
   }
 

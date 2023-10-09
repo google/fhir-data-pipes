@@ -33,6 +33,15 @@ import org.apache.flink.core.execution.JobClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/**
+ * Implementation of the {@link PipelineMetrics} class. This class is used to retrieve the metrics
+ * of the pipelines for the undergoing batch.
+ *
+ * <p>This class assumes that only one batch of pipelines run at any point in time and hence it
+ * maintains a static list of {@link JobClient} and {@link CumulativeMetrics}, which at any point
+ * signifies the list of jobs currently running and the cumulative metrics collected so far for the
+ * completed jobs. The user of this class has to clear these metrics when the batch ends
+ */
 public class FlinkPipelineMetrics implements PipelineMetrics {
 
   private static final Logger logger = LoggerFactory.getLogger(FlinkPipelineMetrics.class);
@@ -41,18 +50,32 @@ public class FlinkPipelineMetrics implements PipelineMetrics {
 
   private static CumulativeMetrics cumulativeMetrics = new CumulativeMetrics(0l, 0l, 0l);
 
+  /**
+   * This method returns {@link CumulativeMetrics} of the all the completed jobs and the currently
+   * running ones for the ongoing batch.
+   */
   @Override
   public synchronized CumulativeMetrics getCumulativeMetricsForOngoingBatch() {
     List<MetricQueryResults> onGoingMetricQueryResults = getOngoingMetricQueryResults();
     return getUpdatedCumulativeMetrics(cumulativeMetrics, onGoingMetricQueryResults);
   }
 
+  /**
+   * Clears and resets all the {@link JobClient} and {@link CumulativeMetrics} collected so far for
+   * the batch.
+   */
   @Override
   public synchronized void clearAllMetrics() {
     jobClientMap.clear();
     cumulativeMetrics = new CumulativeMetrics(0l, 0l, 0l);
   }
 
+  /**
+   * This method is used to initialise the {@link CumulativeMetrics} with the {@code
+   * totalNoOfResources}
+   *
+   * @param totalNoOfResources the total number of resources to be processed in the current batch
+   */
   @Override
   public synchronized void setTotalNoOfResources(long totalNoOfResources) {
     cumulativeMetrics = new CumulativeMetrics(totalNoOfResources, 0l, 0l);
@@ -95,9 +118,16 @@ public class FlinkPipelineMetrics implements PipelineMetrics {
                       .build());
           metricQueryResultsList.add(metricQueryResults);
         }
-      } catch (InterruptedException | ExecutionException e) {
-        logger.error("Caught an exception; interrupting! ", e);
+      } catch (InterruptedException e) {
+        logger.error(
+            "Caught InterruptedException; resetting interrupt flag and throwing "
+                + "RuntimeException! ",
+            e);
         Thread.currentThread().interrupt();
+        throw new RuntimeException(e);
+      } catch (ExecutionException e) {
+        logger.error("Error while fetching the metrics for the currently running pipelines", e);
+        throw new RuntimeException(e);
       }
     }
     return metricQueryResultsList;
@@ -147,16 +177,33 @@ public class FlinkPipelineMetrics implements PipelineMetrics {
                 .addNameFilter(MetricNameFilter.inNamespace(MetricsConstants.METRICS_NAMESPACE))
                 .build());
       }
-    } catch (InterruptedException | ExecutionException e) {
+    } catch (InterruptedException e) {
+      logger.error(
+          "Caught InterruptedException; resetting interrupt flag and throwing "
+              + "RuntimeException! ",
+          e);
+      Thread.currentThread().interrupt();
+      throw new RuntimeException(e);
+    } catch (ExecutionException e) {
+      logger.error("Error while fetching the MetricQueryResults", e);
       throw new RuntimeException(e);
     }
     return getEmptyMetricQueryResults();
   }
 
+  /**
+   * Adds to new {@link JobClient} to the static list of currently running jobs for the current
+   * batch.
+   */
   public static synchronized void addJobClient(JobClient jobClient) {
     jobClientMap.put(jobClient.getJobID().toHexString(), jobClient);
   }
 
+  /**
+   * Removes the {@link JobClient} from the static list of currently running jobs using the {@code
+   * jobClientId}. On removal of the job, it also updates the static {@link CumulativeMetrics} for
+   * the current batch with the metrics of the removed job.
+   */
   public static synchronized void removeJobClient(String jobClientId) {
     JobClient jobClient = jobClientMap.remove(jobClientId);
     if (jobClient != null) {

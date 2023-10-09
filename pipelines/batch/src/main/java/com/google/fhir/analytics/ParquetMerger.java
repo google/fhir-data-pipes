@@ -26,8 +26,6 @@ import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import org.apache.avro.generic.GenericRecord;
 import org.apache.beam.sdk.Pipeline;
 import org.apache.beam.sdk.coders.AvroCoder;
@@ -246,20 +244,7 @@ public class ParquetMerger {
     }
 
     List<Pipeline> pipelines = createMergerPipelines(options, fhirContext);
-    if (pipelines != null && !pipelines.isEmpty()) {
-      ExecutorService executor = null;
-      try {
-        executor = Executors.newFixedThreadPool(2);
-        EtlUtils.runMultipleMergerPipelinesWithTimestamp(pipelines, options, executor);
-      } finally {
-        if (executor != null) {
-          executor.shutdown();
-        }
-      }
-    } else {
-      log.warn("No pipeline to run");
-    }
-
+    EtlUtils.runMultiplePipelines(pipelines, options);
     log.info("DONE!");
   }
 }

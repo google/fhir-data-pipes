@@ -164,10 +164,10 @@ public class PipelineManager implements ApplicationListener<ApplicationReadyEven
     String rootPrefix = dataProperties.getDwhRootPrefix();
     Preconditions.checkState(rootPrefix != null && !rootPrefix.isEmpty());
 
-    Preconditions.checkArgument(
-        dataProperties.getMaxParallelPipelineStreams() > 0,
-        "maxParallelPipelineStreams should be > 0");
-    executor = Executors.newFixedThreadPool(dataProperties.getMaxParallelPipelineStreams());
+    Preconditions.checkArgument(dataProperties.getMaxWorkers() > 0, "maxWorkers should be > 0");
+    executor =
+        Executors.newFixedThreadPool(
+            dataProperties.getMaxWorkers() * EtlUtils.NO_OF_PARALLEL_PIPELINES);
 
     String lastCompletedDwh = "";
     String lastDwh = "";
