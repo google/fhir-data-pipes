@@ -87,6 +87,14 @@ fhirdata:
   # Required if createHiveResourceTables is `true`.
   thriftserverHiveConfig: "config/thriftserver-hive-config.json"
 
+  # Path to a directory containing view definitions for each resource type.
+  # If not set or set to empty string, automatic view creation is disabled.
+  # Otherwise, for each resource type, its view definition SQL queries are read
+  # and applied from corresponding files, i.e., any file that starts with the
+  # resource name and ends in `.sql`, e.g., `DiagnosticReport_flat.sql`.
+  # Only applies when createHiveResourceTables is `true`.
+  hiveResourceViewsDir: "config/views"
+
 # Enable spring boot actuator end points, use "*" to expose all endpoints, or a comma-separated
 # list to expose selected ones
 management:
