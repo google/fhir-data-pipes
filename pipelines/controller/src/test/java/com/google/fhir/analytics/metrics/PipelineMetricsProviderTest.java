@@ -32,7 +32,7 @@ import org.springframework.test.context.TestPropertySource;
 @SpringBootTest
 @AutoConfigureObservability
 @TestPropertySource("classpath:application-test.properties")
-public class PipelineMetricsFactoryTest {
+public class PipelineMetricsProviderTest {
 
   private static MockWebServer mockFhirServer;
 
@@ -48,13 +48,14 @@ public class PipelineMetricsFactoryTest {
 
   @Test
   void testFlinkRunner() {
-    PipelineMetrics pipelineMetrics = PipelineMetricsFactory.getPipelineMetrics(FlinkRunner.class);
+    PipelineMetrics pipelineMetrics = PipelineMetricsProvider.getPipelineMetrics(FlinkRunner.class);
     MatcherAssert.assertThat(pipelineMetrics, Matchers.instanceOf(FlinkPipelineMetrics.class));
   }
 
   @Test
   void testDirectRunner() {
-    PipelineMetrics pipelineMetrics = PipelineMetricsFactory.getPipelineMetrics(DirectRunner.class);
+    PipelineMetrics pipelineMetrics =
+        PipelineMetricsProvider.getPipelineMetrics(DirectRunner.class);
     MatcherAssert.assertThat(pipelineMetrics, Matchers.nullValue());
   }
 

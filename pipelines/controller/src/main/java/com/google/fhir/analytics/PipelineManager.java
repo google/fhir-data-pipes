@@ -21,7 +21,7 @@ import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import com.google.fhir.analytics.metrics.CumulativeMetrics;
 import com.google.fhir.analytics.metrics.PipelineMetrics;
-import com.google.fhir.analytics.metrics.PipelineMetricsFactory;
+import com.google.fhir.analytics.metrics.PipelineMetricsProvider;
 import com.google.fhir.analytics.model.DatabaseConfiguration;
 import io.micrometer.core.instrument.MeterRegistry;
 import java.beans.PropertyVetoException;
@@ -32,11 +32,8 @@ import java.time.LocalDateTime;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.stream.Collectors;
 import javax.annotation.PostConstruct;
-import javax.annotation.PreDestroy;
 import lombok.Data;
 import org.apache.beam.runners.flink.FlinkPipelineOptions;
 import org.apache.beam.runners.flink.FlinkRunner;
@@ -78,8 +75,6 @@ public class PipelineManager implements ApplicationListener<ApplicationReadyEven
   @Autowired private DwhFilesManager dwhFilesManager;
 
   @Autowired private MeterRegistry meterRegistry;
-
-  private ExecutorService executor;
 
   private HiveTableManager hiveTableManager;
 
@@ -139,7 +134,7 @@ public class PipelineManager implements ApplicationListener<ApplicationReadyEven
     //  the stats
     if (isBatchRun() && isRunning()) {
       PipelineMetrics pipelineMetrics =
-          PipelineMetricsFactory.getPipelineMetrics(
+          PipelineMetricsProvider.getPipelineMetrics(
               currentPipeline.pipelines.get(0).getOptions().getRunner());
       return pipelineMetrics != null ? pipelineMetrics.getCumulativeMetricsForOngoingBatch() : null;
     }
@@ -163,11 +158,7 @@ public class PipelineManager implements ApplicationListener<ApplicationReadyEven
     cron = CronExpression.parse(dataProperties.getIncrementalSchedule());
     String rootPrefix = dataProperties.getDwhRootPrefix();
     Preconditions.checkState(rootPrefix != null && !rootPrefix.isEmpty());
-
     Preconditions.checkArgument(dataProperties.getMaxWorkers() > 0, "maxWorkers should be > 0");
-    executor =
-        Executors.newFixedThreadPool(
-            dataProperties.getMaxWorkers() * EtlUtils.NO_OF_PARALLEL_PIPELINES);
 
     String lastCompletedDwh = "";
     String lastDwh = "";
@@ -552,7 +543,7 @@ public class PipelineManager implements ApplicationListener<ApplicationReadyEven
       try {
         currentDwhRoot = options.getOutputParquetPath();
         List<PipelineResult> pipelineResults =
-            EtlUtils.runMultiplePipelinesWithTimestamp(pipelines, options, manager.executor);
+            EtlUtils.runMultiplePipelinesWithTimestamp(pipelines, options);
         // Remove the metrics of the previous pipeline and register the new metrics
         manager.removePipelineMetrics();
         pipelineResults.stream()
@@ -566,8 +557,7 @@ public class PipelineManager implements ApplicationListener<ApplicationReadyEven
               ParquetMerger.createMergerPipelines(mergerOptions, fhirContext);
           logger.info("Merger options are {}", mergerOptions);
           List<PipelineResult> mergerPipelineResults =
-              EtlUtils.runMultipleMergerPipelinesWithTimestamp(
-                  mergerPipelines, mergerOptions, manager.executor);
+              EtlUtils.runMultipleMergerPipelinesWithTimestamp(mergerPipelines, mergerOptions);
           mergerPipelineResults.stream()
               .forEach(pipelineResult -> manager.publishPipelineMetrics(pipelineResult.metrics()));
           manager.updateDwh(currentDwhRoot);
@@ -639,14 +629,6 @@ public class PipelineManager implements ApplicationListener<ApplicationReadyEven
     } catch (IOException e) {
       logger.error("Error in reading timestamp files", e);
       throw new RuntimeException(e);
-    }
-  }
-
-  /** Release resources before destroying the instance of the class */
-  @PreDestroy
-  private void destroy() {
-    if (executor != null) {
-      executor.shutdown();
     }
   }
 

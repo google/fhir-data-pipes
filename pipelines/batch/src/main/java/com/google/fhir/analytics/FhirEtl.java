@@ -23,7 +23,7 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.google.fhir.analytics.metrics.PipelineMetrics;
-import com.google.fhir.analytics.metrics.PipelineMetricsFactory;
+import com.google.fhir.analytics.metrics.PipelineMetricsProvider;
 import com.google.fhir.analytics.model.DatabaseConfiguration;
 import java.beans.PropertyVetoException;
 import java.io.IOException;
@@ -344,7 +344,7 @@ public class FhirEtl {
 
     if (foundResource) { // Otherwise, there is nothing to be done!
       PipelineMetrics pipelineMetrics =
-          PipelineMetricsFactory.getPipelineMetrics(options.getRunner());
+          PipelineMetricsProvider.getPipelineMetrics(options.getRunner());
       if (pipelineMetrics != null) {
         pipelineMetrics.clearAllMetrics();
         pipelineMetrics.setTotalNoOfResources(totalNoOfResources);

@@ -39,11 +39,8 @@ import org.slf4j.LoggerFactory;
 
 class EtlUtils {
 
-  /**
-   * {@value #NO_OF_PARALLEL_PIPELINES} Total number of pipelines that can be executed in parallel
-   * at a given point in time.
-   */
-  public static final Integer NO_OF_PARALLEL_PIPELINES = 2;
+  /** Total number of pipelines that can be executed in parallel at a given time. */
+  public static final int NO_OF_PARALLEL_PIPELINES = 2;
 
   private static final Logger log = LoggerFactory.getLogger(EtlUtils.class);
 
@@ -64,23 +61,21 @@ class EtlUtils {
 
   /**
    * Runs the given `pipelines` and if the output is to a Parquet DWH, also writes a timestamp file
-   * indicating when the pipelines were started. This is useful for future incremental runs. The
-   * pipelines are executed by the given {@code executor} pool in parallel.
+   * indicating when the pipelines were started. This is useful for future incremental runs.
    *
    * @param pipelines the pipelines to be executed
    * @param options the {@link FhirEtlOptions} to be used by the {@code pipelines}
-   * @param executor the {@link Executor} to be used while executing the {@code pipelines}
    * @return the result from running the pipelines.
    * @throws IOException if writing the timestamp file fails.
    */
   static List<PipelineResult> runMultiplePipelinesWithTimestamp(
-      List<Pipeline> pipelines, FhirEtlOptions options, Executor executor) throws IOException {
+      List<Pipeline> pipelines, FhirEtlOptions options) throws IOException {
     String dwhRoot = options.getOutputParquetPath();
     if (dwhRoot != null && !dwhRoot.isEmpty()) {
       // TODO write pipeline options too such that it  can be validated for incremental runs.
       DwhFiles.forRoot(dwhRoot).writeTimestampFile(DwhFiles.TIMESTAMP_FILE_START);
     }
-    List<PipelineResult> pipelineResults = runMultiplePipelines(pipelines, executor);
+    List<PipelineResult> pipelineResults = runMultiplePipelines(pipelines);
     if (dwhRoot != null && !dwhRoot.isEmpty()) {
       DwhFiles.forRoot(dwhRoot).writeTimestampFile(DwhFiles.TIMESTAMP_FILE_END);
     }
@@ -89,8 +84,7 @@ class EtlUtils {
 
   /** Similar to {@link #runMultiplePipelinesWithTimestamp} but for the merge pipeline. */
   static List<PipelineResult> runMultipleMergerPipelinesWithTimestamp(
-      List<Pipeline> pipelines, ParquetMergerOptions options, Executor executor)
-      throws IOException {
+      List<Pipeline> pipelines, ParquetMergerOptions options) throws IOException {
     Instant instant1 =
         DwhFiles.forRoot(options.getDwh1()).readTimestampFile(DwhFiles.TIMESTAMP_FILE_START);
     Instant instant2 =
@@ -98,55 +92,61 @@ class EtlUtils {
     Instant mergedInstant = (instant1.compareTo(instant2) > 0) ? instant1 : instant2;
     DwhFiles.forRoot(options.getMergedDwh())
         .writeTimestampFile(mergedInstant, DwhFiles.TIMESTAMP_FILE_START);
-    List<PipelineResult> pipelineResults = runMultiplePipelines(pipelines, executor);
+    List<PipelineResult> pipelineResults = runMultiplePipelines(pipelines);
     DwhFiles.forRoot(options.getMergedDwh()).writeTimestampFile(DwhFiles.TIMESTAMP_FILE_END);
     return pipelineResults;
   }
 
   /**
-   * Executes the pipelines using the given {@code executor}. The parallelism is defined by the no
-   * of threads in the {@code executor}.
+   * Execute the given pipelines and return the list of pipeline results. The pipelines will be
+   * executed using an {@link Executor} pool. The number of threads in the pool is limited to low
+   * value equal to {@value NO_OF_PARALLEL_PIPELINES} because each execution of the pipeline
+   * reserves a certain amount of FLINK off-heap memory and with high parallelism it can block a
+   * large amount of memory.
    *
    * @param pipelines the pipelines to be executed
-   * @param executor Executor using which the given pipelines are run
    * @return the list of results of the pipelines
    */
-  private static List<PipelineResult> runMultiplePipelines(
-      List<Pipeline> pipelines, Executor executor) {
-    List<CompletableFuture<PipelineResult>> completableFutures = new ArrayList<>();
-    for (Pipeline pipeline : pipelines) {
-      CompletableFuture<PipelineResult> completableFuture =
-          CompletableFuture.supplyAsync(new PipelineSupplier(pipeline), executor);
-      completableFutures.add(completableFuture);
-    }
-    CompletableFuture<Void> finalCompletableFuture =
-        CompletableFuture.allOf(completableFutures.toArray(CompletableFuture[]::new));
+  private static List<PipelineResult> runMultiplePipelines(List<Pipeline> pipelines) {
     List<PipelineResult> pipelineResults = new ArrayList<>();
+    ExecutorService executor = null;
     try {
-      // Waits for all the pipeline executions to complete
-      finalCompletableFuture.get();
-      for (CompletableFuture completableFuture : completableFutures) {
-        pipelineResults.add((PipelineResult) completableFuture.get());
+      executor = Executors.newFixedThreadPool(EtlUtils.NO_OF_PARALLEL_PIPELINES);
+      List<CompletableFuture<PipelineResult>> completableFutures = new ArrayList<>();
+      for (Pipeline pipeline : pipelines) {
+        CompletableFuture<PipelineResult> completableFuture =
+            CompletableFuture.supplyAsync(new PipelineSupplier(pipeline), executor);
+        completableFutures.add(completableFuture);
       }
-    } catch (InterruptedException e) {
-      log.error(
-          "Caught InterruptedException; resetting interrupt flag and throwing "
-              + "RuntimeException! ",
-          e);
-      Thread.currentThread().interrupt();
-      throw new RuntimeException(e);
-    } catch (ExecutionException e) {
-      log.error("Error while executing the pipelines", e);
-      throw new RuntimeException(e);
+      CompletableFuture<Void> finalCompletableFuture =
+          CompletableFuture.allOf(completableFutures.toArray(CompletableFuture[]::new));
+      try {
+        // Waits for all the pipeline executions to complete
+        finalCompletableFuture.get();
+        for (CompletableFuture completableFuture : completableFutures) {
+          pipelineResults.add((PipelineResult) completableFuture.get());
+        }
+      } catch (InterruptedException e) {
+        log.error(
+            "Caught InterruptedException; resetting interrupt flag and throwing "
+                + "RuntimeException! ",
+            e);
+        Thread.currentThread().interrupt();
+        throw new RuntimeException(e);
+      } catch (ExecutionException e) {
+        log.error("Error while executing the pipelines", e);
+        throw new RuntimeException(e);
+      }
+    } finally {
+      if (executor != null) {
+        executor.shutdown();
+      }
     }
     return pipelineResults;
   }
 
   /**
-   * Execute the {@code pipelines} using an {@link Executor} pool. The number of threads in the pool
-   * is limited to {@value NO_OF_PARALLEL_PIPELINES}, as each execution of the pipeline reserves a
-   * certain amount of FLINK off-heap memory and with high parallelism it can block a large amount
-   * of memory.
+   * Execute the {@code pipelines} and return the pipeline results.
    *
    * @param pipelines the pipelines to be executed
    * @param options the {@link FhirEtlOptions} or {@link ParquetMergerOptions} to be used by the
@@ -162,26 +162,17 @@ class EtlUtils {
     }
 
     List<PipelineResult> pipelineResults = null;
-    ExecutorService executor = null;
-    try {
-      executor = Executors.newFixedThreadPool(EtlUtils.NO_OF_PARALLEL_PIPELINES);
-      if (options instanceof FhirEtlOptions) {
-        pipelineResults =
-            EtlUtils.runMultiplePipelinesWithTimestamp(
-                pipelines, (FhirEtlOptions) options, executor);
-      } else if (options instanceof ParquetMergerOptions) {
-        pipelineResults =
-            EtlUtils.runMultipleMergerPipelinesWithTimestamp(
-                pipelines, (ParquetMergerOptions) options, executor);
-      } else {
-        log.error("options should be one of FhirEtlOptions or ParquetMergerOptions");
-        throw new IllegalArgumentException(
-            "options should be one of FhirEtlOptions or ParquetMergerOptions");
-      }
-    } finally {
-      if (executor != null) {
-        executor.shutdown();
-      }
+    if (options instanceof FhirEtlOptions) {
+      pipelineResults =
+          EtlUtils.runMultiplePipelinesWithTimestamp(pipelines, (FhirEtlOptions) options);
+    } else if (options instanceof ParquetMergerOptions) {
+      pipelineResults =
+          EtlUtils.runMultipleMergerPipelinesWithTimestamp(
+              pipelines, (ParquetMergerOptions) options);
+    } else {
+      log.error("options should be one of FhirEtlOptions or ParquetMergerOptions");
+      throw new IllegalArgumentException(
+          "options should be one of FhirEtlOptions or ParquetMergerOptions");
     }
     return pipelineResults;
   }

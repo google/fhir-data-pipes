@@ -20,10 +20,10 @@ import org.apache.beam.sdk.PipelineRunner;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class PipelineMetricsFactory {
+public class PipelineMetricsProvider {
 
   private static final Logger logger =
-      LoggerFactory.getLogger(PipelineMetricsFactory.class.getName());
+      LoggerFactory.getLogger(PipelineMetricsProvider.class.getName());
   private static final String FLINK_RUNNER = "FlinkRunner";
   private static FlinkPipelineMetrics flinkPipelineMetrics = new FlinkPipelineMetrics();
 

@@ -35,20 +35,21 @@ import org.slf4j.LoggerFactory;
 
 /**
  * Implementation of the {@link PipelineMetrics} class. This class is used to retrieve the metrics
- * of the pipelines for the undergoing batch.
+ * of the pipelines for the undergoing batch by FlinkRunner.
  *
- * <p>This class assumes that only one batch of pipelines run at any point in time and hence it
- * maintains a static list of {@link JobClient} and {@link CumulativeMetrics}, which at any point
- * signifies the list of jobs currently running and the cumulative metrics collected so far for the
- * completed jobs. The user of this class has to clear these metrics when the batch ends
+ * <p>This class assumes that only one batch of pipelines run at any point in time. This class
+ * maintains a list of {@link JobClient} (currently running jobs) and {@link CumulativeMetrics} (the
+ * cumulative metrics collected so far for the completed jobs). When the user uses this class as a
+ * Singleton instance, then they must clear the metrics after the current batch ends, so that the
+ * metrics for the new batch can be tracked again.
  */
 public class FlinkPipelineMetrics implements PipelineMetrics {
 
   private static final Logger logger = LoggerFactory.getLogger(FlinkPipelineMetrics.class);
 
-  private static ConcurrentHashMap<String, JobClient> jobClientMap = new ConcurrentHashMap<>();
+  private ConcurrentHashMap<String, JobClient> jobClientMap = new ConcurrentHashMap<>();
 
-  private static CumulativeMetrics cumulativeMetrics = new CumulativeMetrics(0l, 0l, 0l);
+  private CumulativeMetrics cumulativeMetrics = new CumulativeMetrics(0l, 0l, 0l);
 
   /**
    * This method returns {@link CumulativeMetrics} of the all the completed jobs and the currently
@@ -133,7 +134,7 @@ public class FlinkPipelineMetrics implements PipelineMetrics {
     return metricQueryResultsList;
   }
 
-  private static CumulativeMetrics getUpdatedCumulativeMetrics(
+  private CumulativeMetrics getUpdatedCumulativeMetrics(
       CumulativeMetrics currentMetrics, List<MetricQueryResults> metricQueryResultsList) {
     if (metricQueryResultsList == null || metricQueryResultsList.isEmpty()) {
       return cumulativeMetrics;
@@ -195,7 +196,7 @@ public class FlinkPipelineMetrics implements PipelineMetrics {
    * Adds to new {@link JobClient} to the static list of currently running jobs for the current
    * batch.
    */
-  public static synchronized void addJobClient(JobClient jobClient) {
+  public synchronized void addJobClient(JobClient jobClient) {
     jobClientMap.put(jobClient.getJobID().toHexString(), jobClient);
   }
 
@@ -204,7 +205,7 @@ public class FlinkPipelineMetrics implements PipelineMetrics {
    * jobClientId}. On removal of the job, it also updates the static {@link CumulativeMetrics} for
    * the current batch with the metrics of the removed job.
    */
-  public static synchronized void removeJobClient(String jobClientId) {
+  public synchronized void removeJobClient(String jobClientId) {
     JobClient jobClient = jobClientMap.remove(jobClientId);
     if (jobClient != null) {
       MetricQueryResults metricQueryResults = getMetricQueryResults(jobClient);
