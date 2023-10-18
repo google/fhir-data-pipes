@@ -93,6 +93,9 @@ fhirdata:
   # and applied from corresponding files, i.e., any file that starts with the
   # resource name and ends in `.sql`, e.g., `DiagnosticReport_flat.sql`.
   # Only applies when createHiveResourceTables is `true`.
+  #
+  # Note for developers: If you symlink `[repo_root]/docker/config/views` here
+  # you can use those predefined views in your dev. env. too.
   hiveResourceViewsDir: "config/views"
 
 # Enable spring boot actuator end points, use "*" to expose all endpoints, or a comma-separated
