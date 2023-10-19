@@ -15,10 +15,11 @@
  */
 package com.google.fhir.analytics.metrics;
 
+import javax.annotation.Nullable;
+import org.apache.beam.runners.flink.FlinkRunner;
 import org.apache.flink.api.common.JobExecutionResult;
 import org.apache.flink.core.execution.JobClient;
 import org.apache.flink.core.execution.JobListener;
-import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -34,7 +35,9 @@ public class FlinkJobListener implements JobListener {
     }
 
     logger.info("Submitting the job with ID {} ", this);
-    FlinkPipelineMetrics.setJobClient(jobClient);
+    FlinkPipelineMetrics flinkPipelineMetrics =
+        (FlinkPipelineMetrics) PipelineMetricsProvider.getPipelineMetrics(FlinkRunner.class);
+    flinkPipelineMetrics.addJobClient(jobClient);
   }
 
   @Override
@@ -51,6 +54,8 @@ public class FlinkJobListener implements JobListener {
         "Clearing the job with ID {}, jobExecutionResult={}",
         jobExecutionResult.getJobID(),
         jobExecutionResult);
-    FlinkPipelineMetrics.clearJobClient();
+    FlinkPipelineMetrics flinkPipelineMetrics =
+        (FlinkPipelineMetrics) PipelineMetricsProvider.getPipelineMetrics(FlinkRunner.class);
+    flinkPipelineMetrics.removeJobClient(jobExecutionResult.getJobID().toHexString());
   }
 }

@@ -19,8 +19,9 @@ import ca.uhn.fhir.context.FhirContext;
 import com.cerner.bunsen.FhirContexts;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
+import com.google.fhir.analytics.metrics.CumulativeMetrics;
 import com.google.fhir.analytics.metrics.PipelineMetrics;
-import com.google.fhir.analytics.metrics.PipelineMetricsFactory;
+import com.google.fhir.analytics.metrics.PipelineMetricsProvider;
 import com.google.fhir.analytics.model.DatabaseConfiguration;
 import io.micrometer.core.instrument.MeterRegistry;
 import java.beans.PropertyVetoException;
@@ -70,8 +71,6 @@ public class PipelineManager implements ApplicationListener<ApplicationReadyEven
   private static final Logger logger = LoggerFactory.getLogger(PipelineManager.class.getName());
 
   @Autowired private DataProperties dataProperties;
-
-  @Autowired private PipelineMetricsFactory pipelineMetricsFactory;
 
   @Autowired private DwhFilesManager dwhFilesManager;
 
@@ -129,15 +128,15 @@ public class PipelineManager implements ApplicationListener<ApplicationReadyEven
             });
   }
 
-  public MetricQueryResults getMetricQueryResults() {
+  public CumulativeMetrics getCumulativeMetrics() {
     // TODO Generate metrics and stats even for incremental run, incremental run has two pipelines
     //  running one after the other, come up with a strategy to aggregate the metrics and generate
     //  the stats
     if (isBatchRun() && isRunning()) {
       PipelineMetrics pipelineMetrics =
-          pipelineMetricsFactory.getPipelineMetrics(
-              currentPipeline.pipeline.getOptions().getRunner());
-      return pipelineMetrics.getMetricQueryResults();
+          PipelineMetricsProvider.getPipelineMetrics(
+              currentPipeline.pipelines.get(0).getOptions().getRunner());
+      return pipelineMetrics != null ? pipelineMetrics.getCumulativeMetricsForOngoingBatch() : null;
     }
     return null;
   }
@@ -159,6 +158,7 @@ public class PipelineManager implements ApplicationListener<ApplicationReadyEven
     cron = CronExpression.parse(dataProperties.getIncrementalSchedule());
     String rootPrefix = dataProperties.getDwhRootPrefix();
     Preconditions.checkState(rootPrefix != null && !rootPrefix.isEmpty());
+    Preconditions.checkArgument(dataProperties.getMaxWorkers() > 0, "maxWorkers should be > 0");
 
     String lastCompletedDwh = "";
     String lastDwh = "";
@@ -334,13 +334,14 @@ public class PipelineManager implements ApplicationListener<ApplicationReadyEven
     Preconditions.checkState(!isRunning(), "cannot start a pipeline while another one is running");
     PipelineConfig pipelineConfig = dataProperties.createBatchOptions();
     FhirEtlOptions options = pipelineConfig.getFhirEtlOptions();
-    Pipeline pipeline = FhirEtl.buildPipeline(options);
-    if (pipeline == null) {
+    List<Pipeline> pipelines = FhirEtl.buildPipelines(options);
+    if (pipelines == null || pipelines.isEmpty()) {
       logger.warn("No resources found to be fetched!");
       return;
     } else {
       currentPipeline =
-          new PipelineThread(pipeline, this, dwhFilesManager, dataProperties, pipelineConfig, true);
+          new PipelineThread(
+              pipelines, options, this, dwhFilesManager, dataProperties, pipelineConfig, true);
     }
     logger.info("Running full pipeline for DWH {}", options.getOutputParquetPath());
     // We will only have one thread for running pipelines hence no need for a thread pool.
@@ -362,7 +363,7 @@ public class PipelineManager implements ApplicationListener<ApplicationReadyEven
     options.setOutputParquetPath(incrementalDwhRoot);
     String since = currentDwh.readTimestampFile(DwhFiles.TIMESTAMP_FILE_START).toString();
     options.setSince(since);
-    Pipeline pipeline = FhirEtl.buildPipeline(options);
+    List<Pipeline> pipelines = FhirEtl.buildPipelines(options);
 
     // The merger pipeline merges the original full DWH with the new incremental one.
     ParquetMergerOptions mergerOptions = PipelineOptionsFactory.as(ParquetMergerOptions.class);
@@ -378,7 +379,7 @@ public class PipelineManager implements ApplicationListener<ApplicationReadyEven
       flinkOptions.setParallelism(dataProperties.getNumThreads());
     }
 
-    if (pipeline == null) {
+    if (pipelines == null || pipelines.isEmpty()) {
       // TODO communicate this to the UI
       logger.info("No new resources to be fetched!");
       setLastRunStatus(LastRunStatus.SUCCESS);
@@ -386,7 +387,8 @@ public class PipelineManager implements ApplicationListener<ApplicationReadyEven
       // Creating a thread for running both pipelines, one after the other.
       currentPipeline =
           new PipelineThread(
-              pipeline,
+              pipelines,
+              options,
               mergerOptions,
               this,
               dwhFilesManager,
@@ -413,7 +415,7 @@ public class PipelineManager implements ApplicationListener<ApplicationReadyEven
       throw new RuntimeException(e);
     }
     try {
-      hiveTableManager = new HiveTableManager(dbConfig);
+      hiveTableManager = new HiveTableManager(dbConfig, dataProperties.getHiveResourceViewsDir());
       hiveTableManager.showTables();
     } catch (PropertyVetoException | SQLException e) {
       logger.error("Exception while querying the thriftserver: ", e);
@@ -481,7 +483,8 @@ public class PipelineManager implements ApplicationListener<ApplicationReadyEven
 
   private static class PipelineThread extends Thread {
 
-    private final Pipeline pipeline;
+    private final List<Pipeline> pipelines;
+    private FhirEtlOptions options;
     private final PipelineManager manager;
     private final DwhFilesManager dwhFilesManager;
     // This is used in the incremental mode only.
@@ -494,14 +497,16 @@ public class PipelineManager implements ApplicationListener<ApplicationReadyEven
     private final boolean isBatchRun;
 
     PipelineThread(
-        Pipeline pipeline,
+        List<Pipeline> pipelines,
+        FhirEtlOptions options,
         PipelineManager manager,
         DwhFilesManager dwhFilesManager,
         DataProperties dataProperties,
         PipelineConfig pipelineConfig,
         boolean isBatchRun) {
-      Preconditions.checkArgument(pipeline.getOptions().as(FhirEtlOptions.class) != null);
-      this.pipeline = pipeline;
+      Preconditions.checkArgument(options != null);
+      this.pipelines = pipelines;
+      this.options = options;
       this.manager = manager;
       this.dwhFilesManager = dwhFilesManager;
       this.dataProperties = dataProperties;
@@ -511,15 +516,17 @@ public class PipelineManager implements ApplicationListener<ApplicationReadyEven
     }
 
     PipelineThread(
-        Pipeline pipeline,
+        List<Pipeline> pipelines,
+        FhirEtlOptions options,
         ParquetMergerOptions mergerOptions,
         PipelineManager manager,
         DwhFilesManager dwhFilesManager,
         DataProperties dataProperties,
         PipelineConfig pipelineConfig,
         boolean isBatchRun) {
-      Preconditions.checkArgument(pipeline.getOptions().as(FhirEtlOptions.class) != null);
-      this.pipeline = pipeline;
+      Preconditions.checkArgument(options != null);
+      this.pipelines = pipelines;
+      this.options = options;
       this.manager = manager;
       this.dwhFilesManager = dwhFilesManager;
       this.mergerOptions = mergerOptions;
@@ -534,22 +541,25 @@ public class PipelineManager implements ApplicationListener<ApplicationReadyEven
       logger.info("Starting a new thread; number of threads is {}", Thread.activeCount());
       String currentDwhRoot = null;
       try {
-        FhirEtlOptions options = pipeline.getOptions().as(FhirEtlOptions.class);
         currentDwhRoot = options.getOutputParquetPath();
-        PipelineResult pipelineResult = EtlUtils.runPipelineWithTimestamp(pipeline, options);
+        List<PipelineResult> pipelineResults =
+            EtlUtils.runMultiplePipelinesWithTimestamp(pipelines, options);
         // Remove the metrics of the previous pipeline and register the new metrics
         manager.removePipelineMetrics();
-        manager.publishPipelineMetrics(pipelineResult.metrics());
+        pipelineResults.stream()
+            .forEach(pipelineResult -> manager.publishPipelineMetrics(pipelineResult.metrics()));
         if (mergerOptions == null) { // Do not update DWH yet if this was an incremental run.
           manager.updateDwh(currentDwhRoot);
         } else {
           currentDwhRoot = mergerOptions.getMergedDwh();
           FhirContext fhirContext = FhirContexts.forR4();
-          Pipeline mergerPipeline = ParquetMerger.createMergerPipeline(mergerOptions, fhirContext);
+          List<Pipeline> mergerPipelines =
+              ParquetMerger.createMergerPipelines(mergerOptions, fhirContext);
           logger.info("Merger options are {}", mergerOptions);
-          PipelineResult mergerPipelineResult =
-              EtlUtils.runMergerPipelineWithTimestamp(mergerPipeline, mergerOptions);
-          manager.publishPipelineMetrics(mergerPipelineResult.metrics());
+          List<PipelineResult> mergerPipelineResults =
+              EtlUtils.runMultipleMergerPipelinesWithTimestamp(mergerPipelines, mergerOptions);
+          mergerPipelineResults.stream()
+              .forEach(pipelineResult -> manager.publishPipelineMetrics(pipelineResult.metrics()));
           manager.updateDwh(currentDwhRoot);
         }
         if (dataProperties.isCreateHiveResourceTables()) {

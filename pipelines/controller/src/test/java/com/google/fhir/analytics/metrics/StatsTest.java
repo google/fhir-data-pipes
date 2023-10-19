@@ -18,16 +18,7 @@ package com.google.fhir.analytics.metrics;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 
-import com.google.fhir.analytics.MetricsConstants;
 import java.util.stream.Stream;
-import org.apache.beam.sdk.metrics.DistributionResult;
-import org.apache.beam.sdk.metrics.GaugeResult;
-import org.apache.beam.sdk.metrics.MetricKey;
-import org.apache.beam.sdk.metrics.MetricName;
-import org.apache.beam.sdk.metrics.MetricQueryResults;
-import org.apache.beam.sdk.metrics.MetricResult;
-import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.collect.ImmutableList;
-import org.joda.time.Instant;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
@@ -54,37 +45,9 @@ class StatsTest {
       Long noOfMappedResources,
       Long totalNoOfResources,
       Integer expectedPercentageCompletion) {
-    ImmutableList.Builder<MetricResult<Long>> counterResults = ImmutableList.builder();
-    counterResults.add(
-        MetricResult.attempted(
-            MetricKey.create(
-                "Dummy Step1",
-                MetricName.named(
-                    MetricsConstants.METRICS_NAMESPACE, MetricsConstants.NUM_FETCHED_RESOURCES)),
-            noOfFetchedResources));
-    counterResults.add(
-        MetricResult.attempted(
-            MetricKey.create(
-                "Dummy Step2",
-                MetricName.named(
-                    MetricsConstants.METRICS_NAMESPACE, MetricsConstants.NUM_MAPPED_RESOURCES)),
-            noOfMappedResources));
-    ImmutableList.Builder<MetricResult<GaugeResult>> gaugeResults = ImmutableList.builder();
-    gaugeResults.add(
-        MetricResult.attempted(
-            MetricKey.create(
-                "Dummy Step1",
-                MetricName.named(
-                    MetricsConstants.METRICS_NAMESPACE, MetricsConstants.TOTAL_NO_OF_RESOURCES)),
-            GaugeResult.create(totalNoOfResources, Instant.now())));
-    ImmutableList.Builder<MetricResult<DistributionResult>> distributionResults =
-        ImmutableList.builder();
-    MetricQueryResults metricQueryResults =
-        MetricQueryResults.create(
-            counterResults.build(), distributionResults.build(), gaugeResults.build());
-
-    Stats stats = Stats.createStats(metricQueryResults);
-
+    CumulativeMetrics cumulativeMetrics =
+        new CumulativeMetrics(totalNoOfResources, noOfFetchedResources, noOfMappedResources);
+    Stats stats = Stats.createStats(cumulativeMetrics);
     assertThat(stats.getPercentageCompleted(), equalTo(expectedPercentageCompletion));
   }
 }
