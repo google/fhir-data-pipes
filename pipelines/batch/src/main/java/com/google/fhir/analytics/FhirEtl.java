@@ -40,10 +40,8 @@ import org.apache.beam.sdk.Pipeline;
 import org.apache.beam.sdk.coders.CannotProvideCoderException;
 import org.apache.beam.sdk.io.FileIO;
 import org.apache.beam.sdk.io.jdbc.JdbcIO;
-import org.apache.beam.sdk.metrics.Metrics;
 import org.apache.beam.sdk.options.PipelineOptionsFactory;
 import org.apache.beam.sdk.transforms.Create;
-import org.apache.beam.sdk.transforms.DoFn;
 import org.apache.beam.sdk.transforms.Flatten;
 import org.apache.beam.sdk.transforms.ParDo;
 import org.apache.beam.sdk.transforms.Sum;
@@ -291,43 +289,22 @@ public class FhirEtl {
         jdbcFetchHapi.searchResourceCounts(options.getResourceList(), options.getSince());
 
     List<Pipeline> pipelines = new ArrayList<>();
-    long totalNoOfResources = 0l;
+    long totalNumOfResources = 0l;
     for (String resourceType : options.getResourceList().split(",")) {
       int numResources = resourceCount.get(resourceType);
       if (numResources == 0) {
         continue;
       }
 
-      totalNoOfResources += numResources;
+      totalNumOfResources += numResources;
       foundResource = true;
       Pipeline pipeline = Pipeline.create(options);
       PCollection<QueryParameterDescriptor> queryParameters =
-          pipeline
-              .apply(
-                  "Generate query parameters for " + resourceType,
-                  Create.of(
-                      new JdbcFetchHapi(jdbcSource)
-                          .generateQueryParameters(options, resourceType, numResources)))
-              .apply(
-                  ParDo.of(
-                      // The metrics captured below will be used to calculate the progress of the
-                      // pipeline run. The metric might be captured multiple times depending on the
-                      // number of QueryParameterDescriptor's for each resourceType, but this should
-                      // not be issue since they will be replaced. This is done this way because if
-                      // the metric capturing is done separately to avoid duplicate logging then the
-                      // beam bifurcates the resources and allocates lesser number of resources for
-                      // the core operations.
-                      new DoFn<QueryParameterDescriptor, QueryParameterDescriptor>() {
-                        @ProcessElement
-                        public void processElement(ProcessContext context) {
-                          QueryParameterDescriptor input = context.element();
-                          Metrics.gauge(
-                                  MetricsConstants.METRICS_NAMESPACE,
-                                  MetricsConstants.TOTAL_NO_OF_RESOURCES + resourceType)
-                              .set(numResources);
-                          context.output(input);
-                        }
-                      }));
+          pipeline.apply(
+              "Generate query parameters for " + resourceType,
+              Create.of(
+                  new JdbcFetchHapi(jdbcSource)
+                      .generateQueryParameters(options, resourceType, numResources)));
       PCollection<HapiRowDescriptor> payload =
           queryParameters.apply(
               "JdbcIO fetch for " + resourceType,
@@ -347,7 +324,7 @@ public class FhirEtl {
           PipelineMetricsProvider.getPipelineMetrics(options.getRunner());
       if (pipelineMetrics != null) {
         pipelineMetrics.clearAllMetrics();
-        pipelineMetrics.setTotalNoOfResources(totalNoOfResources);
+        pipelineMetrics.setTotalNumOfResources(totalNumOfResources);
       }
       return pipelines;
     }
@@ -417,7 +394,7 @@ public class FhirEtl {
     }
 
     List<Pipeline> pipelines = buildPipelines(options);
-    EtlUtils.runMultiplePipelines(pipelines, options);
+    EtlUtils.runMultiplePipelinesWithTimestamp(pipelines, options);
     log.info("DONE!");
   }
 }

@@ -73,13 +73,13 @@ public class FlinkPipelineMetrics implements PipelineMetrics {
 
   /**
    * This method is used to initialise the {@link CumulativeMetrics} with the {@code
-   * totalNoOfResources}
+   * totalNumOfResources}
    *
-   * @param totalNoOfResources the total number of resources to be processed in the current batch
+   * @param totalNumOfResources the total number of resources to be processed in the current batch
    */
   @Override
-  public synchronized void setTotalNoOfResources(long totalNoOfResources) {
-    cumulativeMetrics = new CumulativeMetrics(totalNoOfResources, 0l, 0l);
+  public synchronized void setTotalNumOfResources(long totalNumOfResources) {
+    cumulativeMetrics = new CumulativeMetrics(totalNumOfResources, 0l, 0l);
   }
 
   /**

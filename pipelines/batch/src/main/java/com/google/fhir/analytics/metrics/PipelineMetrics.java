@@ -30,7 +30,7 @@ public interface PipelineMetrics {
   /**
    * Sets the total number of resources
    *
-   * @param totalNoOfResources
+   * @param totalNumOfResources
    */
-  void setTotalNoOfResources(long totalNoOfResources);
+  void setTotalNumOfResources(long totalNumOfResources);
 }

@@ -244,7 +244,7 @@ public class ParquetMerger {
     }
 
     List<Pipeline> pipelines = createMergerPipelines(options, fhirContext);
-    EtlUtils.runMultiplePipelines(pipelines, options);
+    EtlUtils.runMultipleMergerPipelinesWithTimestamp(pipelines, options);
     log.info("DONE!");
   }
 }

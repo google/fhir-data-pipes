@@ -18,7 +18,6 @@ package com.google.fhir.analytics;
 import java.io.IOException;
 import java.time.Instant;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
@@ -33,7 +32,6 @@ import org.apache.beam.sdk.metrics.MetricQueryResults;
 import org.apache.beam.sdk.metrics.MetricResult;
 import org.apache.beam.sdk.metrics.MetricResults;
 import org.apache.beam.sdk.metrics.MetricsFilter;
-import org.apache.beam.sdk.options.PipelineOptions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -141,38 +139,6 @@ class EtlUtils {
       if (executor != null) {
         executor.shutdown();
       }
-    }
-    return pipelineResults;
-  }
-
-  /**
-   * Execute the {@code pipelines} and return the pipeline results.
-   *
-   * @param pipelines the pipelines to be executed
-   * @param options the {@link FhirEtlOptions} or {@link ParquetMergerOptions} to be used by the
-   *     pipelines
-   * @return the list of pipeline results
-   * @throws IOException
-   */
-  static List<PipelineResult> runMultiplePipelines(
-      List<Pipeline> pipelines, PipelineOptions options) throws IOException {
-    if (pipelines == null || pipelines.isEmpty()) {
-      log.warn("No pipeline to run");
-      return Collections.EMPTY_LIST;
-    }
-
-    List<PipelineResult> pipelineResults = null;
-    if (options instanceof FhirEtlOptions) {
-      pipelineResults =
-          EtlUtils.runMultiplePipelinesWithTimestamp(pipelines, (FhirEtlOptions) options);
-    } else if (options instanceof ParquetMergerOptions) {
-      pipelineResults =
-          EtlUtils.runMultipleMergerPipelinesWithTimestamp(
-              pipelines, (ParquetMergerOptions) options);
-    } else {
-      log.error("options should be one of FhirEtlOptions or ParquetMergerOptions");
-      throw new IllegalArgumentException(
-          "options should be one of FhirEtlOptions or ParquetMergerOptions");
     }
     return pipelineResults;
   }
