@@ -19,16 +19,17 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.nullValue;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import ca.uhn.fhir.context.FhirContext;
 import ca.uhn.fhir.parser.IParser;
 import ca.uhn.fhir.rest.api.SearchTotalModeEnum;
+import ca.uhn.fhir.rest.api.SortSpec;
 import ca.uhn.fhir.rest.api.SummaryEnum;
 import ca.uhn.fhir.rest.client.api.IGenericClient;
 import ca.uhn.fhir.rest.gclient.IQuery;
@@ -43,7 +44,6 @@ import java.util.List;
 import java.util.Map;
 import org.apache.beam.sdk.options.PipelineOptionsFactory;
 import org.hl7.fhir.r4.model.Bundle;
-import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -52,15 +52,13 @@ import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
 @RunWith(MockitoJUnitRunner.class)
-public class FhirSearchUtilTest {
+public abstract class FhirSearchUtilTest {
 
-  private static final String PAGE_URL_PARAM = "_getpages=861af9b4-d847-4831-b945-ab1f6f08f03e";
-
-  private static final String BASE_URL = "http://localhost:9020/openmrs/ws/fhir2/R4";
+  protected static final String BASE_URL = "http://localhost:9020/openmrs/ws/fhir2/R4";
 
   private static final String SEARCH_URL = "Patient?given=TEST";
 
-  @Mock private OpenmrsUtil openmrsUtil;
+  @Mock protected OpenmrsUtil openmrsUtil;
 
   @Mock private IGenericClient genericClient;
 
@@ -79,20 +77,23 @@ public class FhirSearchUtilTest {
     fhirContext = FhirContext.forR4Cached();
   }
 
-  @Before
-  public void setup() throws IOException {
-    URL url = Resources.getResource("bundle.json");
-    String bundleStr = Resources.toString(url, StandardCharsets.UTF_8);
+  public void setup(String bundleResourceName) throws IOException {
     IParser parser = fhirContext.newJsonParser();
+
+    URL url = Resources.getResource(bundleResourceName);
+    String bundleStr = Resources.toString(url, StandardCharsets.UTF_8);
     bundle = parser.parseResource(Bundle.class, bundleStr);
+
     fhirSearchUtil = new FhirSearchUtil(openmrsUtil);
-    when(openmrsUtil.getSourceFhirUrl()).thenReturn(BASE_URL);
+
     when(openmrsUtil.getSourceClient()).thenReturn(genericClient);
     when(openmrsUtil.getSourceClient(anyBoolean())).thenReturn(genericClient);
     when(genericClient.search()).thenReturn(untypedQuery);
     when(untypedQuery.byUrl(SEARCH_URL)).thenReturn(query);
     when(untypedQuery.forResource(anyString())).thenReturn(query);
     when(query.count(anyInt())).thenReturn(query);
+    when(query.offset(anyInt())).thenReturn(query);
+    when(query.sort(any(SortSpec.class))).thenReturn(query);
     when(query.totalMode(any(SearchTotalModeEnum.class))).thenReturn(query);
     when(query.summaryMode(any(SummaryEnum.class))).thenReturn(query);
     when(query.returnBundle(any())).thenReturn(query);
@@ -102,8 +103,10 @@ public class FhirSearchUtilTest {
   @Test
   public void testFindBaseSearchUrl() {
     String baseUrl = fhirSearchUtil.findBaseSearchUrl(bundle);
-    assertThat(baseUrl, equalTo(BASE_URL + "?" + PAGE_URL_PARAM));
+    assertBaseSearchUrl(baseUrl);
   }
+
+  protected abstract void assertBaseSearchUrl(String baseUrl);
 
   @Test
   public void testSearchForResource() {
