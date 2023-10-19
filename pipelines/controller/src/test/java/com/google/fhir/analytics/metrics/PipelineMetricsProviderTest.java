@@ -25,7 +25,6 @@ import org.hamcrest.Matchers;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.actuate.observability.AutoConfigureObservability;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.TestPropertySource;
@@ -33,9 +32,7 @@ import org.springframework.test.context.TestPropertySource;
 @SpringBootTest
 @AutoConfigureObservability
 @TestPropertySource("classpath:application-test.properties")
-public class PipelineMetricsFactoryTest {
-
-  @Autowired private PipelineMetricsFactory pipelineMetricsFactory;
+public class PipelineMetricsProviderTest {
 
   private static MockWebServer mockFhirServer;
 
@@ -51,13 +48,14 @@ public class PipelineMetricsFactoryTest {
 
   @Test
   void testFlinkRunner() {
-    PipelineMetrics pipelineMetrics = pipelineMetricsFactory.getPipelineMetrics(FlinkRunner.class);
+    PipelineMetrics pipelineMetrics = PipelineMetricsProvider.getPipelineMetrics(FlinkRunner.class);
     MatcherAssert.assertThat(pipelineMetrics, Matchers.instanceOf(FlinkPipelineMetrics.class));
   }
 
   @Test
   void testDirectRunner() {
-    PipelineMetrics pipelineMetrics = pipelineMetricsFactory.getPipelineMetrics(DirectRunner.class);
+    PipelineMetrics pipelineMetrics =
+        PipelineMetricsProvider.getPipelineMetrics(DirectRunner.class);
     MatcherAssert.assertThat(pipelineMetrics, Matchers.nullValue());
   }
 

@@ -16,7 +16,7 @@
 
 # This is needed to prevent an "Insufficient number of network buffers"
 # exceptions when running the merger on large input with many workers.
-taskmanager.memory.network.max: 5gb
+taskmanager.memory.network.max: 1gb
 
 # This is needed to be able to process large resources, otherwise in JDBC
 # mode we may get the following exception:

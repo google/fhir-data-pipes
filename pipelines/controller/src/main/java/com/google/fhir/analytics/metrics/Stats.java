@@ -15,12 +15,8 @@
  */
 package com.google.fhir.analytics.metrics;
 
-import com.google.fhir.analytics.MetricsConstants;
 import javax.annotation.Nullable;
 import lombok.Data;
-import org.apache.beam.sdk.metrics.GaugeResult;
-import org.apache.beam.sdk.metrics.MetricQueryResults;
-import org.apache.beam.sdk.metrics.MetricResult;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -42,33 +38,19 @@ public class Stats {
    * weightage for each step is a rough approximation derived based on the time taken for that step
    * as compared to the other steps.
    *
-   * @param metricQueryResults
+   * @param cumulativeMetrics
    * @return Stats
    */
-  public static Stats createStats(@Nullable MetricQueryResults metricQueryResults) {
+  public static Stats createStats(@Nullable CumulativeMetrics cumulativeMetrics) {
 
-    if (metricQueryResults == null) {
+    if (cumulativeMetrics == null) {
       return null;
     }
 
     Stats stats = new Stats();
-    long totalNoOfResources = 0l;
-    for (MetricResult<GaugeResult> gauge : metricQueryResults.getGauges()) {
-      if (gauge.getName().getName().startsWith(MetricsConstants.TOTAL_NO_OF_RESOURCES)) {
-        totalNoOfResources += gauge.getAttempted().getValue();
-      }
-    }
-
-    long totalNoOfFetchedResources = 0l;
-    long totalNoOfMappedResources = 0l;
-    for (MetricResult<Long> counter : metricQueryResults.getCounters()) {
-      if (counter.getName().getName().startsWith(MetricsConstants.NUM_FETCHED_RESOURCES)) {
-        totalNoOfFetchedResources += counter.getAttempted();
-      }
-      if (counter.getName().getName().startsWith(MetricsConstants.NUM_MAPPED_RESOURCES)) {
-        totalNoOfMappedResources += counter.getAttempted();
-      }
-    }
+    long totalNoOfResources = cumulativeMetrics.getTotalResources();
+    long totalNoOfFetchedResources = cumulativeMetrics.getFetchedResources();
+    long totalNoOfMappedResources = cumulativeMetrics.getMappedResources();
 
     int mappedResourcesPercentage =
         getPercentage(Math.min(totalNoOfMappedResources, totalNoOfResources), totalNoOfResources);
