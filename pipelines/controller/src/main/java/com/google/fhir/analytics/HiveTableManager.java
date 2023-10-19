@@ -15,13 +15,21 @@
  */
 package com.google.fhir.analytics;
 
+import com.google.common.base.Strings;
 import com.google.fhir.analytics.model.DatabaseConfiguration;
 import java.beans.PropertyVetoException;
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.List;
+import java.util.stream.Collectors;
 import javax.sql.DataSource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -36,15 +44,19 @@ public class HiveTableManager {
 
   private final DataSource dataSource;
 
+  private final String viewsDir;
+
   private static final String THRIFT_CONTAINER_PARQUET_DIR = "/dwh";
 
-  public HiveTableManager(DatabaseConfiguration hiveDbConfig) throws PropertyVetoException {
+  public HiveTableManager(DatabaseConfiguration hiveDbConfig, String viewsDir)
+      throws PropertyVetoException {
     this.dataSource =
         JdbcConnectionPools.getInstance()
             .getPooledDataSource(
                 JdbcConnectionPools.dbConfigToDataSourceConfig(hiveDbConfig),
                 CONNECTION_POOL_SIZE,
                 CONNECTION_POOL_SIZE);
+    this.viewsDir = Strings.nullToEmpty(viewsDir);
   }
 
   /**
@@ -69,6 +81,7 @@ public class HiveTableManager {
     try (Connection connection = dataSource.getConnection()) {
       for (String resource : resources) {
         createTablesForResource(connection, resource, timestamp, thriftServerParquetPath);
+        createViews(connection, resource);
       }
     }
   }
@@ -101,6 +114,42 @@ public class HiveTableManager {
             "CREATE TABLE IF NOT EXISTS default.%s USING PARQUET LOCATION '%s/%s/%s'",
             resource, THRIFT_CONTAINER_PARQUET_DIR, thriftServerParquetPath, resource);
     executeSql(connection, sql);
+  }
+
+  /**
+   * Creates the views registered in the `views/` directory for the given `resource`. Note since
+   * these views might be user-provided, the SQLException is handled by logging an error but is not
+   * thrown such that the error does not propagate.
+   */
+  private synchronized void createViews(Connection connection, String resource) {
+    if (viewsDir.isEmpty()) {
+      return;
+    }
+    List<Path> viewPaths = null;
+    try {
+      viewPaths =
+          Files.list(Paths.get(viewsDir))
+              .filter(
+                  p ->
+                      p.getFileName().toString().startsWith(resource)
+                          && p.getFileName().toString().endsWith(".sql"))
+              .collect(Collectors.toList());
+    } catch (IOException e) {
+      logger.error("Cannot get the list of files in {}", viewsDir, e);
+      return;
+    }
+    if (viewPaths == null || viewPaths.isEmpty()) {
+      logger.warn("No view files found for resource {} in {}", resource, viewsDir);
+      return;
+    }
+    for (Path p : viewPaths) {
+      try (BufferedReader reader = Files.newBufferedReader(p, StandardCharsets.UTF_8)) {
+        String sql = reader.lines().collect(Collectors.joining(System.lineSeparator()));
+        executeSql(connection, sql);
+      } catch (IOException | SQLException e) {
+        logger.error("Error while executing SQL in {} :", p, e);
+      }
+    }
   }
 
   public void showTables() throws SQLException {

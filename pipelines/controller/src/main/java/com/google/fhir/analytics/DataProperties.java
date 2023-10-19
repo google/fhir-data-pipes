@@ -87,6 +87,8 @@ public class DataProperties {
 
   private boolean createHiveResourceTables;
 
+  private String hiveResourceViewsDir;
+
   private String fhirServerPassword;
 
   private String fhirServerUserName;
@@ -109,6 +111,7 @@ public class DataProperties {
       Preconditions.checkArgument(!Strings.isNullOrEmpty(fhirServerUrl));
       logger.info("Using FHIR-search mode since dbConfig is not set.");
     }
+    Preconditions.checkState(!createHiveResourceTables || !thriftserverHiveConfig.isEmpty());
   }
 
   PipelineConfig createBatchOptions() {

@@ -415,7 +415,7 @@ public class PipelineManager implements ApplicationListener<ApplicationReadyEven
       throw new RuntimeException(e);
     }
     try {
-      hiveTableManager = new HiveTableManager(dbConfig);
+      hiveTableManager = new HiveTableManager(dbConfig, dataProperties.getHiveResourceViewsDir());
       hiveTableManager.showTables();
     } catch (PropertyVetoException | SQLException e) {
       logger.error("Exception while querying the thriftserver: ", e);
