@@ -23,6 +23,7 @@ import com.google.fhir.analytics.metrics.CumulativeMetrics;
 import com.google.fhir.analytics.metrics.PipelineMetrics;
 import com.google.fhir.analytics.metrics.PipelineMetricsProvider;
 import com.google.fhir.analytics.model.DatabaseConfiguration;
+import io.micrometer.core.instrument.Gauge;
 import io.micrometer.core.instrument.MeterRegistry;
 import java.beans.PropertyVetoException;
 import java.io.IOException;
@@ -104,16 +105,23 @@ public class PipelineManager implements ApplicationListener<ApplicationReadyEven
   void publishPipelineMetrics(MetricResults metricResults) {
     MetricQueryResults metricQueryResults = EtlUtils.getMetrics(metricResults);
     for (MetricResult<Long> metricCounterResult : metricQueryResults.getCounters()) {
-      meterRegistry.gauge(
-          metricCounterResult.getName().getNamespace()
-              + "_"
-              + metricCounterResult.getName().getName(),
-          metricCounterResult.getAttempted());
+      Gauge.builder(
+              metricCounterResult.getName().getNamespace()
+                  + "_"
+                  + metricCounterResult.getName().getName(),
+              () -> metricCounterResult.getAttempted())
+          // Make a strong reference so that the value is not immediately cleared after GC
+          .strongReference(true)
+          .register(meterRegistry);
     }
     for (MetricResult<GaugeResult> metricGaugeResult : metricQueryResults.getGauges()) {
-      meterRegistry.gauge(
-          metricGaugeResult.getName().getNamespace() + "_" + metricGaugeResult.getName().getName(),
-          metricGaugeResult.getAttempted().getValue());
+      Gauge.builder(
+              metricGaugeResult.getName().getNamespace()
+                  + "_"
+                  + metricGaugeResult.getName().getName(),
+              () -> metricGaugeResult.getAttempted().getValue())
+          .strongReference(true)
+          .register(meterRegistry);
     }
   }
 
