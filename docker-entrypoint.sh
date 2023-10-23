@@ -45,4 +45,4 @@ enable_jemalloc
 # The -Xmx value is to make sure there is a minimum amount of memory; it can be
 # increased if more memory is available and is desired to be used by pipelines.
 # Note this is related to the memory config in flink-conf.yaml too.
-java -Xms6g -Xmx6g -jar /app/controller.jar
+java -Xms2g -Xmx2g -jar /app/controller.jar
