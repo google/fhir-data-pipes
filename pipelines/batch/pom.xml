@@ -26,7 +26,7 @@
   <parent>
     <groupId>com.google.fhir.analytics</groupId>
     <artifactId>pipelines</artifactId>
-    <version>0.1.0-SNAPSHOT</version>
+    <version>0.2.7-SNAPSHOT</version>
   </parent>
 
   <artifactId>batch</artifactId>
@@ -198,7 +198,7 @@
                  Note with the following `fileName` we produce a "bundled"
                  uber-jar while keep the original normal jar. -->
               <createDependencyReducedPom>false</createDependencyReducedPom>
-              <finalName>${project.artifactId}-bundled-${project.version}</finalName>
+              <finalName>${project.artifactId}-bundled</finalName>
               <filters>
                 <filter>
                   <artifact>*:*</artifact>

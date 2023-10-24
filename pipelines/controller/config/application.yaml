@@ -44,8 +44,10 @@ fhirdata:
   #
   # Note for developers: You can make a symlink of `[repo_root]/docker/dwh` here
   # such that the Thrift Server of `compose-controller-spark-sql-single.yaml`
-  # config can easily be used in dev env. too.
-  dwhRootPrefix: "dwh/controller_DWH_DEV"
+  # config can easily be used in dev env. too. You may need to set the ACL of
+  # that directory too, such that files created by the pipelines are readable by
+  # the Thrift Server, e.g., `setfacl -d -m o::rx dwh/`.
+  dwhRootPrefix: "dwh/controller_DEV_DWH"
 
   # The schedule for automatic incremental pipeline runs.
   # Uses the Spring CronExpression format, i.e.,
@@ -69,7 +71,7 @@ fhirdata:
   # Equivalent to pipeline `resourceList` parameter.
   # Note there is no Questionnaire in our test FHIR server, but it is okay; see
   # https://github.com/google/fhir-data-pipes/issues/785.
-  resourceList: "Patient,Encounter,Observation,Questionnaire"
+  resourceList: "Patient,Encounter,Observation,Questionnaire,Condition,Practitioner,Location,Organization"
 
   # The maximum number of Flink workers to use. Each worker may have 
   # `numThreads` parallel threads.

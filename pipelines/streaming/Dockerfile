@@ -15,7 +15,7 @@
 FROM adoptopenjdk/maven-openjdk11
 
 ARG WORK_DIR="/usr/src/Main"
-COPY target/streaming-binlog-bundled-0.1.0-SNAPSHOT.jar ${WORK_DIR}/app.jar
+COPY target/streaming-bundled.jar ${WORK_DIR}/app.jar
 WORKDIR ${WORK_DIR}
 ENV FHIR_SERVER_URL="http://openmrs:8080/openmrs/ws/fhir2/R4"
 ENV FHIR_SERVER_USERNAME="admin"
