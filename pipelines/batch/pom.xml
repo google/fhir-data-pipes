@@ -35,7 +35,7 @@
 
   <properties>
     <hamcrest.version>2.2</hamcrest.version>
-    <jackson.version>2.15.2</jackson.version>
+    <jackson.version>2.15.3</jackson.version>
     <pubsub.version>v1-rev20220904-2.0.0</pubsub.version>
     <spark.version>2.4.8</spark.version>
     <maven-surefire-plugin.version>3.2.1</maven-surefire-plugin.version>
