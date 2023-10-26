@@ -455,6 +455,15 @@ public class PipelineManager implements ApplicationListener<ApplicationReadyEven
       List<ResourceId> paths =
           dwhFilesManager.getAllChildDirectories(baseDir).stream()
               .filter(dir -> dir.getFilename().startsWith(prefix + DataProperties.TIMESTAMP_PREFIX))
+              .filter(
+                  dir -> {
+                    try {
+                      return dwhFilesManager.isDwhComplete(dir);
+                    } catch (IOException e) {
+                      logger.error("Error while accessing {}", dir, e);
+                    }
+                    return false;
+                  })
               .collect(Collectors.toList());
 
       Preconditions.checkState(paths != null, "Make sure DWH prefix is a valid path!");
