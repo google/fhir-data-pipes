@@ -37,9 +37,7 @@ RUN apt-get update && apt-get install -y libjemalloc-dev
 
 WORKDIR /app
 
-COPY --from=build \
-  /app/pipelines/controller/target/controller-0.1.0-SNAPSHOT-exec.jar \
-  ./controller.jar
+COPY --from=build /app/pipelines/controller/target/controller-bundled.jar .
 
 COPY ./docker/config ./config
 

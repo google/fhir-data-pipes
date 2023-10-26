@@ -56,7 +56,7 @@ Running the JAR directly:
 
 ```
 mvn clean install
-java -jar ./target/controller-0.1.0-SNAPSHOT-exec.jar
+java -jar ./target/controller-bundled.jar
 ```
 
 After running, open a web browser and visit http://localhost:8080. You should

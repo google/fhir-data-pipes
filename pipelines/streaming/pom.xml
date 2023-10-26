@@ -22,7 +22,7 @@
   <parent>
     <groupId>com.google.fhir.analytics</groupId>
     <artifactId>pipelines</artifactId>
-    <version>0.1.0-SNAPSHOT</version>
+    <version>0.2.7-SNAPSHOT</version>
   </parent>
 
   <artifactId>streaming</artifactId>
@@ -139,7 +139,7 @@
             </goals>
             <phase>package</phase>
             <configuration>
-              <finalName>${project.artifactId}-bundled-${project.version}</finalName>
+              <finalName>${project.artifactId}-bundled</finalName>
               <filters>
                 <filter>
                   <artifact>*:*</artifact>

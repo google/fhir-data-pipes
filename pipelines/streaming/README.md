@@ -53,7 +53,7 @@ planned.
 1.  Run the pipeline to a FHIR server and Parquet files:
 
     ```shell
-    $ java -jar ./pipelines/streaming/target/streaming-bundled-0.1.0-SNAPSHOT.jar \
+    $ java -jar ./pipelines/streaming/target/streaming-bundled.jar \
       com.google.fhir.analytics.Runner \
       --fhirServerUrl=http://localhost:8099/openmrs/ws/fhir2/R4 \
         --fhirServerUserName=admin --fhirServerPassword=Admin123 \
@@ -66,7 +66,7 @@ planned.
     Or to a GCP FHIR store:
 
     ```shell
-    $ java -jar ./pipelines/streaming/target/streaming-bundled-0.1.0-SNAPSHOT.jar \
+    $ java -jar ./pipelines/streaming/target/streaming-bundled.jar \
       com.google.fhir.analytics.Runner \
       --fhirServerUrl=http://localhost:8099/openmrs/ws/fhir2/R4 \
         --fhirServerUserName=admin --fhirServerPassword=Admin123 \

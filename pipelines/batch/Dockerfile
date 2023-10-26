@@ -25,7 +25,7 @@ FROM eclipse-temurin:17-jdk-focal
 # FROM eclipse-temurin:11-jdk-focal
 
 ARG WORK_DIR="/usr/src/Main"
-COPY target/batch-bundled-0.1.0-SNAPSHOT.jar ${WORK_DIR}/app.jar
+COPY target/batch-bundled.jar ${WORK_DIR}/app.jar
 WORKDIR ${WORK_DIR}
 
 ENV FHIR_SERVER_URL="http://openmrs:8080/openmrs/ws/fhir2/R4"

@@ -41,7 +41,7 @@ There are two options for transforming the data (output):
 Run the pipeline directly using the `java` command:
 
 ```
-java -jar ./pipelines/batch/target/batch-bundled-0.1.0-SNAPSHOT.jar \
+java -jar ./pipelines/batch/target/batch-bundled.jar \
     com.google.fhir.analytics.FhirEtl \
     --fhirServerUrl=http://example.org/fhir \
     --outputParquetPath=/tmp/parquet/
@@ -59,7 +59,7 @@ This section documents the parameters used by the various pipelines. For more
 information on parameters, see
 [`FhirEtlOptions`](https://github.com/google/fhir-data-pipes/blob/master/pipelines/batch/src/main/java/com/google/fhir/analytics/FhirEtlOptions.java)
 or run the pipeline with the `help` option:
-`java -jar ./batch/target/batch-bundled-0.1.0-SNAPSHOT.jar --help=FhirEtlOptions`.
+`java -jar ./batch/target/batch-bundled.jar --help=FhirEtlOptions`.
 
 ### Common parameters
 
@@ -170,7 +170,7 @@ These examples are set up to work with
 Example run:
 
 ```shell
-java -cp ./pipelines/batch/target/batch-bundled-0.1.0-SNAPSHOT.jar \
+java -cp ./pipelines/batch/target/batch-bundled.jar \
     com.google.fhir.analytics.FhirEtl \
     --fhirServerUrl=http://localhost:8091/fhir \
     --outputParquetPath=/tmp/TEST/ \
@@ -182,7 +182,7 @@ java -cp ./pipelines/batch/target/batch-bundled-0.1.0-SNAPSHOT.jar \
 Example run:
 
 ```shell
-java -cp ./pipelines/batch/target/batch-bundled-0.1.0-SNAPSHOT.jar \
+java -cp ./pipelines/batch/target/batch-bundled.jar \
     com.google.fhir.analytics.FhirEtl \
     --fhirServerUrl=http://localhost:8091/fhir \
     --resourceList=Patient,Encounter,Observation \
