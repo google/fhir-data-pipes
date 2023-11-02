@@ -641,7 +641,10 @@ public class PipelineManager implements ApplicationListener<ApplicationReadyEven
       } else {
         String fileSeparator = DwhFiles.getFileSeparatorForDwhFiles(dwhRoot);
         dwhRoot = dwhRoot.endsWith(fileSeparator) ? dwhRoot : dwhRoot + fileSeparator;
-        dwhRunDetails.setLogFilePath(dwhRoot + ERROR_FILE_NAME);
+        ResourceId errorResource = FileSystems.matchNewResource(dwhRoot + ERROR_FILE_NAME, false);
+        if (dwhFilesManager.doesFileExist(errorResource)) {
+          dwhRunDetails.setLogFilePath(dwhRoot + ERROR_FILE_NAME);
+        }
       }
       dwhRunDetails.setStatus(status);
       this.lastRunDetails = dwhRunDetails;
