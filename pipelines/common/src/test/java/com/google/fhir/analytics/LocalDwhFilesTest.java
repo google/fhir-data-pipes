@@ -30,21 +30,40 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 import org.apache.beam.sdk.io.fs.ResourceId;
+import org.apache.commons.lang3.SystemUtils;
 import org.junit.Assert;
+import org.junit.Assume;
 import org.junit.Test;
 
 public class LocalDwhFilesTest {
   @Test
-  public void getResourcePathTest() {
+  public void getResourcePathTestNonWindows() {
+    Assume.assumeFalse(SystemUtils.IS_OS_WINDOWS);
     DwhFiles dwhFiles = new DwhFiles("/tmp", FhirContext.forR4Cached());
     assertThat(dwhFiles.getResourcePath("Patient").toString(), equalTo("/tmp/Patient/"));
   }
 
   @Test
-  public void newIncrementalRunPathTest() throws IOException {
+  public void getResourcePathTestWindows() {
+    Assume.assumeTrue(SystemUtils.IS_OS_WINDOWS);
+    DwhFiles dwhFiles = new DwhFiles("C:\\tmp", FhirContext.forR4Cached());
+    assertThat(dwhFiles.getResourcePath("Patient").toString(), equalTo("C:\\tmp\\Patient\\"));
+  }
+
+  @Test
+  public void newIncrementalRunPathTestNonWindows() throws IOException {
+    Assume.assumeFalse(SystemUtils.IS_OS_WINDOWS);
     DwhFiles instance = new DwhFiles("/tmp", FhirContext.forR4Cached());
     ResourceId incrementalRunPath = instance.newIncrementalRunPath();
     assertThat(incrementalRunPath.toString(), equalTo("/tmp/incremental_run/"));
+  }
+
+  @Test
+  public void newIncrementalRunPathTesWindows() throws IOException {
+    Assume.assumeTrue(SystemUtils.IS_OS_WINDOWS);
+    DwhFiles instance = new DwhFiles("C:\\tmp", FhirContext.forR4Cached());
+    ResourceId incrementalRunPath = instance.newIncrementalRunPath();
+    assertThat(incrementalRunPath.toString(), equalTo("C:\\tmp\\incremental_run\\"));
   }
 
   @Test

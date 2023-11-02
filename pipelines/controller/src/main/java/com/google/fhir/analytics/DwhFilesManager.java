@@ -19,8 +19,8 @@ import static org.apache.beam.sdk.io.FileSystems.DEFAULT_SCHEME;
 
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
+import java.io.File;
 import java.io.IOException;
-import java.net.URI;
 import java.nio.file.DirectoryNotEmptyException;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -30,6 +30,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.TreeSet;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import javax.annotation.PostConstruct;
 import org.apache.beam.sdk.extensions.gcp.util.gcsfs.GcsPath;
@@ -65,7 +67,11 @@ public class DwhFilesManager {
   private boolean isPurgeJobRunning;
 
   private String dwhRootPrefix;
+
   private int numOfDwhSnapshotsToRetain;
+
+  private static final Pattern WINDOWS_SCHEME_PATTERN =
+      Pattern.compile("(?<scheme>[a-zA-Z]):\\\\(?<path>.*)");
 
   private static final Logger logger = LoggerFactory.getLogger(DwhFilesManager.class.getName());
 
@@ -168,10 +174,10 @@ public class DwhFilesManager {
    * @throws IOException
    */
   private void deleteDirectoryAndFiles(ResourceId rootDirectory) throws IOException {
-    ResourceId filesResourceToBeMatched =
-        rootDirectory.resolve("**", StandardResolveOptions.RESOLVE_FILE);
+
+    String fileSeparator = DwhFiles.getFileSeparatorForDwhFiles(rootDirectory.toString());
     List<MatchResult> matchedFilesResultList =
-        FileSystems.matchResources(Collections.singletonList(filesResourceToBeMatched));
+        FileSystems.match(Collections.singletonList(rootDirectory + fileSeparator + "**"));
 
     // Collect the matched files which also includes the files under the subdirectories, at the same
     // time collect the directories as well.
@@ -341,12 +347,12 @@ public class DwhFilesManager {
    * @throws IOException
    */
   Set<ResourceId> getAllChildDirectories(String baseDir) throws IOException {
-    // TODO avoid using `/` in resolve.
-    ResourceId resourceId =
-        FileSystems.matchNewResource(baseDir, true)
-            .resolve("*/*", StandardResolveOptions.RESOLVE_FILE);
+    String fileSeparator = DwhFiles.getFileSeparatorForDwhFiles(baseDir);
+    // Do not use FileSystems.matchResources(..) as it internally uses Paths.get() which fails in
+    // Windows OS platform to resolve the files correctly when the glob expressions are present.
+    // Refer https://bugs.openjdk.org/browse/JDK-8197918 for details.
     List<MatchResult> matchResultList =
-        FileSystems.matchResources(Collections.singletonList(resourceId));
+        FileSystems.match(Arrays.asList(baseDir + fileSeparator + "*" + fileSeparator + "*"));
     Set<ResourceId> childDirectories = new HashSet<>();
     for (MatchResult matchResult : matchResultList) {
       if (matchResult.status() == Status.OK && !matchResult.metadata().isEmpty()) {
@@ -364,11 +370,15 @@ public class DwhFilesManager {
   }
 
   private int getLastIndexOfSlash(String dwhRootPrefix) {
-    String scheme = parseScheme(dwhRootPrefix);
+    String scheme = DwhFiles.parseScheme(dwhRootPrefix);
     int index = -1;
     switch (scheme) {
       case DEFAULT_SCHEME:
-        index = dwhRootPrefix.lastIndexOf("/");
+        if (isSchemeWindows(dwhRootPrefix)) {
+          index = getLastIndexOfSlashInWindowsSpec(dwhRootPrefix);
+        } else {
+          index = dwhRootPrefix.lastIndexOf(File.separator);
+        }
         break;
       case GcsPath.SCHEME:
         // Fetch the last index position of the character '/' after the bucket name in the gcs path.
@@ -392,8 +402,21 @@ public class DwhFilesManager {
     return index;
   }
 
-  private static String parseScheme(String spec) {
-    URI uri = URI.create(spec);
-    return Strings.isNullOrEmpty(uri.getScheme()) ? DEFAULT_SCHEME : uri.getScheme();
+  private boolean isSchemeWindows(String spec) {
+    return WINDOWS_SCHEME_PATTERN.matcher(spec).matches();
+  }
+
+  private int getLastIndexOfSlashInWindowsSpec(String spec) {
+    Matcher matcher = WINDOWS_SCHEME_PATTERN.matcher(spec);
+    if (!matcher.matches()) return -1;
+
+    String path = matcher.group("path");
+    if (Strings.isNullOrEmpty(path)) return -1;
+
+    int index = path.lastIndexOf("\\");
+    if (index != -1) {
+      index = spec.lastIndexOf(path) + index;
+    }
+    return index;
   }
 }

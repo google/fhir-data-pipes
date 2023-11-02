@@ -17,6 +17,8 @@ package com.google.fhir.analytics;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
+import static org.junit.Assume.assumeFalse;
+import static org.junit.Assume.assumeTrue;
 
 import java.io.File;
 import java.io.IOException;
@@ -28,6 +30,7 @@ import java.time.Instant;
 import java.util.Set;
 import org.apache.beam.sdk.io.FileSystems;
 import org.apache.beam.sdk.io.fs.ResourceId;
+import org.apache.commons.lang3.SystemUtils;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -60,14 +63,14 @@ public class LocalDwhFilesManagerTest {
   @Test
   public void testCheckPurgeScheduleAndTrigger() throws IOException {
     File rootDir = testFolder.newFolder("rootDir");
-    dataProperties.setDwhRootPrefix(rootDir.getPath() + "/snapshot");
+    dataProperties.setDwhRootPrefix(rootDir.getPath() + File.separator + "snapshot");
     dwhFilesManager.init();
 
-    createCompleteDwhSnapshot("rootDir/snapshot1");
-    createCompleteDwhSnapshot("rootDir/snapshot2");
-    createCompleteDwhSnapshot("rootDir/snapshot3");
-    createCompleteDwhSnapshot("rootDir/snapshot4");
-    createCompleteDwhSnapshot("rootDir/snapshot5");
+    createCompleteDwhSnapshot("rootDir" + File.separator + "snapshot1");
+    createCompleteDwhSnapshot("rootDir" + File.separator + "snapshot2");
+    createCompleteDwhSnapshot("rootDir" + File.separator + "snapshot3");
+    createCompleteDwhSnapshot("rootDir" + File.separator + "snapshot4");
+    createCompleteDwhSnapshot("rootDir" + File.separator + "snapshot5");
 
     dwhFilesManager.checkPurgeScheduleAndTrigger();
     // Check if the number of the snapshots remaining after the purge job is equal to the
@@ -121,31 +124,101 @@ public class LocalDwhFilesManagerTest {
   }
 
   @Test
-  public void testBaseDir() {
+  public void testBaseDirForNonWindows() {
+    assumeFalse(SystemUtils.IS_OS_WINDOWS);
     String baseDir1 = dwhFilesManager.getBaseDir("/root/prefix");
     assertThat(baseDir1, equalTo("/root"));
 
     String baseDir2 = dwhFilesManager.getBaseDir("/root/child/prefix");
     assertThat(baseDir2, equalTo("/root/child"));
-  }
 
-  @Test(expected = IllegalArgumentException.class)
-  public void testBaseDirForInvalidPath() {
-    dwhFilesManager.getBaseDir("/root");
+    String baseDir3 = dwhFilesManager.getBaseDir("root/prefix");
+    assertThat(baseDir3, equalTo("root"));
+
+    String baseDir4 = dwhFilesManager.getBaseDir("root/child/prefix");
+    assertThat(baseDir4, equalTo("root/child"));
   }
 
   @Test
-  public void testPrefix() {
+  public void testBaseDirForWindows() {
+    assumeTrue(SystemUtils.IS_OS_WINDOWS);
+    String baseDir1 = dwhFilesManager.getBaseDir("C:\\root\\prefix");
+    assertThat(baseDir1, equalTo("C:\\root"));
+
+    String baseDir2 = dwhFilesManager.getBaseDir("C:\\root\\child\\prefix");
+    assertThat(baseDir2, equalTo("C:\\root\\child"));
+
+    String baseDir3 = dwhFilesManager.getBaseDir("nonRoot\\prefix");
+    assertThat(baseDir3, equalTo("nonRoot"));
+
+    String baseDir4 = dwhFilesManager.getBaseDir("nonRoot\\child\\prefix");
+    assertThat(baseDir4, equalTo("nonRoot\\child"));
+  }
+
+  @Test(expected = IllegalArgumentException.class)
+  public void testBaseDirForInvalidPathNonWindows() {
+    assumeFalse(SystemUtils.IS_OS_WINDOWS);
+    dwhFilesManager.getBaseDir("/root");
+  }
+
+  @Test(expected = IllegalArgumentException.class)
+  public void testBaseDirForInvalidPathWindows() {
+    assumeTrue(SystemUtils.IS_OS_WINDOWS);
+    dwhFilesManager.getBaseDir("C:\\root");
+  }
+
+  @Test(expected = IllegalArgumentException.class)
+  public void testBaseDirForInvalidPath2() {
+    dwhFilesManager.getBaseDir("root");
+  }
+
+  @Test
+  public void testPrefixForNonWindows() {
+    assumeFalse(SystemUtils.IS_OS_WINDOWS);
     String prefix1 = dwhFilesManager.getPrefix("/root/prefix");
     assertThat(prefix1, equalTo("prefix"));
 
     String prefix2 = dwhFilesManager.getPrefix("/root/child/prefix");
     assertThat(prefix2, equalTo("prefix"));
+
+    String prefix3 = dwhFilesManager.getPrefix("nonRoot/prefix");
+    assertThat(prefix3, equalTo("prefix"));
+
+    String prefix4 = dwhFilesManager.getPrefix("nonRoot/child/prefix");
+    assertThat(prefix4, equalTo("prefix"));
+  }
+
+  public void testPrefixForWindows() {
+    assumeTrue(SystemUtils.IS_OS_WINDOWS);
+
+    String prefix1 = dwhFilesManager.getPrefix("C:\\root\\prefix");
+    assertThat(prefix1, equalTo("prefix"));
+
+    String prefix2 = dwhFilesManager.getPrefix("C:\\root\\child\\prefix");
+    assertThat(prefix2, equalTo("prefix"));
+
+    String prefix3 = dwhFilesManager.getPrefix("nonRoot\\prefix");
+    assertThat(prefix3, equalTo("prefix"));
+
+    String prefix4 = dwhFilesManager.getPrefix("nonRoot\\child\\prefix");
+    assertThat(prefix4, equalTo("prefix"));
   }
 
   @Test(expected = IllegalArgumentException.class)
-  public void testPrefixForInvalidPath() {
+  public void testPrefixForInvalidPathNonWindows() {
+    assumeFalse(SystemUtils.IS_OS_WINDOWS);
     dwhFilesManager.getPrefix("/prefix");
+  }
+
+  @Test(expected = IllegalArgumentException.class)
+  public void testPrefixForInvalidPathWindows() {
+    assumeTrue(SystemUtils.IS_OS_WINDOWS);
+    dwhFilesManager.getPrefix("C:\\prefix");
+  }
+
+  @Test(expected = IllegalArgumentException.class)
+  public void testPrefixForInvalidPath2() {
+    dwhFilesManager.getPrefix("prefix");
   }
 
   private void createCompleteDwhSnapshot(String rootPath) throws IOException {

@@ -17,6 +17,7 @@ import org.apache.avro.Protocol;
 import org.apache.avro.Schema;
 import org.apache.avro.compiler.specific.SpecificCompiler;
 import org.apache.avro.generic.GenericData.Record;
+import org.apache.commons.lang3.SystemUtils;
 import org.hl7.fhir.exceptions.FHIRException;
 import org.hl7.fhir.r4.model.CodeableConcept;
 import org.hl7.fhir.r4.model.Coding;
@@ -473,23 +474,28 @@ public class R4AvroConverterTest {
             .map(Object::toString)
             .collect(Collectors.toSet());
 
+    List<String> filesToBeVerified =
+        Arrays.asList(
+            // Ensure common types were generated
+            "com/cerner/bunsen/r4/avro/Period.java",
+            "com/cerner/bunsen/r4/avro/PatientCoding.java",
+            "com/cerner/bunsen/r4/avro/ValueSet.java",
+            // The specific profile should be created in the expected sub-package.
+            "com/cerner/bunsen/r4/avro/us/core/Patient.java",
+            // Check extension types.
+            "com/cerner/bunsen/r4/avro/us/core/UsCoreRace.java",
+            // Choice types include each choice that could be used.
+            "com/cerner/bunsen/r4/avro/ChoiceBooleanInteger.java",
+            // Contained types created.
+            "com/cerner/bunsen/r4/avro/us/core/MedicationRequestContained.java");
+
     // Ensure common types were generated
-    Assert.assertTrue(javaFiles.contains("com/cerner/bunsen/r4/avro/Period.java"));
-    Assert.assertTrue(javaFiles.contains("com/cerner/bunsen/r4/avro/PatientCoding.java"));
-    Assert.assertTrue(javaFiles.contains("com/cerner/bunsen/r4/avro/ValueSet.java"));
-
-    // The specific profile should be created in the expecter4b-package.
-    Assert.assertTrue(javaFiles.contains("com/cerner/bunsen/r4/avro/us/core/Patient.java"));
-
-    // Check extension types.
-    Assert.assertTrue(javaFiles.contains("com/cerner/bunsen/r4/avro/us/core/UsCoreRace.java"));
-
-    // Choice types include each choice that could be used.
-    Assert.assertTrue(javaFiles.contains("com/cerner/bunsen/r4/avro/ChoiceBooleanInteger.java"));
-
-    // Contained types created.
-    Assert.assertTrue(
-        javaFiles.contains("com/cerner/bunsen/r4/avro/us/core/MedicationRequestContained.java"));
+    for (String fileToBeVerified : filesToBeVerified) {
+      if (SystemUtils.IS_OS_WINDOWS) {
+        fileToBeVerified = fileToBeVerified.replaceAll("/", "\\\\");
+      }
+      Assert.assertTrue(javaFiles.contains(fileToBeVerified));
+    }
   }
 
   // TODO add test profile for R4: https://github.com/google/fhir-data-pipes/issues/558
