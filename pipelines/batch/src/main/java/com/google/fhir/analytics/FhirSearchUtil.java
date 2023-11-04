@@ -48,15 +48,15 @@ public class FhirSearchUtil {
 
   private static final Logger log = LoggerFactory.getLogger(FhirSearchUtil.class);
 
-  private final OpenmrsUtil openmrsUtil;
+  private final FetchUtil fetchUtil;
 
-  FhirSearchUtil(OpenmrsUtil openmrsUtil) {
-    this.openmrsUtil = openmrsUtil;
+  FhirSearchUtil(FetchUtil fetchUtil) {
+    this.fetchUtil = fetchUtil;
   }
 
   public Bundle searchByUrl(String searchUrl, int count, SummaryEnum summaryMode) {
     try {
-      IGenericClient client = openmrsUtil.getSourceClient();
+      IGenericClient client = fetchUtil.getSourceClient();
       Bundle result =
           client
               .search()
@@ -84,7 +84,7 @@ public class FhirSearchUtil {
     for (String resourceType : resourceTypes) {
       try {
         String searchUrl = resourceType + "?";
-        IGenericClient client = openmrsUtil.getSourceClient();
+        IGenericClient client = fetchUtil.getSourceClient();
         IQuery<Bundle> query =
             client
                 .search()
@@ -133,7 +133,7 @@ public class FhirSearchUtil {
         throw new IllegalArgumentException(
             String.format("No _getpages parameter found in search link %s", searchLink));
       }
-      return openmrsUtil.getSourceFhirUrl() + "?" + pagesParam.toString();
+      return fetchUtil.getSourceFhirUrl() + "?" + pagesParam.toString();
     } catch (URISyntaxException e) {
       throw new IllegalArgumentException(
           String.format(
@@ -157,7 +157,7 @@ public class FhirSearchUtil {
   }
 
   private IQuery<Bundle> makeQueryForResource(String resourceType, int count) {
-    IGenericClient client = openmrsUtil.getSourceClient(true);
+    IGenericClient client = fetchUtil.getSourceClient(true);
     return client
         .search()
         .forResource(resourceType)
@@ -272,7 +272,7 @@ public class FhirSearchUtil {
     // Note this can also be done by fetching server's `metadata` and parsing the
     // CapabilityStatement.
     Set<String> patientAssociatedResources = Sets.newHashSet();
-    IGenericClient client = openmrsUtil.getSourceClient(true);
+    IGenericClient client = fetchUtil.getSourceClient(true);
     for (String resourceType : resourceTypes) {
       IQuery<Bundle> query =
           client
@@ -302,7 +302,7 @@ public class FhirSearchUtil {
 
   Bundle searchByPatientAndLastDate(
       String resourceType, String patientId, String lastDate, int count) {
-    IGenericClient client = openmrsUtil.getSourceClient(true);
+    IGenericClient client = fetchUtil.getSourceClient(true);
     IQuery<Bundle> query =
         client
             .search()
@@ -322,7 +322,7 @@ public class FhirSearchUtil {
    */
   void testFhirConnection() {
     log.info("Validating FHIR connection");
-    IGenericClient client = openmrsUtil.getSourceClient();
+    IGenericClient client = fetchUtil.getSourceClient();
     IQuery<Bundle> query =
         client
             .search()

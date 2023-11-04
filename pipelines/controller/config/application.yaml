@@ -19,6 +19,18 @@ fhirdata:
   # are fetched from this URL through the FHIR Search API.
   # Equivalent to the pipeline `fhirServerUrl` parameter.
   fhirServerUrl: "http://172.17.0.1:8091/fhir"
+  #fhirServerUrl: "http://localhost:8099/openmrs/ws/fhir2/R4"
+  #fhirServerUrl: "http://localhost:9002/fhir"
+
+  # The following user-name/password should be set if the FHIR server supports
+  # Basic Auth.
+  #fhirServerUserName: "admin"
+  #fhirServerPassword: "Admin123"
+  # The following client credentials should be set if the FHIR server accepts
+  # OAuth access tokens.
+  #fhirServerOAuthTokenEndpoint: "http://localhost:9080/auth/realms/test/protocol/openid-connect/token"
+  #fhirServerOAuthClientId: "THE_CLIENT_ID"
+  #fhirServerOAuthClientSecret: "THE_CLIENT_SECRET"
 
   # The path to the file containing JDBC settings for connecting to a HAPI FHIR
   # server database. If this is set, resources are fetched directly from the
@@ -32,7 +44,7 @@ fhirdata:
   # for example, "config/controller_DWH_ORIG" will create something like
   # ./config/controller_DWH_ORIG_TIMESTAMP_2023-01-27T23-55-39.295824Z
   # Similar to the pipeline `outputParquetPath` parameter.
-  # 
+  #
   # For GCS buckets, dwhRootPrefix must be of the format
   # "gs://<bucket>/<baseDirPath>/<prefix>". <baseDirPath> is optional
   # for GCS buckets and may contain 0 or more directory names.
