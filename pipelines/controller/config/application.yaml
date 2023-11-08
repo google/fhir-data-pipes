@@ -105,6 +105,13 @@ fhirdata:
   # Otherwise, the number of threads is equal to the number of cores.
   numThreads: -1
 
+  # Generate Flink configuration file `flink-conf.yaml` automatically based on the parallelism set
+  # via the parameter `numThreads` and the `cores` available in the machine. The generated file will
+  # have the parameters set with optimised values necessary to run the pipelines without fail.
+  # Disable this parameter to manually pass the configuration file by pointing the environment
+  # variable FLINK_CONF_DIR to the directory where the flink-conf.yaml is placed.
+  autoGenerateFlinkConfiguration: true
+
   # Whether resource tables should be automatically created on a
   # Hive/Spark server. Primarily meant for single-machine deployment.
   createHiveResourceTables: false

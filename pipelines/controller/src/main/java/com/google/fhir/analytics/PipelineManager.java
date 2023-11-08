@@ -92,6 +92,8 @@ public class PipelineManager implements ApplicationListener<ApplicationReadyEven
 
   private DwhRunDetails lastRunDetails;
 
+  private FlinkConfiguration flinkConfiguration;
+
   private static final String ERROR_FILE_NAME = "error.log";
   private static final String SUCCESS = "SUCCESS";
   private static final String FAILURE = "FAILURE";
@@ -159,6 +161,9 @@ public class PipelineManager implements ApplicationListener<ApplicationReadyEven
   @PostConstruct
   private void initDwhStatus() {
 
+    // Initialise the Flink configurations for all the pipelines
+    initialiseFlinkConfiguration();
+
     PipelineConfig pipelineConfig = dataProperties.createBatchOptions();
     FileSystems.setDefaultPipelineOptions(pipelineConfig.getFhirEtlOptions());
     validateFhirSourceConfiguration(pipelineConfig.getFhirEtlOptions());
@@ -221,6 +226,16 @@ public class PipelineManager implements ApplicationListener<ApplicationReadyEven
     }
     if (!lastDwh.isEmpty()) {
       initialiseLastRunDetails(baseDir, lastDwh);
+    }
+  }
+
+  private void initialiseFlinkConfiguration() {
+    flinkConfiguration = new FlinkConfiguration();
+    try {
+      flinkConfiguration.initialiseFlinkConfiguration(dataProperties);
+    } catch (IOException e) {
+      logger.error("IOException while initializing Flink Configuration: ", e);
+      throw new RuntimeException(e);
     }
   }
 
@@ -345,6 +360,10 @@ public class PipelineManager implements ApplicationListener<ApplicationReadyEven
     Preconditions.checkState(!isRunning(), "cannot start a pipeline while another one is running");
     PipelineConfig pipelineConfig = dataProperties.createBatchOptions();
     FhirEtlOptions options = pipelineConfig.getFhirEtlOptions();
+    FlinkPipelineOptions flinkOptions = options.as(FlinkPipelineOptions.class);
+    if (!Strings.isNullOrEmpty(flinkConfiguration.getFlinkConfDir())) {
+      flinkOptions.setFlinkConfDir(flinkConfiguration.getFlinkConfDir());
+    }
     List<Pipeline> pipelines = FhirEtl.buildPipelines(options);
     if (pipelines == null || pipelines.isEmpty()) {
       logger.warn("No resources found to be fetched!");
@@ -374,6 +393,10 @@ public class PipelineManager implements ApplicationListener<ApplicationReadyEven
     options.setOutputParquetPath(incrementalDwhRoot);
     String since = currentDwh.readTimestampFile(DwhFiles.TIMESTAMP_FILE_START).toString();
     options.setSince(since);
+    FlinkPipelineOptions flinkOptionsForBatch = options.as(FlinkPipelineOptions.class);
+    if (!Strings.isNullOrEmpty(flinkConfiguration.getFlinkConfDir())) {
+      flinkOptionsForBatch.setFlinkConfDir(flinkConfiguration.getFlinkConfDir());
+    }
     List<Pipeline> pipelines = FhirEtl.buildPipelines(options);
 
     // The merger pipeline merges the original full DWH with the new incremental one.
@@ -382,12 +405,20 @@ public class PipelineManager implements ApplicationListener<ApplicationReadyEven
     mergerOptions.setDwh2(incrementalDwhRoot);
     mergerOptions.setMergedDwh(finalDwhRoot);
     mergerOptions.setRunner(FlinkRunner.class);
-    mergerOptions.setNumShards(dataProperties.getMaxWorkers());
-    FlinkPipelineOptions flinkOptions = mergerOptions.as(FlinkPipelineOptions.class);
-    flinkOptions.setFasterCopy(true);
-    flinkOptions.setMaxParallelism(dataProperties.getMaxWorkers());
+    // The number of shards is set based on the parallelism available for the FlinkRunner Pipeline
+    int numShards =
+        dataProperties.getNumThreads() > 0
+            ? dataProperties.getNumThreads()
+            : Runtime.getRuntime().availableProcessors();
+    mergerOptions.setNumShards(numShards);
+    FlinkPipelineOptions flinkOptionsForMerge = mergerOptions.as(FlinkPipelineOptions.class);
+    if (!Strings.isNullOrEmpty(flinkConfiguration.getFlinkConfDir())) {
+      flinkOptionsForMerge.setFlinkConfDir(flinkConfiguration.getFlinkConfDir());
+    }
+    flinkOptionsForMerge.setFasterCopy(true);
+    flinkOptionsForMerge.setMaxParallelism(dataProperties.getMaxWorkers());
     if (dataProperties.getNumThreads() > 0) {
-      flinkOptions.setParallelism(dataProperties.getNumThreads());
+      flinkOptionsForMerge.setParallelism(dataProperties.getNumThreads());
     }
 
     if (pipelines == null || pipelines.isEmpty()) {

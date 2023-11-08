@@ -41,7 +41,8 @@ COPY --from=build /app/pipelines/controller/target/controller-bundled.jar .
 
 COPY ./docker/config ./config
 
-# Flink will read the flink-conf.yaml file from this directory.
+# Flink will read the flink-conf.yaml file from this directory if the auto generation of flink
+# configuration is disabled
 ENV FLINK_CONF_DIR=/app/config
 
 COPY docker-entrypoint.sh /

@@ -93,6 +93,8 @@ public class DataProperties {
 
   private String fhirServerUserName;
 
+  private boolean autoGenerateFlinkConfiguration;
+
   private String fhirServerOAuthTokenEndpoint;
 
   private String fhirServerOAuthClientId;

@@ -22,6 +22,7 @@ import com.google.common.base.Preconditions;
 import com.google.common.collect.Sets;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
@@ -30,18 +31,17 @@ import org.apache.avro.generic.GenericRecord;
 import org.apache.beam.sdk.Pipeline;
 import org.apache.beam.sdk.coders.AvroCoder;
 import org.apache.beam.sdk.io.FileIO;
+import org.apache.beam.sdk.io.FileIO.ReadableFile;
 import org.apache.beam.sdk.io.parquet.ParquetIO;
 import org.apache.beam.sdk.metrics.Counter;
 import org.apache.beam.sdk.metrics.Metrics;
 import org.apache.beam.sdk.options.PipelineOptionsFactory;
+import org.apache.beam.sdk.transforms.Create;
 import org.apache.beam.sdk.transforms.DoFn;
+import org.apache.beam.sdk.transforms.GroupByKey;
 import org.apache.beam.sdk.transforms.ParDo;
-import org.apache.beam.sdk.transforms.join.CoGbkResult;
-import org.apache.beam.sdk.transforms.join.CoGroupByKey;
-import org.apache.beam.sdk.transforms.join.KeyedPCollectionTuple;
 import org.apache.beam.sdk.values.KV;
 import org.apache.beam.sdk.values.PCollection;
-import org.apache.beam.sdk.values.TupleTag;
 import org.apache.parquet.hadoop.metadata.CompressionCodecName;
 import org.hl7.fhir.r4.model.codesystems.ActionType;
 import org.slf4j.Logger;
@@ -64,31 +64,50 @@ public class ParquetMerger {
   private static String SYSTEM_KEY = "system";
   private static String CODE_KEY = "code";
 
-  private static PCollection<KV<String, GenericRecord>> readAndMapToId(
-      Pipeline pipeline, DwhFiles dwh, String resourceType) {
-    PCollection<GenericRecord> records =
-        pipeline.apply(
-            ParquetIO.read(ParquetUtil.getResourceSchema(resourceType, FhirVersionEnum.R4))
-                .from(
-                    String.format(
-                        "%s*%s",
-                        dwh.getResourcePath(resourceType).toString(),
-                        ParquetUtil.PARQUET_EXTENSION)));
+  private static PCollection<KV<String, Iterable<GenericRecord>>> readAndGroupById(
+      Pipeline pipeline, List<DwhFiles> dwhFilesList, String resourceType) {
 
-    return records.apply(
-        ParDo.of(
-            new DoFn<GenericRecord, KV<String, GenericRecord>>() {
-              @ProcessElement
-              public void processElement(
-                  @Element GenericRecord record, OutputReceiver<KV<String, GenericRecord>> out) {
-                String id = record.get(ID_KEY).toString();
-                if (id == null) {
-                  throw new IllegalArgumentException(
-                      String.format("No %s key found in %s", ID_KEY, record));
-                }
-                out.output(KV.of(id, record));
-              }
-            }));
+    PCollection<ReadableFile> inputFiles =
+        pipeline
+            .apply(Create.of(getParquetFilePaths(resourceType, dwhFilesList)))
+            .apply(FileIO.matchAll())
+            .apply(FileIO.readMatches());
+
+    PCollection<GenericRecord> records =
+        inputFiles.apply(
+            ParquetIO.readFiles(ParquetUtil.getResourceSchema(resourceType, FhirVersionEnum.R4)));
+
+    return records
+        .apply(
+            ParDo.of(
+                new DoFn<GenericRecord, KV<String, GenericRecord>>() {
+                  @ProcessElement
+                  public void processElement(
+                      @Element GenericRecord record,
+                      OutputReceiver<KV<String, GenericRecord>> out) {
+                    String id = record.get(ID_KEY).toString();
+                    if (id == null) {
+                      throw new IllegalArgumentException(
+                          String.format("No %s key found in %s", ID_KEY, record));
+                    }
+                    out.output(KV.of(id, record));
+                  }
+                }))
+        .apply(GroupByKey.create());
+  }
+
+  private static List<String> getParquetFilePaths(
+      String resourceType, List<DwhFiles> dwhFilesList) {
+    List<String> parquetFilePaths = new ArrayList<>();
+    if (dwhFilesList != null && !dwhFilesList.isEmpty()) {
+      for (DwhFiles dwhFiles : dwhFilesList) {
+        parquetFilePaths.add(
+            String.format(
+                "%s*%s",
+                dwhFiles.getResourcePath(resourceType).toString(), ParquetUtil.PARQUET_EXTENSION));
+      }
+    }
+    return parquetFilePaths;
   }
 
   private static String getUpdateTime(GenericRecord record) {
@@ -124,20 +143,12 @@ public class ParquetMerger {
   }
 
   private static GenericRecord findLastRecord(
-      Iterable<GenericRecord> iter1, Iterable<GenericRecord> iter2, Counter numDuplicates) {
+      Iterable<GenericRecord> genericRecords, Counter numDuplicates) {
     // Note we are assuming all times have the same time-zone to avoid parsing date values.
     String lastUpdated = null;
     GenericRecord lastRecord = null;
     int numRec = 0;
-    for (GenericRecord record : iter1) {
-      numRec++;
-      String updateTimeStr = getUpdateTime(record);
-      if (lastUpdated == null || lastUpdated.compareTo(updateTimeStr) < 0) {
-        lastUpdated = updateTimeStr;
-        lastRecord = record;
-      }
-    }
-    for (GenericRecord record : iter2) {
+    for (GenericRecord record : genericRecords) {
       numRec++;
       String updateTimeStr = getUpdateTime(record);
       if (lastUpdated == null || lastUpdated.compareTo(updateTimeStr) < 0) {
@@ -189,24 +200,17 @@ public class ParquetMerger {
       Pipeline pipeline = Pipeline.create(options);
       pipelines.add(pipeline);
       log.info("Merging resource type {}", type);
-      PCollection<KV<String, GenericRecord>> firstKVs = readAndMapToId(pipeline, dwhFiles1, type);
-      PCollection<KV<String, GenericRecord>> secondKVs = readAndMapToId(pipeline, dwhFiles2, type);
-      final TupleTag<GenericRecord> tag1 = new TupleTag<>();
-      final TupleTag<GenericRecord> tag2 = new TupleTag<>();
-      PCollection<KV<String, CoGbkResult>> join =
-          KeyedPCollectionTuple.of(tag1, firstKVs)
-              .and(tag2, secondKVs)
-              .apply(CoGroupByKey.create());
+      PCollection<KV<String, Iterable<GenericRecord>>> groupedRecords =
+          readAndGroupById(pipeline, Arrays.asList(dwhFiles1, dwhFiles2), type);
       PCollection<GenericRecord> merged =
-          join.apply(
+          groupedRecords
+              .apply(
                   ParDo.of(
-                      new DoFn<KV<String, CoGbkResult>, GenericRecord>() {
+                      new DoFn<KV<String, Iterable<GenericRecord>>, GenericRecord>() {
                         @ProcessElement
                         public void processElement(ProcessContext c) {
-                          KV<String, CoGbkResult> e = c.element();
-                          Iterable<GenericRecord> iter1 = e.getValue().getAll(tag1);
-                          Iterable<GenericRecord> iter2 = e.getValue().getAll(tag2);
-                          GenericRecord lastRecord = findLastRecord(iter1, iter2, numDuplicates);
+                          KV<String, Iterable<GenericRecord>> e = c.element();
+                          GenericRecord lastRecord = findLastRecord(e.getValue(), numDuplicates);
                           if (!isRecordDeleted(lastRecord)) {
                             numOutputRecords.inc();
                             c.output(lastRecord);

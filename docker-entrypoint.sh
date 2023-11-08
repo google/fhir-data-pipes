@@ -42,7 +42,12 @@ enable_jemalloc() {
 
 enable_jemalloc
 
+if [[ -z "$JAVA_OPTS" ]]; then
+  echo "JAVA_OPTS is empty, initialising with default values"
+  JAVA_OPTS="-Xms2g -Xmx2g"
+fi
+
 # The -Xmx value is to make sure there is a minimum amount of memory; it can be
 # increased if more memory is available and is desired to be used by pipelines.
 # Note this is related to the memory config in flink-conf.yaml too.
-java -Xms2g -Xmx2g -jar /app/controller-bundled.jar
+java $JAVA_OPTS -jar /app/controller-bundled.jar
