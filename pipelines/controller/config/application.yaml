@@ -27,7 +27,9 @@ fhirdata:
   #fhirServerUserName: "admin"
   #fhirServerPassword: "Admin123"
   # The following client credentials should be set if the FHIR server accepts
-  # OAuth access tokens.
+  # OAuth access tokens. Note the client credentials, e.g., the secret, are
+  # sensitive, and it is probably a better practice to set these through
+  # command-line arguments.
   #fhirServerOAuthTokenEndpoint: "http://localhost:9080/auth/realms/test/protocol/openid-connect/token"
   #fhirServerOAuthClientId: "THE_CLIENT_ID"
   #fhirServerOAuthClientSecret: "THE_CLIENT_SECRET"

@@ -172,8 +172,9 @@ public class FetchUtil {
           tokenResponse = requestAccessToken();
           log.debug("Fetched token is: {}", tokenResponse.getAccessToken());
         } catch (IOException e) {
-          log.error("Failed fetching a new token through client_credentials grant_type", e);
-          return null;
+          String errorMessage = "Failed fetching a new token through client_credentials grant_type";
+          log.error(errorMessage, e);
+          throw new IllegalStateException(errorMessage);
         }
         nextRefresh =
             Instant.now()
