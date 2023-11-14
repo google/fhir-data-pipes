@@ -345,9 +345,10 @@ public class DwhFilesManager {
    */
   Set<ResourceId> getAllChildDirectories(String baseDir) throws IOException {
     String fileSeparator = DwhFiles.getFileSeparatorForDwhFiles(baseDir);
-    // Do not use FileSystems.matchResources(..) as it internally uses Paths.get() which fails in
-    // Windows OS platform to resolve the files correctly when the glob expressions are present.
-    // Refer https://bugs.openjdk.org/browse/JDK-8197918 for details.
+    // Avoid using ResourceId.resolve(..) method to resolve the files when the path contains glob
+    // expressions with multiple special characters like **, */* etc as this api only supports
+    // single special characters like `*` or `..`. Rather use the FileSystems.match(..) if the path
+    // contains glob expressions.
     List<MatchResult> matchResultList =
         FileSystems.match(
             List.of(
