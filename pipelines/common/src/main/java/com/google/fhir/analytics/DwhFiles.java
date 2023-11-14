@@ -15,14 +15,16 @@
  */
 package com.google.fhir.analytics;
 
-import static org.apache.beam.sdk.io.FileSystems.DEFAULT_SCHEME;
-
 import ca.uhn.fhir.context.FhirContext;
 import ca.uhn.fhir.parser.DataFormatException;
 import com.cerner.bunsen.FhirContexts;
 import com.google.api.client.util.Sets;
 import com.google.common.base.Preconditions;
-import java.io.*;
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.nio.ByteBuffer;
 import java.nio.channels.Channels;
 import java.nio.channels.ReadableByteChannel;
@@ -30,7 +32,11 @@ import java.nio.channels.WritableByteChannel;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.FileAlreadyExistsException;
 import java.time.Instant;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -63,6 +69,8 @@ public class DwhFiles {
   private static final Pattern FILE_SCHEME_PATTERN =
       Pattern.compile("(?<scheme>[a-zA-Z][-a-zA-Z0-9+.]*):/.*");
 
+  static final String DEFAULT_SCHEME = "file";
+
   private final String dwhRoot;
 
   private final FhirContext fhirContext;
@@ -72,8 +80,8 @@ public class DwhFiles {
   }
 
   /**
-   * In order to interpret the file paths correctly the {@code dwhRoot} has to represented in one of
-   * the below formats according to the filesystem platform:
+   * In order to interpret the file paths correctly the {@code dwhRoot} has to be represented in one
+   * of the below formats according to the filesystem platform:
    *
    * <p>Linux/Mac:
    *
@@ -166,10 +174,7 @@ public class DwhFiles {
     List<MatchResult> matches =
         FileSystems.matchResources(Collections.singletonList(getIncrementalRunPath()));
     MatchResult matchResult = Iterables.getOnlyElement(matches);
-    if (matchResult.status() == Status.OK) {
-      return true;
-    }
-    return false;
+    return matchResult.status() == Status.OK;
   }
 
   /**
@@ -183,10 +188,14 @@ public class DwhFiles {
     // TODO : If the list of files under the dwhRoot is huge then there can be a lag in the api
     //  response. This issue https://github.com/google/fhir-data-pipes/issues/288 helps in
     //  maintaining the number of file to an optimum value.
-
     String fileSeparator = getFileSeparatorForDwhFiles(dwhRoot);
     List<MatchResult> matchedChildResultList =
-        FileSystems.match(Arrays.asList(dwhRoot + fileSeparator + "*" + fileSeparator + "*"));
+        FileSystems.match(
+            List.of(
+                getPathEndingWithFileSeparator(dwhRoot, fileSeparator)
+                    + "*"
+                    + fileSeparator
+                    + "*"));
     Set<String> fileSet = new HashSet<>();
     for (MatchResult matchResult : matchedChildResultList) {
       if (matchResult.status() == Status.OK && !matchResult.metadata().isEmpty()) {
@@ -221,10 +230,14 @@ public class DwhFiles {
    * @throws IOException
    */
   public void copyResourcesToDwh(String resourceType, DwhFiles destDwh) throws IOException {
-    String fileSeparator = getFileSeparatorForDwhFiles(getRoot());
+    String fileSeparator = getFileSeparatorForDwhFiles(dwhRoot);
     List<MatchResult> sourceMatchResultList =
         FileSystems.match(
-            Arrays.asList(getRoot() + fileSeparator + resourceType + fileSeparator + "*"));
+            List.of(
+                getPathEndingWithFileSeparator(dwhRoot, fileSeparator)
+                    + resourceType
+                    + fileSeparator
+                    + "*"));
     List<ResourceId> sourceResourceIdList = new ArrayList<>();
 
     // The sourceMatchResultList should only contain 1 element as the matching list
@@ -356,6 +369,13 @@ public class DwhFiles {
         log.error(errorMessage);
         throw new IllegalArgumentException(errorMessage);
     }
+  }
+
+  /** This method returns the {@code path} by appending the {@code fileseparator} if required. */
+  public static String getPathEndingWithFileSeparator(String path, String fileSeparator) {
+    Preconditions.checkNotNull(path);
+    Preconditions.checkNotNull(fileSeparator);
+    return path.endsWith(fileSeparator) ? path : path + fileSeparator;
   }
 
   /**

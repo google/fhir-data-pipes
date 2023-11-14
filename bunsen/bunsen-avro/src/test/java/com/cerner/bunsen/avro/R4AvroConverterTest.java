@@ -4,6 +4,7 @@ import com.cerner.bunsen.FhirContexts;
 import com.cerner.bunsen.r4.TestData;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+import java.io.File;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.nio.file.Files;
@@ -17,7 +18,6 @@ import org.apache.avro.Protocol;
 import org.apache.avro.Schema;
 import org.apache.avro.compiler.specific.SpecificCompiler;
 import org.apache.avro.generic.GenericData.Record;
-import org.apache.commons.lang3.SystemUtils;
 import org.hl7.fhir.exceptions.FHIRException;
 import org.hl7.fhir.r4.model.CodeableConcept;
 import org.hl7.fhir.r4.model.Coding;
@@ -491,9 +491,7 @@ public class R4AvroConverterTest {
 
     // Ensure common types were generated
     for (String fileToBeVerified : filesToBeVerified) {
-      if (SystemUtils.IS_OS_WINDOWS) {
-        fileToBeVerified = fileToBeVerified.replaceAll("/", "\\\\");
-      }
+      fileToBeVerified = fileToBeVerified.replaceAll("/", File.separator);
       Assert.assertTrue(javaFiles.contains(fileToBeVerified));
     }
   }

@@ -43,11 +43,12 @@ fhirdata:
   # Sample 1 : "/fhir-test-analytics/dwh/controller_DWH_ORIG"
   # Sample 2 : "dwh/controller_DWH_ORIG"
   #
-  # For Windows file systems, dwhRootPrefix must be of the format
-  # "<baseDirPath>\\<prefix>" and can be absolute or relative. <baseDirPath>
-  # is required for Windows, and must contain 1 or more directory names.
-  # Sample 1 : "C:\\fhir-test-analytics\\dwh\\controller_DWH_ORIG"
-  # Sample 2 : "dwh\\controller_DWH_ORIG"
+  # For Windows file systems, dwhRootPrefix must be of the format "<baseDirPath>\\<prefix>" and can
+  # be absolute or relative. In case of absolute the <baseDirPath> is non-mandatory and in case of
+  # relative it should contain mandatory <baseDirPath> with 1 or more directory names.
+  # Sample 1 : `C:\\controller_DWH_ORIG`
+  # Sample 1 : `C:\\fhir-test-analytics\\dwh\\controller_DWH_ORIG`
+  # Sample 2 : `dwh\\controller_DWH_ORIG`
   #
   # Note for developers: You can make a symlink of `[repo_root]/docker/dwh` here
   # such that the Thrift Server of `compose-controller-spark-sql-single.yaml`
