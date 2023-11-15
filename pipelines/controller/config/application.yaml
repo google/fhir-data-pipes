@@ -91,7 +91,7 @@ fhirdata:
 
   # Whether resource tables should be automatically created on a
   # Hive/Spark server. Primarily meant for single-machine deployment.
-  createHiveResourceTables: true
+  createHiveResourceTables: false
 
   # Path to a file with the settings used to create tables.
   # Required if createHiveResourceTables is `true`.
