@@ -4,6 +4,7 @@ import com.cerner.bunsen.FhirContexts;
 import com.cerner.bunsen.stu3.TestData;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+import java.io.File;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.nio.file.Files;
@@ -12,12 +13,12 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
+import java.util.regex.Matcher;
 import java.util.stream.Collectors;
 import org.apache.avro.Protocol;
 import org.apache.avro.Schema;
 import org.apache.avro.compiler.specific.SpecificCompiler;
 import org.apache.avro.generic.GenericData.Record;
-import org.apache.commons.lang3.SystemUtils;
 import org.hl7.fhir.dstu3.model.CodeableConcept;
 import org.hl7.fhir.dstu3.model.Coding;
 import org.hl7.fhir.dstu3.model.Condition;
@@ -493,9 +494,13 @@ public class Stu3AvroConverterTest {
 
     // Ensure common types were generated
     for (String fileToBeVerified : filesToBeVerified) {
-      if (SystemUtils.IS_OS_WINDOWS) {
-        fileToBeVerified = fileToBeVerified.replaceAll("/", "\\\\");
-      }
+      String fileSeparator = File.separator;
+      // In case of Windows the path should contain `\\` as the file separator (double slash since
+      // java escapes backslash). Replace `\\` with `\\\\` as the regex will eat one backslash.
+      fileSeparator =
+          fileSeparator.replaceAll(
+              Matcher.quoteReplacement("\\"), Matcher.quoteReplacement("\\\\"));
+      fileToBeVerified = fileToBeVerified.replaceAll("/", fileSeparator);
       Assert.assertTrue(javaFiles.contains(fileToBeVerified));
     }
   }

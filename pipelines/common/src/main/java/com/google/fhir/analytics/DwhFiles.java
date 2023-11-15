@@ -93,8 +93,8 @@ public class DwhFiles {
    * <p>Windows OS:
    *
    * <ul>
-   *   <li>TestRoot\\SamplePrefix
-   *   <li>C:\\Users\\beam\\TestRoot\\SamplePrefix
+   *   <li>TestRoot\SamplePrefix
+   *   <li>C:\Users\beam\TestRoot\SamplePrefix
    * </ul>
    *
    * <p>GCS filesystem

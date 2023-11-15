@@ -13,6 +13,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
+import java.util.regex.Matcher;
 import java.util.stream.Collectors;
 import org.apache.avro.Protocol;
 import org.apache.avro.Schema;
@@ -491,7 +492,13 @@ public class R4AvroConverterTest {
 
     // Ensure common types were generated
     for (String fileToBeVerified : filesToBeVerified) {
-      fileToBeVerified = fileToBeVerified.replaceAll("/", File.separator);
+      String fileSeparator = File.separator;
+      // In case of Windows the path should contain `\\` as the file separator (double slash since
+      // java escapes backslash). Replace `\\` with `\\\\` as the regex will eat one backslash.
+      fileSeparator =
+          fileSeparator.replaceAll(
+              Matcher.quoteReplacement("\\"), Matcher.quoteReplacement("\\\\"));
+      fileToBeVerified = fileToBeVerified.replaceAll("/", fileSeparator);
       Assert.assertTrue(javaFiles.contains(fileToBeVerified));
     }
   }
