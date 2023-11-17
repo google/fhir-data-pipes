@@ -476,8 +476,9 @@ public class PipelineManager implements ApplicationListener<ApplicationReadyEven
         if (tokens.length > 1) {
           String timestamp = tokens[1];
           logger.info("Creating resource tables for relative path {}", path.getFilename());
+          String fileSeparator = DwhFiles.getFileSeparatorForDwhFiles(rootPrefix);
           List<String> existingResources =
-              dwhFilesManager.findExistingResources(baseDir + "/" + path.getFilename());
+              dwhFilesManager.findExistingResources(baseDir + fileSeparator + path.getFilename());
           hiveTableManager.createResourceAndCanonicalTables(
               existingResources, timestamp, path.getFilename());
         }
@@ -638,7 +639,8 @@ public class PipelineManager implements ApplicationListener<ApplicationReadyEven
         String endTime = dwhFiles.readTimestampFile(DwhFiles.TIMESTAMP_FILE_END).toString();
         dwhRunDetails.setEndTime(endTime);
       } else {
-        dwhRoot = dwhRoot.endsWith("/") ? dwhRoot : dwhRoot + "/";
+        String fileSeparator = DwhFiles.getFileSeparatorForDwhFiles(dwhRoot);
+        dwhRoot = dwhRoot.endsWith(fileSeparator) ? dwhRoot : dwhRoot + fileSeparator;
         dwhRunDetails.setLogFilePath(dwhRoot + ERROR_FILE_NAME);
       }
       dwhRunDetails.setStatus(status);
