@@ -13,7 +13,6 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
-import java.util.regex.Matcher;
 import java.util.stream.Collectors;
 import org.apache.avro.Protocol;
 import org.apache.avro.Schema;
@@ -475,30 +474,56 @@ public class R4AvroConverterTest {
             .map(Object::toString)
             .collect(Collectors.toSet());
 
+    String fileSeparator = File.separator;
     List<String> filesToBeVerified =
         Arrays.asList(
             // Ensure common types were generated
-            "com/cerner/bunsen/r4/avro/Period.java",
-            "com/cerner/bunsen/r4/avro/PatientCoding.java",
-            "com/cerner/bunsen/r4/avro/ValueSet.java",
+            String.join(
+                fileSeparator,
+                new String[] {"com", "cerner", "bunsen", "r4", "avro", "Period.java"}),
+            String.join(
+                fileSeparator,
+                new String[] {"com", "cerner", "bunsen", "r4", "avro", "PatientCoding.java"}),
+            String.join(
+                fileSeparator,
+                new String[] {"com", "cerner", "bunsen", "r4", "avro", "ValueSet.java"}),
+            String.join(
+                fileSeparator,
+                new String[] {"com", "cerner", "bunsen", "r4", "avro", "Period.java"}),
             // The specific profile should be created in the expected sub-package.
-            "com/cerner/bunsen/r4/avro/us/core/Patient.java",
+            String.join(
+                fileSeparator,
+                new String[] {
+                  "com", "cerner", "bunsen", "r4", "avro", "us", "core", "Patient.java"
+                }),
             // Check extension types.
-            "com/cerner/bunsen/r4/avro/us/core/UsCoreRace.java",
+            String.join(
+                fileSeparator,
+                new String[] {
+                  "com", "cerner", "bunsen", "r4", "avro", "us", "core", "UsCoreRace.java"
+                }),
             // Choice types include each choice that could be used.
-            "com/cerner/bunsen/r4/avro/ChoiceBooleanInteger.java",
+            String.join(
+                fileSeparator,
+                new String[] {
+                  "com", "cerner", "bunsen", "r4", "avro", "ChoiceBooleanInteger.java"
+                }),
             // Contained types created.
-            "com/cerner/bunsen/r4/avro/us/core/MedicationRequestContained.java");
+            String.join(
+                fileSeparator,
+                new String[] {
+                  "com",
+                  "cerner",
+                  "bunsen",
+                  "r4",
+                  "avro",
+                  "us",
+                  "core",
+                  "MedicationRequestContained.java"
+                }));
 
     // Ensure common types were generated
     for (String fileToBeVerified : filesToBeVerified) {
-      String fileSeparator = File.separator;
-      // In case of Windows the path should contain `\\` as the file separator (double slash since
-      // java escapes backslash). Replace `\\` with `\\\\` as the regex will eat one backslash.
-      fileSeparator =
-          fileSeparator.replaceAll(
-              Matcher.quoteReplacement("\\"), Matcher.quoteReplacement("\\\\"));
-      fileToBeVerified = fileToBeVerified.replaceAll("/", fileSeparator);
       Assert.assertTrue(javaFiles.contains(fileToBeVerified));
     }
   }
