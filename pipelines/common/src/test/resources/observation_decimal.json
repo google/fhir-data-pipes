@@ -1,6 +1,6 @@
 {
   "resourceType": "Observation",
-  "id": "0adb6cfb-0ae3-42df-9d39-fc68ec4334cd",
+  "id": "obs1",
   "status": "final",
   "category": [
     {

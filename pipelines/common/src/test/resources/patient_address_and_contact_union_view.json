@@ -1,0 +1,61 @@
+{
+  "resourceType": "http://hl7.org/fhir/uv/sql-on-fhir/StructureDefinition/ViewDefinition",
+  "text": "Based on https://build.fhir.org/ig/FHIR/sql-on-fhir-v2/Binary-PatientAndContactAddressUnion.html",
+  "select": [
+    {
+      "column": [
+        {
+          "path": "getResourceKey()",
+          "name": "patient_id"
+        }
+      ],
+      "unionAll": [
+        {
+          "column": [
+            {
+              "path": "line.join('\n')",
+              "name": "street"
+            },
+            {
+              "path": "city",
+              "name": "city"
+            },
+            {
+              "path": "postalCode",
+              "name": "zip"
+            },
+            {
+              "path": "true",
+              "name": "is_patient"
+            }
+          ],
+          "forEach": "address"
+        },
+        {
+          "column": [
+            {
+              "path": "line.join('\n')",
+              "name": "street"
+            },
+            {
+              "path": "city",
+              "name": "city"
+            },
+            {
+              "path": "postalCode",
+              "name": "zip"
+            },
+            {
+              "path": "false",
+              "name": "is_patient"
+            }
+          ],
+          "forEach": "contact.address"
+        }
+      ]
+    }
+  ],
+  "name": "patient_and_contact_addresses",
+  "status": "draft",
+  "resource": "Patient"
+}

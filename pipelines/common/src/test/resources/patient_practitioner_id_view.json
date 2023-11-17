@@ -1,0 +1,27 @@
+{
+  "resourceType": "http://hl7.org/fhir/uv/sql-on-fhir/StructureDefinition/ViewDefinition",
+  "select": [
+    {
+      "column": [
+        {
+          "path": "getResourceKey()",
+          "name": "id"
+        }
+      ],
+      "select": [
+        {
+          "column": [
+            {
+              "path": "getReferenceKey('Practitioner')",
+              "name": "practitioner_id"
+            }
+          ],
+          "forEach": "generalPractitioner"
+        }
+      ]
+    }
+  ],
+  "name": "patient_practitioner_id",
+  "status": "draft",
+  "resource": "Patient"
+}
