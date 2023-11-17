@@ -142,29 +142,26 @@ public class LocalDwhFilesManagerTest {
   @Test
   public void testBaseDirForWindows() {
     assumeTrue(SystemUtils.IS_OS_WINDOWS);
-    String baseDir1 = dwhFilesManager.getBaseDir("C:\\root\\prefix");
-    assertThat(baseDir1, equalTo("C:\\root"));
+    String baseDir1 = dwhFilesManager.getBaseDir("C:\\prefix");
+    assertThat(baseDir1, equalTo("C\\"));
 
-    String baseDir2 = dwhFilesManager.getBaseDir("C:\\root\\child\\prefix");
-    assertThat(baseDir2, equalTo("C:\\root\\child"));
+    String baseDir2 = dwhFilesManager.getBaseDir("C:\\root\\prefix");
+    assertThat(baseDir2, equalTo("C:\\root"));
 
-    String baseDir3 = dwhFilesManager.getBaseDir("nonRoot\\prefix");
-    assertThat(baseDir3, equalTo("nonRoot"));
+    String baseDir3 = dwhFilesManager.getBaseDir("C:\\root\\child\\prefix");
+    assertThat(baseDir3, equalTo("C:\\root\\child"));
 
-    String baseDir4 = dwhFilesManager.getBaseDir("nonRoot\\child\\prefix");
-    assertThat(baseDir4, equalTo("nonRoot\\child"));
+    String baseDir4 = dwhFilesManager.getBaseDir("nonRoot\\prefix");
+    assertThat(baseDir4, equalTo("nonRoot"));
+
+    String baseDir5 = dwhFilesManager.getBaseDir("nonRoot\\child\\prefix");
+    assertThat(baseDir5, equalTo("nonRoot\\child"));
   }
 
   @Test(expected = IllegalArgumentException.class)
   public void testBaseDirForInvalidPathNonWindows() {
     assumeFalse(SystemUtils.IS_OS_WINDOWS);
     dwhFilesManager.getBaseDir("/root");
-  }
-
-  @Test(expected = IllegalArgumentException.class)
-  public void testBaseDirForInvalidPathWindows() {
-    assumeTrue(SystemUtils.IS_OS_WINDOWS);
-    dwhFilesManager.getBaseDir("C:\\root");
   }
 
   @Test(expected = IllegalArgumentException.class)
@@ -190,30 +187,26 @@ public class LocalDwhFilesManagerTest {
 
   public void testPrefixForWindows() {
     assumeTrue(SystemUtils.IS_OS_WINDOWS);
-
-    String prefix1 = dwhFilesManager.getPrefix("C:\\root\\prefix");
+    String prefix1 = dwhFilesManager.getBaseDir("C:\\prefix");
     assertThat(prefix1, equalTo("prefix"));
 
-    String prefix2 = dwhFilesManager.getPrefix("C:\\root\\child\\prefix");
+    String prefix2 = dwhFilesManager.getPrefix("C:\\root\\prefix");
     assertThat(prefix2, equalTo("prefix"));
 
-    String prefix3 = dwhFilesManager.getPrefix("nonRoot\\prefix");
+    String prefix3 = dwhFilesManager.getPrefix("C:\\root\\child\\prefix");
     assertThat(prefix3, equalTo("prefix"));
 
-    String prefix4 = dwhFilesManager.getPrefix("nonRoot\\child\\prefix");
+    String prefix4 = dwhFilesManager.getPrefix("nonRoot\\prefix");
     assertThat(prefix4, equalTo("prefix"));
+
+    String prefix5 = dwhFilesManager.getPrefix("nonRoot\\child\\prefix");
+    assertThat(prefix5, equalTo("prefix"));
   }
 
   @Test(expected = IllegalArgumentException.class)
   public void testPrefixForInvalidPathNonWindows() {
     assumeFalse(SystemUtils.IS_OS_WINDOWS);
     dwhFilesManager.getPrefix("/prefix");
-  }
-
-  @Test(expected = IllegalArgumentException.class)
-  public void testPrefixForInvalidPathWindows() {
-    assumeTrue(SystemUtils.IS_OS_WINDOWS);
-    dwhFilesManager.getPrefix("C:\\prefix");
   }
 
   @Test(expected = IllegalArgumentException.class)

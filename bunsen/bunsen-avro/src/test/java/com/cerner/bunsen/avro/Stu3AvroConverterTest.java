@@ -4,6 +4,7 @@ import com.cerner.bunsen.FhirContexts;
 import com.cerner.bunsen.stu3.TestData;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+import java.io.File;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.nio.file.Files;
@@ -17,7 +18,6 @@ import org.apache.avro.Protocol;
 import org.apache.avro.Schema;
 import org.apache.avro.compiler.specific.SpecificCompiler;
 import org.apache.avro.generic.GenericData.Record;
-import org.apache.commons.lang3.SystemUtils;
 import org.hl7.fhir.dstu3.model.CodeableConcept;
 import org.hl7.fhir.dstu3.model.Coding;
 import org.hl7.fhir.dstu3.model.Condition;
@@ -476,26 +476,53 @@ public class Stu3AvroConverterTest {
             .map(Object::toString)
             .collect(Collectors.toSet());
 
+    String fileSeparator = File.separator;
     List<String> filesToBeVerified =
         Arrays.asList(
             // Ensure common types were generated
-            "com/cerner/bunsen/stu3/avro/Period.java",
-            "com/cerner/bunsen/stu3/avro/PatientCoding.java",
-            "com/cerner/bunsen/stu3/avro/ValueSet.java",
+            String.join(
+                fileSeparator,
+                new String[] {"com", "cerner", "bunsen", "stu3", "avro", "Period.java"}),
+            String.join(
+                fileSeparator,
+                new String[] {"com", "cerner", "bunsen", "stu3", "avro", "PatientCoding.java"}),
+            String.join(
+                fileSeparator,
+                new String[] {"com", "cerner", "bunsen", "stu3", "avro", "ValueSet.java"}),
             // The specific profile should be created in the expected sub-package.
-            "com/cerner/bunsen/stu3/avro/us/core/Patient.java",
+            String.join(
+                fileSeparator,
+                new String[] {
+                  "com", "cerner", "bunsen", "stu3", "avro", "us", "core", "Patient.java"
+                }),
             // Check extension types.
-            "com/cerner/bunsen/stu3/avro/us/core/UsCoreRace.java",
+            String.join(
+                fileSeparator,
+                new String[] {
+                  "com", "cerner", "bunsen", "stu3", "avro", "us", "core", "UsCoreRace.java"
+                }),
             // Choice types include each choice that could be used.
-            "com/cerner/bunsen/stu3/avro/ChoiceBooleanInteger.java",
+            String.join(
+                fileSeparator,
+                new String[] {
+                  "com", "cerner", "bunsen", "stu3", "avro", "ChoiceBooleanInteger.java"
+                }),
             // Contained types created.
-            "com/cerner/bunsen/stu3/avro/us/core/MedicationRequestContained.java");
+            String.join(
+                fileSeparator,
+                new String[] {
+                  "com",
+                  "cerner",
+                  "bunsen",
+                  "stu3",
+                  "avro",
+                  "us",
+                  "core",
+                  "MedicationRequestContained.java"
+                }));
 
     // Ensure common types were generated
     for (String fileToBeVerified : filesToBeVerified) {
-      if (SystemUtils.IS_OS_WINDOWS) {
-        fileToBeVerified = fileToBeVerified.replaceAll("/", "\\\\");
-      }
       Assert.assertTrue(javaFiles.contains(fileToBeVerified));
     }
   }

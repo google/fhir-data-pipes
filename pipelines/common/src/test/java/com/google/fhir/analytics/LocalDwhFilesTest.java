@@ -19,6 +19,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 
 import ca.uhn.fhir.context.FhirContext;
+import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.FileAlreadyExistsException;
@@ -170,6 +171,30 @@ public class LocalDwhFilesTest {
 
     Files.delete(timestampPath);
     Files.delete(root);
+  }
+
+  @Test
+  public void passNonWindowsLocalPathDwhRootPrefix_returnsFileSeparator() {
+    Assume.assumeFalse(SystemUtils.IS_OS_WINDOWS);
+    // Absolute Path
+    String fs1 = DwhFiles.getFileSeparatorForDwhFiles("/rootDir/prefix");
+    Assert.assertEquals(File.separator, fs1);
+    // Relative Path
+    String fs2 = DwhFiles.getFileSeparatorForDwhFiles("baseDir/prefix");
+    Assert.assertEquals(File.separator, fs2);
+  }
+
+  @Test
+  public void passWindowsLocalPathDwhRootPrefix_returnsFileSeparator() {
+    Assume.assumeTrue(SystemUtils.IS_OS_WINDOWS);
+    // Absolute Path
+    String fs1 = DwhFiles.getFileSeparatorForDwhFiles("C:\\prefix");
+    Assert.assertEquals(File.separator, fs1);
+    String fs2 = DwhFiles.getFileSeparatorForDwhFiles("C:\\rootDir\\prefix");
+    Assert.assertEquals(File.separator, fs2);
+    // Relative Path
+    String fs3 = DwhFiles.getFileSeparatorForDwhFiles("baseDir\\prefix");
+    Assert.assertEquals(File.separator, fs3);
   }
 
   private void createFile(Path path, byte[] bytes) throws IOException {
