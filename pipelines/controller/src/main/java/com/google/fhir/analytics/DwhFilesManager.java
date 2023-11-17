@@ -261,7 +261,14 @@ public class DwhFilesManager {
     return (doesFileExist(startTimestampResource) && doesFileExist(endTimestampResource));
   }
 
-  private boolean doesFileExist(ResourceId resourceId) throws IOException {
+  /**
+   * This method checks if the given resource exists in the file system or not
+   *
+   * @param resourceId the resource to be checked
+   * @return the existence status of the resource
+   * @throws IOException
+   */
+  boolean doesFileExist(ResourceId resourceId) throws IOException {
     List<MatchResult> matchResultList =
         FileSystems.matchResources(Collections.singletonList(resourceId));
     MatchResult matchResult = Iterables.getOnlyElement(matchResultList);
