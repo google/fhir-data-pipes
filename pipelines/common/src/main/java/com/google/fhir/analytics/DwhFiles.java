@@ -21,6 +21,7 @@ import com.cerner.bunsen.FhirContexts;
 import com.google.api.client.util.Sets;
 import com.google.common.base.Preconditions;
 import java.io.BufferedReader;
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -36,7 +37,10 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
+import org.apache.beam.sdk.extensions.gcp.util.gcsfs.GcsPath;
 import org.apache.beam.sdk.io.FileSystems;
 import org.apache.beam.sdk.io.fs.MatchResult;
 import org.apache.beam.sdk.io.fs.MatchResult.Metadata;
@@ -62,6 +66,11 @@ public class DwhFiles {
 
   private static final String INCREMENTAL_DIR = "incremental_run";
 
+  private static final Pattern FILE_SCHEME_PATTERN =
+      Pattern.compile("(?<scheme>[a-zA-Z][-a-zA-Z0-9+.]*):/.*");
+
+  static final String DEFAULT_SCHEME = "file";
+
   private final String dwhRoot;
 
   private final FhirContext fhirContext;
@@ -70,6 +79,33 @@ public class DwhFiles {
     this(dwhRoot, FhirContexts.forR4());
   }
 
+  /**
+   * In order to interpret the file paths correctly the {@code dwhRoot} has to be represented in one
+   * of the below formats according to the filesystem platform:
+   *
+   * <p>Linux/Mac:
+   *
+   * <ul>
+   *   <li>TestRoot/SamplePrefix
+   *   <li>/Users/beam/TestRoot/SamplePrefix
+   * </ul>
+   *
+   * <p>Windows OS:
+   *
+   * <ul>
+   *   <li>TestRoot\SamplePrefix
+   *   <li>C:\Users\beam\TestRoot\SamplePrefix
+   * </ul>
+   *
+   * <p>GCS filesystem
+   *
+   * <ul>
+   *   <li>gs://TestBucket/TestRoot/SamplePrefix
+   * </ul>
+   *
+   * @param dwhRoot
+   * @param fhirContext
+   */
   DwhFiles(String dwhRoot, FhirContext fhirContext) {
     Preconditions.checkNotNull(dwhRoot);
     this.dwhRoot = dwhRoot;
@@ -138,10 +174,7 @@ public class DwhFiles {
     List<MatchResult> matches =
         FileSystems.matchResources(Collections.singletonList(getIncrementalRunPath()));
     MatchResult matchResult = Iterables.getOnlyElement(matches);
-    if (matchResult.status() == Status.OK) {
-      return true;
-    }
-    return false;
+    return matchResult.status() == Status.OK;
   }
 
   /**
@@ -155,15 +188,15 @@ public class DwhFiles {
     // TODO : If the list of files under the dwhRoot is huge then there can be a lag in the api
     //  response. This issue https://github.com/google/fhir-data-pipes/issues/288 helps in
     //  maintaining the number of file to an optimum value.
-
-    ResourceId childResourceId =
-        FileSystems.matchNewResource(dwhRoot, true)
-            .resolve("*/*", StandardResolveOptions.RESOLVE_FILE);
-
-    Set<String> fileSet = new HashSet<>();
+    String fileSeparator = getFileSeparatorForDwhFiles(dwhRoot);
     List<MatchResult> matchedChildResultList =
-        FileSystems.matchResources(Collections.singletonList(childResourceId));
-
+        FileSystems.match(
+            List.of(
+                getPathEndingWithFileSeparator(dwhRoot, fileSeparator)
+                    + "*"
+                    + fileSeparator
+                    + "*"));
+    Set<String> fileSet = new HashSet<>();
     for (MatchResult matchResult : matchedChildResultList) {
       if (matchResult.status() == Status.OK && !matchResult.metadata().isEmpty()) {
         for (Metadata metadata : matchResult.metadata()) {
@@ -197,12 +230,14 @@ public class DwhFiles {
    * @throws IOException
    */
   public void copyResourcesToDwh(String resourceType, DwhFiles destDwh) throws IOException {
-    ResourceId sourceFiles =
-        FileSystems.matchNewResource(getRoot(), true)
-            .resolve(resourceType, StandardResolveOptions.RESOLVE_DIRECTORY)
-            .resolve("*", StandardResolveOptions.RESOLVE_FILE);
-
-    List<MatchResult> sourceMatchResultList = FileSystems.matchResources(List.of(sourceFiles));
+    String fileSeparator = getFileSeparatorForDwhFiles(dwhRoot);
+    List<MatchResult> sourceMatchResultList =
+        FileSystems.match(
+            List.of(
+                getPathEndingWithFileSeparator(dwhRoot, fileSeparator)
+                    + resourceType
+                    + fileSeparator
+                    + "*"));
     List<ResourceId> sourceResourceIdList = new ArrayList<>();
 
     // The sourceMatchResultList should only contain 1 element as the matching list
@@ -313,6 +348,55 @@ public class DwhFiles {
               getRoot() + "/" + fileName, matchResult.status());
       log.error(errorMessage);
       throw new IOException(errorMessage);
+    }
+  }
+
+  /**
+   * This method returns the file separator for the filesystem where the data-warehouse is hosted.
+   *
+   * @param dwhRootPrefix the root directory prefix of the filesystem.
+   * @return the file separator
+   */
+  public static String getFileSeparatorForDwhFiles(String dwhRootPrefix) {
+    String scheme = parseScheme(dwhRootPrefix);
+    switch (scheme) {
+      case DEFAULT_SCHEME:
+        return File.separator;
+      case GcsPath.SCHEME:
+        return "/";
+      default:
+        String errorMessage = String.format("File system scheme=%s is not yet supported", scheme);
+        log.error(errorMessage);
+        throw new IllegalArgumentException(errorMessage);
+    }
+  }
+
+  /** This method returns the {@code path} by appending the {@code fileseparator} if required. */
+  public static String getPathEndingWithFileSeparator(String path, String fileSeparator) {
+    Preconditions.checkNotNull(path);
+    Preconditions.checkNotNull(fileSeparator);
+    return path.endsWith(fileSeparator) ? path : path + fileSeparator;
+  }
+
+  /**
+   * This method returns the schema of the passed in spec. This is inspired from the parsing logic
+   * in the repo <a href="https://github.com/apache/beam">Beam File System</a>
+   *
+   * @param spec - the spec from which the schema needs to be parsed
+   * @return the schema
+   */
+  public static String parseScheme(String spec) {
+    // The spec is almost, but not quite, a URI. In particular,
+    // the reserved characters '[', ']', and '?' have meanings that differ
+    // from their use in the URI spec. ('*' is not reserved).
+    // Here, we just need the scheme, which is so circumscribed as to be
+    // very easy to extract with a regex.
+    Matcher matcher = FILE_SCHEME_PATTERN.matcher(spec);
+
+    if (!matcher.matches()) {
+      return DEFAULT_SCHEME;
+    } else {
+      return matcher.group("scheme").toLowerCase();
     }
   }
 }

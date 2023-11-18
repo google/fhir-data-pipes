@@ -216,6 +216,12 @@ public class GcsDwhFilesTest {
     Mockito.verify(mockGcsUtil, Mockito.times(1)).open(GcsPath.fromUri(gcsFileName));
   }
 
+  @Test
+  public void dwhRootPrefixForGCSPath_returnsFileSeparator() {
+    String fileSeparator = DwhFiles.getFileSeparatorForDwhFiles("gs://testbucket/testdirectory");
+    Assert.assertEquals("/", fileSeparator);
+  }
+
   private void mockFileRead(String gcsFileName, Instant instant) throws IOException {
     // Any request to open gets a new bogus channel
     Path tempPath = Files.createTempFile("timestamp", ".txt");

@@ -25,18 +25,15 @@ import ca.uhn.fhir.context.FhirContext;
 import ca.uhn.fhir.context.FhirVersionEnum;
 import ca.uhn.fhir.parser.IParser;
 import com.google.common.io.Resources;
-import com.google.common.jimfs.Configuration;
-import com.google.common.jimfs.Jimfs;
+import java.io.File;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.FileSystem;
-import java.nio.file.FileSystems;
-import java.nio.file.Files;
-import java.nio.file.Path;
+import java.nio.file.*;
 import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
+import java.util.regex.Matcher;
 import java.util.stream.Stream;
 import org.apache.avro.Schema;
 import org.apache.avro.generic.GenericData;
@@ -46,7 +43,9 @@ import org.apache.beam.sdk.io.fs.ResourceId;
 import org.hl7.fhir.r4.model.Bundle;
 import org.hl7.fhir.r4.model.Observation;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
 import org.junit.runner.RunWith;
 import org.mockito.junit.MockitoJUnitRunner;
 import org.slf4j.Logger;
@@ -59,7 +58,7 @@ public class ParquetUtilTest {
 
   private static final Logger log = LoggerFactory.getLogger(ParquetUtil.class);
 
-  private static final String PARQUET_ROOT = "/parquet_root";
+  private static final String PARQUET_ROOT = "parquet_root";
 
   private String patientBundle;
 
@@ -69,14 +68,14 @@ public class ParquetUtilTest {
 
   private FhirContext fhirContext;
 
-  private FileSystem fileSystem;
-
   private Path rootPath;
+
+  @Rule public TemporaryFolder testFolder = new TemporaryFolder();
 
   @Before
   public void setup() throws IOException {
-    fileSystem = Jimfs.newFileSystem(Configuration.unix());
-    rootPath = fileSystem.getPath(PARQUET_ROOT);
+    File rootFolder = testFolder.newFolder(PARQUET_ROOT);
+    rootPath = Paths.get(rootFolder.getPath());
     Files.createDirectories(rootPath);
     ParquetUtil.initializeAvroConverters();
     patientBundle =
@@ -85,7 +84,7 @@ public class ParquetUtilTest {
         Resources.toString(
             Resources.getResource("observation_bundle.json"), StandardCharsets.UTF_8);
     this.fhirContext = FhirContext.forR4Cached();
-    parquetUtil = new ParquetUtil(FhirVersionEnum.R4, PARQUET_ROOT, 0, 0, "TEST_", fileSystem);
+    parquetUtil = new ParquetUtil(FhirVersionEnum.R4, rootPath.toString(), 0, 0, "TEST_");
   }
 
   @Test
@@ -153,10 +152,14 @@ public class ParquetUtilTest {
   @Test
   public void bestOutputFile_NoDir() throws IOException {
     ResourceId bestFile = parquetUtil.getUniqueOutputFilePath("Patient");
-    assertThat(
-        bestFile.toString(),
-        matchesPattern(
-            "/parquet_root/Patient/TEST_Patient_output-parquet-th-[\\p{Digit}]+-ts-[\\p{Digit}]+-r-[\\p{Digit}]+.parquet"));
+    String fileSeparator = DwhFiles.getFileSeparatorForDwhFiles(rootPath.toString());
+
+    String path = rootPath.toString() + fileSeparator + "Patient" + fileSeparator;
+    path = path.replaceAll(Matcher.quoteReplacement("\\"), Matcher.quoteReplacement("\\\\"));
+    String patternToBeMatched =
+        path
+            + "TEST_Patient_output-parquet-th-[\\p{Digit}]+-ts-[\\p{Digit}]+-r-[\\p{Digit}]+.parquet";
+    assertThat(bestFile.toString(), matchesPattern(patternToBeMatched));
   }
 
   @Test
@@ -164,42 +167,45 @@ public class ParquetUtilTest {
     Path patientPath = rootPath.resolve("Patient");
     Files.createDirectory(patientPath);
     ResourceId bestFile = parquetUtil.getUniqueOutputFilePath("Patient");
-    assertThat(
-        bestFile.toString(),
-        matchesPattern(
-            "/parquet_root/Patient/TEST_Patient_output-parquet-th-[\\p{Digit}]+-ts-[\\p{Digit}]+-r-[\\p{Digit}]+.parquet"));
-  }
+    String fileSeparator = DwhFiles.getFileSeparatorForDwhFiles(rootPath.toString());
 
-  private void initilizeLocalFileSystem() throws IOException {
-    // TODO: if we could convince ParquetWriter to use an input FileSystem we could use `Jimfs`.
-    fileSystem = FileSystems.getDefault();
-    rootPath = Files.createTempDirectory("PARQUET_TEST");
-    log.info("Temporary directory is " + rootPath);
+    String path = rootPath.toString() + fileSeparator + "Patient" + fileSeparator;
+    path = path.replaceAll(Matcher.quoteReplacement("\\"), Matcher.quoteReplacement("\\\\"));
+    String patternToBeMatched =
+        path
+            + "TEST_Patient_output-parquet-th-[\\p{Digit}]+-ts-[\\p{Digit}]+-r-[\\p{Digit}]+.parquet";
+    assertThat(bestFile.toString(), matchesPattern(patternToBeMatched));
   }
 
   @Test
   public void createSingleOutput() throws IOException {
-    initilizeLocalFileSystem();
-    parquetUtil = new ParquetUtil(FhirVersionEnum.R4, rootPath.toString(), 0, 0, "", fileSystem);
+    rootPath = Files.createTempDirectory("PARQUET_TEST");
+    parquetUtil = new ParquetUtil(FhirVersionEnum.R4, rootPath.toString(), 0, 0, "");
     IParser parser = fhirContext.newJsonParser();
     Bundle bundle = parser.parseResource(Bundle.class, observationBundle);
     for (Bundle.BundleEntryComponent entry : bundle.getEntry()) {
       parquetUtil.write(entry.getResource());
     }
     parquetUtil.closeAllWriters();
+    String fileSeparator = DwhFiles.getFileSeparatorForDwhFiles(rootPath.toString());
     Stream<Path> files =
         Files.list(rootPath.resolve("Observation"))
             .filter(
                 f ->
                     f.toString()
-                        .startsWith(rootPath.toString() + "/Observation/Observation_output-"));
+                        .startsWith(
+                            rootPath.toString()
+                                + fileSeparator
+                                + "Observation"
+                                + fileSeparator
+                                + "Observation_output-"));
     assertThat(files.count(), equalTo(1L));
   }
 
   @Test
   public void createMultipleOutputByTime() throws IOException, InterruptedException {
-    initilizeLocalFileSystem();
-    parquetUtil = new ParquetUtil(FhirVersionEnum.R4, rootPath.toString(), 1, 0, "", fileSystem);
+    rootPath = Files.createTempDirectory("PARQUET_TEST");
+    parquetUtil = new ParquetUtil(FhirVersionEnum.R4, rootPath.toString(), 1, 0, "");
     IParser parser = fhirContext.newJsonParser();
     Bundle bundle = parser.parseResource(Bundle.class, observationBundle);
     for (Bundle.BundleEntryComponent entry : bundle.getEntry()) {
@@ -207,19 +213,25 @@ public class ParquetUtilTest {
       TimeUnit.SECONDS.sleep(2); // A better way to test this is to inject a mocked `Timer`.
     }
     parquetUtil.closeAllWriters();
+    String fileSeparator = DwhFiles.getFileSeparatorForDwhFiles(rootPath.toString());
     Stream<Path> files =
         Files.list(rootPath.resolve("Observation"))
             .filter(
                 f ->
                     f.toString()
-                        .startsWith(rootPath.toString() + "/Observation/Observation_output-"));
+                        .startsWith(
+                            rootPath.toString()
+                                + fileSeparator
+                                + "Observation"
+                                + fileSeparator
+                                + "Observation_output-"));
     assertThat(files.count(), equalTo(7L));
   }
 
   @Test
   public void createSingleOutputWithRowGroupSize() throws IOException {
-    initilizeLocalFileSystem();
-    parquetUtil = new ParquetUtil(FhirVersionEnum.R4, rootPath.toString(), 0, 1, "", fileSystem);
+    rootPath = Files.createTempDirectory("PARQUET_TEST");
+    parquetUtil = new ParquetUtil(FhirVersionEnum.R4, rootPath.toString(), 0, 1, "");
     IParser parser = fhirContext.newJsonParser();
     Bundle bundle = parser.parseResource(Bundle.class, observationBundle);
     // There are 7 resources in the bundle so we write 15*7 (>100) resources, such that the page
@@ -230,12 +242,18 @@ public class ParquetUtilTest {
       }
     }
     parquetUtil.closeAllWriters();
+    String fileSeparator = DwhFiles.getFileSeparatorForDwhFiles(rootPath.toString());
     Stream<Path> files =
         Files.list(rootPath.resolve("Observation"))
             .filter(
                 f ->
                     f.toString()
-                        .startsWith(rootPath.toString() + "/Observation/Observation_output-"));
+                        .startsWith(
+                            rootPath.toString()
+                                + fileSeparator
+                                + "Observation"
+                                + fileSeparator
+                                + "Observation_output-"));
     assertThat(files.count(), equalTo(1L));
   }
 
@@ -258,8 +276,8 @@ public class ParquetUtilTest {
    */
   @Test
   public void writeObservationWithBigDecimalValue() throws IOException {
-    initilizeLocalFileSystem();
-    parquetUtil = new ParquetUtil(FhirVersionEnum.R4, rootPath.toString(), 0, 0, "", fileSystem);
+    rootPath = Files.createTempDirectory("PARQUET_TEST");
+    parquetUtil = new ParquetUtil(FhirVersionEnum.R4, rootPath.toString(), 0, 0, "");
     String observationStr =
         Resources.toString(
             Resources.getResource("observation_decimal.json"), StandardCharsets.UTF_8);
@@ -271,8 +289,8 @@ public class ParquetUtilTest {
   /** This is similar to the above test but has more `decimal` examples with different scales. */
   @Test
   public void writeObservationBundleWithDecimalConversionIssue() throws IOException {
-    initilizeLocalFileSystem();
-    parquetUtil = new ParquetUtil(FhirVersionEnum.R4, rootPath.toString(), 0, 0, "", fileSystem);
+    rootPath = Files.createTempDirectory("PARQUET_TEST");
+    parquetUtil = new ParquetUtil(FhirVersionEnum.R4, rootPath.toString(), 0, 0, "");
     String observationBundleStr =
         Resources.toString(
             Resources.getResource("observation_decimal_bundle.json"), StandardCharsets.UTF_8);

@@ -15,7 +15,10 @@
 
   <script>
     function openLogs(logPath) {
-      window.open('/download?path='+logPath, '_blank').focus();
+      const url = "/download?path="+logPath;
+      // Encode the special characters in the url
+      const encodedURL = encodeURI(url);
+      window.open(encodedURL, '_blank').focus();
     }
 
     function changeVisibility(elemId, makeVisible) {
@@ -217,11 +220,16 @@
         <div class="alert alert-danger alert-dismissible fade show"
              th:if="${lastRunDetails ne null AND lastRunDetails.status == 'FAILURE'}"
              style="color:red">
-          Last run failed! Please find error logs here
-          <button type="submit"
-                  class="button btn btn-primary" th:onclick="openLogs([[${lastRunDetails.logFilePath}]])">
-            View Raw Logs
-          </button>
+          <div th:if="${#strings.isEmpty(lastRunDetails.logFilePath)}">
+            Last run failed and the logs are not available. Please contact the Administrator.
+          </div>
+          <div th:unless="${#strings.isEmpty(lastRunDetails.logFilePath)}">
+            Last run failed! Please find error logs here
+            <button type="submit"
+                    class="button btn btn-primary" th:onclick="openLogs([[${lastRunDetails.logFilePath}]])">
+              View Raw Logs
+            </button>
+          </div>
         </div>
         <div class="alert alert-danger alert-dismissible fade show" id="errorFetchingRawLogs"
              style="display:none; color:red">

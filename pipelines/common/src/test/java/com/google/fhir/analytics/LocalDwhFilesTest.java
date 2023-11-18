@@ -19,6 +19,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 
 import ca.uhn.fhir.context.FhirContext;
+import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.FileAlreadyExistsException;
@@ -30,21 +31,40 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 import org.apache.beam.sdk.io.fs.ResourceId;
+import org.apache.commons.lang3.SystemUtils;
 import org.junit.Assert;
+import org.junit.Assume;
 import org.junit.Test;
 
 public class LocalDwhFilesTest {
   @Test
-  public void getResourcePathTest() {
+  public void getResourcePathTestNonWindows() {
+    Assume.assumeFalse(SystemUtils.IS_OS_WINDOWS);
     DwhFiles dwhFiles = new DwhFiles("/tmp", FhirContext.forR4Cached());
     assertThat(dwhFiles.getResourcePath("Patient").toString(), equalTo("/tmp/Patient/"));
   }
 
   @Test
-  public void newIncrementalRunPathTest() throws IOException {
+  public void getResourcePathTestWindows() {
+    Assume.assumeTrue(SystemUtils.IS_OS_WINDOWS);
+    DwhFiles dwhFiles = new DwhFiles("C:\\tmp", FhirContext.forR4Cached());
+    assertThat(dwhFiles.getResourcePath("Patient").toString(), equalTo("C:\\tmp\\Patient\\"));
+  }
+
+  @Test
+  public void newIncrementalRunPathTestNonWindows() throws IOException {
+    Assume.assumeFalse(SystemUtils.IS_OS_WINDOWS);
     DwhFiles instance = new DwhFiles("/tmp", FhirContext.forR4Cached());
     ResourceId incrementalRunPath = instance.newIncrementalRunPath();
     assertThat(incrementalRunPath.toString(), equalTo("/tmp/incremental_run/"));
+  }
+
+  @Test
+  public void newIncrementalRunPathTesWindows() throws IOException {
+    Assume.assumeTrue(SystemUtils.IS_OS_WINDOWS);
+    DwhFiles instance = new DwhFiles("C:\\tmp", FhirContext.forR4Cached());
+    ResourceId incrementalRunPath = instance.newIncrementalRunPath();
+    assertThat(incrementalRunPath.toString(), equalTo("C:\\tmp\\incremental_run\\"));
   }
 
   @Test
@@ -151,6 +171,30 @@ public class LocalDwhFilesTest {
 
     Files.delete(timestampPath);
     Files.delete(root);
+  }
+
+  @Test
+  public void passNonWindowsLocalPathDwhRootPrefix_returnsFileSeparator() {
+    Assume.assumeFalse(SystemUtils.IS_OS_WINDOWS);
+    // Absolute Path
+    String fs1 = DwhFiles.getFileSeparatorForDwhFiles("/rootDir/prefix");
+    Assert.assertEquals(File.separator, fs1);
+    // Relative Path
+    String fs2 = DwhFiles.getFileSeparatorForDwhFiles("baseDir/prefix");
+    Assert.assertEquals(File.separator, fs2);
+  }
+
+  @Test
+  public void passWindowsLocalPathDwhRootPrefix_returnsFileSeparator() {
+    Assume.assumeTrue(SystemUtils.IS_OS_WINDOWS);
+    // Absolute Path
+    String fs1 = DwhFiles.getFileSeparatorForDwhFiles("C:\\prefix");
+    Assert.assertEquals(File.separator, fs1);
+    String fs2 = DwhFiles.getFileSeparatorForDwhFiles("C:\\rootDir\\prefix");
+    Assert.assertEquals(File.separator, fs2);
+    // Relative Path
+    String fs3 = DwhFiles.getFileSeparatorForDwhFiles("baseDir\\prefix");
+    Assert.assertEquals(File.separator, fs3);
   }
 
   private void createFile(Path path, byte[] bytes) throws IOException {

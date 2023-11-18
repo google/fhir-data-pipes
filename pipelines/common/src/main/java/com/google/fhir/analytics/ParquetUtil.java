@@ -26,8 +26,6 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.channels.Channels;
 import java.nio.channels.WritableByteChannel;
-import java.nio.file.FileSystem;
-import java.nio.file.FileSystems;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -105,43 +103,26 @@ public class ParquetUtil {
    * @param parquetFilePath The directory under which the Parquet files are written.
    */
   public ParquetUtil(FhirVersionEnum fhirVersionEnum, String parquetFilePath) {
-    this(fhirVersionEnum, parquetFilePath, 0, 0, "", FileSystems.getDefault());
+    this(fhirVersionEnum, parquetFilePath, 0, 0, "");
   }
 
+  // TODO remove this constructor and only expose a similar one in `DwhFiles` (for testing).
   /**
-   * The preferred constructor for the streaming mode.
-   *
    * @param fhirVersionEnum This should match the resources intended to be converted.
    * @param parquetFilePath The directory under which the Parquet files are written.
    * @param secondsToFlush The interval after which the content of Parquet writers is flushed to
    *     disk.
    * @param rowGroupSize The approximate size of row-groups in the Parquet files (0 means use
    *     default).
+   * @param namePrefix The prefix directory at which the Parquet files are written
    */
-  public ParquetUtil(
-      FhirVersionEnum fhirVersionEnum,
-      String parquetFilePath,
-      int secondsToFlush,
-      int rowGroupSize,
-      String namePrefix) {
-    this(
-        fhirVersionEnum,
-        parquetFilePath,
-        secondsToFlush,
-        rowGroupSize,
-        namePrefix,
-        FileSystems.getDefault());
-  }
-
-  // TODO remove this constructor and only expose a similar one in `DwhFiles` (for testing).
   @VisibleForTesting
   ParquetUtil(
       FhirVersionEnum fhirVersionEnum,
       String parquetFilePath,
       int secondsToFlush,
       int rowGroupSize,
-      String namePrefix,
-      FileSystem fileSystem) {
+      String namePrefix) {
     if (fhirVersionEnum == FhirVersionEnum.DSTU3 || fhirVersionEnum == FhirVersionEnum.R4) {
       this.fhirContext = FhirContexts.contextFor(fhirVersionEnum);
     } else {
@@ -203,7 +184,6 @@ public class ParquetUtil {
   }
 
   private synchronized void createWriter(String resourceType) throws IOException {
-    // TODO: Find a way to convince Hadoop file operations to use `fileSystem` (needed for testing).
 
     ResourceId resourceId = getUniqueOutputFilePath(resourceType);
     WritableByteChannel writableByteChannel =
