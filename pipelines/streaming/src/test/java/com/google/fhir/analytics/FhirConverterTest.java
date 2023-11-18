@@ -46,7 +46,7 @@ public class FhirConverterTest extends CamelTestSupport {
   @Produce(TEST_ROUTE)
   protected ProducerTemplate eventsProducer;
 
-  @Mock private OpenmrsUtil openmrsUtil;
+  @Mock private FetchUtil fetchUtil;
 
   @Mock private FhirStoreUtil fhirStoreUtil;
 
@@ -70,7 +70,7 @@ public class FhirConverterTest extends CamelTestSupport {
         String fhirDebeziumEventConfigPath = "../../utils/dbz_event_to_fhir_config.json";
         fhirConverter =
             new FhirConverter(
-                openmrsUtil,
+                fetchUtil,
                 fhirStoreUtil,
                 parquetUtil,
                 fhirDebeziumEventConfigPath,
@@ -90,7 +90,7 @@ public class FhirConverterTest extends CamelTestSupport {
         DebeziumTestUtil.genExpectedHeaders(Operation.UPDATE, "encounter");
     resource = new Encounter();
     resource.setId(TEST_ID);
-    Mockito.when(openmrsUtil.fetchFhirResource(Mockito.anyString())).thenReturn(resource);
+    Mockito.when(fetchUtil.fetchFhirResource(Mockito.anyString())).thenReturn(resource);
     Mockito.when(fhirStoreUtil.getSinkUrl()).thenReturn("sinkPath");
     // empty parquet File Path
     Mockito.when(parquetUtil.getParquetPath()).thenReturn("");
@@ -98,7 +98,7 @@ public class FhirConverterTest extends CamelTestSupport {
     // Actual event that will trigger process().
     eventsProducer.sendBodyAndHeaders(messageBody, messageHeaders);
 
-    Mockito.verify(openmrsUtil).fetchFhirResource(Mockito.anyString());
+    Mockito.verify(fetchUtil).fetchFhirResource(Mockito.anyString());
     Mockito.verify(fhirStoreUtil).uploadResource(resource);
     Mockito.verify(parquetUtil, Mockito.never()).write(Mockito.<Resource>any());
   }
@@ -114,7 +114,7 @@ public class FhirConverterTest extends CamelTestSupport {
     // Actual event that will trigger process().
     eventsProducer.sendBodyAndHeaders(messageBody, messageHeaders);
 
-    Mockito.verify(openmrsUtil).fetchFhirResource("/Patient/UUID");
+    Mockito.verify(fetchUtil).fetchFhirResource("/Patient/UUID");
     Mockito.verify(uuidUtil).getUuid("person", "person_id", "1");
   }
 
@@ -126,7 +126,7 @@ public class FhirConverterTest extends CamelTestSupport {
     resource = new Encounter();
     resource.setId(TEST_ID);
     final String testPath = "some_test_path";
-    Mockito.when(openmrsUtil.fetchFhirResource(Mockito.anyString())).thenReturn(resource);
+    Mockito.when(fetchUtil.fetchFhirResource(Mockito.anyString())).thenReturn(resource);
     Mockito.when(parquetUtil.getParquetPath()).thenReturn(testPath);
     // empty fhir sink path
     Mockito.when(fhirStoreUtil.getSinkUrl()).thenReturn("");
@@ -134,7 +134,7 @@ public class FhirConverterTest extends CamelTestSupport {
     // Actual event that will trigger process().
     eventsProducer.sendBodyAndHeaders(messageBody, messageHeaders);
 
-    Mockito.verify(openmrsUtil).fetchFhirResource(Mockito.anyString());
+    Mockito.verify(fetchUtil).fetchFhirResource(Mockito.anyString());
     Mockito.verify(fhirStoreUtil, Mockito.never()).uploadResource(Mockito.<Resource>any());
     Mockito.verify(parquetUtil, Mockito.times(1)).write(Mockito.<Resource>any());
   }
@@ -147,14 +147,14 @@ public class FhirConverterTest extends CamelTestSupport {
     resource = new Encounter();
     resource.setId(TEST_ID);
     final String testPath = "some_test_path";
-    Mockito.when(openmrsUtil.fetchFhirResource(Mockito.anyString())).thenReturn(resource);
+    Mockito.when(fetchUtil.fetchFhirResource(Mockito.anyString())).thenReturn(resource);
     Mockito.when(parquetUtil.getParquetPath()).thenReturn(testPath);
     Mockito.when(fhirStoreUtil.getSinkUrl()).thenReturn("someFhirSink");
 
     // Actual event that will trigger process().
     eventsProducer.sendBodyAndHeaders(messageBody, messageHeaders);
 
-    Mockito.verify(openmrsUtil).fetchFhirResource(Mockito.anyString());
+    Mockito.verify(fetchUtil).fetchFhirResource(Mockito.anyString());
     Mockito.verify(fhirStoreUtil).uploadResource(Mockito.<Resource>any());
     Mockito.verify(parquetUtil, Mockito.times(1)).write(Mockito.<Resource>any());
   }
@@ -168,7 +168,7 @@ public class FhirConverterTest extends CamelTestSupport {
     // Actual event that will tripper process().
     eventsProducer.sendBodyAndHeaders(messageBody, messageHeaders);
 
-    Mockito.verify(openmrsUtil, Mockito.times(0)).fetchFhirResource(Mockito.anyString());
+    Mockito.verify(fetchUtil, Mockito.times(0)).fetchFhirResource(Mockito.anyString());
   }
 
   @Test
@@ -178,7 +178,7 @@ public class FhirConverterTest extends CamelTestSupport {
     // Actual event that will tripper process().
     eventsProducer.sendBody(messageBody);
 
-    Mockito.verify(openmrsUtil, Mockito.times(0)).fetchFhirResource(Mockito.anyString());
+    Mockito.verify(fetchUtil, Mockito.times(0)).fetchFhirResource(Mockito.anyString());
   }
 
   @Test
@@ -190,7 +190,7 @@ public class FhirConverterTest extends CamelTestSupport {
     // Actual event that will tripper process().
     eventsProducer.sendBodyAndHeaders(messageBody, messageHeaders);
 
-    Mockito.verify(openmrsUtil, Mockito.times(0)).fetchFhirResource(Mockito.anyString());
+    Mockito.verify(fetchUtil, Mockito.times(0)).fetchFhirResource(Mockito.anyString());
   }
 
   @Test
@@ -220,8 +220,7 @@ public class FhirConverterTest extends CamelTestSupport {
       eventsProducer.sendBodyAndHeaders(messageBody, messageHeaders);
     }
 
-    Mockito.verify(openmrsUtil, Mockito.times(tables.length))
-        .fetchFhirResource(Mockito.anyString());
+    Mockito.verify(fetchUtil, Mockito.times(tables.length)).fetchFhirResource(Mockito.anyString());
   }
 
   @Test
@@ -239,7 +238,7 @@ public class FhirConverterTest extends CamelTestSupport {
       eventsProducer.sendBodyAndHeaders(messageBody, messageHeaders);
     }
 
-    Mockito.verify(openmrsUtil, Mockito.times(0)).fetchFhirResource(Mockito.anyString());
+    Mockito.verify(fetchUtil, Mockito.times(0)).fetchFhirResource(Mockito.anyString());
   }
 
   @Test
@@ -257,6 +256,6 @@ public class FhirConverterTest extends CamelTestSupport {
       eventsProducer.sendBodyAndHeaders(messageBody, messageHeaders);
     }
 
-    Mockito.verify(openmrsUtil, Mockito.times(0)).fetchFhirResource(Mockito.anyString());
+    Mockito.verify(fetchUtil, Mockito.times(0)).fetchFhirResource(Mockito.anyString());
   }
 }

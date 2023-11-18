@@ -34,7 +34,7 @@ import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
 @RunWith(MockitoJUnitRunner.class)
-public class OpenmrsUtilTest {
+public class FetchUtilTest {
 
   private static final String SOURCE_FHIR_URL = "someurl";
 
@@ -47,11 +47,19 @@ public class OpenmrsUtilTest {
   @Mock(answer = Answers.RETURNS_DEEP_STUBS)
   IGenericClient client;
 
-  OpenmrsUtil openmrsUtil;
+  FetchUtil fetchUtil;
 
   @Before
   public void setUp() throws Exception {
-    openmrsUtil = new OpenmrsUtil(SOURCE_FHIR_URL, "someuser", "somepw", fhirContext);
+    fetchUtil =
+        new FetchUtil(
+            SOURCE_FHIR_URL,
+            "someuser",
+            "somepw",
+            "someOAuthEndpoint",
+            "someOAuthClient",
+            "someOAuthSecret",
+            fhirContext);
 
     doNothing().when(clientFactory).setSocketTimeout(any(Integer.class));
     when(fhirContext.getRestfulClientFactory()).thenReturn(clientFactory);
@@ -71,14 +79,14 @@ public class OpenmrsUtilTest {
     when(client.read().resource(resourceType).withId(RESOURCE_ID).execute())
         .thenReturn(testResource);
 
-    Patient result = (Patient) openmrsUtil.fetchFhirResource(resourceUrl);
+    Patient result = (Patient) fetchUtil.fetchFhirResource(resourceUrl);
 
     assertThat(result, equalTo(testResource));
   }
 
   @Test
   public void shouldGetSourceClient() {
-    IGenericClient result = openmrsUtil.getSourceClient();
+    IGenericClient result = fetchUtil.getSourceClient();
 
     assertThat(result, equalTo(client));
   }

@@ -58,7 +58,7 @@ public class FetchPatients extends PTransform<PCollection<KV<String, Integer>>, 
                 String.format(
                     "Already fetched %d resources for patient %s",
                     patientIdCount.getValue(), patientId));
-            // TODO use openmrsUtil.fetchResource() instead of search and process bundle.
+            // TODO use FetchUtil.fetchResource() instead of search and process bundle.
             Bundle bundle =
                 this.fhirSearchUtil.searchByUrl(
                     PATIENT + "?_id=" + patientId, count, SummaryEnum.DATA);
