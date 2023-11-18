@@ -60,7 +60,7 @@ public class FhirSearchUtilTest {
 
   private static final String SEARCH_URL = "Patient?given=TEST";
 
-  @Mock private OpenmrsUtil openmrsUtil;
+  @Mock private FetchUtil fetchUtil;
 
   @Mock private IGenericClient genericClient;
 
@@ -85,10 +85,10 @@ public class FhirSearchUtilTest {
     String bundleStr = Resources.toString(url, StandardCharsets.UTF_8);
     IParser parser = fhirContext.newJsonParser();
     bundle = parser.parseResource(Bundle.class, bundleStr);
-    fhirSearchUtil = new FhirSearchUtil(openmrsUtil);
-    when(openmrsUtil.getSourceFhirUrl()).thenReturn(BASE_URL);
-    when(openmrsUtil.getSourceClient()).thenReturn(genericClient);
-    when(openmrsUtil.getSourceClient(anyBoolean())).thenReturn(genericClient);
+    fhirSearchUtil = new FhirSearchUtil(fetchUtil);
+    when(fetchUtil.getSourceFhirUrl()).thenReturn(BASE_URL);
+    when(fetchUtil.getSourceClient()).thenReturn(genericClient);
+    when(fetchUtil.getSourceClient(anyBoolean())).thenReturn(genericClient);
     when(genericClient.search()).thenReturn(untypedQuery);
     when(untypedQuery.byUrl(SEARCH_URL)).thenReturn(query);
     when(untypedQuery.forResource(anyString())).thenReturn(query);

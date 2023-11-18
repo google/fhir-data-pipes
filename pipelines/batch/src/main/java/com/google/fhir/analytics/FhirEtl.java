@@ -74,14 +74,17 @@ public class FhirEtl {
   }
 
   static FhirSearchUtil createFhirSearchUtil(FhirEtlOptions options, FhirContext fhirContext) {
-    return new FhirSearchUtil(createOpenmrsUtil(options, fhirContext));
+    return new FhirSearchUtil(createFetchUtil(options, fhirContext));
   }
 
-  static OpenmrsUtil createOpenmrsUtil(FhirEtlOptions options, FhirContext fhirContext) {
-    return new OpenmrsUtil(
+  static FetchUtil createFetchUtil(FhirEtlOptions options, FhirContext fhirContext) {
+    return new FetchUtil(
         options.getFhirServerUrl(),
         options.getFhirServerUserName(),
         options.getFhirServerPassword(),
+        options.getFhirServerOAuthTokenEndpoint(),
+        options.getFhirServerOAuthClientId(),
+        options.getFhirServerOAuthClientSecret(),
         fhirContext);
   }
 

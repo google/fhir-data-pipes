@@ -55,17 +55,44 @@ public interface FhirEtlOptions extends PipelineOptions {
 
   void setJdbcFetchSize(int value);
 
-  @Description("Fhir source server BasicAuth Username")
-  @Default.String("admin")
+  @Description("Fhir source server BasicAuth username")
+  @Default.String("")
   String getFhirServerUserName();
 
   void setFhirServerUserName(String value);
 
-  @Description("Fhir source server BasicAuth Password")
-  @Default.String("Admin123")
+  @Description("Fhir source server BasicAuth password")
+  @Default.String("")
   String getFhirServerPassword();
 
   void setFhirServerPassword(String value);
+
+  // TODO add the option for reading this from the FHIR server's `.well-known/smart-configuration`
+  //   if it is supported by the FHIR server.
+  @Description(
+      "The `token_endpoint` to be used in the OAuth Client Credential flow when interacting with "
+          + "the FHIR server. If set, `fhirServerOAuthClientId` and `fhirServerOAuthClientSecret` "
+          + "should also be set. In that case, Basic Auth username/password is ignored.")
+  @Default.String("")
+  String getFhirServerOAuthTokenEndpoint();
+
+  void setFhirServerOAuthTokenEndpoint(String value);
+
+  @Description(
+      "The `client_id` to be used in the OAuth Client Credential flow when interacting with the "
+          + "FHIR server; see `fhirServerOAuthEndpoint`.")
+  @Default.String("")
+  String getFhirServerOAuthClientId();
+
+  void setFhirServerOAuthClientId(String value);
+
+  @Description(
+      "The `client_secret` to be used in the OAuth Client Credential flow when interacting with "
+          + "the FHIR server; see `fhirServerOAuthEndpoint`.")
+  @Default.String("")
+  String getFhirServerOAuthClientSecret();
+
+  void setFhirServerOAuthClientSecret(String value);
 
   @Description(
       "The path to the target generic fhir store, or a GCP fhir store with the format:"

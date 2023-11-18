@@ -65,6 +65,12 @@ abstract class FetchSearchPageFn<T> extends DoFn<T, KV<String, Integer>> {
 
   private final String sourcePw;
 
+  private final String oAuthTokenEndpoint;
+
+  private final String oAuthClientId;
+
+  private final String oAuthClientSecret;
+
   protected final String sinkPath;
 
   private final String sinkUsername;
@@ -91,7 +97,7 @@ abstract class FetchSearchPageFn<T> extends DoFn<T, KV<String, Integer>> {
 
   @VisibleForTesting protected ParquetUtil parquetUtil;
 
-  protected OpenmrsUtil openmrsUtil;
+  protected FetchUtil fetchUtil;
 
   protected FhirSearchUtil fhirSearchUtil;
 
@@ -110,6 +116,9 @@ abstract class FetchSearchPageFn<T> extends DoFn<T, KV<String, Integer>> {
     this.sourceUrl = options.getFhirServerUrl();
     this.sourceUser = options.getFhirServerUserName();
     this.sourcePw = options.getFhirServerPassword();
+    this.oAuthTokenEndpoint = options.getFhirServerOAuthTokenEndpoint();
+    this.oAuthClientId = options.getFhirServerOAuthClientId();
+    this.oAuthClientSecret = options.getFhirServerOAuthClientSecret();
     this.stageIdentifier = stageIdentifier;
     this.parquetFile = options.getOutputParquetPath();
     this.secondsToFlush = options.getSecondsToFlushParquetFiles();
@@ -171,8 +180,16 @@ abstract class FetchSearchPageFn<T> extends DoFn<T, KV<String, Integer>> {
     fhirStoreUtil =
         FhirStoreUtil.createFhirStoreUtil(
             sinkPath, sinkUsername, sinkPassword, fhirContext.getRestfulClientFactory());
-    openmrsUtil = new OpenmrsUtil(sourceUrl, sourceUser, sourcePw, fhirContext);
-    fhirSearchUtil = new FhirSearchUtil(openmrsUtil);
+    fetchUtil =
+        new FetchUtil(
+            sourceUrl,
+            sourceUser,
+            sourcePw,
+            oAuthTokenEndpoint,
+            oAuthClientId,
+            oAuthClientSecret,
+            fhirContext);
+    fhirSearchUtil = new FhirSearchUtil(fetchUtil);
     parquetUtil =
         new ParquetUtil(
             fhirContext.getVersion().getVersion(),

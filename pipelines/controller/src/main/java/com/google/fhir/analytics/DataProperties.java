@@ -93,6 +93,12 @@ public class DataProperties {
 
   private String fhirServerUserName;
 
+  private String fhirServerOAuthTokenEndpoint;
+
+  private String fhirServerOAuthClientId;
+
+  private String fhirServerOAuthClientSecret;
+
   @PostConstruct
   void validateProperties() {
     CronExpression.parse(incrementalSchedule);
@@ -126,6 +132,9 @@ public class DataProperties {
       options.setFhirServerUrl(fhirServerUrl);
       options.setFhirServerPassword(fhirServerPassword);
       options.setFhirServerUserName(fhirServerUserName);
+      options.setFhirServerOAuthTokenEndpoint(fhirServerOAuthTokenEndpoint);
+      options.setFhirServerOAuthClientId(fhirServerOAuthClientId);
+      options.setFhirServerOAuthClientSecret(fhirServerOAuthClientSecret);
     }
     options.setResourceList(resourceList);
 

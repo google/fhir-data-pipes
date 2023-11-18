@@ -286,10 +286,13 @@ public class PipelineManager implements ApplicationListener<ApplicationReadyEven
   private void validateFhirSearchParameters(FhirEtlOptions options) {
     FhirSearchUtil fhirSearchUtil =
         new FhirSearchUtil(
-            new OpenmrsUtil(
+            new FetchUtil(
                 options.getFhirServerUrl(),
                 options.getFhirServerUserName(),
                 options.getFhirServerPassword(),
+                options.getFhirServerOAuthTokenEndpoint(),
+                options.getFhirServerOAuthClientId(),
+                options.getFhirServerOAuthClientSecret(),
                 FhirContext.forR4()));
     fhirSearchUtil.testFhirConnection();
   }
