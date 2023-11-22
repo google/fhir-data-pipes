@@ -41,10 +41,24 @@ public class FlinkConfiguration {
   private static final Logger logger = LoggerFactory.getLogger(FlinkConfiguration.class.getName());
   static final String TEMP_FLINK_CONF_DIR = "tmp-flink-conf";
 
-  // This value is arrived based on the maximum number of reshuffle/partition operations that can
-  // occur in the pipelines. This has to be updated if any modifications are made to the pipelines
-  // that impact the reshuffle/partition operations.
+  /**
+   * This value is arrived based on the maximum number of reshuffle/partition operations that can
+   * occur in the pipelines. This has to be updated if any modifications are made to the pipelines
+   * that impact the reshuffle/partition operations.
+   *
+   * <p>Currently, for incremental run a maximum of 7 reshuffle/partition operations take place.
+   *
+   * <ul>
+   *   <li>2 reshuffle operations for matching and reading from Parquet files
+   *   <li>1 reshuffle operation for GroupByKey
+   *   <li>4 reshuffle operations for writing back to new parquet files (some kind of map-reduce
+   *       logic is used).
+   * </ul>
+   *
+   * <p>An extra number is allocated as a buffer
+   */
   static final int NUMBER_OF_RESHUFFLES = 8;
+
   private static final int DEFAULT_PARALLELISM = Runtime.getRuntime().availableProcessors();
   static final String DEFAULT_MANAGED_MEMORY_SIZE = "256mb";
   private static final String KEY_VALUE_FORMAT = "%s: %s";

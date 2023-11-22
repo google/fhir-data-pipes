@@ -28,10 +28,16 @@ import org.apache.flink.configuration.Configuration;
 import org.apache.flink.configuration.GlobalConfiguration;
 import org.apache.flink.configuration.MemorySize;
 import org.apache.flink.configuration.TaskManagerOptions;
+import org.junit.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
+import org.junit.runner.RunWith;
+import org.mockito.MockedStatic;
+import org.mockito.Mockito;
+import org.mockito.junit.MockitoJUnitRunner;
 
+@RunWith(MockitoJUnitRunner.class)
 public class FlinkConfigurationTest {
 
   @ParameterizedTest
@@ -61,12 +67,30 @@ public class FlinkConfigurationTest {
   private static Stream<Arguments> provideFlinkParams() {
     return Stream.of(
         // The percentage completion is rounded off to next highest integer
-        Arguments.of(2, getNetworkMemory(2)), Arguments.of(2, getNetworkMemory(2)));
+        Arguments.of(2, getNetworkMemory(2)), Arguments.of(4, getNetworkMemory(4)));
   }
 
   private static long getNetworkMemory(int numThreads) {
     return (int) (Math.pow((numThreads + 1), 2))
         * NUMBER_OF_RESHUFFLES
         * TaskManagerOptions.MEMORY_SEGMENT_SIZE.defaultValue().getBytes();
+  }
+
+  @Test
+  public void testNonAutoGenerationWithDefaultConfiguration() throws IOException {
+    DataProperties dataProperties = new DataProperties();
+    dataProperties.setAutoGenerateFlinkConfiguration(false);
+    try (MockedStatic<GlobalConfiguration> mockedStatic =
+        Mockito.mockStatic(GlobalConfiguration.class)) {
+      Configuration defaultConfiguration = new Configuration();
+      mockedStatic
+          .when(() -> GlobalConfiguration.loadConfiguration())
+          .thenReturn(defaultConfiguration);
+      FlinkConfiguration flinkConfiguration = new FlinkConfiguration();
+
+      flinkConfiguration.initialiseFlinkConfiguration(dataProperties);
+
+      mockedStatic.verify(() -> GlobalConfiguration.loadConfiguration(), Mockito.times(1));
+    }
   }
 }

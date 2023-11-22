@@ -64,9 +64,15 @@ public class ParquetMerger {
   private static String SYSTEM_KEY = "system";
   private static String CODE_KEY = "code";
 
+  /**
+   * This method reads all the Parquet files under the paths {@code dwhFilesList} for the given
+   * {@code resourceType}. It then groups the records by ID key and returns the grouped PCollection.
+   */
   private static PCollection<KV<String, Iterable<GenericRecord>>> readAndGroupById(
       Pipeline pipeline, List<DwhFiles> dwhFilesList, String resourceType) {
 
+    // Reading all parquet files at once instead of one at a time, reduces the number of Flink
+    // reshuffle operations by one.
     PCollection<ReadableFile> inputFiles =
         pipeline
             .apply(Create.of(getParquetFilePaths(resourceType, dwhFilesList)))

@@ -215,8 +215,9 @@
               <archive>
                 <manifestEntries>
                   <!-- These options enable access to all methods in the mentioned packages at
-                  compile and runtime. These options are added as MANIFEST entries in the bundled
-                  jar  -->
+                  compile and runtime. These are added as MANIFEST entries in the bundled jar. These
+                  had to be enabled specifically for accessing the
+                  `jdk.internal.misc.VM.maxDirectMemory()` API -->
                   <Add-Exports>java.base/jdk.internal.misc</Add-Exports>
                   <Add-Opens>java.base/jdk.internal.misc=ALL-UNNAMED</Add-Opens>
                 </manifestEntries>
