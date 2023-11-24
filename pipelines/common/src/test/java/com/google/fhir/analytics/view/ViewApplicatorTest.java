@@ -158,6 +158,11 @@ public class ViewApplicatorTest {
     assertThat(rows.getRows().get(0).getElements().get(1).getName(), equalTo("patient_id"));
     assertThat(
         rows.getRows().get(0).getElements().get(1).getValue(), equalTo("7_SOME_PATIENT_REF"));
+    assertThat(
+        rows.getRows().get(0).getElements().get(2).getName(), equalTo("effective_date_time"));
+    assertThat(
+        rows.getRows().get(0).getElements().get(2).getValue(),
+        equalTo("2021-04-16T11:12:33+03:00"));
   }
 
   @Test

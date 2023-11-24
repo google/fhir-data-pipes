@@ -39,6 +39,7 @@ import org.hl7.fhir.instance.model.api.IBase;
 import org.hl7.fhir.instance.model.api.IBaseReference;
 import org.hl7.fhir.instance.model.api.IBaseResource;
 import org.hl7.fhir.instance.model.api.IIdType;
+import org.hl7.fhir.instance.model.api.IPrimitiveType;
 import org.hl7.fhir.r4.hapi.fluentpath.FhirPathR4;
 import org.hl7.fhir.r5.hapi.fhirpath.FhirPathR5;
 
@@ -259,7 +260,18 @@ public class ViewApplicator {
       if (element != null) {
         List<IBase> eval = fhirPath.evaluate(element, col.getPath(), IBase.class);
         // TODO fix this by handling types and avoiding `toString()`!
-        value = String.join(",", eval.stream().map(e -> e.toString()).collect(Collectors.toList()));
+        value =
+            String.join(
+                ",",
+                eval.stream()
+                    .map(
+                        e -> {
+                          if (e instanceof IPrimitiveType<?>) {
+                            return ((IPrimitiveType) e).getValueAsString();
+                          }
+                          return e.toString();
+                        })
+                    .collect(Collectors.toList()));
       }
       rowElements.add(new RowElement(col.getName(), value));
     }
