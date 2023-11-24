@@ -24,6 +24,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.fhir.analytics.view.ViewDefinition.Column;
 import com.google.fhir.analytics.view.ViewDefinition.Select;
+import com.google.fhir.analytics.view.ViewDefinition.Where;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -42,9 +43,12 @@ import org.hl7.fhir.instance.model.api.IIdType;
 import org.hl7.fhir.instance.model.api.IPrimitiveType;
 import org.hl7.fhir.r4.hapi.fluentpath.FhirPathR4;
 import org.hl7.fhir.r5.hapi.fhirpath.FhirPathR5;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /** Given a {@link ViewDefinition}, this is to apply it on FHIR resources of appropriate type. */
 public class ViewApplicator {
+  private static final Logger log = LoggerFactory.getLogger(ViewApplicator.class);
   private static final String GET_RESOURCE_KEY = "getResourceKey()";
   private static final Pattern GET_REF_KEY_PATTERN =
       Pattern.compile("(?<fhirPath>.*)getReferenceKey\\(('(?<resourceType>[a-zA-Z]*)')?\\)");
@@ -53,7 +57,6 @@ public class ViewApplicator {
   private final IFhirPath fhirPath;
 
   public ViewApplicator(ViewDefinition viewDefinition) {
-    Preconditions.checkState(viewDefinition.validate());
     this.viewDef = viewDefinition;
     if (viewDefinition.getResourceVersion() == null
         || viewDefinition.getResourceVersion().equals(FhirVersionEnum.R4.getFhirVersionString())) {
@@ -91,8 +94,40 @@ public class ViewApplicator {
    */
   public RowList apply(IBaseResource resource) throws ViewApplicationException {
     Preconditions.checkState(viewDef.getResource().equals(resource.fhirType()));
-    // TODO apply `constant` and `where` features too.
-    return applyAllSelects(resource, viewDef.getSelect());
+    if (satisfiesWhere(resource)) {
+      return applyAllSelects(resource, viewDef.getSelect());
+    } else {
+      return EMPTY_LIST;
+    }
+  }
+
+  private boolean satisfiesWhere(IBaseResource resource) throws ViewApplicationException {
+    if (viewDef.getWhere() == null) {
+      return true;
+    }
+    for (Where w : viewDef.getWhere()) {
+      List<IBase> results = fhirPath.evaluate(resource, w.getPath(), IBase.class);
+      if (results == null || results.size() != 1) {
+        return false;
+      }
+      IBase r = results.get(0);
+      if (r.fhirType() != "boolean") {
+        String error =
+            String.format("The `where` FHIRPath %s did not return a boolean!", w.getPath());
+        log.error(error);
+        throw new ViewApplicationException(error);
+      }
+      try {
+        IPrimitiveType<Boolean> booleanBase = (IPrimitiveType<Boolean>) r;
+        if (booleanBase.getValue() != Boolean.TRUE) {
+          return false;
+        }
+      } catch (ClassCastException e) {
+        // This should never happen because `r.fhirType()` is "boolean".
+        throw new ViewApplicationException("Error casting to IPrimitiveType<Boolean>!");
+      }
+    }
+    return true;
   }
 
   /**

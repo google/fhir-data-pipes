@@ -29,21 +29,21 @@ import org.mockito.junit.MockitoJUnitRunner;
 public class ViewDefinitionTest {
 
   @Test
-  public void createFromJson() throws IOException {
+  public void createFromJson() throws IOException, ViewDefinitionException {
     String viewJson =
         Resources.toString(
             Resources.getResource("patient_addresses_view.json"), StandardCharsets.UTF_8);
     ViewDefinition viewDef = ViewDefinition.createFromString(viewJson);
     assertThat(viewDef.getName(), equalTo("patient_addresses"));
     assertThat(viewDef.getSelect().size(), equalTo(2));
-    assertThat(viewDef.getSelect().get(0).getColumn().size(), equalTo(1));
+    assertThat(viewDef.getSelect().get(0).getColumn().size(), equalTo(2));
     assertThat(viewDef.getSelect().get(1).getColumn().size(), equalTo(4));
     assertThat(viewDef.getSelect().get(1).getColumn().get(1).getName(), equalTo("use"));
     assertThat(viewDef.getSelect().get(1).getColumn().get(3).getPath(), equalTo("postalCode"));
   }
 
   @Test
-  public void createFromJsonUnion() throws IOException {
+  public void createFromJsonUnion() throws IOException, ViewDefinitionException {
     String viewJson =
         Resources.toString(
             Resources.getResource("patient_address_and_contact_union_view.json"),
@@ -60,7 +60,7 @@ public class ViewDefinitionTest {
   }
 
   @Test
-  public void createFromJsonWhereAndConstant() throws IOException {
+  public void createFromJsonWhereAndConstant() throws IOException, ViewDefinitionException {
     String viewJson =
         Resources.toString(
             Resources.getResource("us_core_blood_pressures_view.json"), StandardCharsets.UTF_8);
@@ -68,12 +68,122 @@ public class ViewDefinitionTest {
     assertThat(viewDef.getName(), equalTo("us_core_blood_pressures"));
     assertThat(viewDef.getSelect().size(), equalTo(3));
     assertThat(viewDef.getWhere().size(), equalTo(1));
-    assertThat(viewDef.getConstant().size(), equalTo(3));
     assertThat(viewDef.getSelect().get(1).getColumn().size(), equalTo(4));
-    assertThat(viewDef.getConstant().get(1).getValueCode(), equalTo("8462-4"));
-    assertThat(viewDef.getConstant().get(1).getValueBoolean(), equalTo(null));
+    // Check constant replacements
     assertThat(
         viewDef.getWhere().get(0).getPath(),
-        equalTo("code.coding.exists(system='http://loinc.org' and code=%bp_code)"));
+        equalTo("code.coding.exists(system='http://loinc.org' and code='85354-9')"));
+    assertThat(
+        viewDef.getSelect().get(1).getForEach(),
+        equalTo(
+            "component.where(code.coding.exists(system='http://loinc.org' and"
+                + " code='8480-6')).first()"));
+    assertThat(
+        viewDef.getSelect().get(2).getForEach(),
+        equalTo(
+            "component.where(code.coding.exists(system='http://loinc.org' and"
+                + " code='8462-4')).first()"));
+  }
+
+  @Test(expected = ViewDefinitionException.class)
+  public void inconsistentSelects() throws IOException, ViewDefinitionException {
+    String viewJson =
+        Resources.toString(
+            Resources.getResource("patient_inconsistent_selects_view.json"),
+            StandardCharsets.UTF_8);
+    ViewDefinition.createFromString(viewJson);
+  }
+
+  @Test(expected = ViewDefinitionException.class)
+  public void inconsistentUnion() throws IOException, ViewDefinitionException {
+    String viewJson =
+        Resources.toString(
+            Resources.getResource("patient_inconsistent_union_view.json"), StandardCharsets.UTF_8);
+    ViewDefinition.createFromString(viewJson);
+  }
+
+  @Test(expected = ViewDefinitionException.class)
+  public void emptyResource() throws ViewDefinitionException {
+    ViewDefinition.createFromString(
+        """
+    {
+      "resourceType": "http://hl7.org/fhir/uv/sql-on-fhir/StructureDefinition/ViewDefinition",
+      "select": [
+        {
+          "column": [
+            {
+              "path": "getResourceKey()",
+              "name": "patient_id"
+            }
+          ]
+        }
+      ],
+      "status": "draft"
+    }
+    """);
+  }
+
+  @Test(expected = ViewDefinitionException.class)
+  public void emptyColumnName() throws ViewDefinitionException {
+    ViewDefinition.createFromString(
+        """
+    {
+      "resourceType": "http://hl7.org/fhir/uv/sql-on-fhir/StructureDefinition/ViewDefinition",
+      "select": [
+        {
+          "column": [
+            {
+              "path": "getResourceKey()"
+            }
+          ]
+        }
+      ],
+      "status": "draft",
+      "resource": "Patient"
+    }
+    """);
+  }
+
+  @Test(expected = ViewDefinitionException.class)
+  public void emptyColumnPath() throws ViewDefinitionException {
+    ViewDefinition.createFromString(
+        """
+    {
+      "resourceType": "http://hl7.org/fhir/uv/sql-on-fhir/StructureDefinition/ViewDefinition",
+      "select": [
+        {
+          "column": [
+            {
+              "name": "patient_id"
+            }
+          ]
+        }
+      ],
+      "status": "draft",
+      "resource": "Patient"
+    }
+    """);
+  }
+
+  @Test(expected = ViewDefinitionException.class)
+  public void undefinedConstant() throws ViewDefinitionException {
+    ViewDefinition.createFromString(
+        """
+    {
+      "resourceType": "http://hl7.org/fhir/uv/sql-on-fhir/StructureDefinition/ViewDefinition",
+      "select": [
+        {
+          "column": [
+            {
+              "path": "code.coding.exists(code=%a_constant)).first()",
+              "name": "code"
+            }
+          ]
+        }
+      ],
+      "status": "draft",
+      "resource": "Observation"
+    }
+    """);
   }
 }
