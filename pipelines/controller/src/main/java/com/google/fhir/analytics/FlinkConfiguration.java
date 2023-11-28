@@ -15,6 +15,7 @@
  */
 package com.google.fhir.analytics;
 
+import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import com.google.fhir.analytics.metrics.FlinkJobListener;
 import java.io.BufferedWriter;
@@ -85,6 +86,13 @@ public class FlinkConfiguration {
    * @throws IOException
    */
   void initialiseFlinkConfiguration(DataProperties dataProperties) throws IOException {
+    boolean isFlinkModelLocal = isFlinkModeLocal(dataProperties);
+    Preconditions.checkState(
+        isFlinkModelLocal || !dataProperties.isAutoGenerateFlinkConfiguration(),
+        "Auto-generation of Flink configuration is only applicable for Local execution mode");
+    // Do not generate or validate the Flink configuration in case of non-local mode
+    if (!isFlinkModelLocal) return;
+
     if (dataProperties.isAutoGenerateFlinkConfiguration()) {
       Path confPath = Files.createTempDirectory(TEMP_FLINK_CONF_DIR);
       logger.info("Creating Flink temporary configuration directory at {}", confPath);
@@ -177,5 +185,11 @@ public class FlinkConfiguration {
                         path.toString());
                   }
                 }));
+  }
+
+  private boolean isFlinkModeLocal(DataProperties dataProperties) {
+    // TODO: Enable the pipeline for Flink non-local modes as well
+    // https://github.com/google/fhir-data-pipes/issues/893
+    return true;
   }
 }

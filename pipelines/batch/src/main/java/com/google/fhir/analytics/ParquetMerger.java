@@ -71,7 +71,7 @@ public class ParquetMerger {
   private static PCollection<KV<String, Iterable<GenericRecord>>> readAndGroupById(
       Pipeline pipeline, List<DwhFiles> dwhFilesList, String resourceType) {
 
-    // Reading all parquet files at once instead of one at a time, reduces the number of Flink
+    // Reading all parquet files at once instead of one set at a time, reduces the number of Flink
     // reshuffle operations by one.
     PCollection<ReadableFile> inputFiles =
         pipeline

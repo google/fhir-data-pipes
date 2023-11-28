@@ -406,6 +406,8 @@ public class PipelineManager implements ApplicationListener<ApplicationReadyEven
     mergerOptions.setMergedDwh(finalDwhRoot);
     mergerOptions.setRunner(FlinkRunner.class);
     // The number of shards is set based on the parallelism available for the FlinkRunner Pipeline
+    // TODO: For Flink non-local mode, refactor this to be not dependent on the pipeline-controller
+    //  machine https://github.com/google/fhir-data-pipes/issues/893
     int numShards =
         dataProperties.getNumThreads() > 0
             ? dataProperties.getNumThreads()
@@ -589,8 +591,11 @@ public class PipelineManager implements ApplicationListener<ApplicationReadyEven
 
     @Override
     public void run() {
+      long start = System.currentTimeMillis();
       // The number of threads may increase after a few runs, but it should eventually go down.
-      logger.info("Starting a new thread; number of threads is {}", Thread.activeCount());
+      logger.info(
+          "Pipelines execution started with a new thread; number of threads is {}",
+          Thread.activeCount());
       String currentDwhRoot = null;
       try {
         currentDwhRoot = options.getOutputParquetPath();
@@ -631,6 +636,9 @@ public class PipelineManager implements ApplicationListener<ApplicationReadyEven
       } finally {
         // See https://github.com/google/fhir-data-pipes/issues/777#issuecomment-1703142297
         System.gc();
+        logger.info(
+            "Total time taken for the pipelines = {} secs",
+            (System.currentTimeMillis() - start) / 1000);
       }
     }
 
