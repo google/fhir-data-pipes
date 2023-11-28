@@ -33,7 +33,7 @@ fhirdata:
   # TODO: add resource table creation to e2e tests.
   resourceList: "Patient,Encounter,Observation,Questionnaire,Condition,Practitioner,Location,Organization"
   maxWorkers: 1
-  numThreads: -1
+  numThreads: 5
   createHiveResourceTables: true
   thriftserverHiveConfig: "config/thriftserver-hive-config_local.json"
   hiveResourceViewsDir: "config/views"
