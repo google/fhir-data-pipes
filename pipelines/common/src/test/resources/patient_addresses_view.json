@@ -1,0 +1,39 @@
+{
+  "resourceType": "http://hl7.org/fhir/uv/sql-on-fhir/StructureDefinition/ViewDefinition",
+  "text": "Based on https://build.fhir.org/ig/FHIR/sql-on-fhir-v2/Binary-PatientAddresses.html",
+  "select": [
+    {
+      "column": [
+        {
+          "path": "getResourceKey()",
+          "name": "patient_id"
+        }
+      ]
+    },
+    {
+      "column": [
+        {
+          "path": "line.join('\n')",
+          "name": "street",
+          "description": "The full street address, including newlines if present."
+        },
+        {
+          "path": "use",
+          "name": "use"
+        },
+        {
+          "path": "city",
+          "name": "city"
+        },
+        {
+          "path": "postalCode",
+          "name": "zip"
+        }
+      ],
+      "forEach": "address"
+    }
+  ],
+  "name": "patient_addresses",
+  "status": "draft",
+  "resource": "Patient"
+}

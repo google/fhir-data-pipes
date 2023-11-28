@@ -1,0 +1,24 @@
+{
+  "resourceType": "http://hl7.org/fhir/uv/sql-on-fhir/StructureDefinition/ViewDefinition",
+  "select": [
+    {
+      "column": [
+        {
+          "path": "getResourceKey()",
+          "name": "id"
+        },
+        {
+          "path": "subject.getReferenceKey('Patient')",
+          "name": "patient_id"
+        },
+        {
+          "path": "effective.ofType(dateTime)",
+          "name": "effective_date_time"
+        }
+      ]
+    }
+  ],
+  "name": "observation_patient_id",
+  "status": "draft",
+  "resource": "Observation"
+}

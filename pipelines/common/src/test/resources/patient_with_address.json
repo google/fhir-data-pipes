@@ -1,0 +1,68 @@
+{
+  "resourceType": "Patient",
+  "id": "Patient/12345",
+  "text": {
+    "status": "generated",
+    "div": "<div></div>"
+  },
+  "name": [
+    {
+      "use": "official",
+      "family": "Emily",
+      "given": [
+        "Stevenson"
+      ]
+    }
+  ],
+  "address": [
+    {
+      "use": "home",
+      "line": [
+        "245",
+        "Republic st."
+      ],
+      "city": "Waterloo",
+      "country": "Canada"
+    },
+    {
+      "use": "work",
+      "line": [
+        "10",
+        "Parliament st."
+      ],
+      "city": "Kitchener",
+      "country": "Canada"
+    }
+  ],
+  "contact": [
+    {
+      "name": {
+        "family": "Contact1"
+      },
+      "address": {
+        "use": "home",
+        "line": [
+          "250",
+          "Contact1 st."
+        ],
+        "city": "Waterloo",
+        "country": "Canada"
+      }
+    },
+    {
+      "name": {
+        "family": "Contact2"
+      },
+      "address": {
+        "use": "work",
+        "line": [
+          "15",
+          "Contact2 st."
+        ],
+        "city": "Kitchener",
+        "country": "Canada"
+      }
+    }
+  ],
+  "gender": "female"
+}

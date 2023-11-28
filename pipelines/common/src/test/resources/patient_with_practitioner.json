@@ -1,0 +1,29 @@
+{
+  "resourceType": "Patient",
+  "id": "Patient/12345",
+  "text": {
+    "status": "generated",
+    "div": "<div></div>"
+  },
+  "name": [
+    {
+      "use": "official",
+      "family": "Emily",
+      "given": [
+        "Stevenson"
+      ]
+    }
+  ],
+  "generalPractitioner": [
+    {
+      "reference": "Practitioner/prac1"
+    },
+    {
+      "reference": "Organization/org1"
+    },
+    {
+      "reference": "Practitioner/prac2"
+    }
+  ],
+  "gender": "female"
+}
