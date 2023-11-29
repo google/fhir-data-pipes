@@ -12,10 +12,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-FROM adoptopenjdk/maven-openjdk11
+FROM maven:3.8.7-eclipse-temurin-17-focal
 
-RUN apt-get update && apt-get install -y jq  python3.7 python3-pip 
-RUN update-alternatives --install /usr/bin/python3 python3 /usr/bin/python3.7 1
+RUN apt-get update && apt-get install -y jq  python3.8 python3-pip
+RUN update-alternatives --install /usr/bin/python3 python3 /usr/bin/python3.8 1
 RUN pip3 install virtualenv google-auth requests
 
 COPY pipeline_validation.sh pipeline_validation.sh
