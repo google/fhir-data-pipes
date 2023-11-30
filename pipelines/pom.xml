@@ -218,7 +218,7 @@
         </plugin>
         <plugin>
           <artifactId>maven-project-info-reports-plugin</artifactId>
-          <version>3.4.5</version>
+          <version>3.5.0</version>
         </plugin>
         <!-- this is for finding files at the root ${main.basedir} easier -->
         <plugin>
@@ -304,7 +304,20 @@
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-compiler-plugin</artifactId>
         <configuration>
-          <release>17</release>
+          <source>17</source>
+          <target>17</target>
+          <compilerArgs>
+            <!-- Enable access to the packages at compile time -->
+            <arg>--add-exports=java.base/jdk.internal.misc=ALL-UNNAMED</arg>
+          </compilerArgs>
+        </configuration>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-surefire-plugin</artifactId>
+        <configuration>
+          <!-- Enable access to the packages at run time -->
+          <argLine>--add-opens=java.base/jdk.internal.misc=ALL-UNNAMED</argLine>
         </configuration>
       </plugin>
     </plugins>

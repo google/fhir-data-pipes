@@ -71,6 +71,8 @@ services:
     volumes:
       - ${PIPELINE_CONFIG}:/app/config:ro
       - ${DWH_ROOT}:/dwh
+    environment:
+      - JAVA_OPTS=$JAVA_OPTS
     ports:
       - '8090:8080'
     networks:

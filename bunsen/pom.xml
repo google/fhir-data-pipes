@@ -35,9 +35,9 @@
     <scm.connection>scm:git:git@github.com/cerner/bunsen.git</scm.connection>
     <python.version>3.5.3</python.version>
     <maven-javadoc.plugin.version>3.6.2</maven-javadoc.plugin.version>
-    <maven-project-info-reports.plugin.version>3.4.5</maven-project-info-reports.plugin.version>
+    <maven-project-info-reports.plugin.version>3.5.0</maven-project-info-reports.plugin.version>
     <slf4j.version>2.0.9</slf4j.version>
-    <logback.version>1.4.11</logback.version>
+    <logback.version>1.4.12</logback.version>
   </properties>
 
   <modules>

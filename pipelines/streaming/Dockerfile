@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-FROM adoptopenjdk/maven-openjdk11
+FROM maven:3.8.7-eclipse-temurin-17-focal
 
 ARG WORK_DIR="/usr/src/Main"
 COPY target/streaming-bundled.jar ${WORK_DIR}/app.jar
