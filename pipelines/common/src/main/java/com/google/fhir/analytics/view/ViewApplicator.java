@@ -107,16 +107,13 @@ public class ViewApplicator {
     }
     for (Where w : viewDef.getWhere()) {
       List<IBase> results = fhirPath.evaluate(resource, w.getPath(), IBase.class);
-      if (results == null || results.size() != 1) {
-        return false;
-      }
-      IBase r = results.get(0);
-      if (r.fhirType() != "boolean") {
+      if (results == null || results.size() != 1 || !results.get(0).fhirType().equals("boolean")) {
         String error =
-            String.format("The `where` FHIRPath %s did not return a boolean!", w.getPath());
+            String.format("The `where` FHIRPath %s did not return one boolean!", w.getPath());
         log.error(error);
         throw new ViewApplicationException(error);
       }
+      IBase r = results.get(0);
       try {
         IPrimitiveType<Boolean> booleanBase = (IPrimitiveType<Boolean>) r;
         if (booleanBase.getValue() != Boolean.TRUE) {

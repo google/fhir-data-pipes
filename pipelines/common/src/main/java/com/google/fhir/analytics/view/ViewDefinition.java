@@ -39,6 +39,7 @@ import lombok.Getter;
 public class ViewDefinition {
 
   private static Pattern CONSTANT_PATTERN = Pattern.compile("%[A-Za-z][A-Za-z0-9_]*");
+  private static Pattern SQL_NAME_PATTERN = Pattern.compile("^[A-Za-z][A-Za-z0-9_]*$");
 
   @Getter private String name;
   @Getter private String resource;
@@ -75,6 +76,10 @@ public class ViewDefinition {
     }
     if (constant != null) {
       for (Constant c : constant) {
+        if (!SQL_NAME_PATTERN.matcher(c.name).matches()) {
+          throw new ViewDefinitionException(
+              "Constant name " + c.name + " does not match 'sql-name' pattern!");
+        }
         constMap.put(c.getName(), c.convertValueToString());
       }
     }
@@ -118,6 +123,10 @@ public class ViewDefinition {
       for (Column c : select.getColumn()) {
         if (Strings.nullToEmpty(c.name).isEmpty()) {
           throw new ViewDefinitionException("Column name cannot be empty!");
+        }
+        if (!SQL_NAME_PATTERN.matcher(c.name).matches()) {
+          throw new ViewDefinitionException(
+              "Column name " + c.name + " does not match 'sql-name' pattern!");
         }
         if (Strings.nullToEmpty(c.path).isEmpty()) {
           throw new ViewDefinitionException("Column path cannot be empty for " + c.name);

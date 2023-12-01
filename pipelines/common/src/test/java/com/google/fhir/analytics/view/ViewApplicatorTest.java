@@ -223,4 +223,12 @@ public class ViewApplicatorTest {
     RowList rows = applicator.apply(obs);
     assertThat(rows.getRows().size(), equalTo(0));
   }
+
+  @Test
+  public void whereAndConstantNoMatch() throws IOException, ViewApplicationException {
+    RowList rows =
+        applyViewOnResource(
+            "us_core_blood_pressures_view.json", "observation_decimal.json", Observation.class);
+    assertThat(rows.getRows().size(), equalTo(0));
+  }
 }

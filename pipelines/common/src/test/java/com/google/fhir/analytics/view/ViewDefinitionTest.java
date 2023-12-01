@@ -175,8 +175,30 @@ public class ViewDefinitionTest {
         {
           "column": [
             {
-              "path": "code.coding.exists(code=%a_constant)).first()",
+              "path": "code.coding.exists(code=%a_constant).first()",
               "name": "code"
+            }
+          ]
+        }
+      ],
+      "status": "draft",
+      "resource": "Observation"
+    }
+    """);
+  }
+
+  @Test(expected = ViewDefinitionException.class)
+  public void badColumnName() throws ViewDefinitionException {
+    ViewDefinition.createFromString(
+        """
+    {
+      "resourceType": "http://hl7.org/fhir/uv/sql-on-fhir/StructureDefinition/ViewDefinition",
+      "select": [
+        {
+          "column": [
+            {
+              "path": "code.coding.exists(code='test').first()",
+              "name": "code-12"
             }
           ]
         }
