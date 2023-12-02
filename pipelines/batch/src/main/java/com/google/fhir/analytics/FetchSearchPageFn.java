@@ -22,6 +22,7 @@ import com.cerner.bunsen.FhirContexts;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.fhir.analytics.JdbcConnectionPools.DataSourceConfig;
 import com.google.fhir.analytics.model.DatabaseConfiguration;
+import com.google.fhir.analytics.view.ViewApplicationException;
 import java.beans.PropertyVetoException;
 import java.io.IOException;
 import java.sql.SQLException;
@@ -87,9 +88,7 @@ abstract class FetchSearchPageFn<T> extends DoFn<T, KV<String, Integer>> {
 
   protected final DataSourceConfig sinkDbConfig;
 
-  private final String sinkDbTableName;
-
-  private final boolean useSingleSinkDbTable;
+  protected final String viewDefinitionsDir;
 
   private final int initialPoolSize;
 
@@ -123,7 +122,7 @@ abstract class FetchSearchPageFn<T> extends DoFn<T, KV<String, Integer>> {
     this.parquetFile = options.getOutputParquetPath();
     this.secondsToFlush = options.getSecondsToFlushParquetFiles();
     this.rowGroupSize = options.getRowGroupSizeForParquetFiles();
-    this.sinkDbTableName = options.getSinkDbTablePrefix();
+    this.viewDefinitionsDir = options.getViewDefinitionsDir();
     if (options.getSinkDbConfigPath().isEmpty()) {
       this.sinkDbConfig = null;
     } else {
@@ -137,7 +136,6 @@ abstract class FetchSearchPageFn<T> extends DoFn<T, KV<String, Integer>> {
         throw new IllegalArgumentException(error);
       }
     }
-    this.useSingleSinkDbTable = options.getUseSingleSinkTable();
     this.initialPoolSize = options.getJdbcInitialPoolSize();
     this.maxPoolSize = options.getJdbcMaxPoolSize();
     this.numFetchedResources =
@@ -201,8 +199,9 @@ abstract class FetchSearchPageFn<T> extends DoFn<T, KV<String, Integer>> {
       DataSource jdbcSink =
           JdbcConnectionPools.getInstance()
               .getPooledDataSource(sinkDbConfig, initialPoolSize, maxPoolSize);
-      jdbcWriter =
-          new JdbcResourceWriter(jdbcSink, sinkDbTableName, useSingleSinkDbTable, fhirContext);
+      // TODO separate view generation from writing; TBD in a more generic version of:
+      //  https://github.com/google/fhir-data-pipes/issues/288
+      jdbcWriter = new JdbcResourceWriter(jdbcSink, viewDefinitionsDir, fhirContext);
     }
   }
 
@@ -215,13 +214,13 @@ abstract class FetchSearchPageFn<T> extends DoFn<T, KV<String, Integer>> {
     totalFetchTimeMillis.inc(millis);
   }
 
-  protected void processBundle(Bundle bundle) throws IOException, SQLException {
+  protected void processBundle(Bundle bundle)
+      throws IOException, SQLException, ViewApplicationException {
     this.processBundle(bundle, null);
   }
 
-  // TODO remove `resourceTypes` once we support different FHIR versions in AVRO conversion.
   protected void processBundle(Bundle bundle, @Nullable Set<String> resourceTypes)
-      throws IOException, SQLException {
+      throws IOException, SQLException, ViewApplicationException {
     if (bundle != null && bundle.getEntry() != null) {
       numFetchedResources.inc(bundle.getEntry().size());
       if (!parquetFile.isEmpty()) {
@@ -240,7 +239,7 @@ abstract class FetchSearchPageFn<T> extends DoFn<T, KV<String, Integer>> {
         }
         for (BundleEntryComponent entry : bundle.getEntry()) {
           Resource resource = entry.getResource();
-          if (resourceTypes != null && resourceTypes.contains(resource.getResourceType().name())) {
+          if (resourceTypes == null || resourceTypes.contains(resource.getResourceType().name())) {
             jdbcWriter.writeResource(resource);
           }
         }

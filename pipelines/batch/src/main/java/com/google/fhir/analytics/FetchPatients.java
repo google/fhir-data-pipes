@@ -17,6 +17,7 @@ package com.google.fhir.analytics;
 
 import ca.uhn.fhir.rest.api.SummaryEnum;
 import com.google.common.base.Preconditions;
+import com.google.fhir.analytics.view.ViewApplicationException;
 import java.io.IOException;
 import java.sql.SQLException;
 import java.util.List;
@@ -52,7 +53,7 @@ public class FetchPatients extends PTransform<PCollection<KV<String, Integer>>, 
 
           @ProcessElement
           public void processElement(@Element KV<String, Integer> patientIdCount)
-              throws IOException, SQLException {
+              throws IOException, SQLException, ViewApplicationException {
             String patientId = patientIdCount.getKey();
             log.info(
                 String.format(

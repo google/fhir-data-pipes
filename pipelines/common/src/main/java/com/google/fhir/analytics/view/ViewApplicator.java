@@ -261,6 +261,11 @@ public class ViewApplicator {
       }
       Matcher refMatcher = GET_REF_KEY_PATTERN.matcher(col.getPath());
       if (refMatcher.matches()) {
+        // TODO add a unit-test for when element can be null here, e.g., forEachOrNull.
+        if (element == null) {
+          rowElements.add(new RowElement(col.getName(), null));
+          continue;
+        }
         List<String> refs = new ArrayList<>();
         String resType = Strings.nullToEmpty(refMatcher.group("resourceType"));
         String fhirPathForRef = Strings.nullToEmpty(refMatcher.group("fhirPath"));

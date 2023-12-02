@@ -16,7 +16,7 @@
               "name": "practitioner_id"
             }
           ],
-          "forEach": "generalPractitioner"
+          "forEachOrNull": "generalPractitioner"
         }
       ]
     }

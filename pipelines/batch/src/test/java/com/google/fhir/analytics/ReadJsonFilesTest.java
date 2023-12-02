@@ -21,6 +21,7 @@ import static org.hamcrest.Matchers.notNullValue;
 import static org.mockito.Mockito.when;
 
 import com.google.common.io.Resources;
+import com.google.fhir.analytics.view.ViewApplicationException;
 import java.beans.PropertyVetoException;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -63,7 +64,7 @@ public class ReadJsonFilesTest {
   }
 
   @Test
-  public void testProcessBundleUrnRef() throws IOException, java.text.ParseException, SQLException {
+  public void testProcessBundleUrnRef() throws IOException, SQLException, ViewApplicationException {
     String bundleResourceStr =
         Resources.toString(Resources.getResource("bundle_urn_ref.json"), StandardCharsets.UTF_8);
     when(fileMock.readFullyAsUTF8String()).thenReturn(bundleResourceStr);
@@ -85,7 +86,7 @@ public class ReadJsonFilesTest {
 
   @Test
   public void testProcessBundleRelativeRef()
-      throws IOException, java.text.ParseException, SQLException {
+      throws IOException, SQLException, ViewApplicationException {
     String bundleResourceStr =
         Resources.toString(
             Resources.getResource("bundle_relative_ref.json"), StandardCharsets.UTF_8);

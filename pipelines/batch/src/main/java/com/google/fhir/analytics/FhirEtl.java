@@ -25,6 +25,7 @@ import com.google.common.collect.Sets;
 import com.google.fhir.analytics.metrics.PipelineMetrics;
 import com.google.fhir.analytics.metrics.PipelineMetricsProvider;
 import com.google.fhir.analytics.model.DatabaseConfiguration;
+import com.google.fhir.analytics.view.ViewDefinitionException;
 import java.beans.PropertyVetoException;
 import java.io.IOException;
 import java.sql.SQLException;
@@ -236,8 +237,7 @@ public class FhirEtl {
     return pipelines;
   }
 
-  private static void validateOptions(FhirEtlOptions options)
-      throws SQLException, PropertyVetoException, IOException {
+  private static void validateOptions(FhirEtlOptions options) {
     if (!options.getActivePeriod().isEmpty()) {
       Set<String> resourceSet = Sets.newHashSet(options.getResourceList().split(","));
       if (resourceSet.contains("Patient")) {
@@ -271,10 +271,6 @@ public class FhirEtl {
         throw new IllegalArgumentException(
             "Either --fhirServerUrl or --jdbcModeHapi or --sourceJsonFilePattern should be set!");
       }
-    }
-
-    if (!options.getSinkDbConfigPath().isEmpty()) {
-      JdbcResourceWriter.createTables(options);
     }
   }
 
@@ -368,8 +364,11 @@ public class FhirEtl {
    * @param options the pipeline options to be used.
    * @return the created Pipeline instance or null if nothing needs to be done.
    */
-  static List<Pipeline> buildPipelines(FhirEtlOptions options)
-      throws PropertyVetoException, IOException, SQLException {
+  static List<Pipeline> setupAndBuildPipelines(FhirEtlOptions options)
+      throws PropertyVetoException, IOException, SQLException, ViewDefinitionException {
+    if (!options.getSinkDbConfigPath().isEmpty()) {
+      JdbcResourceWriter.createTables(options);
+    }
     FhirContext fhirContext = FhirContexts.forR4();
     if (options.isJdbcModeHapi()) {
       return buildHapiJdbcPipeline(options);
@@ -382,7 +381,8 @@ public class FhirEtl {
     }
   }
 
-  public static void main(String[] args) throws PropertyVetoException, IOException, SQLException {
+  public static void main(String[] args)
+      throws PropertyVetoException, IOException, SQLException, ViewDefinitionException {
 
     ParquetUtil.initializeAvroConverters();
 
@@ -392,11 +392,7 @@ public class FhirEtl {
     log.info("Flags: " + options);
     validateOptions(options);
 
-    if (!options.getSinkDbConfigPath().isEmpty()) {
-      JdbcResourceWriter.createTables(options);
-    }
-
-    List<Pipeline> pipelines = buildPipelines(options);
+    List<Pipeline> pipelines = setupAndBuildPipelines(options);
     EtlUtils.runMultiplePipelinesWithTimestamp(pipelines, options);
     log.info("DONE!");
   }

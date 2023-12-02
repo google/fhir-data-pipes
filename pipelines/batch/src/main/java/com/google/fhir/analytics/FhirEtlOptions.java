@@ -207,26 +207,33 @@ public interface FhirEtlOptions extends PipelineOptions {
 
   void setSince(String value);
 
-  // NOTE: Sink DB options are experimental.
-  @Description("Path to the sink database config; if not set, no sink DB is used [experimental].")
+  @Description(
+      "Path to the sink database config; if not set, no sink DB is used [experimental].\n"
+          + "If viewDefinitionsDir is set, the output tables will be the generated views\n"
+          + "(the `name` field value will be used as the table name); if not, one table\n"
+          + "per resource type is created with the JSON content of a resource and its\n"
+          + "`id` column for each row.")
   @Default.String("")
   String getSinkDbConfigPath();
 
   void setSinkDbConfigPath(String value);
 
-  @Description("The name prefix for the sink DB tables.")
-  @Default.String("")
-  String getSinkDbTablePrefix();
-
-  void setSinkDbTablePrefix(String value);
-
   @Description(
-      "If enabled all json resources are stored in the same table; by default a separate "
-          + "table is created for each resource type.")
-  @Default.Boolean(false)
-  Boolean getUseSingleSinkTable();
+      "The directory from which SQL-on-FHIR-v2 ViewDefinition json files are read.\n"
+          + "Note currently this requires setting sinkDbConfigPath as this is\n"
+          + "currently the only option for writing views (more to be added).")
+  @Default.String("")
+  String getViewDefinitionsDir();
 
-  void setUseSingleSinkTable(Boolean value);
+  void setViewDefinitionsDir(String value);
+
+  // TODO add the option for CSV output of views.
+  // @Description(
+  //     "The output directory for CSV files generated for ViewDefinitions in viewDefinitionsDir.\n"
+  //         + "File names will be the `name` fields of views with the `.json` suffix.")
+  // @Default.String("")
+  // String getSinkCsvDir();
+  // void setSinkCsvDir();
 
   @Description(
       "The pattern for input JSON files, e.g., 'PATH/*'. Each file should be one Bundle resource.")

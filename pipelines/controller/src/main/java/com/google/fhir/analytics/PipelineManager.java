@@ -23,6 +23,7 @@ import com.google.fhir.analytics.metrics.CumulativeMetrics;
 import com.google.fhir.analytics.metrics.PipelineMetrics;
 import com.google.fhir.analytics.metrics.PipelineMetricsProvider;
 import com.google.fhir.analytics.model.DatabaseConfiguration;
+import com.google.fhir.analytics.view.ViewDefinitionException;
 import io.micrometer.core.instrument.Gauge;
 import io.micrometer.core.instrument.MeterRegistry;
 import java.beans.PropertyVetoException;
@@ -344,7 +345,8 @@ public class PipelineManager implements ApplicationListener<ApplicationReadyEven
 
   // Every 30 seconds, check for pipeline status and incremental pipeline schedule.
   @Scheduled(fixedDelay = 30000)
-  private void checkSchedule() throws IOException, PropertyVetoException, SQLException {
+  private void checkSchedule()
+      throws IOException, PropertyVetoException, SQLException, ViewDefinitionException {
     LocalDateTime next = getNextIncrementalTime();
     if (next == null) {
       return;
@@ -356,7 +358,8 @@ public class PipelineManager implements ApplicationListener<ApplicationReadyEven
     }
   }
 
-  synchronized void runBatchPipeline() throws IOException, PropertyVetoException, SQLException {
+  synchronized void runBatchPipeline()
+      throws IOException, PropertyVetoException, SQLException, ViewDefinitionException {
     Preconditions.checkState(!isRunning(), "cannot start a pipeline while another one is running");
     PipelineConfig pipelineConfig = dataProperties.createBatchOptions();
     FhirEtlOptions options = pipelineConfig.getFhirEtlOptions();
@@ -364,7 +367,7 @@ public class PipelineManager implements ApplicationListener<ApplicationReadyEven
     if (!Strings.isNullOrEmpty(flinkConfiguration.getFlinkConfDir())) {
       flinkOptions.setFlinkConfDir(flinkConfiguration.getFlinkConfDir());
     }
-    List<Pipeline> pipelines = FhirEtl.buildPipelines(options);
+    List<Pipeline> pipelines = FhirEtl.setupAndBuildPipelines(options);
     if (pipelines == null || pipelines.isEmpty()) {
       logger.warn("No resources found to be fetched!");
       return;
@@ -379,7 +382,7 @@ public class PipelineManager implements ApplicationListener<ApplicationReadyEven
   }
 
   synchronized void runIncrementalPipeline()
-      throws IOException, PropertyVetoException, SQLException {
+      throws IOException, PropertyVetoException, SQLException, ViewDefinitionException {
     // TODO do the same as above but read/set --since
     Preconditions.checkState(!isRunning(), "cannot start a pipeline while another one is running");
     Preconditions.checkState(
@@ -397,7 +400,7 @@ public class PipelineManager implements ApplicationListener<ApplicationReadyEven
     if (!Strings.isNullOrEmpty(flinkConfiguration.getFlinkConfDir())) {
       flinkOptionsForBatch.setFlinkConfDir(flinkConfiguration.getFlinkConfDir());
     }
-    List<Pipeline> pipelines = FhirEtl.buildPipelines(options);
+    List<Pipeline> pipelines = FhirEtl.setupAndBuildPipelines(options);
 
     // The merger pipeline merges the original full DWH with the new incremental one.
     ParquetMergerOptions mergerOptions = PipelineOptionsFactory.as(ParquetMergerOptions.class);

@@ -18,6 +18,7 @@ package com.google.fhir.analytics;
 import ca.uhn.fhir.context.FhirVersionEnum;
 import ca.uhn.fhir.parser.DataFormatException;
 import com.google.common.base.Strings;
+import com.google.fhir.analytics.view.ViewApplicationException;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.sql.SQLException;
@@ -94,7 +95,7 @@ public class ConvertResourceFn extends FetchSearchPageFn<HapiRowDescriptor> {
   }
 
   public void writeResource(HapiRowDescriptor element)
-      throws IOException, ParseException, SQLException {
+      throws IOException, ParseException, SQLException, ViewApplicationException {
     String resourceId = element.resourceId();
     String forcedId = element.forcedId();
     String resourceType = element.resourceType();
@@ -145,14 +146,14 @@ public class ConvertResourceFn extends FetchSearchPageFn<HapiRowDescriptor> {
       parquetUtil.write(resource);
       totalGenerateTimeMillisMap.get(resourceType).inc(System.currentTimeMillis() - startTime);
     }
-    if (!this.sinkPath.isEmpty()) {
+    if (!sinkPath.isEmpty()) {
       startTime = System.currentTimeMillis();
       // TODO : Remove the deleted resources from the sink fhir store
       // https://github.com/google/fhir-data-pipes/issues/588
       fhirStoreUtil.uploadResource(resource);
       totalPushTimeMillisMap.get(resourceType).inc(System.currentTimeMillis() - startTime);
     }
-    if (this.sinkDbConfig != null) {
+    if (sinkDbConfig != null) {
       // TODO : Remove the deleted resources from the sink database
       // https://github.com/google/fhir-data-pipes/issues/588
       jdbcWriter.writeResource(resource);
@@ -192,7 +193,7 @@ public class ConvertResourceFn extends FetchSearchPageFn<HapiRowDescriptor> {
 
   @ProcessElement
   public void processElement(ProcessContext processContext)
-      throws IOException, ParseException, SQLException {
+      throws IOException, ParseException, SQLException, ViewApplicationException {
     HapiRowDescriptor element = processContext.element();
     writeResource(element);
   }
