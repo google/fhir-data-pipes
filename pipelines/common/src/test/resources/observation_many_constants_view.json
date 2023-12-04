@@ -1,0 +1,49 @@
+{
+  "resourceType": "http://hl7.org/fhir/uv/sql-on-fhir/StructureDefinition/ViewDefinition",
+  "constant": [
+    {
+      "name": "integer_const",
+      "valueInteger": "24"
+    },
+    {
+      "name": "decimal_const",
+      "valueDecimal": "23.5"
+    },
+    {
+      "name": "date_const",
+      "valueDate": "2023-10-20"
+    },
+    {
+      "name": "date_time_const",
+      "valueDateTime": "2021-02-07T13:28:17-05:00"
+    }
+  ],
+  "select": [
+    {
+      "column": [
+        {
+          "path": "getResourceKey()",
+          "name": "id"
+        },
+        {
+          "path": "effective.ofType(dateTime)",
+          "name": "effective_date_time"
+        }
+      ]
+    }
+  ],
+  "where": [
+    {
+      "path": "value.ofType(Quantity).value > %decimal_const"
+    },
+    {
+      "path": "value.ofType(Quantity).value > %integer_const"
+    },
+    {
+      "path": "effective.ofType(dateTime) > %date_time_const"
+    }
+  ],
+  "name": "observation_many_constants",
+  "status": "draft",
+  "resource": "Observation"
+}
