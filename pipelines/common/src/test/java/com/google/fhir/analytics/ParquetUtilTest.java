@@ -267,7 +267,7 @@ public class ParquetUtilTest {
     GenericRecord record = parquetUtil.convertToAvro(observation);
     GenericData.Record valueRecord = (GenericData.Record) record.get("value");
     BigDecimal value = (BigDecimal) ((GenericData.Record) valueRecord.get("quantity")).get("value");
-    assertThat(value.doubleValue(), closeTo(1.8287, 0.001));
+    assertThat(value.doubleValue(), closeTo(25, 0.001));
   }
 
   /**
