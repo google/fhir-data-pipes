@@ -7,6 +7,10 @@
         {
           "path": "getResourceKey()",
           "name": "patient_id"
+        },
+        {
+          "path": "multipleBirthInteger",
+          "name": "multiple_birth"
         }
       ]
     },

@@ -14,8 +14,18 @@
         {
           "path": "effective.ofType(dateTime)",
           "name": "effective_date_time"
+        },
+        {
+          "path": "value.ofType(Quantity).value",
+          "name": "value_quantity"
         }
       ]
+    }
+  ],
+  "where": [
+    {
+      "path": "subject.exists()",
+      "description": "Drop resources that do not have a subject."
     }
   ],
   "name": "observation_patient_id",
