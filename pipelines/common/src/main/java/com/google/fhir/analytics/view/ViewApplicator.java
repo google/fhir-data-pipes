@@ -17,6 +17,7 @@ package com.google.fhir.analytics.view;
 
 import ca.uhn.fhir.context.FhirContext;
 import ca.uhn.fhir.context.FhirVersionEnum;
+import ca.uhn.fhir.fhirpath.FhirPathExecutionException;
 import ca.uhn.fhir.fhirpath.IFhirPath;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
@@ -101,12 +102,23 @@ public class ViewApplicator {
     }
   }
 
+  private List<IBase> evaluateFhirPath(IBase resource, String path)
+      throws ViewApplicationException {
+    try {
+      return fhirPath.evaluate(resource, path, IBase.class);
+    } catch (FhirPathExecutionException e) {
+      log.error("Error while evaluating path {}:", path, e);
+      throw new ViewApplicationException(
+          String.format("Error while evaluating path %s: %s", path, e.getMessage()));
+    }
+  }
+
   private boolean satisfiesWhere(IBaseResource resource) throws ViewApplicationException {
     if (viewDef.getWhere() == null) {
       return true;
     }
     for (Where w : viewDef.getWhere()) {
-      List<IBase> results = fhirPath.evaluate(resource, w.getPath(), IBase.class);
+      List<IBase> results = evaluateFhirPath(resource, w.getPath());
       if (results == null || results.size() != 1 || !results.get(0).fhirType().equals("boolean")) {
         String error =
             String.format("The `where` FHIRPath %s did not return one boolean!", w.getPath());
@@ -178,7 +190,7 @@ public class ViewApplicator {
     List<IBase> refElements = new ArrayList<>();
     refElements.add(element);
     if (element != null && !forEachPath.isEmpty()) {
-      refElements = fhirPath.evaluate(element, forEachPath, IBase.class);
+      refElements = evaluateFhirPath(element, forEachPath);
     }
 
     RowList.Builder allRowsBuilder = RowList.builder();
@@ -274,7 +286,7 @@ public class ViewApplicator {
         }
         List<IBase> eval = List.of(element);
         if (!fhirPathForRef.isEmpty()) {
-          eval = fhirPath.evaluate(element, fhirPathForRef, IBase.class);
+          eval = evaluateFhirPath(element, fhirPathForRef);
         }
         for (IBase refElem : eval) {
           if (!(refElem instanceof IBaseReference)) {
@@ -295,7 +307,7 @@ public class ViewApplicator {
       }
       String value = null;
       if (element != null) {
-        List<IBase> eval = fhirPath.evaluate(element, col.getPath(), IBase.class);
+        List<IBase> eval = evaluateFhirPath(element, col.getPath());
         // TODO fix this by handling types and avoiding `toString()`!
         value =
             String.join(
@@ -456,6 +468,7 @@ public class ViewApplicator {
   public static class RowElement {
     private final String name;
     // TODO add support for types too and change `value` type to be not String.
+    //  This probably requires using a better data-type for `FlatRow`, e.g., Avro or ProtoBuf.
     private final String value;
 
     public RowElement(String name, String value) {

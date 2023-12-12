@@ -18,7 +18,10 @@ package com.google.fhir.analytics.view;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 
+import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Sets;
 import com.google.common.io.Resources;
+import com.google.fhir.analytics.view.ViewDefinition.DbType;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import org.junit.Test;
@@ -57,6 +60,50 @@ public class ViewDefinitionTest {
     assertThat(
         viewDef.getSelect().get(0).getUnionAll().get(0).getColumn().get(1).getName(),
         equalTo("city"));
+    ImmutableMap<String, DbType> schema = viewDef.getDbSchema();
+    assertThat(
+        schema.keySet(),
+        equalTo(Sets.newHashSet("patient_id", "street", "city", "zip", "is_patient")));
+    // There is no type definitions in the above view and since we don't have automatic type
+    // derivation yet, all types will be string.
+    assertThat(schema.get("patient_id"), equalTo(DbType.STRING));
+    assertThat(schema.get("street"), equalTo(DbType.STRING));
+    assertThat(schema.get("city"), equalTo(DbType.STRING));
+    assertThat(schema.get("zip"), equalTo(DbType.STRING));
+    assertThat(schema.get("is_patient"), equalTo(DbType.STRING));
+  }
+
+  @Test
+  public void createFromJsonUnionWithTypes() throws IOException, ViewDefinitionException {
+    String viewJson =
+        Resources.toString(
+            Resources.getResource("patient_address_and_contact_union_with_types_view.json"),
+            StandardCharsets.UTF_8);
+    ViewDefinition viewDef = ViewDefinition.createFromString(viewJson);
+    assertThat(viewDef.getName(), equalTo("patient_and_contact_addresses_with_types"));
+    ImmutableMap<String, DbType> schema = viewDef.getDbSchema();
+    assertThat(
+        schema.keySet(),
+        equalTo(
+            Sets.newHashSet(
+                "patient_id",
+                "birth_date",
+                "multiple_birth",
+                "street",
+                "city",
+                "zip",
+                "address_use",
+                "period_end",
+                "is_patient")));
+    assertThat(schema.get("patient_id"), equalTo(DbType.STRING));
+    assertThat(schema.get("street"), equalTo(DbType.STRING));
+    assertThat(schema.get("city"), equalTo(DbType.STRING));
+    assertThat(schema.get("zip"), equalTo(DbType.STRING));
+    assertThat(schema.get("is_patient"), equalTo(DbType.BOOLEAN));
+    assertThat(schema.get("address_use"), equalTo(DbType.STRING));
+    assertThat(schema.get("period_end"), equalTo(DbType.DATETIME));
+    assertThat(schema.get("birth_date"), equalTo(DbType.DATE));
+    assertThat(schema.get("multiple_birth"), equalTo(DbType.INTEGER));
   }
 
   @Test

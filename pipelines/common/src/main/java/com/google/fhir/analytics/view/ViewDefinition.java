@@ -67,7 +67,10 @@ public class ViewDefinition {
       if (DB_TYPE_MAP.containsKey(entry.getValue())) {
         builder.put(entry.getKey(), DB_TYPE_MAP.get(entry.getValue()));
       } else {
-        log.warn("No DB type mapping for column {} with type {}", entry.getKey(), entry.getValue());
+        log.warn(
+            "No DB type mapping for column {} with type {}; using string instead.",
+            entry.getKey(),
+            entry.getValue());
         if (entry.getValue().isEmpty()) {
           // TODO once we fix column types derivation, this case should be changed to UNDEFINED.
           builder.put(entry.getKey(), DbType.STRING);
@@ -208,9 +211,9 @@ public class ViewDefinition {
           if (!unionCols.equals(uCols)) {
             throw new ViewDefinitionException(
                 "Union columns are not consistent "
-                    + Arrays.toString(uCols.keySet().toArray())
+                    + Arrays.toString(uCols.entrySet().toArray())
                     + " vs "
-                    + Arrays.toString(unionCols.keySet().toArray()));
+                    + Arrays.toString(unionCols.entrySet().toArray()));
           }
         }
       }
@@ -381,14 +384,11 @@ public class ViewDefinition {
     }
   }
 
+  // TODO add an option to customize these for specific DBs using type hints, see:
+  // https://build.fhir.org/ig/FHIR/sql-on-fhir-v2/StructureDefinition-ViewDefinition.html#database-type-hints
   public enum DbType {
     BOOLEAN, // boolean
-    INTEGER { // integer, positiveInt, unsignedInt
-      @Override
-      public String typeString() {
-        return "INT";
-      }
-    },
+    INTEGER, // integer, positiveInt, unsignedInt
     INTEGER64 { // integer64
       @Override
       public String typeString() {
@@ -397,7 +397,12 @@ public class ViewDefinition {
     },
     DOUBLE, // decimal
     DATE, // date
-    DATETIME, // dateTime, instant
+    DATETIME { // dateTime, instant
+      @Override
+      public String typeString() {
+        return "TIMESTAMP WITH TIME ZONE";
+      }
+    },
     TIME, // time
     // TODO differentiate between different string types of FHIR.
     STRING { // base64Binary, canonical, code, id, markdown, oid, string, uri, url, uuid
