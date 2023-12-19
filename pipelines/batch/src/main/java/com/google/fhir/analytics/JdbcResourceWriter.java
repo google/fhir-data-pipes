@@ -103,7 +103,8 @@ public class JdbcResourceWriter {
       log.info("Creating tables for each resource type.");
       for (String resourceType : options.getResourceList().split(",")) {
         String tableCreate =
-            "CREATE TABLE %s (id VARCHAR(100) NOT NULL, " + "datab JSONB, PRIMARY KEY (id) );";
+            "CREATE TABLE IF NOT EXISTS %s (id VARCHAR(100) NOT NULL, "
+                + "datab JSONB, PRIMARY KEY (id) );";
         String createStatement = String.format(tableCreate, resourceType);
         createSingleTable(jdbcSource, createStatement);
       }
@@ -118,7 +119,9 @@ public class JdbcResourceWriter {
             if (Strings.isNullOrEmpty(vDef.getName())) {
               throw new ViewDefinitionException("Field `name` in ViewDefinition is not defined.");
             }
-            StringBuilder builder = new StringBuilder("CREATE TABLE ");
+            // TODO if tables already exist, the better way is to check their schema to see if it is
+            //  consistent with the view; and fail if it is not.
+            StringBuilder builder = new StringBuilder("CREATE TABLE IF NOT EXISTS ");
             builder.append(vDef.getName()).append(" (");
             builder.append(
                 String.join(
@@ -165,20 +168,20 @@ public class JdbcResourceWriter {
             builder.append(vDef.getName()).append(" (");
             builder.append(String.join(",", rowList.getColumnNames()));
             builder.append(") VALUES(");
-            // TODO add resource ID requirement and replacing old rows for incremental update.
+            // TODO add resource ID requirement and replacing old rows for incremental update; also
+            //  handle deleted resources: https://github.com/google/fhir-data-pipes/issues/588
             builder.append(
                 String.join(
                     ",", row.getElements().stream().map(e -> "?").collect(Collectors.toList())));
             builder.append(");");
-            try (Connection connection = jdbcDataSource.getConnection()) {
-              PreparedStatement statement = connection.prepareStatement(builder.toString());
+            try (Connection connection = jdbcDataSource.getConnection();
+                PreparedStatement statement = connection.prepareStatement(builder.toString())) {
               int ind = 0;
               for (RowElement re : row.getElements()) {
                 // TODO instead of string use the right type once column type derivation is done!
                 statement.setString(++ind, re.getValue());
               }
               statement.execute();
-              statement.close();
             }
           }
         }

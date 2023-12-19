@@ -114,6 +114,9 @@ public class ViewDefinition {
       throw new ViewDefinitionException(
           "The resource field of a view should be a valid FHIR resource type.");
     }
+    if (Strings.isNullOrEmpty(this.name) || !SQL_NAME_PATTERN.matcher(this.name).matches()) {
+      throw new ViewDefinitionException("The name is not a valid 'sql-name': " + name);
+    }
     if (constant != null) {
       for (Constant c : constant) {
         if (!SQL_NAME_PATTERN.matcher(c.name).matches()) {

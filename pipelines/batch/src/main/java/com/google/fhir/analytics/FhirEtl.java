@@ -366,9 +366,6 @@ public class FhirEtl {
    */
   static List<Pipeline> setupAndBuildPipelines(FhirEtlOptions options)
       throws PropertyVetoException, IOException, SQLException, ViewDefinitionException {
-    if (!options.getSinkDbConfigPath().isEmpty()) {
-      JdbcResourceWriter.createTables(options);
-    }
     FhirContext fhirContext = FhirContexts.forR4();
     if (options.isJdbcModeHapi()) {
       return buildHapiJdbcPipeline(options);
@@ -392,6 +389,9 @@ public class FhirEtl {
     log.info("Flags: " + options);
     validateOptions(options);
 
+    if (!options.getSinkDbConfigPath().isEmpty()) {
+      JdbcResourceWriter.createTables(options);
+    }
     List<Pipeline> pipelines = setupAndBuildPipelines(options);
     EtlUtils.runMultiplePipelinesWithTimestamp(pipelines, options);
     log.info("DONE!");
