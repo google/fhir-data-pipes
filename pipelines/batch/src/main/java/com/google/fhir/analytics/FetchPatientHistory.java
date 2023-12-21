@@ -16,6 +16,7 @@
 package com.google.fhir.analytics;
 
 import ca.uhn.fhir.rest.api.SummaryEnum;
+import com.google.fhir.analytics.view.ViewApplicationException;
 import java.io.IOException;
 import java.sql.SQLException;
 import java.util.List;
@@ -54,7 +55,7 @@ public class FetchPatientHistory extends PTransform<PCollection<KV<String, Integ
 
           @ProcessElement
           public void ProcessElement(@Element KV<String, Integer> patientIdCount)
-              throws IOException, SQLException {
+              throws IOException, SQLException, ViewApplicationException {
             if (startDate.isEmpty()) {
               return;
             }

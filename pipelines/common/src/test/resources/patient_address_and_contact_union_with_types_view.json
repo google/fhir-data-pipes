@@ -1,0 +1,99 @@
+{
+  "resourceType": "http://hl7.org/fhir/uv/sql-on-fhir/StructureDefinition/ViewDefinition",
+  "text": "Based on https://build.fhir.org/ig/FHIR/sql-on-fhir-v2/Binary-PatientAndContactAddressUnion.html",
+  "select": [
+    {
+      "column": [
+        {
+          "path": "getResourceKey()",
+          "name": "patient_id"
+        },
+        {
+          "path": "birthDate",
+          "name": "birth_date",
+          "type": "date"
+        },
+        {
+          "path": "multipleBirth.ofType(integer)",
+          "name": "multiple_birth",
+          "type": "integer"
+        }
+      ],
+      "unionAll": [
+        {
+          "column": [
+            {
+              "path": "line.join('\n')",
+              "name": "street",
+              "type": "string"
+            },
+            {
+              "path": "city",
+              "name": "city",
+              "type": "string"
+            },
+            {
+              "path": "postalCode",
+              "name": "zip",
+              "type": "string"
+            },
+            {
+              "path": "use",
+              "name": "address_use",
+              "type": "code"
+            },
+            {
+              "path": "period.end",
+              "name": "period_end",
+              "type": "dateTime"
+            },
+            {
+              "path": "true",
+              "name": "is_patient",
+              "type": "boolean"
+            }
+          ],
+          "forEach": "address"
+        },
+        {
+          "column": [
+            {
+              "path": "line.join('\n')",
+              "name": "street",
+              "type": "string"
+            },
+            {
+              "path": "city",
+              "name": "city",
+              "type": "string"
+            },
+            {
+              "path": "postalCode",
+              "name": "zip",
+              "type": "string"
+            },
+            {
+              "path": "use",
+              "name": "address_use",
+              "type": "code"
+            },
+            {
+              "path": "period.end",
+              "name": "period_end",
+              "type": "dateTime"
+            },
+            {
+              "path": "false",
+              "name": "is_patient",
+              "type": "boolean"
+            }
+          ],
+          "forEach": "contact.address"
+        }
+      ]
+    }
+  ],
+  "name": "patient_and_contact_addresses_with_types",
+  "status": "draft",
+  "resource": "Patient"
+}

@@ -25,6 +25,7 @@ import static org.mockito.Mockito.when;
 import ca.uhn.fhir.context.FhirContext;
 import ca.uhn.fhir.parser.IParser;
 import com.google.common.io.Resources;
+import com.google.fhir.analytics.view.ViewApplicationException;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.sql.Connection;
@@ -43,8 +44,6 @@ import org.mockito.junit.MockitoJUnitRunner;
 
 @RunWith(MockitoJUnitRunner.class)
 public class JdbcResourceWriterTest {
-
-  private static final String TABLE_PREFIX = "res_";
 
   @Mock private DataSource dataSourceMock;
 
@@ -77,9 +76,8 @@ public class JdbcResourceWriterTest {
   }
 
   @Test
-  public void testWriteResource() throws SQLException {
-    JdbcResourceWriter testWriter =
-        new JdbcResourceWriter(dataSourceMock, TABLE_PREFIX, false, fhirContext);
+  public void testWriteResource() throws SQLException, ViewApplicationException {
+    JdbcResourceWriter testWriter = new JdbcResourceWriter(dataSourceMock, "", fhirContext);
     testWriter.writeResource((Resource) parser.parseResource(patientResourceStr));
     verify(statementMock, times(4)).setString(any(Integer.class), any(String.class));
     verify(statementMock, times(4)).setString(indexCaptor.capture(), idCaptor.capture());
@@ -87,20 +85,5 @@ public class JdbcResourceWriterTest {
     assertThat(idCaptor.getAllValues().get(0), equalTo("my-patient-id"));
     assertThat(indexCaptor.getAllValues().get(2), equalTo(3));
     assertThat(idCaptor.getAllValues().get(2), equalTo("my-patient-id"));
-  }
-
-  @Test
-  public void testWriteResourceSingleTable() throws SQLException {
-    JdbcResourceWriter testWriter =
-        new JdbcResourceWriter(dataSourceMock, TABLE_PREFIX, true, fhirContext);
-    testWriter.writeResource((Resource) parser.parseResource(patientResourceStr));
-    verify(statementMock, times(6)).setString(any(Integer.class), any(String.class));
-    verify(statementMock, times(6)).setString(indexCaptor.capture(), idCaptor.capture());
-    assertThat(indexCaptor.getAllValues().get(0), equalTo(1));
-    assertThat(idCaptor.getAllValues().get(0), equalTo("my-patient-id"));
-    assertThat(indexCaptor.getAllValues().get(1), equalTo(2));
-    assertThat(idCaptor.getAllValues().get(1), equalTo("Patient"));
-    assertThat(indexCaptor.getAllValues().get(3), equalTo(4));
-    assertThat(idCaptor.getAllValues().get(3), equalTo("my-patient-id"));
   }
 }

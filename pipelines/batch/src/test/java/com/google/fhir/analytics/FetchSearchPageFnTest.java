@@ -23,6 +23,7 @@ import static org.mockito.Mockito.verify;
 import ca.uhn.fhir.context.FhirContext;
 import ca.uhn.fhir.parser.IParser;
 import com.google.common.io.Resources;
+import com.google.fhir.analytics.view.ViewApplicationException;
 import java.beans.PropertyVetoException;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -68,7 +69,8 @@ public class FetchSearchPageFnTest {
   }
 
   @Test
-  public void testProcessObservationBundle() throws IOException, SQLException {
+  public void testProcessObservationBundle()
+      throws IOException, SQLException, ViewApplicationException {
     String observationBundleStr =
         Resources.toString(
             Resources.getResource("observation_decimal_bundle.json"), StandardCharsets.UTF_8);
