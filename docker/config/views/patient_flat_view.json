@@ -38,6 +38,7 @@
       "forEachOrNull": "generalPractitioner"
     },
     {
+      "forEach": "name",
       "column": [
         {
           "path": "family",
@@ -46,16 +47,15 @@
       ],
       "select": [
         {
+          "forEach": "given",
           "column": [
             {
               "path": "$this",
               "name": "given"
             }
-          ],
-          "forEach": "given"
+          ]
         }
-      ],
-      "forEach": "name"
+      ]
     }
   ],
   "name": "patient_flat",

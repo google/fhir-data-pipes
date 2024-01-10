@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2023 Google LLC
+ * Copyright 2020-2024 Google LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -271,17 +271,16 @@ public class ViewApplicator {
         IBaseResource baseResource = (IBaseResource) element;
         rowElements.add(
             new RowElement(
-                col.getName(),
-                Lists.newArrayList(baseResource.getIdElement()),
                 // TODO move all type inference to a single place outside View application.
-                col.toBuilder().inferredType(ID_TYPE).inferredCollection(false).build()));
+                col.toBuilder().inferredType(ID_TYPE).inferredCollection(false).build(),
+                Lists.newArrayList(baseResource.getIdElement())));
         continue;
       }
       Matcher refMatcher = GET_REF_KEY_PATTERN.matcher(col.getPath());
       if (refMatcher.matches()) {
         // TODO add a unit-test for when element can be null here, e.g., forEachOrNull.
         if (element == null) {
-          rowElements.add(new RowElement(col.getName(), null, col));
+          rowElements.add(new RowElement(col, null));
           continue;
         }
         // The elements would all be IIdType, but we need IBase for creating RowElement.
@@ -314,14 +313,14 @@ public class ViewApplicator {
         }
         rowElements.add(
             // TODO move all type inference to a single place outside View application.
-            new RowElement(col.getName(), refs, col.toBuilder().inferredType(ID_TYPE).build()));
+            new RowElement(col.toBuilder().inferredType(ID_TYPE).build(), refs));
         continue;
       }
       List<IBase> eval = null;
       if (element != null) {
         eval = evaluateFhirPath(element, col.getPath());
       }
-      rowElements.add(new RowElement(col.getName(), eval, col));
+      rowElements.add(new RowElement(col, eval));
     }
     Preconditions.checkState(columns.isEmpty() || !rowElements.isEmpty());
     return FlatRow.builder().elements(ImmutableList.copyOf(rowElements)).build();
@@ -460,17 +459,20 @@ public class ViewApplicator {
 
   @Getter
   public static class RowElement {
-    private final String name;
     private final List<IBase> values;
     private final Column columnInfo;
 
-    public RowElement(String name, List<IBase> values, Column columnInfo) {
+    public RowElement(Column columnInfo, List<IBase> values) {
       Preconditions.checkArgument(
           columnInfo.isCollection() || values == null || values.size() <= 1,
-          "A list provided for the non-collection column " + name);
-      this.name = name;
+          "A list provided for the non-collection column " + columnInfo.getName());
       this.values = values;
       this.columnInfo = columnInfo;
+    }
+
+    // Convenience function
+    public String getName() {
+      return columnInfo.getName();
     }
 
     public boolean isCollection() {

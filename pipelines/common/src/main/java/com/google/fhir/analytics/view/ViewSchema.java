@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2023 Google LLC
+ * Copyright 2020-2024 Google LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,6 @@
 package com.google.fhir.analytics.view;
 
 import com.google.common.base.Preconditions;
-import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.fhir.analytics.view.ViewApplicator.RowElement;
@@ -44,42 +43,43 @@ public class ViewSchema {
    * Converts a fhir type to a JDBCType
    *
    * @param fhirType the given FHIR type
-   * @return the corresponding JDBCType or JDBCType.NULL if `fhirType` is not mapped.
+   * @return the corresponding JDBCType; if `fhirType` is not mapped JDBCType.VARCHAR is returned.
    */
   public static JDBCType fhirTypeToDb(String fhirType) {
-    if (fhirType == null) {
-      return JDBCType.NULL;
+    if (fhirType != null) {
+      switch (fhirType) {
+        case "boolean":
+          return JDBCType.BOOLEAN;
+        case "integer":
+        case "unsignedInt":
+          return JDBCType.INTEGER;
+        case "integer64":
+          return JDBCType.BIGINT;
+        case "decimal":
+          return JDBCType.DECIMAL;
+        case "date":
+          return JDBCType.DATE;
+        case "dateTime":
+        case "instant":
+          return JDBCType.TIMESTAMP;
+        case "time":
+          return JDBCType.TIME;
+        case "base64Binary":
+        case "canonical":
+        case "code":
+        case "id":
+        case "markdown":
+        case "oid":
+        case "string":
+        case "uri":
+        case "url":
+        case "uuid":
+          return JDBCType.VARCHAR;
+      }
     }
-    switch (fhirType) {
-      case "boolean":
-        return JDBCType.BOOLEAN;
-      case "integer":
-      case "unsignedInt":
-        return JDBCType.INTEGER;
-      case "integer64":
-        return JDBCType.BIGINT;
-      case "decimal":
-        return JDBCType.DOUBLE;
-      case "date":
-        return JDBCType.DATE;
-      case "dateTime":
-      case "instant":
-        return JDBCType.TIMESTAMP;
-      case "time":
-        return JDBCType.TIME;
-      case "base64Binary":
-      case "canonical":
-      case "code":
-      case "id":
-      case "markdown":
-      case "oid":
-      case "string":
-      case "uri":
-      case "url":
-      case "uuid":
-        return JDBCType.VARCHAR;
-    }
-    return null;
+    // This is to handle non-primitive types or when the type is not specified, we may want to
+    // separate these case from string in the future.
+    return JDBCType.VARCHAR;
   }
 
   /**
@@ -93,23 +93,10 @@ public class ViewSchema {
     for (Entry<String, Column> entry : view.getColumnTypes().entrySet()) {
       // This is internally guaranteed.
       Preconditions.checkState(entry.getValue() != null);
-      JDBCType dbType = fhirTypeToDb(entry.getValue().getType());
-      if (dbType != JDBCType.NULL) {
-        builder.put(entry.getKey(), dbType);
-      } else {
-        log.warn(
-            "No DB type mapping for column {} with type {}; using string instead.",
-            entry.getKey(),
-            entry.getValue());
-        if (Strings.nullToEmpty(entry.getValue().getType()).isEmpty()) {
-          // TODO once we fix column types derivation, this case should be changed to UNDEFINED.
-          builder.put(entry.getKey(), JDBCType.VARCHAR);
-          // builder.put(entry.getKey(), DbType.UNDEFINED);
-        } else {
-          // We may need special handling here for structures but for now use string.
-          builder.put(entry.getKey(), JDBCType.VARCHAR);
-        }
+      if (entry.getValue().getType() == null && entry.getValue().getInferredType() == null) {
+        log.warn("No type specified for column {}; using string instead.", entry.getKey());
       }
+      builder.put(entry.getKey(), fhirTypeToDb(entry.getValue().getType()));
     }
     return builder.build();
   }
@@ -125,50 +112,50 @@ public class ViewSchema {
       ImmutableList<RowElement> rowElements, PreparedStatement statement) throws SQLException {
     int ind = 0;
     for (RowElement re : rowElements) {
+      ind++;
       if (re.getPrimitive() != null) {
         // TODO add unit-tests for all cases and add extra cases too if needed!
         if (ViewApplicator.ID_TYPE.equals(re.getColumnInfo().getInferredType())) {
-          statement.setString(++ind, re.getSingleIdPart());
+          statement.setString(ind, re.getSingleIdPart());
         } else {
           switch (fhirTypeToDb(re.getColumnInfo().getType())) {
             case BOOLEAN:
-              statement.setBoolean(++ind, re.getPrimitive());
+              statement.setBoolean(ind, re.getPrimitive());
               break;
             case INTEGER:
-              statement.setInt(++ind, re.getPrimitive());
+              statement.setInt(ind, re.getPrimitive());
               break;
             case BIGINT:
-              statement.setLong(++ind, re.getPrimitive());
+              statement.setLong(ind, re.getPrimitive());
               break;
-            case DOUBLE:
-              statement.setDouble(++ind, re.getPrimitive());
+            case DECIMAL:
+              statement.setBigDecimal(ind, re.getPrimitive());
               break;
             case DATE:
             case TIMESTAMP:
             case TIME:
-              statement.setTimestamp(++ind, new Timestamp(re.<Date>getPrimitive().getTime()));
+              statement.setTimestamp(ind, new Timestamp(re.<Date>getPrimitive().getTime()));
               break;
             case VARCHAR:
             default:
-              statement.setString(++ind, re.getString());
+              statement.setString(ind, re.getString());
               break;
           }
         }
       } else {
         // Currently arrays in DB are not supported; also type inference is not enabled.
         if (re.getColumnInfo().isCollection()
-            || (re.getColumnInfo().getType() == null
-                && re.getColumnInfo().getInferredType() == null)) {
+            || fhirTypeToDb(re.getColumnInfo().getType()) == JDBCType.VARCHAR) {
           statement.setString(
-              ++ind,
+              ind,
               re.getValues() == null
                   ? null
                   : String.join(
                       ",",
                       re.getValues().stream().map(v -> v.toString()).collect(Collectors.toList())));
         } else {
-          statement.setNull(
-              ++ind, fhirTypeToDb(re.getColumnInfo().getType()).getVendorTypeNumber());
+          // This happens when there is no value for a column with a primitive type.
+          statement.setNull(ind, fhirTypeToDb(re.getColumnInfo().getType()).getVendorTypeNumber());
         }
       }
     }

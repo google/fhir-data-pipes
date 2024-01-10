@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2023 Google LLC
+ * Copyright 2020-2024 Google LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -184,6 +184,8 @@ public class JdbcResourceWriter {
             builder.append(");");
             try (Connection connection = jdbcDataSource.getConnection();
                 PreparedStatement statement = connection.prepareStatement(builder.toString())) {
+              // TODO it is probably better to move both INSERT and CREATE TABLE (above) statements
+              //  to the ViewSchema to have the full SQL logic in one place.
               ViewSchema.setValueInStatement(row.getElements(), statement);
               statement.execute();
             }
