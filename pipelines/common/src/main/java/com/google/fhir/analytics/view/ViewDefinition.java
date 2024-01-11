@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2023 Google LLC
+ * Copyright 2020-2024 Google LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,21 +26,19 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.TreeMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import lombok.Builder;
 import lombok.Getter;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 // TODO: Generate this class from StructureDefinition using tools like:
 //  https://github.com/hapifhir/org.hl7.fhir.core/tree/master/org.hl7.fhir.core.generator
 public class ViewDefinition {
-
-  private static final Logger log = LoggerFactory.getLogger(ViewDefinition.class);
   private static Pattern CONSTANT_PATTERN = Pattern.compile("%[A-Za-z][A-Za-z0-9_]*");
   private static Pattern SQL_NAME_PATTERN = Pattern.compile("^[A-Za-z][A-Za-z0-9_]*$");
 
@@ -54,34 +52,11 @@ public class ViewDefinition {
   // This is also used internally for processing constants and should not be exposed.
   private final Map<String, String> constMap = new HashMap<>();
 
-  // It is probably better to take schema generation and validation out of this class and leave
-  // this to be a pure data-object. However, because this class is instantiated only with factory
-  // methods, it is probably okay to keep the current pattern for now.
-  private ImmutableMap<String, String> columnTypes; // Initialized once in `validateAndSetUp`.
-
-  public ImmutableMap<String, DbType> getDbSchema() {
-    ImmutableMap.Builder<String, DbType> builder = ImmutableMap.builder();
-    for (Entry<String, String> entry : columnTypes.entrySet()) {
-      // This is internally guaranteed.
-      Preconditions.checkState(entry.getValue() != null);
-      if (DB_TYPE_MAP.containsKey(entry.getValue())) {
-        builder.put(entry.getKey(), DB_TYPE_MAP.get(entry.getValue()));
-      } else {
-        log.warn(
-            "No DB type mapping for column {} with type {}; using string instead.",
-            entry.getKey(),
-            entry.getValue());
-        if (entry.getValue().isEmpty()) {
-          // TODO once we fix column types derivation, this case should be changed to UNDEFINED.
-          builder.put(entry.getKey(), DbType.STRING);
-          // builder.put(entry.getKey(), DbType.UNDEFINED);
-        } else {
-          builder.put(entry.getKey(), DbType.NON_PRIMITIVE);
-        }
-      }
-    }
-    return builder.build();
-  }
+  // We try to limit the schema generation and validation to a minimum here as we prefer this to be
+  // a pure data-object. This class is instantiated only with factory methods, so it is probably
+  // okay to keep the current pattern.
+  @Getter
+  private ImmutableMap<String, Column> columnTypes; // Initialized once in `validateAndSetUp`.
 
   // This class should only be instantiated with the `create*` factory methods.
   private ViewDefinition() {}
@@ -146,9 +121,10 @@ public class ViewDefinition {
    * @return the [ordered] map of new column names and their types as string.
    * @throws ViewDefinitionException for repeated columns or other requirements not satisfied.
    */
-  private TreeMap<String, String> validateAndReplaceConstantsInSelects(
-      List<Select> selects, TreeMap<String, String> currentColumns) throws ViewDefinitionException {
-    TreeMap<String, String> newCols = newTypeMap();
+  private LinkedHashMap<String, Column> validateAndReplaceConstantsInSelects(
+      List<Select> selects, LinkedHashMap<String, Column> currentColumns)
+      throws ViewDefinitionException {
+    LinkedHashMap<String, Column> newCols = newTypeMap();
     if (selects == null) {
       return newCols;
     }
@@ -159,21 +135,21 @@ public class ViewDefinition {
     return newCols;
   }
 
-  private static TreeMap<String, String> newTypeMap() {
-    return new TreeMap<>();
+  private static LinkedHashMap<String, Column> newTypeMap() {
+    return new LinkedHashMap<>();
   }
 
-  private static TreeMap<String, String> unionTypeMaps(
-      TreeMap<String, String> m1, TreeMap<String, String> m2) {
-    TreeMap<String, String> u = new TreeMap<>();
+  private static LinkedHashMap<String, Column> unionTypeMaps(
+      LinkedHashMap<String, Column> m1, LinkedHashMap<String, Column> m2) {
+    LinkedHashMap<String, Column> u = new LinkedHashMap<>();
     u.putAll(m1);
     u.putAll(m2);
     return u;
   }
 
-  private TreeMap<String, String> validateAndReplaceConstantsInOneSelect(
-      Select select, TreeMap<String, String> currentColumns) throws ViewDefinitionException {
-    TreeMap<String, String> newCols = newTypeMap();
+  private LinkedHashMap<String, Column> validateAndReplaceConstantsInOneSelect(
+      Select select, LinkedHashMap<String, Column> currentColumns) throws ViewDefinitionException {
+    LinkedHashMap<String, Column> newCols = newTypeMap();
     if (select.getColumn() != null) {
       for (Column c : select.getColumn()) {
         if (Strings.nullToEmpty(c.name).isEmpty()) {
@@ -190,7 +166,7 @@ public class ViewDefinition {
           throw new ViewDefinitionException("Repeated column name " + c.getName());
         }
         // TODO implement automatic type derivation support.
-        newCols.put(c.getName(), Strings.nullToEmpty(c.getType()));
+        newCols.put(c.getName(), c);
         c.path = validateAndReplaceConstants(c.getPath());
       }
     }
@@ -203,15 +179,15 @@ public class ViewDefinition {
     newCols.putAll(
         validateAndReplaceConstantsInSelects(
             select.getSelect(), unionTypeMaps(currentColumns, newCols)));
-    TreeMap<String, String> unionCols = null;
+    LinkedHashMap<String, Column> unionCols = null;
     if (select.getUnionAll() != null) {
       for (Select u : select.getUnionAll()) {
-        TreeMap<String, String> uCols =
+        LinkedHashMap<String, Column> uCols =
             validateAndReplaceConstantsInOneSelect(u, unionTypeMaps(currentColumns, newCols));
         if (unionCols == null) {
           unionCols = uCols;
         } else {
-          if (!unionCols.equals(uCols)) {
+          if (!compatibleColumns(unionCols, uCols)) {
             throw new ViewDefinitionException(
                 "Union columns are not consistent "
                     + Arrays.toString(uCols.entrySet().toArray())
@@ -225,6 +201,31 @@ public class ViewDefinition {
       return unionTypeMaps(newCols, unionCols);
     }
     return newCols;
+  }
+
+  private boolean compatibleColumns(Map<String, Column> cols1, Map<String, Column> cols2) {
+    Preconditions.checkNotNull(cols1);
+    Preconditions.checkNotNull(cols2);
+    if (cols1.size() != cols2.size()) {
+      return false;
+    }
+    Iterator<Entry<String, Column>> cols2Iter = cols2.entrySet().iterator();
+    for (Entry<String, Column> e1 : cols1.entrySet()) {
+      Entry<String, Column> e2 = cols2Iter.next();
+      if (!e2.getKey().equals(e1.getKey())) {
+        return false;
+      }
+      // We only check column name, type, collection and ignore other fields, e.g., description.
+      String t1 = Strings.nullToEmpty(e1.getValue().getType());
+      String t2 = Strings.nullToEmpty(e2.getValue().getType());
+      if (!t1.equals(t2)) {
+        return false;
+      }
+      if (e1.getValue().isCollection() != e2.getValue().isCollection()) {
+        return false;
+      }
+    }
+    return true;
   }
 
   private String validateAndReplaceConstants(String fhirPath) throws ViewDefinitionException {
@@ -254,11 +255,17 @@ public class ViewDefinition {
     private List<Select> unionAll;
   }
 
+  @Builder(toBuilder = true)
   @Getter
   public static class Column {
     private String path;
     private String name;
     private String type;
+    private boolean collection;
+    private String description;
+    // The following fields are _not_ read from the ViewDefinition.
+    private String inferredType;
+    private boolean inferredCollection;
   }
 
   @Getter
@@ -386,63 +393,4 @@ public class ViewDefinition {
       return stringValue;
     }
   }
-
-  // TODO add an option to customize these for specific DBs using type hints, see:
-  // https://build.fhir.org/ig/FHIR/sql-on-fhir-v2/StructureDefinition-ViewDefinition.html#database-type-hints
-  public enum DbType {
-    BOOLEAN, // boolean
-    INTEGER, // integer, positiveInt, unsignedInt
-    INTEGER64 { // integer64
-      @Override
-      public String typeString() {
-        return "BIGINT";
-      }
-    },
-    DOUBLE, // decimal
-    DATE, // date
-    DATETIME { // dateTime, instant
-      @Override
-      public String typeString() {
-        return "TIMESTAMP WITH TIME ZONE";
-      }
-    },
-    TIME, // time
-    // TODO differentiate between different string types of FHIR.
-    STRING { // base64Binary, canonical, code, id, markdown, oid, string, uri, url, uuid
-      @Override
-      public String typeString() {
-        return "VARCHAR(1048576)"; // 1024*1024
-      }
-    },
-    NON_PRIMITIVE,
-    UNDEFINED;
-
-    public String typeString() {
-      return this.name();
-    }
-  }
-
-  // TODO add a FHIR version specific type validation to make sure all primitive types are covered.
-  public static final ImmutableMap<String, DbType> DB_TYPE_MAP =
-      ImmutableMap.<String, DbType>builder()
-          .put("boolean", DbType.BOOLEAN)
-          .put("integer", DbType.INTEGER)
-          .put("unsignedInt", DbType.INTEGER)
-          .put("integer64", DbType.INTEGER64)
-          .put("decimal", DbType.DOUBLE)
-          .put("date", DbType.DATE)
-          .put("dateTime", DbType.DATETIME)
-          .put("instant", DbType.DATETIME)
-          .put("time", DbType.TIME)
-          .put("base64Binary", DbType.STRING)
-          .put("canonical", DbType.STRING)
-          .put("code", DbType.STRING)
-          .put("id", DbType.STRING)
-          .put("markdown", DbType.STRING)
-          .put("oid", DbType.STRING)
-          .put("string", DbType.STRING)
-          .put("uri", DbType.STRING)
-          .put("url", DbType.STRING)
-          .put("uuid", DbType.STRING)
-          .build();
 }

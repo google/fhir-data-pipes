@@ -1,0 +1,64 @@
+{
+  "resourceType": "http://hl7.org/fhir/uv/sql-on-fhir/StructureDefinition/ViewDefinition",
+  "text": "This is the SQL-on-FHIR-v2 version of Patient_flat.sql",
+  "select": [
+    {
+      "column": [
+        {
+          "path": "getResourceKey()",
+          "name": "pat_id"
+        },
+        {
+          "path": "active",
+          "name": "active",
+          "type": "boolean"
+        },
+        {
+          "path": "gender",
+          "name": "gender"
+        },
+        {
+          "path": "deceased",
+          "name": "deceased",
+          "type": "boolean"
+        },
+        {
+          "path": "managingOrganization.organizationId",
+          "name": "organization_id"
+        }
+      ]
+    },
+    {
+      "column": [
+        {
+          "path": "getReferenceKey('Practitioner')",
+          "name": "practitioner_id"
+        }
+      ],
+      "forEachOrNull": "generalPractitioner"
+    },
+    {
+      "forEach": "name",
+      "column": [
+        {
+          "path": "family",
+          "name": "family"
+        }
+      ],
+      "select": [
+        {
+          "forEach": "given",
+          "column": [
+            {
+              "path": "$this",
+              "name": "given"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "name": "patient_flat",
+  "status": "draft",
+  "resource": "Patient"
+}

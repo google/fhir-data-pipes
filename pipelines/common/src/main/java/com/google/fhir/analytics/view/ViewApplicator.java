@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2023 Google LLC
+ * Copyright 2020-2024 Google LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,16 +23,17 @@ import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Lists;
 import com.google.fhir.analytics.view.ViewDefinition.Column;
 import com.google.fhir.analytics.view.ViewDefinition.Select;
 import com.google.fhir.analytics.view.ViewDefinition.Where;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Map.Entry;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import lombok.Builder;
 import lombok.Getter;
@@ -50,6 +51,7 @@ import org.slf4j.LoggerFactory;
 /** Given a {@link ViewDefinition}, this is to apply it on FHIR resources of appropriate type. */
 public class ViewApplicator {
   private static final Logger log = LoggerFactory.getLogger(ViewApplicator.class);
+  public static String ID_TYPE = "id";
   private static final String GET_RESOURCE_KEY = "getResourceKey()";
   private static final Pattern GET_REF_KEY_PATTERN =
       Pattern.compile("(?<fhirPath>.*)getReferenceKey\\(('(?<resourceType>[a-zA-Z]*)')?\\)");
@@ -268,17 +270,22 @@ public class ViewApplicator {
               GET_RESOURCE_KEY + " can only be applied at the root!");
         }
         IBaseResource baseResource = (IBaseResource) element;
-        rowElements.add(new RowElement(col.getName(), baseResource.getIdElement().getIdPart()));
+        rowElements.add(
+            new RowElement(
+                // TODO move all type inference to a single place outside View application.
+                col.toBuilder().inferredType(ID_TYPE).inferredCollection(false).build(),
+                Lists.newArrayList(baseResource.getIdElement())));
         continue;
       }
       Matcher refMatcher = GET_REF_KEY_PATTERN.matcher(col.getPath());
       if (refMatcher.matches()) {
         // TODO add a unit-test for when element can be null here, e.g., forEachOrNull.
         if (element == null) {
-          rowElements.add(new RowElement(col.getName(), null));
+          rowElements.add(new RowElement(col, null));
           continue;
         }
-        List<String> refs = new ArrayList<>();
+        // The elements would all be IIdType, but we need IBase for creating RowElement.
+        List<IBase> refs = new ArrayList<>();
         String resType = Strings.nullToEmpty(refMatcher.group("resourceType"));
         String fhirPathForRef = Strings.nullToEmpty(refMatcher.group("fhirPath"));
         if (fhirPathForRef.endsWith(".")) {
@@ -294,35 +301,27 @@ public class ViewApplicator {
                 "getReferenceKey can only be applied to Reference elements; got " + fhirPathForRef);
           }
           IIdType ref = ((IBaseReference) refElem).getReferenceElement();
+          // TODO there is a confusion in the ViewDefinition spec re. how multiple references to
+          //  multiple types should be handled. For now, we keep the full IIdType but this may need
+          //  to be revisited (for writing to DB, we extract the IdPart but that's not ideal).
           if (resType.isEmpty()) {
-            refs.add(ref.getValue());
+            refs.add(ref);
           } else {
             if (resType.equals(ref.getResourceType())) {
-              refs.add(ref.getIdPart());
+              refs.add(ref);
             }
           }
         }
-        rowElements.add(new RowElement(col.getName(), String.join(",", refs)));
+        rowElements.add(
+            // TODO move all type inference to a single place outside View application.
+            new RowElement(col.toBuilder().inferredType(ID_TYPE).build(), refs));
         continue;
       }
-      String value = null;
+      List<IBase> eval = null;
       if (element != null) {
-        List<IBase> eval = evaluateFhirPath(element, col.getPath());
-        // TODO fix this by handling types and avoiding `toString()`!
-        value =
-            String.join(
-                ",",
-                eval.stream()
-                    .map(
-                        e -> {
-                          if (e instanceof IPrimitiveType<?>) {
-                            return ((IPrimitiveType) e).getValueAsString();
-                          }
-                          return e.toString();
-                        })
-                    .collect(Collectors.toList()));
+        eval = evaluateFhirPath(element, col.getPath());
       }
-      rowElements.add(new RowElement(col.getName(), value));
+      rowElements.add(new RowElement(col, eval));
     }
     Preconditions.checkState(columns.isEmpty() || !rowElements.isEmpty());
     return FlatRow.builder().elements(ImmutableList.copyOf(rowElements)).build();
@@ -338,24 +337,18 @@ public class ViewApplicator {
    */
   @Getter
   public static class RowList {
-    // TODO add value types too (instead of STRING); add type checking to schema verification.
-    // The keys of this map are the column names; the values will eventually be types.
-    private final ImmutableMap<String, String> columnTypes;
+    // The keys of this map are the column names; the values are full Column structs.
+    private final ImmutableMap<String, Column> columnInfos;
 
     private final ImmutableList<FlatRow> rows;
 
-    private RowList(List<FlatRow> rows, LinkedHashMap<String, String> columnTypes) {
+    private RowList(List<FlatRow> rows, LinkedHashMap<String, Column> columnInfos) {
       this.rows = ImmutableList.copyOf(rows);
-      this.columnTypes = ImmutableMap.copyOf(columnTypes);
+      this.columnInfos = ImmutableMap.copyOf(columnInfos);
     }
 
     public boolean isEmpty() {
-      return columnTypes.isEmpty();
-    }
-
-    /** The order of the column names are the same as the first inserted row's. */
-    public List<String> getColumnNames() {
-      return List.copyOf(columnTypes.keySet());
+      return columnInfos.isEmpty();
     }
 
     /**
@@ -369,13 +362,13 @@ public class ViewApplicator {
       if (isEmpty() || other.isEmpty()) {
         return EMPTY_LIST;
       }
-      LinkedHashMap<String, String> resultColTypes = new LinkedHashMap<>(this.getColumnTypes());
-      for (Entry<String, String> entry : other.getColumnTypes().entrySet()) {
-        if (resultColTypes.get(entry.getKey()) != null) {
+      LinkedHashMap<String, Column> resultColInfos = new LinkedHashMap<>(this.getColumnInfos());
+      for (Entry<String, Column> entry : other.getColumnInfos().entrySet()) {
+        if (resultColInfos.get(entry.getKey()) != null) {
           throw new ViewApplicationException(
               "Repeated column in the cross joined RowList: " + entry.getKey());
         }
-        resultColTypes.put(entry.getKey(), entry.getValue());
+        resultColInfos.put(entry.getKey(), entry.getValue());
       }
       List<FlatRow> resultList = new ArrayList<>();
       for (FlatRow myRow : this.rows) {
@@ -384,7 +377,7 @@ public class ViewApplicator {
           resultList.add(combinedRow);
         }
       }
-      return new RowList(resultList, resultColTypes);
+      return new RowList(resultList, resultColInfos);
     }
 
     private static Builder builder() {
@@ -393,7 +386,7 @@ public class ViewApplicator {
 
     // This can eventually be public, but currently it is not used outside this file.
     private static class Builder {
-      private final LinkedHashMap<String, String> columnTypes = new LinkedHashMap<>();
+      private final LinkedHashMap<String, Column> columnInfos = new LinkedHashMap<>();
       private final List<FlatRow> rows = new ArrayList<>();
 
       private Builder() {}
@@ -404,21 +397,23 @@ public class ViewApplicator {
           return this;
         }
 
-        if (columnTypes.isEmpty()) {
+        if (columnInfos.isEmpty()) {
           for (RowElement e : row.getElements()) {
-            columnTypes.put(e.getName(), "STRING");
+            columnInfos.put(e.getName(), e.getColumnInfo());
           }
         }
-        if (row.getElements().size() != columnTypes.size()) {
+        if (row.getElements().size() != columnInfos.size()) {
           throw new ViewApplicationException(
               String.format(
                   "New row size does not match schema: %d vs %d",
-                  row.getElements().size(), columnTypes.size()));
+                  row.getElements().size(), columnInfos.size()));
         }
-        // Note the schema check is a little looser than what it should; in particular it is not
-        // sensitive to the order of columns in the new `row`.
-        for (RowElement e : row.getElements()) {
-          if (columnTypes.get(e.getName()) == null) {
+        // Checking that the new row has the same columns, in the same order. We could check extra
+        // fields like type, collection, etc. but this is assumed to be done in ViewDefinition.
+        int ind = 0;
+        for (Map.Entry<String, ViewDefinition.Column> entry : columnInfos.entrySet()) {
+          RowElement e = row.getElements().get(ind++);
+          if (!entry.getKey().equals(e.getName())) {
             throw new ViewApplicationException("Unexpected column " + e.getName());
           }
         }
@@ -442,7 +437,7 @@ public class ViewApplicator {
       }
 
       public RowList build() {
-        return new RowList(rows, columnTypes);
+        return new RowList(rows, columnInfos);
       }
     }
   }
@@ -466,14 +461,101 @@ public class ViewApplicator {
 
   @Getter
   public static class RowElement {
-    private final String name;
-    // TODO add support for types too and change `value` type to be not String.
-    //  This probably requires using a better data-type for `FlatRow`, e.g., Avro or ProtoBuf.
-    private final String value;
+    private final List<IBase> values;
+    private final Column columnInfo;
 
-    public RowElement(String name, String value) {
-      this.name = name;
-      this.value = value;
+    public RowElement(Column columnInfo, List<IBase> values) {
+      Preconditions.checkArgument(
+          columnInfo.isCollection() || values == null || values.size() <= 1,
+          "A list provided for the non-collection column " + columnInfo.getName());
+      this.values = values;
+      this.columnInfo = columnInfo;
+    }
+
+    // Convenience function
+    public String getName() {
+      return columnInfo.getName();
+    }
+
+    public boolean isCollection() {
+      return columnInfo.isCollection()
+          || columnInfo.isInferredCollection()
+          || (values != null && values.size() > 1);
+    }
+
+    @Nullable
+    public IBase getSingleValue() {
+      if (values == null || values.isEmpty() || isCollection()) {
+        return null;
+      }
+      return values.get(0);
+    }
+
+    // Note the following methods are currently static, but it is possible that in the future we may
+    // need to attach them to the ViewApplicator instance that has generated the RowElement. That
+    // will be the case if we need to cast to the actual type of the value (which is FHIR version
+    // dependent) and not just use the interfaces (which are version independent).
+
+    @Nullable
+    public String getString() {
+      IPrimitiveType primitiveType = getPrimitiveType();
+      if (primitiveType != null) {
+        return primitiveType.getValueAsString();
+      }
+      return getSingleValue() == null ? null : getSingleValue().toString();
+    }
+
+    @Nullable
+    public IPrimitiveType getPrimitiveType() {
+      IBase val = getSingleValue();
+      if (val == null) {
+        return null;
+      }
+      if (!(val instanceof IPrimitiveType<?>)) {
+        return null;
+      }
+      return (IPrimitiveType) val;
+    }
+
+    @Nullable
+    public <T> T getPrimitive() {
+      IBase val = getSingleValue();
+      if (val == null) {
+        return null;
+      }
+      if (!(val instanceof IPrimitiveType<?>)) {
+        return null;
+      }
+      IPrimitiveType<T> primitive = (IPrimitiveType<T>) val;
+      if (primitive == null) {
+        return null;
+      }
+      return primitive.getValue();
+    }
+
+    @Nullable
+    public String getSingleIdPart() {
+      Preconditions.checkState(!isCollection());
+      if (values != null && !values.isEmpty() && ID_TYPE.equals(columnInfo.getInferredType())) {
+        IBase elem = values.get(0);
+        return ((IIdType) elem).getIdPart();
+      }
+      return null;
+    }
+
+    public List<String> getIdParts() {
+      List<String> idParts = new ArrayList<>();
+      if (ID_TYPE.equals(columnInfo.getInferredType())) {
+        for (IBase elem : values) {
+          idParts.add(((IIdType) elem).getIdPart());
+        }
+      }
+      return idParts;
+    }
+
+    public boolean isIdType() {
+      return (ID_TYPE.equals(columnInfo.getInferredType()))
+          || (ID_TYPE.equals(columnInfo.getType()));
     }
   }
 }

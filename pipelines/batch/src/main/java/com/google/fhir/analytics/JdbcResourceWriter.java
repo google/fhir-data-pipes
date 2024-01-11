@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2023 Google LLC
+ * Copyright 2020-2024 Google LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,14 +25,15 @@ import com.google.fhir.analytics.model.DatabaseConfiguration;
 import com.google.fhir.analytics.view.ViewApplicationException;
 import com.google.fhir.analytics.view.ViewApplicator;
 import com.google.fhir.analytics.view.ViewApplicator.FlatRow;
-import com.google.fhir.analytics.view.ViewApplicator.RowElement;
 import com.google.fhir.analytics.view.ViewApplicator.RowList;
 import com.google.fhir.analytics.view.ViewDefinition;
 import com.google.fhir.analytics.view.ViewDefinitionException;
 import com.google.fhir.analytics.view.ViewManager;
+import com.google.fhir.analytics.view.ViewSchema;
 import java.beans.PropertyVetoException;
 import java.io.IOException;
 import java.sql.Connection;
+import java.sql.JDBCType;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.util.stream.Collectors;
@@ -126,8 +127,15 @@ public class JdbcResourceWriter {
             builder.append(
                 String.join(
                     ",",
-                    vDef.getDbSchema().entrySet().stream()
-                        .map(e -> String.format("%s %s", e.getKey(), e.getValue().typeString()))
+                    ViewSchema.getDbSchema(vDef).entrySet().stream()
+                        .map(
+                            e ->
+                                String.format(
+                                    "%s %s",
+                                    e.getKey(),
+                                    e.getValue() == JDBCType.TIMESTAMP
+                                        ? "TIMESTAMP WITH TIME ZONE"
+                                        : e.getValue().toString()))
                         .collect(Collectors.toList())));
             builder.append(");");
             createSingleTable(jdbcSource, builder.toString());
@@ -166,7 +174,7 @@ public class JdbcResourceWriter {
           for (FlatRow row : rowList.getRows()) {
             StringBuilder builder = new StringBuilder("INSERT INTO ");
             builder.append(vDef.getName()).append(" (");
-            builder.append(String.join(",", rowList.getColumnNames()));
+            builder.append(String.join(",", rowList.getColumnInfos().keySet()));
             builder.append(") VALUES(");
             // TODO add resource ID requirement and replacing old rows for incremental update; also
             //  handle deleted resources: https://github.com/google/fhir-data-pipes/issues/588
@@ -176,11 +184,9 @@ public class JdbcResourceWriter {
             builder.append(");");
             try (Connection connection = jdbcDataSource.getConnection();
                 PreparedStatement statement = connection.prepareStatement(builder.toString())) {
-              int ind = 0;
-              for (RowElement re : row.getElements()) {
-                // TODO instead of string use the right type once column type derivation is done!
-                statement.setString(++ind, re.getValue());
-              }
+              // TODO it is probably better to move both INSERT and CREATE TABLE (above) statements
+              //  to the ViewSchema to have the full SQL logic in one place.
+              ViewSchema.setValueInStatement(row.getElements(), statement);
               statement.execute();
             }
           }
