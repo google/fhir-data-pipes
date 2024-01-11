@@ -30,6 +30,7 @@ import com.google.fhir.analytics.view.ViewDefinition.Where;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Map.Entry;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -407,11 +408,12 @@ public class ViewApplicator {
                   "New row size does not match schema: %d vs %d",
                   row.getElements().size(), columnInfos.size()));
         }
-        // Note the schema check is a little looser than what it should; in particular it is not
-        // sensitive to the order of columns in the new `row`. Or it does not care about some field
-        // mismatches, e.g., `description`.
-        for (RowElement e : row.getElements()) {
-          if (columnInfos.get(e.getName()) == null) {
+        // Checking that the new row has the same columns, in the same order. We could check extra
+        // fields like type, collection, etc. but this is assumed to be done in ViewDefinition.
+        int ind = 0;
+        for (Map.Entry<String, ViewDefinition.Column> entry : columnInfos.entrySet()) {
+          RowElement e = row.getElements().get(ind++);
+          if (!entry.getKey().equals(e.getName())) {
             throw new ViewApplicationException("Unexpected column " + e.getName());
           }
         }

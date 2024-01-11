@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2023 Google LLC
+ * Copyright 2020-2024 Google LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,6 +26,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -208,14 +209,19 @@ public class ViewDefinition {
     if (cols1.size() != cols2.size()) {
       return false;
     }
-    // Note our check is less strict than it should be, e.g., we only care about names and types.
+    Iterator<Entry<String, Column>> cols2Iter = cols2.entrySet().iterator();
     for (Entry<String, Column> e1 : cols1.entrySet()) {
-      if (!cols2.containsKey(e1.getKey())) {
+      Entry<String, Column> e2 = cols2Iter.next();
+      if (!e2.getKey().equals(e1.getKey())) {
         return false;
       }
+      // We only check column name, type, collection and ignore other fields, e.g., description.
       String t1 = Strings.nullToEmpty(e1.getValue().getType());
-      String t2 = Strings.nullToEmpty(cols2.get(e1.getKey()).getType());
+      String t2 = Strings.nullToEmpty(e2.getValue().getType());
       if (!t1.equals(t2)) {
+        return false;
+      }
+      if (e1.getValue().isCollection() != e2.getValue().isCollection()) {
         return false;
       }
     }
