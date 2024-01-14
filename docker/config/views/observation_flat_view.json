@@ -6,7 +6,7 @@
       "column": [
         {
           "path": "getResourceKey()",
-          "name": "obs_id"
+          "name": "id"
         },
         {
           "path": "subject.getReferenceKey('Patient')",

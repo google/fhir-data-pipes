@@ -52,7 +52,7 @@ import org.slf4j.LoggerFactory;
 public class ViewApplicator {
   private static final Logger log = LoggerFactory.getLogger(ViewApplicator.class);
   public static String ID_TYPE = "id";
-  private static final String GET_RESOURCE_KEY = "getResourceKey()";
+  public static final String GET_RESOURCE_KEY = "getResourceKey()";
   private static final Pattern GET_REF_KEY_PATTERN =
       Pattern.compile("(?<fhirPath>.*)getReferenceKey\\(('(?<resourceType>[a-zA-Z]*)')?\\)");
   private static final RowList EMPTY_LIST = RowList.builder().build();
@@ -459,6 +459,10 @@ public class ViewApplicator {
     }
   }
 
+  public static String getIdString(IIdType id) {
+    return id.getIdPart();
+  }
+
   @Getter
   public static class RowElement {
     private final List<IBase> values;
@@ -538,7 +542,7 @@ public class ViewApplicator {
       Preconditions.checkState(!isCollection());
       if (values != null && !values.isEmpty() && ID_TYPE.equals(columnInfo.getInferredType())) {
         IBase elem = values.get(0);
-        return ((IIdType) elem).getIdPart();
+        return getIdString((IIdType) elem);
       }
       return null;
     }
@@ -547,7 +551,7 @@ public class ViewApplicator {
       List<String> idParts = new ArrayList<>();
       if (ID_TYPE.equals(columnInfo.getInferredType())) {
         for (IBase elem : values) {
-          idParts.add(((IIdType) elem).getIdPart());
+          idParts.add(getIdString((IIdType) elem));
         }
       }
       return idParts;

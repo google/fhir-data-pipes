@@ -56,7 +56,7 @@ public class ViewDefinition {
   // a pure data-object. This class is instantiated only with factory methods, so it is probably
   // okay to keep the current pattern.
   @Getter
-  private ImmutableMap<String, Column> columnTypes; // Initialized once in `validateAndSetUp`.
+  private ImmutableMap<String, Column> allColumns; // Initialized once in `validateAndSetUp`.
 
   // This class should only be instantiated with the `create*` factory methods.
   private ViewDefinition() {}
@@ -111,7 +111,7 @@ public class ViewDefinition {
         w.path = validateAndReplaceConstants(w.getPath());
       }
     }
-    columnTypes = ImmutableMap.copyOf(validateAndReplaceConstantsInSelects(select, newTypeMap()));
+    allColumns = ImmutableMap.copyOf(validateAndReplaceConstantsInSelects(select, newTypeMap()));
   }
 
   /**

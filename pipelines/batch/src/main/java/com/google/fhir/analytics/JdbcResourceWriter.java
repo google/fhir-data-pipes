@@ -51,6 +51,8 @@ public class JdbcResourceWriter {
 
   private static final Logger log = LoggerFactory.getLogger(JdbcResourceWriter.class);
 
+  private static final String ID_COLUMN = "id";
+
   private final ViewManager viewManager;
 
   private final IParser parser;
@@ -79,6 +81,18 @@ public class JdbcResourceWriter {
     try (Connection connection = dataSource.getConnection();
         PreparedStatement statement = connection.prepareStatement(createStatement)) {
       log.info("Table creation statement is " + statement);
+      statement.execute();
+    }
+  }
+
+  private static void createIdIndex(DataSource dataSource, String tableName) throws SQLException {
+    String sql =
+        String.format(
+            "CREATE INDEX IF NOT EXISTS %s_%s_index ON %s (%s);",
+            tableName, ID_COLUMN, tableName, ID_COLUMN);
+    try (Connection connection = dataSource.getConnection();
+        PreparedStatement statement = connection.prepareStatement(sql)) {
+      log.debug("Index creation statement is " + statement);
       statement.execute();
     }
   }
@@ -120,6 +134,14 @@ public class JdbcResourceWriter {
             if (Strings.isNullOrEmpty(vDef.getName())) {
               throw new ViewDefinitionException("Field `name` in ViewDefinition is not defined.");
             }
+            if (vDef.getAllColumns().get(ID_COLUMN) == null
+                || !ViewApplicator.GET_RESOURCE_KEY.equals(
+                    vDef.getAllColumns().get(ID_COLUMN).getPath())) {
+              throw new ViewDefinitionException(
+                  String.format(
+                      "To write view '%s' to DB, there should be a column '%s' with path '%s'.",
+                      vDef.getName(), ID_COLUMN, ViewApplicator.GET_RESOURCE_KEY));
+            }
             // TODO if tables already exist, the better way is to check their schema to see if it is
             //  consistent with the view; and fail if it is not.
             StringBuilder builder = new StringBuilder("CREATE TABLE IF NOT EXISTS ");
@@ -139,9 +161,22 @@ public class JdbcResourceWriter {
                         .collect(Collectors.toList())));
             builder.append(");");
             createSingleTable(jdbcSource, builder.toString());
+            // We create an index on the id column to speed up the incremental update process. It is
+            // also useful for common JOIN scenarios where resource IDs are involved.
+            createIdIndex(jdbcSource, vDef.getName());
           }
         }
       }
+    }
+  }
+
+  private static void deleteOldViewRows(DataSource dataSource, String tableName, String resId)
+      throws SQLException {
+    String sql = String.format("DELETE FROM %s WHERE %s=? ;", tableName, ID_COLUMN);
+    try (Connection connection = dataSource.getConnection();
+        PreparedStatement statement = connection.prepareStatement(sql)) {
+      statement.setString(1, resId);
+      statement.execute();
     }
   }
 
@@ -171,6 +206,9 @@ public class JdbcResourceWriter {
           }
           ViewApplicator applicator = new ViewApplicator(vDef);
           RowList rowList = applicator.apply(resource);
+          // We should first delete old rows produced from the same resource in a previous run:
+          deleteOldViewRows(
+              jdbcDataSource, vDef.getName(), ViewApplicator.getIdString(resource.getIdElement()));
           for (FlatRow row : rowList.getRows()) {
             StringBuilder builder = new StringBuilder("INSERT INTO ");
             builder.append(vDef.getName()).append(" (");
