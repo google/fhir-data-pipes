@@ -1,3 +1,11 @@
+# Adding FHIR-Views and required packages for Spark:
 google-fhir-views[r4,spark,bigquery]
 cryptography
 thrift_sasl
+
+# For PostgreSQL connection through SQLAlchemy
+psycopg2
+
+# Jupyter extensions
+jupyterlab_execute_time
+jupyterlab-spellchecker
