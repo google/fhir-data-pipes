@@ -90,7 +90,7 @@ public class ViewSchema {
    */
   public static ImmutableMap<String, JDBCType> getDbSchema(ViewDefinition view) {
     ImmutableMap.Builder<String, JDBCType> builder = ImmutableMap.builder();
-    for (Entry<String, Column> entry : view.getColumnTypes().entrySet()) {
+    for (Entry<String, Column> entry : view.getAllColumns().entrySet()) {
       // This is internally guaranteed.
       Preconditions.checkState(entry.getValue() != null);
       if (entry.getValue().getType() == null && entry.getValue().getInferredType() == null) {

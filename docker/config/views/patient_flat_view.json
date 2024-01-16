@@ -6,7 +6,7 @@
       "column": [
         {
           "path": "getResourceKey()",
-          "name": "pat_id"
+          "name": "id"
         },
         {
           "path": "active",
