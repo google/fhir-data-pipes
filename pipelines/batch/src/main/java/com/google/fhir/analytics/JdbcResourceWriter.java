@@ -170,6 +170,7 @@ public class JdbcResourceWriter {
     }
   }
 
+  // TODO expose this such that we can properly handle deleted FHIR resources in the pipeline.
   private static void deleteOldViewRows(DataSource dataSource, String tableName, String resId)
       throws SQLException {
     String sql = String.format("DELETE FROM %s WHERE %s=? ;", tableName, ID_COLUMN);
@@ -206,6 +207,7 @@ public class JdbcResourceWriter {
           }
           ViewApplicator applicator = new ViewApplicator(vDef);
           RowList rowList = applicator.apply(resource);
+          // TODO merge deletion and insertion into an atomic transaction.
           // We should first delete old rows produced from the same resource in a previous run:
           deleteOldViewRows(
               jdbcDataSource, vDef.getName(), ViewApplicator.getIdString(resource.getIdElement()));

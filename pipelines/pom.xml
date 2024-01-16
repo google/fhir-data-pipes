@@ -42,7 +42,7 @@
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <junit.version>4.13.2</junit.version>
-    <slf4j.version>2.0.9</slf4j.version>
+    <slf4j.version>2.0.11</slf4j.version>
     <logback.version>1.4.11</logback.version>
     <hapifhirVersion>6.6.2</hapifhirVersion>
     <hamcrest.version>2.2</hamcrest.version>
@@ -189,7 +189,7 @@
         </plugin>
         <plugin>
           <artifactId>maven-surefire-plugin</artifactId>
-          <version>3.2.2</version>
+          <version>3.2.5</version>
         </plugin>
         <!--
            Configures `mvn package` to produce a bundled jar ("fat jar") for runners
