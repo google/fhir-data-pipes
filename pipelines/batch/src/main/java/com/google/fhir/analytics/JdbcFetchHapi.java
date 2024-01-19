@@ -87,7 +87,7 @@ public class JdbcFetchHapi {
       // TODO check for null values before accessing columns; this caused NPEs with `latest` HAPI.
       switch (resultSet.getString("res_encoding")) {
         case "JSON":
-          jsonResource = new String(resultSet.getBytes("res_text"), Charsets.UTF_8);
+          jsonResource = new String(resultSet.getBytes("res_text_vc"), Charsets.UTF_8);
           break;
         case "JSONC":
           Blob blob = resultSet.getBlob("res_text");
