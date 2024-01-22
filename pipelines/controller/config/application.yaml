@@ -135,6 +135,10 @@ fhirdata:
   # you can use those predefined views in your dev. env. too.
   hiveResourceViewsDir: "config/views"
 
+  # List of paths containing the structure definition file for any custom profiles that needs to be
+  # supported. Currently only one profile is supported for any given resource type.
+  profileDefinitionsDir: "config/profile-definitions"
+
 # Enable spring boot actuator end points, use "*" to expose all endpoints, or a comma-separated
 # list to expose selected ones
 management:

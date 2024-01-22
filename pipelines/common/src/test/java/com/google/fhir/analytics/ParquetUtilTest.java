@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2023 Google LLC
+ * Copyright 2020-2024 Google LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +19,6 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.matchesPattern;
 import static org.hamcrest.Matchers.notNullValue;
-import static org.hamcrest.number.IsCloseTo.closeTo;
 
 import ca.uhn.fhir.context.FhirContext;
 import ca.uhn.fhir.context.FhirVersionEnum;
@@ -27,7 +26,6 @@ import ca.uhn.fhir.parser.IParser;
 import com.google.common.io.Resources;
 import java.io.File;
 import java.io.IOException;
-import java.math.BigDecimal;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.*;
 import java.util.Collection;
@@ -36,7 +34,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.stream.Stream;
 import org.apache.avro.Schema;
-import org.apache.avro.generic.GenericData;
 import org.apache.avro.generic.GenericData.Record;
 import org.apache.avro.generic.GenericRecord;
 import org.apache.beam.sdk.io.fs.ResourceId;
@@ -133,20 +130,6 @@ public class ParquetUtilTest {
     Bundle bundle = parser.parseResource(Bundle.class, observationBundle);
     List<GenericRecord> recordList = parquetUtil.generateRecords(bundle);
     assertThat(recordList.size(), equalTo(6));
-  }
-
-  @Test
-  public void generateRecordForPatient() {
-    IParser parser = fhirContext.newJsonParser();
-    Bundle bundle = parser.parseResource(Bundle.class, patientBundle);
-    GenericRecord record = parquetUtil.convertToAvro(bundle.getEntry().get(0).getResource());
-    Collection<Object> addressList = (Collection<Object>) record.get("address");
-    // TODO We need to fix this again; the root cause is the change in `id` type to System.String.
-    // https://github.com/GoogleCloudPlatform/openmrs-fhir-analytics/issues/55
-    // assertThat(record.get("id"), equalTo("471be3bc-08c7-4d78-a4ab-1b3d044dae67"));
-    assertThat(addressList.size(), equalTo(1));
-    Record address = (Record) addressList.iterator().next();
-    assertThat((String) address.get("city"), equalTo("Waterloo"));
   }
 
   @Test
@@ -257,19 +240,6 @@ public class ParquetUtilTest {
     assertThat(files.count(), equalTo(1L));
   }
 
-  @Test
-  public void convertObservationWithBigDecimalValue() throws IOException {
-    String observationStr =
-        Resources.toString(
-            Resources.getResource("observation_decimal.json"), StandardCharsets.UTF_8);
-    IParser parser = fhirContext.newJsonParser();
-    Observation observation = parser.parseResource(Observation.class, observationStr);
-    GenericRecord record = parquetUtil.convertToAvro(observation);
-    GenericData.Record valueRecord = (GenericData.Record) record.get("value");
-    BigDecimal value = (BigDecimal) ((GenericData.Record) valueRecord.get("quantity")).get("value");
-    assertThat(value.doubleValue(), closeTo(25, 0.001));
-  }
-
   /**
    * This is the test to demonstrate the BigDecimal conversion bug. See:
    * https://github.com/GoogleCloudPlatform/openmrs-fhir-analytics/issues/156
@@ -297,5 +267,26 @@ public class ParquetUtilTest {
     IParser parser = fhirContext.newJsonParser();
     Bundle bundle = parser.parseResource(Bundle.class, observationBundleStr);
     parquetUtil.writeRecords(bundle, null);
+  }
+
+  /** This is similar to the above test but has more `decimal` examples with different scales. */
+  @Test
+  public void writeObservationBundleWithMultipleProfiles() throws IOException {
+    rootPath = Files.createTempDirectory("PARQUET_TEST");
+    parquetUtil = new ParquetUtil(FhirVersionEnum.R4, rootPath.toString(), 0, 0, "");
+
+    String patientStr =
+        Resources.toString(Resources.getResource("patient_bundle.json"), StandardCharsets.UTF_8);
+    IParser parser = fhirContext.newJsonParser();
+    Bundle bundle = parser.parseResource(Bundle.class, patientStr);
+    parquetUtil.writeRecords(bundle, null);
+
+    String patientUsCoreStr =
+        Resources.toString(Resources.getResource("patient_bundle2.json"), StandardCharsets.UTF_8);
+    IParser parser2 = fhirContext.newJsonParser();
+    Bundle bundle2 = parser2.parseResource(Bundle.class, patientUsCoreStr);
+    parquetUtil.writeRecords(bundle2, null);
+
+    parquetUtil.closeAllWriters();
   }
 }

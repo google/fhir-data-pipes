@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2023 Google LLC
+ * Copyright 2020-2024 Google LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,6 @@ package com.google.fhir.analytics;
 
 import ca.uhn.fhir.context.FhirContext;
 import ca.uhn.fhir.parser.DataFormatException;
-import com.cerner.bunsen.FhirContexts;
 import com.google.api.client.util.Sets;
 import com.google.common.base.Preconditions;
 import java.io.BufferedReader;
@@ -75,10 +74,6 @@ public class DwhFiles {
 
   private final FhirContext fhirContext;
 
-  private DwhFiles(String dwhRoot) {
-    this(dwhRoot, FhirContexts.forR4());
-  }
-
   /**
    * In order to interpret the file paths correctly the {@code dwhRoot} has to be represented in one
    * of the below formats according to the filesystem platform:
@@ -112,8 +107,8 @@ public class DwhFiles {
     this.fhirContext = fhirContext;
   }
 
-  static DwhFiles forRoot(String dwhRoot) {
-    return new DwhFiles(dwhRoot);
+  static DwhFiles forRoot(String dwhRoot, FhirContext fhirContext) {
+    return new DwhFiles(dwhRoot, fhirContext);
   }
 
   public String getRoot() {

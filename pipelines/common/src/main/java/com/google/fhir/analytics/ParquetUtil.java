@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2023 Google LLC
+ * Copyright 2020-2024 Google LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,7 +21,6 @@ import com.cerner.bunsen.FhirContexts;
 import com.cerner.bunsen.avro.AvroConverter;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
-import com.google.common.collect.Maps;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.channels.Channels;
@@ -34,7 +33,6 @@ import java.util.Random;
 import java.util.Set;
 import java.util.Timer;
 import java.util.TimerTask;
-import javax.annotation.Nullable;
 import org.apache.avro.Conversions.DecimalConversion;
 import org.apache.avro.Schema;
 import org.apache.avro.generic.GenericData;
@@ -58,12 +56,6 @@ public class ParquetUtil {
   public static String PARQUET_EXTENSION = ".parquet";
 
   private final FhirContext fhirContext;
-
-  private static final Map<String, AvroConverter> converterMap;
-
-  static {
-    converterMap = Maps.newHashMap();
-  }
 
   private final Map<String, ParquetWriter<GenericRecord>> writerMap;
 
@@ -155,19 +147,6 @@ public class ParquetUtil {
     this.random = new Random(System.currentTimeMillis());
   }
 
-  private static synchronized AvroConverter getConverter(
-      String resourceType, FhirContext fhirContext) {
-    if (!converterMap.containsKey(resourceType)) {
-      // TODO: Check how to automate discovery of relevant profiles to be applied. Right now we need
-      // to supply the corresponding resource profile identifier for the extensions to work, e.g.,
-      // "http://hl7.org/fhir/us/core/StructureDefinition/us-core-patient" instead of "Patient".
-      // https://github.com/google/fhir-data-pipes/issues/560
-      AvroConverter converter = AvroConverter.forResource(fhirContext, resourceType);
-      converterMap.put(resourceType, converter);
-    }
-    return converterMap.get(resourceType);
-  }
-
   @VisibleForTesting
   synchronized ResourceId getUniqueOutputFilePath(String resourceType) throws IOException {
     ResourceId resourceId = dwhFiles.getResourcePath(resourceType);
@@ -215,7 +194,7 @@ public class ParquetUtil {
       createWriter(resourceType);
     }
     final ParquetWriter<GenericRecord> parquetWriter = writerMap.get(resourceType);
-    GenericRecord record = convertToAvro(resource);
+    GenericRecord record = AvroUtil.convertToAvro(resource, fhirContext);
     if (record != null) {
       parquetWriter.write(record);
     }
@@ -250,7 +229,7 @@ public class ParquetUtil {
   }
 
   public static Schema getResourceSchema(String resourceType, FhirContext fhirContext) {
-    AvroConverter converter = getConverter(resourceType, fhirContext);
+    AvroConverter converter = AvroUtil.getConverter(resourceType, fhirContext);
     Schema schema = converter.getSchema();
     log.debug(String.format("Schema for resource type %s is %s", resourceType, schema));
     return schema;
@@ -263,7 +242,7 @@ public class ParquetUtil {
     }
     for (BundleEntryComponent entry : bundle.getEntry()) {
       Resource resource = entry.getResource();
-      GenericRecord record = convertToAvro(resource);
+      GenericRecord record = AvroUtil.convertToAvro(resource, fhirContext);
       if (record != null) {
         records.add(record);
       }
@@ -281,13 +260,5 @@ public class ParquetUtil {
         write(resource);
       }
     }
-  }
-
-  @VisibleForTesting
-  @Nullable
-  GenericRecord convertToAvro(Resource resource) {
-    AvroConverter converter = getConverter(resource.getResourceType().name(), fhirContext);
-    // TODO: Check why Bunsen returns IndexedRecord instead of GenericRecord.
-    return (GenericRecord) converter.resourceToAvro(resource);
   }
 }

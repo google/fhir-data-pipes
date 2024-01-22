@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2023 Google LLC
+ * Copyright 2020-2024 Google LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package com.google.fhir.analytics;
 
+import ca.uhn.fhir.context.FhirContext;
 import java.io.IOException;
 import java.time.Instant;
 import java.util.ArrayList;
@@ -67,31 +68,36 @@ class EtlUtils {
    * @throws IOException if writing the timestamp file fails.
    */
   static List<PipelineResult> runMultiplePipelinesWithTimestamp(
-      List<Pipeline> pipelines, FhirEtlOptions options) throws IOException {
+      List<Pipeline> pipelines, FhirEtlOptions options, FhirContext fhirContext)
+      throws IOException {
     String dwhRoot = options.getOutputParquetPath();
     if (dwhRoot != null && !dwhRoot.isEmpty()) {
       // TODO write pipeline options too such that it  can be validated for incremental runs.
-      DwhFiles.forRoot(dwhRoot).writeTimestampFile(DwhFiles.TIMESTAMP_FILE_START);
+      DwhFiles.forRoot(dwhRoot, fhirContext).writeTimestampFile(DwhFiles.TIMESTAMP_FILE_START);
     }
     List<PipelineResult> pipelineResults = runMultiplePipelines(pipelines);
     if (dwhRoot != null && !dwhRoot.isEmpty()) {
-      DwhFiles.forRoot(dwhRoot).writeTimestampFile(DwhFiles.TIMESTAMP_FILE_END);
+      DwhFiles.forRoot(dwhRoot, fhirContext).writeTimestampFile(DwhFiles.TIMESTAMP_FILE_END);
     }
     return pipelineResults;
   }
 
   /** Similar to {@link #runMultiplePipelinesWithTimestamp} but for the merge pipeline. */
   static List<PipelineResult> runMultipleMergerPipelinesWithTimestamp(
-      List<Pipeline> pipelines, ParquetMergerOptions options) throws IOException {
+      List<Pipeline> pipelines, ParquetMergerOptions options, FhirContext fhirContext)
+      throws IOException {
     Instant instant1 =
-        DwhFiles.forRoot(options.getDwh1()).readTimestampFile(DwhFiles.TIMESTAMP_FILE_START);
+        DwhFiles.forRoot(options.getDwh1(), fhirContext)
+            .readTimestampFile(DwhFiles.TIMESTAMP_FILE_START);
     Instant instant2 =
-        DwhFiles.forRoot(options.getDwh2()).readTimestampFile(DwhFiles.TIMESTAMP_FILE_START);
+        DwhFiles.forRoot(options.getDwh2(), fhirContext)
+            .readTimestampFile(DwhFiles.TIMESTAMP_FILE_START);
     Instant mergedInstant = (instant1.compareTo(instant2) > 0) ? instant1 : instant2;
-    DwhFiles.forRoot(options.getMergedDwh())
+    DwhFiles.forRoot(options.getMergedDwh(), fhirContext)
         .writeTimestampFile(mergedInstant, DwhFiles.TIMESTAMP_FILE_START);
     List<PipelineResult> pipelineResults = runMultiplePipelines(pipelines);
-    DwhFiles.forRoot(options.getMergedDwh()).writeTimestampFile(DwhFiles.TIMESTAMP_FILE_END);
+    DwhFiles.forRoot(options.getMergedDwh(), fhirContext)
+        .writeTimestampFile(DwhFiles.TIMESTAMP_FILE_END);
     return pipelineResults;
   }
 

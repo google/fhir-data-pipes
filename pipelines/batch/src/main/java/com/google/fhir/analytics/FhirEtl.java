@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2023 Google LLC
+ * Copyright 2020-2024 Google LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -364,9 +364,8 @@ public class FhirEtl {
    * @param options the pipeline options to be used.
    * @return the created Pipeline instance or null if nothing needs to be done.
    */
-  static List<Pipeline> setupAndBuildPipelines(FhirEtlOptions options)
-      throws PropertyVetoException, IOException, SQLException, ViewDefinitionException {
-    FhirContext fhirContext = FhirContexts.forR4();
+  static List<Pipeline> setupAndBuildPipelines(FhirEtlOptions options, FhirContext fhirContext)
+      throws PropertyVetoException, IOException, SQLException {
     if (options.isJdbcModeHapi()) {
       return buildHapiJdbcPipeline(options);
     } else if (options.isJdbcModeEnabled()) {
@@ -376,6 +375,16 @@ public class FhirEtl {
     } else {
       return buildFhirSearchPipeline(options, fhirContext);
     }
+  }
+
+  private static FhirContext initializeFhirContext(String profileDefinitionsDirList) {
+    FhirContext fhirContext = null;
+    if (!Strings.isNullOrEmpty(profileDefinitionsDirList)) {
+      fhirContext = FhirContexts.forR4(Arrays.asList(profileDefinitionsDirList.split(",")));
+    } else {
+      fhirContext = FhirContexts.forR4();
+    }
+    return fhirContext;
   }
 
   public static void main(String[] args)
@@ -392,8 +401,10 @@ public class FhirEtl {
     if (!options.getSinkDbConfigPath().isEmpty()) {
       JdbcResourceWriter.createTables(options);
     }
-    List<Pipeline> pipelines = setupAndBuildPipelines(options);
-    EtlUtils.runMultiplePipelinesWithTimestamp(pipelines, options);
+
+    FhirContext fhirContext = initializeFhirContext(options.getProfileDefinitionsDirList());
+    List<Pipeline> pipelines = setupAndBuildPipelines(options, fhirContext);
+    EtlUtils.runMultiplePipelinesWithTimestamp(pipelines, options, fhirContext);
     log.info("DONE!");
   }
 }

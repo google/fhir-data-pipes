@@ -51,6 +51,20 @@
       <scope>compile</scope>
     </dependency>
 
+    <!-- Testing -->
+    <!-- TODO this "testing" claim does not seem to be tru; update! -->
+    <!-- HAPI FHIR R4 resources included only for unit tests. -->
+    <dependency>
+      <groupId>ca.uhn.hapi.fhir</groupId>
+      <artifactId>hapi-fhir-validation-resources-r4</artifactId>
+      <scope>compile</scope>
+    </dependency>
+    <dependency>
+      <groupId>ca.uhn.hapi.fhir</groupId>
+      <artifactId>hapi-fhir-structures-r4</artifactId>
+      <scope>compile</scope>
+    </dependency>
+
     <dependency>
       <groupId>junit</groupId>
       <artifactId>junit</artifactId>

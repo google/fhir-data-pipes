@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2023 Google LLC
+ * Copyright 2020-2024 Google LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ import ca.uhn.fhir.context.FhirContext;
 import ca.uhn.fhir.context.FhirVersionEnum;
 import com.cerner.bunsen.FhirContexts;
 import com.google.common.base.Preconditions;
+import com.google.common.base.Strings;
 import com.google.common.collect.Sets;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -185,9 +186,9 @@ public class ParquetMerger {
     String dwh1 = options.getDwh1();
     String dwh2 = options.getDwh2();
     String mergedDwh = options.getMergedDwh();
-    DwhFiles dwhFiles1 = DwhFiles.forRoot(dwh1);
-    DwhFiles dwhFiles2 = DwhFiles.forRoot(dwh2);
-    DwhFiles mergedDwhFiles = DwhFiles.forRoot(mergedDwh);
+    DwhFiles dwhFiles1 = DwhFiles.forRoot(dwh1, fhirContext);
+    DwhFiles dwhFiles2 = DwhFiles.forRoot(dwh2, fhirContext);
+    DwhFiles mergedDwhFiles = DwhFiles.forRoot(mergedDwh, fhirContext);
 
     Set<String> resourceTypes1 = dwhFiles1.findNonEmptyFhirResourceTypes();
     Set<String> resourceTypes2 = dwhFiles2.findNonEmptyFhirResourceTypes();
@@ -246,7 +247,7 @@ public class ParquetMerger {
     ParquetMergerOptions options =
         PipelineOptionsFactory.fromArgs(args).withValidation().as(ParquetMergerOptions.class);
     log.info("Flags: " + options);
-    FhirContext fhirContext = FhirContexts.forR4();
+    FhirContext fhirContext = initializeFhirContext(options.getProfileDefinitionsDirList());
     if (options.getDwh1().isEmpty()
         || options.getDwh2().isEmpty()
         || options.getMergedDwh().isEmpty()) {
@@ -254,7 +255,17 @@ public class ParquetMerger {
     }
 
     List<Pipeline> pipelines = createMergerPipelines(options, fhirContext);
-    EtlUtils.runMultipleMergerPipelinesWithTimestamp(pipelines, options);
+    EtlUtils.runMultipleMergerPipelinesWithTimestamp(pipelines, options, fhirContext);
     log.info("DONE!");
+  }
+
+  private static FhirContext initializeFhirContext(String profileDefinitionsDirList) {
+    FhirContext fhirContext = null;
+    if (!Strings.isNullOrEmpty(profileDefinitionsDirList)) {
+      fhirContext = FhirContexts.forR4(Arrays.asList(profileDefinitionsDirList.split(",")));
+    } else {
+      fhirContext = FhirContexts.forR4();
+    }
+    return fhirContext;
   }
 }

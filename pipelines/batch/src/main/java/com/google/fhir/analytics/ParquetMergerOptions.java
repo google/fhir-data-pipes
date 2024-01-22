@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2023 Google LLC
+ * Copyright 2020-2024 Google LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -57,4 +57,12 @@ public interface ParquetMergerOptions extends PipelineOptions {
   int getNumShards();
 
   void setNumShards(int value);
+
+  @Description(
+      "Load the fhir profiles defined in this directory, otherwise only the base structure"
+          + "definitions will be supported")
+  @Default.String("")
+  String getProfileDefinitionsDirList();
+
+  void setProfileDefinitionsDirList(String value);
 }

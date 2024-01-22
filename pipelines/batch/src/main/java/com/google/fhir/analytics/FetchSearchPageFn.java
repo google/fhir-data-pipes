@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2023 Google LLC
+ * Copyright 2020-2024 Google LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,12 +20,14 @@ import ca.uhn.fhir.context.ParserOptions;
 import ca.uhn.fhir.parser.IParser;
 import com.cerner.bunsen.FhirContexts;
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Strings;
 import com.google.fhir.analytics.JdbcConnectionPools.DataSourceConfig;
 import com.google.fhir.analytics.model.DatabaseConfiguration;
 import com.google.fhir.analytics.view.ViewApplicationException;
 import java.beans.PropertyVetoException;
 import java.io.IOException;
 import java.sql.SQLException;
+import java.util.Arrays;
 import java.util.Set;
 import javax.annotation.Nullable;
 import javax.sql.DataSource;
@@ -108,6 +110,8 @@ abstract class FetchSearchPageFn<T> extends DoFn<T, KV<String, Integer>> {
 
   protected FhirContext fhirContext;
 
+  private String profileDefinitionsDirList;
+
   FetchSearchPageFn(FhirEtlOptions options, String stageIdentifier) {
     this.sinkPath = options.getFhirSinkPath();
     this.sinkUsername = options.getSinkUserName();
@@ -123,6 +127,7 @@ abstract class FetchSearchPageFn<T> extends DoFn<T, KV<String, Integer>> {
     this.secondsToFlush = options.getSecondsToFlushParquetFiles();
     this.rowGroupSize = options.getRowGroupSizeForParquetFiles();
     this.viewDefinitionsDir = options.getViewDefinitionsDir();
+    this.profileDefinitionsDirList = options.getProfileDefinitionsDirList();
     if (options.getSinkDbConfigPath().isEmpty()) {
       this.sinkDbConfig = null;
     } else {
@@ -161,7 +166,7 @@ abstract class FetchSearchPageFn<T> extends DoFn<T, KV<String, Integer>> {
     log.debug("Starting setup for stage " + stageIdentifier);
     // TODO make this configurable
     //   https://github.com/GoogleCloudPlatform/openmrs-fhir-analytics/issues/400
-    fhirContext = FhirContexts.forR4();
+    fhirContext = initialiseFhirContext(profileDefinitionsDirList);
     // The documentation for `FhirContext` claims that it is thread-safe but looking at the code,
     // it is not obvious if it is. This might be an issue when we write to it, like the next line.
     fhirContext.setParserOptions(
@@ -203,6 +208,16 @@ abstract class FetchSearchPageFn<T> extends DoFn<T, KV<String, Integer>> {
       //  https://github.com/google/fhir-data-pipes/issues/288
       jdbcWriter = new JdbcResourceWriter(jdbcSink, viewDefinitionsDir, fhirContext);
     }
+  }
+
+  private FhirContext initialiseFhirContext(String profileDefinitionsDirList) {
+    FhirContext fhirContext = null;
+    if (!Strings.isNullOrEmpty(profileDefinitionsDirList)) {
+      fhirContext = FhirContexts.forR4(Arrays.asList(profileDefinitionsDirList.split(",")));
+    } else {
+      fhirContext = FhirContexts.forR4();
+    }
+    return fhirContext;
   }
 
   @Teardown

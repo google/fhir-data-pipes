@@ -2472,7 +2472,6 @@
             "code": "Reference",
             "targetProfile": [
               "http://hl7.org/fhir/us/core/StructureDefinition/us-core-condition-problems-health-concerns",
-              "http://hl7.org/fhir/us/core/StructureDefinition/us-core-condition-encounter-diagnosis",
               "http://hl7.org/fhir/us/core/StructureDefinition/us-core-procedure",
               "http://hl7.org/fhir/StructureDefinition/Observation",
               "http://hl7.org/fhir/StructureDefinition/ImmunizationRecommendation"
