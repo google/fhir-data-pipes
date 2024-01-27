@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2023 Google LLC
+ * Copyright 2020-2024 Google LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ import ca.uhn.fhir.parser.DataFormatException;
 import com.cerner.bunsen.FhirContexts;
 import com.google.api.client.util.Sets;
 import com.google.common.base.Preconditions;
+import com.google.common.base.Strings;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
@@ -107,7 +108,7 @@ public class DwhFiles {
    * @param fhirContext
    */
   DwhFiles(String dwhRoot, FhirContext fhirContext) {
-    Preconditions.checkNotNull(dwhRoot);
+    Preconditions.checkArgument(!Strings.isNullOrEmpty(dwhRoot));
     this.dwhRoot = dwhRoot;
     this.fhirContext = fhirContext;
   }
@@ -129,6 +130,15 @@ public class DwhFiles {
   public ResourceId getResourcePath(String resourceType) {
     return FileSystems.matchNewResource(getRoot(), true)
         .resolve(resourceType, StandardResolveOptions.RESOLVE_DIRECTORY);
+  }
+
+  /**
+   * @param resourceType the type of the FHIR resources
+   * @return The file pattern for Parquet files of `resourceType` in this DWH.
+   */
+  public String getFilePattern(String resourceType) {
+    return String.format(
+        "%s*%s", getResourcePath(resourceType).toString(), ParquetUtil.PARQUET_EXTENSION);
   }
 
   /**

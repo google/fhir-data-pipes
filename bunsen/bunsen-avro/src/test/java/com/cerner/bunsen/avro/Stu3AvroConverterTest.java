@@ -156,8 +156,9 @@ public class Stu3AvroConverterTest {
 
     // Decode the Avro decimal to ensure the expected value is there.
     BigDecimal avroDecimal =
-        (BigDecimal)
-            ((Record) ((Record) avroObservation.get("value")).get("quantity")).get("value");
+        BigDecimal.valueOf(
+            (Double)
+                ((Record) ((Record) avroObservation.get("value")).get("quantity")).get("value"));
 
     Assert.assertEquals(originalDecimal.compareTo(avroDecimal), 0);
 

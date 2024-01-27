@@ -30,8 +30,9 @@
       }
     }
 
-    function runPipeline(isFullRun) {
-      console.log('Trying to start pipeline; isFullRun: ' + isFullRun);
+    // valid `runMode`s: 'INCREMENTAL', 'FULL', 'VIEWS'
+    function runPipeline(runMode) {
+      console.log('Trying to start pipeline; runMode: ' + runMode);
       var xhr = new XMLHttpRequest();
       xhr.open("POST", '/run', true);
       xhr.onreadystatechange = function() {
@@ -52,7 +53,7 @@
         }
       }
       formData = new FormData();
-      formData.append('isFullRun', isFullRun);
+      formData.append('runMode', runMode);
       changeVisibility('pipelineWait', true);
       xhr.send(formData);
     }
@@ -245,34 +246,60 @@
           </div>
           <!-- TODO add last run time -->
           <!-- End to-do -->
-          <div class="row row-cols-1 row-cols-md-2 mb-2 text-center">
+          <div class="row row-cols-1 row-cols-sm-1 row-cols-md-3 mb-2 text-center">
+
+            <!-- "Run Incremental" button -->
             <div class="col">
               <div class="card md-5 rounded-3 shadow-sm">
                 <div class="card-header py-3">
                   <h5>Run Incremental Pipeline</h5>
                 </div>
                 <div class="card-body">
-                  <p>This fetches the resources since last run and merges them into the data-warehouse.</p>
+                  <p>This fetches the resources since last run and merges them into the
+                    data-warehouse.</p>
                   <button type="submit" name="mode" class="button btn btn-primary"
-                          th:classappend="${hasDwh ? '' : 'disabled'}" onclick="runPipeline(false)">
-                  Run Incremental
+                          th:classappend="${hasDwh ? '' : 'disabled'}"
+                          onclick="runPipeline('INCREMENTAL')">
+                    Run Incremental
                   </button>
                 </div>
               </div>
             </div>
+
+            <!-- "Run Full" button -->
             <div class="col">
               <div class="card md-4 rounded-3 shadow-sm">
                 <div class="card-header py-3">
                   <h5>Run Full Pipeline</h5>
                 </div>
                 <div class="card-body">
-                  <p>Fetch all of the resources and create a new data-warehouse snapshot</p>
-                  <button type="submit" name="mode" class="button btn btn-primary" onclick="runPipeline(true)">
+                  <p>This fetches all the resources and create a new data-warehouse snapshot.</p>
+                  <button type="submit" name="mode" class="button btn btn-primary"
+                          onclick="runPipeline('FULL')">
                     Run Full
                   </button>
                 </div>
               </div>
             </div>
+
+            <!-- "Recreate Views" button -->
+            <div class="col">
+              <div class="card md-4 rounded-3 shadow-sm">
+                <div class="card-header py-3">
+                  <h5>Recreate Views</h5>
+                </div>
+                <div class="card-body">
+                  <p>This reads the current data-warehouse snapshot and recreates the flat views in
+                    the sink database.</p>
+                  <button type="submit" name="mode" class="button btn btn-primary"
+                          th:classappend="${hasDwh AND enableView ? '' : 'disabled'}"
+                          onclick="runPipeline('VIEWS')">
+                    Recreate Views
+                  </button>
+                </div>
+              </div>
+            </div>
+
           </div>
         </div>
         <div style="margin-top: 50px">

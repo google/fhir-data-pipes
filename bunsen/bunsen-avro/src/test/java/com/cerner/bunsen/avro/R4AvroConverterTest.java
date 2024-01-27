@@ -95,6 +95,10 @@ public class R4AvroConverterTest {
   @BeforeClass
   public static void convertTestData() throws IOException {
 
+    // TODO update these conversions to actually use the wire/binary format, i.e., create
+    //  the wire format from the Avro object then re-read/convert that format back to an
+    //  Avro object before converting back to a HAPI object. That way we make sure that
+    //  if the Avro object is serialized to disk, it is still convertible back to HAPI objects.
     AvroConverter observationConverter =
         AvroConverter.forResource(FhirContexts.forR4(), "Observation");
 
@@ -160,8 +164,9 @@ public class R4AvroConverterTest {
 
     // Decode the Avro decimal to ensure the expected value is there.
     BigDecimal avroDecimal =
-        (BigDecimal)
-            ((Record) ((Record) avroObservation.get("value")).get("quantity")).get("value");
+        BigDecimal.valueOf(
+            (Double)
+                ((Record) ((Record) avroObservation.get("value")).get("quantity")).get("value"));
 
     Assert.assertEquals(originalDecimal.compareTo(avroDecimal), 0);
 

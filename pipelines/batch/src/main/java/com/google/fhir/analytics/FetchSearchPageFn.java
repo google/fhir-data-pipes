@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2023 Google LLC
+ * Copyright 2020-2024 Google LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ import ca.uhn.fhir.context.ParserOptions;
 import ca.uhn.fhir.parser.IParser;
 import com.cerner.bunsen.FhirContexts;
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Strings;
 import com.google.fhir.analytics.JdbcConnectionPools.DataSourceConfig;
 import com.google.fhir.analytics.model.DatabaseConfiguration;
 import com.google.fhir.analytics.view.ViewApplicationException;
@@ -188,13 +189,15 @@ abstract class FetchSearchPageFn<T> extends DoFn<T, KV<String, Integer>> {
             oAuthClientSecret,
             fhirContext);
     fhirSearchUtil = new FhirSearchUtil(fetchUtil);
-    parquetUtil =
-        new ParquetUtil(
-            fhirContext.getVersion().getVersion(),
-            parquetFile,
-            secondsToFlush,
-            rowGroupSize,
-            stageIdentifier + "_");
+    if (!Strings.isNullOrEmpty(parquetFile)) {
+      parquetUtil =
+          new ParquetUtil(
+              fhirContext.getVersion().getVersion(),
+              parquetFile,
+              secondsToFlush,
+              rowGroupSize,
+              stageIdentifier + "_");
+    }
     if (sinkDbConfig != null) {
       DataSource jdbcSink =
           JdbcConnectionPools.getInstance()
@@ -207,7 +210,9 @@ abstract class FetchSearchPageFn<T> extends DoFn<T, KV<String, Integer>> {
 
   @Teardown
   public void teardown() throws IOException {
-    parquetUtil.closeAllWriters();
+    if (parquetUtil != null) {
+      parquetUtil.closeAllWriters();
+    }
   }
 
   protected void addFetchTime(long millis) {
@@ -223,7 +228,7 @@ abstract class FetchSearchPageFn<T> extends DoFn<T, KV<String, Integer>> {
       throws IOException, SQLException, ViewApplicationException {
     if (bundle != null && bundle.getEntry() != null) {
       numFetchedResources.inc(bundle.getEntry().size());
-      if (!parquetFile.isEmpty()) {
+      if (parquetUtil != null) {
         long startTime = System.currentTimeMillis();
         parquetUtil.writeRecords(bundle, resourceTypes);
         totalGenerateTimeMillis.inc(System.currentTimeMillis() - startTime);

@@ -1,0 +1,9 @@
+{
+  "jdbcDriverClass": "org.postgresql.Driver",
+  "databaseService" : "postgresql",
+  "databaseHostName" : "172.17.0.1",
+  "databasePort" : "5432",
+  "databaseUser" : "admin",
+  "databasePassword" : "admin",
+  "databaseName" : "views"
+}

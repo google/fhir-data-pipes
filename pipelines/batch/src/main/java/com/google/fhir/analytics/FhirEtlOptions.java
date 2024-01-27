@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2023 Google LLC
+ * Copyright 2020-2024 Google LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -227,6 +227,19 @@ public interface FhirEtlOptions extends PipelineOptions {
 
   void setViewDefinitionsDir(String value);
 
+  @Description(
+      "The path to the data-warehouse directory of Parquet files to be read. The content of this "
+          + "directory is expected to have the same structure used in output data-warehouse, i.e., "
+          + "one dir per each resource type. If this is enabled, --fhirServerUrl and "
+          + "--fhirDatabaseConfigPath should be disabled because input resources are read from "
+          + "Parquet files. This is for example useful when we want to regenerate the views. "
+          + "[EXPERIMENTAL]")
+  @Required
+  @Default.String("")
+  String getParquetInputDwhRoot();
+
+  void setParquetInputDwhRoot(String value);
+
   // TODO add the option for CSV output of views.
   // @Description(
   //     "The output directory for CSV files generated for ViewDefinitions in viewDefinitionsDir.\n"
@@ -236,7 +249,8 @@ public interface FhirEtlOptions extends PipelineOptions {
   // void setSinkCsvDir();
 
   @Description(
-      "The pattern for input JSON files, e.g., 'PATH/*'. Each file should be one Bundle resource.")
+      "The pattern for input JSON files, e.g., 'PATH/*'. Each file should be one Bundle resource. "
+          + "[EXPERIMENTAL]")
   @Default.String("")
   String getSourceJsonFilePattern();
 

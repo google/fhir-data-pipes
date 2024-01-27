@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
 
-    Copyright 2020-2023 Google LLC
+    Copyright 2020-2024 Google LLC
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -217,7 +217,10 @@
                   <!-- These options enable access to all methods in the mentioned packages at
                   compile and runtime. These are added as MANIFEST entries in the bundled jar. These
                   had to be enabled specifically for accessing the
-                  `jdk.internal.misc.VM.maxDirectMemory()` API -->
+                  `jdk.internal.misc.VM.maxDirectMemory()` API
+                  TODO find an easy way to add these for IDE debugging too;
+                   currently we need to comment out the corresponding part.
+                  -->
                   <Add-Exports>java.base/jdk.internal.misc</Add-Exports>
                   <Add-Opens>java.base/jdk.internal.misc=ALL-UNNAMED</Add-Opens>
                 </manifestEntries>

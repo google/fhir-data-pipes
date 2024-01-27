@@ -117,10 +117,11 @@ public class JdbcResourceWriter {
     if (viewDir.isEmpty()) {
       log.info("Creating tables for each resource type.");
       for (String resourceType : options.getResourceList().split(",")) {
-        String tableCreate =
-            "CREATE TABLE IF NOT EXISTS %s (id VARCHAR(100) NOT NULL, "
-                + "datab JSONB, PRIMARY KEY (id) );";
-        String createStatement = String.format(tableCreate, resourceType);
+        String createStatement =
+            String.format(
+                "CREATE TABLE IF NOT EXISTS %s (%s VARCHAR(100) NOT NULL, "
+                    + "datab JSONB, PRIMARY KEY (%s) );",
+                resourceType, ID_COLUMN, ID_COLUMN);
         createSingleTable(jdbcSource, createStatement);
       }
     } else {
@@ -182,16 +183,24 @@ public class JdbcResourceWriter {
   }
 
   public void writeResource(Resource resource) throws SQLException, ViewApplicationException {
+    // TODO merge deletions and insertions into atomic transactions.
     if (viewManager == null) {
       try (Connection connection = jdbcDataSource.getConnection()) {
         String tableName = resource.getResourceType().name();
+        String resId = resource.getIdElement().getIdPart();
+        PreparedStatement deleteStatement =
+            connection.prepareStatement(
+                String.format("DELETE FROM %s WHERE %s=? ;", tableName, ID_COLUMN));
+        deleteStatement.setString(1, resId);
+        deleteStatement.execute();
+        deleteStatement.close();
         PreparedStatement statement =
             connection.prepareStatement(
                 "INSERT INTO "
                     + tableName
                     + " (id, datab) VALUES(?, ?::jsonb) "
                     + "ON CONFLICT (id) DO UPDATE SET id=?, datab=?::jsonb ;");
-        statement.setString(1, resource.getIdElement().getIdPart());
+        statement.setString(1, resId);
         statement.setString(2, parser.encodeResourceToString(resource));
         statement.setString(3, resource.getIdElement().getIdPart());
         statement.setString(4, parser.encodeResourceToString(resource));
@@ -207,7 +216,6 @@ public class JdbcResourceWriter {
           }
           ViewApplicator applicator = new ViewApplicator(vDef);
           RowList rowList = applicator.apply(resource);
-          // TODO merge deletion and insertion into an atomic transaction.
           // We should first delete old rows produced from the same resource in a previous run:
           deleteOldViewRows(
               jdbcDataSource, vDef.getName(), ViewApplicator.getIdString(resource.getIdElement()));
@@ -216,8 +224,7 @@ public class JdbcResourceWriter {
             builder.append(vDef.getName()).append(" (");
             builder.append(String.join(",", rowList.getColumnInfos().keySet()));
             builder.append(") VALUES(");
-            // TODO add resource ID requirement and replacing old rows for incremental update; also
-            //  handle deleted resources: https://github.com/google/fhir-data-pipes/issues/588
+            // TODO handle deleted resources: https://github.com/google/fhir-data-pipes/issues/588
             builder.append(
                 String.join(
                     ",", row.getElements().stream().map(e -> "?").collect(Collectors.toList())));

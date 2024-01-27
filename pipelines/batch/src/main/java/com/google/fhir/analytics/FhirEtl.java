@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2023 Google LLC
+ * Copyright 2020-2024 Google LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 package com.google.fhir.analytics;
 
 import ca.uhn.fhir.context.FhirContext;
+import ca.uhn.fhir.context.FhirVersionEnum;
 import com.cerner.bunsen.FhirContexts;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
@@ -37,10 +38,13 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import javax.sql.DataSource;
+import org.apache.avro.generic.GenericRecord;
 import org.apache.beam.sdk.Pipeline;
 import org.apache.beam.sdk.coders.CannotProvideCoderException;
 import org.apache.beam.sdk.io.FileIO;
+import org.apache.beam.sdk.io.FileIO.ReadableFile;
 import org.apache.beam.sdk.io.jdbc.JdbcIO;
+import org.apache.beam.sdk.io.parquet.ParquetIO;
 import org.apache.beam.sdk.options.PipelineOptionsFactory;
 import org.apache.beam.sdk.transforms.Create;
 import org.apache.beam.sdk.transforms.Flatten;
@@ -120,7 +124,8 @@ public class FhirEtl {
     PCollection<KV<String, Integer>> mergedPatients = flattenedPatients.apply(Sum.integersPerKey());
     final String patientType = "Patient";
     FetchPatients fetchPatients =
-        new FetchPatients(options, ParquetUtil.getResourceSchema(patientType, fhirContext));
+        new FetchPatients(
+            options, AvroConversionUtil.getInstance().getResourceSchema(patientType, fhirContext));
     mergedPatients.apply(fetchPatients);
     for (String resourceType : patientAssociatedResources) {
       FetchPatientHistory fetchPatientHistory = new FetchPatientHistory(options, resourceType);
@@ -237,7 +242,7 @@ public class FhirEtl {
     return pipelines;
   }
 
-  private static void validateOptions(FhirEtlOptions options) {
+  static void validateOptions(FhirEtlOptions options) {
     if (!options.getActivePeriod().isEmpty()) {
       Set<String> resourceSet = Sets.newHashSet(options.getResourceList().split(","));
       if (resourceSet.contains("Patient")) {
@@ -252,24 +257,37 @@ public class FhirEtl {
       }
     }
 
-    if (!options.getSourceJsonFilePattern().isEmpty()) {
+    if (!options.getParquetInputDwhRoot().isEmpty()
+        || !options.getSourceJsonFilePattern().isEmpty()) {
+      if (!options.getParquetInputDwhRoot().isEmpty()
+          && !options.getSourceJsonFilePattern().isEmpty()) {
+        throw new IllegalArgumentException(
+            "--parquetInputDwhRoot and --sourceJsonFilePattern cannot be used together!");
+      }
+      if (!options.getParquetInputDwhRoot().isEmpty()
+          && !options.getOutputParquetPath().isEmpty()) {
+        // This constraint is to make the PipelineManager logic simpler and because there is
+        // currently no use-case for both reading from Parquet files and also writing into Parquet.
+        throw new IllegalArgumentException(
+            "--parquetInputDwhRoot and --outputParquetPath cannot be used together!");
+      }
       if (!options.getFhirServerUrl().isEmpty()) {
         throw new IllegalArgumentException(
-            "--sourceJsonFilePattern and --fhirServerUrl cannot be used together!");
+            "When reading from input files, --fhirServerUrl should not be set!");
       }
       if (options.isJdbcModeEnabled()) {
         throw new IllegalArgumentException(
-            "--sourceJsonFilePattern and --jdbcModeEnabled cannot be used together!");
+            "When reading from input files, --jdbcModeEnabled should not be set!");
       }
       if (!options.getActivePeriod().isEmpty()) {
         throw new IllegalArgumentException(
-            "Enabling --activePeriod is not supported when reading from file input"
-                + " (--sourceJsonFilePattern)!");
+            "Enabling --activePeriod is not supported when reading from input files");
       }
-    } else { // options.getSourceJsonFilePattern() is not set.
+    } else { // sourceJsonFilePattern and parquetInputDwh are not set.
       if (options.getFhirServerUrl().isEmpty() && !options.isJdbcModeHapi()) {
         throw new IllegalArgumentException(
-            "Either --fhirServerUrl or --jdbcModeHapi or --sourceJsonFilePattern should be set!");
+            "One of --fhirServerUrl --jdbcModeHapi --parquetInputDwhRoot --sourceJsonFilePattern"
+                + " --parquetInputDwhRoot should be set!");
       }
     }
   }
@@ -330,6 +348,35 @@ public class FhirEtl {
     return null;
   }
 
+  private static List<Pipeline> buildParquetReadPipeline(FhirEtlOptions options)
+      throws IOException {
+    Preconditions.checkArgument(!options.getParquetInputDwhRoot().isEmpty());
+    DwhFiles dwhFiles = DwhFiles.forRoot(options.getParquetInputDwhRoot());
+    Set<String> resourceTypes = dwhFiles.findNonEmptyFhirResourceTypes();
+    log.info("Reading Parquet files for these resource types: {}", resourceTypes);
+    List<Pipeline> pipelineList = new ArrayList<>();
+    for (String resourceType : resourceTypes) {
+      Pipeline pipeline = Pipeline.create(options);
+      PCollection<ReadableFile> inputFiles =
+          pipeline
+              .apply(Create.of(dwhFiles.getFilePattern(resourceType)))
+              .apply(FileIO.matchAll())
+              .apply(FileIO.readMatches());
+
+      PCollection<GenericRecord> records =
+          inputFiles.apply(
+              ParquetIO.readFiles(
+                  AvroConversionUtil.getInstance()
+                      .getResourceSchema(resourceType, FhirVersionEnum.R4)));
+
+      records.apply(
+          "Process Parquet records for " + resourceType,
+          ParDo.of(new ProcessGenericRecords(options, resourceType)));
+      pipelineList.add(pipeline);
+    }
+    return pipelineList;
+  }
+
   private static List<Pipeline> buildJsonReadPipeline(FhirEtlOptions options) throws IOException {
     Preconditions.checkArgument(Strings.isNullOrEmpty(options.getSince()));
     Preconditions.checkArgument(!options.getSourceJsonFilePattern().isEmpty());
@@ -366,12 +413,17 @@ public class FhirEtl {
    */
   static List<Pipeline> setupAndBuildPipelines(FhirEtlOptions options)
       throws PropertyVetoException, IOException, SQLException, ViewDefinitionException {
+    if (!options.getSinkDbConfigPath().isEmpty()) {
+      JdbcResourceWriter.createTables(options);
+    }
     FhirContext fhirContext = FhirContexts.forR4();
     if (options.isJdbcModeHapi()) {
       return buildHapiJdbcPipeline(options);
     } else if (options.isJdbcModeEnabled()) {
       return buildOpenmrsJdbcPipeline(options, fhirContext);
-    } else if (!Strings.isNullOrEmpty(options.getSourceJsonFilePattern())) {
+    } else if (!options.getParquetInputDwhRoot().isEmpty()) {
+      return buildParquetReadPipeline(options);
+    } else if (!options.getSourceJsonFilePattern().isEmpty()) {
       return buildJsonReadPipeline(options);
     } else {
       return buildFhirSearchPipeline(options, fhirContext);
@@ -381,7 +433,7 @@ public class FhirEtl {
   public static void main(String[] args)
       throws PropertyVetoException, IOException, SQLException, ViewDefinitionException {
 
-    ParquetUtil.initializeAvroConverters();
+    AvroConversionUtil.initializeAvroConverters();
 
     PipelineOptionsFactory.register(FhirEtlOptions.class);
     FhirEtlOptions options =
@@ -389,9 +441,6 @@ public class FhirEtl {
     log.info("Flags: " + options);
     validateOptions(options);
 
-    if (!options.getSinkDbConfigPath().isEmpty()) {
-      JdbcResourceWriter.createTables(options);
-    }
     List<Pipeline> pipelines = setupAndBuildPipelines(options);
     EtlUtils.runMultiplePipelinesWithTimestamp(pipelines, options);
     log.info("DONE!");

@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2023 Google LLC
+ * Copyright 2020-2024 Google LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package com.google.fhir.analytics;
 
+import com.google.fhir.analytics.PipelineManager.RunMode;
 import com.google.fhir.analytics.metrics.CumulativeMetrics;
 import com.google.fhir.analytics.metrics.ProgressStats;
 import com.google.fhir.analytics.metrics.Stats;
@@ -50,16 +51,23 @@ public class ApiController {
 
   @PostMapping("/run")
   public ResponseEntity<String> runBatch(
-      @RequestParam(name = "isFullRun", required = true) boolean isFullRun) {
+      @RequestParam(name = "runMode", required = true) String runMode) {
     if (pipelineManager.isRunning()) {
       return new ResponseEntity<>("Another pipeline is running.", HttpStatus.INTERNAL_SERVER_ERROR);
     }
     logger.info("Received request to start the pipeline ...");
     try {
-      if (isFullRun) {
-        pipelineManager.runBatchPipeline();
-      } else {
+      if (RunMode.FULL.name().equals(runMode)) {
+        pipelineManager.runBatchPipeline(false);
+      } else if (RunMode.INCREMENTAL.name().equals(runMode)) {
         pipelineManager.runIncrementalPipeline();
+      } else if (RunMode.VIEWS.name().equals(runMode)) {
+        pipelineManager.runBatchPipeline(true);
+      } else {
+        throw new IllegalArgumentException(
+            String.format(
+                "The runType argument should be one of %s %s %s got %s",
+                RunMode.FULL.name(), RunMode.INCREMENTAL.name(), RunMode.VIEWS.name(), runMode));
       }
     } catch (Exception e) {
       logger.error("Error in starting the pipeline", e);

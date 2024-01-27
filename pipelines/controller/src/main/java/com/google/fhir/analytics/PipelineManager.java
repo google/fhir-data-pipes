@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2023 Google LLC
+ * Copyright 2020-2024 Google LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -99,6 +99,12 @@ public class PipelineManager implements ApplicationListener<ApplicationReadyEven
   private static final String SUCCESS = "SUCCESS";
   private static final String FAILURE = "FAILURE";
 
+  static enum RunMode {
+    INCREMENTAL,
+    FULL,
+    VIEWS,
+  }
+
   /**
    * This method publishes the beam pipeline metrics to the spring boot actuator. Previous metrics
    * are removed from the actuator before publishing the latest metrics
@@ -140,9 +146,9 @@ public class PipelineManager implements ApplicationListener<ApplicationReadyEven
   }
 
   public CumulativeMetrics getCumulativeMetrics() {
-    // TODO Generate metrics and stats even for incremental run, incremental run has two pipelines
-    //  running one after the other, come up with a strategy to aggregate the metrics and generate
-    //  the stats
+    // TODO Generate metrics and stats even for incremental and recreate views run; incremental run
+    //  has two pipelines running one after the other, come up with a strategy to aggregate the
+    //  metrics and generate the stats.
     if (isBatchRun() && isRunning()) {
       PipelineMetrics pipelineMetrics =
           PipelineMetricsProvider.getPipelineMetrics(
@@ -314,7 +320,7 @@ public class PipelineManager implements ApplicationListener<ApplicationReadyEven
   }
 
   synchronized boolean isBatchRun() {
-    return currentPipeline != null && currentPipeline.isBatchRun;
+    return (currentPipeline != null) && (currentPipeline.runMode == RunMode.FULL);
   }
 
   synchronized boolean isRunning() {
@@ -358,15 +364,23 @@ public class PipelineManager implements ApplicationListener<ApplicationReadyEven
     }
   }
 
-  synchronized void runBatchPipeline()
+  synchronized void runBatchPipeline(boolean isRecreateViews)
       throws IOException, PropertyVetoException, SQLException, ViewDefinitionException {
     Preconditions.checkState(!isRunning(), "cannot start a pipeline while another one is running");
-    PipelineConfig pipelineConfig = dataProperties.createBatchOptions();
+    Preconditions.checkState(
+        !Strings.isNullOrEmpty(getCurrentDwhRoot()) || !isRecreateViews,
+        "cannot recreate views because no DWH is found!");
+    PipelineConfig pipelineConfig =
+        (isRecreateViews
+            ? dataProperties.createRecreateViewsOptions(getCurrentDwhRoot())
+            : dataProperties.createBatchOptions());
     FhirEtlOptions options = pipelineConfig.getFhirEtlOptions();
     FlinkPipelineOptions flinkOptions = options.as(FlinkPipelineOptions.class);
     if (!Strings.isNullOrEmpty(flinkConfiguration.getFlinkConfDir())) {
       flinkOptions.setFlinkConfDir(flinkConfiguration.getFlinkConfDir());
     }
+    // sanity check; should always pass!
+    FhirEtl.validateOptions(options);
     List<Pipeline> pipelines = FhirEtl.setupAndBuildPipelines(options);
     if (pipelines == null || pipelines.isEmpty()) {
       logger.warn("No resources found to be fetched!");
@@ -374,9 +388,20 @@ public class PipelineManager implements ApplicationListener<ApplicationReadyEven
     } else {
       currentPipeline =
           new PipelineThread(
-              pipelines, options, this, dwhFilesManager, dataProperties, pipelineConfig, true);
+              pipelines,
+              options,
+              this,
+              dwhFilesManager,
+              dataProperties,
+              pipelineConfig,
+              isRecreateViews ? RunMode.VIEWS : RunMode.FULL);
     }
-    logger.info("Running full pipeline for DWH {}", options.getOutputParquetPath());
+    if (isRecreateViews) {
+      logger.info(
+          "Running pipeline for recreating views from DWH {}", options.getParquetInputDwhRoot());
+    } else {
+      logger.info("Running full pipeline for DWH {}", options.getOutputParquetPath());
+    }
     // We will only have one thread for running pipelines hence no need for a thread pool.
     currentPipeline.start();
   }
@@ -400,6 +425,8 @@ public class PipelineManager implements ApplicationListener<ApplicationReadyEven
     if (!Strings.isNullOrEmpty(flinkConfiguration.getFlinkConfDir())) {
       flinkOptionsForBatch.setFlinkConfDir(flinkConfiguration.getFlinkConfDir());
     }
+    // sanity check; should always pass!
+    FhirEtl.validateOptions(options);
     List<Pipeline> pipelines = FhirEtl.setupAndBuildPipelines(options);
 
     // The merger pipeline merges the original full DWH with the new incremental one.
@@ -440,8 +467,7 @@ public class PipelineManager implements ApplicationListener<ApplicationReadyEven
               this,
               dwhFilesManager,
               dataProperties,
-              pipelineConfig,
-              false);
+              pipelineConfig);
       logger.info("Running incremental pipeline for DWH {} since {}", currentDwh.getRoot(), since);
       currentPipeline.start();
     }
@@ -551,7 +577,7 @@ public class PipelineManager implements ApplicationListener<ApplicationReadyEven
 
     private final PipelineConfig pipelineConfig;
 
-    private final boolean isBatchRun;
+    private final RunMode runMode;
 
     PipelineThread(
         List<Pipeline> pipelines,
@@ -560,7 +586,7 @@ public class PipelineManager implements ApplicationListener<ApplicationReadyEven
         DwhFilesManager dwhFilesManager,
         DataProperties dataProperties,
         PipelineConfig pipelineConfig,
-        boolean isBatchRun) {
+        RunMode runMode) {
       Preconditions.checkArgument(options != null);
       this.pipelines = pipelines;
       this.options = options;
@@ -568,10 +594,11 @@ public class PipelineManager implements ApplicationListener<ApplicationReadyEven
       this.dwhFilesManager = dwhFilesManager;
       this.dataProperties = dataProperties;
       this.pipelineConfig = pipelineConfig;
-      this.isBatchRun = isBatchRun;
+      this.runMode = runMode;
       this.mergerOptions = null;
     }
 
+    // The constructor for the incremental pipeline (hence the `mergerOptions`).
     PipelineThread(
         List<Pipeline> pipelines,
         FhirEtlOptions options,
@@ -579,8 +606,7 @@ public class PipelineManager implements ApplicationListener<ApplicationReadyEven
         PipelineManager manager,
         DwhFilesManager dwhFilesManager,
         DataProperties dataProperties,
-        PipelineConfig pipelineConfig,
-        boolean isBatchRun) {
+        PipelineConfig pipelineConfig) {
       Preconditions.checkArgument(options != null);
       this.pipelines = pipelines;
       this.options = options;
@@ -589,7 +615,7 @@ public class PipelineManager implements ApplicationListener<ApplicationReadyEven
       this.mergerOptions = mergerOptions;
       this.dataProperties = dataProperties;
       this.pipelineConfig = pipelineConfig;
-      this.isBatchRun = isBatchRun;
+      this.runMode = RunMode.INCREMENTAL;
     }
 
     @Override
@@ -601,13 +627,23 @@ public class PipelineManager implements ApplicationListener<ApplicationReadyEven
           Thread.activeCount());
       String currentDwhRoot = null;
       try {
-        currentDwhRoot = options.getOutputParquetPath();
+        if (runMode != RunMode.VIEWS) {
+          currentDwhRoot = options.getOutputParquetPath();
+        } else {
+          currentDwhRoot = options.getParquetInputDwhRoot();
+        }
+
         List<PipelineResult> pipelineResults =
             EtlUtils.runMultiplePipelinesWithTimestamp(pipelines, options);
         // Remove the metrics of the previous pipeline and register the new metrics
         manager.removePipelineMetrics();
         pipelineResults.stream()
             .forEach(pipelineResult -> manager.publishPipelineMetrics(pipelineResult.metrics()));
+        if (runMode == RunMode.VIEWS) {
+          // Nothing more is needed to be done as we do not recreate a new DWH in this mode.
+          // TODO record timing info and other details in this case.
+          return;
+        }
         if (mergerOptions == null) { // Do not update DWH yet if this was an incremental run.
           manager.updateDwh(currentDwhRoot);
         } else {

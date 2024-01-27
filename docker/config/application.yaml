@@ -38,6 +38,9 @@ fhirdata:
   createHiveResourceTables: true
   thriftserverHiveConfig: "config/thriftserver-hive-config_local.json"
   hiveResourceViewsDir: "config/views"
+  viewDefinitionsDir: "config/views"
+  sinkDbConfigPath: "config/hapi-postgres-config_local_views.json"
+
 # Enable spring boot actuator end points, use "*" to expose all endpoints, or a comma-separated
 # list to expose selected ones
 management:

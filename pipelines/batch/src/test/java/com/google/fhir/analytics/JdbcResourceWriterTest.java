@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2023 Google LLC
+ * Copyright 2020-2024 Google LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -79,11 +79,15 @@ public class JdbcResourceWriterTest {
   public void testWriteResource() throws SQLException, ViewApplicationException {
     JdbcResourceWriter testWriter = new JdbcResourceWriter(dataSourceMock, "", fhirContext);
     testWriter.writeResource((Resource) parser.parseResource(patientResourceStr));
-    verify(statementMock, times(4)).setString(any(Integer.class), any(String.class));
-    verify(statementMock, times(4)).setString(indexCaptor.capture(), idCaptor.capture());
+    verify(statementMock, times(5)).setString(any(Integer.class), any(String.class));
+    verify(statementMock, times(5)).setString(indexCaptor.capture(), idCaptor.capture());
+    // These are for the first DELETE.
     assertThat(indexCaptor.getAllValues().get(0), equalTo(1));
     assertThat(idCaptor.getAllValues().get(0), equalTo("my-patient-id"));
-    assertThat(indexCaptor.getAllValues().get(2), equalTo(3));
-    assertThat(idCaptor.getAllValues().get(2), equalTo("my-patient-id"));
+    // These are for the INSERT.
+    assertThat(indexCaptor.getAllValues().get(1), equalTo(1));
+    assertThat(idCaptor.getAllValues().get(1), equalTo("my-patient-id"));
+    assertThat(indexCaptor.getAllValues().get(3), equalTo(3));
+    assertThat(idCaptor.getAllValues().get(3), equalTo("my-patient-id"));
   }
 }
