@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2023 Google LLC
+ * Copyright 2020-2024 Google LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,6 +33,7 @@ import org.apache.beam.sdk.coders.AvroCoder;
 import org.apache.beam.sdk.io.FileIO;
 import org.apache.beam.sdk.io.FileIO.ReadableFile;
 import org.apache.beam.sdk.io.parquet.ParquetIO;
+import org.apache.beam.sdk.io.parquet.ParquetIO.Sink;
 import org.apache.beam.sdk.metrics.Counter;
 import org.apache.beam.sdk.metrics.Metrics;
 import org.apache.beam.sdk.options.PipelineOptionsFactory;
@@ -224,11 +225,16 @@ public class ParquetMerger {
                         }
                       }))
               .setCoder(AvroCoder.of(ParquetUtil.getResourceSchema(type, fhirContext)));
+
+      Sink parquetSink =
+          ParquetIO.sink(ParquetUtil.getResourceSchema(type, fhirContext))
+              .withCompressionCodec(CompressionCodecName.SNAPPY);
+      if (options.getRowGroupSizeForParquetFiles() > 0) {
+        parquetSink.withRowGroupSize(options.getRowGroupSizeForParquetFiles());
+      }
       merged.apply(
           FileIO.<GenericRecord>write()
-              .via(
-                  ParquetIO.sink(ParquetUtil.getResourceSchema(type, fhirContext))
-                      .withCompressionCodec(CompressionCodecName.SNAPPY))
+              .via(parquetSink)
               .to(mergedDwhFiles.getResourcePath(type).toString())
               .withSuffix(".parquet")
               // TODO if we don't set this, DirectRunner works fine but FlinkRunner only writes

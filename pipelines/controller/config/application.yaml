@@ -135,6 +135,12 @@ fhirdata:
   # you can use those predefined views in your dev. env. too.
   hiveResourceViewsDir: "config/views"
 
+  # This is the size of the Parquet Row Group (a logical horizontal partitioning into rows) that
+  # will be used for creating row groups in parquet file by pipelines. A large value means more data
+  # for one column can be fit into one big column chunk which will speed up the reading of column
+  # data. On the downside, more in-memory will be needed to hold the data before writing to files.
+  rowGroupSizeForParquetFiles: 33554432   # 32mb
+
 # Enable spring boot actuator end points, use "*" to expose all endpoints, or a comma-separated
 # list to expose selected ones
 management:

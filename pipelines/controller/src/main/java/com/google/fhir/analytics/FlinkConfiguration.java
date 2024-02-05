@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2023 Google LLC
+ * Copyright 2020-2024 Google LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,6 +32,7 @@ import org.apache.flink.configuration.IllegalConfigurationException;
 import org.apache.flink.configuration.MemorySize;
 import org.apache.flink.configuration.TaskManagerOptions;
 import org.apache.flink.runtime.taskexecutor.TaskExecutorResourceUtils;
+import org.apache.parquet.hadoop.ParquetWriter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.util.FileSystemUtils;
@@ -93,6 +94,7 @@ public class FlinkConfiguration {
     // Do not generate or validate the Flink configuration in case of non-local mode
     if (!isFlinkModelLocal) return;
 
+    validateHeapMemoryConfig(dataProperties);
     if (dataProperties.isAutoGenerateFlinkConfiguration()) {
       Path confPath = Files.createTempDirectory(TEMP_FLINK_CONF_DIR);
       logger.info("Creating Flink temporary configuration directory at {}", confPath);
@@ -185,6 +187,51 @@ public class FlinkConfiguration {
                         path.toString());
                   }
                 }));
+  }
+
+  /**
+   * Validates if the JVM memory is sufficient to run pipelines successfully. This validation helps
+   * the application to fail-fast rather than failing during batch execution.
+   */
+  private void validateHeapMemoryConfig(DataProperties dataProperties) {
+    long maxMemory = Runtime.getRuntime().maxMemory();
+    long minJVMMemoryRequired = minJVMMemory(dataProperties);
+    if (minJVMMemoryRequired > maxMemory) {
+      throw new IllegalConfigurationException(
+          String.format(
+              "Insufficient max JVM memory, required %s mb but provided %s mb",
+              memoryInMB(minJVMMemoryRequired), memoryInMB(maxMemory)));
+    }
+  }
+
+  /**
+   * The minimum JVM memory needed for the pipelines to run without fail. This is derived based on
+   * the number of parquet row groups that can be read or written in parallel by the pipeline
+   * threads. This is roughly derived by the below formula.
+   *
+   * <p>memoryNeeded = Misc memory for JVM stack + (#Parallel Pipeline Threads * #Parallel Pipelines
+   * * Parquet Row Group Size)
+   */
+  private long minJVMMemory(DataProperties dataProperties) {
+    int rowGroupSize =
+        dataProperties.getRowGroupSizeForParquetFiles() > 0
+            ? dataProperties.getRowGroupSizeForParquetFiles()
+            : ParquetWriter.DEFAULT_BLOCK_SIZE;
+    int parallelism =
+        dataProperties.getNumThreads() > 0 ? dataProperties.getNumThreads() : DEFAULT_PARALLELISM;
+    // Temporary memory needed for decoding the read data from files.
+    long tempBufferSize = (long) Math.max(40 * 1024 * 1024, 0.6 * rowGroupSize);
+    // This is the minimum memory required for reading/writing parquet row groups in parallel by
+    // pipelines.
+    long memoryNeededForParquetRowGroups =
+        parallelism * EtlUtils.NO_OF_PARALLEL_PIPELINES * (rowGroupSize + tempBufferSize);
+    // This is required for stack, perm files etc.
+    long minJVMMemoryMisc = 512 * 1024 * 1024;
+    return memoryNeededForParquetRowGroups + minJVMMemoryMisc;
+  }
+
+  private long memoryInMB(long memoryInBytes) {
+    return memoryInBytes / (1024 * 1024);
   }
 
   private boolean isFlinkModeLocal(DataProperties dataProperties) {
