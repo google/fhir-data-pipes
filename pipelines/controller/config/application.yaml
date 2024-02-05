@@ -40,6 +40,12 @@ fhirdata:
   # Equivalent to pipeline `fhirDatabaseConfigPath` parameter.
   # dbConfig: "config/hapi-postgres-config.json"
 
+  # The base URL of the FHIR Store 
+  #fhirSinkPath: "http://172.17.0.1:8098/fhir"
+  # The following user-name/password should be set if the FHIR store supports Basic Auth.
+  #sinkUserName: "hapi"
+  #sinkPassword: "hapi123"
+
   # The path to output Parquet files to. The last portion of the
   # path is used as a prefix for naming the directory that contains
   # per-resource directories and a timestamp will be added;
