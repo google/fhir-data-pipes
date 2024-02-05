@@ -101,6 +101,12 @@ public class DataProperties {
 
   private String fhirServerOAuthClientSecret;
 
+  private String fhirSinkPath;
+
+  public String sinkUserName;
+
+  public String sinkPassword;
+
   @PostConstruct
   void validateProperties() {
     CronExpression.parse(incrementalSchedule);
@@ -139,6 +145,9 @@ public class DataProperties {
       options.setFhirServerOAuthClientSecret(fhirServerOAuthClientSecret);
     }
     options.setResourceList(resourceList);
+    options.setFhirSinkPath(fhirSinkPath);
+    options.setSinkUserName(sinkUserName);
+    options.setSinkPassword(sinkPassword);
 
     PipelineConfig.PipelineConfigBuilder pipelineConfigBuilder = PipelineConfig.builder();
 
@@ -177,6 +186,9 @@ public class DataProperties {
             String.valueOf(numOfDwhSnapshotsToRetain),
             "",
             ""),
+        new ConfigFields("fhirdata.fhirSinkPath", fhirSinkPath, "", ""),
+        new ConfigFields("fhirdata.sinkUserName", sinkUserName, "", ""),
+        new ConfigFields("fhirdata.sinkPassword", sinkPassword, "", ""),
         new ConfigFields("fhirdata.resourceList", resourceList, "", ""),
         new ConfigFields("fhirdata.maxWorkers", String.valueOf(maxWorkers), "", ""),
         new ConfigFields("fhirdata.dbConfig", dbConfig, "", ""));
