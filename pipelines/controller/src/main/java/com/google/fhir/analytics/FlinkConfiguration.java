@@ -209,8 +209,8 @@ public class FlinkConfiguration {
    * the number of parquet row groups that can be read or written in parallel by the pipeline
    * threads. This is roughly derived by the below formula.
    *
-   * <p>memoryNeeded = Misc memory for JVM stack + (#Parallel Pipeline Threads * #Parallel Pipelines
-   * * Parquet Row Group Size)
+   * <p>Minimum JVM Memory = Memory for JVM stack, perm files etc + (#Parallel Pipeline Threads *
+   * #Parallel Pipelines * (Parquet Row Group Size + buffer for parsing the parquet file))
    */
   private long minJVMMemory(DataProperties dataProperties) {
     int rowGroupSize =
@@ -219,7 +219,7 @@ public class FlinkConfiguration {
             : ParquetWriter.DEFAULT_BLOCK_SIZE;
     int parallelism =
         dataProperties.getNumThreads() > 0 ? dataProperties.getNumThreads() : DEFAULT_PARALLELISM;
-    // Temporary memory needed for decoding the read data from files.
+    // Temporary memory needed for decoding the read data from parquet files.
     long tempBufferSize = (long) Math.max(40 * 1024 * 1024, 0.6 * rowGroupSize);
     // This is the minimum memory required for reading/writing parquet row groups in parallel by
     // pipelines.
