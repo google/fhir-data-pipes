@@ -221,7 +221,7 @@ function check_parquet() {
 #######################################################################
 function clear() {
   rm -rf $HOME_PATH/$PARQUET_SUBDIR/*.json
-  rm -rf "$HOME_PATH/fhirSink"/*.json
+  rm -rf $HOME_PATH/fhirSink/*.json
 }
 
 #######################################################################
