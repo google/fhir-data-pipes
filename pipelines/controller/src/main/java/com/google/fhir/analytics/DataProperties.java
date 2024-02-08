@@ -145,9 +145,11 @@ public class DataProperties {
       options.setFhirServerOAuthClientSecret(fhirServerOAuthClientSecret);
     }
     options.setResourceList(resourceList);
-    options.setFhirSinkPath(fhirSinkPath);
-    options.setSinkUserName(sinkUserName);
-    options.setSinkPassword(sinkPassword);
+    if (!Strings.isNullOrEmpty(fhirSinkPath)) {
+      options.setFhirSinkPath(fhirSinkPath);
+      options.setSinkUserName(sinkUserName);
+      options.setSinkPassword(sinkPassword);
+    }
 
     PipelineConfig.PipelineConfigBuilder pipelineConfigBuilder = PipelineConfig.builder();
 
