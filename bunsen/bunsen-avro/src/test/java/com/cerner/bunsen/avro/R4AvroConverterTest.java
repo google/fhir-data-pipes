@@ -96,7 +96,7 @@ public class R4AvroConverterTest {
   public static void convertTestData() throws IOException {
 
     // TODO update these conversions to actually use the wire/binary format, i.e., create
-    //  the wire format from the Avro object then re-read/convert that format back to an
+    //  the serialized format from the Avro object then re-read/convert that format back to an
     //  Avro object before converting back to a HAPI object. That way we make sure that
     //  if the Avro object is serialized to disk, it is still convertible back to HAPI objects.
     AvroConverter observationConverter =

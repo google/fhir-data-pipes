@@ -332,7 +332,7 @@ public class DwhFiles {
     return Instant.parse(result.get(0));
   }
 
-  public void writeToFile(String fileName, byte[] content) throws IOException {
+  public void overwriteFile(String fileName, byte[] content) throws IOException {
     ResourceId resourceId =
         FileSystems.matchNewResource(getRoot(), true)
             .resolve(fileName, StandardResolveOptions.RESOLVE_FILE);
@@ -341,13 +341,13 @@ public class DwhFiles {
     MatchResult matchResult = Iterables.getOnlyElement(matches);
 
     if (matchResult.status() == Status.OK) {
-      String errorMessage =
-          String.format(
-              "Attempting to write to the file %s which already exists",
-              getRoot() + "/" + fileName);
-      log.error(errorMessage);
-      throw new FileAlreadyExistsException(errorMessage);
-    } else if (matchResult.status() == Status.NOT_FOUND) {
+      String warnMessage =
+          String.format("Overwriting the existing file %s", getRoot() + "/" + fileName);
+      log.warn(warnMessage);
+      FileSystems.delete(List.of(resourceId));
+    }
+
+    if (matchResult.status() == Status.NOT_FOUND || matchResult.status() == Status.OK) {
       WritableByteChannel writableByteChannel = FileSystems.create(resourceId, MimeTypes.BINARY);
       writableByteChannel.write(ByteBuffer.wrap(content));
       writableByteChannel.close();

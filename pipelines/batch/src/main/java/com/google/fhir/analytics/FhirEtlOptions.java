@@ -208,7 +208,7 @@ public interface FhirEtlOptions extends PipelineOptions {
   void setSince(String value);
 
   @Description(
-      "Path to the sink database config; if not set, no sink DB is used [experimental].\n"
+      "Path to the sink database config; if not set, no sink DB is used.\n"
           + "If viewDefinitionsDir is set, the output tables will be the generated views\n"
           + "(the `name` field value will be used as the table name); if not, one table\n"
           + "per resource type is created with the JSON content of a resource and its\n"
@@ -217,6 +217,14 @@ public interface FhirEtlOptions extends PipelineOptions {
   String getSinkDbConfigPath();
 
   void setSinkDbConfigPath(String value);
+
+  @Description(
+      "If true, drops the old view tables first and recreate them; otherwise create tables \n"
+          + "only if they do not exit.")
+  @Default.Boolean(false)
+  Boolean getRecreateSinkTables();
+
+  void setRecreateSinkTables(Boolean value);
 
   @Description(
       "The directory from which SQL-on-FHIR-v2 ViewDefinition json files are read.\n"

@@ -242,6 +242,7 @@ abstract class FetchSearchPageFn<T> extends DoFn<T, KV<String, Integer>> {
         if (bundle.getEntry() == null) {
           return;
         }
+        // TODO consider processing the whole Bundle in one batched DB update.
         for (BundleEntryComponent entry : bundle.getEntry()) {
           Resource resource = entry.getResource();
           if (resourceTypes == null || resourceTypes.contains(resource.getResourceType().name())) {

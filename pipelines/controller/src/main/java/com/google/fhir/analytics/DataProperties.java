@@ -152,6 +152,7 @@ public class DataProperties {
     options.setParquetInputDwhRoot(dwhRoot);
     options.setViewDefinitionsDir(viewDefinitionsDir);
     options.setSinkDbConfigPath(sinkDbConfigPath);
+    options.setRecreateSinkTables(true);
     return addFlinkOptions(options).build();
   }
 

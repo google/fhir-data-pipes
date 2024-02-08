@@ -24,7 +24,6 @@ import java.util.List;
 import org.apache.avro.generic.GenericRecord;
 import org.apache.beam.sdk.metrics.Counter;
 import org.apache.beam.sdk.metrics.Metrics;
-import org.apache.beam.sdk.values.KV;
 import org.hl7.fhir.r4.model.Bundle;
 import org.hl7.fhir.r4.model.Bundle.BundleEntryComponent;
 import org.hl7.fhir.r4.model.Resource;
@@ -68,16 +67,17 @@ public class ProcessGenericRecords extends FetchSearchPageFn<GenericRecord> {
   public void teardown() throws IOException {
     if (!cachedResources.isEmpty()) {
       try {
-        processBundle(flushCacheToBundle());
+        processBundle(flushCachToBundle());
       } catch (SQLException | ViewApplicationException e) {
         // This is not perfect but the parent teardown only has IOException.
+        log.error("Caught exception in teardown: ", e);
         throw new IOException(e);
       }
     }
     super.teardown();
   }
 
-  private Bundle flushCacheToBundle() {
+  private Bundle flushCachToBundle() {
     Bundle bundle = new Bundle();
     for (Resource resource : cachedResources) {
       bundle.addEntry(new BundleEntryComponent().setResource(resource));
@@ -87,7 +87,7 @@ public class ProcessGenericRecords extends FetchSearchPageFn<GenericRecord> {
   }
 
   @ProcessElement
-  public void processElement(@Element GenericRecord record, OutputReceiver<KV<String, Integer>> out)
+  public void processElement(@Element GenericRecord record)
       throws IOException, SQLException, ViewApplicationException {
     try {
       long startTime = System.currentTimeMillis();
@@ -97,7 +97,7 @@ public class ProcessGenericRecords extends FetchSearchPageFn<GenericRecord> {
       totalAvroConversions.inc();
       cachedResources.add(resource);
       if (cachedResources.size() >= BUNDLE_SIZE) {
-        processBundle(flushCacheToBundle());
+        processBundle(flushCachToBundle());
       }
     } catch (IllegalArgumentException e) {
       log.error("Dropping bad record because: " + e.getMessage());

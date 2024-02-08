@@ -702,7 +702,7 @@ public class PipelineManager implements ApplicationListener<ApplicationReadyEven
       if (!Strings.isNullOrEmpty(dwhRoot)) {
         String stackTrace = ExceptionUtils.getStackTrace(e);
         DwhFiles.forRoot(dwhRoot)
-            .writeToFile(ERROR_FILE_NAME, stackTrace.getBytes(StandardCharsets.UTF_8));
+            .overwriteFile(ERROR_FILE_NAME, stackTrace.getBytes(StandardCharsets.UTF_8));
       }
     } catch (IOException ex) {
       logger.error("Error while capturing error to a file", ex);

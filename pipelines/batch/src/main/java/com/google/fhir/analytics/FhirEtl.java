@@ -287,7 +287,7 @@ public class FhirEtl {
       if (options.getFhirServerUrl().isEmpty() && !options.isJdbcModeHapi()) {
         throw new IllegalArgumentException(
             "One of --fhirServerUrl --jdbcModeHapi --parquetInputDwhRoot --sourceJsonFilePattern"
-                + " --parquetInputDwhRoot should be set!");
+                + " should be set!");
       }
     }
   }

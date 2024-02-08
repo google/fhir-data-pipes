@@ -79,15 +79,11 @@ public class JdbcResourceWriterTest {
   public void testWriteResource() throws SQLException, ViewApplicationException {
     JdbcResourceWriter testWriter = new JdbcResourceWriter(dataSourceMock, "", fhirContext);
     testWriter.writeResource((Resource) parser.parseResource(patientResourceStr));
-    verify(statementMock, times(5)).setString(any(Integer.class), any(String.class));
-    verify(statementMock, times(5)).setString(indexCaptor.capture(), idCaptor.capture());
-    // These are for the first DELETE.
+    verify(statementMock, times(4)).setString(any(Integer.class), any(String.class));
+    verify(statementMock, times(4)).setString(indexCaptor.capture(), idCaptor.capture());
     assertThat(indexCaptor.getAllValues().get(0), equalTo(1));
     assertThat(idCaptor.getAllValues().get(0), equalTo("my-patient-id"));
-    // These are for the INSERT.
-    assertThat(indexCaptor.getAllValues().get(1), equalTo(1));
-    assertThat(idCaptor.getAllValues().get(1), equalTo("my-patient-id"));
-    assertThat(indexCaptor.getAllValues().get(3), equalTo(3));
-    assertThat(idCaptor.getAllValues().get(3), equalTo("my-patient-id"));
+    assertThat(indexCaptor.getAllValues().get(2), equalTo(3));
+    assertThat(idCaptor.getAllValues().get(2), equalTo("my-patient-id"));
   }
 }

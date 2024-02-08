@@ -85,6 +85,15 @@ public class JdbcResourceWriter {
     }
   }
 
+  private static void dropTable(DataSource dataSource, String tableName) throws SQLException {
+    try (Connection connection = dataSource.getConnection();
+        PreparedStatement statement =
+            connection.prepareStatement(String.format("DROP TABLE IF EXISTS %s ;", tableName))) {
+      log.info("Table deletion statement is " + statement);
+      statement.execute();
+    }
+  }
+
   private static void createIdIndex(DataSource dataSource, String tableName) throws SQLException {
     String sql =
         String.format(
@@ -143,6 +152,9 @@ public class JdbcResourceWriter {
                       "To write view '%s' to DB, there should be a column '%s' with path '%s'.",
                       vDef.getName(), ID_COLUMN, ViewApplicator.GET_RESOURCE_KEY));
             }
+            if (options.getRecreateSinkTables()) {
+              dropTable(jdbcSource, vDef.getName());
+            }
             // TODO if tables already exist, the better way is to check their schema to see if it is
             //  consistent with the view; and fail if it is not.
             StringBuilder builder = new StringBuilder("CREATE TABLE IF NOT EXISTS ");
@@ -187,20 +199,13 @@ public class JdbcResourceWriter {
     if (viewManager == null) {
       try (Connection connection = jdbcDataSource.getConnection()) {
         String tableName = resource.getResourceType().name();
-        String resId = resource.getIdElement().getIdPart();
-        PreparedStatement deleteStatement =
-            connection.prepareStatement(
-                String.format("DELETE FROM %s WHERE %s=? ;", tableName, ID_COLUMN));
-        deleteStatement.setString(1, resId);
-        deleteStatement.execute();
-        deleteStatement.close();
         PreparedStatement statement =
             connection.prepareStatement(
                 "INSERT INTO "
                     + tableName
                     + " (id, datab) VALUES(?, ?::jsonb) "
                     + "ON CONFLICT (id) DO UPDATE SET id=?, datab=?::jsonb ;");
-        statement.setString(1, resId);
+        statement.setString(1, resource.getIdElement().getIdPart());
         statement.setString(2, parser.encodeResourceToString(resource));
         statement.setString(3, resource.getIdElement().getIdPart());
         statement.setString(4, parser.encodeResourceToString(resource));
@@ -219,23 +224,28 @@ public class JdbcResourceWriter {
           // We should first delete old rows produced from the same resource in a previous run:
           deleteOldViewRows(
               jdbcDataSource, vDef.getName(), ViewApplicator.getIdString(resource.getIdElement()));
-          for (FlatRow row : rowList.getRows()) {
-            StringBuilder builder = new StringBuilder("INSERT INTO ");
-            builder.append(vDef.getName()).append(" (");
-            builder.append(String.join(",", rowList.getColumnInfos().keySet()));
-            builder.append(") VALUES(");
-            // TODO handle deleted resources: https://github.com/google/fhir-data-pipes/issues/588
-            builder.append(
-                String.join(
-                    ",", row.getElements().stream().map(e -> "?").collect(Collectors.toList())));
-            builder.append(");");
-            try (Connection connection = jdbcDataSource.getConnection();
-                PreparedStatement statement = connection.prepareStatement(builder.toString())) {
+          StringBuilder builder = new StringBuilder("INSERT INTO ");
+          builder.append(vDef.getName()).append(" (");
+          builder.append(String.join(",", rowList.getColumnInfos().keySet()));
+          builder.append(") VALUES(");
+          // TODO handle deleted resources: https://github.com/google/fhir-data-pipes/issues/588
+          builder.append(
+              String.join(
+                  ",",
+                  rowList.getColumnInfos().keySet().stream()
+                      .map(e -> "?")
+                      .collect(Collectors.toList())));
+          builder.append(");");
+          String statementText = builder.toString();
+          try (Connection connection = jdbcDataSource.getConnection();
+              PreparedStatement statement = connection.prepareStatement(statementText)) {
+            for (FlatRow row : rowList.getRows()) {
               // TODO it is probably better to move both INSERT and CREATE TABLE (above) statements
               //  to the ViewSchema to have the full SQL logic in one place.
               ViewSchema.setValueInStatement(row.getElements(), statement);
-              statement.execute();
+              statement.addBatch();
             }
+            statement.executeBatch();
           }
         }
       }
