@@ -24,7 +24,7 @@ fhirdata:
   # fhirServerUrl: "http://172.17.0.1:8091/fhir"
   # fhirServerUrl: "http://hapi-server:8080/fhir"
   dbConfig: "config/hapi-postgres-config_local.json"
-  fhirSinkPath: "http://172.17.0.1:8098/fhir"
+  fhirSinkPath: "http://sink-server:8098/fhir"
   #sinkUserName: "hapi"
   #sinkPassword: "hapi123"
   dwhRootPrefix: "/dwh/controller_DWH"
