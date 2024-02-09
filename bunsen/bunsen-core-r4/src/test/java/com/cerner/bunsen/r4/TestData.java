@@ -29,6 +29,7 @@ import org.hl7.fhir.r4.model.Provenance;
 import org.hl7.fhir.r4.model.Quantity;
 import org.hl7.fhir.r4.model.Reference;
 import org.hl7.fhir.r4.model.StringType;
+import org.hl7.fhir.r4.model.Task;
 import org.hl7.fhir.r4.model.Timing;
 import org.hl7.fhir.r4.model.Timing.TimingRepeatComponent;
 import org.hl7.fhir.utilities.xhtml.NodeType;
@@ -181,6 +182,24 @@ public class TestData {
     component.setCode(code);
 
     return observation;
+  }
+
+  public static Task newTask() {
+    Task task = new Task();
+
+    task.setId("my-task");
+
+    CodeableConcept taskCode = new CodeableConcept();
+    taskCode.addCoding().setSystem("test-system");
+
+    Task.ParameterComponent input = task.addInput();
+    input.setType(taskCode);
+    input.setValue(new IntegerType(12));
+    Task.TaskOutputComponent output = task.addOutput();
+    output.setType(taskCode);
+    output.setValue(new IntegerType(13));
+
+    return task;
   }
 
   /**

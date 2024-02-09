@@ -127,7 +127,6 @@ public class DefinitionToAvroVisitor implements DefinitionVisitor<HapiConverter<
           .put("markdown", STRING_CONVERTER)
           .put("date", DATE_CONVERTER)
           .put("instant", DATE_CONVERTER)
-          .put("datetime", DATE_CONVERTER)
           .put("dateTime", DATE_CONVERTER)
           .put("time", STRING_CONVERTER)
           .put("string", STRING_CONVERTER)
@@ -147,8 +146,6 @@ public class DefinitionToAvroVisitor implements DefinitionVisitor<HapiConverter<
           .put("http://hl7.org/fhirpath/System.Decimal", DOUBLE_CONVERTER)
           .put("http://hl7.org/fhirpath/System.DateTime", DATE_CONVERTER)
           .put("http://hl7.org/fhirpath/System.Time", STRING_CONVERTER)
-          // TODO add the following converter; in the standard R4 implementation this seems missing!
-          //  .put("http://hl7.org/fhirpath/System.Quantity", ?)
           .put("canonical", STRING_CONVERTER)
           .put("url", STRING_CONVERTER)
           .put("uuid", STRING_CONVERTER)
