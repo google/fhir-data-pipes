@@ -414,7 +414,7 @@ fhir_source_query
 sleep 50
 run_pipeline true
 check_parquet false
-#test_fhir_sink false
+test_fhir_sink false
 
 clear
 
@@ -424,7 +424,7 @@ sleep 10
 # Incremental run.
 run_pipeline false
 sleep 50
-#test_fhir_sink true
+test_fhir_sink true
 check_parquet true
 
 validate_resource_tables
