@@ -116,7 +116,7 @@ function fhir_source_query() {
   local fhir_username="hapi"
   local fhir_password="hapi"
   local fhir_url_extension="/fhir"
-
+  print_message ">>> Debuggin CI e2e tests >>>>>>>>>>>>>>>>>>>>>"
   curl -L -X GET -u $fhir_username:$fhir_password --connect-timeout 5 --max-time 20 \
   "${SOURCE_FHIR_SERVER_URL}${fhir_url_extension}/Patient${query_param}" 2>/dev/null \
   >"${HOME_PATH}/${PARQUET_SUBDIR}/patients.json"
@@ -335,6 +335,7 @@ function validate_resource_tables_data() {
 ##############################################################
 function validate_updated_resource() {
   # Count all viral-load observations.
+  print_message ">>>> DEBUGIN LAST STEP >>>>>>>>>>>>>>>>>>>>>>>"
   local query="SELECT p.name.family FROM patient AS p where p.id = ${PATIENT_ID};"
   beeline -u "jdbc:hive2://${THRIFTSERVER_URL}" -n hive -e "${query}" \
     --outputformat=csv2 >>patient_data.csv
@@ -411,6 +412,7 @@ validate_args  "$@"
 setup "$@"
 print_message "---- STARTING TEST ----"
 fhir_source_query
+ print_message ">>> Debugging CI e2e tests After FHIR QUERY >>>>>>>>>>>>>>>>>>>>>"
 sleep 50
 run_pipeline true
 check_parquet false
