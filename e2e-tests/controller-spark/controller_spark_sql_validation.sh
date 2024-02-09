@@ -98,6 +98,7 @@ function setup() {
     PIPELINE_CONTROLLER_URL='http://pipeline-controller:8080'
     THRIFTSERVER_URL='spark:10000'
   fi
+  mkdir "${HOME_PATH}/fhirSink"
 }
 
 #################################################
@@ -362,7 +363,6 @@ function test_fhir_sink() {
 
   print_message "Finding number of patients, encounters and obs in FHIR server"
 
-  mkdir "${HOME_PATH}/fhirSink"
   curl -L -X GET -u hapi:hapi --connect-timeout 5 --max-time 20 \
     "${SINK_FHIR_SERVER_URL}/fhir/Patient${query_param}" 2>/dev/null >>"${HOME_PATH}/fhirSink/patients.json"
 
