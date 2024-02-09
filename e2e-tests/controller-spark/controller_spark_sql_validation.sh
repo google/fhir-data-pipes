@@ -359,7 +359,16 @@ function validate_updated_resource() {
 #   TOTAL_TEST_OBS
 #################################################
 function test_fhir_sink() {
-   local query_param="?_summary=count"
+  local query_param="?_summary=count"
+
+  local isIncremental=$1
+
+  if [[ "${isIncremental}" == "true" ]]
+  then
+    # In case of incremental run, A new patient is added
+    # assuming batch run was executed before this.
+    TOTAL_TEST_PATIENTS=$((TOTAL_TEST_PATIENTS + 1))
+  fi
 
   print_message "Finding number of patients, encounters and obs in FHIR server"
 
@@ -387,6 +396,11 @@ function test_fhir_sink() {
         == "${TOTAL_TEST_ENCOUNTERS}" && "${total_obs_sinked_fhir}" == "${TOTAL_TEST_OBS}" ]] \
     ; then
     print_message "FHIR SERVER SINK EXECUTED SUCCESSFULLY USING ${PARQUET_SUBDIR} MODE"
+    if [[ "${isIncremental}" == "true" ]]
+    then
+      # Revert the Change for the next Paquet tests
+      TOTAL_TEST_PATIENTS=$((TOTAL_TEST_PATIENTS - 1))
+    fi
   else
     print_message "FHIR SERVER SINK TEST FAILED USING ${PARQUET_SUBDIR} MODE"
     exit 1
@@ -400,7 +414,7 @@ fhir_source_query
 sleep 50
 run_pipeline true
 check_parquet false
-test_fhir_sink
+test_fhir_sink false
 
 clear
 
@@ -409,8 +423,9 @@ update_resource
 sleep 10
 # Incremental run.
 run_pipeline false
+sleep 20
+test_fhir_sink true
 check_parquet true
-test_fhir_sink
 
 validate_resource_tables
 validate_resource_tables_data
