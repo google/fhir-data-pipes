@@ -23,7 +23,7 @@ store.
 
 - [docker/](docker/): Docker configurations for various servers/pipelines.
 
-- [doc/](doc/): Documentation for project contributors. See the
+- [doc/](doc/): Documentation for project contributors.  See the
   [pipelines README](pipelines/README.md) and
   [wiki](https://github.com/google/fhir-data-pipes/wiki) for usage documentation.
 
