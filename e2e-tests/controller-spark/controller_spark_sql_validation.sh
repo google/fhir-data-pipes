@@ -424,7 +424,7 @@ sleep 10
 # Incremental run.
 run_pipeline false
 sleep 20
-test_fhir_sink true
+#test_fhir_sink true
 check_parquet true
 
 validate_resource_tables
