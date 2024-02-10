@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2023 Google LLC
+ * Copyright 2020-2024 Google LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -87,7 +87,7 @@ public class JdbcFetchHapi {
       // TODO check for null values before accessing columns; this caused NPEs with `latest` HAPI.
       switch (resultSet.getString("res_encoding")) {
         case "JSON":
-          jsonResource = new String(resultSet.getBytes("res_text"), Charsets.UTF_8);
+          jsonResource = new String(resultSet.getBytes("res_text_vc"), Charsets.UTF_8);
           break;
         case "JSONC":
           Blob blob = resultSet.getBlob("res_text");
@@ -157,7 +157,8 @@ public class JdbcFetchHapi {
       StringBuilder builder =
           new StringBuilder(
               "SELECT res.res_id, hfi.forced_id, res.res_type, res.res_updated, res.res_ver,"
-                  + " res.res_version, ver.res_encoding, ver.res_text  FROM hfj_resource res JOIN"
+                  + " res.res_version, ver.res_encoding, ver.res_text, ver.res_text_vc "
+                  + " FROM hfj_resource res JOIN"
                   + " hfj_res_ver ver ON res.res_id = ver.res_id AND res.res_ver = ver.res_ver  "
                   + " LEFT JOIN hfj_forced_id hfi ON res.res_id = hfi.resource_pid WHERE"
                   + " res.res_type = ? AND res.res_id % ? = ? AND"
