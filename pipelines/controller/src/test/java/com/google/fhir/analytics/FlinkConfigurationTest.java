@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2023 Google LLC
+ * Copyright 2020-2024 Google LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -80,6 +80,7 @@ public class FlinkConfigurationTest {
   public void testNonAutoGenerationWithDefaultConfiguration() throws IOException {
     DataProperties dataProperties = new DataProperties();
     dataProperties.setAutoGenerateFlinkConfiguration(false);
+    dataProperties.setNumThreads(1);
     try (MockedStatic<GlobalConfiguration> mockedStatic =
         Mockito.mockStatic(GlobalConfiguration.class)) {
       Configuration defaultConfiguration = new Configuration();

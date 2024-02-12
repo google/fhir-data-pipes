@@ -44,7 +44,7 @@ enable_jemalloc
 
 if [[ -z "$JAVA_OPTS" ]]; then
   echo "JAVA_OPTS is empty, initialising with default values"
-  JAVA_OPTS="-Xms2g -Xmx2g"
+  JAVA_OPTS="-Xms6g -Xmx6g"
 fi
 
 # The -Xmx value is to make sure there is a minimum amount of memory; it can be

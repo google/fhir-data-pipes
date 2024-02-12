@@ -135,6 +135,12 @@ fhirdata:
   # you can use those predefined views in your dev. env. too.
   hiveResourceViewsDir: "config/views"
 
+  # This is the size of the Parquet Row Group (a logical horizontal partitioning into rows) that
+  # will be used for creating row groups in parquet file by pipelines. A large value means more data
+  # for one column can be fit into one big column chunk which will speed up the reading of column
+  # data. On the downside, more in-memory will be needed to hold the data before writing to files.
+  rowGroupSizeForParquetFiles: 33554432   # 32mb
+
   # The location from which ViewDefinition resources are read and applied to the
   # corresponding input FHIR resources. Any file in this directory that ends
   # `.json` is assumed to be a single ViewDefinition. To output these views to a
@@ -147,6 +153,12 @@ fhirdata:
   # feature can have a noticeable impact on pipelines performance. The default
   # empty string disables this feature.
   sinkDbConfigPath: "config/hapi-postgres-config_local_views.json"
+
+  # The base URL of the FHIR Store/Sink server 
+  fhirSinkPath: "http://172.17.0.1:8098/fhir"
+  # The following user-name/password should be set if the FHIR store supports Basic Auth.
+  #sinkUserName: "hapi"
+  #sinkPassword: "hapi123"
 
 # Enable spring boot actuator end points, use "*" to expose all endpoints, or a comma-separated
 # list to expose selected ones
