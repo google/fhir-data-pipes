@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2023 Google LLC
+ * Copyright 2020-2024 Google LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -208,7 +208,7 @@ public interface FhirEtlOptions extends PipelineOptions {
   void setSince(String value);
 
   @Description(
-      "Path to the sink database config; if not set, no sink DB is used [experimental].\n"
+      "Path to the sink database config; if not set, no sink DB is used.\n"
           + "If viewDefinitionsDir is set, the output tables will be the generated views\n"
           + "(the `name` field value will be used as the table name); if not, one table\n"
           + "per resource type is created with the JSON content of a resource and its\n"
@@ -219,6 +219,14 @@ public interface FhirEtlOptions extends PipelineOptions {
   void setSinkDbConfigPath(String value);
 
   @Description(
+      "If true, drops the old view tables first and recreate them; otherwise create tables \n"
+          + "only if they do not exit.")
+  @Default.Boolean(false)
+  Boolean getRecreateSinkTables();
+
+  void setRecreateSinkTables(Boolean value);
+
+  @Description(
       "The directory from which SQL-on-FHIR-v2 ViewDefinition json files are read.\n"
           + "Note currently this requires setting sinkDbConfigPath as this is\n"
           + "currently the only option for writing views (more to be added).")
@@ -226,6 +234,19 @@ public interface FhirEtlOptions extends PipelineOptions {
   String getViewDefinitionsDir();
 
   void setViewDefinitionsDir(String value);
+
+  @Description(
+      "The path to the data-warehouse directory of Parquet files to be read. The content of this "
+          + "directory is expected to have the same structure used in output data-warehouse, i.e., "
+          + "one dir per each resource type. If this is enabled, --fhirServerUrl and "
+          + "--fhirDatabaseConfigPath should be disabled because input resources are read from "
+          + "Parquet files. This is for example useful when we want to regenerate the views. "
+          + "[EXPERIMENTAL]")
+  @Required
+  @Default.String("")
+  String getParquetInputDwhRoot();
+
+  void setParquetInputDwhRoot(String value);
 
   // TODO add the option for CSV output of views.
   // @Description(
@@ -236,7 +257,8 @@ public interface FhirEtlOptions extends PipelineOptions {
   // void setSinkCsvDir();
 
   @Description(
-      "The pattern for input JSON files, e.g., 'PATH/*'. Each file should be one Bundle resource.")
+      "The pattern for input JSON files, e.g., 'PATH/*'. Each file should be one Bundle resource. "
+          + "[EXPERIMENTAL]")
   @Default.String("")
   String getSourceJsonFilePattern();
 

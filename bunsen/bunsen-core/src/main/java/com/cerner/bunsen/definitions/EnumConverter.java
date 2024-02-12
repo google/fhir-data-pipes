@@ -17,7 +17,10 @@ public class EnumConverter<T> extends StringConverter<T> {
       input = null;
     }
 
-    primitive.setValueAsString((String) input);
+    // We can't assume the type is necessarily `String` for Avro `string`
+    // types; it can be Utf8 too, see:
+    // https://github.com/apache/parquet-mr/commit/918609f2cc4e4de95445ce4fdd7dc952b9625017
+    primitive.setValueAsString(input.toString());
   }
 
   @Override

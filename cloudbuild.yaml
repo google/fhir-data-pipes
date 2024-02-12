@@ -120,6 +120,15 @@ steps:
     - PARQUET_SUBDIR=JDBC_HAPI
     - DOCKER_NETWORK=--use_docker_network
 
+# The `views` database is used for creating flat views from ViewDefinitions.
+- name: 'postgres'
+  id: 'Create views database'
+  entrypoint: psql
+  env:
+  - PGPASSWORD=admin
+  args: [ '-U', 'admin', '-d', 'postgres', '-h', 'hapi-fhir-db', '-p', '5432',
+          '-c', 'CREATE DATABASE views;']
+
 - name: 'docker/compose'
   id: 'Bring up controller and Spark containers'
   env:
@@ -130,6 +139,16 @@ steps:
 
 - name: '${_REPOSITORY}/e2e-tests/controller-spark:${_TAG}'
   id: 'Run E2E Test for Dockerized Controller and Spark Thriftserver'
+
+# The controller logs don't appear in Cloud Build output because we run it in
+# the detached mode. For debugging controller failures we can use something like
+#  the following (and forcing the previous step to have 0 exit code).
+# - name: 'gcr.io/cloud-builders/docker'
+#   id: 'PRINT CONTROLLER LOGS'
+#   entrypoint: /bin/bash
+#   args:
+#   - -c
+#   - docker logs pipeline-controller
 
 - name: 'docker/compose'
   id: 'Bring down controller and Spark containers'

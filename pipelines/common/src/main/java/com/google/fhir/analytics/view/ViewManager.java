@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2023 Google LLC
+ * Copyright 2020-2024 Google LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ import com.google.common.collect.HashMultimap;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Multimap;
 import java.io.IOException;
+import java.nio.file.FileVisitOption;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -49,7 +50,8 @@ public class ViewManager {
     Preconditions.checkArgument(!viewDefinitionsDir.isEmpty());
     ViewManager viewManager = new ViewManager();
     List<Path> viewPaths = new ArrayList<>();
-    try (Stream<Path> paths = Files.walk(Paths.get(viewDefinitionsDir))) {
+    try (Stream<Path> paths =
+        Files.walk(Paths.get(viewDefinitionsDir), FileVisitOption.FOLLOW_LINKS)) {
       paths
           .filter(f -> f.toString().endsWith(JSON_EXT))
           .forEach(

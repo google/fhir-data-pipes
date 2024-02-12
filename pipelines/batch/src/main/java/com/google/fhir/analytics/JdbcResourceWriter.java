@@ -85,6 +85,15 @@ public class JdbcResourceWriter {
     }
   }
 
+  private static void dropTable(DataSource dataSource, String tableName) throws SQLException {
+    try (Connection connection = dataSource.getConnection();
+        PreparedStatement statement =
+            connection.prepareStatement(String.format("DROP TABLE IF EXISTS %s ;", tableName))) {
+      log.info("Table deletion statement is " + statement);
+      statement.execute();
+    }
+  }
+
   private static void createIdIndex(DataSource dataSource, String tableName) throws SQLException {
     String sql =
         String.format(
@@ -117,10 +126,11 @@ public class JdbcResourceWriter {
     if (viewDir.isEmpty()) {
       log.info("Creating tables for each resource type.");
       for (String resourceType : options.getResourceList().split(",")) {
-        String tableCreate =
-            "CREATE TABLE IF NOT EXISTS %s (id VARCHAR(100) NOT NULL, "
-                + "datab JSONB, PRIMARY KEY (id) );";
-        String createStatement = String.format(tableCreate, resourceType);
+        String createStatement =
+            String.format(
+                "CREATE TABLE IF NOT EXISTS %s (%s VARCHAR(100) NOT NULL, "
+                    + "datab JSONB, PRIMARY KEY (%s) );",
+                resourceType, ID_COLUMN, ID_COLUMN);
         createSingleTable(jdbcSource, createStatement);
       }
     } else {
@@ -141,6 +151,9 @@ public class JdbcResourceWriter {
                   String.format(
                       "To write view '%s' to DB, there should be a column '%s' with path '%s'.",
                       vDef.getName(), ID_COLUMN, ViewApplicator.GET_RESOURCE_KEY));
+            }
+            if (options.getRecreateSinkTables()) {
+              dropTable(jdbcSource, vDef.getName());
             }
             // TODO if tables already exist, the better way is to check their schema to see if it is
             //  consistent with the view; and fail if it is not.
@@ -182,6 +195,7 @@ public class JdbcResourceWriter {
   }
 
   public void writeResource(Resource resource) throws SQLException, ViewApplicationException {
+    // TODO merge deletions and insertions into atomic transactions.
     if (viewManager == null) {
       try (Connection connection = jdbcDataSource.getConnection()) {
         String tableName = resource.getResourceType().name();
@@ -207,28 +221,31 @@ public class JdbcResourceWriter {
           }
           ViewApplicator applicator = new ViewApplicator(vDef);
           RowList rowList = applicator.apply(resource);
-          // TODO merge deletion and insertion into an atomic transaction.
           // We should first delete old rows produced from the same resource in a previous run:
           deleteOldViewRows(
               jdbcDataSource, vDef.getName(), ViewApplicator.getIdString(resource.getIdElement()));
-          for (FlatRow row : rowList.getRows()) {
-            StringBuilder builder = new StringBuilder("INSERT INTO ");
-            builder.append(vDef.getName()).append(" (");
-            builder.append(String.join(",", rowList.getColumnInfos().keySet()));
-            builder.append(") VALUES(");
-            // TODO add resource ID requirement and replacing old rows for incremental update; also
-            //  handle deleted resources: https://github.com/google/fhir-data-pipes/issues/588
-            builder.append(
-                String.join(
-                    ",", row.getElements().stream().map(e -> "?").collect(Collectors.toList())));
-            builder.append(");");
-            try (Connection connection = jdbcDataSource.getConnection();
-                PreparedStatement statement = connection.prepareStatement(builder.toString())) {
+          StringBuilder builder = new StringBuilder("INSERT INTO ");
+          builder.append(vDef.getName()).append(" (");
+          builder.append(String.join(",", rowList.getColumnInfos().keySet()));
+          builder.append(") VALUES(");
+          // TODO handle deleted resources: https://github.com/google/fhir-data-pipes/issues/588
+          builder.append(
+              String.join(
+                  ",",
+                  rowList.getColumnInfos().keySet().stream()
+                      .map(e -> "?")
+                      .collect(Collectors.toList())));
+          builder.append(");");
+          String statementText = builder.toString();
+          try (Connection connection = jdbcDataSource.getConnection();
+              PreparedStatement statement = connection.prepareStatement(statementText)) {
+            for (FlatRow row : rowList.getRows()) {
               // TODO it is probably better to move both INSERT and CREATE TABLE (above) statements
               //  to the ViewSchema to have the full SQL logic in one place.
               ViewSchema.setValueInStatement(row.getElements(), statement);
-              statement.execute();
+              statement.addBatch();
             }
+            statement.executeBatch();
           }
         }
       }
