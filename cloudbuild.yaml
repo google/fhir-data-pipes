@@ -120,13 +120,13 @@ steps:
     - PARQUET_SUBDIR=JDBC_HAPI
     - DOCKER_NETWORK=--use_docker_network
 
-# - name: 'docker/compose'
-#   id: 'Turn down Sink Server'
-#   args: [ '-f', './docker/sink-compose.yml', 'down' ]
+- name: 'docker/compose'
+  id: 'Turn down Sink Server'
+  args: [ '-f', './docker/sink-compose.yml', 'down' ,'-v']
 
-# - name: 'docker/compose'
-#   id: 'Launch HAPI FHIR Sink Server'
-#   args: [ '-f', './docker/sink-compose.yml', 'up','--force-recreate', '--remove-orphan', '-d' ]  
+- name: 'docker/compose'
+  id: 'Launch HAPI FHIR Sink Server'
+  args: [ '-f', './docker/sink-compose.yml', 'up','--force-recreate', '-d' ]  
 
 - name: 'docker/compose'
   id: 'Bring up controller and Spark containers'
