@@ -193,13 +193,15 @@ abstract class FetchSearchPageFn<T> extends DoFn<T, KV<String, Integer>> {
             oAuthClientSecret,
             fhirContext);
     fhirSearchUtil = new FhirSearchUtil(fetchUtil);
-    parquetUtil =
-        new ParquetUtil(
-            fhirContext.getVersion().getVersion(),
-            parquetFile,
-            secondsToFlush,
-            rowGroupSize,
-            stageIdentifier + "_");
+    if (!Strings.isNullOrEmpty(parquetFile)) {
+      parquetUtil =
+          new ParquetUtil(
+              fhirContext.getVersion().getVersion(),
+              parquetFile,
+              secondsToFlush,
+              rowGroupSize,
+              stageIdentifier + "_");
+    }
     if (sinkDbConfig != null) {
       DataSource jdbcSink =
           JdbcConnectionPools.getInstance()
@@ -222,7 +224,9 @@ abstract class FetchSearchPageFn<T> extends DoFn<T, KV<String, Integer>> {
 
   @Teardown
   public void teardown() throws IOException {
-    parquetUtil.closeAllWriters();
+    if (parquetUtil != null) {
+      parquetUtil.closeAllWriters();
+    }
   }
 
   protected void addFetchTime(long millis) {
@@ -238,7 +242,7 @@ abstract class FetchSearchPageFn<T> extends DoFn<T, KV<String, Integer>> {
       throws IOException, SQLException, ViewApplicationException {
     if (bundle != null && bundle.getEntry() != null) {
       numFetchedResources.inc(bundle.getEntry().size());
-      if (!parquetFile.isEmpty()) {
+      if (parquetUtil != null) {
         long startTime = System.currentTimeMillis();
         parquetUtil.writeRecords(bundle, resourceTypes);
         totalGenerateTimeMillis.inc(System.currentTimeMillis() - startTime);
@@ -252,6 +256,7 @@ abstract class FetchSearchPageFn<T> extends DoFn<T, KV<String, Integer>> {
         if (bundle.getEntry() == null) {
           return;
         }
+        // TODO consider processing the whole Bundle in one batched DB update.
         for (BundleEntryComponent entry : bundle.getEntry()) {
           Resource resource = entry.getResource();
           if (resourceTypes == null || resourceTypes.contains(resource.getResourceType().name())) {

@@ -2,6 +2,7 @@ package com.cerner.bunsen.definitions;
 
 import ca.uhn.fhir.context.FhirContext;
 import ca.uhn.fhir.context.FhirVersionEnum;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Verify;
 import com.google.common.collect.ImmutableSet;
 import java.lang.reflect.Constructor;
@@ -21,7 +22,8 @@ import javax.annotation.Nullable;
 public abstract class StructureDefinitions {
 
   // TODO make this FHIR version specific and hide it under an abstract method.
-  protected static final Set<String> PRIMITIVE_TYPES =
+  @VisibleForTesting
+  public static final Set<String> PRIMITIVE_TYPES =
       ImmutableSet.<String>builder()
           .add("id")
           .add("boolean")
@@ -29,29 +31,28 @@ public abstract class StructureDefinitions {
           .add("markdown")
           .add("date")
           .add("instant")
-          .add("datetime")
           .add("dateTime")
           .add("time")
-          .add("oid")
           .add("string")
+          .add("oid")
+          .add("xhtml")
           .add("decimal")
           .add("integer")
-          .add("xhtml")
           .add("unsignedInt")
           .add("positiveInt")
           .add("base64Binary")
           .add("uri")
           // TODO: Figure out why these are added to R4 resource definitions.
-          .add("http://hl7.org/fhirpath/System.Boolean")
           .add("http://hl7.org/fhirpath/System.String")
+          .add("http://hl7.org/fhirpath/System.Boolean")
           .add("http://hl7.org/fhirpath/System.Integer")
           .add("http://hl7.org/fhirpath/System.Long")
           .add("http://hl7.org/fhirpath/System.Decimal")
           .add("http://hl7.org/fhirpath/System.DateTime")
           .add("http://hl7.org/fhirpath/System.Time")
-          .add("http://hl7.org/fhirpath/System.Quantity")
           .add("canonical")
           .add("url")
+          .add("uuid")
           .build();
 
   private static final String STU3_DEFINITIONS_CLASS =

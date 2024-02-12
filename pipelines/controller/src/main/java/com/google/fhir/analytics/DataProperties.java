@@ -89,6 +89,10 @@ public class DataProperties {
 
   private String hiveResourceViewsDir;
 
+  private String viewDefinitionsDir;
+
+  private String sinkDbConfigPath;
+
   private String fhirServerPassword;
 
   private String fhirServerUserName;
@@ -124,6 +128,36 @@ public class DataProperties {
     Preconditions.checkState(!createHiveResourceTables || !thriftserverHiveConfig.isEmpty());
   }
 
+  private PipelineConfig.PipelineConfigBuilder addFlinkOptions(FhirEtlOptions options) {
+    PipelineConfig.PipelineConfigBuilder pipelineConfigBuilder = PipelineConfig.builder();
+    options.setRunner(FlinkRunner.class);
+    FlinkPipelineOptions flinkOptions = options.as(FlinkPipelineOptions.class);
+    flinkOptions.setMaxParallelism(getMaxWorkers());
+    if (numThreads > 0) {
+      flinkOptions.setParallelism(numThreads);
+    }
+
+    pipelineConfigBuilder.fhirEtlOptions(options);
+    return pipelineConfigBuilder;
+  }
+
+  PipelineConfig createRecreateViewsOptions(String dwhRoot) {
+    Preconditions.checkState(!Strings.isNullOrEmpty(viewDefinitionsDir));
+    Preconditions.checkState(!Strings.isNullOrEmpty(sinkDbConfigPath));
+    Preconditions.checkState(!Strings.isNullOrEmpty(dwhRoot));
+    FhirEtlOptions options = PipelineOptionsFactory.as(FhirEtlOptions.class);
+    logger.info(
+        "Creating options for recreating views in {} into DB config {} from DWH {} ",
+        viewDefinitionsDir,
+        sinkDbConfigPath,
+        dwhRoot);
+    options.setParquetInputDwhRoot(dwhRoot);
+    options.setViewDefinitionsDir(viewDefinitionsDir);
+    options.setSinkDbConfigPath(sinkDbConfigPath);
+    options.setRecreateSinkTables(true);
+    return addFlinkOptions(options).build();
+  }
+
   PipelineConfig createBatchOptions() {
     FhirEtlOptions options = PipelineOptionsFactory.as(FhirEtlOptions.class);
     logger.info("Converting options for fhirServerUrl {} and dbConfig {}", fhirServerUrl, dbConfig);
@@ -133,21 +167,25 @@ public class DataProperties {
       options.setJdbcModeHapi(true);
       options.setFhirDatabaseConfigPath(dbConfig);
     } else {
-      options.setFhirServerUrl(fhirServerUrl);
-      options.setFhirServerPassword(fhirServerPassword);
-      options.setFhirServerUserName(fhirServerUserName);
-      options.setFhirServerOAuthTokenEndpoint(fhirServerOAuthTokenEndpoint);
-      options.setFhirServerOAuthClientId(fhirServerOAuthClientId);
-      options.setFhirServerOAuthClientSecret(fhirServerOAuthClientSecret);
+      options.setFhirServerUrl(Strings.nullToEmpty(fhirServerUrl));
+      options.setFhirServerPassword(Strings.nullToEmpty(fhirServerPassword));
+      options.setFhirServerUserName(Strings.nullToEmpty(fhirServerUserName));
+      options.setFhirServerOAuthTokenEndpoint(Strings.nullToEmpty(fhirServerOAuthTokenEndpoint));
+      options.setFhirServerOAuthClientId(Strings.nullToEmpty(fhirServerOAuthClientId));
+      options.setFhirServerOAuthClientSecret(Strings.nullToEmpty(fhirServerOAuthClientSecret));
     }
-    options.setResourceList(resourceList);
-
-    PipelineConfig.PipelineConfigBuilder pipelineConfigBuilder = PipelineConfig.builder();
+    if (resourceList != null) {
+      options.setResourceList(resourceList);
+    }
+    options.setViewDefinitionsDir(Strings.nullToEmpty(viewDefinitionsDir));
+    options.setSinkDbConfigPath(Strings.nullToEmpty(sinkDbConfigPath));
 
     // Using underscore for suffix as hyphens are discouraged in hive table names.
     String timestampSuffix =
         Instant.now().toString().replace(":", "-").replace("-", "_").replace(".", "_");
     options.setOutputParquetPath(dwhRootPrefix + TIMESTAMP_PREFIX + timestampSuffix);
+
+    PipelineConfig.PipelineConfigBuilder pipelineConfigBuilder = addFlinkOptions(options);
 
     // Get hold of thrift server parquet directory from dwhRootPrefix config.
     String thriftServerParquetPathPrefix =
@@ -156,14 +194,6 @@ public class DataProperties {
         thriftServerParquetPathPrefix + TIMESTAMP_PREFIX + timestampSuffix);
     pipelineConfigBuilder.timestampSuffix(timestampSuffix);
 
-    options.setRunner(FlinkRunner.class);
-    FlinkPipelineOptions flinkOptions = options.as(FlinkPipelineOptions.class);
-    flinkOptions.setMaxParallelism(getMaxWorkers());
-    if (numThreads > 0) {
-      flinkOptions.setParallelism(numThreads);
-    }
-
-    pipelineConfigBuilder.fhirEtlOptions(options);
     return pipelineConfigBuilder.build();
   }
 
@@ -181,7 +211,10 @@ public class DataProperties {
             ""),
         new ConfigFields("fhirdata.resourceList", resourceList, "", ""),
         new ConfigFields("fhirdata.maxWorkers", String.valueOf(maxWorkers), "", ""),
-        new ConfigFields("fhirdata.dbConfig", dbConfig, "", ""));
+        new ConfigFields("fhirdata.numThreads", String.valueOf(numThreads), "", ""),
+        new ConfigFields("fhirdata.dbConfig", dbConfig, "", ""),
+        new ConfigFields("fhirdata.viewDefinitionsDir", viewDefinitionsDir, "", ""),
+        new ConfigFields("fhirdata.sinkDbConfigPath", sinkDbConfigPath, "", ""));
   }
 
   ConfigFields getConfigFields(FhirEtlOptions options, Method getMethod) {

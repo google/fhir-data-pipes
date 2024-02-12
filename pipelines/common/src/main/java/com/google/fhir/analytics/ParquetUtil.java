@@ -18,26 +18,19 @@ package com.google.fhir.analytics;
 import ca.uhn.fhir.context.FhirContext;
 import ca.uhn.fhir.context.FhirVersionEnum;
 import com.cerner.bunsen.FhirContexts;
-import com.cerner.bunsen.avro.AvroConverter;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.channels.Channels;
 import java.nio.channels.WritableByteChannel;
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Random;
 import java.util.Set;
 import java.util.Timer;
 import java.util.TimerTask;
-import org.apache.avro.Conversions.DecimalConversion;
-import org.apache.avro.Schema;
-import org.apache.avro.generic.GenericData;
 import org.apache.avro.generic.GenericRecord;
-import org.apache.avro.specific.SpecificData;
 import org.apache.beam.sdk.io.fs.ResolveOptions.StandardResolveOptions;
 import org.apache.beam.sdk.io.fs.ResourceId;
 import org.apache.beam.sdk.util.MimeTypes;
@@ -55,33 +48,14 @@ public class ParquetUtil {
 
   public static String PARQUET_EXTENSION = ".parquet";
 
+  private final AvroConversionUtil conversionUtil;
   private final FhirContext fhirContext;
-
   private final Map<String, ParquetWriter<GenericRecord>> writerMap;
-
   private final int rowGroupSize;
-
   private final DwhFiles dwhFiles;
-
   private final Timer timer;
-
   private final Random random;
-
   private final String namePrefix;
-
-  /**
-   * This is to fix the logical type conversions for BigDecimal. This should be called once before
-   * any FHIR resource conversion to Avro.
-   */
-  public static void initializeAvroConverters() {
-    // For more context on the next two conversions, see this thread: https://bit.ly/3iE4rwS
-    // Add BigDecimal conversion to the singleton instance to fix "Unknown datum type" Avro
-    // exception.
-    GenericData.get().addLogicalTypeConversion(new DecimalConversion());
-    // This is for a similar error in the ParquetWriter.write which uses SpecificData.get() as its
-    // model.
-    SpecificData.get().addLogicalTypeConversion(new DecimalConversion());
-  }
 
   public String getParquetPath() {
     return dwhFiles.getRoot();
@@ -115,6 +89,7 @@ public class ParquetUtil {
       int secondsToFlush,
       int rowGroupSize,
       String namePrefix) {
+    conversionUtil = AvroConversionUtil.getInstance();
     if (fhirVersionEnum == FhirVersionEnum.DSTU3 || fhirVersionEnum == FhirVersionEnum.R4) {
       this.fhirContext = FhirContexts.contextFor(fhirVersionEnum);
     } else {
@@ -176,7 +151,7 @@ public class ParquetUtil {
       builder.withRowGroupSize(rowGroupSize);
     }
     ParquetWriter<GenericRecord> writer =
-        builder.withSchema(getResourceSchema(resourceType, fhirContext)).build();
+        builder.withSchema(conversionUtil.getResourceSchema(resourceType, fhirContext)).build();
     writerMap.put(resourceType, writer);
   }
 
@@ -194,7 +169,7 @@ public class ParquetUtil {
       createWriter(resourceType);
     }
     final ParquetWriter<GenericRecord> parquetWriter = writerMap.get(resourceType);
-    GenericRecord record = AvroUtil.convertToAvro(resource, fhirContext);
+    GenericRecord record = conversionUtil.convertToAvro(resource, fhirContext);
     if (record != null) {
       parquetWriter.write(record);
     }
@@ -222,32 +197,6 @@ public class ParquetUtil {
       entry.getValue().close();
       writerMap.put(entry.getKey(), null);
     }
-  }
-
-  public static Schema getResourceSchema(String resourceType, FhirVersionEnum fhirVersion) {
-    return getResourceSchema(resourceType, FhirContexts.contextFor(fhirVersion));
-  }
-
-  public static Schema getResourceSchema(String resourceType, FhirContext fhirContext) {
-    AvroConverter converter = AvroUtil.getConverter(resourceType, fhirContext);
-    Schema schema = converter.getSchema();
-    log.debug(String.format("Schema for resource type %s is %s", resourceType, schema));
-    return schema;
-  }
-
-  public List<GenericRecord> generateRecords(Bundle bundle) {
-    List<GenericRecord> records = new ArrayList<>();
-    if (bundle.getTotal() == 0) {
-      return records;
-    }
-    for (BundleEntryComponent entry : bundle.getEntry()) {
-      Resource resource = entry.getResource();
-      GenericRecord record = AvroUtil.convertToAvro(resource, fhirContext);
-      if (record != null) {
-        records.add(record);
-      }
-    }
-    return records;
   }
 
   public void writeRecords(Bundle bundle, Set<String> resourceTypes) throws IOException {
