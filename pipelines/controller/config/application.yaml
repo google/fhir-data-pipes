@@ -141,6 +141,19 @@ fhirdata:
   # data. On the downside, more in-memory will be needed to hold the data before writing to files.
   rowGroupSizeForParquetFiles: 33554432   # 32mb
 
+  # The location from which ViewDefinition resources are read and applied to the
+  # corresponding input FHIR resources. Any file in this directory that ends
+  # `.json` is assumed to be a single ViewDefinition. To output these views to a
+  # relational database, the next sinkDbConfigPath should also be set.
+  viewDefinitionsDir: "config/views"
+
+  # The configuration file for the sink database. If `viewDefinitionsDir` is set
+  # then the generated views are materialized and written to this DB. If not,
+  # then the raw FHIR JSON resources are written to this DB. Note enabling this
+  # feature can have a noticeable impact on pipelines performance. The default
+  # empty string disables this feature.
+  sinkDbConfigPath: "config/hapi-postgres-config_local_views.json"
+
 # Enable spring boot actuator end points, use "*" to expose all endpoints, or a comma-separated
 # list to expose selected ones
 management:
