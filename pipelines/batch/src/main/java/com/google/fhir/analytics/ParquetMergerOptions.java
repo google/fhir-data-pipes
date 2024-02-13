@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2023 Google LLC
+ * Copyright 2020-2024 Google LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,11 +17,10 @@ package com.google.fhir.analytics;
 
 import org.apache.beam.sdk.options.Default;
 import org.apache.beam.sdk.options.Description;
-import org.apache.beam.sdk.options.PipelineOptions;
 import org.apache.beam.sdk.options.Validation.Required;
 
 /** Options supported by {@link ParquetMerger}. */
-public interface ParquetMergerOptions extends PipelineOptions {
+public interface ParquetMergerOptions extends BasePipelineOptions {
 
   @Description(
       "The path to the first set of Parquet files to be merged; the data-warehouse file  structure"

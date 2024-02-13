@@ -20,6 +20,7 @@ import com.cerner.bunsen.definitions.StringConverter;
 import com.cerner.bunsen.definitions.StructureField;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -88,8 +89,27 @@ public class DefinitionToAvroVisitor implements DefinitionVisitor<HapiConverter<
   // Avro `decimal` type  has a fixed scale and a maximum precision but with a fixed scale we have
   // no guarantees on the precision of the FHIR `decimal` type. See this for more details:
   // https://github.com/GoogleCloudPlatform/openmrs-fhir-analytics/issues/156#issuecomment-880964207
+  // On the other hand, when we convert Avro records back to HAPI objects, we need to convert
+  // `Double` values to `BigDecimal `because that's the Java type HAPI uses for `decimal` type of
+  // FHIR (Double and BigDecimal are not assignable to each other hence explicit conversions).
+  // Note with this approach we are loosing some precision!
   private static final HapiConverter<Schema> DOUBLE_CONVERTER =
       new PrimitiveConverter<Schema>("Double") {
+        @Override
+        public void toHapi(Object input, IPrimitiveType primitive) {
+          Preconditions.checkArgument((input instanceof BigDecimal) || (input instanceof Double));
+          if (input instanceof Double) {
+            primitive.setValue(BigDecimal.valueOf((Double) input));
+          } else {
+            primitive.setValue(input);
+          }
+        }
+
+        protected Object fromHapi(IPrimitiveType primitive) {
+          Object value = primitive.getValue();
+          Preconditions.checkState(value instanceof BigDecimal);
+          return ((BigDecimal) value).doubleValue();
+        }
 
         @Override
         public Schema getDataType() {
