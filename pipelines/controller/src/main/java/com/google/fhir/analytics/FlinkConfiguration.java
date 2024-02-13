@@ -63,6 +63,13 @@ public class FlinkConfiguration {
 
   private static final int DEFAULT_PARALLELISM = Runtime.getRuntime().availableProcessors();
   static final String DEFAULT_MANAGED_MEMORY_SIZE = "256mb";
+
+  /**
+   * The factor of how much memory is needed when parquet row groups are read and decoded into
+   * in-memory. 2 is a rough estimate *
+   */
+  private static final int PARQUET_ROW_GROUP_INFLATION_FACTOR = 2;
+
   private static final String KEY_VALUE_FORMAT = "%s: %s";
   private String flinkConfDir;
 
@@ -199,7 +206,7 @@ public class FlinkConfiguration {
     if (minJVMMemoryRequired > maxMemory) {
       throw new IllegalConfigurationException(
           String.format(
-              "Insufficient max JVM memory, required %s mb but provided %s mb",
+              "Insufficient max JVM memory, required %s MB but provided %s MB",
               memoryInMB(minJVMMemoryRequired), memoryInMB(maxMemory)));
     }
   }
@@ -210,21 +217,26 @@ public class FlinkConfiguration {
    * threads. This is roughly derived by the below formula.
    *
    * <p>Minimum JVM Memory = Memory for JVM stack, perm files etc + (#Parallel Pipeline Threads *
-   * #Parallel Pipelines * (Parquet Row Group Size + buffer for parsing the parquet file))
+   * #Parallel Pipelines * Parquet Row Group Size * Row Group Inflation factor)
    */
   private long minJVMMemory(DataProperties dataProperties) {
+    // If the parquet files have already been created with a different row group size using the
+    // pipelines earlier, then the below values won't be honored. The below values will be applied
+    // only on the files which are written and read by the new pipelines.
     int rowGroupSize =
         dataProperties.getRowGroupSizeForParquetFiles() > 0
             ? dataProperties.getRowGroupSizeForParquetFiles()
             : ParquetWriter.DEFAULT_BLOCK_SIZE;
     int parallelism =
         dataProperties.getNumThreads() > 0 ? dataProperties.getNumThreads() : DEFAULT_PARALLELISM;
-    // Temporary memory needed for decoding the read data from parquet files.
-    long tempBufferSize = (long) Math.max(40 * 1024 * 1024, 0.6 * rowGroupSize);
     // This is the minimum memory required for reading/writing parquet row groups in parallel by
-    // pipelines.
+    // pipelines. Row group size is multiplied by inflation factor to accommodate the memory needed
+    // when the parquet rows are read and decoded in memory.
     long memoryNeededForParquetRowGroups =
-        parallelism * EtlUtils.NO_OF_PARALLEL_PIPELINES * (rowGroupSize + tempBufferSize);
+        parallelism
+            * EtlUtils.NO_OF_PARALLEL_PIPELINES
+            * rowGroupSize
+            * PARQUET_ROW_GROUP_INFLATION_FACTOR;
     // This is required for stack, perm files etc.
     long minJVMMemoryMisc = 512 * 1024 * 1024;
     return memoryNeededForParquetRowGroups + minJVMMemoryMisc;

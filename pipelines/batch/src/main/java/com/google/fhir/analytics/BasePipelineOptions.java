@@ -27,7 +27,7 @@ public interface BasePipelineOptions extends PipelineOptions {
   @Description(
       "The approximate size (bytes) of the row-groups in Parquet files. When this size is reached,"
           + " the content is flushed to disk. A large value means more data for one column can fit"
-          + " into one big column chunk which will speed up the reading of column data. On the"
+          + " into one big column chunk which means better compression and faster IO/query. On the"
           + " downside, larger value means more in-memory size will be needed to hold the data "
           + " before writing to files. The default value of 0 means use the default row-group size"
           + " of Parquet writers.")
