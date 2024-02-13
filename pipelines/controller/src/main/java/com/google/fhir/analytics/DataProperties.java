@@ -105,6 +105,8 @@ public class DataProperties {
 
   private String fhirServerOAuthClientSecret;
 
+  private int rowGroupSizeForParquetFiles;
+
   @PostConstruct
   void validateProperties() {
     CronExpression.parse(incrementalSchedule);

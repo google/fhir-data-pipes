@@ -17,11 +17,10 @@ package com.google.fhir.analytics;
 
 import org.apache.beam.sdk.options.Default;
 import org.apache.beam.sdk.options.Description;
-import org.apache.beam.sdk.options.PipelineOptions;
 import org.apache.beam.sdk.options.Validation.Required;
 
 /** Options supported by {@link FhirEtl}. */
-public interface FhirEtlOptions extends PipelineOptions {
+public interface FhirEtlOptions extends BasePipelineOptions {
 
   @Description("Fhir source server URL, e.g., http://localhost:8091/fhir, etc.")
   @Required
@@ -165,16 +164,6 @@ public interface FhirEtlOptions extends PipelineOptions {
   int getSecondsToFlushParquetFiles();
 
   void setSecondsToFlushParquetFiles(int value);
-
-  @Description(
-      "The approximate size (bytes) of the row-groups in Parquet files. When this size is reached,"
-          + " the content is flushed to disk. This won't be triggered if there are less than 100"
-          + " records.\n"
-          + "The default 0 uses the default row-group size of Parquet writers.")
-  @Default.Integer(0)
-  int getRowGroupSizeForParquetFiles();
-
-  void setRowGroupSizeForParquetFiles(int value);
 
   // TODO: Either remove this feature or properly implement patient history fetching based on
   //   Patient Compartment definition.
