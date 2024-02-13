@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2023 Google LLC
+ * Copyright 2020-2024 Google LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,4 +27,6 @@ public class MetricsConstants {
   public static final String TOTAL_PUSH_TIME_MILLIS = "totalPushTimeMillis_";
   public static final String TOTAL_PARSE_TIME_MILLIS = "totalParseTimeMillis_";
   public static final String TOTAL_NO_OF_RESOURCES = "totalNoOfResources_";
+  public static final String TOTAL_AVRO_CONVERSION_TIME_MILLIS = "totalAvroConversionTimeMillis_";
+  public static final String TOTAL_AVRO_CONVERSIONS = "totalNumOfAvroConversions_";
 }
