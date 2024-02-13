@@ -39,6 +39,7 @@ fhirdata:
   thriftserverHiveConfig: "config/thriftserver-hive-config_local.json"
   hiveResourceViewsDir: "config/views"
   profileDefinitionsDirList: "config/profile-definitions"
+  rowGroupSizeForParquetFiles: 33554432   # 32mb
   viewDefinitionsDir: "config/views"
   sinkDbConfigPath: "config/hapi-postgres-config_local_views.json"
 

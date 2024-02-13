@@ -17,11 +17,10 @@ package com.google.fhir.analytics;
 
 import org.apache.beam.sdk.options.Default;
 import org.apache.beam.sdk.options.Description;
-import org.apache.beam.sdk.options.PipelineOptions;
 import org.apache.beam.sdk.options.Validation.Required;
 
 /** Options supported by {@link ParquetMerger}. */
-public interface ParquetMergerOptions extends PipelineOptions {
+public interface ParquetMergerOptions extends BasePipelineOptions {
 
   @Description(
       "The path to the first set of Parquet files to be merged; the data-warehouse file  structure"

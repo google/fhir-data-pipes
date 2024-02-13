@@ -107,6 +107,8 @@ public class DataProperties {
 
   private String profileDefinitionsDirList;
 
+  private int rowGroupSizeForParquetFiles;
+
   @PostConstruct
   void validateProperties() {
     CronExpression.parse(incrementalSchedule);

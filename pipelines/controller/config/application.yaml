@@ -139,6 +139,12 @@ fhirdata:
   # supported. Currently only one profile is supported for any given resource type.
   profileDefinitionsDir: "config/profile-definitions"
 
+  # This is the size of the Parquet Row Group (a logical horizontal partitioning into rows) that
+  # will be used for creating row groups in parquet file by pipelines. A large value means more data
+  # for one column can be fit into one big column chunk which will speed up the reading of column
+  # data. On the downside, more in-memory will be needed to hold the data before writing to files.
+  rowGroupSizeForParquetFiles: 33554432   # 32mb
+
   # The location from which ViewDefinition resources are read and applied to the
   # corresponding input FHIR resources. Any file in this directory that ends
   # `.json` is assumed to be a single ViewDefinition. To output these views to a
