@@ -16,10 +16,8 @@
 package com.google.fhir.analytics;
 
 import ca.uhn.fhir.context.FhirContext;
-import ca.uhn.fhir.context.FhirVersionEnum;
-import com.cerner.bunsen.FhirContexts;
+import com.cerner.bunsen.ProfileMapperFhirContexts;
 import com.google.common.base.Preconditions;
-import com.google.common.base.Strings;
 import com.google.common.collect.Sets;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -71,7 +69,11 @@ public class ParquetMerger {
    * {@code resourceType}. It then groups the records by ID key and returns the grouped PCollection.
    */
   private static PCollection<KV<String, Iterable<GenericRecord>>> readAndGroupById(
-      Pipeline pipeline, List<DwhFiles> dwhFilesList, String resourceType) {
+      Pipeline pipeline,
+      List<DwhFiles> dwhFilesList,
+      String resourceType,
+      FhirContext fhirContext,
+      AvroConversionUtil avroConversionUtil) {
 
     // Reading all parquet files at once instead of one set at a time, reduces the number of Flink
     // reshuffle operations by one.
@@ -84,9 +86,7 @@ public class ParquetMerger {
     // TODO make the FHIR version configurable: https://github.com/google/fhir-data-pipes/issues/400
     PCollection<GenericRecord> records =
         inputFiles.apply(
-            ParquetIO.readFiles(
-                AvroConversionUtil.getInstance()
-                    .getResourceSchema(resourceType, FhirVersionEnum.R4)));
+            ParquetIO.readFiles(avroConversionUtil.getResourceSchema(resourceType, fhirContext)));
 
     return records
         .apply(
@@ -173,7 +173,8 @@ public class ParquetMerger {
     return lastRecord;
   }
 
-  static List<Pipeline> createMergerPipelines(ParquetMergerOptions options, FhirContext fhirContext)
+  static List<Pipeline> createMergerPipelines(
+      ParquetMergerOptions options, FhirContext fhirContext, AvroConversionUtil avroConversionUtil)
       throws IOException {
     Preconditions.checkArgument(!options.getDwh1().isEmpty());
     Preconditions.checkArgument(!options.getDwh2().isEmpty());
@@ -209,7 +210,8 @@ public class ParquetMerger {
       pipelines.add(pipeline);
       log.info("Merging resource type {}", type);
       PCollection<KV<String, Iterable<GenericRecord>>> groupedRecords =
-          readAndGroupById(pipeline, Arrays.asList(dwhFiles1, dwhFiles2), type);
+          readAndGroupById(
+              pipeline, Arrays.asList(dwhFiles1, dwhFiles2), type, fhirContext, avroConversionUtil);
       PCollection<GenericRecord> merged =
           groupedRecords
               .apply(
@@ -225,12 +227,10 @@ public class ParquetMerger {
                           }
                         }
                       }))
-              .setCoder(
-                  AvroCoder.of(
-                      AvroConversionUtil.getInstance().getResourceSchema(type, fhirContext)));
+              .setCoder(AvroCoder.of(avroConversionUtil.getResourceSchema(type, fhirContext)));
 
       Sink parquetSink =
-          ParquetIO.sink(AvroConversionUtil.getInstance().getResourceSchema(type, fhirContext))
+          ParquetIO.sink(avroConversionUtil.getResourceSchema(type, fhirContext))
               .withCompressionCodec(CompressionCodecName.SNAPPY);
       if (options.getRowGroupSizeForParquetFiles() > 0) {
         parquetSink.withRowGroupSize(options.getRowGroupSizeForParquetFiles());
@@ -255,25 +255,21 @@ public class ParquetMerger {
     ParquetMergerOptions options =
         PipelineOptionsFactory.fromArgs(args).withValidation().as(ParquetMergerOptions.class);
     log.info("Flags: " + options);
-    FhirContext fhirContext = initializeFhirContext(options.getProfileDefinitionsDirList());
+    ProfileMapperFhirContexts profileMapperFhirContexts = ProfileMapperFhirContexts.getInstance();
+    FhirContext fhirContext =
+        profileMapperFhirContexts.contextFor(
+            options.getFhirVersion(), options.getProfileDefinitionsDir());
+    AvroConversionUtil avroConversionUtil =
+        AvroConversionUtil.getInstance()
+            .loadContextFor(options.getFhirVersion(), options.getProfileDefinitionsDir());
     if (options.getDwh1().isEmpty()
         || options.getDwh2().isEmpty()
         || options.getMergedDwh().isEmpty()) {
       throw new IllegalArgumentException("All of --dwh1, --dwh2, and --mergedDwh should be set!");
     }
 
-    List<Pipeline> pipelines = createMergerPipelines(options, fhirContext);
+    List<Pipeline> pipelines = createMergerPipelines(options, fhirContext, avroConversionUtil);
     EtlUtils.runMultipleMergerPipelinesWithTimestamp(pipelines, options, fhirContext);
     log.info("DONE!");
-  }
-
-  private static FhirContext initializeFhirContext(String profileDefinitionsDirList) {
-    FhirContext fhirContext = null;
-    if (!Strings.isNullOrEmpty(profileDefinitionsDirList)) {
-      fhirContext = FhirContexts.forR4(Arrays.asList(profileDefinitionsDirList.split(",")));
-    } else {
-      fhirContext = FhirContexts.forR4();
-    }
-    return fhirContext;
   }
 }

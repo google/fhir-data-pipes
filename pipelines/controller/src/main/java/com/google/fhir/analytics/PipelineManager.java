@@ -16,7 +16,7 @@
 package com.google.fhir.analytics;
 
 import ca.uhn.fhir.context.FhirContext;
-import com.cerner.bunsen.FhirContexts;
+import com.cerner.bunsen.ProfileMapperFhirContexts;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import com.google.fhir.analytics.metrics.CumulativeMetrics;
@@ -31,7 +31,6 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.sql.SQLException;
 import java.time.LocalDateTime;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
@@ -97,6 +96,8 @@ public class PipelineManager implements ApplicationListener<ApplicationReadyEven
   private FlinkConfiguration flinkConfiguration;
 
   private FhirContext fhirContext;
+
+  private AvroConversionUtil avroConversionUtil;
 
   private static final String ERROR_FILE_NAME = "error.log";
   private static final String SUCCESS = "SUCCESS";
@@ -173,7 +174,13 @@ public class PipelineManager implements ApplicationListener<ApplicationReadyEven
 
     // Initialise the Flink configurations for all the pipelines
     initialiseFlinkConfiguration();
-    initializeFhirContext(dataProperties.getProfileDefinitionsDirList());
+    fhirContext =
+        ProfileMapperFhirContexts.getInstance()
+            .contextFor(dataProperties.getFhirVersion(), dataProperties.getProfileDefinitionsDir());
+    avroConversionUtil =
+        AvroConversionUtil.getInstance()
+            .loadContextFor(
+                dataProperties.getFhirVersion(), dataProperties.getProfileDefinitionsDir());
 
     PipelineConfig pipelineConfig = dataProperties.createBatchOptions();
     FileSystems.setDefaultPipelineOptions(pipelineConfig.getFhirEtlOptions());
@@ -248,15 +255,6 @@ public class PipelineManager implements ApplicationListener<ApplicationReadyEven
       logger.error("IOException while initializing Flink Configuration: ", e);
       throw new RuntimeException(e);
     }
-  }
-
-  private FhirContext initializeFhirContext(String profileDefinitionsDirList) {
-    if (!Strings.isNullOrEmpty(profileDefinitionsDirList)) {
-      fhirContext = FhirContexts.forR4(Arrays.asList(profileDefinitionsDirList.split(",")));
-    } else {
-      fhirContext = FhirContexts.forR4();
-    }
-    return fhirContext;
   }
 
   /**
@@ -394,7 +392,8 @@ public class PipelineManager implements ApplicationListener<ApplicationReadyEven
     }
     // sanity check; should always pass!
     FhirEtl.validateOptions(options);
-    List<Pipeline> pipelines = FhirEtl.setupAndBuildPipelines(options);
+    List<Pipeline> pipelines =
+        FhirEtl.setupAndBuildPipelines(options, fhirContext, avroConversionUtil);
     if (pipelines == null || pipelines.isEmpty()) {
       logger.warn("No resources found to be fetched!");
       return;
@@ -407,7 +406,9 @@ public class PipelineManager implements ApplicationListener<ApplicationReadyEven
               dwhFilesManager,
               dataProperties,
               pipelineConfig,
-              isRecreateViews ? RunMode.VIEWS : RunMode.FULL);
+              isRecreateViews ? RunMode.VIEWS : RunMode.FULL,
+              fhirContext,
+              avroConversionUtil);
     }
     if (isRecreateViews) {
       logger.info(
@@ -440,7 +441,8 @@ public class PipelineManager implements ApplicationListener<ApplicationReadyEven
     }
     // sanity check; should always pass!
     FhirEtl.validateOptions(options);
-    List<Pipeline> pipelines = FhirEtl.setupAndBuildPipelines(options);
+    List<Pipeline> pipelines =
+        FhirEtl.setupAndBuildPipelines(options, fhirContext, avroConversionUtil);
 
     // The merger pipeline merges the original full DWH with the new incremental one.
     ParquetMergerOptions mergerOptions = PipelineOptionsFactory.as(ParquetMergerOptions.class);
@@ -456,6 +458,9 @@ public class PipelineManager implements ApplicationListener<ApplicationReadyEven
             ? dataProperties.getNumThreads()
             : Runtime.getRuntime().availableProcessors();
     mergerOptions.setNumShards(numShards);
+    mergerOptions.setProfileDefinitionsDir(
+        Strings.nullToEmpty(dataProperties.getProfileDefinitionsDir()));
+    mergerOptions.setFhirVersion(dataProperties.getFhirVersion());
     FlinkPipelineOptions flinkOptionsForMerge = mergerOptions.as(FlinkPipelineOptions.class);
     if (!Strings.isNullOrEmpty(flinkConfiguration.getFlinkConfDir())) {
       flinkOptionsForMerge.setFlinkConfDir(flinkConfiguration.getFlinkConfDir());
@@ -480,7 +485,9 @@ public class PipelineManager implements ApplicationListener<ApplicationReadyEven
               this,
               dwhFilesManager,
               dataProperties,
-              pipelineConfig);
+              pipelineConfig,
+              fhirContext,
+              avroConversionUtil);
       logger.info("Running incremental pipeline for DWH {} since {}", currentDwh.getRoot(), since);
       currentPipeline.start();
     }
@@ -594,6 +601,8 @@ public class PipelineManager implements ApplicationListener<ApplicationReadyEven
 
     private FhirContext fhirContext;
 
+    private AvroConversionUtil avroConversionUtil;
+
     PipelineThread(
         List<Pipeline> pipelines,
         FhirEtlOptions options,
@@ -601,7 +610,9 @@ public class PipelineManager implements ApplicationListener<ApplicationReadyEven
         DwhFilesManager dwhFilesManager,
         DataProperties dataProperties,
         PipelineConfig pipelineConfig,
-        RunMode runMode) {
+        RunMode runMode,
+        FhirContext fhirContext,
+        AvroConversionUtil avroConversionUtil) {
       Preconditions.checkArgument(options != null);
       this.pipelines = pipelines;
       this.options = options;
@@ -612,6 +623,7 @@ public class PipelineManager implements ApplicationListener<ApplicationReadyEven
       this.runMode = runMode;
       this.mergerOptions = null;
       this.fhirContext = fhirContext;
+      this.avroConversionUtil = avroConversionUtil;
     }
 
     // The constructor for the incremental pipeline (hence the `mergerOptions`).
@@ -622,7 +634,9 @@ public class PipelineManager implements ApplicationListener<ApplicationReadyEven
         PipelineManager manager,
         DwhFilesManager dwhFilesManager,
         DataProperties dataProperties,
-        PipelineConfig pipelineConfig) {
+        PipelineConfig pipelineConfig,
+        FhirContext fhirContext,
+        AvroConversionUtil avroConversionUtil) {
       Preconditions.checkArgument(options != null);
       this.pipelines = pipelines;
       this.options = options;
@@ -631,6 +645,8 @@ public class PipelineManager implements ApplicationListener<ApplicationReadyEven
       this.mergerOptions = mergerOptions;
       this.dataProperties = dataProperties;
       this.pipelineConfig = pipelineConfig;
+      this.fhirContext = fhirContext;
+      this.avroConversionUtil = avroConversionUtil;
       this.runMode = RunMode.INCREMENTAL;
     }
 
@@ -665,7 +681,7 @@ public class PipelineManager implements ApplicationListener<ApplicationReadyEven
         } else {
           currentDwhRoot = mergerOptions.getMergedDwh();
           List<Pipeline> mergerPipelines =
-              ParquetMerger.createMergerPipelines(mergerOptions, fhirContext);
+              ParquetMerger.createMergerPipelines(mergerOptions, fhirContext, avroConversionUtil);
           logger.info("Merger options are {}", mergerOptions);
           List<PipelineResult> mergerPipelineResults =
               EtlUtils.runMultipleMergerPipelinesWithTimestamp(
@@ -685,7 +701,7 @@ public class PipelineManager implements ApplicationListener<ApplicationReadyEven
         manager.setLastRunDetails(currentDwhRoot, SUCCESS);
       } catch (Exception e) {
         logger.error("exception while running pipeline: ", e);
-        manager.captureError(currentDwhRoot, e);
+        manager.captureError(fhirContext, currentDwhRoot, e);
         manager.setLastRunDetails(currentDwhRoot, FAILURE);
         manager.setLastRunStatus(LastRunStatus.FAILURE);
       } finally {
@@ -713,11 +729,11 @@ public class PipelineManager implements ApplicationListener<ApplicationReadyEven
   }
 
   /** This method captures the given exception into a file rooted at the dwhRoot location. */
-  void captureError(String dwhRoot, Exception e) {
+  void captureError(FhirContext fhirContext, String dwhRoot, Exception e) {
     try {
       if (!Strings.isNullOrEmpty(dwhRoot)) {
         String stackTrace = ExceptionUtils.getStackTrace(e);
-        DwhFiles.forRoot(dwhRoot)
+        DwhFiles.forRoot(dwhRoot, fhirContext)
             .overwriteFile(ERROR_FILE_NAME, stackTrace.getBytes(StandardCharsets.UTF_8));
       }
     } catch (IOException ex) {

@@ -17,11 +17,13 @@ package com.google.fhir.analytics;
 
 import ca.uhn.fhir.context.FhirContext;
 import ca.uhn.fhir.context.FhirVersionEnum;
-import com.cerner.bunsen.FhirContexts;
+import com.cerner.bunsen.ProfileMapperFhirContexts;
 import com.cerner.bunsen.avro.AvroConverter;
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Strings;
 import com.google.common.collect.Maps;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import javax.annotation.Nullable;
@@ -49,9 +51,9 @@ public class AvroConversionUtil {
   // This is the singleton instance.
   private static AvroConversionUtil instance;
 
-  // TODO make this map FHIR version dependent: https://github.com/google/fhir-data-pipes/issues/400
-  private final Map<String, AvroConverter> converterMap;
+  private final Map<FhirVersionEnum, Map<String, AvroConverter>> converterMap;
 
+  private ProfileMapperFhirContexts profileMapperFhirContexts;
   /**
    * This is to fix the logical type conversions for BigDecimal. This should be called once before
    * any FHIR resource conversion to Avro.
@@ -67,7 +69,8 @@ public class AvroConversionUtil {
   }
 
   private AvroConversionUtil() {
-    converterMap = Maps.newHashMap();
+    this.converterMap = Maps.newHashMap();
+    this.profileMapperFhirContexts = ProfileMapperFhirContexts.getInstance();
   }
 
   static synchronized AvroConversionUtil getInstance() {
@@ -77,16 +80,29 @@ public class AvroConversionUtil {
     return instance;
   }
 
+  synchronized AvroConversionUtil loadContextFor(
+      FhirVersionEnum fhirVersionEnum, @Nullable String profileDefinitionsDir) {
+    profileMapperFhirContexts.contextFor(fhirVersionEnum, profileDefinitionsDir);
+    return this;
+  }
+
   synchronized AvroConverter getConverter(String resourceType, FhirContext fhirContext) {
-    if (!converterMap.containsKey(resourceType)) {
-      // TODO: Check how to automate discovery of relevant profiles to be applied. Right now we need
-      // to supply the corresponding resource profile identifier for the extensions to work, e.g.,
-      // "http://hl7.org/fhir/us/core/StructureDefinition/us-core-patient" instead of "Patient".
-      // https://github.com/google/fhir-data-pipes/issues/560
-      AvroConverter converter = AvroConverter.forResource(fhirContext, resourceType);
-      converterMap.put(resourceType, converter);
+    FhirVersionEnum fhirVersionEnum = fhirContext.getVersion().getVersion();
+    Map<String, AvroConverter> map =
+        converterMap.computeIfAbsent(fhirVersionEnum, key -> new HashMap<>());
+    if (!map.containsKey(resourceType)) {
+      String profile =
+          profileMapperFhirContexts.getMappedProfileForResource(fhirVersionEnum, resourceType);
+      if (Strings.isNullOrEmpty(profile)) {
+        String errorMsg =
+            String.format("No mapped profile found for resourceType=%s", resourceType);
+        log.error(errorMsg);
+        throw new IllegalArgumentException(errorMsg);
+      }
+      AvroConverter converter = AvroConverter.forResource(fhirContext, profile);
+      map.put(resourceType, converter);
     }
-    return converterMap.get(resourceType);
+    return map.get(resourceType);
   }
 
   @VisibleForTesting
@@ -109,10 +125,6 @@ public class AvroConversionUtil {
     return (Resource) resource;
   }
 
-  public Schema getResourceSchema(String resourceType, FhirVersionEnum fhirVersion) {
-    return getResourceSchema(resourceType, FhirContexts.contextFor(fhirVersion));
-  }
-
   public Schema getResourceSchema(String resourceType, FhirContext fhirContext) {
     AvroConverter converter = getConverter(resourceType, fhirContext);
     Schema schema = converter.getSchema();
@@ -133,5 +145,16 @@ public class AvroConversionUtil {
       }
     }
     return records;
+  }
+
+  @VisibleForTesting
+  synchronized AvroConversionUtil deRegisterMappingsFor(FhirVersionEnum fhirVersionEnum) {
+    if (profileMapperFhirContexts != null) {
+      profileMapperFhirContexts.deRegisterFhirContexts(fhirVersionEnum);
+    }
+    if (converterMap != null) {
+      converterMap.remove(fhirVersionEnum);
+    }
+    return this;
   }
 }

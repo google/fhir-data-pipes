@@ -15,6 +15,7 @@
  */
 package com.google.fhir.analytics;
 
+import ca.uhn.fhir.context.FhirVersionEnum;
 import org.apache.beam.sdk.options.Default;
 import org.apache.beam.sdk.options.Description;
 import org.apache.beam.sdk.options.PipelineOptions;
@@ -35,4 +36,18 @@ public interface BasePipelineOptions extends PipelineOptions {
   int getRowGroupSizeForParquetFiles();
 
   void setRowGroupSizeForParquetFiles(int value);
+
+  @Description(
+      "Directory containing the structure definition files for any custom"
+          + " profiles that needs to be supported")
+  @Default.String("")
+  String getProfileDefinitionsDir();
+
+  void setProfileDefinitionsDir(String value);
+
+  @Description("The fhir version to be used for the FHIR Context APIs")
+  @Default.Enum("R4")
+  FhirVersionEnum getFhirVersion();
+
+  void setFhirVersion(FhirVersionEnum fhirVersionEnum);
 }

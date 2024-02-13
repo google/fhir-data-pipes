@@ -22,6 +22,7 @@ import static org.hamcrest.Matchers.matchesPattern;
 import ca.uhn.fhir.context.FhirContext;
 import ca.uhn.fhir.context.FhirVersionEnum;
 import ca.uhn.fhir.parser.IParser;
+import com.cerner.bunsen.ProfileMapperFhirContexts;
 import com.google.common.io.Resources;
 import java.io.File;
 import java.io.IOException;
@@ -70,8 +71,11 @@ public class ParquetUtilTest {
     observationBundle =
         Resources.toString(
             Resources.getResource("observation_bundle.json"), StandardCharsets.UTF_8);
-    this.fhirContext = FhirContext.forR4Cached();
-    parquetUtil = new ParquetUtil(FhirVersionEnum.R4, rootPath.toString(), 0, 0, "TEST_");
+    ProfileMapperFhirContexts.getInstance().deRegisterFhirContexts(FhirVersionEnum.R4);
+    AvroConversionUtil.getInstance().deRegisterMappingsFor(FhirVersionEnum.R4);
+
+    this.fhirContext = ProfileMapperFhirContexts.getInstance().contextFor(FhirVersionEnum.R4, "");
+    parquetUtil = new ParquetUtil(FhirVersionEnum.R4, "", rootPath.toString(), 0, 0, "TEST_");
   }
 
   @Test
@@ -105,7 +109,7 @@ public class ParquetUtilTest {
   @Test
   public void createSingleOutput() throws IOException {
     rootPath = Files.createTempDirectory("PARQUET_TEST");
-    parquetUtil = new ParquetUtil(FhirVersionEnum.R4, rootPath.toString(), 0, 0, "");
+    parquetUtil = new ParquetUtil(FhirVersionEnum.R4, "", rootPath.toString(), 0, 0, "");
     IParser parser = fhirContext.newJsonParser();
     Bundle bundle = parser.parseResource(Bundle.class, observationBundle);
     for (Bundle.BundleEntryComponent entry : bundle.getEntry()) {
@@ -130,7 +134,7 @@ public class ParquetUtilTest {
   @Test
   public void createMultipleOutputByTime() throws IOException, InterruptedException {
     rootPath = Files.createTempDirectory("PARQUET_TEST");
-    parquetUtil = new ParquetUtil(FhirVersionEnum.R4, rootPath.toString(), 1, 0, "");
+    parquetUtil = new ParquetUtil(FhirVersionEnum.R4, "", rootPath.toString(), 1, 0, "");
     IParser parser = fhirContext.newJsonParser();
     Bundle bundle = parser.parseResource(Bundle.class, observationBundle);
     for (Bundle.BundleEntryComponent entry : bundle.getEntry()) {
@@ -156,7 +160,7 @@ public class ParquetUtilTest {
   @Test
   public void createSingleOutputWithRowGroupSize() throws IOException {
     rootPath = Files.createTempDirectory("PARQUET_TEST");
-    parquetUtil = new ParquetUtil(FhirVersionEnum.R4, rootPath.toString(), 0, 1, "");
+    parquetUtil = new ParquetUtil(FhirVersionEnum.R4, "", rootPath.toString(), 0, 1, "");
     IParser parser = fhirContext.newJsonParser();
     Bundle bundle = parser.parseResource(Bundle.class, observationBundle);
     // There are 7 resources in the bundle so we write 15*7 (>100) resources, such that the page
@@ -189,7 +193,7 @@ public class ParquetUtilTest {
   @Test
   public void writeObservationWithBigDecimalValue() throws IOException {
     rootPath = Files.createTempDirectory("PARQUET_TEST");
-    parquetUtil = new ParquetUtil(FhirVersionEnum.R4, rootPath.toString(), 0, 0, "");
+    parquetUtil = new ParquetUtil(FhirVersionEnum.R4, "", rootPath.toString(), 0, 0, "");
     String observationStr =
         Resources.toString(
             Resources.getResource("observation_decimal.json"), StandardCharsets.UTF_8);
@@ -202,7 +206,7 @@ public class ParquetUtilTest {
   @Test
   public void writeObservationBundleWithDecimalConversionIssue() throws IOException {
     rootPath = Files.createTempDirectory("PARQUET_TEST");
-    parquetUtil = new ParquetUtil(FhirVersionEnum.R4, rootPath.toString(), 0, 0, "");
+    parquetUtil = new ParquetUtil(FhirVersionEnum.R4, "", rootPath.toString(), 0, 0, "");
     String observationBundleStr =
         Resources.toString(
             Resources.getResource("observation_decimal_bundle.json"), StandardCharsets.UTF_8);
@@ -211,11 +215,11 @@ public class ParquetUtilTest {
     parquetUtil.writeRecords(bundle, null);
   }
 
-  /** This is similar to the above test but has more `decimal` examples with different scales. */
+  /** This test check if the same resource with multiple profiles get written to files. */
   @Test
   public void writeObservationBundleWithMultipleProfiles() throws IOException {
     rootPath = Files.createTempDirectory("PARQUET_TEST");
-    parquetUtil = new ParquetUtil(FhirVersionEnum.R4, rootPath.toString(), 0, 0, "");
+    parquetUtil = new ParquetUtil(FhirVersionEnum.R4, "", rootPath.toString(), 0, 0, "");
 
     String patientStr =
         Resources.toString(Resources.getResource("patient_bundle.json"), StandardCharsets.UTF_8);
@@ -224,7 +228,8 @@ public class ParquetUtilTest {
     parquetUtil.writeRecords(bundle, null);
 
     String patientUsCoreStr =
-        Resources.toString(Resources.getResource("patient_bundle2.json"), StandardCharsets.UTF_8);
+        Resources.toString(
+            Resources.getResource("patient_bundle_us_core_profile.json"), StandardCharsets.UTF_8);
     IParser parser2 = fhirContext.newJsonParser();
     Bundle bundle2 = parser2.parseResource(Bundle.class, patientUsCoreStr);
     parquetUtil.writeRecords(bundle2, null);

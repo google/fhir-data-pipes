@@ -252,12 +252,4 @@ public interface FhirEtlOptions extends BasePipelineOptions {
   String getSourceJsonFilePattern();
 
   void setSourceJsonFilePattern(String value);
-
-  @Description(
-      "Load the fhir profiles defined in this directory, otherwise only the base structure"
-          + "definitions will be supported")
-  @Default.String("")
-  String getProfileDefinitionsDirList();
-
-  void setProfileDefinitionsDirList(String value);
 }

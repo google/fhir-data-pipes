@@ -16,8 +16,7 @@
 package com.google.fhir.analytics;
 
 import ca.uhn.fhir.context.FhirContext;
-import ca.uhn.fhir.context.FhirVersionEnum;
-import com.cerner.bunsen.FhirContexts;
+import com.cerner.bunsen.ProfileMapperFhirContexts;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import com.google.common.collect.Lists;
@@ -116,7 +115,8 @@ public class FhirEtl {
       List<PCollection<KV<String, Integer>>> allPatientIds,
       Set<String> patientAssociatedResources,
       FhirEtlOptions options,
-      FhirContext fhirContext) {
+      FhirContext fhirContext,
+      AvroConversionUtil avroConversionUtil) {
     PCollectionList<KV<String, Integer>> patientIdList =
         PCollectionList.<KV<String, Integer>>empty(pipeline).and(allPatientIds);
     PCollection<KV<String, Integer>> flattenedPatients =
@@ -124,8 +124,7 @@ public class FhirEtl {
     PCollection<KV<String, Integer>> mergedPatients = flattenedPatients.apply(Sum.integersPerKey());
     final String patientType = "Patient";
     FetchPatients fetchPatients =
-        new FetchPatients(
-            options, AvroConversionUtil.getInstance().getResourceSchema(patientType, fhirContext));
+        new FetchPatients(options, avroConversionUtil.getResourceSchema(patientType, fhirContext));
     mergedPatients.apply(fetchPatients);
     for (String resourceType : patientAssociatedResources) {
       FetchPatientHistory fetchPatientHistory = new FetchPatientHistory(options, resourceType);
@@ -134,7 +133,7 @@ public class FhirEtl {
   }
 
   private static List<Pipeline> buildFhirSearchPipeline(
-      FhirEtlOptions options, FhirContext fhirContext) {
+      FhirEtlOptions options, FhirContext fhirContext, AvroConversionUtil avroConversionUtil) {
     FhirSearchUtil fhirSearchUtil = createFhirSearchUtil(options, fhirContext);
     Map<String, List<SearchSegmentDescriptor>> segmentMap = Maps.newHashMap();
     try {
@@ -165,7 +164,12 @@ public class FhirEtl {
       Set<String> patientAssociatedResources =
           fhirSearchUtil.findPatientAssociatedResources(segmentMap.keySet());
       fetchPatientHistory(
-          pipeline, allPatientIds, patientAssociatedResources, options, fhirContext);
+          pipeline,
+          allPatientIds,
+          patientAssociatedResources,
+          options,
+          fhirContext,
+          avroConversionUtil);
     }
     return Arrays.asList(pipeline);
   }
@@ -180,7 +184,7 @@ public class FhirEtl {
   }
 
   private static List<Pipeline> buildOpenmrsJdbcPipeline(
-      FhirEtlOptions options, FhirContext fhirContext)
+      FhirEtlOptions options, FhirContext fhirContext, AvroConversionUtil avroConversionUtil)
       throws PropertyVetoException, IOException, SQLException {
     // TODO add incremental support.
     Preconditions.checkArgument(Strings.isNullOrEmpty(options.getSince()));
@@ -237,7 +241,12 @@ public class FhirEtl {
       Set<String> patientAssociatedResources =
           fhirSearchUtil.findPatientAssociatedResources(resourceTypes);
       fetchPatientHistory(
-          pipeline, allPatientIds, patientAssociatedResources, options, fhirContext);
+          pipeline,
+          allPatientIds,
+          patientAssociatedResources,
+          options,
+          fhirContext,
+          avroConversionUtil);
     }
     return pipelines;
   }
@@ -348,10 +357,11 @@ public class FhirEtl {
     return null;
   }
 
-  private static List<Pipeline> buildParquetReadPipeline(FhirEtlOptions options)
+  private static List<Pipeline> buildParquetReadPipeline(
+      FhirEtlOptions options, FhirContext fhirContext, AvroConversionUtil avroConversionUtil)
       throws IOException {
     Preconditions.checkArgument(!options.getParquetInputDwhRoot().isEmpty());
-    DwhFiles dwhFiles = DwhFiles.forRoot(options.getParquetInputDwhRoot());
+    DwhFiles dwhFiles = DwhFiles.forRoot(options.getParquetInputDwhRoot(), fhirContext);
     Set<String> resourceTypes = dwhFiles.findNonEmptyFhirResourceTypes();
     log.info("Reading Parquet files for these resource types: {}", resourceTypes);
     List<Pipeline> pipelineList = new ArrayList<>();
@@ -365,9 +375,7 @@ public class FhirEtl {
 
       PCollection<GenericRecord> records =
           inputFiles.apply(
-              ParquetIO.readFiles(
-                  AvroConversionUtil.getInstance()
-                      .getResourceSchema(resourceType, FhirVersionEnum.R4)));
+              ParquetIO.readFiles(avroConversionUtil.getResourceSchema(resourceType, fhirContext)));
 
       records.apply(
           "Process Parquet records for " + resourceType,
@@ -411,34 +419,23 @@ public class FhirEtl {
    * @param options the pipeline options to be used.
    * @return the created Pipeline instance or null if nothing needs to be done.
    */
-
-  static List<Pipeline> setupAndBuildPipelines(FhirEtlOptions options)
+  static List<Pipeline> setupAndBuildPipelines(
+      FhirEtlOptions options, FhirContext fhirContext, AvroConversionUtil avroConversionUtil)
       throws PropertyVetoException, IOException, SQLException, ViewDefinitionException {
     if (!options.getSinkDbConfigPath().isEmpty()) {
       JdbcResourceWriter.createTables(options);
     }
-    FhirContext fhirContext = FhirContexts.forR4();
     if (options.isJdbcModeHapi()) {
       return buildHapiJdbcPipeline(options);
     } else if (options.isJdbcModeEnabled()) {
-      return buildOpenmrsJdbcPipeline(options, fhirContext);
+      return buildOpenmrsJdbcPipeline(options, fhirContext, avroConversionUtil);
     } else if (!options.getParquetInputDwhRoot().isEmpty()) {
-      return buildParquetReadPipeline(options);
+      return buildParquetReadPipeline(options, fhirContext, avroConversionUtil);
     } else if (!options.getSourceJsonFilePattern().isEmpty()) {
       return buildJsonReadPipeline(options);
     } else {
-      return buildFhirSearchPipeline(options, fhirContext);
+      return buildFhirSearchPipeline(options, fhirContext, avroConversionUtil);
     }
-  }
-
-  private static FhirContext initializeFhirContext(String profileDefinitionsDirList) {
-    FhirContext fhirContext = null;
-    if (!Strings.isNullOrEmpty(profileDefinitionsDirList)) {
-      fhirContext = FhirContexts.forR4(Arrays.asList(profileDefinitionsDirList.split(",")));
-    } else {
-      fhirContext = FhirContexts.forR4();
-    }
-    return fhirContext;
   }
 
   public static void main(String[] args)
@@ -452,8 +449,15 @@ public class FhirEtl {
     log.info("Flags: " + options);
     validateOptions(options);
 
-    List<Pipeline> pipelines = setupAndBuildPipelines(options);
-    EtlUtils.runMultiplePipelinesWithTimestamp(pipelines, options);
+    FhirContext fhirContext =
+        ProfileMapperFhirContexts.getInstance()
+            .contextFor(options.getFhirVersion(), options.getProfileDefinitionsDir());
+    AvroConversionUtil avroConversionUtil =
+        AvroConversionUtil.getInstance()
+            .loadContextFor(options.getFhirVersion(), options.getProfileDefinitionsDir());
+    List<Pipeline> pipelines = setupAndBuildPipelines(options, fhirContext, avroConversionUtil);
+    EtlUtils.runMultiplePipelinesWithTimestamp(pipelines, options, fhirContext);
+
     log.info("DONE!");
   }
 }

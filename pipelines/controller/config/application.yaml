@@ -135,9 +135,12 @@ fhirdata:
   # you can use those predefined views in your dev. env. too.
   hiveResourceViewsDir: "config/views"
 
-  # List of paths containing the structure definition file for any custom profiles that needs to be
+  # Path containing the structure definition files for any custom profiles that needs to be
   # supported. Currently only one profile is supported for any given resource type.
   profileDefinitionsDir: "config/profile-definitions"
+
+  # The fhir version to be used for the FHIR Context APIs
+  fhirVersion: "R4"
 
   # This is the size of the Parquet Row Group (a logical horizontal partitioning into rows) that
   # will be used for creating row groups in parquet file by pipelines. A large value means more data

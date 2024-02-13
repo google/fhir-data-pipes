@@ -17,7 +17,7 @@ package com.google.fhir.analytics;
 
 import ca.uhn.fhir.context.FhirContext;
 import ca.uhn.fhir.context.FhirVersionEnum;
-import com.cerner.bunsen.FhirContexts;
+import com.cerner.bunsen.ProfileMapperFhirContexts;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import java.io.IOException;
@@ -69,12 +69,13 @@ public class ParquetUtil {
    * @param parquetFilePath The directory under which the Parquet files are written.
    */
   public ParquetUtil(FhirVersionEnum fhirVersionEnum, String parquetFilePath) {
-    this(fhirVersionEnum, parquetFilePath, 0, 0, "");
+    this(fhirVersionEnum, "", parquetFilePath, 0, 0, "");
   }
 
   // TODO remove this constructor and only expose a similar one in `DwhFiles` (for testing).
   /**
    * @param fhirVersionEnum This should match the resources intended to be converted.
+   * @param profileDefinitionsDir Path containing the custom fhir profile definitions to be used
    * @param parquetFilePath The directory under which the Parquet files are written.
    * @param secondsToFlush The interval after which the content of Parquet writers is flushed to
    *     disk.
@@ -85,13 +86,17 @@ public class ParquetUtil {
   @VisibleForTesting
   ParquetUtil(
       FhirVersionEnum fhirVersionEnum,
+      String profileDefinitionsDir,
       String parquetFilePath,
       int secondsToFlush,
       int rowGroupSize,
       String namePrefix) {
-    conversionUtil = AvroConversionUtil.getInstance();
     if (fhirVersionEnum == FhirVersionEnum.DSTU3 || fhirVersionEnum == FhirVersionEnum.R4) {
-      this.fhirContext = FhirContexts.contextFor(fhirVersionEnum);
+      this.conversionUtil =
+          AvroConversionUtil.getInstance().loadContextFor(fhirVersionEnum, profileDefinitionsDir);
+      this.fhirContext =
+          ProfileMapperFhirContexts.getInstance()
+              .contextFor(fhirVersionEnum, profileDefinitionsDir);
     } else {
       throw new IllegalArgumentException("Only versions 3 and 4 of FHIR are supported!");
     }

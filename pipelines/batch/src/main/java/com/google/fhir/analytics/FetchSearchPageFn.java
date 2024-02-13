@@ -16,9 +16,10 @@
 package com.google.fhir.analytics;
 
 import ca.uhn.fhir.context.FhirContext;
+import ca.uhn.fhir.context.FhirVersionEnum;
 import ca.uhn.fhir.context.ParserOptions;
 import ca.uhn.fhir.parser.IParser;
-import com.cerner.bunsen.FhirContexts;
+import com.cerner.bunsen.ProfileMapperFhirContexts;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Strings;
 import com.google.fhir.analytics.JdbcConnectionPools.DataSourceConfig;
@@ -27,7 +28,6 @@ import com.google.fhir.analytics.view.ViewApplicationException;
 import java.beans.PropertyVetoException;
 import java.io.IOException;
 import java.sql.SQLException;
-import java.util.Arrays;
 import java.util.Set;
 import javax.annotation.Nullable;
 import javax.sql.DataSource;
@@ -110,7 +110,11 @@ abstract class FetchSearchPageFn<T> extends DoFn<T, KV<String, Integer>> {
 
   protected FhirContext fhirContext;
 
-  private String profileDefinitionsDirList;
+  private FhirVersionEnum fhirVersionEnum;
+
+  private String profileDefinitionsDir;
+
+  protected AvroConversionUtil avroConversionUtil;
 
   FetchSearchPageFn(FhirEtlOptions options, String stageIdentifier) {
     this.sinkPath = options.getFhirSinkPath();
@@ -127,7 +131,8 @@ abstract class FetchSearchPageFn<T> extends DoFn<T, KV<String, Integer>> {
     this.secondsToFlush = options.getSecondsToFlushParquetFiles();
     this.rowGroupSize = options.getRowGroupSizeForParquetFiles();
     this.viewDefinitionsDir = options.getViewDefinitionsDir();
-    this.profileDefinitionsDirList = options.getProfileDefinitionsDirList();
+    this.profileDefinitionsDir = options.getProfileDefinitionsDir();
+    this.fhirVersionEnum = options.getFhirVersion();
     if (options.getSinkDbConfigPath().isEmpty()) {
       this.sinkDbConfig = null;
     } else {
@@ -164,9 +169,10 @@ abstract class FetchSearchPageFn<T> extends DoFn<T, KV<String, Integer>> {
   @Setup
   public void setup() throws SQLException, PropertyVetoException {
     log.debug("Starting setup for stage " + stageIdentifier);
-    // TODO make this configurable
-    //   https://github.com/GoogleCloudPlatform/openmrs-fhir-analytics/issues/400
-    fhirContext = initialiseFhirContext(profileDefinitionsDirList);
+    fhirContext =
+        ProfileMapperFhirContexts.getInstance().contextFor(fhirVersionEnum, profileDefinitionsDir);
+    avroConversionUtil = AvroConversionUtil.getInstance();
+    avroConversionUtil.loadContextFor(fhirVersionEnum, profileDefinitionsDir);
     // The documentation for `FhirContext` claims that it is thread-safe but looking at the code,
     // it is not obvious if it is. This might be an issue when we write to it, like the next line.
     fhirContext.setParserOptions(
@@ -197,6 +203,7 @@ abstract class FetchSearchPageFn<T> extends DoFn<T, KV<String, Integer>> {
       parquetUtil =
           new ParquetUtil(
               fhirContext.getVersion().getVersion(),
+              profileDefinitionsDir,
               parquetFile,
               secondsToFlush,
               rowGroupSize,
@@ -210,16 +217,6 @@ abstract class FetchSearchPageFn<T> extends DoFn<T, KV<String, Integer>> {
       //  https://github.com/google/fhir-data-pipes/issues/288
       jdbcWriter = new JdbcResourceWriter(jdbcSink, viewDefinitionsDir, fhirContext);
     }
-  }
-
-  private FhirContext initialiseFhirContext(String profileDefinitionsDirList) {
-    FhirContext fhirContext = null;
-    if (!Strings.isNullOrEmpty(profileDefinitionsDirList)) {
-      fhirContext = FhirContexts.forR4(Arrays.asList(profileDefinitionsDirList.split(",")));
-    } else {
-      fhirContext = FhirContexts.forR4();
-    }
-    return fhirContext;
   }
 
   @Teardown

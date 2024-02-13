@@ -23,18 +23,30 @@ import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.number.IsCloseTo.closeTo;
 
 import ca.uhn.fhir.context.FhirContext;
+import ca.uhn.fhir.context.FhirVersionEnum;
 import ca.uhn.fhir.parser.IParser;
+import com.cerner.bunsen.ProfileMapperFhirContexts;
+import com.cerner.bunsen.avro.AvroConverter;
 import com.google.common.io.Resources;
+import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
+import java.net.URISyntaxException;
+import java.net.URL;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Paths;
 import java.util.Collection;
 import java.util.List;
 import org.apache.avro.Schema;
 import org.apache.avro.generic.GenericData;
 import org.apache.avro.generic.GenericData.Record;
 import org.apache.avro.generic.GenericRecord;
+import org.hamcrest.Matchers;
+import org.hl7.fhir.instance.model.api.IBaseResource;
 import org.hl7.fhir.r4.model.Bundle;
 import org.hl7.fhir.r4.model.Observation;
+import org.hl7.fhir.r4.model.Patient;
+import org.hl7.fhir.r4.model.Resource;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -42,21 +54,38 @@ import org.mockito.junit.MockitoJUnitRunner;
 
 @RunWith(MockitoJUnitRunner.class)
 public class AvroConversionUtilTest {
-  private AvroConversionUtil instance = AvroConversionUtil.getInstance();
-
+  private AvroConversionUtil instance;
   private FhirContext fhirContext;
   private String patientBundle;
   private String observationBundle;
 
+  public static final String US_CORE_PATIENT =
+      "http://hl7.org/fhir/us/core/StructureDefinition/us-core-patient";
+
   @Before
-  public void setup() throws IOException {
+  public void setup() throws IOException, ClassNotFoundException, URISyntaxException {
     AvroConversionUtil.initializeAvroConverters();
     patientBundle =
         Resources.toString(Resources.getResource("patient_bundle.json"), StandardCharsets.UTF_8);
     observationBundle =
         Resources.toString(
             Resources.getResource("observation_bundle.json"), StandardCharsets.UTF_8);
-    this.fhirContext = FhirContext.forR4Cached();
+
+    URL resourceURL =
+        AvroConversionUtilTest.class
+            .getClassLoader()
+            .getResource("definitions-r4/StructureDefinition-us-core-patient.json");
+    File file = Paths.get(resourceURL.toURI()).toFile();
+
+    ProfileMapperFhirContexts.getInstance().deRegisterFhirContexts(FhirVersionEnum.R4);
+    AvroConversionUtil.getInstance().deRegisterMappingsFor(FhirVersionEnum.R4);
+
+    this.fhirContext =
+        ProfileMapperFhirContexts.getInstance()
+            .contextFor(FhirVersionEnum.R4, file.getParentFile().getAbsolutePath());
+    this.instance =
+        AvroConversionUtil.getInstance()
+            .loadContextFor(FhirVersionEnum.R4, file.getParentFile().getAbsolutePath());
   }
 
   @Test
@@ -112,8 +141,7 @@ public class AvroConversionUtilTest {
     IParser parser = fhirContext.newJsonParser();
     Bundle bundle = parser.parseResource(Bundle.class, patientBundle);
     GenericRecord record =
-        AvroConversionUtil.getInstance()
-            .convertToAvro(bundle.getEntry().get(0).getResource(), fhirContext);
+        instance.convertToAvro(bundle.getEntry().get(0).getResource(), fhirContext);
     Collection<Object> addressList = (Collection<Object>) record.get("address");
     // TODO We need to fix this again; the root cause is the change in `id` type to System.String.
     // https://github.com/GoogleCloudPlatform/openmrs-fhir-analytics/issues/55
@@ -130,9 +158,50 @@ public class AvroConversionUtilTest {
             Resources.getResource("observation_decimal.json"), StandardCharsets.UTF_8);
     IParser parser = fhirContext.newJsonParser();
     Observation observation = parser.parseResource(Observation.class, observationStr);
-    GenericRecord record = AvroConversionUtil.getInstance().convertToAvro(observation, fhirContext);
+    GenericRecord record = instance.convertToAvro(observation, fhirContext);
     GenericData.Record valueRecord = (GenericData.Record) record.get("value");
     Double value = (Double) ((GenericData.Record) valueRecord.get("quantity")).get("value");
     assertThat(value, closeTo(25, 0.001));
+  }
+
+  @Test
+  public void checkForCorrectAvroConverter() {
+    AvroConverter patientUtilAvroConverter = instance.getConverter("Patient", fhirContext);
+    AvroConverter patientDirectAvroConverter =
+        AvroConverter.forResource(fhirContext, US_CORE_PATIENT);
+    // Check if the schemas are equal
+    assertThat(
+        patientUtilAvroConverter.getSchema(),
+        Matchers.equalTo(patientDirectAvroConverter.getSchema()));
+
+    AvroConverter obsUtilAvroConverter = instance.getConverter("Observation", fhirContext);
+    AvroConverter obsDirectAvroConverter = AvroConverter.forResource(fhirContext, "Observation");
+    // Check if the schemas are equal
+    assertThat(
+        obsUtilAvroConverter.getSchema(), Matchers.equalTo(obsDirectAvroConverter.getSchema()));
+  }
+
+  @Test
+  public void testForAvroRecords() throws IOException {
+    IBaseResource baseResource = loadResource("patient_us_core.json", Patient.class);
+    GenericRecord avroRecord = instance.convertToAvro((Resource) baseResource, fhirContext);
+
+    AvroConverter avroConverter = instance.getConverter("Patient", fhirContext);
+    IBaseResource baseResource1 = avroConverter.avroToResource(avroRecord);
+
+    IParser jsonParser = fhirContext.newJsonParser();
+    String string1 = (jsonParser.encodeResourceToString(baseResource));
+    String string2 = jsonParser.encodeResourceToString(baseResource1);
+
+    assertThat(string1.equals(string2), Matchers.equalTo(Boolean.TRUE));
+  }
+
+  private <T extends IBaseResource> IBaseResource loadResource(
+      String resourceFile, Class<T> resourceType) throws IOException {
+    IParser jsonParser = FhirContext.forR4().newJsonParser();
+    try (InputStream patientStream =
+        getClass().getClassLoader().getResourceAsStream(resourceFile)) {
+      return jsonParser.parseResource(resourceType, patientStream);
+    }
   }
 }

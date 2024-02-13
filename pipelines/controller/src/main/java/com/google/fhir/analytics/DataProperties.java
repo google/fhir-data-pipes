@@ -15,6 +15,7 @@
  */
 package com.google.fhir.analytics;
 
+import ca.uhn.fhir.context.FhirVersionEnum;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import java.lang.reflect.InvocationTargetException;
@@ -105,9 +106,11 @@ public class DataProperties {
 
   private String fhirServerOAuthClientSecret;
 
-  private String profileDefinitionsDirList;
+  private String profileDefinitionsDir;
 
   private int rowGroupSizeForParquetFiles;
+
+  private FhirVersionEnum fhirVersion;
 
   @PostConstruct
   void validateProperties() {
@@ -116,6 +119,7 @@ public class DataProperties {
     Preconditions.checkArgument(
         !Strings.isNullOrEmpty(fhirServerUrl) || !Strings.isNullOrEmpty(dbConfig),
         "At least one of fhirServerUrl or dbConfig should be set!");
+    Preconditions.checkState(fhirVersion != null, "FhirVersion cannot be empty");
 
     if (!Strings.isNullOrEmpty(dbConfig)) {
       if (!Strings.isNullOrEmpty(fhirServerUrl)) {
@@ -181,6 +185,8 @@ public class DataProperties {
     }
     options.setViewDefinitionsDir(Strings.nullToEmpty(viewDefinitionsDir));
     options.setSinkDbConfigPath(Strings.nullToEmpty(sinkDbConfigPath));
+    options.setProfileDefinitionsDir(Strings.nullToEmpty(profileDefinitionsDir));
+    options.setFhirVersion(fhirVersion);
 
     // Using underscore for suffix as hyphens are discouraged in hive table names.
     String timestampSuffix =
@@ -216,7 +222,9 @@ public class DataProperties {
         new ConfigFields("fhirdata.numThreads", String.valueOf(numThreads), "", ""),
         new ConfigFields("fhirdata.dbConfig", dbConfig, "", ""),
         new ConfigFields("fhirdata.viewDefinitionsDir", viewDefinitionsDir, "", ""),
-        new ConfigFields("fhirdata.sinkDbConfigPath", sinkDbConfigPath, "", ""));
+        new ConfigFields("fhirdata.sinkDbConfigPath", sinkDbConfigPath, "", ""),
+        new ConfigFields("fhirdata.profileDefinitionsDir", profileDefinitionsDir, "", ""),
+        new ConfigFields("fhirdata.fhirVersion", fhirVersion.name(), "", ""));
   }
 
   ConfigFields getConfigFields(FhirEtlOptions options, Method getMethod) {

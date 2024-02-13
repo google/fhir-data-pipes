@@ -91,8 +91,7 @@ public class ProcessGenericRecords extends FetchSearchPageFn<GenericRecord> {
       throws IOException, SQLException, ViewApplicationException {
     try {
       long startTime = System.currentTimeMillis();
-      Resource resource =
-          AvroConversionUtil.getInstance().convertToHapi(record, resourceType, fhirContext);
+      Resource resource = avroConversionUtil.convertToHapi(record, resourceType, fhirContext);
       totalAvroConversionTime.inc(System.currentTimeMillis() - startTime);
       totalAvroConversions.inc();
       cachedResources.add(resource);
