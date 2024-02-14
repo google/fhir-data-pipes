@@ -27,7 +27,7 @@
 
     <compile.source>11</compile.source>
 
-    <hapi.fhir.version>6.6.2</hapi.fhir.version>
+    <hapi.fhir.version>6.10.4</hapi.fhir.version>
     <avro.version>1.11.3</avro.version>
     <junit.version>4.13.2</junit.version>
     <hamcrest.version>2.2</hamcrest.version>
@@ -36,7 +36,7 @@
     <python.version>3.5.3</python.version>
     <maven-javadoc.plugin.version>3.6.3</maven-javadoc.plugin.version>
     <maven-project-info-reports.plugin.version>3.5.0</maven-project-info-reports.plugin.version>
-    <slf4j.version>2.0.11</slf4j.version>
+    <slf4j.version>2.0.12</slf4j.version>
     <logback.version>1.4.12</logback.version>
   </properties>
 
@@ -82,6 +82,15 @@
       <!-- We only enable the logback binding while testing such that it is
         not imposed on the end-user of the Bunsen libraries.-->
       <scope>test</scope>
+    </dependency>
+
+    <!-- This is to override the old Jackson dependency that Avro has; without
+      this the libraries that depend on newer Jackson throw NoClassDefFound.
+      TODO remove this dependency once Avro is upgraded. -->
+    <dependency>
+      <groupId>com.fasterxml.jackson.core</groupId>
+      <artifactId>jackson-core</artifactId>
+      <version>2.16.1</version>
     </dependency>
   </dependencies>
 
