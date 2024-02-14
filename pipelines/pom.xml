@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
 
-    Copyright 2020-2023 Google LLC
+    Copyright 2020-2024 Google LLC
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -42,9 +42,10 @@
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <junit.version>4.13.2</junit.version>
-    <slf4j.version>2.0.9</slf4j.version>
+    <slf4j.version>2.0.11</slf4j.version>
     <logback.version>1.4.12</logback.version>
-    <hapifhirVersion>6.6.2</hapifhirVersion>
+    <hapifhirVersion>6.10.4</hapifhirVersion>
+
     <hamcrest.version>2.2</hamcrest.version>
     <openmrsPlatformVersion>2.6.0-SNAPSHOT</openmrsPlatformVersion>
     <mockito.version>5.2.0</mockito.version>
@@ -165,7 +166,7 @@
     <dependency>
       <groupId>com.fasterxml.jackson.core</groupId>
       <artifactId>jackson-core</artifactId>
-      <version>2.16.0</version>
+      <version>2.16.1</version>
     </dependency>
   </dependencies>
 
@@ -185,11 +186,11 @@
         </plugin>
         <plugin>
           <artifactId>maven-compiler-plugin</artifactId>
-          <version>3.11.0</version>
+          <version>3.12.1</version>
         </plugin>
         <plugin>
           <artifactId>maven-surefire-plugin</artifactId>
-          <version>3.2.2</version>
+          <version>3.2.5</version>
         </plugin>
         <!--
            Configures `mvn package` to produce a bundled jar ("fat jar") for runners

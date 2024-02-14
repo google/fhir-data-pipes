@@ -32,6 +32,7 @@ import org.hl7.fhir.r4.model.Observation;
 import org.hl7.fhir.r4.model.Patient;
 import org.hl7.fhir.r4.model.Provenance;
 import org.hl7.fhir.r4.model.Quantity;
+import org.hl7.fhir.r4.model.Task;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -44,6 +45,12 @@ public class R4AvroConverterTest {
   private static Record avroObservation;
 
   private static Observation testObservationDecoded;
+
+  private static final Task testTask = TestData.newTask();
+
+  private static Record avroTask;
+
+  private static Task testTaskDecoded;
 
   private static final Observation testObservationNullStatus =
       TestData.newObservation().setStatus(Observation.ObservationStatus.NULL);
@@ -95,6 +102,10 @@ public class R4AvroConverterTest {
   @BeforeClass
   public static void convertTestData() throws IOException {
 
+    // TODO update these conversions to actually use the wire/binary format, i.e., create
+    //  the serialized format from the Avro object then re-read/convert that format back to an
+    //  Avro object before converting back to a HAPI object. That way we make sure that
+    //  if the Avro object is serialized to disk, it is still convertible back to HAPI objects.
     AvroConverter observationConverter =
         AvroConverter.forResource(FhirContexts.forR4(), "Observation");
 
@@ -107,6 +118,12 @@ public class R4AvroConverterTest {
 
     testObservationDecodedNullStatus =
         (Observation) observationConverter.avroToResource(avroObservationNullStatus);
+
+    AvroConverter taskConverter = AvroConverter.forResource(FhirContexts.forR4(), "Task");
+
+    avroTask = (Record) taskConverter.resourceToAvro(testTask);
+
+    testTaskDecoded = (Task) taskConverter.avroToResource(avroTask);
 
     AvroConverter patientConverter =
         AvroConverter.forResource(FhirContexts.forR4(), TestData.US_CORE_PATIENT);
@@ -160,13 +177,27 @@ public class R4AvroConverterTest {
 
     // Decode the Avro decimal to ensure the expected value is there.
     BigDecimal avroDecimal =
-        (BigDecimal)
-            ((Record) ((Record) avroObservation.get("value")).get("quantity")).get("value");
+        BigDecimal.valueOf(
+            (Double)
+                ((Record) ((Record) avroObservation.get("value")).get("quantity")).get("value"));
 
     Assert.assertEquals(originalDecimal.compareTo(avroDecimal), 0);
 
     Assert.assertEquals(
         originalDecimal.compareTo(((Quantity) testObservationDecoded.getValue()).getValue()), 0);
+  }
+
+  @Test
+  public void testTaskConversion() {
+    Assert.assertEquals(testTask.getInput().size(), testTaskDecoded.getInput().size());
+    Assert.assertEquals(testTask.getInput().size(), 1);
+    Assert.assertEquals(
+        testTask.getInput().get(0).getType().getCoding().get(0).getSystem(),
+        testTaskDecoded.getInput().get(0).getType().getCoding().get(0).getSystem());
+    Assert.assertEquals(
+        testTask.getInput().get(0).getValue().primitiveValue(),
+        testTaskDecoded.getInput().get(0).getValue().primitiveValue());
+    Assert.assertEquals(testTask.getOutput().size(), testTaskDecoded.getOutput().size());
   }
 
   @Test

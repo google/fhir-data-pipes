@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2023 Google LLC
+ * Copyright 2020-2024 Google LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ import ca.uhn.fhir.parser.DataFormatException;
 import com.cerner.bunsen.FhirContexts;
 import com.google.api.client.util.Sets;
 import com.google.common.base.Preconditions;
+import com.google.common.base.Strings;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
@@ -107,7 +108,7 @@ public class DwhFiles {
    * @param fhirContext
    */
   DwhFiles(String dwhRoot, FhirContext fhirContext) {
-    Preconditions.checkNotNull(dwhRoot);
+    Preconditions.checkArgument(!Strings.isNullOrEmpty(dwhRoot));
     this.dwhRoot = dwhRoot;
     this.fhirContext = fhirContext;
   }
@@ -129,6 +130,15 @@ public class DwhFiles {
   public ResourceId getResourcePath(String resourceType) {
     return FileSystems.matchNewResource(getRoot(), true)
         .resolve(resourceType, StandardResolveOptions.RESOLVE_DIRECTORY);
+  }
+
+  /**
+   * @param resourceType the type of the FHIR resources
+   * @return The file pattern for Parquet files of `resourceType` in this DWH.
+   */
+  public String getFilePattern(String resourceType) {
+    return String.format(
+        "%s*%s", getResourcePath(resourceType).toString(), ParquetUtil.PARQUET_EXTENSION);
   }
 
   /**
@@ -322,7 +332,7 @@ public class DwhFiles {
     return Instant.parse(result.get(0));
   }
 
-  public void writeToFile(String fileName, byte[] content) throws IOException {
+  public void overwriteFile(String fileName, byte[] content) throws IOException {
     ResourceId resourceId =
         FileSystems.matchNewResource(getRoot(), true)
             .resolve(fileName, StandardResolveOptions.RESOLVE_FILE);
@@ -331,13 +341,13 @@ public class DwhFiles {
     MatchResult matchResult = Iterables.getOnlyElement(matches);
 
     if (matchResult.status() == Status.OK) {
-      String errorMessage =
-          String.format(
-              "Attempting to write to the file %s which already exists",
-              getRoot() + "/" + fileName);
-      log.error(errorMessage);
-      throw new FileAlreadyExistsException(errorMessage);
-    } else if (matchResult.status() == Status.NOT_FOUND) {
+      String warnMessage =
+          String.format("Overwriting the existing file %s", getRoot() + "/" + fileName);
+      log.warn(warnMessage);
+      FileSystems.delete(List.of(resourceId));
+    }
+
+    if (matchResult.status() == Status.NOT_FOUND || matchResult.status() == Status.OK) {
       WritableByteChannel writableByteChannel = FileSystems.create(resourceId, MimeTypes.BINARY);
       writableByteChannel.write(ByteBuffer.wrap(content));
       writableByteChannel.close();

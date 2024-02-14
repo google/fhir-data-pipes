@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2023 Google LLC
+ * Copyright 2020-2024 Google LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,8 +20,10 @@ import ca.uhn.fhir.context.ParserOptions;
 import ca.uhn.fhir.parser.IParser;
 import com.cerner.bunsen.FhirContexts;
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Strings;
 import com.google.fhir.analytics.JdbcConnectionPools.DataSourceConfig;
 import com.google.fhir.analytics.model.DatabaseConfiguration;
+import com.google.fhir.analytics.view.ViewApplicationException;
 import java.beans.PropertyVetoException;
 import java.io.IOException;
 import java.sql.SQLException;
@@ -87,9 +89,7 @@ abstract class FetchSearchPageFn<T> extends DoFn<T, KV<String, Integer>> {
 
   protected final DataSourceConfig sinkDbConfig;
 
-  private final String sinkDbTableName;
-
-  private final boolean useSingleSinkDbTable;
+  protected final String viewDefinitionsDir;
 
   private final int initialPoolSize;
 
@@ -123,7 +123,7 @@ abstract class FetchSearchPageFn<T> extends DoFn<T, KV<String, Integer>> {
     this.parquetFile = options.getOutputParquetPath();
     this.secondsToFlush = options.getSecondsToFlushParquetFiles();
     this.rowGroupSize = options.getRowGroupSizeForParquetFiles();
-    this.sinkDbTableName = options.getSinkDbTablePrefix();
+    this.viewDefinitionsDir = options.getViewDefinitionsDir();
     if (options.getSinkDbConfigPath().isEmpty()) {
       this.sinkDbConfig = null;
     } else {
@@ -137,7 +137,6 @@ abstract class FetchSearchPageFn<T> extends DoFn<T, KV<String, Integer>> {
         throw new IllegalArgumentException(error);
       }
     }
-    this.useSingleSinkDbTable = options.getUseSingleSinkTable();
     this.initialPoolSize = options.getJdbcInitialPoolSize();
     this.maxPoolSize = options.getJdbcMaxPoolSize();
     this.numFetchedResources =
@@ -190,41 +189,46 @@ abstract class FetchSearchPageFn<T> extends DoFn<T, KV<String, Integer>> {
             oAuthClientSecret,
             fhirContext);
     fhirSearchUtil = new FhirSearchUtil(fetchUtil);
-    parquetUtil =
-        new ParquetUtil(
-            fhirContext.getVersion().getVersion(),
-            parquetFile,
-            secondsToFlush,
-            rowGroupSize,
-            stageIdentifier + "_");
+    if (!Strings.isNullOrEmpty(parquetFile)) {
+      parquetUtil =
+          new ParquetUtil(
+              fhirContext.getVersion().getVersion(),
+              parquetFile,
+              secondsToFlush,
+              rowGroupSize,
+              stageIdentifier + "_");
+    }
     if (sinkDbConfig != null) {
       DataSource jdbcSink =
           JdbcConnectionPools.getInstance()
               .getPooledDataSource(sinkDbConfig, initialPoolSize, maxPoolSize);
-      jdbcWriter =
-          new JdbcResourceWriter(jdbcSink, sinkDbTableName, useSingleSinkDbTable, fhirContext);
+      // TODO separate view generation from writing; TBD in a more generic version of:
+      //  https://github.com/google/fhir-data-pipes/issues/288
+      jdbcWriter = new JdbcResourceWriter(jdbcSink, viewDefinitionsDir, fhirContext);
     }
   }
 
   @Teardown
   public void teardown() throws IOException {
-    parquetUtil.closeAllWriters();
+    if (parquetUtil != null) {
+      parquetUtil.closeAllWriters();
+    }
   }
 
   protected void addFetchTime(long millis) {
     totalFetchTimeMillis.inc(millis);
   }
 
-  protected void processBundle(Bundle bundle) throws IOException, SQLException {
+  protected void processBundle(Bundle bundle)
+      throws IOException, SQLException, ViewApplicationException {
     this.processBundle(bundle, null);
   }
 
-  // TODO remove `resourceTypes` once we support different FHIR versions in AVRO conversion.
   protected void processBundle(Bundle bundle, @Nullable Set<String> resourceTypes)
-      throws IOException, SQLException {
+      throws IOException, SQLException, ViewApplicationException {
     if (bundle != null && bundle.getEntry() != null) {
       numFetchedResources.inc(bundle.getEntry().size());
-      if (!parquetFile.isEmpty()) {
+      if (parquetUtil != null) {
         long startTime = System.currentTimeMillis();
         parquetUtil.writeRecords(bundle, resourceTypes);
         totalGenerateTimeMillis.inc(System.currentTimeMillis() - startTime);
@@ -238,9 +242,10 @@ abstract class FetchSearchPageFn<T> extends DoFn<T, KV<String, Integer>> {
         if (bundle.getEntry() == null) {
           return;
         }
+        // TODO consider processing the whole Bundle in one batched DB update.
         for (BundleEntryComponent entry : bundle.getEntry()) {
           Resource resource = entry.getResource();
-          if (resourceTypes != null && resourceTypes.contains(resource.getResourceType().name())) {
+          if (resourceTypes == null || resourceTypes.contains(resource.getResourceType().name())) {
             jdbcWriter.writeResource(resource);
           }
         }

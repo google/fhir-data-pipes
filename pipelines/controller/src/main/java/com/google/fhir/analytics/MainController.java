@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2023 Google LLC
+ * Copyright 2020-2024 Google LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package com.google.fhir.analytics;
 
+import com.google.common.base.Strings;
 import java.beans.PropertyVetoException;
 import java.io.IOException;
 import java.time.LocalDateTime;
@@ -61,6 +62,10 @@ public class MainController {
       model.addAttribute("next_run", next.toString());
       model.addAttribute("hasDwh", true);
     }
+    model.addAttribute(
+        "enableView",
+        !Strings.isNullOrEmpty(dataProperties.getViewDefinitionsDir())
+            && !Strings.isNullOrEmpty(dataProperties.getSinkDbConfigPath()));
     FhirEtlOptions options = dataProperties.createBatchOptions().getFhirEtlOptions();
     List<DataProperties.ConfigFields> configParams = dataProperties.getConfigParams();
     model.addAttribute("configParams", configParams);

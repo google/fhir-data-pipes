@@ -1,0 +1,71 @@
+{
+  "resourceType": "http://hl7.org/fhir/uv/sql-on-fhir/StructureDefinition/ViewDefinition",
+  "text": "This is [almost] the SQL-on-FHIR-v2 version of Observation_flat.sql",
+  "select": [
+    {
+      "column": [
+        {
+          "path": "getResourceKey()",
+          "name": "id"
+        },
+        {
+          "path": "subject.getReferenceKey('Patient')",
+          "name": "patient_id"
+        },
+        {
+          "path": "encounter.getReferenceKey('Encounter')",
+          "name": "encounter_id"
+        },
+        {
+          "path": "status",
+          "name": "status"
+        },
+        {
+          "path": "effective.ofType(dateTime)",
+          "name": "obs_date",
+          "type": "dateTime"
+        },
+        {
+          "path": "value.ofType(Quantity).value",
+          "name": "val_quantity",
+          "type": "decimal"
+        }
+      ]
+    },
+    {
+      "forEachOrNull": "code.coding",
+      "column": [
+        {
+          "path": "code",
+          "name": "code"
+        },
+        {
+          "path": "system",
+          "name": "code_sys"
+        }
+      ]
+    },
+    {
+      "forEachOrNull": "valueCodeableConcept.coding",
+      "column": [
+        {
+          "path": "code",
+          "name": "val_code"
+        },
+        {
+          "path": "system",
+          "name": "val_sys"
+        }
+      ]
+    }
+  ],
+  "where": [
+    {
+      "path": "subject.exists()",
+      "description": "Drop resources that do not have a subject."
+    }
+  ],
+  "name": "observation_flat",
+  "status": "draft",
+  "resource": "Observation"
+}

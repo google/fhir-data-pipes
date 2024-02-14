@@ -18,6 +18,7 @@ package com.google.fhir.analytics;
 import ca.uhn.fhir.rest.api.SummaryEnum;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.Maps;
+import com.google.fhir.analytics.view.ViewApplicationException;
 import java.io.IOException;
 import java.sql.SQLException;
 import java.util.List;
@@ -128,7 +129,7 @@ public class FetchResources
     @ProcessElement
     public void processElement(
         @Element SearchSegmentDescriptor segment, OutputReceiver<KV<String, Integer>> out)
-        throws IOException, SQLException {
+        throws IOException, SQLException, ViewApplicationException {
       String searchUrl = segment.searchUrl();
       log.info(
           String.format(

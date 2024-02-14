@@ -17,6 +17,7 @@ package com.google.fhir.analytics;
 
 import ca.uhn.fhir.parser.DataFormatException;
 import com.google.common.collect.Sets;
+import com.google.fhir.analytics.view.ViewApplicationException;
 import java.io.IOException;
 import java.sql.SQLException;
 import java.util.List;
@@ -44,7 +45,7 @@ public class ReadJsonFilesFn extends FetchSearchPageFn<FileIO.ReadableFile> {
   @ProcessElement
   public void processElement(
       @Element FileIO.ReadableFile file, OutputReceiver<KV<String, Integer>> out)
-      throws IOException, SQLException {
+      throws IOException, SQLException, ViewApplicationException {
     log.info("Reading file with metadata " + file.getMetadata());
     String fileContent = file.readFullyAsUTF8String();
     try {

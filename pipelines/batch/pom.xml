@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
 
-    Copyright 2020-2023 Google LLC
+    Copyright 2020-2024 Google LLC
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -35,14 +35,14 @@
 
   <properties>
     <hamcrest.version>2.2</hamcrest.version>
-    <jackson.version>2.16.0</jackson.version>
+    <jackson.version>2.16.1</jackson.version>
     <pubsub.version>v1-rev20220904-2.0.0</pubsub.version>
     <spark.version>2.4.8</spark.version>
-    <maven-surefire-plugin.version>3.2.2</maven-surefire-plugin.version>
+    <maven-surefire-plugin.version>3.2.5</maven-surefire-plugin.version>
     <nemo.version>0.1</nemo.version>
     <flink.artifact.name>beam-runners-flink-1.14</flink.artifact.name>
     <mysql.driver.version>8.0.16</mysql.driver.version>
-    <postgresql.version>42.7.0</postgresql.version>
+    <postgresql.version>42.7.1</postgresql.version>
 
   </properties>
 

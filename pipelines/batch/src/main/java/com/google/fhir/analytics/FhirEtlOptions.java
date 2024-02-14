@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2023 Google LLC
+ * Copyright 2020-2024 Google LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,11 +17,10 @@ package com.google.fhir.analytics;
 
 import org.apache.beam.sdk.options.Default;
 import org.apache.beam.sdk.options.Description;
-import org.apache.beam.sdk.options.PipelineOptions;
 import org.apache.beam.sdk.options.Validation.Required;
 
 /** Options supported by {@link FhirEtl}. */
-public interface FhirEtlOptions extends PipelineOptions {
+public interface FhirEtlOptions extends BasePipelineOptions {
 
   @Description("Fhir source server URL, e.g., http://localhost:8091/fhir, etc.")
   @Required
@@ -166,16 +165,6 @@ public interface FhirEtlOptions extends PipelineOptions {
 
   void setSecondsToFlushParquetFiles(int value);
 
-  @Description(
-      "The approximate size (bytes) of the row-groups in Parquet files. When this size is reached,"
-          + " the content is flushed to disk. This won't be triggered if there are less than 100"
-          + " records.\n"
-          + "The default 0 uses the default row-group size of Parquet writers.")
-  @Default.Integer(0)
-  int getRowGroupSizeForParquetFiles();
-
-  void setRowGroupSizeForParquetFiles(int value);
-
   // TODO: Either remove this feature or properly implement patient history fetching based on
   //   Patient Compartment definition.
   @Description(
@@ -207,29 +196,58 @@ public interface FhirEtlOptions extends PipelineOptions {
 
   void setSince(String value);
 
-  // NOTE: Sink DB options are experimental.
-  @Description("Path to the sink database config; if not set, no sink DB is used [experimental].")
+  @Description(
+      "Path to the sink database config; if not set, no sink DB is used.\n"
+          + "If viewDefinitionsDir is set, the output tables will be the generated views\n"
+          + "(the `name` field value will be used as the table name); if not, one table\n"
+          + "per resource type is created with the JSON content of a resource and its\n"
+          + "`id` column for each row.")
   @Default.String("")
   String getSinkDbConfigPath();
 
   void setSinkDbConfigPath(String value);
 
-  @Description("The name prefix for the sink DB tables.")
-  @Default.String("")
-  String getSinkDbTablePrefix();
-
-  void setSinkDbTablePrefix(String value);
-
   @Description(
-      "If enabled all json resources are stored in the same table; by default a separate "
-          + "table is created for each resource type.")
+      "If true, drops the old view tables first and recreate them; otherwise create tables \n"
+          + "only if they do not exit.")
   @Default.Boolean(false)
-  Boolean getUseSingleSinkTable();
+  Boolean getRecreateSinkTables();
 
-  void setUseSingleSinkTable(Boolean value);
+  void setRecreateSinkTables(Boolean value);
 
   @Description(
-      "The pattern for input JSON files, e.g., 'PATH/*'. Each file should be one Bundle resource.")
+      "The directory from which SQL-on-FHIR-v2 ViewDefinition json files are read.\n"
+          + "Note currently this requires setting sinkDbConfigPath as this is\n"
+          + "currently the only option for writing views (more to be added).")
+  @Default.String("")
+  String getViewDefinitionsDir();
+
+  void setViewDefinitionsDir(String value);
+
+  @Description(
+      "The path to the data-warehouse directory of Parquet files to be read. The content of this "
+          + "directory is expected to have the same structure used in output data-warehouse, i.e., "
+          + "one dir per each resource type. If this is enabled, --fhirServerUrl and "
+          + "--fhirDatabaseConfigPath should be disabled because input resources are read from "
+          + "Parquet files. This is for example useful when we want to regenerate the views. "
+          + "[EXPERIMENTAL]")
+  @Required
+  @Default.String("")
+  String getParquetInputDwhRoot();
+
+  void setParquetInputDwhRoot(String value);
+
+  // TODO add the option for CSV output of views.
+  // @Description(
+  //     "The output directory for CSV files generated for ViewDefinitions in viewDefinitionsDir.\n"
+  //         + "File names will be the `name` fields of views with the `.json` suffix.")
+  // @Default.String("")
+  // String getSinkCsvDir();
+  // void setSinkCsvDir();
+
+  @Description(
+      "The pattern for input JSON files, e.g., 'PATH/*'. Each file should be one Bundle resource. "
+          + "[EXPERIMENTAL]")
   @Default.String("")
   String getSourceJsonFilePattern();
 

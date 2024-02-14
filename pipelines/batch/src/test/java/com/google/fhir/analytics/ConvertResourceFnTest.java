@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2023 Google LLC
+ * Copyright 2020-2024 Google LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
 import com.google.common.io.Resources;
+import com.google.fhir.analytics.view.ViewApplicationException;
 import java.beans.PropertyVetoException;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -64,12 +65,13 @@ public class ConvertResourceFnTest {
           }
         };
     convertResourceFn.setup();
-    ParquetUtil.initializeAvroConverters();
+    AvroConversionUtil.initializeAvroConverters();
   }
 
   @Test
   public void testProcessPatientResource_withoutForcedId()
-      throws IOException, java.text.ParseException, SQLException, PropertyVetoException {
+      throws IOException, java.text.ParseException, SQLException, PropertyVetoException,
+          ViewApplicationException {
     String[] args = {"--outputParquetPath=SOME_PATH"};
     setUp(args);
     String patientResourceStr =
@@ -93,7 +95,8 @@ public class ConvertResourceFnTest {
 
   @Test
   public void testProcessPatientResource_withForcedId()
-      throws IOException, java.text.ParseException, SQLException, PropertyVetoException {
+      throws IOException, java.text.ParseException, SQLException, PropertyVetoException,
+          ViewApplicationException {
     String[] args = {"--outputParquetPath=SOME_PATH"};
     setUp(args);
     String patientResourceStr =
@@ -123,7 +126,8 @@ public class ConvertResourceFnTest {
 
   @Test
   public void testProcessDeletedPatientResourceFullMode()
-      throws SQLException, IOException, ParseException, PropertyVetoException {
+      throws SQLException, IOException, ParseException, PropertyVetoException,
+          ViewApplicationException {
     String[] args = {"--outputParquetPath=SOME_PATH", "--since="};
     setUp(args);
     // Deleted Patient resource
@@ -137,7 +141,8 @@ public class ConvertResourceFnTest {
 
   @Test
   public void testProcessDeletedPatientResourceIncrementalMode()
-      throws SQLException, IOException, ParseException, PropertyVetoException {
+      throws SQLException, IOException, ParseException, PropertyVetoException,
+          ViewApplicationException {
     String[] args = {"--outputParquetPath=SOME_PATH", "--since=NON-EMPTY"};
     setUp(args);
     // Deleted Patient resource
@@ -164,7 +169,8 @@ public class ConvertResourceFnTest {
 
   @Test
   public void testResourceMetaTags()
-      throws IOException, java.text.ParseException, SQLException, PropertyVetoException {
+      throws IOException, java.text.ParseException, SQLException, PropertyVetoException,
+          ViewApplicationException {
     String[] args = {"--outputParquetPath=SOME_PATH", "--since="};
     setUp(args);
     String patientResourceStr =

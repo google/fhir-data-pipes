@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2023 Google LLC
+ * Copyright 2020-2024 Google LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,6 +23,7 @@ import static org.mockito.Mockito.verify;
 import ca.uhn.fhir.context.FhirContext;
 import ca.uhn.fhir.parser.IParser;
 import com.google.common.io.Resources;
+import com.google.fhir.analytics.view.ViewApplicationException;
 import java.beans.PropertyVetoException;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -64,11 +65,12 @@ public class FetchSearchPageFnTest {
         };
     this.fhirContext = FhirContext.forR4();
     fetchSearchPageFn.setup();
-    ParquetUtil.initializeAvroConverters();
+    AvroConversionUtil.initializeAvroConverters();
   }
 
   @Test
-  public void testProcessObservationBundle() throws IOException, SQLException {
+  public void testProcessObservationBundle()
+      throws IOException, SQLException, ViewApplicationException {
     String observationBundleStr =
         Resources.toString(
             Resources.getResource("observation_decimal_bundle.json"), StandardCharsets.UTF_8);

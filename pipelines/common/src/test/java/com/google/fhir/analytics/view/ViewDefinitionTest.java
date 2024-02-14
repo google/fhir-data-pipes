@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2023 Google LLC
+ * Copyright 2020-2024 Google LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,9 +18,12 @@ package com.google.fhir.analytics.view;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 
+import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Sets;
 import com.google.common.io.Resources;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.sql.JDBCType;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.junit.MockitoJUnitRunner;
@@ -57,6 +60,50 @@ public class ViewDefinitionTest {
     assertThat(
         viewDef.getSelect().get(0).getUnionAll().get(0).getColumn().get(1).getName(),
         equalTo("city"));
+    ImmutableMap<String, JDBCType> schema = ViewSchema.getDbSchema(viewDef);
+    assertThat(
+        schema.keySet(),
+        equalTo(Sets.newHashSet("patient_id", "street", "city", "zip", "is_patient")));
+    // There is no type definitions in the above view and since we don't have automatic type
+    // derivation yet, all types will be string.
+    assertThat(schema.get("patient_id"), equalTo(JDBCType.VARCHAR));
+    assertThat(schema.get("street"), equalTo(JDBCType.VARCHAR));
+    assertThat(schema.get("city"), equalTo(JDBCType.VARCHAR));
+    assertThat(schema.get("zip"), equalTo(JDBCType.VARCHAR));
+    assertThat(schema.get("is_patient"), equalTo(JDBCType.VARCHAR));
+  }
+
+  @Test
+  public void createFromJsonUnionWithTypes() throws IOException, ViewDefinitionException {
+    String viewJson =
+        Resources.toString(
+            Resources.getResource("patient_address_and_contact_union_with_types_view.json"),
+            StandardCharsets.UTF_8);
+    ViewDefinition viewDef = ViewDefinition.createFromString(viewJson);
+    assertThat(viewDef.getName(), equalTo("patient_and_contact_addresses_with_types"));
+    ImmutableMap<String, JDBCType> schema = ViewSchema.getDbSchema(viewDef);
+    assertThat(
+        schema.keySet(),
+        equalTo(
+            Sets.newHashSet(
+                "patient_id",
+                "birth_date",
+                "multiple_birth",
+                "street",
+                "city",
+                "zip",
+                "address_use",
+                "period_end",
+                "is_patient")));
+    assertThat(schema.get("patient_id"), equalTo(JDBCType.VARCHAR));
+    assertThat(schema.get("street"), equalTo(JDBCType.VARCHAR));
+    assertThat(schema.get("city"), equalTo(JDBCType.VARCHAR));
+    assertThat(schema.get("zip"), equalTo(JDBCType.VARCHAR));
+    assertThat(schema.get("is_patient"), equalTo(JDBCType.BOOLEAN));
+    assertThat(schema.get("address_use"), equalTo(JDBCType.VARCHAR));
+    assertThat(schema.get("period_end"), equalTo(JDBCType.TIMESTAMP));
+    assertThat(schema.get("birth_date"), equalTo(JDBCType.DATE));
+    assertThat(schema.get("multiple_birth"), equalTo(JDBCType.INTEGER));
   }
 
   @Test

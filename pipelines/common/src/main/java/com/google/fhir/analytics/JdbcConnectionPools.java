@@ -20,6 +20,7 @@ import com.google.common.base.Preconditions;
 import com.google.fhir.analytics.model.DatabaseConfiguration;
 import com.mchange.v2.c3p0.ComboPooledDataSource;
 import java.beans.PropertyVetoException;
+import java.io.Serializable;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import javax.sql.DataSource;
@@ -121,7 +122,7 @@ public class JdbcConnectionPools {
    * pools and to impose a Singleton pattern per connection config (hence AutoValue).
    */
   @AutoValue
-  public abstract static class DataSourceConfig {
+  public abstract static class DataSourceConfig implements Serializable {
     abstract String jdbcDriverClass();
 
     abstract String jdbcUrl();

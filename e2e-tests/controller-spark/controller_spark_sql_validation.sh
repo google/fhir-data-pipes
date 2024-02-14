@@ -137,14 +137,15 @@ function fhir_source_query() {
 # Globals:
 #   PIPELINE_CONTROLLER_URL
 # Arguments:
-#   isFullRun: flag to indicate whether to start full or incremental run.
+#   runMode: flag to indicate whether to start full or incremental or recreate
+#     runs; should be one of "FULL", "INCREMENTAL", "VIEWS".
 #######################################################################
 function run_pipeline() {
-  local isFullRun=$1
-  curl --location --request POST "${PIPELINE_CONTROLLER_URL}/run?isFullRun=${isFullRun}" \
+  local runMode=$1
+  curl --location --request POST "${PIPELINE_CONTROLLER_URL}/run?runMode=${runMode}" \
   --connect-timeout 5 \
   --header 'Content-Type: application/json' \
-  --header 'Accept: */*'
+  --header 'Accept: */*' -v
 }
 
 #######################################################################
@@ -345,10 +346,9 @@ function validate_updated_resource() {
 
 validate_args  "$@"
 setup "$@"
-print_message "---- STARTING TEST ----"
 fhir_source_query
 sleep 50
-run_pipeline true
+run_pipeline "FULL"
 check_parquet false
 
 clear
@@ -357,11 +357,15 @@ add_resource
 update_resource
 sleep 10
 # Incremental run.
-run_pipeline false
+run_pipeline "INCREMENTAL"
 check_parquet true
 
 validate_resource_tables
 validate_resource_tables_data
 validate_updated_resource
+
+# View recreation run
+# TODO add validation for the views as well
+run_pipeline "VIEWS"
 
 print_message "END!!"
