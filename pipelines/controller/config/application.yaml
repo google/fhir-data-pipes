@@ -97,12 +97,11 @@ fhirdata:
   # https://github.com/google/fhir-data-pipes/issues/785.
   resourceList: "Patient,Encounter,Observation,Questionnaire,Condition,Practitioner,Location,Organization"
 
-  # The maximum number of Flink workers to use. Each worker may have 
-  # `numThreads` parallel threads.
-  maxWorkers: 1
-
-  # If a positive number, the number of threads to use per worker.
-  # Otherwise, the number of threads is equal to the number of cores.
+  # The parallelism to be used for a pipeline job. In case of FlinkRunner, if the value is set to
+  # -1, then in the local execution mode the number of threads the job uses will be equal to the
+  # number of cores in the machine, whereas in the remote mode (cluster) only 1 thread is used.
+  # If set to a positive value, then in both the modes the pipeline uses these many threads combined
+  # across all the workers.
   numThreads: -1
 
   # In case of Flink local execution mode (which is the default currently), generate Flink
