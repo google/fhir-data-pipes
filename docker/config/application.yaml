@@ -32,7 +32,6 @@ fhirdata:
   # prevent regression of https://github.com/google/fhir-data-pipes/issues/785.
   # TODO: add resource table creation to e2e tests.
   resourceList: "Patient,Encounter,Observation,Questionnaire,Condition,Practitioner,Location,Organization"
-  maxWorkers: 1
   numThreads: -1
   autoGenerateFlinkConfiguration: true
   createHiveResourceTables: true

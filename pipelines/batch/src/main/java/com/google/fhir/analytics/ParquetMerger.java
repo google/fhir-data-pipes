@@ -232,7 +232,7 @@ public class ParquetMerger {
           ParquetIO.sink(AvroConversionUtil.getInstance().getResourceSchema(type, fhirContext))
               .withCompressionCodec(CompressionCodecName.SNAPPY);
       if (options.getRowGroupSizeForParquetFiles() > 0) {
-        parquetSink.withRowGroupSize(options.getRowGroupSizeForParquetFiles());
+        parquetSink = parquetSink.withRowGroupSize(options.getRowGroupSizeForParquetFiles());
       }
       merged.apply(
           FileIO.<GenericRecord>write()
