@@ -38,8 +38,8 @@ public interface BasePipelineOptions extends PipelineOptions {
   void setRowGroupSizeForParquetFiles(int value);
 
   @Description(
-      "Directory containing the structure definition files for any custom"
-          + " profiles that needs to be supported")
+      "Directory containing the structure definition files for any custom profiles that needs to be"
+          + " supported")
   @Default.String("")
   String getProfileDefinitionsDir();
 

@@ -4,6 +4,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 
 import ca.uhn.fhir.context.FhirContext;
 import ca.uhn.fhir.context.FhirVersionEnum;
+import com.cerner.bunsen.exception.ProfileMapperException;
 import com.cerner.bunsen.profiles.ProfileMappingProvider;
 import com.cerner.bunsen.profiles.ProfileMappingProviderImpl;
 import java.io.File;
@@ -26,7 +27,7 @@ public class ProfileMapperProviderImplTest {
       "http://hl7.org/fhir/bunsen/test/StructureDefinition/bunsen-test-patient";
 
   @Test
-  public void testIfR4ProfilesAreOverloaded() throws URISyntaxException {
+  public void testIfR4ProfilesAreOverloaded() throws URISyntaxException, ProfileMapperException {
     ProfileMappingProvider profileMappingProvider = new ProfileMappingProviderImpl();
     FhirContext fhirContext = new FhirContext(FhirVersionEnum.R4);
     URL resource =
@@ -48,7 +49,7 @@ public class ProfileMapperProviderImplTest {
   }
 
   @Test
-  public void testIfStu3ProfilesAreOverloaded() throws URISyntaxException {
+  public void testIfStu3ProfilesAreOverloaded() throws URISyntaxException, ProfileMapperException {
     ProfileMappingProvider profileMappingProvider = new ProfileMappingProviderImpl();
     FhirContext fhirContext = new FhirContext(FhirVersionEnum.DSTU3);
     URL resource =

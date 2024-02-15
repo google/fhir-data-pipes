@@ -4,6 +4,7 @@ import ca.uhn.fhir.context.FhirContext;
 import ca.uhn.fhir.context.FhirVersionEnum;
 import ca.uhn.fhir.context.RuntimeResourceDefinition;
 import ca.uhn.fhir.parser.IParser;
+import com.cerner.bunsen.exception.ProfileMapperException;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import java.io.IOException;
@@ -45,28 +46,13 @@ public class ProfileMappingProviderImpl implements ProfileMappingProvider {
    * @param context The context to which the profiles are added.
    * @param structureDefinitionPath the path containing the list of structure definitions to be used
    * @return the map containing the resource to profile mapping.
+   * @throws ProfileMapperException if there are any errors while loading and mapping the structure
+   *     definitions
    */
   @Override
   public Map<String, String> loadStructureDefinitions(
-      FhirContext context, @Nullable String structureDefinitionPath) {
-    List<IBaseResource> defaultDefinitions =
-        context.getValidationSupport().fetchAllStructureDefinitions();
-    PrePopulatedValidationSupport support = new PrePopulatedValidationSupport(context);
-    Map<String, String> profileMap = new HashMap<>();
-    loadBaseStructureDefinitions(context, defaultDefinitions, profileMap, support);
-    if (!Strings.isNullOrEmpty(structureDefinitionPath)) {
-      loadCustomStructureDefinitions(support, context, structureDefinitionPath, profileMap);
-    }
-    context.setValidationSupport(support);
-    return profileMap;
-  }
+      FhirContext context, @Nullable String structureDefinitionPath) throws ProfileMapperException {
 
-  private Map<String, String> loadBaseStructureDefinitions(
-      FhirContext context,
-      List<IBaseResource> defaultDefinitions,
-      Map<String, String> profileMap,
-      PrePopulatedValidationSupport support) {
-    Map<String, String> resourceProfileMap = new HashMap<>();
     if (context.getVersion().getVersion() != FhirVersionEnum.DSTU3
         && context.getVersion().getVersion() != FhirVersionEnum.R4) {
       log.warn(
@@ -74,29 +60,51 @@ public class ProfileMappingProviderImpl implements ProfileMappingProvider {
           context.getVersion().getVersion(),
           FhirVersionEnum.DSTU3,
           FhirVersionEnum.R4);
-      return resourceProfileMap;
+      return new HashMap<>();
     }
 
+    List<IBaseResource> defaultDefinitions =
+        context.getValidationSupport().fetchAllStructureDefinitions();
+    PrePopulatedValidationSupport support = new PrePopulatedValidationSupport(context);
+    Map<String, String> baseResourcePofileMap =
+        loadBaseStructureDefinitions(context, defaultDefinitions, support);
+    if (!Strings.isNullOrEmpty(structureDefinitionPath)) {
+      Map<String, String> customResourceProfileMap =
+          loadCustomStructureDefinitions(support, context, structureDefinitionPath);
+      // Overwrite the profiles for the resources with the custom profiles
+      baseResourcePofileMap.putAll(customResourceProfileMap);
+    }
+    context.setValidationSupport(support);
+    return baseResourcePofileMap;
+  }
+
+  private Map<String, String> loadBaseStructureDefinitions(
+      FhirContext context,
+      List<IBaseResource> defaultDefinitions,
+      PrePopulatedValidationSupport support) {
+    Map<String, String> resourceProfileMap = new HashMap<>();
     for (IBaseResource definition : defaultDefinitions) {
       support.addStructureDefinition(definition);
       // Links the profile only if the definition belongs to a base resource
       if (isABaseResource(context, definition)) {
-        mapResourceProfileMap(context, definition, profileMap);
+        RuntimeResourceDefinition resourceDefinition = context.getResourceDefinition(definition);
+        String type = fetchProperty("type", resourceDefinition, definition);
+        String url = fetchProperty("url", resourceDefinition, definition);
+        resourceProfileMap.put(type, url);
       }
     }
     context.setValidationSupport(support);
     return resourceProfileMap;
   }
 
-  private void loadCustomStructureDefinitions(
-      PrePopulatedValidationSupport support,
-      FhirContext context,
-      String structureDefinitionPath,
-      Map<String, String> profileMap) {
-    Preconditions.checkArgument(
-        context.getVersion().getVersion() == FhirVersionEnum.DSTU3
-            || context.getVersion().getVersion() == FhirVersionEnum.R4);
-
+  /**
+   * This method loads the custom structure definitions defined in the path structureDefinitionPath.
+   * It fails if any duplicate profile is defined for the same resource type.
+   */
+  private Map<String, String> loadCustomStructureDefinitions(
+      PrePopulatedValidationSupport support, FhirContext context, String structureDefinitionPath)
+      throws ProfileMapperException {
+    Map<String, String> resourceProfileMap = new HashMap<>();
     IParser jsonParser = context.newJsonParser();
     try {
       List<Path> paths =
@@ -110,17 +118,41 @@ public class ProfileMappingProviderImpl implements ProfileMappingProvider {
               });
       for (Path definitionPath : definitionPaths) {
         IBaseResource baseResource = getResource(jsonParser, definitionPath);
-        RuntimeResourceDefinition resourceDefinition = context.getResourceDefinition(baseResource);
-        String resourceName = resourceDefinition.getName();
-        if (resourceName.equals(STRUCTURE_DEFINITION)) {
-          if (baseResource.getStructureFhirVersionEnum() == context.getVersion().getVersion()) {
-            mapResourceProfileMap(context, baseResource, profileMap);
-            support.addStructureDefinition(baseResource);
-          }
-        }
+        addDefinitionAndMapping(context, baseResource, support, resourceProfileMap);
       }
     } catch (IOException e) {
       log.error("Cannot get the list of files at the directory {}", structureDefinitionPath, e);
+    }
+    return resourceProfileMap;
+  }
+
+  private void addDefinitionAndMapping(
+      FhirContext context,
+      IBaseResource baseResource,
+      PrePopulatedValidationSupport support,
+      Map<String, String> resourceProfileMap)
+      throws ProfileMapperException {
+    RuntimeResourceDefinition resourceDefinition = context.getResourceDefinition(baseResource);
+    String resourceName = resourceDefinition.getName();
+    if (resourceName.equals(STRUCTURE_DEFINITION)
+        && baseResource.getStructureFhirVersionEnum() == context.getVersion().getVersion()) {
+      String type = fetchProperty("type", resourceDefinition, baseResource);
+      String baseDefinition = fetchProperty("baseDefinition", resourceDefinition, baseResource);
+      String url = fetchProperty("url", resourceDefinition, baseResource);
+
+      Preconditions.checkNotNull(url, "The url must not be null");
+      if (resourceProfileMap.containsKey(type)) {
+        String errorMsg =
+            String.format(
+                "Resource has already been mapped to a custom profile, resourceType=%s", type);
+        log.error(errorMsg);
+        throw new ProfileMapperException(errorMsg);
+      }
+      if (context.getResourceTypes().contains(type)
+          && baseDefinition.startsWith("http://hl7.org/fhir/StructureDefinition/")) {
+        resourceProfileMap.put(type, url);
+      }
+      support.addStructureDefinition(baseResource);
     }
   }
 
@@ -128,23 +160,6 @@ public class ProfileMappingProviderImpl implements ProfileMappingProvider {
       throws IOException {
     try (Reader reader = Files.newBufferedReader(definitionPath, StandardCharsets.UTF_8)) {
       return jsonParser.parseResource(reader);
-    }
-  }
-
-  private void mapResourceProfileMap(
-      FhirContext fhirContext, IBaseResource baseResource, Map<String, String> resourceProfileMap) {
-    RuntimeResourceDefinition resourceDefinition = fhirContext.getResourceDefinition(baseResource);
-    String resourceName = resourceDefinition.getName();
-    if (resourceName.equals(STRUCTURE_DEFINITION)) {
-      String type = fetchProperty("type", resourceDefinition, baseResource);
-      String baseDefinition = fetchProperty("baseDefinition", resourceDefinition, baseResource);
-      String url = fetchProperty("url", resourceDefinition, baseResource);
-
-      Preconditions.checkNotNull(url, "The url must not be null");
-      if (fhirContext.getResourceTypes().contains(type)
-          && baseDefinition.startsWith("http://hl7.org/fhir/StructureDefinition/")) {
-        resourceProfileMap.put(type, url);
-      }
     }
   }
 
@@ -156,7 +171,7 @@ public class ProfileMappingProviderImpl implements ProfileMappingProvider {
   }
 
   /**
-   * Checks if the given resource definition belongs is a StructureDefinition that belongs to a base
+   * Checks if the given resource definition is a StructureDefinition that belongs to a base
    * resource and not an extended definition.
    */
   private boolean isABaseResource(FhirContext fhirContext, IBaseResource definition) {

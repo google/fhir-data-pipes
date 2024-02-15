@@ -15,6 +15,7 @@
  */
 package com.google.fhir.analytics;
 
+import com.cerner.bunsen.exception.ProfileMapperException;
 import com.google.fhir.analytics.view.ViewApplicationException;
 import java.beans.PropertyVetoException;
 import java.io.IOException;
@@ -50,7 +51,7 @@ public class ProcessGenericRecords extends FetchSearchPageFn<GenericRecord> {
   }
 
   @Override
-  public void setup() throws SQLException, PropertyVetoException {
+  public void setup() throws SQLException, PropertyVetoException, ProfileMapperException {
     super.setup();
     cachedResources = new ArrayList<>();
     totalAvroConversionTime =
@@ -68,7 +69,7 @@ public class ProcessGenericRecords extends FetchSearchPageFn<GenericRecord> {
     if (!cachedResources.isEmpty()) {
       try {
         processBundle(flushCachToBundle());
-      } catch (SQLException | ViewApplicationException e) {
+      } catch (SQLException | ViewApplicationException | ProfileMapperException e) {
         // This is not perfect but the parent teardown only has IOException.
         log.error("Caught exception in teardown: ", e);
         throw new IOException(e);
@@ -88,7 +89,7 @@ public class ProcessGenericRecords extends FetchSearchPageFn<GenericRecord> {
 
   @ProcessElement
   public void processElement(@Element GenericRecord record)
-      throws IOException, SQLException, ViewApplicationException {
+      throws IOException, SQLException, ViewApplicationException, ProfileMapperException {
     try {
       long startTime = System.currentTimeMillis();
       Resource resource = avroConversionUtil.convertToHapi(record, resourceType, fhirContext);

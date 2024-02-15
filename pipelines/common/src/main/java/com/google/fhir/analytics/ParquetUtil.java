@@ -18,6 +18,7 @@ package com.google.fhir.analytics;
 import ca.uhn.fhir.context.FhirContext;
 import ca.uhn.fhir.context.FhirVersionEnum;
 import com.cerner.bunsen.ProfileMapperFhirContexts;
+import com.cerner.bunsen.exception.ProfileMapperException;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import java.io.IOException;
@@ -67,8 +68,11 @@ public class ParquetUtil {
    *
    * @param fhirVersionEnum the FHIR version
    * @param parquetFilePath The directory under which the Parquet files are written.
+   * @throws ProfileMapperException if any errors are encountered during initialisation of
+   *     FhirContext
    */
-  public ParquetUtil(FhirVersionEnum fhirVersionEnum, String parquetFilePath) {
+  public ParquetUtil(FhirVersionEnum fhirVersionEnum, String parquetFilePath)
+      throws ProfileMapperException {
     this(fhirVersionEnum, "", parquetFilePath, 0, 0, "");
   }
 
@@ -82,6 +86,8 @@ public class ParquetUtil {
    * @param rowGroupSize The approximate size of row-groups in the Parquet files (0 means use
    *     default).
    * @param namePrefix The prefix directory at which the Parquet files are written
+   * @throws ProfileMapperException if any errors are encountered during initialisation of
+   *     FhirContext
    */
   @VisibleForTesting
   ParquetUtil(
@@ -90,7 +96,8 @@ public class ParquetUtil {
       String parquetFilePath,
       int secondsToFlush,
       int rowGroupSize,
-      String namePrefix) {
+      String namePrefix)
+      throws ProfileMapperException {
     if (fhirVersionEnum == FhirVersionEnum.DSTU3 || fhirVersionEnum == FhirVersionEnum.R4) {
       this.conversionUtil =
           AvroConversionUtil.getInstance().loadContextFor(fhirVersionEnum, profileDefinitionsDir);
@@ -114,7 +121,7 @@ public class ParquetUtil {
                 log.info(
                     "Flushing all Parquet writers for thread " + Thread.currentThread().getId());
                 flushAll();
-              } catch (IOException e) {
+              } catch (IOException | ProfileMapperException e) {
                 log.error("Could not flush Parquet files: " + e);
               }
             }
@@ -142,7 +149,8 @@ public class ParquetUtil {
     return resourceId.resolve(uniquetFileName, StandardResolveOptions.RESOLVE_FILE);
   }
 
-  private synchronized void createWriter(String resourceType) throws IOException {
+  private synchronized void createWriter(String resourceType)
+      throws IOException, ProfileMapperException {
 
     ResourceId resourceId = getUniqueOutputFilePath(resourceType);
     WritableByteChannel writableByteChannel =
@@ -167,7 +175,7 @@ public class ParquetUtil {
    * not be used in its current form once we move the streaming pipeline to Beam; the I/O should be
    * left to Beam similar to the batch mode.
    */
-  public synchronized void write(Resource resource) throws IOException {
+  public synchronized void write(Resource resource) throws IOException, ProfileMapperException {
     Preconditions.checkNotNull(resource.fhirType());
     String resourceType = resource.fhirType();
     if (!writerMap.containsKey(resourceType)) {
@@ -180,7 +188,7 @@ public class ParquetUtil {
     }
   }
 
-  private synchronized void flush(String resourceType) throws IOException {
+  private synchronized void flush(String resourceType) throws IOException, ProfileMapperException {
     ParquetWriter<GenericRecord> writer = writerMap.get(resourceType);
     if (writer != null && writer.getDataSize() > 0) {
       writer.close();
@@ -188,7 +196,7 @@ public class ParquetUtil {
     }
   }
 
-  private synchronized void flushAll() throws IOException {
+  private synchronized void flushAll() throws IOException, ProfileMapperException {
     for (String resourceType : writerMap.keySet()) {
       flush(resourceType);
     }
@@ -204,7 +212,8 @@ public class ParquetUtil {
     }
   }
 
-  public void writeRecords(Bundle bundle, Set<String> resourceTypes) throws IOException {
+  public void writeRecords(Bundle bundle, Set<String> resourceTypes)
+      throws IOException, ProfileMapperException {
     if (bundle.getEntry() == null) {
       return;
     }

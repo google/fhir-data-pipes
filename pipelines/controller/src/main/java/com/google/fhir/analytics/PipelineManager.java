@@ -17,6 +17,7 @@ package com.google.fhir.analytics;
 
 import ca.uhn.fhir.context.FhirContext;
 import com.cerner.bunsen.ProfileMapperFhirContexts;
+import com.cerner.bunsen.exception.ProfileMapperException;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import com.google.fhir.analytics.metrics.CumulativeMetrics;
@@ -170,7 +171,7 @@ public class PipelineManager implements ApplicationListener<ApplicationReadyEven
   }
 
   @PostConstruct
-  private void initDwhStatus() {
+  private void initDwhStatus() throws ProfileMapperException {
 
     // Initialise the Flink configurations for all the pipelines
     initialiseFlinkConfiguration();
@@ -362,7 +363,8 @@ public class PipelineManager implements ApplicationListener<ApplicationReadyEven
   // Every 30 seconds, check for pipeline status and incremental pipeline schedule.
   @Scheduled(fixedDelay = 30000)
   private void checkSchedule()
-      throws IOException, PropertyVetoException, SQLException, ViewDefinitionException {
+      throws IOException, PropertyVetoException, SQLException, ViewDefinitionException,
+          ProfileMapperException {
     LocalDateTime next = getNextIncrementalTime();
     if (next == null) {
       return;
@@ -375,7 +377,8 @@ public class PipelineManager implements ApplicationListener<ApplicationReadyEven
   }
 
   synchronized void runBatchPipeline(boolean isRecreateViews)
-      throws IOException, PropertyVetoException, SQLException, ViewDefinitionException {
+      throws IOException, PropertyVetoException, SQLException, ViewDefinitionException,
+          ProfileMapperException {
     Preconditions.checkState(!isRunning(), "cannot start a pipeline while another one is running");
     Preconditions.checkState(
         !Strings.isNullOrEmpty(getCurrentDwhRoot()) || !isRecreateViews,
@@ -420,7 +423,8 @@ public class PipelineManager implements ApplicationListener<ApplicationReadyEven
   }
 
   synchronized void runIncrementalPipeline()
-      throws IOException, PropertyVetoException, SQLException, ViewDefinitionException {
+      throws IOException, PropertyVetoException, SQLException, ViewDefinitionException,
+          ProfileMapperException {
     // TODO do the same as above but read/set --since
     Preconditions.checkState(!isRunning(), "cannot start a pipeline while another one is running");
     Preconditions.checkState(

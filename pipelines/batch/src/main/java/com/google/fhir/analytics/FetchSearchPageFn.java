@@ -20,6 +20,7 @@ import ca.uhn.fhir.context.FhirVersionEnum;
 import ca.uhn.fhir.context.ParserOptions;
 import ca.uhn.fhir.parser.IParser;
 import com.cerner.bunsen.ProfileMapperFhirContexts;
+import com.cerner.bunsen.exception.ProfileMapperException;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Strings;
 import com.google.fhir.analytics.JdbcConnectionPools.DataSourceConfig;
@@ -167,12 +168,12 @@ abstract class FetchSearchPageFn<T> extends DoFn<T, KV<String, Integer>> {
   }
 
   @Setup
-  public void setup() throws SQLException, PropertyVetoException {
+  public void setup() throws SQLException, PropertyVetoException, ProfileMapperException {
     log.debug("Starting setup for stage " + stageIdentifier);
     fhirContext =
         ProfileMapperFhirContexts.getInstance().contextFor(fhirVersionEnum, profileDefinitionsDir);
-    avroConversionUtil = AvroConversionUtil.getInstance();
-    avroConversionUtil.loadContextFor(fhirVersionEnum, profileDefinitionsDir);
+    avroConversionUtil =
+        AvroConversionUtil.getInstance().loadContextFor(fhirVersionEnum, profileDefinitionsDir);
     // The documentation for `FhirContext` claims that it is thread-safe but looking at the code,
     // it is not obvious if it is. This might be an issue when we write to it, like the next line.
     fhirContext.setParserOptions(
@@ -231,12 +232,12 @@ abstract class FetchSearchPageFn<T> extends DoFn<T, KV<String, Integer>> {
   }
 
   protected void processBundle(Bundle bundle)
-      throws IOException, SQLException, ViewApplicationException {
+      throws IOException, SQLException, ViewApplicationException, ProfileMapperException {
     this.processBundle(bundle, null);
   }
 
   protected void processBundle(Bundle bundle, @Nullable Set<String> resourceTypes)
-      throws IOException, SQLException, ViewApplicationException {
+      throws IOException, SQLException, ViewApplicationException, ProfileMapperException {
     if (bundle != null && bundle.getEntry() != null) {
       numFetchedResources.inc(bundle.getEntry().size());
       if (parquetUtil != null) {
