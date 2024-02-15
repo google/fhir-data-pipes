@@ -189,7 +189,6 @@ public class PipelineManager implements ApplicationListener<ApplicationReadyEven
     cron = CronExpression.parse(dataProperties.getIncrementalSchedule());
     String rootPrefix = dataProperties.getDwhRootPrefix();
     Preconditions.checkState(rootPrefix != null && !rootPrefix.isEmpty());
-    Preconditions.checkArgument(dataProperties.getMaxWorkers() > 0, "maxWorkers should be > 0");
 
     String lastCompletedDwh = "";
     String lastDwh = "";
@@ -461,12 +460,14 @@ public class PipelineManager implements ApplicationListener<ApplicationReadyEven
     mergerOptions.setProfileDefinitionsDir(
         Strings.nullToEmpty(dataProperties.getProfileDefinitionsDir()));
     mergerOptions.setFhirVersion(dataProperties.getFhirVersion());
+    if (dataProperties.getRowGroupSizeForParquetFiles() > 0) {
+      mergerOptions.setRowGroupSizeForParquetFiles(dataProperties.getRowGroupSizeForParquetFiles());
+    }
     FlinkPipelineOptions flinkOptionsForMerge = mergerOptions.as(FlinkPipelineOptions.class);
     if (!Strings.isNullOrEmpty(flinkConfiguration.getFlinkConfDir())) {
       flinkOptionsForMerge.setFlinkConfDir(flinkConfiguration.getFlinkConfDir());
     }
     flinkOptionsForMerge.setFasterCopy(true);
-    flinkOptionsForMerge.setMaxParallelism(dataProperties.getMaxWorkers());
     if (dataProperties.getNumThreads() > 0) {
       flinkOptionsForMerge.setParallelism(dataProperties.getNumThreads());
     }
