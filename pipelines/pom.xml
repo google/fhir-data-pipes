@@ -42,7 +42,7 @@
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <junit.version>4.13.2</junit.version>
-    <slf4j.version>2.0.11</slf4j.version>
+    <slf4j.version>2.0.12</slf4j.version>
     <logback.version>1.4.11</logback.version>
     <hapifhirVersion>6.10.4</hapifhirVersion>
     <hamcrest.version>2.2</hamcrest.version>

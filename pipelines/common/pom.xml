@@ -28,7 +28,7 @@
   <artifactId>common</artifactId>
 
   <properties>
-    <c3p0.version>0.9.5.5</c3p0.version>
+    <c3p0.version>0.10.0-pre3</c3p0.version>
   </properties>
 
   <dependencies>
@@ -55,13 +55,13 @@
     <dependency>
       <groupId>com.google.auth</groupId>
       <artifactId>google-auth-library-oauth2-http</artifactId>
-      <version>1.22.0</version>
+      <version>1.23.0</version>
     </dependency>
 
     <dependency>
       <groupId>com.google.apis</groupId>
       <artifactId>google-api-services-healthcare</artifactId>
-      <version>v1-rev20240112-2.0.0</version>
+      <version>v1-rev20240130-2.0.0</version>
     </dependency>
 
     <dependency>
@@ -98,7 +98,7 @@
     <dependency>
       <groupId>commons-codec</groupId>
       <artifactId>commons-codec</artifactId>
-      <version>1.16.0</version>
+      <version>1.16.1</version>
       <scope>runtime</scope>
     </dependency>
 
