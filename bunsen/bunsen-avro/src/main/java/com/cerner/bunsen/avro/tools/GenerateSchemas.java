@@ -1,7 +1,10 @@
 package com.cerner.bunsen.avro.tools;
 
-import com.cerner.bunsen.FhirContexts;
+import ca.uhn.fhir.context.FhirContext;
+import ca.uhn.fhir.context.FhirVersionEnum;
+import com.cerner.bunsen.ProfileMapperFhirContexts;
 import com.cerner.bunsen.avro.AvroConverter;
+import com.cerner.bunsen.exception.ProfileMapperException;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -24,7 +27,7 @@ public class GenerateSchemas {
    * @param args the output file followed by a list of resource type urls
    * @return the OS status code
    */
-  public static int main(String[] args) {
+  public static int main(String[] args) throws ProfileMapperException {
 
     if (args.length < 2) {
       System.out.println("Usage: GenerateSchemas <output file> resourceTypeUrls...");
@@ -52,14 +55,18 @@ public class GenerateSchemas {
       return 1;
     }
 
+    String structureDefinitionsPath = args[1];
     Map<String, List<String>> resourceTypeUrls =
         Arrays.stream(args)
-            .skip(1)
+            .skip(2)
             .collect(
                 Collectors.toMap(
                     item -> item.split(DELIMITER)[0], item -> generateContainedUrls(item)));
 
-    List<Schema> schemas = AvroConverter.generateSchemas(FhirContexts.forStu3(), resourceTypeUrls);
+    FhirContext fhirContext =
+        ProfileMapperFhirContexts.getInstance()
+            .contextFor(FhirVersionEnum.DSTU3, structureDefinitionsPath);
+    List<Schema> schemas = AvroConverter.generateSchemas(fhirContext, resourceTypeUrls);
 
     // Wrap the schemas in a protocol to simplify the invocation of the compiler.
     Protocol protocol =

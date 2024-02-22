@@ -136,9 +136,13 @@ fhirdata:
 
   # Path containing the structure definition files for any custom profiles that needs to be
   # supported. Currently only one profile is supported for any given resource type.
-  profileDefinitionsDir: "config/profile-definitions"
+  structureDefinitionsDir: "config/r4-us-core-definitions"
 
-  # The fhir version to be used for the FHIR Context APIs
+  # The fhir version to be used for the FHIR Context APIs. This is an enum value and the possible
+  # values should be one from the list mentioned in the below link
+  # https://github.com/hapifhir/hapi-fhir/blob/a5eddc3837c72e5a6df4fd65150c8e10ec966f4e/hapi-fhir-base/src/main/java/ca/uhn/fhir/context/FhirVersionEnum.java#L37
+  # Currently, only enums R4 and DSTU3 are supported by the application.
+  # TODO: https://github.com/google/fhir-data-pipes/issues/958
   fhirVersion: "R4"
 
   # This is the size of the Parquet Row Group (a logical horizontal partitioning into rows) that

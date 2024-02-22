@@ -92,7 +92,7 @@ public class ProcessGenericRecords extends FetchSearchPageFn<GenericRecord> {
       throws IOException, SQLException, ViewApplicationException, ProfileMapperException {
     try {
       long startTime = System.currentTimeMillis();
-      Resource resource = avroConversionUtil.convertToHapi(record, resourceType, fhirContext);
+      Resource resource = avroConversionUtil.convertToHapi(record, resourceType);
       totalAvroConversionTime.inc(System.currentTimeMillis() - startTime);
       totalAvroConversions.inc();
       cachedResources.add(resource);

@@ -15,9 +15,7 @@
  */
 package com.google.fhir.analytics;
 
-import ca.uhn.fhir.context.FhirContext;
 import ca.uhn.fhir.context.FhirVersionEnum;
-import com.cerner.bunsen.ProfileMapperFhirContexts;
 import com.cerner.bunsen.exception.ProfileMapperException;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
@@ -46,11 +44,8 @@ import org.slf4j.LoggerFactory;
 public class ParquetUtil {
 
   private static final Logger log = LoggerFactory.getLogger(ParquetUtil.class);
-
   public static String PARQUET_EXTENSION = ".parquet";
-
   private final AvroConversionUtil conversionUtil;
-  private final FhirContext fhirContext;
   private final Map<String, ParquetWriter<GenericRecord>> writerMap;
   private final int rowGroupSize;
   private final DwhFiles dwhFiles;
@@ -79,7 +74,8 @@ public class ParquetUtil {
   // TODO remove this constructor and only expose a similar one in `DwhFiles` (for testing).
   /**
    * @param fhirVersionEnum This should match the resources intended to be converted.
-   * @param profileDefinitionsDir Path containing the custom fhir profile definitions to be used
+   * @param structureDefinitionsDir Path containing the structure definitions for custom fhir
+   *     profiles
    * @param parquetFilePath The directory under which the Parquet files are written.
    * @param secondsToFlush The interval after which the content of Parquet writers is flushed to
    *     disk.
@@ -92,7 +88,7 @@ public class ParquetUtil {
   @VisibleForTesting
   ParquetUtil(
       FhirVersionEnum fhirVersionEnum,
-      String profileDefinitionsDir,
+      String structureDefinitionsDir,
       String parquetFilePath,
       int secondsToFlush,
       int rowGroupSize,
@@ -100,14 +96,11 @@ public class ParquetUtil {
       throws ProfileMapperException {
     if (fhirVersionEnum == FhirVersionEnum.DSTU3 || fhirVersionEnum == FhirVersionEnum.R4) {
       this.conversionUtil =
-          AvroConversionUtil.getInstance().loadContextFor(fhirVersionEnum, profileDefinitionsDir);
-      this.fhirContext =
-          ProfileMapperFhirContexts.getInstance()
-              .contextFor(fhirVersionEnum, profileDefinitionsDir);
+          AvroConversionUtil.getInstance(fhirVersionEnum, structureDefinitionsDir);
     } else {
       throw new IllegalArgumentException("Only versions 3 and 4 of FHIR are supported!");
     }
-    this.dwhFiles = new DwhFiles(parquetFilePath, fhirContext);
+    this.dwhFiles = new DwhFiles(parquetFilePath, conversionUtil.getFhirContext());
     this.writerMap = new HashMap<>();
     this.rowGroupSize = rowGroupSize;
     this.namePrefix = namePrefix;
@@ -164,7 +157,7 @@ public class ParquetUtil {
       builder.withRowGroupSize(rowGroupSize);
     }
     ParquetWriter<GenericRecord> writer =
-        builder.withSchema(conversionUtil.getResourceSchema(resourceType, fhirContext)).build();
+        builder.withSchema(conversionUtil.getResourceSchema(resourceType)).build();
     writerMap.put(resourceType, writer);
   }
 
@@ -182,7 +175,7 @@ public class ParquetUtil {
       createWriter(resourceType);
     }
     final ParquetWriter<GenericRecord> parquetWriter = writerMap.get(resourceType);
-    GenericRecord record = conversionUtil.convertToAvro(resource, fhirContext);
+    GenericRecord record = conversionUtil.convertToAvro(resource);
     if (record != null) {
       parquetWriter.write(record);
     }

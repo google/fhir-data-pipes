@@ -16,10 +16,11 @@
 package com.google.fhir.analytics;
 
 import ca.uhn.fhir.context.FhirContext;
+import ca.uhn.fhir.context.FhirVersionEnum;
 import com.beust.jcommander.JCommander;
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.Parameters;
-import com.cerner.bunsen.FhirContexts;
+import com.cerner.bunsen.ProfileMapperFhirContexts;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.fhir.analytics.JdbcConnectionPools.DataSourceConfig;
 import com.google.fhir.analytics.model.DatabaseConfiguration;
@@ -68,7 +69,8 @@ public class DebeziumListener extends RouteBuilder {
 
   @VisibleForTesting
   FhirConverter createFhirConverter(CamelContext camelContext) throws Exception {
-    FhirContext fhirContext = FhirContexts.forR4();
+    FhirContext fhirContext =
+        ProfileMapperFhirContexts.getInstance().contextFor(FhirVersionEnum.R4, null);
     String fhirBaseUrl = params.fhirServerUrl;
     // TODO add OAuth support if we want to continue maintaining the streaming pipeline.
     FetchUtil fetchUtil =

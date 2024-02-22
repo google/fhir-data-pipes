@@ -19,7 +19,6 @@ import ca.uhn.fhir.context.FhirContext;
 import ca.uhn.fhir.context.FhirVersionEnum;
 import ca.uhn.fhir.context.ParserOptions;
 import ca.uhn.fhir.parser.IParser;
-import com.cerner.bunsen.ProfileMapperFhirContexts;
 import com.cerner.bunsen.exception.ProfileMapperException;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Strings;
@@ -109,11 +108,9 @@ abstract class FetchSearchPageFn<T> extends DoFn<T, KV<String, Integer>> {
 
   protected IParser parser;
 
-  protected FhirContext fhirContext;
-
   private FhirVersionEnum fhirVersionEnum;
 
-  private String profileDefinitionsDir;
+  private String structureDefinitionsDir;
 
   protected AvroConversionUtil avroConversionUtil;
 
@@ -132,7 +129,7 @@ abstract class FetchSearchPageFn<T> extends DoFn<T, KV<String, Integer>> {
     this.secondsToFlush = options.getSecondsToFlushParquetFiles();
     this.rowGroupSize = options.getRowGroupSizeForParquetFiles();
     this.viewDefinitionsDir = options.getViewDefinitionsDir();
-    this.profileDefinitionsDir = options.getProfileDefinitionsDir();
+    this.structureDefinitionsDir = options.getStructureDefinitionsDir();
     this.fhirVersionEnum = options.getFhirVersion();
     if (options.getSinkDbConfigPath().isEmpty()) {
       this.sinkDbConfig = null;
@@ -170,10 +167,8 @@ abstract class FetchSearchPageFn<T> extends DoFn<T, KV<String, Integer>> {
   @Setup
   public void setup() throws SQLException, PropertyVetoException, ProfileMapperException {
     log.debug("Starting setup for stage " + stageIdentifier);
-    fhirContext =
-        ProfileMapperFhirContexts.getInstance().contextFor(fhirVersionEnum, profileDefinitionsDir);
-    avroConversionUtil =
-        AvroConversionUtil.getInstance().loadContextFor(fhirVersionEnum, profileDefinitionsDir);
+    avroConversionUtil = AvroConversionUtil.getInstance(fhirVersionEnum, structureDefinitionsDir);
+    FhirContext fhirContext = avroConversionUtil.getFhirContext();
     // The documentation for `FhirContext` claims that it is thread-safe but looking at the code,
     // it is not obvious if it is. This might be an issue when we write to it, like the next line.
     fhirContext.setParserOptions(
@@ -204,7 +199,7 @@ abstract class FetchSearchPageFn<T> extends DoFn<T, KV<String, Integer>> {
       parquetUtil =
           new ParquetUtil(
               fhirContext.getVersion().getVersion(),
-              profileDefinitionsDir,
+              structureDefinitionsDir,
               parquetFile,
               secondsToFlush,
               rowGroupSize,

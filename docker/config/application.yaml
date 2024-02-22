@@ -37,7 +37,7 @@ fhirdata:
   createHiveResourceTables: true
   thriftserverHiveConfig: "config/thriftserver-hive-config_local.json"
   hiveResourceViewsDir: "config/views"
-  profileDefinitionsDir: "config/profile-definitions"
+  # structureDefinitionsDir: "config/profile-definitions"
   fhirVersion: "R4"
   rowGroupSizeForParquetFiles: 33554432   # 32mb
   viewDefinitionsDir: "config/views"

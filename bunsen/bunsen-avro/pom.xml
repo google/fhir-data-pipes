@@ -64,19 +64,6 @@
       <scope>test</scope>
     </dependency>
 
-    <dependency>
-      <groupId>com.cerner.bunsen</groupId>
-      <artifactId>bunsen-uscore-resources</artifactId>
-      <scope>test</scope>
-    </dependency>
-
-    <dependency>
-      <groupId>com.cerner.bunsen</groupId>
-      <artifactId>bunsen-uscore-resources</artifactId>
-      <type>test-jar</type>
-      <scope>test</scope>
-    </dependency>
-
     <!-- HAPI FHIR DSTU3 resources included only for unit tests. -->
     <dependency>
       <groupId>ca.uhn.hapi.fhir</groupId>

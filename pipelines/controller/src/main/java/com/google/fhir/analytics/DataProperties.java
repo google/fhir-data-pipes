@@ -104,7 +104,7 @@ public class DataProperties {
 
   private String fhirServerOAuthClientSecret;
 
-  private String profileDefinitionsDir;
+  private String structureDefinitionsDir;
 
   private int rowGroupSizeForParquetFiles;
 
@@ -182,7 +182,7 @@ public class DataProperties {
     }
     options.setViewDefinitionsDir(Strings.nullToEmpty(viewDefinitionsDir));
     options.setSinkDbConfigPath(Strings.nullToEmpty(sinkDbConfigPath));
-    options.setProfileDefinitionsDir(Strings.nullToEmpty(profileDefinitionsDir));
+    options.setStructureDefinitionsDir(Strings.nullToEmpty(structureDefinitionsDir));
     options.setFhirVersion(fhirVersion);
     if (rowGroupSizeForParquetFiles > 0) {
       options.setRowGroupSizeForParquetFiles(rowGroupSizeForParquetFiles);
@@ -222,7 +222,7 @@ public class DataProperties {
         new ConfigFields("fhirdata.dbConfig", dbConfig, "", ""),
         new ConfigFields("fhirdata.viewDefinitionsDir", viewDefinitionsDir, "", ""),
         new ConfigFields("fhirdata.sinkDbConfigPath", sinkDbConfigPath, "", ""),
-        new ConfigFields("fhirdata.profileDefinitionsDir", profileDefinitionsDir, "", ""),
+        new ConfigFields("fhirdata.structureDefinitionsDir", structureDefinitionsDir, "", ""),
         new ConfigFields("fhirdata.fhirVersion", fhirVersion.name(), "", ""),
         new ConfigFields(
             "fhirdata.rowGroupSizeForParquetFiles",

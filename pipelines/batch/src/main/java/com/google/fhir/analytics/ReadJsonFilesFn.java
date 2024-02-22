@@ -77,10 +77,11 @@ public class ReadJsonFilesFn extends FetchSearchPageFn<FileIO.ReadableFile> {
    *
    * @param bundle the bundle whose references are updated.
    */
-  private void updateResolvedRefIds(Bundle bundle) {
+  private void updateResolvedRefIds(Bundle bundle) throws ProfileMapperException {
     for (BundleEntryComponent entry : bundle.getEntry()) {
       List<IBaseReference> refs =
-          fhirContext
+          avroConversionUtil
+              .getFhirContext()
               .newTerser()
               .getAllPopulatedChildElementsOfType(entry.getResource(), IBaseReference.class);
       for (IBaseReference ref : refs) {

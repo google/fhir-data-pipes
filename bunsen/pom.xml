@@ -44,7 +44,6 @@
     <module>bunsen-core</module>
     <module>bunsen-core-r4</module>
     <module>bunsen-core-stu3</module>
-    <module>bunsen-uscore-resources</module>
     <module>bunsen-avro</module>
   </modules>
 
@@ -486,19 +485,6 @@
       <dependency>
         <groupId>com.cerner.bunsen</groupId>
         <artifactId>bunsen-spark-stu3</artifactId>
-        <version>${project.version}</version>
-      </dependency>
-
-      <dependency>
-        <groupId>com.cerner.bunsen</groupId>
-        <artifactId>bunsen-uscore-resources</artifactId>
-        <version>${project.version}</version>
-      </dependency>
-
-      <dependency>
-        <groupId>com.cerner.bunsen</groupId>
-        <artifactId>bunsen-uscore-resources</artifactId>
-        <type>test-jar</type>
         <version>${project.version}</version>
       </dependency>
 
