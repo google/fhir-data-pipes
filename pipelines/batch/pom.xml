@@ -99,7 +99,9 @@
       <version>${postgresql.version}</version>
     </dependency>
 
-    <!-- Adds a dependency on the Beam Google Cloud Platform IO module. -->
+    <!-- Adds a dependency on the Beam Google Cloud Platform IO module. Without
+      this we get some NoClassDefFoundError related to Beam's CoderRegistry. We
+      can probably use a smaller dep but we depend on this in common anyways.-->
     <dependency>
       <groupId>org.apache.beam</groupId>
       <artifactId>beam-sdks-java-io-google-cloud-platform</artifactId>

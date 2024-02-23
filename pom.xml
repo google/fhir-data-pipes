@@ -30,6 +30,8 @@
   </modules>
 
   <properties>
+    <!-- Setting default encoding to prevent related warnings -->
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <!-- Sonar configuration -->
     <sonar.java.coveragePlugin>jacoco</sonar.java.coveragePlugin>
     <sonar.dynamicAnalysis>reuseReports</sonar.dynamicAnalysis>
