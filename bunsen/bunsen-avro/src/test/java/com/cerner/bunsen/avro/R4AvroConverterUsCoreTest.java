@@ -11,10 +11,8 @@ import java.io.File;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.net.URISyntaxException;
-import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -114,14 +112,10 @@ public class R4AvroConverterUsCoreTest {
     //  the serialized format from the Avro object then re-read/convert that format back to an
     //  Avro object before converting back to a HAPI object. That way we make sure that
     //  if the Avro object is serialized to disk, it is still convertible back to HAPI objects.
-
-    URL resourceURL =
-        R4AvroConverterUsCoreTest.class
-            .getClassLoader()
-            .getResource("definitions-r4/StructureDefinition-us-core-birthsex.json");
-    String path = Paths.get(resourceURL.toURI()).toFile().getParentFile().getAbsolutePath();
     ProfileMapperFhirContexts.getInstance().deRegisterFhirContexts(FhirVersionEnum.R4);
-    fhirContext = ProfileMapperFhirContexts.getInstance().contextFor(FhirVersionEnum.R4, path);
+    fhirContext =
+        ProfileMapperFhirContexts.getInstance()
+            .contextForFromClasspath(FhirVersionEnum.R4, "/r4-us-core-definitions");
 
     AvroConverter observationConverter = AvroConverter.forResource(fhirContext, "Observation");
 

@@ -9,7 +9,13 @@ import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import java.io.IOException;
 import java.io.Reader;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.net.URL;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.FileSystem;
+import java.nio.file.FileSystemNotFoundException;
+import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -54,7 +60,7 @@ class ProfileMappingProvider {
    *     definitions
    */
   Map<String, String> loadStructureDefinitions(
-      FhirContext context, @Nullable String structureDefinitionsPath)
+      FhirContext context, @Nullable String structureDefinitionsPath, boolean isClasspath)
       throws ProfileMapperException {
 
     // TODO: Add support for other versions (R4B and R5) and then remove this constraint
@@ -73,7 +79,7 @@ class ProfileMappingProvider {
     Map<String, String> baseResourcePofileMap = loadBaseStructureDefinitions(context, support);
     if (!Strings.isNullOrEmpty(structureDefinitionsPath)) {
       Map<String, String> customResourceProfileMap =
-          loadCustomStructureDefinitions(context, support, structureDefinitionsPath);
+          loadCustomStructureDefinitions(context, support, structureDefinitionsPath, isClasspath);
       // Overwrite the profiles for the resources with the custom profiles
       baseResourcePofileMap.putAll(customResourceProfileMap);
     }
@@ -106,13 +112,19 @@ class ProfileMappingProvider {
    * type.
    */
   private Map<String, String> loadCustomStructureDefinitions(
-      FhirContext context, PrePopulatedValidationSupport support, String structureDefinitionsPath)
+      FhirContext context,
+      PrePopulatedValidationSupport support,
+      String structureDefinitionsPath,
+      boolean isClasspath)
       throws ProfileMapperException {
     Map<String, String> resourceProfileMap = new HashMap<>();
     IParser jsonParser = context.newJsonParser();
     try {
-      List<Path> paths =
-          Files.walk(Paths.get(structureDefinitionsPath)).collect(Collectors.toList());
+      Path path =
+          isClasspath
+              ? getDirectoryPathFromClasspath(structureDefinitionsPath)
+              : Paths.get(structureDefinitionsPath);
+      List<Path> paths = Files.walk(path).collect(Collectors.toList());
       List<Path> definitionPaths = new ArrayList<>();
       paths.stream()
           .filter(f -> f.toString().endsWith(JSON_EXT))
@@ -124,15 +136,42 @@ class ProfileMappingProvider {
         IBaseResource baseResource = getResource(jsonParser, definitionPath);
         addDefinitionAndMapping(context, baseResource, support, resourceProfileMap);
       }
-    } catch (IOException e) {
+    } catch (IOException | URISyntaxException e) {
       String errorMsg =
           String.format(
-              "Cannot get the list of files at the directory=%s, error=%s",
-              structureDefinitionsPath, e.getMessage());
+              "Cannot get the list of files at the directory=%s, classpath=%s, error=%s",
+              structureDefinitionsPath, isClasspath, e.getMessage());
       log.error(errorMsg, e);
       throw new ProfileMapperException(errorMsg);
     }
     return resourceProfileMap;
+  }
+
+  private Path getDirectoryPathFromClasspath(String classpath)
+      throws URISyntaxException, IOException, ProfileMapperException {
+    URL resourceURL = getClass().getResource(classpath);
+    if (resourceURL == null) {
+      String errorMsg = String.format("the classpath url=%s does not exist", classpath);
+      log.error(errorMsg);
+      throw new ProfileMapperException(errorMsg);
+    }
+
+    URI uri = resourceURL.toURI();
+    // This is to make sure that the FileSystem is initialised for zip files, as the API
+    // Paths.get() does not create automatically.
+    if (uri.getScheme().equals("jar")) {
+      Map<String, String> env = new HashMap<>();
+      env.put("create", "true");
+      try {
+        FileSystem fileSystem = FileSystems.getFileSystem(uri);
+        if (!fileSystem.isOpen()) {
+          FileSystems.newFileSystem(uri, env);
+        }
+      } catch (FileSystemNotFoundException e) {
+        FileSystems.newFileSystem(uri, env);
+      }
+    }
+    return Paths.get(resourceURL.toURI());
   }
 
   private void addDefinitionAndMapping(

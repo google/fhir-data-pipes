@@ -56,25 +56,54 @@ public class ProfileMapperFhirContexts {
   public synchronized FhirContext contextFor(
       FhirVersionEnum fhirVersion, @Nullable String structureDefinitionsPath)
       throws ProfileMapperException {
+    return contextFor(fhirVersion, structureDefinitionsPath, false);
+  }
+
+  /**
+   * Similar to {@link #contextFor(FhirVersionEnum, String)} but the custom profiles are loaded from
+   * the classpath name passed via structureDefinitionsClasspath.
+   */
+  public synchronized FhirContext contextForFromClasspath(
+      FhirVersionEnum fhirVersion, @Nullable String structureDefinitionsClasspath)
+      throws ProfileMapperException {
+    return contextFor(fhirVersion, structureDefinitionsClasspath, true);
+  }
+
+  private FhirContext contextFor(
+      FhirVersionEnum fhirVersion, @Nullable String structureDefinitionsPath, boolean isClasspath)
+      throws ProfileMapperException {
     structureDefinitionsPath = Strings.nullToEmpty(structureDefinitionsPath);
     FhirContextData fhirContextData = fhirContextMappings.get(fhirVersion);
-    if (fhirContextData == null) {
-      FhirContext context = new FhirContext(fhirVersion);
-      Map<String, String> profileMap = loadStructureDefinitions(context, structureDefinitionsPath);
-      fhirContextData = new FhirContextData(context, structureDefinitionsPath, profileMap);
-      fhirContextMappings.put(fhirVersion, fhirContextData);
+    if (fhirContextData != null) {
+      isContextLoadedWithDifferentConfig(fhirContextData, structureDefinitionsPath, isClasspath);
     } else {
-      if (!Objects.equals(structureDefinitionsPath, fhirContextData.structureDefinitionsPath)) {
-        String errorMsg =
-            String.format(
-                "Failed to initialise FhirContext with structureDefinitionsPath=%s, it is already"
-                    + " initialised with a different structureDefinitionsPath=%s",
-                structureDefinitionsPath, fhirContextData.structureDefinitionsPath);
-        logger.error(errorMsg);
-        throw new ProfileMapperException(errorMsg);
-      }
+      FhirContext context = new FhirContext(fhirVersion);
+      Map<String, String> profileMap =
+          loadStructureDefinitions(context, structureDefinitionsPath, isClasspath);
+      fhirContextData =
+          new FhirContextData(context, structureDefinitionsPath, profileMap, isClasspath);
+      fhirContextMappings.put(fhirVersion, fhirContextData);
     }
     return fhirContextData.fhirContext;
+  }
+
+  private void isContextLoadedWithDifferentConfig(
+      FhirContextData fhirContextData, String structureDefinitionsPath, boolean isClasspath)
+      throws ProfileMapperException {
+    if (!(Objects.equals(fhirContextData.isClasspath, isClasspath)
+        && Objects.equals(fhirContextData.structureDefinitionsPath, structureDefinitionsPath))) {
+      String errorMsg =
+          String.format(
+              "Failed to initialise FhirContext with configs structureDefinitionsPath=%s and"
+                  + " isClasspath=%s, it is already initialised with different configs"
+                  + " structureDefinitionsPath=%s and isClasspath=%s",
+              structureDefinitionsPath,
+              isClasspath,
+              fhirContextData.structureDefinitionsPath,
+              fhirContextData.isClasspath);
+      logger.error(errorMsg);
+      throw new ProfileMapperException(errorMsg);
+    }
   }
 
   /**
@@ -88,9 +117,10 @@ public class ProfileMapperFhirContexts {
    *     definitions
    */
   private Map<String, String> loadStructureDefinitions(
-      FhirContext context, @Nullable String structureDefinitionsPath)
+      FhirContext context, @Nullable String structureDefinitionsPath, boolean isClasspath)
       throws ProfileMapperException {
-    return profileMappingProvider.loadStructureDefinitions(context, structureDefinitionsPath);
+    return profileMappingProvider.loadStructureDefinitions(
+        context, structureDefinitionsPath, isClasspath);
   }
 
   /**
@@ -133,12 +163,17 @@ public class ProfileMapperFhirContexts {
     private final FhirContext fhirContext;
     private final String structureDefinitionsPath;
     private final Map<String, String> profileMap;
+    private final boolean isClasspath;
 
     FhirContextData(
-        FhirContext fhirContext, String structureDefinitionsPath, Map<String, String> profileMap) {
+        FhirContext fhirContext,
+        String structureDefinitionsPath,
+        Map<String, String> profileMap,
+        boolean isClasspath) {
       this.fhirContext = fhirContext;
       this.structureDefinitionsPath = structureDefinitionsPath;
       this.profileMap = profileMap;
+      this.isClasspath = isClasspath;
     }
   }
 }

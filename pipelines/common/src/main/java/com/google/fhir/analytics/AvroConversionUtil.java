@@ -62,6 +62,8 @@ public class AvroConversionUtil {
 
   private String structureDefinitionsDir;
 
+  private String structureDefinitionsClasspath;
+
   /**
    * This is to fix the logical type conversions for BigDecimal. This should be called once before
    * any FHIR resource conversion to Avro.
@@ -77,34 +79,65 @@ public class AvroConversionUtil {
   }
 
   private AvroConversionUtil(
-      FhirVersionEnum fhirVersionEnum, @Nullable String structureDefinitionsDir)
+      FhirVersionEnum fhirVersionEnum,
+      @Nullable String structureDefinitionsDir,
+      @Nullable String structureDefinitionsClasspath)
       throws ProfileMapperException {
     this.fhirVersionEnum = fhirVersionEnum;
     this.structureDefinitionsDir = structureDefinitionsDir;
+    this.structureDefinitionsClasspath = structureDefinitionsClasspath;
     this.converterMap = Maps.newHashMap();
     this.profileMapperFhirContexts = ProfileMapperFhirContexts.getInstance();
-    this.fhirContext =
-        profileMapperFhirContexts.contextFor(fhirVersionEnum, structureDefinitionsDir);
+    if (!Strings.isNullOrEmpty(structureDefinitionsClasspath)) {
+      this.fhirContext =
+          profileMapperFhirContexts.contextForFromClasspath(
+              fhirVersionEnum, structureDefinitionsClasspath);
+    } else {
+      this.fhirContext =
+          profileMapperFhirContexts.contextFor(fhirVersionEnum, structureDefinitionsDir);
+    }
   }
 
   static synchronized AvroConversionUtil getInstance(
-      FhirVersionEnum fhirVersionEnum, @Nullable String structureDefinitionsDir)
+      FhirVersionEnum fhirVersionEnum,
+      @Nullable String structureDefinitionsDir,
+      @Nullable String structureDefinitionsClasspath)
       throws ProfileMapperException {
     Preconditions.checkNotNull(fhirVersionEnum, "fhirVersionEnum cannot be null");
     structureDefinitionsDir = Strings.nullToEmpty(structureDefinitionsDir);
+    structureDefinitionsClasspath = Strings.nullToEmpty(structureDefinitionsClasspath);
+    if (!Strings.isNullOrEmpty(structureDefinitionsDir)
+        && !Strings.isNullOrEmpty(structureDefinitionsClasspath)) {
+      String errorMsg =
+          String.format(
+              "Please configure only one of the parameter between structureDefinitionsDir=%s and"
+                  + " structureDefinitionsClasspath=%s, leave both empty if custom profiles are not"
+                  + " needed.",
+              structureDefinitionsDir, structureDefinitionsClasspath);
+      log.error(errorMsg);
+      throw new ProfileMapperException(errorMsg);
+    }
+
     if (instance == null) {
-      instance = new AvroConversionUtil(fhirVersionEnum, structureDefinitionsDir);
+      instance =
+          new AvroConversionUtil(
+              fhirVersionEnum, structureDefinitionsDir, structureDefinitionsClasspath);
     } else if (!fhirVersionEnum.equals(instance.fhirVersionEnum)
-        || !structureDefinitionsDir.equals(instance.structureDefinitionsDir)) {
+        || !structureDefinitionsDir.equals(instance.structureDefinitionsDir)
+        || !structureDefinitionsClasspath.equals(instance.structureDefinitionsClasspath)) {
       String errorMsg =
           String.format(
               "AvroConversionUtil has been initialised with different set of parameters earlier"
-                  + " with fhirVersionEnum=%s and structureDefinitionsDir=%s, compared to what is"
-                  + " being passed now with fhirVersionEnum=%s and structureDefinitionsDir=%s",
+                  + " with fhirVersionEnum=%s, structureDefinitionsDir=%s and"
+                  + " structureDefinitionsClasspath=%s, compared to what is being passed now with"
+                  + " fhirVersionEnum=%s, structureDefinitionsDir=%s and"
+                  + " structureDefinitionsClasspath=%s",
               instance.fhirVersionEnum,
               instance.structureDefinitionsDir,
+              instance.structureDefinitionsClasspath,
               fhirVersionEnum,
-              structureDefinitionsDir);
+              structureDefinitionsDir,
+              structureDefinitionsClasspath);
       log.error(errorMsg);
       throw new ProfileMapperException(errorMsg);
     }
@@ -116,7 +149,7 @@ public class AvroConversionUtil {
     // initialised properly.
     if (fhirContext == null) {
       String errorMsg =
-          "The fhirContext has yet been initialised yet. Please initialise the fhirContext using"
+          "The fhirContext is not initialised yet. Please initialise the fhirContext using"
               + " the method getInstance(FhirVersionEnum fhirVersion, @Nullable String"
               + " structureDefinitionsDir)";
       log.error(errorMsg);

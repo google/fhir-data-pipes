@@ -112,6 +112,8 @@ abstract class FetchSearchPageFn<T> extends DoFn<T, KV<String, Integer>> {
 
   private String structureDefinitionsDir;
 
+  private String structureDefinitionsClasspath;
+
   protected AvroConversionUtil avroConversionUtil;
 
   FetchSearchPageFn(FhirEtlOptions options, String stageIdentifier) {
@@ -130,6 +132,7 @@ abstract class FetchSearchPageFn<T> extends DoFn<T, KV<String, Integer>> {
     this.rowGroupSize = options.getRowGroupSizeForParquetFiles();
     this.viewDefinitionsDir = options.getViewDefinitionsDir();
     this.structureDefinitionsDir = options.getStructureDefinitionsDir();
+    this.structureDefinitionsClasspath = options.getStructureDefinitionsClasspath();
     this.fhirVersionEnum = options.getFhirVersion();
     if (options.getSinkDbConfigPath().isEmpty()) {
       this.sinkDbConfig = null;
@@ -167,7 +170,9 @@ abstract class FetchSearchPageFn<T> extends DoFn<T, KV<String, Integer>> {
   @Setup
   public void setup() throws SQLException, PropertyVetoException, ProfileMapperException {
     log.debug("Starting setup for stage " + stageIdentifier);
-    avroConversionUtil = AvroConversionUtil.getInstance(fhirVersionEnum, structureDefinitionsDir);
+    avroConversionUtil =
+        AvroConversionUtil.getInstance(
+            fhirVersionEnum, structureDefinitionsDir, structureDefinitionsClasspath);
     FhirContext fhirContext = avroConversionUtil.getFhirContext();
     // The documentation for `FhirContext` claims that it is thread-safe but looking at the code,
     // it is not obvious if it is. This might be an issue when we write to it, like the next line.
@@ -200,6 +205,7 @@ abstract class FetchSearchPageFn<T> extends DoFn<T, KV<String, Integer>> {
           new ParquetUtil(
               fhirContext.getVersion().getVersion(),
               structureDefinitionsDir,
+              structureDefinitionsClasspath,
               parquetFile,
               secondsToFlush,
               rowGroupSize,

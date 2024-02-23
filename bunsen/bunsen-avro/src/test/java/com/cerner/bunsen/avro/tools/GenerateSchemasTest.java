@@ -6,10 +6,8 @@ import com.cerner.bunsen.exception.ProfileMapperException;
 import com.cerner.bunsen.stu3.TestData;
 import java.io.IOException;
 import java.net.URISyntaxException;
-import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -32,17 +30,11 @@ public class GenerateSchemasTest {
     Path outputFile = generatedCodePath.resolve("out.asvc");
 
     ProfileMapperFhirContexts.getInstance().deRegisterFhirContexts(FhirVersionEnum.DSTU3);
-    URL resourceURL =
-        GenerateSchemasTest.class
-            .getClassLoader()
-            .getResource("definitions-stu3/StructureDefinition-us-core-patient.json");
-    String structureDefinitionsPath =
-        Paths.get(resourceURL.toURI()).toFile().getParentFile().getAbsolutePath();
     int result =
         GenerateSchemas.main(
             new String[] {
               outputFile.toString(),
-              structureDefinitionsPath,
+              "/stu3-us-core-definitions",
               TestData.US_CORE_PATIENT,
               TestData.US_CORE_CONDITION,
               TestData.US_CORE_MEDICATION,

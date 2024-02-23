@@ -6,8 +6,6 @@ import com.cerner.bunsen.ProfileMapperFhirContexts;
 import com.cerner.bunsen.exception.ProfileMapperException;
 import com.cerner.bunsen.stu3.TestData;
 import java.net.URISyntaxException;
-import java.net.URL;
-import java.nio.file.Paths;
 import java.util.List;
 import org.apache.avro.generic.GenericData.Record;
 import org.hl7.fhir.dstu3.model.CodeableConcept;
@@ -27,15 +25,10 @@ public class Stu3AvroConverterCustomProfileTest {
 
   @BeforeClass
   public static void setUp() throws URISyntaxException, ProfileMapperException {
-    URL resourceURL =
-        Stu3AvroConverterCustomProfileTest.class
-            .getClassLoader()
-            .getResource(
-                "definitions-custom-profile/StructureDefinition-bunsen-test-profile-Patient.json");
-    String path = Paths.get(resourceURL.toURI()).toFile().getParentFile().getAbsolutePath();
     ProfileMapperFhirContexts.getInstance().deRegisterFhirContexts(FhirVersionEnum.DSTU3);
     FhirContext fhirContext =
-        ProfileMapperFhirContexts.getInstance().contextFor(FhirVersionEnum.DSTU3, path);
+        ProfileMapperFhirContexts.getInstance()
+            .contextForFromClasspath(FhirVersionEnum.DSTU3, "/other-profile-definitions");
     AvroConverter converterBunsenTestProfilePatient =
         AvroConverter.forResource(fhirContext, TestData.BUNSEN_TEST_PATIENT);
 

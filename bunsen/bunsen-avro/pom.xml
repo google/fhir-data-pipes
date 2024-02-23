@@ -44,6 +44,11 @@
     </dependency>
 
     <dependency>
+      <groupId>com.cerner.bunsen</groupId>
+      <artifactId>bunsen-structure-definitions</artifactId>
+    </dependency>
+
+    <dependency>
       <groupId>org.apache.avro</groupId>
       <artifactId>avro-compiler</artifactId>
       <scope>test</scope>

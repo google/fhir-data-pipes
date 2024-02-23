@@ -11,10 +11,8 @@ import java.io.File;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.net.URISyntaxException;
-import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -94,13 +92,10 @@ public class Stu3AvroConverterUsCoreTest {
   @BeforeClass
   public static void convertTestData()
       throws IOException, URISyntaxException, ProfileMapperException {
-    URL resourceURL =
-        Stu3AvroConverterUsCoreTest.class
-            .getClassLoader()
-            .getResource("definitions-stu3/StructureDefinition-us-core-birthsex.json");
-    String path = Paths.get(resourceURL.toURI()).toFile().getParentFile().getAbsolutePath();
     ProfileMapperFhirContexts.getInstance().deRegisterFhirContexts(FhirVersionEnum.DSTU3);
-    fhirContext = ProfileMapperFhirContexts.getInstance().contextFor(FhirVersionEnum.DSTU3, path);
+    fhirContext =
+        ProfileMapperFhirContexts.getInstance()
+            .contextForFromClasspath(FhirVersionEnum.DSTU3, "/stu3-us-core-definitions");
     AvroConverter observationConverter = AvroConverter.forResource(fhirContext, "Observation");
 
     avroObservation = (Record) observationConverter.resourceToAvro(testObservation);

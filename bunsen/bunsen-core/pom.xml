@@ -48,7 +48,10 @@
       <artifactId>hapi-fhir-structures-r4</artifactId>
       <scope>test</scope>
     </dependency>
-
+    <dependency>
+      <groupId>com.cerner.bunsen</groupId>
+      <artifactId>bunsen-structure-definitions</artifactId>
+    </dependency>
     <dependency>
       <groupId>junit</groupId>
       <artifactId>junit</artifactId>

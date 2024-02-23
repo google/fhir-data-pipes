@@ -106,6 +106,8 @@ public class DataProperties {
 
   private String structureDefinitionsDir;
 
+  private String structureDefinitionsClasspath;
+
   private int rowGroupSizeForParquetFiles;
 
   private FhirVersionEnum fhirVersion;
@@ -183,6 +185,7 @@ public class DataProperties {
     options.setViewDefinitionsDir(Strings.nullToEmpty(viewDefinitionsDir));
     options.setSinkDbConfigPath(Strings.nullToEmpty(sinkDbConfigPath));
     options.setStructureDefinitionsDir(Strings.nullToEmpty(structureDefinitionsDir));
+    options.setStructureDefinitionsClasspath(Strings.nullToEmpty(structureDefinitionsClasspath));
     options.setFhirVersion(fhirVersion);
     if (rowGroupSizeForParquetFiles > 0) {
       options.setRowGroupSizeForParquetFiles(rowGroupSizeForParquetFiles);
@@ -223,6 +226,8 @@ public class DataProperties {
         new ConfigFields("fhirdata.viewDefinitionsDir", viewDefinitionsDir, "", ""),
         new ConfigFields("fhirdata.sinkDbConfigPath", sinkDbConfigPath, "", ""),
         new ConfigFields("fhirdata.structureDefinitionsDir", structureDefinitionsDir, "", ""),
+        new ConfigFields(
+            "fhirdata.structureDefinitionsClasspath", structureDefinitionsClasspath, "", ""),
         new ConfigFields("fhirdata.fhirVersion", fhirVersion.name(), "", ""),
         new ConfigFields(
             "fhirdata.rowGroupSizeForParquetFiles",

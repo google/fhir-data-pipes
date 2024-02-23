@@ -160,6 +160,12 @@
 
     <dependency>
       <groupId>com.cerner.bunsen</groupId>
+      <artifactId>bunsen-structure-definitions</artifactId>
+      <version>0.5.14-SNAPSHOT</version>
+    </dependency>
+
+    <dependency>
+      <groupId>com.cerner.bunsen</groupId>
       <artifactId>bunsen-core-stu3</artifactId>
       <version>0.5.14-SNAPSHOT</version>
     </dependency>

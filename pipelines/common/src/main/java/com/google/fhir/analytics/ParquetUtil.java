@@ -68,14 +68,16 @@ public class ParquetUtil {
    */
   public ParquetUtil(FhirVersionEnum fhirVersionEnum, String parquetFilePath)
       throws ProfileMapperException {
-    this(fhirVersionEnum, "", parquetFilePath, 0, 0, "");
+    this(fhirVersionEnum, "", "", parquetFilePath, 0, 0, "");
   }
 
   // TODO remove this constructor and only expose a similar one in `DwhFiles` (for testing).
   /**
    * @param fhirVersionEnum This should match the resources intended to be converted.
-   * @param structureDefinitionsDir Path containing the structure definitions for custom fhir
-   *     profiles
+   * @param structureDefinitionsDir Directory path containing the structure definitions for custom
+   *     fhir profiles
+   * @param structureDefinitionsClasspath Classpath name containing the structure definitions for
+   *     custom fhir profiles
    * @param parquetFilePath The directory under which the Parquet files are written.
    * @param secondsToFlush The interval after which the content of Parquet writers is flushed to
    *     disk.
@@ -89,6 +91,7 @@ public class ParquetUtil {
   ParquetUtil(
       FhirVersionEnum fhirVersionEnum,
       String structureDefinitionsDir,
+      String structureDefinitionsClasspath,
       String parquetFilePath,
       int secondsToFlush,
       int rowGroupSize,
@@ -96,7 +99,8 @@ public class ParquetUtil {
       throws ProfileMapperException {
     if (fhirVersionEnum == FhirVersionEnum.DSTU3 || fhirVersionEnum == FhirVersionEnum.R4) {
       this.conversionUtil =
-          AvroConversionUtil.getInstance(fhirVersionEnum, structureDefinitionsDir);
+          AvroConversionUtil.getInstance(
+              fhirVersionEnum, structureDefinitionsDir, structureDefinitionsClasspath);
     } else {
       throw new IllegalArgumentException("Only versions 3 and 4 of FHIR are supported!");
     }

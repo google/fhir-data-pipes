@@ -45,6 +45,14 @@ public interface BasePipelineOptions extends PipelineOptions {
 
   void setStructureDefinitionsDir(String value);
 
+  @Description(
+      "Classpath containing the structure definition files for any custom profiles that needs to be"
+          + " supported")
+  @Default.String("")
+  String getStructureDefinitionsClasspath();
+
+  void setStructureDefinitionsClasspath(String value);
+
   @Description("The fhir version to be used for the FHIR Context APIs")
   @Default.Enum("R4")
   FhirVersionEnum getFhirVersion();

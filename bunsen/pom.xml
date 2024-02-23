@@ -41,6 +41,7 @@
   </properties>
 
   <modules>
+    <module>bunsen-structure-definitions</module>
     <module>bunsen-core</module>
     <module>bunsen-core-r4</module>
     <module>bunsen-core-stu3</module>
@@ -438,6 +439,12 @@
     <dependencies>
 
       <!-- Project libraries -->
+      <dependency>
+        <groupId>com.cerner.bunsen</groupId>
+        <artifactId>bunsen-structure-definitions</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+
       <dependency>
         <groupId>com.cerner.bunsen</groupId>
         <artifactId>bunsen-core</artifactId>

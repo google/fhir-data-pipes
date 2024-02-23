@@ -134,9 +134,16 @@ fhirdata:
   # you can use those predefined views in your dev. env. too.
   hiveResourceViewsDir: "config/views"
 
-  # Path containing the structure definition files for any custom profiles that needs to be
+  # Directory path containing the structure definition files for any custom profiles that needs to be
   # supported. Currently only one profile is supported for any given resource type.
-  structureDefinitionsDir: "config/r4-us-core-definitions"
+  #structureDefinitionsDir: "config/r4-us-core-definitions"
+
+  # Similar to the structureDefinitionsDir, this path should also contain the structure definition
+  # files for any custom profiles that needs to be supported. But the difference is that this is the
+  # classpath name instead of a directory name and should always start with a '/'. Also, only one of
+  # the parameter either structureDefinitionsDir or structureDefinitionsClasspath can be configured,
+  # or do not configure anything if custom profiles are not needed.
+  structureDefinitionsClasspath: "/r4-us-core-definitions"
 
   # The fhir version to be used for the FHIR Context APIs. This is an enum value and the possible
   # values should be one from the list mentioned in the below link

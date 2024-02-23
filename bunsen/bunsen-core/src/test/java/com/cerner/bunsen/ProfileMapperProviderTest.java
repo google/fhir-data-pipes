@@ -5,10 +5,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import ca.uhn.fhir.context.FhirContext;
 import ca.uhn.fhir.context.FhirVersionEnum;
 import com.cerner.bunsen.exception.ProfileMapperException;
-import java.io.File;
 import java.net.URISyntaxException;
-import java.net.URL;
-import java.nio.file.Paths;
 import java.util.Map;
 import org.hamcrest.Matchers;
 import org.junit.Test;
@@ -28,15 +25,9 @@ public class ProfileMapperProviderTest {
   public void testIfR4ProfilesAreOverloaded() throws URISyntaxException, ProfileMapperException {
     ProfileMappingProvider profileMappingProvider = new ProfileMappingProvider();
     FhirContext fhirContext = new FhirContext(FhirVersionEnum.R4);
-    URL resource =
-        ProfileMapperProviderTest.class
-            .getClassLoader()
-            .getResource("definitions-r4/StructureDefinition-us-core-patient.json");
-
-    File file = Paths.get(resource.toURI()).toFile();
     Map<String, String> profileMapping =
         profileMappingProvider.loadStructureDefinitions(
-            fhirContext, file.getParentFile().getAbsolutePath());
+            fhirContext, "/r4-us-core-definitions", true);
 
     assertThat(profileMapping.get("Patient"), Matchers.notNullValue());
     assertThat(profileMapping.get("Patient"), Matchers.equalTo(US_CORE_PATIENT_PROFILE));
@@ -50,15 +41,9 @@ public class ProfileMapperProviderTest {
   public void testIfStu3ProfilesAreOverloaded() throws URISyntaxException, ProfileMapperException {
     ProfileMappingProvider profileMappingProvider = new ProfileMappingProvider();
     FhirContext fhirContext = new FhirContext(FhirVersionEnum.DSTU3);
-    URL resource =
-        ProfileMapperProviderTest.class
-            .getClassLoader()
-            .getResource("definitions/StructureDefinition-bunsen-test-profile-Patient.json");
-
-    File file = Paths.get(resource.toURI()).toFile();
     Map<String, String> profileMapping =
         profileMappingProvider.loadStructureDefinitions(
-            fhirContext, file.getParentFile().getAbsolutePath());
+            fhirContext, "/other-profile-definitions", true);
 
     assertThat(profileMapping.get("Patient"), Matchers.notNullValue());
     assertThat(profileMapping.get("Patient"), Matchers.equalTo(BUNSEN_TEST_PATIENT_PROFILE));
