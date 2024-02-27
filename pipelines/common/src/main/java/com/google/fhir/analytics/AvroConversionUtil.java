@@ -106,8 +106,7 @@ public class AvroConversionUtil {
     Preconditions.checkNotNull(fhirVersionEnum, "fhirVersionEnum cannot be null");
     structureDefinitionsDir = Strings.nullToEmpty(structureDefinitionsDir);
     structureDefinitionsClasspath = Strings.nullToEmpty(structureDefinitionsClasspath);
-    if (!Strings.isNullOrEmpty(structureDefinitionsDir)
-        && !Strings.isNullOrEmpty(structureDefinitionsClasspath)) {
+    if (!structureDefinitionsDir.isEmpty() && !structureDefinitionsClasspath.isEmpty()) {
       String errorMsg =
           String.format(
               "Please configure only one of the parameter between structureDefinitionsDir=%s and"

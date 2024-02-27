@@ -46,8 +46,14 @@ public interface BasePipelineOptions extends PipelineOptions {
   void setStructureDefinitionsDir(String value);
 
   @Description(
-      "Classpath containing the structure definition files for any custom profiles that needs to be"
-          + " supported")
+      "Similar to the structureDefinitionsDir, this path should also contain the structure"
+          + " definition files for any custom profiles that needs to be supported. But the"
+          + " difference is that, this is the classpath name instead of a directory name and should"
+          + " always start with a '/'. Also, only one of the parameter either"
+          + " structureDefinitionsDir or structureDefinitionsClasspath can be configured, or do not"
+          + " configure anything if custom profiles are not needed."
+          + " e.g., /r4-us-core-definitions is the classpath name under the resources folder of"
+          + " module extension-structure-definitions")
   @Default.String("")
   String getStructureDefinitionsClasspath();
 

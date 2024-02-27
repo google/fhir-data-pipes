@@ -7,23 +7,27 @@ import ca.uhn.fhir.parser.IParser;
 import com.cerner.bunsen.exception.ProfileMapperException;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.io.Reader;
+import java.net.JarURLConnection;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.FileSystem;
-import java.nio.file.FileSystemNotFoundException;
-import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.jar.JarEntry;
+import java.util.jar.JarFile;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import org.hl7.fhir.common.hapi.validation.support.PrePopulatedValidationSupport;
@@ -94,7 +98,9 @@ class ProfileMappingProvider {
         context.getValidationSupport().fetchAllStructureDefinitions();
     for (IBaseResource definition : defaultDefinitions) {
       support.addStructureDefinition(definition);
-      // Links the profile only if the definition belongs to a base resource
+      // Links the profile only if the definition belongs to a base resource. The default
+      // definitions loaded could be a StructureDefinition, Extension element, CapabilityStatement,
+      // ValueSet etc., hence this check is necessary.
       if (isABaseResource(context, definition)) {
         RuntimeResourceDefinition resourceDefinition = context.getResourceDefinition(definition);
         String type = fetchProperty("type", resourceDefinition, definition);
@@ -120,20 +126,12 @@ class ProfileMappingProvider {
     Map<String, String> resourceProfileMap = new HashMap<>();
     IParser jsonParser = context.newJsonParser();
     try {
-      Path path =
+      List<IBaseResource> resources =
           isClasspath
-              ? getDirectoryPathFromClasspath(structureDefinitionsPath)
-              : Paths.get(structureDefinitionsPath);
-      List<Path> paths = Files.walk(path).collect(Collectors.toList());
-      List<Path> definitionPaths = new ArrayList<>();
-      paths.stream()
-          .filter(f -> f.toString().endsWith(JSON_EXT))
-          .forEach(
-              f -> {
-                definitionPaths.add(f);
-              });
-      for (Path definitionPath : definitionPaths) {
-        IBaseResource baseResource = getResource(jsonParser, definitionPath);
+              ? getListOfResourcesFromClasspath(jsonParser, structureDefinitionsPath)
+              : getResourcesFromPath(jsonParser, structureDefinitionsPath);
+
+      for (IBaseResource baseResource : resources) {
         addDefinitionAndMapping(context, baseResource, support, resourceProfileMap);
       }
     } catch (IOException | URISyntaxException e) {
@@ -147,8 +145,9 @@ class ProfileMappingProvider {
     return resourceProfileMap;
   }
 
-  private Path getDirectoryPathFromClasspath(String classpath)
-      throws URISyntaxException, IOException, ProfileMapperException {
+  private List<IBaseResource> getListOfResourcesFromClasspath(IParser parser, String classpath)
+      throws ProfileMapperException, URISyntaxException, IOException {
+
     URL resourceURL = getClass().getResource(classpath);
     if (resourceURL == null) {
       String errorMsg = String.format("the classpath url=%s does not exist", classpath);
@@ -157,21 +156,49 @@ class ProfileMappingProvider {
     }
 
     URI uri = resourceURL.toURI();
-    // This is to make sure that the FileSystem is initialised for zip files, as the API
-    // Paths.get() does not create automatically.
     if (uri.getScheme().equals("jar")) {
-      Map<String, String> env = new HashMap<>();
-      env.put("create", "true");
-      try {
-        FileSystem fileSystem = FileSystems.getFileSystem(uri);
-        if (!fileSystem.isOpen()) {
-          FileSystems.newFileSystem(uri, env);
-        }
-      } catch (FileSystemNotFoundException e) {
-        FileSystems.newFileSystem(uri, env);
+      return getResourcesFromJarURL(parser, resourceURL);
+    } else {
+      return getResourcesFromPath(parser, uri.getSchemeSpecificPart());
+    }
+  }
+
+  private List<IBaseResource> getResourcesFromJarURL(IParser parser, URL jarURL)
+      throws IOException {
+    JarURLConnection jarURLConnection = (JarURLConnection) jarURL.openConnection();
+    JarFile jarFile = jarURLConnection.getJarFile();
+    JarEntry jarEntry = jarURLConnection.getJarEntry();
+    String baseEntryPath = (jarEntry != null ? jarEntry.getName() : "");
+
+    List<IBaseResource> resources = new ArrayList<>();
+    for (Enumeration<JarEntry> entries = jarFile.entries(); entries.hasMoreElements(); ) {
+      JarEntry entry = entries.nextElement();
+      String entryPath = entry.getName();
+      if (!entry.isDirectory()
+          && entryPath.startsWith(baseEntryPath)
+          && entryPath.endsWith(JSON_EXT)) {
+        resources.add(getResource(parser, jarFile.getInputStream(entry)));
       }
     }
-    return Paths.get(resourceURL.toURI());
+    return resources;
+  }
+
+  private List<IBaseResource> getResourcesFromPath(IParser parser, String pathName)
+      throws IOException {
+    Path path = Paths.get(pathName);
+    List<Path> paths = Files.walk(path).collect(Collectors.toList());
+    List<Path> definitionPaths = new ArrayList<>();
+    paths.stream()
+        .filter(f -> f.toString().endsWith(JSON_EXT))
+        .forEach(
+            f -> {
+              definitionPaths.add(f);
+            });
+    List<IBaseResource> baseResources = new ArrayList<>();
+    for (Path definitionPath : definitionPaths) {
+      baseResources.add(getResource(parser, definitionPath));
+    }
+    return baseResources;
   }
 
   private void addDefinitionAndMapping(
@@ -218,6 +245,13 @@ class ProfileMappingProvider {
   private static IBaseResource getResource(IParser jsonParser, Path definitionPath)
       throws IOException {
     try (Reader reader = Files.newBufferedReader(definitionPath, StandardCharsets.UTF_8)) {
+      return jsonParser.parseResource(reader);
+    }
+  }
+
+  private static IBaseResource getResource(IParser jsonParser, InputStream inputStream)
+      throws IOException {
+    try (Reader reader = new BufferedReader(new InputStreamReader(inputStream))) {
       return jsonParser.parseResource(reader);
     }
   }

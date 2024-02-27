@@ -139,10 +139,9 @@ public class ProfileMapperFhirContexts {
     if (fhirContextData == null) {
       String errorMsg =
           String.format(
-              "The fhirContext has not been initialised yet for version=%s, Please initialise the"
-                  + " fhirContext using the method contextFor(FhirVersionEnum fhirVersion,"
-                  + " @Nullable String structureDefinitionsPath) before fetching the mapped"
-                  + " profile.",
+              "The fhirContext is not initialised yet for version=%s, Please initialise the"
+                  + " fhirContext using one of the flavors of contextFor() methods before fetching"
+                  + " the mapped profile.",
               fhirVersion);
       logger.error(errorMsg);
       throw new ProfileMapperException(errorMsg);

@@ -74,7 +74,6 @@ public class TestData {
 
   public static final String VALUE_SET = "http://hl7.org/fhir/StructureDefinition/ValueSet";
 
-  // TODO add test profile for R4: https://github.com/google/fhir-data-pipes/issues/558
   public static final String BUNSEN_TEST_PATIENT =
       "http://hl7.org/fhir/bunsen/test/StructureDefinition/bunsen-test-patient";
 
@@ -439,12 +438,11 @@ public class TestData {
     return provenance;
   }
 
-  // TODO add test profile for R4: https://github.com/google/fhir-data-pipes/issues/558
-  // /**
-  //  * Returns a new Patient from Bunsen Test profile for testing.
-  //  *
-  //  * @return a FHIR Patient for testing.
-  //  */
+  /**
+   * Returns a new Patient from Bunsen Test profile for testing.
+   *
+   * @return a FHIR Patient for testing.
+   */
   public static Patient newBunsenTestProfilePatient() {
     Patient patient = new Patient();
 

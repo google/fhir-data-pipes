@@ -17,7 +17,6 @@ import org.junit.Test;
 
 public class R4AvroConverterCustomProfileTest {
 
-  // TODO add test profile for R4: https://github.com/google/fhir-data-pipes/issues/558
   private static final Patient testBunsenTestProfilePatient =
       TestData.newBunsenTestProfilePatient();
 
@@ -31,7 +30,6 @@ public class R4AvroConverterCustomProfileTest {
     FhirContext fhirContext =
         ProfileMapperFhirContexts.getInstance()
             .contextForFromClasspath(FhirVersionEnum.R4, "/other-profile-definitions");
-    // TODO add test profile for R4: https://github.com/google/fhir-data-pipes/issues/558
     AvroConverter converterBunsenTestProfilePatient =
         AvroConverter.forResource(fhirContext, TestData.BUNSEN_TEST_PATIENT);
 
@@ -42,7 +40,6 @@ public class R4AvroConverterCustomProfileTest {
         (Patient) converterBunsenTestProfilePatient.avroToResource(avroBunsenTestProfilePatient);
   }
 
-  // TODO add test profile for R4: https://github.com/google/fhir-data-pipes/issues/558
   @Test
   public void testSimpleExtensionWithBooleanField() {
 

@@ -50,7 +50,7 @@
     </dependency>
     <dependency>
       <groupId>com.cerner.bunsen</groupId>
-      <artifactId>bunsen-structure-definitions</artifactId>
+      <artifactId>extension-structure-definitions</artifactId>
     </dependency>
     <dependency>
       <groupId>junit</groupId>
