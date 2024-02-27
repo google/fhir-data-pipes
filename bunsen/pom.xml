@@ -37,7 +37,7 @@
     <maven-javadoc.plugin.version>3.6.3</maven-javadoc.plugin.version>
     <maven-project-info-reports.plugin.version>3.5.0</maven-project-info-reports.plugin.version>
     <slf4j.version>2.0.12</slf4j.version>
-    <logback.version>1.4.12</logback.version>
+    <logback.version>1.5.0</logback.version>
   </properties>
 
   <modules>
@@ -81,6 +81,12 @@
       <version>${logback.version}</version>
       <!-- We only enable the logback binding while testing such that it is
         not imposed on the end-user of the Bunsen libraries.-->
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>ch.qos.logback</groupId>
+      <artifactId>logback-core</artifactId>
+      <version>${logback.version}</version>
       <scope>test</scope>
     </dependency>
 
