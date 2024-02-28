@@ -54,6 +54,11 @@
     <auto-value.version>1.10.4</auto-value.version>
   </properties>
 
+  <!-- The artifact versions defined in the dependencyManagement section below are the versions that
+   will be used as default if they are added as dependencies in the current module or any of the
+   child modules, unless we explicitly override the version when the dependency is defined.
+   Note that, though the dependencies are defined here, they won't be included in the modules unless
+   they are added as dependencies under the dependency section directly or transitively -->
   <dependencyManagement>
     <dependencies>
       <dependency>
@@ -92,6 +97,29 @@
         <artifactId>jcommander</artifactId>
         <version>${jcommander.version}</version>
       </dependency>
+
+      <!-- In the controller module, we import the pom of the artifact -
+       org.springframework.boot:spring-boot-dependencies to inherit the dependencyManagement
+       section of it. The logback versions defined below will take precedence over the versions
+       defined in the org.springframework.boot:spring-boot-dependencies artifact because the direct
+       dependency takes precedence other the transitive dependency. -->
+      <dependency>
+        <groupId>ch.qos.logback</groupId>
+        <artifactId>logback-classic</artifactId>
+        <version>${logback.version}</version>
+      </dependency>
+
+      <dependency>
+        <groupId>ch.qos.logback</groupId>
+        <artifactId>logback-core</artifactId>
+        <version>${logback.version}</version>
+      </dependency>
+
+      <dependency>
+        <groupId>ch.qos.logback</groupId>
+        <artifactId>logback-access</artifactId>
+        <version>${logback.version}</version>
+      </dependency>
     </dependencies>
   </dependencyManagement>
 
@@ -105,14 +133,6 @@
     <dependency>
       <groupId>ch.qos.logback</groupId>
       <artifactId>logback-classic</artifactId>
-      <version>${logback.version}</version>
-      <scope>runtime</scope>
-    </dependency>
-    <dependency>
-      <groupId>ch.qos.logback</groupId>
-      <artifactId>logback-core</artifactId>
-      <version>${logback.version}</version>
-      <scope>runtime</scope>
     </dependency>
 
     <!-- Test deps -->

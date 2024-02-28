@@ -83,12 +83,6 @@
         not imposed on the end-user of the Bunsen libraries.-->
       <scope>test</scope>
     </dependency>
-    <dependency>
-      <groupId>ch.qos.logback</groupId>
-      <artifactId>logback-core</artifactId>
-      <version>${logback.version}</version>
-      <scope>test</scope>
-    </dependency>
 
     <!-- This is to override the old Jackson dependency that Avro has; without
       this the libraries that depend on newer Jackson throw NoClassDefFound.
