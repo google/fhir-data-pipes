@@ -28,7 +28,7 @@
   <artifactId>common</artifactId>
 
   <properties>
-    <c3p0.version>0.10.0-pre3</c3p0.version>
+    <c3p0.version>0.10.0-pre4</c3p0.version>
   </properties>
 
   <dependencies>
