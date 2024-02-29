@@ -188,8 +188,8 @@ public class DataProperties {
 
     if (!Strings.isNullOrEmpty(fhirSinkPath)) {
       options.setFhirSinkPath(fhirSinkPath);
-      options.setSinkUserName(sinkUserName);
-      options.setSinkPassword(sinkPassword);
+      options.setSinkUserName(Strings.nullToEmpty(sinkUserName));
+      options.setSinkPassword(Strings.nullToEmpty(sinkPassword));
     }
 
     // Using underscore for suffix as hyphens are discouraged in hive table names.
@@ -228,13 +228,12 @@ public class DataProperties {
         new ConfigFields("fhirdata.sinkDbConfigPath", sinkDbConfigPath, "", ""),
         new ConfigFields("fhirdata.fhirSinkPath", fhirSinkPath, "", ""),
         new ConfigFields("fhirdata.sinkUserName", sinkUserName, "", ""),
-        new ConfigFields("fhirdata.sinkPassword", sinkPassword, "", ""));
+        new ConfigFields("fhirdata.sinkPassword", sinkPassword, "", ""),
         new ConfigFields(
             "fhirdata.rowGroupSizeForParquetFiles",
             String.valueOf(rowGroupSizeForParquetFiles),
             "",
             ""));
-
   }
 
   ConfigFields getConfigFields(FhirEtlOptions options, Method getMethod) {

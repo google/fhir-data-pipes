@@ -20,6 +20,7 @@ RUN pip3 install virtualenv google-auth requests
 
 COPY pipeline_validation.sh pipeline_validation.sh
 COPY controller-spark/parquet-tools-1.11.1.jar  parquet-tools-1.11.1.jar
+COPY controller-spark/test_fhir_sink.sh  test_fhir_sink.sh
 ENV PARQUET_SUBDIR="NON_JDBC"
 ENV DOCKER_NETWORK="--use_docker_network"
 ENV STREAMING_TEST=""

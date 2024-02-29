@@ -347,51 +347,23 @@ function validate_updated_resource() {
   fi
 }
 
+
 #################################################
 # Function that counts resources in  FHIR server and compares output to what is 
 #  in the source FHIR server
 # Globals:
 #   HOME_PATH
+#   PARQUET_SUBDIR
 #   SINK_FHIR_SERVER_URL
 #   TOTAL_TEST_PATIENTS
 #   TOTAL_TEST_ENCOUNTERS
 #   TOTAL_TEST_OBS
 #################################################
-function test_fhir_sink() {
-  local query_param="?_summary=count"
-
+function test_fhir_sink(){
   local runMode=$1
-
-  print_message "Finding number of patients, encounters and obs in FHIR server"
-
-  curl -L -X GET -u hapi:hapi --connect-timeout 5 --max-time 20 \
-    "${SINK_FHIR_SERVER_URL}/fhir/Patient${query_param}" 2>/dev/null >>"${HOME_PATH}/${PARQUET_SUBDIR}/patients-sink.json"
-
-  curl -L -X GET -u hapi:hapi --connect-timeout 5 --max-time 20 \
-    "${SINK_FHIR_SERVER_URL}/fhir/Encounter${query_param}" 2>/dev/null >>"${HOME_PATH}/${PARQUET_SUBDIR}/encounters-sink.json"
-
-  curl -L -X GET -u hapi:hapi --connect-timeout 5 --max-time 20 \
-    "${SINK_FHIR_SERVER_URL}/fhir/Observation${query_param}" 2>/dev/null >>"${HOME_PATH}/${PARQUET_SUBDIR}/obs-sink.json"
-
-  print_message "Counting number of patients, encounters and obs sinked to fhir files"
-
-  local total_patients_sinked_fhir=$(jq '.total' "${HOME_PATH}/${PARQUET_SUBDIR}/patients-sink.json")
-  print_message "Total patients sinked to fhir ---> ${total_patients_sinked_fhir}"
-
-  local total_encounters_sinked_fhir=$(jq '.total' "${HOME_PATH}/${PARQUET_SUBDIR}/encounters-sink.json")
-  print_message "Total encounters sinked to fhir ---> ${total_encounters_sinked_fhir}"
-
-  local total_obs_sinked_fhir=$(jq '.total' "${HOME_PATH}/${PARQUET_SUBDIR}/obs-sink.json")
-  print_message "Total observations sinked to fhir ---> ${total_obs_sinked_fhir}"
-
-  if [[ "${total_patients_sinked_fhir}" == "${TOTAL_TEST_PATIENTS}" && "${total_encounters_sinked_fhir}" \
-        == "${TOTAL_TEST_ENCOUNTERS}" && "${total_obs_sinked_fhir}" == "${TOTAL_TEST_OBS}" ]] \
-    ; then
-    print_message "FHIR SERVER SINK EXECUTED SUCCESSFULLY USING ${runMode} MODE"
-  else
-    print_message "FHIR SERVER SINK TEST FAILED USING ${runMode} MODE"
-    exit 1
-  fi
+  local STREAMING=""
+  ./test_fhir_sink.sh "${runMode}" "${STREAMING}" "${HOME_PATH}" "${PARQUET_SUBDIR}" \
+  "${SINK_FHIR_SERVER_URL}" "${TOTAL_TEST_PATIENTS}" "${TOTAL_TEST_ENCOUNTERS}" "${TOTAL_TEST_OBS}"
 }
 
 validate_args  "$@"
