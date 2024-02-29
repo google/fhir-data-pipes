@@ -192,8 +192,12 @@
             <div class="progress-bar progress-bar-striped" style="min-width:30px; font-size:medium; display:none"></div>
           </div>
           <div class="alert alert-primary alert-dismissible fade show" role="alert" id="pipelineRunning" style="display:none">
-            <!-- TODO replace the spinning GIF with something that uses less CPU for rendering. -->
-            <img width="100px" src="../static/Spinning_wheel_throbber_blue.gif" th:src="@{/Spinning_wheel_throbber_blue.gif}">
+            <!-- Spinner -->
+            <div class="lds-default">
+              <div></div><div></div><div></div><div></div>
+              <div></div><div></div><div></div><div></div>
+              <div></div><div></div><div></div><div></div>
+            </div>
             A pipeline is currently running!
           </div>
         </div>
@@ -204,7 +208,12 @@
         </div>
 
         <div class="alert alert-info alert-dismissible fade show" id="pipelineWait" style="display:none">
-          <img width="100px" src="../static/Spinning_wheel_throbber_blue.gif" th:src="@{/Spinning_wheel_throbber_blue.gif}">
+          <!-- Spinner -->
+          <div class="lds-default">
+            <div></div><div></div><div></div><div></div>
+            <div></div><div></div><div></div><div></div>
+            <div></div><div></div><div></div><div></div>
+          </div>
           The pipeline is being started ...
           <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
         </div>

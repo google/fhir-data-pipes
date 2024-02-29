@@ -233,7 +233,7 @@ public class FlinkConfiguration {
     // pipelines. Row group size is multiplied by inflation factor to accommodate the memory needed
     // when the parquet rows are read and decoded in memory.
     long memoryNeededForParquetRowGroups =
-        parallelism
+        (long) parallelism
             * EtlUtils.NO_OF_PARALLEL_PIPELINES
             * rowGroupSize
             * PARQUET_ROW_GROUP_INFLATION_FACTOR;

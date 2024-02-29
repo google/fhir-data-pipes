@@ -184,6 +184,7 @@
       <plugin>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-maven-plugin</artifactId>
+        <version>${spring-boot.version}</version>
         <!-- The "fork" configuration parameter was removed in Spring Boot 3;
            we need another way to be able to debug from IDE. -->
         <executions>
