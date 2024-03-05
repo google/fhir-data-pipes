@@ -341,7 +341,7 @@
         <artifactId>maven-surefire-plugin</artifactId>
         <configuration>
           <!-- Enable access to the packages at run time -->
-          <argLine>--add-opens=java.base/jdk.internal.misc=ALL-UNNAMED</argLine>
+          <argLine>@{argLine} --add-opens=java.base/jdk.internal.misc=ALL-UNNAMED</argLine>
         </configuration>
       </plugin>
     </plugins>
