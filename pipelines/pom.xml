@@ -44,7 +44,7 @@
     <bunsen.version>0.5.14-SNAPSHOT</bunsen.version>
     <junit.version>4.13.2</junit.version>
     <slf4j.version>2.0.12</slf4j.version>
-    <logback.version>1.4.11</logback.version>
+    <logback.version>1.5.3</logback.version>
     <hapifhirVersion>6.10.4</hapifhirVersion>
     <hamcrest.version>2.2</hamcrest.version>
     <mockito.version>5.2.0</mockito.version>
@@ -92,6 +92,32 @@
         <artifactId>jcommander</artifactId>
         <version>${jcommander.version}</version>
       </dependency>
+
+      <!-- In the controller module, we import the pom of the artifact -
+       org.springframework.boot:spring-boot-dependencies to inherit the dependencyManagement
+       section of it. The logback versions defined below will take precedence over the versions
+       defined in the org.springframework.boot:spring-boot-dependencies artifact because the direct
+       dependency takes precedence other the transitive dependency. -->
+      <dependency>
+        <groupId>ch.qos.logback</groupId>
+        <artifactId>logback-classic</artifactId>
+        <version>${logback.version}</version>
+        <scope>runtime</scope>
+      </dependency>
+
+      <dependency>
+        <groupId>ch.qos.logback</groupId>
+        <artifactId>logback-core</artifactId>
+        <version>${logback.version}</version>
+        <scope>runtime</scope>
+      </dependency>
+
+      <dependency>
+        <groupId>ch.qos.logback</groupId>
+        <artifactId>logback-access</artifactId>
+        <version>${logback.version}</version>
+        <scope>runtime</scope>
+      </dependency>
     </dependencies>
   </dependencyManagement>
 
@@ -105,8 +131,6 @@
     <dependency>
       <groupId>ch.qos.logback</groupId>
       <artifactId>logback-classic</artifactId>
-      <version>${logback.version}</version>
-      <scope>runtime</scope>
     </dependency>
 
     <!-- Test deps -->
@@ -317,7 +341,7 @@
         <artifactId>maven-surefire-plugin</artifactId>
         <configuration>
           <!-- Enable access to the packages at run time -->
-          <argLine>--add-opens=java.base/jdk.internal.misc=ALL-UNNAMED</argLine>
+          <argLine>@{argLine} --add-opens=java.base/jdk.internal.misc=ALL-UNNAMED</argLine>
         </configuration>
       </plugin>
     </plugins>

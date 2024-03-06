@@ -28,7 +28,7 @@
   <artifactId>common</artifactId>
 
   <properties>
-    <c3p0.version>0.10.0-pre4</c3p0.version>
+    <c3p0.version>0.10.0-pre7</c3p0.version>
   </properties>
 
   <dependencies>
@@ -61,7 +61,7 @@
     <dependency>
       <groupId>com.google.apis</groupId>
       <artifactId>google-api-services-healthcare</artifactId>
-      <version>v1-rev20240130-2.0.0</version>
+      <version>v1-rev20240220-2.0.0</version>
     </dependency>
 
     <dependency>
