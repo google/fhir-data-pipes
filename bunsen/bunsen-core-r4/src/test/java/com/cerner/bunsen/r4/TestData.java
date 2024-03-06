@@ -52,8 +52,8 @@ public class TestData {
   public static final String US_CORE_PATIENT =
       "http://hl7.org/fhir/us/core/StructureDefinition/us-core-patient";
 
-  public static final String US_CORE_OBSERVATION =
-      "http://hl7.org/fhir/us/core/StructureDefinition/us-core-observationresults";
+  public static final String US_CORE_OBSERVATION_VITALS_SIGNS =
+      "http://hl7.org/fhir/us/core/StructureDefinition/us-core-vital-signs";
 
   public static final String US_CORE_CONDITION_PROBLEMS_HEALTH_CONCERNS =
       "http://hl7.org/fhir/us/core/StructureDefinition/us-core-condition-problems-health-concerns";

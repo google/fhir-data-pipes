@@ -57,6 +57,8 @@ public class AvroConversionUtilTest {
   public static final String BASE_PATIENT = "http://hl7.org/fhir/StructureDefinition/Patient";
   public static final String US_CORE_PATIENT =
       "http://hl7.org/fhir/us/core/StructureDefinition/us-core-patient";
+  public static final String HEAD_OCCIPITAL_FRONT_CIRCUMFERENCE_PERCENTILE =
+      "http://hl7.org/fhir/us/core/StructureDefinition/head-occipital-frontal-circumference-percentile";
 
   @Before
   public void setup()
@@ -177,7 +179,8 @@ public class AvroConversionUtilTest {
 
     AvroConverter obsUtilAvroConverter = avroConversionUtil.getConverter("Observation");
     AvroConverter obsDirectAvroConverter =
-        AvroConverter.forResource(avroConversionUtil.getFhirContext(), "Observation");
+        AvroConverter.forResource(
+            avroConversionUtil.getFhirContext(), HEAD_OCCIPITAL_FRONT_CIRCUMFERENCE_PERCENTILE);
     // Check if the schemas are equal
     assertThat(
         obsUtilAvroConverter.getSchema(), Matchers.equalTo(obsDirectAvroConverter.getSchema()));

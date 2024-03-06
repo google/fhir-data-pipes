@@ -49,12 +49,18 @@ class ProfileMappingProvider {
 
   /**
    * This method initially loads all the default base structure definitions into the context and
-   * additionally loads any custom profiles in the given structureDefinitionsPath. It expects only
-   * one extended profile for the given base resource type.
+   * additionally loads any custom structure definitions in the given structureDefinitionsPath. A
+   * mapping is maintained between the resource type and the profile url that is configured against
+   * it. This mapping is initially created using the default base structure definitions and gets
+   * overridden with the definitions in the structureDefinitionsPath. In case of multiple structure
+   * definitions being defined for the same resource type, lexicographically choose the smaller
+   * profile url (which is always deterministic for the given set of definitions).
    *
-   * <p>This method returns a map containing the mappings between the resource type and the profile
-   * url which is defined for the resource type. Any extended profile defined in the
-   * structureDefinitionsPath will overwrite the mapped profile with the extended profile.
+   * <p>The client can use the mapped profile for the Avro conversion, in case of multiple profiles
+   * a better approach would be to come up with a generic solution which can consider all the
+   * profiles defined in the structureDefinitionsPath. TODO: Create a generic solution for
+   * supporting multiple extensions for same resource type
+   * https://github.com/google/fhir-data-pipes/issues/980
    *
    * @param context The context to which the profiles are added.
    * @param structureDefinitionsPath the path containing the list of structure definitions to be
@@ -128,7 +134,7 @@ class ProfileMappingProvider {
     try {
       List<IBaseResource> resources =
           isClasspath
-              ? getListOfResourcesFromClasspath(jsonParser, structureDefinitionsPath)
+              ? getResourcesFromClasspath(jsonParser, structureDefinitionsPath)
               : getResourcesFromPath(jsonParser, structureDefinitionsPath);
 
       for (IBaseResource baseResource : resources) {
@@ -145,7 +151,7 @@ class ProfileMappingProvider {
     return resourceProfileMap;
   }
 
-  private List<IBaseResource> getListOfResourcesFromClasspath(IParser parser, String classpath)
+  private List<IBaseResource> getResourcesFromClasspath(IParser parser, String classpath)
       throws ProfileMapperException, URISyntaxException, IOException {
 
     URL resourceURL = getClass().getResource(classpath);
@@ -205,38 +211,22 @@ class ProfileMappingProvider {
       FhirContext context,
       IBaseResource baseResource,
       PrePopulatedValidationSupport support,
-      Map<String, String> resourceProfileMap)
-      throws ProfileMapperException {
+      Map<String, String> resourceProfileMap) {
     RuntimeResourceDefinition resourceDefinition = context.getResourceDefinition(baseResource);
     String resourceName = resourceDefinition.getName();
     if (resourceName.equals(STRUCTURE_DEFINITION)
         && baseResource.getStructureFhirVersionEnum() == context.getVersion().getVersion()) {
       String type = fetchProperty("type", resourceDefinition, baseResource);
-      String baseDefinition = fetchProperty("baseDefinition", resourceDefinition, baseResource);
       String url = fetchProperty("url", resourceDefinition, baseResource);
 
       Preconditions.checkNotNull(url, "The url must not be null");
-      if (resourceProfileMap.containsKey(type)) {
-        String errorMsg =
-            String.format(
-                "ResourceType=%s has already been mapped to a custom profile, current profile"
-                    + " mapped=%s, new profile trying to be mapped=%s",
-                type, resourceProfileMap.get(type), url);
-        log.error(errorMsg);
-        throw new ProfileMapperException(errorMsg);
-      }
-
       if (context.getResourceTypes().contains(type)) {
-        if (!baseDefinition.startsWith("http://hl7.org/fhir/StructureDefinition/")) {
-          String errorMsg =
-              String.format(
-                  "Profiles which extend the extended profiles are not supported ResourceType=%s"
-                      + " with profile url=%s cannot be supported",
-                  type, baseDefinition);
-          log.error(errorMsg);
-          throw new ProfileMapperException(errorMsg);
+        // Add or replace the url for the resource type with a lexicographically smaller one. This
+        // makes sure that for a given set of profiles, it always the chooses the same profile.
+        if (resourceProfileMap.get(type) == null
+            || resourceProfileMap.get(type).compareTo(url) > 0) {
+          resourceProfileMap.put(type, url);
         }
-        resourceProfileMap.put(type, url);
       }
       support.addStructureDefinition(baseResource);
     }

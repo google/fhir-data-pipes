@@ -77,20 +77,27 @@ public abstract class StructureDefinitions {
   private List<IElementDefinition> getChildren(
       IElementDefinition parent, List<IElementDefinition> definitions) {
 
-    if (parent.getContentReference() != null) {
-      if (!parent.getContentReference().startsWith("#")) {
-        throw new IllegalStateException("Non-local references are not yet supported");
+    String contentReference = parent.getContentReference();
+    if (contentReference != null) {
+      if (!contentReference.startsWith("#")) {
+        // For Non-local references check if there is any existing local reference, otherwise fail.
+        parent = null;
+        if (contentReference.indexOf("#") > 0) {
+          String referencedType = contentReference.substring(contentReference.indexOf("#") + 1);
+          parent = getParentDefinition(referencedType, definitions);
+        }
+        if (parent == null) {
+          throw new IllegalStateException("Non-local references are not yet supported");
+        }
+      } else {
+        // Remove the leading hash (#) to get the referenced type.
+        String referencedType = parent.getContentReference().substring(1);
+        // Find the actual type to use.
+        parent = getParentDefinition(referencedType, definitions);
+        if (parent == null) {
+          throw new IllegalArgumentException("Expected a reference type");
+        }
       }
-
-      // Remove the leading hash (#) to get the referenced type.
-      String referencedType = parent.getContentReference().substring(1);
-
-      // Find the actual type to use.
-      parent =
-          definitions.stream()
-              .filter(definition -> definition.getPath().equals(referencedType))
-              .findFirst()
-              .orElseThrow(() -> new IllegalArgumentException("Expected a reference type"));
     }
 
     String startsWith = parent.getId() + ".";
@@ -101,6 +108,14 @@ public abstract class StructureDefinitions {
                 definition.getId().startsWith(startsWith)
                     && definition.getId().indexOf('.', startsWith.length()) < 0)
         .collect(Collectors.toList());
+  }
+
+  private IElementDefinition getParentDefinition(
+      String referencedType, List<IElementDefinition> definitions) {
+    return definitions.stream()
+        .filter(definition -> definition.getPath().equals(referencedType))
+        .findFirst()
+        .orElse(null);
   }
 
   private <T> List<StructureField<T>> singleField(String elementName, T result) {
@@ -514,6 +529,8 @@ public abstract class StructureDefinitions {
           referenceProfiles.stream()
               .map(profile -> getStructureDefinition(profile).getType())
               .sorted()
+              // Retrieve only the unique reference types
+              .distinct()
               .collect(Collectors.toList());
       return visitor.visitReference(parentElement.toString(), referenceTypes, childElements);
     } else {
