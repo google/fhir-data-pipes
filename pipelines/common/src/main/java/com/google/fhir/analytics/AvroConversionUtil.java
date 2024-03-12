@@ -90,7 +90,7 @@ public class AvroConversionUtil {
     this.profileMapperFhirContexts = ProfileMapperFhirContexts.getInstance();
     if (!Strings.isNullOrEmpty(structureDefinitionsClasspath)) {
       this.fhirContext =
-          profileMapperFhirContexts.contextForFromClasspath(
+          profileMapperFhirContexts.contextFromClasspathFor(
               fhirVersionEnum, structureDefinitionsClasspath);
     } else {
       this.fhirContext =

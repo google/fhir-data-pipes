@@ -17,11 +17,8 @@ public class ProfileMapperProviderTest {
   public static final String HEAD_OCCIPITAL_FRONT_CIRCUMFERENCE_PERCENTILE =
       "http://hl7.org/fhir/us/core/StructureDefinition/head-occipital-frontal-circumference-percentile";
 
-  public static final String BASE_OBSERVATION_PROFILE =
-      "http://hl7.org/fhir/StructureDefinition/Observation";
-
-  public static final String BUNSEN_TEST_PATIENT_PROFILE =
-      "http://hl7.org/fhir/bunsen/test/StructureDefinition/bunsen-test-patient";
+  public static final String US_CORE_OBSERVATION_RESULTS =
+      "http://hl7.org/fhir/us/core/StructureDefinition/us-core-observationresults";
 
   @Test
   public void testIfR4ProfilesAreOverloaded() throws ProfileMapperException {
@@ -47,13 +44,13 @@ public class ProfileMapperProviderTest {
     FhirContext fhirContext = new FhirContext(FhirVersionEnum.DSTU3);
     Map<String, String> profileMapping =
         profileMappingProvider.loadStructureDefinitions(
-            fhirContext, "/other-profile-definitions", true);
+            fhirContext, "/stu3-us-core-definitions", true);
 
     assertThat(profileMapping.get("Patient"), Matchers.notNullValue());
-    assertThat(profileMapping.get("Patient"), Matchers.equalTo(BUNSEN_TEST_PATIENT_PROFILE));
+    assertThat(profileMapping.get("Patient"), Matchers.equalTo(US_CORE_PATIENT_PROFILE));
 
     // Observation profile is not overloaded since no custom profile was defined
     assertThat(profileMapping.get("Observation"), Matchers.notNullValue());
-    assertThat(profileMapping.get("Observation"), Matchers.equalTo(BASE_OBSERVATION_PROFILE));
+    assertThat(profileMapping.get("Observation"), Matchers.equalTo(US_CORE_OBSERVATION_RESULTS));
   }
 }

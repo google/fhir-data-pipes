@@ -15,6 +15,11 @@ import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
+/**
+ * This class tests the used defined structure definitions which should also follow the HL7 FHIR
+ * specifications and these are just some additional test cases, apart from the regular US Core
+ * Profiles tests.
+ */
 public class R4AvroConverterCustomProfileTest {
 
   private static final Patient testBunsenTestProfilePatient =
@@ -29,7 +34,7 @@ public class R4AvroConverterCustomProfileTest {
     ProfileMapperFhirContexts.getInstance().deRegisterFhirContexts(FhirVersionEnum.R4);
     FhirContext fhirContext =
         ProfileMapperFhirContexts.getInstance()
-            .contextForFromClasspath(FhirVersionEnum.R4, "/other-profile-definitions");
+            .contextFromClasspathFor(FhirVersionEnum.R4, "/other-profile-definitions");
     AvroConverter converterBunsenTestProfilePatient =
         AvroConverter.forResource(fhirContext, TestData.BUNSEN_TEST_PATIENT);
 

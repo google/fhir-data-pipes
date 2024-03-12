@@ -65,6 +65,7 @@ class ProfileMappingProvider {
    * @param context The context to which the profiles are added.
    * @param structureDefinitionsPath the path containing the list of structure definitions to be
    *     used
+   * @param isClasspath whether the structureDefinitionsPath is a classpath or not
    * @return the map containing the resource type to profile mapping.
    * @throws ProfileMapperException if there are any errors while loading and mapping the structure
    *     definitions
@@ -222,7 +223,7 @@ class ProfileMappingProvider {
       Preconditions.checkNotNull(url, "The url must not be null");
       if (context.getResourceTypes().contains(type)) {
         // Add or replace the url for the resource type with a lexicographically smaller one. This
-        // makes sure that for a given set of profiles, it always the chooses the same profile.
+        // makes sure that for a given set of profiles, it always chooses the same profile.
         if (resourceProfileMap.get(type) == null
             || resourceProfileMap.get(type).compareTo(url) > 0) {
           resourceProfileMap.put(type, url);

@@ -70,6 +70,8 @@ public class AvroConversionUtilTest {
         Resources.toString(
             Resources.getResource("observation_bundle.json"), StandardCharsets.UTF_8);
     usCoreProfilesStructureDefinitionsPath = "/r4-us-core-definitions";
+    // This is needed because the mappings are carried across unit test classes due to the static
+    // instance being used.
     AvroConversionUtil.deRegisterMappingsFor(FhirVersionEnum.R4);
   }
 

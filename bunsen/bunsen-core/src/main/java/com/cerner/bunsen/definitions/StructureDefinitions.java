@@ -81,6 +81,9 @@ public abstract class StructureDefinitions {
     if (contentReference != null) {
       if (!contentReference.startsWith("#")) {
         // For Non-local references check if there is any existing local reference, otherwise fail.
+        // This is a temporary fix so that the changes work for US Core Profile, the original issue
+        // where in to support Non-local references is being tracked in the below ticket.
+        // TODO: https://github.com/google/fhir-data-pipes/issues/961
         parent = null;
         if (contentReference.indexOf("#") > 0) {
           String referencedType = contentReference.substring(contentReference.indexOf("#") + 1);
@@ -92,7 +95,6 @@ public abstract class StructureDefinitions {
       } else {
         // Remove the leading hash (#) to get the referenced type.
         String referencedType = parent.getContentReference().substring(1);
-        // Find the actual type to use.
         parent = getParentDefinition(referencedType, definitions);
         if (parent == null) {
           throw new IllegalArgumentException("Expected a reference type");
@@ -110,6 +112,9 @@ public abstract class StructureDefinitions {
         .collect(Collectors.toList());
   }
 
+  /**
+   * Find the definition from the definitions list, whose path starts with the given referencedType
+   */
   private IElementDefinition getParentDefinition(
       String referencedType, List<IElementDefinition> definitions) {
     return definitions.stream()

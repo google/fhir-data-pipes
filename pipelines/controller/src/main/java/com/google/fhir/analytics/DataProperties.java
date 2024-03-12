@@ -160,6 +160,12 @@ public class DataProperties {
     options.setViewDefinitionsDir(viewDefinitionsDir);
     options.setSinkDbConfigPath(sinkDbConfigPath);
     options.setRecreateSinkTables(true);
+    options.setStructureDefinitionsDir(Strings.nullToEmpty(structureDefinitionsDir));
+    options.setStructureDefinitionsClasspath(Strings.nullToEmpty(structureDefinitionsClasspath));
+    options.setFhirVersion(fhirVersion);
+    if (rowGroupSizeForParquetFiles > 0) {
+      options.setRowGroupSizeForParquetFiles(rowGroupSizeForParquetFiles);
+    }
     return addFlinkOptions(options).build();
   }
 

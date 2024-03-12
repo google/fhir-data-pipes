@@ -141,8 +141,8 @@ fhirdata:
   # Similar to the structureDefinitionsDir, this path should also contain the structure definition
   # files for any custom profiles that needs to be supported. But the difference is that this is the
   # classpath name instead of a directory name and should always start with a '/'. Also, only one of
-  # the parameter either structureDefinitionsDir or structureDefinitionsClasspath can be configured,
-  # or do not configure anything if custom profiles are not needed.
+  # the structureDefinitionsDir or structureDefinitionsClasspath parameters can be configured, do
+  # not configure anything if custom profiles are not needed.
   structureDefinitionsClasspath: "/r4-us-core-definitions"
 
   # The fhir version to be used for the FHIR Context APIs. This is an enum value and the possible

@@ -63,7 +63,7 @@ public class ProfileMapperFhirContexts {
    * Similar to {@link #contextFor(FhirVersionEnum, String)} but the custom profiles are loaded from
    * the classpath name passed via structureDefinitionsClasspath.
    */
-  public synchronized FhirContext contextForFromClasspath(
+  public synchronized FhirContext contextFromClasspathFor(
       FhirVersionEnum fhirVersion, @Nullable String structureDefinitionsClasspath)
       throws ProfileMapperException {
     return contextFor(fhirVersion, structureDefinitionsClasspath, true);
@@ -77,6 +77,9 @@ public class ProfileMapperFhirContexts {
     if (fhirContextData != null) {
       isContextLoadedWithDifferentConfig(fhirContextData, structureDefinitionsPath, isClasspath);
     } else {
+      // We are creating a new FhirContext instance here using the constructor method instead of the
+      // FhirContext.forCached(), because we need to load different Structure Definitions during
+      // unit tests for the same version, using static cached context limits this.
       FhirContext context = new FhirContext(fhirVersion);
       Map<String, String> profileMap =
           loadStructureDefinitions(context, structureDefinitionsPath, isClasspath);
@@ -112,6 +115,7 @@ public class ProfileMapperFhirContexts {
    *
    * @param context the context into which the structure definitions are loaded
    * @param structureDefinitionsPath the path containing the custom structure definitions
+   * @param isClasspath whether the structureDefinitionsPath is a classpath or not
    * @return the map containing the resource to profile url mappings
    * @throws ProfileMapperException if there are any errors while loading and mapping the structure
    *     definitions
