@@ -342,62 +342,6 @@
         ]
       },
       {
-        "id": "Patient.extension:race",
-        "path": "Patient.extension",
-        "sliceName": "race",
-        "short": "Extension",
-        "definition": "An Extension",
-        "min": 0,
-        "max": "1",
-        "base": {
-          "path": "DomainResource.extension",
-          "min": 0,
-          "max": "*"
-        },
-        "type": [
-          {
-            "code": "Extension",
-            "profile": "http://hl7.org/fhir/us/core/StructureDefinition/us-core-race"
-          }
-        ],
-        "mustSupport": true,
-        "isModifier": false,
-        "mapping": [
-          {
-            "identity": "argonaut-dq-dstu2",
-            "map": "Patient.extension"
-          }
-        ]
-      },
-      {
-        "id": "Patient.extension:ethnicity",
-        "path": "Patient.extension",
-        "sliceName": "ethnicity",
-        "short": "Extension",
-        "definition": "An Extension",
-        "min": 0,
-        "max": "1",
-        "base": {
-          "path": "DomainResource.extension",
-          "min": 0,
-          "max": "*"
-        },
-        "type": [
-          {
-            "code": "Extension",
-            "profile": "http://hl7.org/fhir/us/core/StructureDefinition/us-core-ethnicity"
-          }
-        ],
-        "mustSupport": true,
-        "isModifier": false,
-        "mapping": [
-          {
-            "identity": "argonaut-dq-dstu2",
-            "map": "Patient.extension"
-          }
-        ]
-      },
-      {
         "id": "Patient.extension:booleanfield",
         "path": "Patient.extension",
         "sliceName": "booleanfield",
@@ -2894,48 +2838,6 @@
           {
             "identity": "argonaut-dq-dstu2",
             "map": "Patient"
-          }
-        ]
-      },
-      {
-        "id": "Patient.extension:race",
-        "path": "Patient.extension",
-        "sliceName": "race",
-        "min": 0,
-        "max": "1",
-        "type": [
-          {
-            "code": "Extension",
-            "profile": "http://hl7.org/fhir/us/core/StructureDefinition/us-core-race"
-          }
-        ],
-        "mustSupport": true,
-        "isModifier": false,
-        "mapping": [
-          {
-            "identity": "argonaut-dq-dstu2",
-            "map": "Patient.extension"
-          }
-        ]
-      },
-      {
-        "id": "Patient.extension:ethnicity",
-        "path": "Patient.extension",
-        "sliceName": "ethnicity",
-        "min": 0,
-        "max": "1",
-        "type": [
-          {
-            "code": "Extension",
-            "profile": "http://hl7.org/fhir/us/core/StructureDefinition/us-core-ethnicity"
-          }
-        ],
-        "mustSupport": true,
-        "isModifier": false,
-        "mapping": [
-          {
-            "identity": "argonaut-dq-dstu2",
-            "map": "Patient.extension"
           }
         ]
       },

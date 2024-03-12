@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2023 Google LLC
+ * Copyright 2020-2024 Google LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 package com.google.fhir.analytics;
 
 import ca.uhn.fhir.parser.DataFormatException;
+import com.cerner.bunsen.exception.ProfileMapperException;
 import com.google.common.collect.Sets;
 import com.google.fhir.analytics.view.ViewApplicationException;
 import java.io.IOException;
@@ -45,7 +46,7 @@ public class ReadJsonFilesFn extends FetchSearchPageFn<FileIO.ReadableFile> {
   @ProcessElement
   public void processElement(
       @Element FileIO.ReadableFile file, OutputReceiver<KV<String, Integer>> out)
-      throws IOException, SQLException, ViewApplicationException {
+      throws IOException, SQLException, ViewApplicationException, ProfileMapperException {
     log.info("Reading file with metadata " + file.getMetadata());
     String fileContent = file.readFullyAsUTF8String();
     try {
@@ -76,10 +77,11 @@ public class ReadJsonFilesFn extends FetchSearchPageFn<FileIO.ReadableFile> {
    *
    * @param bundle the bundle whose references are updated.
    */
-  private void updateResolvedRefIds(Bundle bundle) {
+  private void updateResolvedRefIds(Bundle bundle) throws ProfileMapperException {
     for (BundleEntryComponent entry : bundle.getEntry()) {
       List<IBaseReference> refs =
-          fhirContext
+          avroConversionUtil
+              .getFhirContext()
               .newTerser()
               .getAllPopulatedChildElementsOfType(entry.getResource(), IBaseReference.class);
       for (IBaseReference ref : refs) {

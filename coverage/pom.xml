@@ -60,9 +60,10 @@
 
     <dependency>
       <groupId>com.cerner.bunsen</groupId>
-      <artifactId>bunsen-uscore-resources</artifactId>
+      <artifactId>extension-structure-definitions</artifactId>
       <version>0.5.14-SNAPSHOT</version>
     </dependency>
+
     <dependency>
       <groupId>com.google.fhir.analytics</groupId>
       <artifactId>batch</artifactId>

@@ -1,12 +1,16 @@
 package com.cerner.bunsen.avro;
 
-import com.cerner.bunsen.FhirContexts;
+import ca.uhn.fhir.context.FhirContext;
+import ca.uhn.fhir.context.FhirVersionEnum;
+import com.cerner.bunsen.ProfileMapperFhirContexts;
+import com.cerner.bunsen.exception.ProfileMapperException;
 import com.cerner.bunsen.r4.TestData;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import java.io.File;
 import java.io.IOException;
 import java.math.BigDecimal;
+import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Arrays;
@@ -22,6 +26,7 @@ import org.hl7.fhir.exceptions.FHIRException;
 import org.hl7.fhir.r4.model.CodeableConcept;
 import org.hl7.fhir.r4.model.Coding;
 import org.hl7.fhir.r4.model.Condition;
+import org.hl7.fhir.r4.model.Encounter;
 import org.hl7.fhir.r4.model.Extension;
 import org.hl7.fhir.r4.model.Identifier;
 import org.hl7.fhir.r4.model.IntegerType;
@@ -38,7 +43,7 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 // TODO refactor the shared code with AvroConverterTest (STU3).
-public class R4AvroConverterTest {
+public class R4AvroConverterUsCoreTest {
 
   private static final Observation testObservation = TestData.newObservation();
 
@@ -90,24 +95,30 @@ public class R4AvroConverterTest {
 
   private static MedicationRequest testMedicationRequestDecoded;
 
-  // TODO add test profile for R4: https://github.com/google/fhir-data-pipes/issues/558
-  // private static final Patient testBunsenTestProfilePatient = TestData
-  //     .newBunsenTestProfilePatient();
+  private static Encounter testEncounter = TestData.newEncounter();
 
-  private static Record avroBunsenTestProfilePatient;
+  private static Record avroEncounter;
 
-  private static Patient testBunsenTestProfilePatientDecoded;
+  private static Encounter testEncounterDecoded;
+
+  private static FhirContext fhirContext;
 
   /** Initialize test data. */
   @BeforeClass
-  public static void convertTestData() throws IOException {
+  public static void convertTestData()
+      throws IOException, URISyntaxException, ProfileMapperException {
 
     // TODO update these conversions to actually use the wire/binary format, i.e., create
     //  the serialized format from the Avro object then re-read/convert that format back to an
     //  Avro object before converting back to a HAPI object. That way we make sure that
     //  if the Avro object is serialized to disk, it is still convertible back to HAPI objects.
+    ProfileMapperFhirContexts.getInstance().deRegisterFhirContexts(FhirVersionEnum.R4);
+    fhirContext =
+        ProfileMapperFhirContexts.getInstance()
+            .contextFromClasspathFor(FhirVersionEnum.R4, "/r4-us-core-definitions");
+
     AvroConverter observationConverter =
-        AvroConverter.forResource(FhirContexts.forR4(), "Observation");
+        AvroConverter.forResource(fhirContext, TestData.US_CORE_OBSERVATION_VITALS_SIGNS);
 
     avroObservation = (Record) observationConverter.resourceToAvro(testObservation);
 
@@ -119,29 +130,28 @@ public class R4AvroConverterTest {
     testObservationDecodedNullStatus =
         (Observation) observationConverter.avroToResource(avroObservationNullStatus);
 
-    AvroConverter taskConverter = AvroConverter.forResource(FhirContexts.forR4(), "Task");
+    AvroConverter taskConverter = AvroConverter.forResource(fhirContext, "Task");
 
     avroTask = (Record) taskConverter.resourceToAvro(testTask);
 
     testTaskDecoded = (Task) taskConverter.avroToResource(avroTask);
 
     AvroConverter patientConverter =
-        AvroConverter.forResource(FhirContexts.forR4(), TestData.US_CORE_PATIENT);
+        AvroConverter.forResource(fhirContext, TestData.US_CORE_PATIENT);
 
     avroPatient = (Record) patientConverter.resourceToAvro(testPatient);
 
     testPatientDecoded = (Patient) patientConverter.avroToResource(avroPatient);
 
     AvroConverter conditionConverter =
-        AvroConverter.forResource(
-            FhirContexts.forR4(), "Condition" /* TODO TestData.US_CORE_CONDITION */);
+        AvroConverter.forResource(fhirContext, TestData.US_CORE_CONDITION_PROBLEMS_HEALTH_CONCERNS);
 
     avroCondition = (Record) conditionConverter.resourceToAvro(testCondition);
 
     testConditionDecoded = (Condition) conditionConverter.avroToResource(avroCondition);
 
     AvroConverter medicationConverter =
-        AvroConverter.forResource(FhirContexts.forR4(), TestData.US_CORE_MEDICATION);
+        AvroConverter.forResource(fhirContext, TestData.US_CORE_MEDICATION);
 
     Record avroMedication = (Record) medicationConverter.resourceToAvro(testMedicationOne);
 
@@ -149,7 +159,7 @@ public class R4AvroConverterTest {
 
     AvroConverter medicationRequestConverter =
         AvroConverter.forResource(
-            FhirContexts.forR4(),
+            fhirContext,
             TestData.US_CORE_MEDICATION_REQUEST,
             Arrays.asList(TestData.US_CORE_MEDICATION, TestData.PROVENANCE));
 
@@ -159,15 +169,10 @@ public class R4AvroConverterTest {
     testMedicationRequestDecoded =
         (MedicationRequest) medicationRequestConverter.avroToResource(avroMedicationRequest);
 
-    // TODO add test profile for R4: https://github.com/google/fhir-data-pipes/issues/558
-    // AvroConverter converterBunsenTestProfilePatient = AvroConverter
-    //    .forResource(FhirContexts.forR4(), TestData.BUNSEN_TEST_PATIENT);
-
-    // avroBunsenTestProfilePatient = (Record) converterBunsenTestProfilePatient
-    //     .resourceToAvro(testBunsenTestProfilePatient);
-
-    // testBunsenTestProfilePatientDecoded = (Patient) converterBunsenTestProfilePatient
-    //     .avroToResource(avroBunsenTestProfilePatient);
+    AvroConverter encounterConverter =
+        AvroConverter.forResource(fhirContext, TestData.US_CORE_ENCOUNTER);
+    avroEncounter = (Record) encounterConverter.resourceToAvro(testEncounter);
+    testEncounterDecoded = (Encounter) encounterConverter.avroToResource(avroEncounter);
   }
 
   @Test
@@ -476,7 +481,7 @@ public class R4AvroConverterTest {
 
     List<Schema> schemas =
         AvroConverter.generateSchemas(
-            FhirContexts.forR4(),
+            fhirContext,
             ImmutableMap.of(
                 TestData.US_CORE_PATIENT,
                 Collections.emptyList(),
@@ -559,239 +564,6 @@ public class R4AvroConverterTest {
     }
   }
 
-  // TODO add test profile for R4: https://github.com/google/fhir-data-pipes/issues/558
-  // @Test
-  // public void testSimpleExtensionWithBooleanField() {
-
-  //   Boolean expected = (Boolean) testBunsenTestProfilePatient
-  //       .getExtensionsByUrl(TestData.BUNSEN_TEST_BOOLEAN_FIELD)
-  //       .get(0)
-  //       .getValueAsPrimitive().getValue();
-
-  //   Boolean actual = (Boolean) avroBunsenTestProfilePatient.get("booleanfield");
-  //   Assert.assertEquals(expected, actual);
-
-  //   Boolean decodedBooleanField = (Boolean) testBunsenTestProfilePatientDecoded
-  //       .getExtensionsByUrl(TestData.BUNSEN_TEST_BOOLEAN_FIELD)
-  //       .get(0)
-  //       .getValueAsPrimitive().getValue();
-
-  //   Assert.assertEquals(expected, decodedBooleanField);
-  // }
-
-  // @Test
-  // public void testSimpleExtensionWithIntegerField() {
-
-  //   Integer expected = (Integer) testBunsenTestProfilePatient
-  //       .getExtensionsByUrl(TestData.BUNSEN_TEST_INTEGER_FIELD)
-  //       .get(0)
-  //       .getValueAsPrimitive().getValue();
-
-  //   Integer actual = (Integer) avroBunsenTestProfilePatient.get("integerfield");
-  //   Assert.assertEquals(expected, actual);
-
-  //   Integer decodedIntegerField = (Integer) testBunsenTestProfilePatientDecoded
-  //       .getExtensionsByUrl(TestData.BUNSEN_TEST_INTEGER_FIELD)
-  //       .get(0)
-  //       .getValueAsPrimitive().getValue();
-
-  //   Assert.assertEquals(expected, decodedIntegerField);
-  // }
-
-  // @Test
-  // public void testMultiExtensionWithIntegerArrayField() {
-
-  //   Integer expected1 = (Integer) testBunsenTestProfilePatient
-  //       .getExtensionsByUrl(TestData.BUNSEN_TEST_INTEGER_ARRAY_FIELD)
-  //       .get(0).getValueAsPrimitive().getValue();
-
-  //   Integer expected2 = (Integer) testBunsenTestProfilePatient
-  //       .getExtensionsByUrl(TestData.BUNSEN_TEST_INTEGER_ARRAY_FIELD)
-  //       .get(1).getValueAsPrimitive().getValue();
-
-  //   Integer actual1 =
-  //       ((List<Integer>)avroBunsenTestProfilePatient.get("integerArrayField")).get(0);
-  //   Integer actual2 =
-  //       ((List<Integer>)avroBunsenTestProfilePatient.get("integerArrayField")).get(1);
-
-  //   Assert.assertEquals(expected1, actual1);
-  //   Assert.assertEquals(expected2, actual2);
-
-  //   Integer decodedIntegerField1 = (Integer) testBunsenTestProfilePatientDecoded
-  //       .getExtensionsByUrl(TestData.BUNSEN_TEST_INTEGER_ARRAY_FIELD)
-  //       .get(0).getValueAsPrimitive().getValue();
-
-  //   Integer decodedIntegerField2 = (Integer) testBunsenTestProfilePatientDecoded
-  //       .getExtensionsByUrl(TestData.BUNSEN_TEST_INTEGER_ARRAY_FIELD)
-  //       .get(1).getValueAsPrimitive().getValue();
-
-  //   Assert.assertEquals(expected1, decodedIntegerField1);
-  //   Assert.assertEquals(expected2, decodedIntegerField2);
-
-  //   final List<Record> nestedExtList = (List<Record>) avroBunsenTestProfilePatient
-  //       .get("nestedExt");
-  // }
-
-  // @Test
-  // public void testMultiNestedExtension() {
-
-  //   final Extension nestedExtension1 = testBunsenTestProfilePatient
-  //       .getExtensionsByUrl(TestData.BUNSEN_TEST_NESTED_EXT_FIELD)
-  //       .get(0);
-
-  //   final Extension nestedExtension2 = testBunsenTestProfilePatient
-  //       .getExtensionsByUrl(TestData.BUNSEN_TEST_NESTED_EXT_FIELD)
-  //       .get(1);
-
-  //   String text1 = nestedExtension1.getExtensionsByUrl("text")
-  //       .get(0).getValueAsPrimitive().getValueAsString();
-
-  //   String text2 = nestedExtension1.getExtensionsByUrl("text")
-  //       .get(1).getValueAsPrimitive().getValueAsString();
-
-  //   String text3 = nestedExtension2.getExtensionsByUrl("text")
-  //       .get(0).getValueAsPrimitive().getValueAsString();
-
-  //   CodeableConcept codeableConcept1 = (CodeableConcept) nestedExtension1
-  //       .getExtensionsByUrl(TestData.BUNSEN_TEST_CODEABLE_CONCEPT_EXT_FIELD)
-  //       .get(0).getValue();
-
-  //   CodeableConcept codeableConcept2 = (CodeableConcept) nestedExtension1
-  //       .getExtensionsByUrl(TestData.BUNSEN_TEST_CODEABLE_CONCEPT_EXT_FIELD)
-  //       .get(1).getValue();
-
-  //   CodeableConcept codeableConcept3 = (CodeableConcept) nestedExtension2
-  //       .getExtensionsByUrl(TestData.BUNSEN_TEST_CODEABLE_CONCEPT_EXT_FIELD)
-  //       .get(0).getValue();
-
-  //   final Extension decodedNestedExtension1 = testBunsenTestProfilePatientDecoded
-  //       .getExtensionsByUrl(TestData.BUNSEN_TEST_NESTED_EXT_FIELD)
-  //       .get(0);
-
-  //   final Extension decodedNestedExtension2 = testBunsenTestProfilePatientDecoded
-  //       .getExtensionsByUrl(TestData.BUNSEN_TEST_NESTED_EXT_FIELD)
-  //       .get(1);
-
-  //   String decodedText1 = decodedNestedExtension1.getExtensionsByUrl("text")
-  //       .get(0).getValueAsPrimitive().getValueAsString();
-
-  //   String decodedText2 = decodedNestedExtension1.getExtensionsByUrl("text")
-  //       .get(1).getValueAsPrimitive().getValueAsString();
-
-  //   String decodedText3 = decodedNestedExtension2.getExtensionsByUrl("text")
-  //       .get(0).getValueAsPrimitive().getValueAsString();
-
-  //   CodeableConcept decodedCodeableConcept1 = (CodeableConcept) decodedNestedExtension1
-  //       .getExtensionsByUrl(TestData.BUNSEN_TEST_CODEABLE_CONCEPT_EXT_FIELD)
-  //       .get(0).getValue();
-
-  //   CodeableConcept decodedCodeableConcept2 = (CodeableConcept) decodedNestedExtension1
-  //       .getExtensionsByUrl(TestData.BUNSEN_TEST_CODEABLE_CONCEPT_EXT_FIELD)
-  //       .get(1).getValue();
-
-  //   CodeableConcept decodedCodeableConcept3 = (CodeableConcept) decodedNestedExtension2
-  //       .getExtensionsByUrl(TestData.BUNSEN_TEST_CODEABLE_CONCEPT_EXT_FIELD)
-  //       .get(0).getValue();
-
-  //   Assert.assertEquals(text1, decodedText1);
-  //   Assert.assertEquals(text2, decodedText2);
-  //   Assert.assertEquals(text3, decodedText3);
-
-  //   Assert.assertTrue(codeableConcept1.equalsDeep(decodedCodeableConcept1));
-  //   Assert.assertTrue(codeableConcept2.equalsDeep(decodedCodeableConcept2));
-  //   Assert.assertTrue(codeableConcept3.equalsDeep(decodedCodeableConcept3));
-
-  //   final List<Record> nestedExtList = (List<Record>) avroBunsenTestProfilePatient
-  //       .get("nestedExt");
-
-  //   final Record nestedExt1 = nestedExtList.get(0);
-  //   final Record nestedExt2 = nestedExtList.get(1);
-
-  //   final List<Record> textList1 = (List<Record>) nestedExt1.get("text");
-  //   final List<Record> textList2 = (List<Record>) nestedExt2.get("text");
-
-  //   final List<Record> codeableConceptsList1 =
-  //       (List<Record>) nestedExt1.get("codeableConceptExt");
-  //   final List<Record> codeableConceptsList2 =
-  //       (List<Record>) nestedExt2.get("codeableConceptExt");
-
-  //   Assert.assertEquals(text1, textList1.get(0));
-  //   Assert.assertEquals(text2, textList1.get(1));
-  //   Assert.assertEquals(text3, textList2.get(0));
-
-  //   Assert.assertEquals(codeableConcept1.getCoding().get(0).getCode(),
-  //       ((List<Record>)codeableConceptsList1.get(0).get("coding")).get(0).get("code"));
-
-  //   Assert.assertEquals(codeableConcept2.getCoding().get(0).getCode(),
-  //       ((List<Record>)codeableConceptsList1.get(1).get("coding")).get(0).get("code"));
-
-  //   Assert.assertEquals(codeableConcept3.getCoding().get(0).getCode(),
-  //       ((List<Record>)codeableConceptsList2.get(0).get("coding")).get(0).get("code"));
-  // }
-
-  // @Test
-  // public void testSimpleModifierExtensionWithStringField() {
-
-  //   String expected = (String) testBunsenTestProfilePatient
-  //       .getModifierExtensionsByUrl(TestData.BUNSEN_TEST_STRING_MODIFIER_EXT_FIELD)
-  //       .get(0).getValueAsPrimitive().getValue();
-
-  //   String actual = (String) avroBunsenTestProfilePatient.get("stringModifierExt");
-
-  //   Assert.assertEquals(expected, actual);
-
-  //   String decodedStringField = (String) testBunsenTestProfilePatientDecoded
-  //       .getModifierExtensionsByUrl(TestData.BUNSEN_TEST_STRING_MODIFIER_EXT_FIELD)
-  //       .get(0).getValueAsPrimitive().getValue();
-
-  //   Assert.assertEquals(expected, decodedStringField);
-  // }
-
-  // @Test
-  // public void testMultiModifierExtensionsWithCodeableConceptField() {
-
-  //   CodeableConcept expected1 = (CodeableConcept) testBunsenTestProfilePatient
-  //       .getModifierExtensionsByUrl(TestData.BUNSEN_TEST_CODEABLE_CONCEPT_MODIFIER_EXT_FIELD)
-  //       .get(0).getValue();
-
-  //   CodeableConcept expected2 = (CodeableConcept) testBunsenTestProfilePatient
-  //       .getModifierExtensionsByUrl(TestData.BUNSEN_TEST_CODEABLE_CONCEPT_MODIFIER_EXT_FIELD)
-  //       .get(1).getValue();
-
-  //   CodeableConcept decodedCodeableConceptField1 =
-  //       (CodeableConcept) testBunsenTestProfilePatientDecoded
-  //           .getModifierExtensionsByUrl(TestData.BUNSEN_TEST_CODEABLE_CONCEPT_MODIFIER_EXT_FIELD)
-  //           .get(0).getValue();
-
-  //   CodeableConcept decodedCodeableConceptField2 =
-  //       (CodeableConcept) testBunsenTestProfilePatientDecoded
-  //           .getModifierExtensionsByUrl(TestData.BUNSEN_TEST_CODEABLE_CONCEPT_MODIFIER_EXT_FIELD)
-  //           .get(1).getValue();
-
-  //   Assert.assertTrue(expected1.equalsDeep(decodedCodeableConceptField1));
-  //   Assert.assertTrue(expected2.equalsDeep(decodedCodeableConceptField2));
-
-  //   final List<Record> codeableConceptList = (List<Record>) avroBunsenTestProfilePatient
-  //       .get("codeableConceptModifierExt");
-
-  //   final Record codeableConcept1 = codeableConceptList.get(0);
-  //   final Record codeableConcept2 = codeableConceptList.get(1);
-
-  //   Assert.assertEquals(decodedCodeableConceptField1.getCoding().get(0).getSystem(),
-  //       ((List<Record>)codeableConcept1.get("coding")).get(0).get("system"));
-  //   Assert.assertEquals(decodedCodeableConceptField1.getCoding().get(0).getCode(),
-  //       ((List<Record>)codeableConcept1.get("coding")).get(0).get("code"));
-  //   Assert.assertEquals(decodedCodeableConceptField1.getCoding().get(0).getDisplay(),
-  //       ((List<Record>)codeableConcept1.get("coding")).get(0).get("display"));
-
-  //   Assert.assertEquals(decodedCodeableConceptField2.getCoding().get(0).getSystem(),
-  //       ((List<Record>)codeableConcept2.get("coding")).get(0).get("system"));
-  //   Assert.assertEquals(decodedCodeableConceptField2.getCoding().get(0).getCode(),
-  //       ((List<Record>)codeableConcept2.get("coding")).get(0).get("code"));
-  //   Assert.assertEquals(decodedCodeableConceptField2.getCoding().get(0).getDisplay(),
-  //       ((List<Record>)codeableConcept2.get("coding")).get(0).get("display"));
-  // }
-
   @Test
   public void testMetaElement() {
 
@@ -805,5 +577,12 @@ public class R4AvroConverterTest {
         meta.getTag().get(0).getCode(), testPatientDecoded.getMeta().getTag().get(0).getCode());
     Assert.assertEquals(
         meta.getTag().get(0).getSystem(), testPatientDecoded.getMeta().getTag().get(0).getSystem());
+  }
+
+  @Test
+  public void testEncounterConversions() {
+    Assert.assertEquals(testEncounter.getId(), testEncounterDecoded.getId());
+    Assert.assertEquals(
+        testEncounter.getParticipant().size(), testEncounterDecoded.getParticipant().size());
   }
 }

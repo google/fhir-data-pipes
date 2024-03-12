@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2023 Google LLC
+ * Copyright 2020-2024 Google LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package com.google.fhir.analytics;
 
+import com.cerner.bunsen.exception.ProfileMapperException;
 import io.debezium.data.Envelope.Operation;
 import java.io.IOException;
 import java.sql.SQLException;
@@ -84,7 +85,8 @@ public class FhirConverterTest extends CamelTestSupport {
   }
 
   @Test
-  public void shouldFetchFhirResourceAndUploadToFhirStore() throws IOException {
+  public void shouldFetchFhirResourceAndUploadToFhirStore()
+      throws IOException, ProfileMapperException {
     Map<String, String> messageBody = DebeziumTestUtil.genExpectedBody();
     Map<String, Object> messageHeaders =
         DebeziumTestUtil.genExpectedHeaders(Operation.UPDATE, "encounter");
@@ -119,7 +121,7 @@ public class FhirConverterTest extends CamelTestSupport {
   }
 
   @Test
-  public void shouldFetchFhirResourceAndOutputParquet() throws IOException {
+  public void shouldFetchFhirResourceAndOutputParquet() throws IOException, ProfileMapperException {
     Map<String, String> messageBody = DebeziumTestUtil.genExpectedBody();
     Map<String, Object> messageHeaders =
         DebeziumTestUtil.genExpectedHeaders(Operation.UPDATE, "encounter");
@@ -140,7 +142,8 @@ public class FhirConverterTest extends CamelTestSupport {
   }
 
   @Test
-  public void shouldFetchFhirResourceAndOutputParquetAndUploadToFhirSink() throws IOException {
+  public void shouldFetchFhirResourceAndOutputParquetAndUploadToFhirSink()
+      throws IOException, ProfileMapperException {
     Map<String, String> messageBody = DebeziumTestUtil.genExpectedBody();
     Map<String, Object> messageHeaders =
         DebeziumTestUtil.genExpectedHeaders(Operation.UPDATE, "encounter");

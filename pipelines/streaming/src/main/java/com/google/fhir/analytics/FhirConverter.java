@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2023 Google LLC
+ * Copyright 2020-2024 Google LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package com.google.fhir.analytics;
 
+import com.cerner.bunsen.exception.ProfileMapperException;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.fhir.analytics.model.DatabaseConfiguration;
 import com.google.fhir.analytics.model.EventConfiguration;
@@ -89,7 +90,7 @@ public class FhirConverter implements Processor {
     }
   }
 
-  public void process(Exchange exchange) throws SQLException {
+  public void process(Exchange exchange) throws SQLException, ProfileMapperException {
     Message message = exchange.getMessage();
     final Map payload = message.getBody(Map.class);
     final Map sourceMetadata =

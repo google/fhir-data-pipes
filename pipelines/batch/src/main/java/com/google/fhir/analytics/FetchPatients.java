@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2023 Google LLC
+ * Copyright 2020-2024 Google LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 package com.google.fhir.analytics;
 
 import ca.uhn.fhir.rest.api.SummaryEnum;
+import com.cerner.bunsen.exception.ProfileMapperException;
 import com.google.common.base.Preconditions;
 import com.google.fhir.analytics.view.ViewApplicationException;
 import java.io.IOException;
@@ -53,7 +54,7 @@ public class FetchPatients extends PTransform<PCollection<KV<String, Integer>>, 
 
           @ProcessElement
           public void processElement(@Element KV<String, Integer> patientIdCount)
-              throws IOException, SQLException, ViewApplicationException {
+              throws IOException, SQLException, ViewApplicationException, ProfileMapperException {
             String patientId = patientIdCount.getKey();
             log.info(
                 String.format(

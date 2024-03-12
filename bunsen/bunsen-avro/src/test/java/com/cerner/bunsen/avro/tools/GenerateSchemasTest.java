@@ -1,7 +1,11 @@
 package com.cerner.bunsen.avro.tools;
 
+import ca.uhn.fhir.context.FhirVersionEnum;
+import com.cerner.bunsen.ProfileMapperFhirContexts;
+import com.cerner.bunsen.exception.ProfileMapperException;
 import com.cerner.bunsen.stu3.TestData;
 import java.io.IOException;
+import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Arrays;
@@ -17,7 +21,7 @@ public class GenerateSchemasTest {
   private static final String BASE_TEST_URL = "http://test.org/test_resource";
 
   @Test
-  public void testWriteSchema() throws IOException {
+  public void testWriteSchema() throws IOException, ProfileMapperException, URISyntaxException {
 
     Path generatedCodePath = Files.createTempDirectory("schema_directory");
 
@@ -25,10 +29,12 @@ public class GenerateSchemasTest {
 
     Path outputFile = generatedCodePath.resolve("out.asvc");
 
+    ProfileMapperFhirContexts.getInstance().deRegisterFhirContexts(FhirVersionEnum.DSTU3);
     int result =
         GenerateSchemas.main(
             new String[] {
               outputFile.toString(),
+              "/stu3-us-core-definitions",
               TestData.US_CORE_PATIENT,
               TestData.US_CORE_CONDITION,
               TestData.US_CORE_MEDICATION,

@@ -134,6 +134,24 @@ fhirdata:
   # you can use those predefined views in your dev. env. too.
   hiveResourceViewsDir: "config/views"
 
+  # Directory path containing the structure definition files for any custom profiles that needs to be
+  # supported. Currently only one profile is supported for any given resource type.
+  #structureDefinitionsDir: "config/r4-us-core-definitions"
+
+  # Similar to the structureDefinitionsDir, this path should also contain the structure definition
+  # files for any custom profiles that needs to be supported. But the difference is that this is the
+  # classpath name instead of a directory name and should always start with a '/'. Also, only one of
+  # the structureDefinitionsDir or structureDefinitionsClasspath parameters can be configured, do
+  # not configure anything if custom profiles are not needed.
+  structureDefinitionsClasspath: "/r4-us-core-definitions"
+
+  # The fhir version to be used for the FHIR Context APIs. This is an enum value and the possible
+  # values should be one from the list mentioned in the below link
+  # https://github.com/hapifhir/hapi-fhir/blob/a5eddc3837c72e5a6df4fd65150c8e10ec966f4e/hapi-fhir-base/src/main/java/ca/uhn/fhir/context/FhirVersionEnum.java#L37
+  # Currently, only enums R4 and DSTU3 are supported by the application.
+  # TODO: https://github.com/google/fhir-data-pipes/issues/958
+  fhirVersion: "R4"
+
   # This is the size of the Parquet Row Group (a logical horizontal partitioning into rows) that
   # will be used for creating row groups in parquet file by pipelines. A large value means more data
   # for one column can be fit into one big column chunk which will speed up the reading of column

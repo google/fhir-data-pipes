@@ -15,6 +15,7 @@
  */
 package com.google.fhir.analytics;
 
+import ca.uhn.fhir.context.FhirVersionEnum;
 import org.apache.beam.sdk.options.Default;
 import org.apache.beam.sdk.options.Description;
 import org.apache.beam.sdk.options.PipelineOptions;
@@ -35,4 +36,31 @@ public interface BasePipelineOptions extends PipelineOptions {
   int getRowGroupSizeForParquetFiles();
 
   void setRowGroupSizeForParquetFiles(int value);
+
+  @Description(
+      "Directory containing the structure definition files for any custom profiles that needs to be"
+          + " supported")
+  @Default.String("")
+  String getStructureDefinitionsDir();
+
+  void setStructureDefinitionsDir(String value);
+
+  @Description(
+      "Similar to the structureDefinitionsDir, this path should also contain the structure"
+          + " definition files for any custom profiles that needs to be supported. But the"
+          + " difference is that, this is the classpath name instead of a directory name and should"
+          + " always start with a '/'. Also, only one of the structureDefinitionsDir or"
+          + " structureDefinitionsClasspath parameters can be configured, do not configure anything"
+          + " if custom profiles are not needed. e.g., /r4-us-core-definitions is the"
+          + " classpath name under the resources folder of module extension-structure-definitions")
+  @Default.String("")
+  String getStructureDefinitionsClasspath();
+
+  void setStructureDefinitionsClasspath(String value);
+
+  @Description("The fhir version to be used for the FHIR Context APIs")
+  @Default.Enum("R4")
+  FhirVersionEnum getFhirVersion();
+
+  void setFhirVersion(FhirVersionEnum fhirVersionEnum);
 }
