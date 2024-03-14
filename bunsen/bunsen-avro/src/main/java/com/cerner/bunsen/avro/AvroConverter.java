@@ -7,8 +7,11 @@ import com.cerner.bunsen.avro.converters.DefinitionToAvroVisitor;
 import com.cerner.bunsen.definitions.HapiConverter;
 import com.cerner.bunsen.definitions.HapiConverter.HapiObjectConverter;
 import com.cerner.bunsen.definitions.StructureDefinitions;
+import com.cerner.bunsen.exception.HapiMergeException;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -134,6 +137,28 @@ public class AvroConverter {
   }
 
   /**
+   * Similar to {@link #forResource(FhirContext, String)} this method returns an Avro converter, but
+   * the returned Avro converter is a union of all the converters for the given resourceTypeUrls,
+   * the union is formed by merging all the fields in each converter.
+   *
+   * @param context the FHIR context
+   * @param resourceTypeUrls the list of resource type profile urls. The resourceTypeUrl can either
+   *     be a relative URL for a base resource (e.g., "Condition" or "Observation"), or a URL
+   *     identifying the structure definition for a given profile, such as
+   *     "http://hl7.org/fhir/us/core/StructureDefinition/us-core-patient".
+   * @return the merged Avro converter
+   */
+  public static AvroConverter forResources(FhirContext context, List<String> resourceTypeUrls)
+      throws HapiMergeException {
+    List<AvroConverter> avroConverters = new ArrayList<>();
+    for (String resourceTypeUrl : resourceTypeUrls) {
+      AvroConverter avroConverter = forResource(context, resourceTypeUrl, Collections.emptyList());
+      avroConverters.add(avroConverter);
+    }
+    return mergeAvroConverters(avroConverters, context);
+  }
+
+  /**
    * Returns an Avro converter for the given resource type. The resource type can either be a
    * relative URL for a base resource (e.g. "Condition" or "Observation"), or a URL identifying the
    * structure definition for a given profile, such as
@@ -195,5 +220,32 @@ public class AvroConverter {
    */
   public String getResourceType() {
     return hapiToAvroConverter.getElementType();
+  }
+
+  /**
+   * Merges all the given list of avroConverters to create a single AvroConverter which is a union
+   * of all the fields in the list of avroConverters
+   */
+  private static AvroConverter mergeAvroConverters(
+      List<AvroConverter> avroConverters, FhirContext context) throws HapiMergeException {
+    if (avroConverters == null || avroConverters.isEmpty()) {
+      throw new IllegalArgumentException("AvroConverter list cannot be empty for merging");
+    }
+
+    Iterator<AvroConverter> iterator = avroConverters.iterator();
+    AvroConverter mergedConverter = iterator.next();
+    while (iterator.hasNext()) {
+      mergedConverter = mergeAvroConverters(mergedConverter, iterator.next(), context);
+    }
+    return mergedConverter;
+  }
+
+  private static AvroConverter mergeAvroConverters(
+      AvroConverter left, AvroConverter right, FhirContext context) throws HapiMergeException {
+    HapiConverter<Schema> mergedConverter =
+        left.hapiToAvroConverter.merge(right.hapiToAvroConverter);
+    RuntimeResourceDefinition[] resources = new RuntimeResourceDefinition[1];
+    resources[0] = context.getResourceDefinition(mergedConverter.getElementType());
+    return new AvroConverter(mergedConverter, resources);
   }
 }

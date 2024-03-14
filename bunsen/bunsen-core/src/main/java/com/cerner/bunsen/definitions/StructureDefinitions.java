@@ -280,7 +280,10 @@ public abstract class StructureDefinitions {
     } else if (element.getSliceName() != null) {
       // Drop slices for non-extension fields; otherwise we will end up with duplicated fields.
       return Collections.emptyList();
-    } else if (element.hasSingleType() && PRIMITIVE_TYPES.contains(element.getFirstTypeCode())) {
+    } else if (element.hasSingleType()
+        && PRIMITIVE_TYPES.contains(element.getFirstTypeCode())
+        // Allow for choice types only if they are not Extensions
+        && (element.getPath().startsWith("Extension") || !element.getPath().endsWith("[x]"))) {
       T primitiveConverter = visitor.visitPrimitive(elementName, element.getFirstTypeCode());
       if (!element.getMax().equals("1")) {
         return singleField(elementName, visitor.visitMultiValued(elementName, primitiveConverter));

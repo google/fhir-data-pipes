@@ -16,6 +16,7 @@
 package com.google.fhir.analytics;
 
 import ca.uhn.fhir.rest.api.SummaryEnum;
+import com.cerner.bunsen.exception.HapiMergeException;
 import com.cerner.bunsen.exception.ProfileMapperException;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.Maps;
@@ -130,7 +131,8 @@ public class FetchResources
     @ProcessElement
     public void processElement(
         @Element SearchSegmentDescriptor segment, OutputReceiver<KV<String, Integer>> out)
-        throws IOException, SQLException, ViewApplicationException, ProfileMapperException {
+        throws IOException, SQLException, ViewApplicationException, ProfileMapperException,
+            HapiMergeException {
       String searchUrl = segment.searchUrl();
       log.info(
           String.format(

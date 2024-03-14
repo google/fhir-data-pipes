@@ -18,7 +18,7 @@ public abstract class HapiChoiceConverter<T> extends HapiConverter<T> {
 
   private final T structType;
 
-  private final FhirConversionSupport fhirSupport;
+  protected final FhirConversionSupport fhirSupport;
 
   private final class ChoiceFieldSetter implements HapiFieldSetter {
 
@@ -113,5 +113,10 @@ public abstract class HapiChoiceConverter<T> extends HapiConverter<T> {
   @Override
   public T getDataType() {
     return structType;
+  }
+
+  @Override
+  public Map<String, HapiConverter<T>> getElements() {
+    return choiceTypes;
   }
 }

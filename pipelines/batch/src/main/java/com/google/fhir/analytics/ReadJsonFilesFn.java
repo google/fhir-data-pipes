@@ -16,6 +16,7 @@
 package com.google.fhir.analytics;
 
 import ca.uhn.fhir.parser.DataFormatException;
+import com.cerner.bunsen.exception.HapiMergeException;
 import com.cerner.bunsen.exception.ProfileMapperException;
 import com.google.common.collect.Sets;
 import com.google.fhir.analytics.view.ViewApplicationException;
@@ -46,7 +47,8 @@ public class ReadJsonFilesFn extends FetchSearchPageFn<FileIO.ReadableFile> {
   @ProcessElement
   public void processElement(
       @Element FileIO.ReadableFile file, OutputReceiver<KV<String, Integer>> out)
-      throws IOException, SQLException, ViewApplicationException, ProfileMapperException {
+      throws IOException, SQLException, ViewApplicationException, ProfileMapperException,
+          HapiMergeException {
     log.info("Reading file with metadata " + file.getMetadata());
     String fileContent = file.readFullyAsUTF8String();
     try {

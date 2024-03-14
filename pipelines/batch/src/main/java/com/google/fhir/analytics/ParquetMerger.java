@@ -15,6 +15,7 @@
  */
 package com.google.fhir.analytics;
 
+import com.cerner.bunsen.exception.HapiMergeException;
 import com.cerner.bunsen.exception.ProfileMapperException;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Sets;
@@ -72,7 +73,7 @@ public class ParquetMerger {
       List<DwhFiles> dwhFilesList,
       String resourceType,
       AvroConversionUtil avroConversionUtil)
-      throws ProfileMapperException {
+      throws ProfileMapperException, HapiMergeException {
 
     // Reading all parquet files at once instead of one set at a time, reduces the number of Flink
     // reshuffle operations by one.
@@ -173,7 +174,7 @@ public class ParquetMerger {
 
   static List<Pipeline> createMergerPipelines(
       ParquetMergerOptions options, AvroConversionUtil avroConversionUtil)
-      throws IOException, ProfileMapperException {
+      throws IOException, ProfileMapperException, HapiMergeException {
     Preconditions.checkArgument(!options.getDwh1().isEmpty());
     Preconditions.checkArgument(!options.getDwh2().isEmpty());
     Preconditions.checkArgument(!options.getMergedDwh().isEmpty());
@@ -245,7 +246,8 @@ public class ParquetMerger {
     return pipelines;
   }
 
-  public static void main(String[] args) throws IOException, ProfileMapperException {
+  public static void main(String[] args)
+      throws IOException, ProfileMapperException, HapiMergeException {
 
     AvroConversionUtil.initializeAvroConverters();
     PipelineOptionsFactory.register(ParquetMergerOptions.class);

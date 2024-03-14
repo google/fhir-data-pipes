@@ -1,5 +1,6 @@
 package com.cerner.bunsen.definitions;
 
+import com.cerner.bunsen.exception.HapiMergeException;
 import org.hl7.fhir.instance.model.api.IPrimitiveType;
 
 public class EnumConverter<T> extends StringConverter<T> {
@@ -27,5 +28,21 @@ public class EnumConverter<T> extends StringConverter<T> {
   protected Object fromHapi(IPrimitiveType primitive) {
 
     return "?".equals(primitive.getValueAsString()) ? null : primitive.getValueAsString();
+  }
+
+  @Override
+  public HapiConverter merge(HapiConverter other) throws HapiMergeException {
+    if (other != null
+        && other instanceof EnumConverter
+        && "String".equals(other.getElementType())) {
+      return this;
+    }
+    throw new HapiMergeException(
+        String.format(
+            "Cannot merge String Fhir Type EnumConverter with %s ",
+            other != null
+                ? String.format(
+                    "%s Fhir Type %s", other.getElementType(), other.getClass().getName())
+                : null));
   }
 }

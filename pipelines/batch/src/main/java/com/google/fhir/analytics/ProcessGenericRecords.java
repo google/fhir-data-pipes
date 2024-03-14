@@ -15,6 +15,7 @@
  */
 package com.google.fhir.analytics;
 
+import com.cerner.bunsen.exception.HapiMergeException;
 import com.cerner.bunsen.exception.ProfileMapperException;
 import com.google.fhir.analytics.view.ViewApplicationException;
 import java.beans.PropertyVetoException;
@@ -69,7 +70,10 @@ public class ProcessGenericRecords extends FetchSearchPageFn<GenericRecord> {
     if (!cachedResources.isEmpty()) {
       try {
         processBundle(flushCachToBundle());
-      } catch (SQLException | ViewApplicationException | ProfileMapperException e) {
+      } catch (SQLException
+          | ViewApplicationException
+          | ProfileMapperException
+          | HapiMergeException e) {
         // This is not perfect but the parent teardown only has IOException.
         log.error("Caught exception in teardown: ", e);
         throw new IOException(e);
@@ -89,7 +93,8 @@ public class ProcessGenericRecords extends FetchSearchPageFn<GenericRecord> {
 
   @ProcessElement
   public void processElement(@Element GenericRecord record)
-      throws IOException, SQLException, ViewApplicationException, ProfileMapperException {
+      throws IOException, SQLException, ViewApplicationException, ProfileMapperException,
+          HapiMergeException {
     try {
       long startTime = System.currentTimeMillis();
       Resource resource = avroConversionUtil.convertToHapi(record, resourceType);

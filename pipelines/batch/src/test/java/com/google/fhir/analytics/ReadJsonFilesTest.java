@@ -20,6 +20,7 @@ import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.mockito.Mockito.when;
 
+import com.cerner.bunsen.exception.HapiMergeException;
 import com.cerner.bunsen.exception.ProfileMapperException;
 import com.google.common.io.Resources;
 import com.google.fhir.analytics.view.ViewApplicationException;
@@ -66,7 +67,8 @@ public class ReadJsonFilesTest {
 
   @Test
   public void testProcessBundleUrnRef()
-      throws IOException, SQLException, ViewApplicationException, ProfileMapperException {
+      throws IOException, SQLException, ViewApplicationException, ProfileMapperException,
+          HapiMergeException {
     String bundleResourceStr =
         Resources.toString(Resources.getResource("bundle_urn_ref.json"), StandardCharsets.UTF_8);
     when(fileMock.readFullyAsUTF8String()).thenReturn(bundleResourceStr);
@@ -88,7 +90,8 @@ public class ReadJsonFilesTest {
 
   @Test
   public void testProcessBundleRelativeRef()
-      throws IOException, SQLException, ViewApplicationException, ProfileMapperException {
+      throws IOException, SQLException, ViewApplicationException, ProfileMapperException,
+          HapiMergeException {
     String bundleResourceStr =
         Resources.toString(
             Resources.getResource("bundle_relative_ref.json"), StandardCharsets.UTF_8);

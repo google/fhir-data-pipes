@@ -16,6 +16,7 @@
 package com.google.fhir.analytics;
 
 import ca.uhn.fhir.rest.api.SummaryEnum;
+import com.cerner.bunsen.exception.HapiMergeException;
 import com.cerner.bunsen.exception.ProfileMapperException;
 import com.google.common.base.Preconditions;
 import com.google.fhir.analytics.view.ViewApplicationException;
@@ -54,7 +55,8 @@ public class FetchPatients extends PTransform<PCollection<KV<String, Integer>>, 
 
           @ProcessElement
           public void processElement(@Element KV<String, Integer> patientIdCount)
-              throws IOException, SQLException, ViewApplicationException, ProfileMapperException {
+              throws IOException, SQLException, ViewApplicationException, ProfileMapperException,
+                  HapiMergeException {
             String patientId = patientIdCount.getKey();
             log.info(
                 String.format(

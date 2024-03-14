@@ -2,6 +2,7 @@ package com.cerner.bunsen.definitions;
 
 import ca.uhn.fhir.context.BaseRuntimeChildDefinition;
 import ca.uhn.fhir.context.BaseRuntimeElementDefinition;
+import com.cerner.bunsen.exception.HapiMergeException;
 import org.hl7.fhir.instance.model.api.IBase;
 
 /**
@@ -84,6 +85,15 @@ public abstract class HapiConverter<T> {
   }
 
   /**
+   * Returns the elements which the converter if responsible for conversion
+   *
+   * @return the elements which needs conversion
+   */
+  public Object getElements() {
+    return null;
+  }
+
+  /**
    * Returns a field setter to be used when converting an object of an alternative model to HAPI.
    * Choice types may have multiple element definitions, but in the common case there will be only
    * one.
@@ -93,4 +103,14 @@ public abstract class HapiConverter<T> {
    */
   public abstract HapiFieldSetter toHapiConverter(
       BaseRuntimeElementDefinition... elementDefinitions);
+
+  /**
+   * Merges the elements of the other converter with the current converter and returns the merged
+   * converter, merging happens even for the nested child fields.
+   *
+   * @param other the HapiConverter to be merged
+   * @return the merged HapiConverter
+   * @throws HapiMergeException
+   */
+  public abstract HapiConverter merge(HapiConverter other) throws HapiMergeException;
 }

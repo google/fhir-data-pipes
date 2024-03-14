@@ -17,6 +17,7 @@ package com.google.fhir.analytics;
 
 import ca.uhn.fhir.context.FhirVersionEnum;
 import ca.uhn.fhir.parser.DataFormatException;
+import com.cerner.bunsen.exception.HapiMergeException;
 import com.cerner.bunsen.exception.ProfileMapperException;
 import com.google.common.base.Strings;
 import com.google.fhir.analytics.view.ViewApplicationException;
@@ -97,7 +98,7 @@ public class ConvertResourceFn extends FetchSearchPageFn<HapiRowDescriptor> {
 
   public void writeResource(HapiRowDescriptor element)
       throws IOException, ParseException, SQLException, ViewApplicationException,
-          ProfileMapperException {
+          ProfileMapperException, HapiMergeException {
     String resourceId = element.resourceId();
     String forcedId = element.forcedId();
     String resourceType = element.resourceType();
@@ -196,7 +197,7 @@ public class ConvertResourceFn extends FetchSearchPageFn<HapiRowDescriptor> {
   @ProcessElement
   public void processElement(ProcessContext processContext)
       throws IOException, ParseException, SQLException, ViewApplicationException,
-          ProfileMapperException {
+          ProfileMapperException, HapiMergeException {
     HapiRowDescriptor element = processContext.element();
     writeResource(element);
   }

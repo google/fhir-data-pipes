@@ -19,6 +19,7 @@ import ca.uhn.fhir.context.FhirContext;
 import ca.uhn.fhir.context.FhirVersionEnum;
 import ca.uhn.fhir.context.ParserOptions;
 import ca.uhn.fhir.parser.IParser;
+import com.cerner.bunsen.exception.HapiMergeException;
 import com.cerner.bunsen.exception.ProfileMapperException;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Strings;
@@ -233,12 +234,14 @@ abstract class FetchSearchPageFn<T> extends DoFn<T, KV<String, Integer>> {
   }
 
   protected void processBundle(Bundle bundle)
-      throws IOException, SQLException, ViewApplicationException, ProfileMapperException {
+      throws IOException, SQLException, ViewApplicationException, ProfileMapperException,
+          HapiMergeException {
     this.processBundle(bundle, null);
   }
 
   protected void processBundle(Bundle bundle, @Nullable Set<String> resourceTypes)
-      throws IOException, SQLException, ViewApplicationException, ProfileMapperException {
+      throws IOException, SQLException, ViewApplicationException, ProfileMapperException,
+          HapiMergeException {
     if (bundle != null && bundle.getEntry() != null) {
       numFetchedResources.inc(bundle.getEntry().size());
       if (parquetUtil != null) {

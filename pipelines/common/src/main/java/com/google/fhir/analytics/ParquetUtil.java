@@ -16,6 +16,7 @@
 package com.google.fhir.analytics;
 
 import ca.uhn.fhir.context.FhirVersionEnum;
+import com.cerner.bunsen.exception.HapiMergeException;
 import com.cerner.bunsen.exception.ProfileMapperException;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
@@ -118,7 +119,7 @@ public class ParquetUtil {
                 log.info(
                     "Flushing all Parquet writers for thread " + Thread.currentThread().getId());
                 flushAll();
-              } catch (IOException | ProfileMapperException e) {
+              } catch (HapiMergeException | IOException | ProfileMapperException e) {
                 log.error("Could not flush Parquet files: " + e);
               }
             }
@@ -147,7 +148,7 @@ public class ParquetUtil {
   }
 
   private synchronized void createWriter(String resourceType)
-      throws IOException, ProfileMapperException {
+      throws HapiMergeException, IOException, ProfileMapperException {
 
     ResourceId resourceId = getUniqueOutputFilePath(resourceType);
     WritableByteChannel writableByteChannel =
@@ -172,7 +173,8 @@ public class ParquetUtil {
    * not be used in its current form once we move the streaming pipeline to Beam; the I/O should be
    * left to Beam similar to the batch mode.
    */
-  public synchronized void write(Resource resource) throws IOException, ProfileMapperException {
+  public synchronized void write(Resource resource)
+      throws HapiMergeException, IOException, ProfileMapperException {
     Preconditions.checkNotNull(resource.fhirType());
     String resourceType = resource.fhirType();
     if (!writerMap.containsKey(resourceType)) {
@@ -185,7 +187,8 @@ public class ParquetUtil {
     }
   }
 
-  private synchronized void flush(String resourceType) throws IOException, ProfileMapperException {
+  private synchronized void flush(String resourceType)
+      throws HapiMergeException, IOException, ProfileMapperException {
     ParquetWriter<GenericRecord> writer = writerMap.get(resourceType);
     if (writer != null && writer.getDataSize() > 0) {
       writer.close();
@@ -193,7 +196,8 @@ public class ParquetUtil {
     }
   }
 
-  private synchronized void flushAll() throws IOException, ProfileMapperException {
+  private synchronized void flushAll()
+      throws HapiMergeException, IOException, ProfileMapperException {
     for (String resourceType : writerMap.keySet()) {
       flush(resourceType);
     }
@@ -210,7 +214,7 @@ public class ParquetUtil {
   }
 
   public void writeRecords(Bundle bundle, Set<String> resourceTypes)
-      throws IOException, ProfileMapperException {
+      throws HapiMergeException, IOException, ProfileMapperException {
     if (bundle.getEntry() == null) {
       return;
     }
