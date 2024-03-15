@@ -28,6 +28,7 @@ import com.google.fhir.analytics.view.ViewDefinition.Column;
 import com.google.fhir.analytics.view.ViewDefinition.Select;
 import com.google.fhir.analytics.view.ViewDefinition.Where;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -96,7 +97,11 @@ public class ViewApplicator {
    *     the errors come from errors in the ViewDefinition.
    */
   public RowList apply(IBaseResource resource) throws ViewApplicationException {
-    Preconditions.checkState(viewDef.getResource().equals(resource.fhirType()));
+    Preconditions.checkState(
+        viewDef.getResource().equals(resource.fhirType()),
+        String.format(
+            "expected resource type %s got %s",
+            viewDef.getResource(), Strings.nullToEmpty(resource.fhirType())));
     if (satisfiesWhere(resource)) {
       return applyAllSelects(resource, viewDef.getSelect());
     } else {
@@ -121,6 +126,10 @@ public class ViewApplicator {
     }
     for (Where w : viewDef.getWhere()) {
       List<IBase> results = evaluateFhirPath(resource, w.getPath());
+      // Empty list is treated as false; see logic operators https://hl7.org/fhirpath/#boolean-logic
+      if (results != null && results.isEmpty()) {
+        return false;
+      }
       if (results == null || results.size() != 1 || !results.get(0).fhirType().equals("boolean")) {
         String error =
             String.format("The `where` FHIRPath %s did not return one boolean!", w.getPath());
@@ -212,8 +221,9 @@ public class ViewApplicator {
       throws ViewApplicationException {
     RowList aggregteRowList = EMPTY_LIST;
     // First apply the `column` fields.
-    if (!select.getColumn().isEmpty()) {
-      FlatRow columnRow = applyColumns(elem, select.getColumn());
+    List<Column> columns = select.getColumn();
+    if (columns != null && !columns.isEmpty()) {
+      FlatRow columnRow = applyColumns(elem, columns);
       aggregteRowList = RowList.builder().addRow(columnRow).build();
     }
 
@@ -448,6 +458,11 @@ public class ViewApplicator {
   public static class FlatRow {
     private final ImmutableList<RowElement> elements;
 
+    @Override
+    public String toString() {
+      return Arrays.toString(elements.toArray());
+    }
+
     boolean isEmpty() {
       return elements.isEmpty();
     }
@@ -468,10 +483,16 @@ public class ViewApplicator {
     private final List<IBase> values;
     private final Column columnInfo;
 
-    public RowElement(Column columnInfo, List<IBase> values) {
-      Preconditions.checkArgument(
-          columnInfo.isCollection() || values == null || values.size() <= 1,
-          "A list provided for the non-collection column " + columnInfo.getName());
+    @Override
+    public String toString() {
+      return columnInfo.getName() + ":" + Arrays.toString(values.toArray());
+    }
+
+    public RowElement(Column columnInfo, List<IBase> values) throws ViewApplicationException {
+      if (!columnInfo.isCollection() && values != null && values.size() > 1) {
+        throw new ViewApplicationException(
+            "A list provided for the non-collection column " + columnInfo.getName());
+      }
       this.values = values;
       this.columnInfo = columnInfo;
     }

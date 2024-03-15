@@ -15,6 +15,7 @@
  */
 package com.google.fhir.analytics.view;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableMap;
@@ -66,15 +67,21 @@ public class ViewDefinition {
     Gson gson = new Gson();
     try (Reader reader = Files.newBufferedReader(jsonFile, StandardCharsets.UTF_8)) {
       ViewDefinition view = gson.fromJson(reader, ViewDefinition.class);
-      view.validateAndSetUp();
+      view.validateAndSetUp(true);
       return view;
     }
   }
 
   public static ViewDefinition createFromString(String jsonContent) throws ViewDefinitionException {
+    return createFromString(jsonContent, true);
+  }
+
+  @VisibleForTesting
+  static ViewDefinition createFromString(String jsonContent, boolean checkName)
+      throws ViewDefinitionException {
     Gson gson = new Gson();
     ViewDefinition view = gson.fromJson(jsonContent, ViewDefinition.class);
-    view.validateAndSetUp();
+    view.validateAndSetUp(checkName);
     return view;
   }
 
@@ -82,14 +89,16 @@ public class ViewDefinition {
    * This does two main tasks: 1) replacing constants in all FHIRPaths, 2) collecting the list of
    * column with their types and checking for inconsistencies.
    *
+   * @param checkName whether to check name or not; this should always be true in production code.
    * @throws ViewDefinitionException if there is any column inconsistency, e.g., duplicates.
    */
-  private void validateAndSetUp() throws ViewDefinitionException {
+  private void validateAndSetUp(boolean checkName) throws ViewDefinitionException {
     if (Strings.isNullOrEmpty(resource)) {
       throw new ViewDefinitionException(
           "The resource field of a view should be a valid FHIR resource type.");
     }
-    if (Strings.isNullOrEmpty(this.name) || !SQL_NAME_PATTERN.matcher(this.name).matches()) {
+    if (checkName
+        && (Strings.isNullOrEmpty(this.name) || !SQL_NAME_PATTERN.matcher(this.name).matches())) {
       throw new ViewDefinitionException("The name is not a valid 'sql-name': " + name);
     }
     if (constant != null) {
