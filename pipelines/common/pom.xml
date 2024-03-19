@@ -178,7 +178,7 @@
 
     <dependency>
       <groupId>com.cerner.bunsen</groupId>
-      <artifactId>bunsen-uscore-resources</artifactId>
+      <artifactId>extension-structure-definitions</artifactId>
       <version>${bunsen.version}</version>
     </dependency>
 

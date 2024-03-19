@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2023 Google LLC
+ * Copyright 2020-2024 Google LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 package com.google.fhir.analytics;
 
 import ca.uhn.fhir.rest.api.SummaryEnum;
+import com.cerner.bunsen.exception.ProfileMapperException;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.Maps;
 import com.google.fhir.analytics.view.ViewApplicationException;
@@ -129,7 +130,7 @@ public class FetchResources
     @ProcessElement
     public void processElement(
         @Element SearchSegmentDescriptor segment, OutputReceiver<KV<String, Integer>> out)
-        throws IOException, SQLException, ViewApplicationException {
+        throws IOException, SQLException, ViewApplicationException, ProfileMapperException {
       String searchUrl = segment.searchUrl();
       log.info(
           String.format(

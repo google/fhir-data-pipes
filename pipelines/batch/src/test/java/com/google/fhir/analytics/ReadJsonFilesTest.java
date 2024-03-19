@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2023 Google LLC
+ * Copyright 2020-2024 Google LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.mockito.Mockito.when;
 
+import com.cerner.bunsen.exception.ProfileMapperException;
 import com.google.common.io.Resources;
 import com.google.fhir.analytics.view.ViewApplicationException;
 import java.beans.PropertyVetoException;
@@ -48,7 +49,7 @@ public class ReadJsonFilesTest {
   private Bundle capturedBundle;
 
   @Before
-  public void setUp() throws PropertyVetoException, SQLException {
+  public void setUp() throws PropertyVetoException, SQLException, ProfileMapperException {
     String[] args = {"--outputParquetPath=SOME_PATH"};
     FhirEtlOptions options =
         PipelineOptionsFactory.fromArgs(args).withValidation().as(FhirEtlOptions.class);
@@ -64,7 +65,8 @@ public class ReadJsonFilesTest {
   }
 
   @Test
-  public void testProcessBundleUrnRef() throws IOException, SQLException, ViewApplicationException {
+  public void testProcessBundleUrnRef()
+      throws IOException, SQLException, ViewApplicationException, ProfileMapperException {
     String bundleResourceStr =
         Resources.toString(Resources.getResource("bundle_urn_ref.json"), StandardCharsets.UTF_8);
     when(fileMock.readFullyAsUTF8String()).thenReturn(bundleResourceStr);
@@ -86,7 +88,7 @@ public class ReadJsonFilesTest {
 
   @Test
   public void testProcessBundleRelativeRef()
-      throws IOException, SQLException, ViewApplicationException {
+      throws IOException, SQLException, ViewApplicationException, ProfileMapperException {
     String bundleResourceStr =
         Resources.toString(
             Resources.getResource("bundle_relative_ref.json"), StandardCharsets.UTF_8);

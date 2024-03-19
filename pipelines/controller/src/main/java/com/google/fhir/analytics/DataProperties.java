@@ -15,6 +15,7 @@
  */
 package com.google.fhir.analytics;
 
+import ca.uhn.fhir.context.FhirVersionEnum;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import java.lang.reflect.InvocationTargetException;
@@ -109,7 +110,13 @@ public class DataProperties {
 
   public String sinkPassword;
 
+  private String structureDefinitionsDir;
+
+  private String structureDefinitionsClasspath;
+
   private int rowGroupSizeForParquetFiles;
+
+  private FhirVersionEnum fhirVersion;
 
   @PostConstruct
   void validateProperties() {
@@ -118,6 +125,7 @@ public class DataProperties {
     Preconditions.checkArgument(
         !Strings.isNullOrEmpty(fhirServerUrl) || !Strings.isNullOrEmpty(dbConfig),
         "At least one of fhirServerUrl or dbConfig should be set!");
+    Preconditions.checkState(fhirVersion != null, "FhirVersion cannot be empty");
 
     if (!Strings.isNullOrEmpty(dbConfig)) {
       if (!Strings.isNullOrEmpty(fhirServerUrl)) {
@@ -158,6 +166,12 @@ public class DataProperties {
     options.setViewDefinitionsDir(viewDefinitionsDir);
     options.setSinkDbConfigPath(sinkDbConfigPath);
     options.setRecreateSinkTables(true);
+    options.setStructureDefinitionsDir(Strings.nullToEmpty(structureDefinitionsDir));
+    options.setStructureDefinitionsClasspath(Strings.nullToEmpty(structureDefinitionsClasspath));
+    options.setFhirVersion(fhirVersion);
+    if (rowGroupSizeForParquetFiles > 0) {
+      options.setRowGroupSizeForParquetFiles(rowGroupSizeForParquetFiles);
+    }
     return addFlinkOptions(options).build();
   }
 
@@ -182,6 +196,9 @@ public class DataProperties {
     }
     options.setViewDefinitionsDir(Strings.nullToEmpty(viewDefinitionsDir));
     options.setSinkDbConfigPath(Strings.nullToEmpty(sinkDbConfigPath));
+    options.setStructureDefinitionsDir(Strings.nullToEmpty(structureDefinitionsDir));
+    options.setStructureDefinitionsClasspath(Strings.nullToEmpty(structureDefinitionsClasspath));
+    options.setFhirVersion(fhirVersion);
     if (rowGroupSizeForParquetFiles > 0) {
       options.setRowGroupSizeForParquetFiles(rowGroupSizeForParquetFiles);
     }
@@ -229,6 +246,10 @@ public class DataProperties {
         new ConfigFields("fhirdata.fhirSinkPath", fhirSinkPath, "", ""),
         new ConfigFields("fhirdata.sinkUserName", sinkUserName, "", ""),
         new ConfigFields("fhirdata.sinkPassword", sinkPassword, "", ""),
+        new ConfigFields("fhirdata.structureDefinitionsDir", structureDefinitionsDir, "", ""),
+        new ConfigFields(
+            "fhirdata.structureDefinitionsClasspath", structureDefinitionsClasspath, "", ""),
+        new ConfigFields("fhirdata.fhirVersion", fhirVersion.name(), "", ""),
         new ConfigFields(
             "fhirdata.rowGroupSizeForParquetFiles",
             String.valueOf(rowGroupSizeForParquetFiles),
