@@ -371,6 +371,7 @@ setup "$@"
 fhir_source_query
 sleep 50
 run_pipeline "FULL"
+sleep 50
 check_parquet false
 test_fhir_sink "FULL"
 
