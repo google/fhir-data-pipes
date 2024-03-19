@@ -44,6 +44,11 @@
     </dependency>
 
     <dependency>
+      <groupId>com.cerner.bunsen</groupId>
+      <artifactId>extension-structure-definitions</artifactId>
+    </dependency>
+
+    <dependency>
       <groupId>org.apache.avro</groupId>
       <artifactId>avro-compiler</artifactId>
       <scope>test</scope>
@@ -60,19 +65,6 @@
     <dependency>
       <groupId>com.cerner.bunsen</groupId>
       <artifactId>bunsen-core-r4</artifactId>
-      <type>test-jar</type>
-      <scope>test</scope>
-    </dependency>
-
-    <dependency>
-      <groupId>com.cerner.bunsen</groupId>
-      <artifactId>bunsen-uscore-resources</artifactId>
-      <scope>test</scope>
-    </dependency>
-
-    <dependency>
-      <groupId>com.cerner.bunsen</groupId>
-      <artifactId>bunsen-uscore-resources</artifactId>
       <type>test-jar</type>
       <scope>test</scope>
     </dependency>

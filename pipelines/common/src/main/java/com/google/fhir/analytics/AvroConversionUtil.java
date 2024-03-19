@@ -17,9 +17,12 @@ package com.google.fhir.analytics;
 
 import ca.uhn.fhir.context.FhirContext;
 import ca.uhn.fhir.context.FhirVersionEnum;
-import com.cerner.bunsen.FhirContexts;
+import com.cerner.bunsen.ProfileMapperFhirContexts;
 import com.cerner.bunsen.avro.AvroConverter;
+import com.cerner.bunsen.exception.ProfileMapperException;
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Preconditions;
+import com.google.common.base.Strings;
 import com.google.common.collect.Maps;
 import java.util.ArrayList;
 import java.util.List;
@@ -49,8 +52,17 @@ public class AvroConversionUtil {
   // This is the singleton instance.
   private static AvroConversionUtil instance;
 
-  // TODO make this map FHIR version dependent: https://github.com/google/fhir-data-pipes/issues/400
   private final Map<String, AvroConverter> converterMap;
+
+  private ProfileMapperFhirContexts profileMapperFhirContexts;
+
+  private FhirContext fhirContext;
+
+  private FhirVersionEnum fhirVersionEnum;
+
+  private String structureDefinitionsDir;
+
+  private String structureDefinitionsClasspath;
 
   /**
    * This is to fix the logical type conversions for BigDecimal. This should be called once before
@@ -66,24 +78,98 @@ public class AvroConversionUtil {
     SpecificData.get().addLogicalTypeConversion(new DecimalConversion());
   }
 
-  private AvroConversionUtil() {
-    converterMap = Maps.newHashMap();
+  private AvroConversionUtil(
+      FhirVersionEnum fhirVersionEnum,
+      @Nullable String structureDefinitionsDir,
+      @Nullable String structureDefinitionsClasspath)
+      throws ProfileMapperException {
+    this.fhirVersionEnum = fhirVersionEnum;
+    this.structureDefinitionsDir = structureDefinitionsDir;
+    this.structureDefinitionsClasspath = structureDefinitionsClasspath;
+    this.converterMap = Maps.newHashMap();
+    this.profileMapperFhirContexts = ProfileMapperFhirContexts.getInstance();
+    if (!Strings.isNullOrEmpty(structureDefinitionsClasspath)) {
+      this.fhirContext =
+          profileMapperFhirContexts.contextFromClasspathFor(
+              fhirVersionEnum, structureDefinitionsClasspath);
+    } else {
+      this.fhirContext =
+          profileMapperFhirContexts.contextFor(fhirVersionEnum, structureDefinitionsDir);
+    }
   }
 
-  static synchronized AvroConversionUtil getInstance() {
+  static synchronized AvroConversionUtil getInstance(
+      FhirVersionEnum fhirVersionEnum,
+      @Nullable String structureDefinitionsDir,
+      @Nullable String structureDefinitionsClasspath)
+      throws ProfileMapperException {
+    Preconditions.checkNotNull(fhirVersionEnum, "fhirVersionEnum cannot be null");
+    structureDefinitionsDir = Strings.nullToEmpty(structureDefinitionsDir);
+    structureDefinitionsClasspath = Strings.nullToEmpty(structureDefinitionsClasspath);
+    if (!structureDefinitionsDir.isEmpty() && !structureDefinitionsClasspath.isEmpty()) {
+      String errorMsg =
+          String.format(
+              "Please configure only one of the parameter between structureDefinitionsDir=%s and"
+                  + " structureDefinitionsClasspath=%s, leave both empty if custom profiles are not"
+                  + " needed.",
+              structureDefinitionsDir, structureDefinitionsClasspath);
+      log.error(errorMsg);
+      throw new ProfileMapperException(errorMsg);
+    }
+
     if (instance == null) {
-      instance = new AvroConversionUtil();
+      instance =
+          new AvroConversionUtil(
+              fhirVersionEnum, structureDefinitionsDir, structureDefinitionsClasspath);
+    } else if (!fhirVersionEnum.equals(instance.fhirVersionEnum)
+        || !structureDefinitionsDir.equals(instance.structureDefinitionsDir)
+        || !structureDefinitionsClasspath.equals(instance.structureDefinitionsClasspath)) {
+      String errorMsg =
+          String.format(
+              "AvroConversionUtil has been initialised with different set of parameters earlier"
+                  + " with fhirVersionEnum=%s, structureDefinitionsDir=%s and"
+                  + " structureDefinitionsClasspath=%s, compared to what is being passed now with"
+                  + " fhirVersionEnum=%s, structureDefinitionsDir=%s and"
+                  + " structureDefinitionsClasspath=%s",
+              instance.fhirVersionEnum,
+              instance.structureDefinitionsDir,
+              instance.structureDefinitionsClasspath,
+              fhirVersionEnum,
+              structureDefinitionsDir,
+              structureDefinitionsClasspath);
+      log.error(errorMsg);
+      throw new ProfileMapperException(errorMsg);
     }
     return instance;
   }
 
-  synchronized AvroConverter getConverter(String resourceType, FhirContext fhirContext) {
+  public synchronized FhirContext getFhirContext() throws ProfileMapperException {
+    // This should never be the case as creation of new instance makes sure the FhirContext is
+    // initialised properly.
+    if (fhirContext == null) {
+      String errorMsg =
+          "The fhirContext is not initialised yet. Please initialise the fhirContext using"
+              + " the method getInstance(FhirVersionEnum fhirVersion, @Nullable String"
+              + " structureDefinitionsDir)";
+      log.error(errorMsg);
+      throw new ProfileMapperException(errorMsg);
+    }
+    return fhirContext;
+  }
+
+  synchronized AvroConverter getConverter(String resourceType) throws ProfileMapperException {
     if (!converterMap.containsKey(resourceType)) {
-      // TODO: Check how to automate discovery of relevant profiles to be applied. Right now we need
-      // to supply the corresponding resource profile identifier for the extensions to work, e.g.,
-      // "http://hl7.org/fhir/us/core/StructureDefinition/us-core-patient" instead of "Patient".
-      // https://github.com/google/fhir-data-pipes/issues/560
-      AvroConverter converter = AvroConverter.forResource(fhirContext, resourceType);
+      FhirContext fhirContext = getFhirContext();
+      String profile =
+          profileMapperFhirContexts.getMappedProfileForResource(
+              fhirContext.getVersion().getVersion(), resourceType);
+      if (Strings.isNullOrEmpty(profile)) {
+        String errorMsg =
+            String.format("No mapped profile found for resourceType=%s", resourceType);
+        log.error(errorMsg);
+        throw new ProfileMapperException(errorMsg);
+      }
+      AvroConverter converter = AvroConverter.forResource(fhirContext, profile);
       converterMap.put(resourceType, converter);
     }
     return converterMap.get(resourceType);
@@ -91,16 +177,16 @@ public class AvroConversionUtil {
 
   @VisibleForTesting
   @Nullable
-  GenericRecord convertToAvro(Resource resource, FhirContext fhirContext) {
-    AvroConverter converter = getConverter(resource.getResourceType().name(), fhirContext);
+  GenericRecord convertToAvro(Resource resource) throws ProfileMapperException {
+    AvroConverter converter = getConverter(resource.getResourceType().name());
     // TODO: Check why Bunsen returns IndexedRecord instead of GenericRecord.
     return (GenericRecord) converter.resourceToAvro(resource);
   }
 
   @VisibleForTesting
-  Resource convertToHapi(GenericRecord record, String resourceType, FhirContext fhirContext) {
+  Resource convertToHapi(GenericRecord record, String resourceType) throws ProfileMapperException {
     // Note resourceType can also be inferred from the record (through fhirType).
-    AvroConverter converter = getConverter(resourceType, fhirContext);
+    AvroConverter converter = getConverter(resourceType);
     IBaseResource resource = converter.avroToResource(record);
     // TODO: fix this for other FHIR versions: https://github.com/google/fhir-data-pipes/issues/400
     if (!(resource instanceof Resource)) {
@@ -109,29 +195,31 @@ public class AvroConversionUtil {
     return (Resource) resource;
   }
 
-  public Schema getResourceSchema(String resourceType, FhirVersionEnum fhirVersion) {
-    return getResourceSchema(resourceType, FhirContexts.contextFor(fhirVersion));
-  }
-
-  public Schema getResourceSchema(String resourceType, FhirContext fhirContext) {
-    AvroConverter converter = getConverter(resourceType, fhirContext);
+  public Schema getResourceSchema(String resourceType) throws ProfileMapperException {
+    AvroConverter converter = getConverter(resourceType);
     Schema schema = converter.getSchema();
     log.debug(String.format("Schema for resource type %s is %s", resourceType, schema));
     return schema;
   }
 
-  public List<GenericRecord> generateRecords(Bundle bundle, FhirContext fhirContext) {
+  public List<GenericRecord> generateRecords(Bundle bundle) throws ProfileMapperException {
     List<GenericRecord> records = new ArrayList<>();
     if (bundle.getTotal() == 0) {
       return records;
     }
     for (BundleEntryComponent entry : bundle.getEntry()) {
       Resource resource = entry.getResource();
-      GenericRecord record = convertToAvro(resource, fhirContext);
+      GenericRecord record = convertToAvro(resource);
       if (record != null) {
         records.add(record);
       }
     }
     return records;
+  }
+
+  @VisibleForTesting
+  static synchronized void deRegisterMappingsFor(FhirVersionEnum fhirVersionEnum) {
+    instance = null;
+    ProfileMapperFhirContexts.getInstance().deRegisterFhirContexts(fhirVersionEnum);
   }
 }

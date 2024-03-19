@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2023 Google LLC
+ * Copyright 2020-2024 Google LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -98,7 +98,8 @@ public class LocalDwhFilesTest {
   @Test
   public void copyResourceTypeTest() throws IOException {
     Path sourcePath = Files.createTempDirectory("DWH_SOURCE_TEST");
-    DwhFiles instance = new DwhFiles(sourcePath.toString(), FhirContext.forR4Cached());
+    FhirContext fhirContext = FhirContext.forR4Cached();
+    DwhFiles instance = new DwhFiles(sourcePath.toString(), fhirContext);
     Path patientPath = Paths.get(sourcePath.toString(), "Patient");
     Files.createDirectories(patientPath);
     createFile(
@@ -106,7 +107,7 @@ public class LocalDwhFilesTest {
         "SAMPLE TEXT".getBytes(StandardCharsets.UTF_8));
 
     Path destPath = Files.createTempDirectory("DWH_DEST_TEST");
-    instance.copyResourcesToDwh("Patient", DwhFiles.forRoot(destPath.toString()));
+    instance.copyResourcesToDwh("Patient", DwhFiles.forRoot(destPath.toString(), fhirContext));
 
     List<Path> destFiles = Files.list(destPath).collect(Collectors.toList());
     assertThat(destFiles.size(), equalTo(1));

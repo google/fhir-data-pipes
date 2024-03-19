@@ -1,0 +1,130 @@
+{
+  "resourceType": "Bundle",
+  "id": "937f1ff1-d26f-43df-a57f-88eabf42b02a",
+  "meta": {
+    "lastUpdated": "2020-09-30T10:23:35.190-04:00",
+    "tag": [
+      {
+        "system": "http://terminology.hl7.org/CodeSystem/v3-ObservationValue",
+        "code": "SUBSETTED",
+        "display": "Resource encoded in summary mode"
+      }
+    ]
+  },
+  "type": "searchset",
+  "total": 1,
+  "link": [
+    {
+      "relation": "self",
+      "url": "http://localhost:9020/openmrs/ws/fhir2/R4/Patient?_count=15&_getpagesoffset=0&_summary=data&given=Bashir"
+    },
+    {
+      "relation": "next",
+      "url": "http://localhost:9020/openmrs/ws/fhir2/R4?_getpages=861af9b4-d847-4831-b945-ab1f6f08f03e&_getpagesoffset=15&_count=15&_bundletype=searchset"
+    }
+  ],
+  "entry": [
+    {
+      "fullUrl": "http://localhost:9020/openmrs/ws/fhir2/R4/Patient/child-example",
+      "resource": {
+        "resourceType" : "Patient",
+        "id" : "child-example",
+        "meta" : {
+          "profile" : [
+            "http://hl7.org/fhir/us/core/StructureDefinition/us-core-patient"
+          ]
+        },
+        "extension" : [
+          {
+            "extension" : [
+              {
+                "url" : "ombCategory",
+                "valueCoding" : {
+                  "system" : "urn:oid:2.16.840.1.113883.6.238",
+                  "code" : "2028-9",
+                  "display" : "Asian"
+                }
+              },
+              {
+                "url" : "text",
+                "valueString" : "Asian"
+              }
+            ],
+            "url" : "http://hl7.org/fhir/us/core/StructureDefinition/us-core-race"
+          },
+          {
+            "extension" : [
+              {
+                "url" : "ombCategory",
+                "valueCoding" : {
+                  "system" : "urn:oid:2.16.840.1.113883.6.238",
+                  "code" : "2186-5",
+                  "display" : "Not Hispanic or Latino"
+                }
+              },
+              {
+                "url" : "text",
+                "valueString" : "Not Hispanic or Latino"
+              }
+            ],
+            "url" : "http://hl7.org/fhir/us/core/StructureDefinition/us-core-ethnicity"
+          },
+          {
+            "url" : "http://hl7.org/fhir/us/core/StructureDefinition/us-core-birthsex",
+            "valueCode" : "M"
+          },
+          {
+            "url" : "http://hl7.org/fhir/us/core/StructureDefinition/us-core-sex",
+            "valueCode" : "248153007"
+          }
+        ],
+        "identifier" : [
+          {
+            "use" : "usual",
+            "type" : {
+              "coding" : [
+                {
+                  "system" : "http://terminology.hl7.org/CodeSystem/v2-0203",
+                  "code" : "MR",
+                  "display" : "Medical Record Number"
+                }
+              ],
+              "text" : "Medical Record Number"
+            },
+            "system" : "http://hospital.smarthealthit.org",
+            "value" : "1032704"
+          }
+        ],
+        "active" : true,
+        "name" : [
+          {
+            "family" : "Example",
+            "given" : [
+              "Child"
+            ]
+          }
+        ],
+        "telecom" : [
+          {
+            "system" : "phone",
+            "value" : "555-555-5555",
+            "use" : "home"
+          }
+        ],
+        "gender" : "male",
+        "birthDate" : "2016-01-15",
+        "address" : [
+          {
+            "line" : [
+              "49 Meadow St"
+            ],
+            "city" : "Mounds",
+            "state" : "OK",
+            "postalCode" : "74047",
+            "country" : "US"
+          }
+        ]
+      }
+    }
+  ]
+}
