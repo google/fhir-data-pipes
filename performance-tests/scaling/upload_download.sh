@@ -1,3 +1,9 @@
+# 1) Uploads the synthetic data to the HAPI server. This is a one-time setup,
+# not interesting for performance measurement.
+
+# 2) Runs the FHIR pipeline to fetch from HAPI. That's what we want to measure
+# and test with different HAPI / DB configurations.
+
 set -e # Fail on errors.
 set -x # Show each command.
 
