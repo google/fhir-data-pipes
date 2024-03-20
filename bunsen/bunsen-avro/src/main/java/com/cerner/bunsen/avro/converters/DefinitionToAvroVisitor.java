@@ -25,7 +25,7 @@ import com.google.common.collect.ImmutableMap;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -83,7 +83,7 @@ public class DefinitionToAvroVisitor implements DefinitionVisitor<HapiConverter<
                   "Cannot merge Boolean FHIR Type PrimitiveConverter with %s ",
                   other != null
                       ? String.format(
-                      "%s FHIR Type %s", other.getElementType(), other.getClass().getName())
+                          "%s FHIR Type %s", other.getElementType(), other.getClass().getName())
                       : null));
         }
       };
@@ -110,7 +110,7 @@ public class DefinitionToAvroVisitor implements DefinitionVisitor<HapiConverter<
                   "Cannot merge Integer FHIR Type PrimitiveConverter with %s ",
                   other != null
                       ? String.format(
-                      "%s FHIR Type %s", other.getElementType(), other.getClass().getName())
+                          "%s FHIR Type %s", other.getElementType(), other.getClass().getName())
                       : null));
         }
       };
@@ -164,7 +164,7 @@ public class DefinitionToAvroVisitor implements DefinitionVisitor<HapiConverter<
                   "Cannot merge Double FHIR Type PrimitiveConverter with %s ",
                   other != null
                       ? String.format(
-                      "%s FHIR Type %s", other.getElementType(), other.getClass().getName())
+                          "%s FHIR Type %s", other.getElementType(), other.getClass().getName())
                       : null));
         }
       };
@@ -376,7 +376,8 @@ public class DefinitionToAvroVisitor implements DefinitionVisitor<HapiConverter<
       Map<String, HapiConverter<Schema>> currentChoiceTypes = this.getElements();
       Map<String, HapiConverter<Schema>> otherChoiceTypes = otherConverter.getElements();
 
-      Map<String, HapiConverter<Schema>> mergedChoiceTypes = new HashMap<>();
+      // Use a linked hash map to preserve the order of the fields in the merged converter
+      Map<String, HapiConverter<Schema>> mergedChoiceTypes = new LinkedHashMap<>();
       for (String key : currentChoiceTypes.keySet()) {
         if (!otherChoiceTypes.containsKey(key)) {
           mergedChoiceTypes.put(key, currentChoiceTypes.get(key));
@@ -932,9 +933,11 @@ public class DefinitionToAvroVisitor implements DefinitionVisitor<HapiConverter<
             .map(
                 (StructureField<HapiConverter<Schema>> field) -> {
                   String desc =
-                      field.extensionUrl() != null
-                          ? "Extension field for " + field.extensionUrl()
-                          : "Field for FHIR property " + field.propertyName();
+                      recordName.endsWith("Reference")
+                          ? "Reference field"
+                          : field.extensionUrl() != null
+                              ? "Extension field for " + field.extensionUrl()
+                              : "Field for FHIR property " + field.propertyName();
 
                   return new Field(
                       field.fieldName(),

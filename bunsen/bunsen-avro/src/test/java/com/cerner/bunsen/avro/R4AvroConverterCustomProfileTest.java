@@ -3,9 +3,11 @@ package com.cerner.bunsen.avro;
 import ca.uhn.fhir.context.FhirContext;
 import ca.uhn.fhir.context.FhirVersionEnum;
 import com.cerner.bunsen.ProfileMapperFhirContexts;
+import com.cerner.bunsen.exception.HapiMergeException;
 import com.cerner.bunsen.exception.ProfileMapperException;
 import com.cerner.bunsen.r4.TestData;
 import java.net.URISyntaxException;
+import java.util.Arrays;
 import java.util.List;
 import org.apache.avro.generic.GenericData.Record;
 import org.hl7.fhir.r4.model.CodeableConcept;
@@ -30,13 +32,17 @@ public class R4AvroConverterCustomProfileTest {
   private static Patient testBunsenTestProfilePatientDecoded;
 
   @BeforeClass
-  public static void setUp() throws URISyntaxException, ProfileMapperException {
+  public static void setUp() throws URISyntaxException, ProfileMapperException, HapiMergeException {
     ProfileMapperFhirContexts.getInstance().deRegisterFhirContexts(FhirVersionEnum.R4);
     FhirContext fhirContext =
         ProfileMapperFhirContexts.getInstance()
             .contextFromClasspathFor(FhirVersionEnum.R4, "/other-profile-definitions");
+    List<String> patientProfiles =
+        Arrays.asList(
+            "http://hl7.org/fhir/StructureDefinition/Patient",
+            "http://hl7.org/fhir/bunsen/test/StructureDefinition/bunsen-test-patient");
     AvroConverter converterBunsenTestProfilePatient =
-        AvroConverter.forResource(fhirContext, TestData.BUNSEN_TEST_PATIENT);
+        AvroConverter.forResources(fhirContext, patientProfiles);
 
     avroBunsenTestProfilePatient =
         (Record) converterBunsenTestProfilePatient.resourceToAvro(testBunsenTestProfilePatient);

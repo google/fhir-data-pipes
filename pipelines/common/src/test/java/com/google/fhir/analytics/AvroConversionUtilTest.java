@@ -26,6 +26,7 @@ import ca.uhn.fhir.context.FhirContext;
 import ca.uhn.fhir.context.FhirVersionEnum;
 import ca.uhn.fhir.parser.IParser;
 import com.cerner.bunsen.avro.AvroConverter;
+import com.cerner.bunsen.common.R4UsCoreProfileData;
 import com.cerner.bunsen.exception.HapiMergeException;
 import com.cerner.bunsen.exception.ProfileMapperException;
 import com.google.common.io.Resources;
@@ -56,10 +57,6 @@ public class AvroConversionUtilTest {
   private String observationBundle;
   private String usCoreProfilesStructureDefinitionsPath;
   public static final String BASE_PATIENT = "http://hl7.org/fhir/StructureDefinition/Patient";
-  public static final String US_CORE_PATIENT =
-      "http://hl7.org/fhir/us/core/StructureDefinition/us-core-patient";
-  public static final String HEAD_OCCIPITAL_FRONT_CIRCUMFERENCE_PERCENTILE =
-      "http://hl7.org/fhir/us/core/StructureDefinition/head-occipital-frontal-circumference-percentile";
 
   @Before
   public void setup()
@@ -168,33 +165,36 @@ public class AvroConversionUtilTest {
     assertThat(value, closeTo(25, 0.001));
   }
 
-  //  @Test
-  //  public void checkForCorrectAvroConverterWithOverloadedProfiles() throws ProfileMapperException
-  // {
-  //
-  //    AvroConversionUtil avroConversionUtil =
-  //        AvroConversionUtil.getInstance(
-  //            FhirVersionEnum.R4, null, usCoreProfilesStructureDefinitionsPath);
-  //
-  //    AvroConverter patientUtilAvroConverter = avroConversionUtil.getConverter("Patient");
-  //    AvroConverter patientDirectAvroConverter =
-  //        AvroConverter.forResource(avroConversionUtil.getFhirContext(), US_CORE_PATIENT);
-  //    // Check if the schemas are equal
-  //    assertThat(
-  //        patientUtilAvroConverter.getSchema(),
-  //        Matchers.equalTo(patientDirectAvroConverter.getSchema()));
-  //
-  //    AvroConverter obsUtilAvroConverter = avroConversionUtil.getConverter("Observation");
-  //    AvroConverter obsDirectAvroConverter =
-  //        AvroConverter.forResource(
-  //            avroConversionUtil.getFhirContext(), HEAD_OCCIPITAL_FRONT_CIRCUMFERENCE_PERCENTILE);
-  //    // Check if the schemas are equal
-  //    assertThat(
-  //        obsUtilAvroConverter.getSchema(), Matchers.equalTo(obsDirectAvroConverter.getSchema()));
-  //  }
+  @Test
+  public void checkForCorrectAvroConverterWithMultipleProfiles()
+      throws ProfileMapperException, HapiMergeException {
+    AvroConversionUtil avroConversionUtil =
+        AvroConversionUtil.getInstance(
+            FhirVersionEnum.R4, null, usCoreProfilesStructureDefinitionsPath);
+
+    AvroConverter patientConverterFromAvroConversionUtil =
+        avroConversionUtil.getConverter("Patient");
+    AvroConverter patientConverterFetchedDirectly =
+        AvroConverter.forResources(
+            avroConversionUtil.getFhirContext(), R4UsCoreProfileData.US_CORE_PATIENT_PROFILES);
+    // Check if the schemas are equal
+    assertThat(
+        patientConverterFetchedDirectly.getSchema().toString(),
+        Matchers.equalTo(patientConverterFromAvroConversionUtil.getSchema().toString()));
+
+    AvroConverter obsConverterFromAvroConversionUtil =
+        avroConversionUtil.getConverter("Observation");
+    AvroConverter obsConverterFetchedDirectly =
+        AvroConverter.forResources(
+            avroConversionUtil.getFhirContext(), R4UsCoreProfileData.US_CORE_OBSERVATION_PROFILES);
+    // Check if the schemas are equal
+    assertThat(
+        obsConverterFetchedDirectly.getSchema().toString(),
+        Matchers.equalTo(obsConverterFromAvroConversionUtil.getSchema().toString()));
+  }
 
   @Test
-  public void checkForCorrectAvroConverterWithoutOverloadedProfiles()
+  public void checkForCorrectAvroConverterWithBaseProfiles()
       throws HapiMergeException, ProfileMapperException {
     AvroConversionUtil avroConversionUtil =
         AvroConversionUtil.getInstance(FhirVersionEnum.R4, null, null);
@@ -205,8 +205,8 @@ public class AvroConversionUtilTest {
         AvroConverter.forResource(avroConversionUtil.getFhirContext(), BASE_PATIENT);
     // Check if the schemas are equal
     assertThat(
-        patientConverterFromAvroConversionUtil.getSchema(),
-        Matchers.equalTo(patientConverterFetchedDirectly.getSchema()));
+        patientConverterFromAvroConversionUtil.getSchema().toString(),
+        Matchers.equalTo(patientConverterFetchedDirectly.getSchema().toString()));
 
     AvroConverter obsConverterFromAvroConversionUtil =
         avroConversionUtil.getConverter("Observation");
@@ -214,8 +214,8 @@ public class AvroConversionUtilTest {
         AvroConverter.forResource(avroConversionUtil.getFhirContext(), "Observation");
     // Check if the schemas are equal
     assertThat(
-        obsConverterFromAvroConversionUtil.getSchema(),
-        Matchers.equalTo(obsConverterFetchedDirectly.getSchema()));
+        obsConverterFromAvroConversionUtil.getSchema().toString(),
+        Matchers.equalTo(obsConverterFetchedDirectly.getSchema().toString()));
   }
 
   @Test
