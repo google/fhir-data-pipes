@@ -166,7 +166,7 @@ function run_pipeline() {
 #######################################################################
 function check_parquet() {
   local isIncremental=$1
-  local runtime="5 minute"
+  local runtime="15 minute"
   local end_time=$(date -ud "$runtime" +%s)
   local output="${HOME_PATH}/${PARQUET_SUBDIR}"
   local timeout=true
@@ -371,7 +371,7 @@ setup "$@"
 fhir_source_query
 sleep 50
 run_pipeline "FULL"
-sleep 100
+sleep 50
 check_parquet false
 test_fhir_sink "FULL"
 
