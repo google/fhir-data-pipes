@@ -81,6 +81,9 @@ public class ViewDefinition {
       throws ViewDefinitionException {
     Gson gson = new Gson();
     ViewDefinition view = gson.fromJson(jsonContent, ViewDefinition.class);
+    if (view == null) {
+      throw new ViewDefinitionException("Error in parsing ViewDefinition JSON content!");
+    }
     view.validateAndSetUp(checkName);
     return view;
   }

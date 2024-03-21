@@ -251,4 +251,38 @@ public class ViewApplicatorTest {
     assertThat(rows.getRows().get(0).getElements().get(2).getName(), equalTo("gender"));
     assertThat(rows.getRows().get(0).getElements().get(2).getString(), equalTo("female"));
   }
+
+  @Test
+  public void toCsv() throws IOException, ViewApplicationException {
+    RowList rows =
+        applyViewOnResource(
+            "patient_flat_view.json", "patient_with_practitioner.json", Patient.class);
+    StringBuilder expected = new StringBuilder();
+    expected
+        .append("pat_id,active,gender,deceased,organization_id,practitioner_id,family,given\n")
+        .append("Patient/12345,null,female,null,null,Practitioner/prac1,Emily,Stevenson\n")
+        .append("Patient/12345,null,female,null,null,null,Emily,Stevenson\n")
+        .append("Patient/12345,null,female,null,null,Practitioner/prac2,Emily,Stevenson");
+    assertThat(rows.toCsv(), equalTo(expected.toString()));
+  }
+
+  @Test
+  public void toHtml() throws IOException, ViewApplicationException {
+    RowList rows =
+        applyViewOnResource(
+            "patient_flat_view.json", "patient_with_practitioner.json", Patient.class);
+    StringBuilder expected = new StringBuilder();
+    expected
+        .append("<thead>")
+        .append("<tr><td>pat_id</td><td>active</td><td>gender</td><td>deceased</td>")
+        .append("<td>organization_id</td><td>practitioner_id</td><td>family</td><td>given</td>")
+        .append("</tr></thead><tbody>")
+        .append("<tr><td>Patient/12345</td><td>null</td><td>female</td><td>null</td><td>null</td>")
+        .append("<td>Practitioner/prac1</td><td>Emily</td><td>Stevenson</td></tr>")
+        .append("<tr><td>Patient/12345</td><td>null</td><td>female</td><td>null</td><td>null</td>")
+        .append("<td>null</td><td>Emily</td><td>Stevenson</td></tr>")
+        .append("<tr><td>Patient/12345</td><td>null</td><td>female</td><td>null</td><td>null</td>")
+        .append("<td>Practitioner/prac2</td><td>Emily</td><td>Stevenson</td></tr></tbody>");
+    assertThat(rows.toHtml(), equalTo(expected.toString()));
+  }
 }

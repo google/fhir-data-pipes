@@ -83,8 +83,7 @@ public class SQLonFHIRv2Test {
           "fn_reference_keys.getReferenceKey result matches getResourceKey with right type"
               + " specifier",
           "fn_reference_keys.getReferenceKey result matches getResourceKey with wrong type"
-              + " specifier"
-      );
+              + " specifier");
 
   @Test
   public void runAllTests() throws IOException {
