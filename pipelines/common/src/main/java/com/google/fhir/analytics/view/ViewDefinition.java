@@ -73,15 +73,9 @@ public class ViewDefinition {
   }
 
   public static ViewDefinition createFromString(String jsonContent) throws ViewDefinitionException {
-    return createFromString(jsonContent, true);
-  }
-
-  @VisibleForTesting
-  static ViewDefinition createFromString(String jsonContent, boolean checkName)
-      throws ViewDefinitionException {
     Gson gson = new Gson();
     ViewDefinition view = gson.fromJson(jsonContent, ViewDefinition.class);
-    view.validateAndSetUp(checkName);
+    view.validateAndSetUp(true);
     return view;
   }
 
@@ -92,7 +86,8 @@ public class ViewDefinition {
    * @param checkName whether to check name or not; this should always be true in production code.
    * @throws ViewDefinitionException if there is any column inconsistency, e.g., duplicates.
    */
-  private void validateAndSetUp(boolean checkName) throws ViewDefinitionException {
+  @VisibleForTesting
+  void validateAndSetUp(boolean checkName) throws ViewDefinitionException {
     if (Strings.isNullOrEmpty(resource)) {
       throw new ViewDefinitionException(
           "The resource field of a view should be a valid FHIR resource type.");

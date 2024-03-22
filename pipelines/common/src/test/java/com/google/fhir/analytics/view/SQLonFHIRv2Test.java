@@ -25,6 +25,10 @@ import com.google.fhir.analytics.view.ViewApplicator.FlatRow;
 import com.google.fhir.analytics.view.ViewApplicator.RowElement;
 import com.google.fhir.analytics.view.ViewApplicator.RowList;
 import com.google.gson.Gson;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonNull;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonPrimitive;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -46,8 +50,6 @@ import org.hl7.fhir.instance.model.api.IBaseResource;
 import org.hl7.fhir.instance.model.api.IIdType;
 import org.hl7.fhir.instance.model.api.IPrimitiveType;
 import org.hl7.fhir.r4.utils.FHIRLexer.FHIRLexerException;
-import org.json.JSONArray;
-import org.json.JSONObject;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.junit.MockitoJUnitRunner;
@@ -83,8 +85,7 @@ public class SQLonFHIRv2Test {
           "fn_reference_keys.getReferenceKey result matches getResourceKey with right type"
               + " specifier",
           "fn_reference_keys.getReferenceKey result matches getResourceKey with wrong type"
-              + " specifier"
-      );
+              + " specifier");
 
   @Test
   public void runAllTests() throws IOException {
@@ -96,35 +97,34 @@ public class SQLonFHIRv2Test {
         Files.walk(testsPath)
             .filter(f -> f.getFileName().toString().endsWith(".json"))
             .collect(Collectors.toList());
+    Gson gson = new Gson();
     for (Path p : testFiles) {
-      InputStream stream = new FileInputStream(p.toFile());
-      String jsonContent = IOUtils.toString(stream, StandardCharsets.UTF_8);
-      JSONObject json = new JSONObject(jsonContent);
-      String collectionTitle = (String) json.get("title");
-      log.info("Next test-collection: " + collectionTitle);
+      String jsonContent = "";
+      try (InputStream stream = new FileInputStream(p.toFile())) {
+        jsonContent = IOUtils.toString(stream, StandardCharsets.UTF_8);
+      }
+      TestDef testDef = gson.fromJson(jsonContent, TestDef.class);
+
+      log.info("Next test-collection: " + testDef.title);
       List<IBaseResource> resources = new ArrayList<>();
-      JSONArray resourceArray = (JSONArray) json.get("resources");
-      for (Object r : resourceArray) {
+      for (JsonObject r : testDef.resources) {
         resources.add(parser.parseResource(r.toString()));
       }
-      for (Object t : (JSONArray) json.get("tests")) {
-        JSONObject testObj = (JSONObject) t;
-        String testTitle = (String) testObj.get("title");
-        if (SKIPPED_TESTS.contains(collectionTitle + "." + testTitle)) continue;
+      for (SingleTest test : testDef.tests) {
+        if (SKIPPED_TESTS.contains(testDef.title + "." + test.title)) continue;
         // Note: To debug a single test case we can do the following:
-        // if (!testTitle.equals("wrong type in forEach")) continue;
-        log.info("Next test: " + testTitle);
+        // if (!test.title.equals("two elements + first")) continue;
+        log.info("Next test: " + test.title);
         ExpectedRows expectedRows = null; // will be null if `expectError` is set.
-        if (!testObj.has("expectError")) {
-          expectedRows = new ExpectedRows((JSONArray) testObj.get("expect"));
+        if (test.expectError == null || !test.expectError) {
+          expectedRows = new ExpectedRows(test.expect);
         }
         try {
-          ViewDefinition view =
-              ViewDefinition.createFromString(testObj.get("view").toString(), false);
-          ViewApplicator applicator = new ViewApplicator(view);
+          test.view.validateAndSetUp(false);
+          ViewApplicator applicator = new ViewApplicator(test.view);
           int totalRows = 0;
           for (IBaseResource resource : resources) {
-            if (!view.getResource().equals(resource.fhirType())) continue;
+            if (!test.view.getResource().equals(resource.fhirType())) continue;
             RowList rowList = applicator.apply(resource);
             for (FlatRow row : rowList.getRows()) {
               assertThat("Row not found; index " + totalRows, expectedRows.hasRow(row));
@@ -143,16 +143,26 @@ public class SQLonFHIRv2Test {
     }
   }
 
-  private void findRow(FlatRow row, List<Map<String, Object>> expectedRows) {}
+  private static class TestDef {
+    String title;
+    List<JsonObject> resources;
+    List<SingleTest> tests;
+  }
+
+  private static class SingleTest {
+    String title;
+    ViewDefinition view;
+    List<JsonObject> expect;
+    Boolean expectError;
+  }
 
   private static class ExpectedRows {
     private final List<Map<String, Object>> rows;
 
-    public ExpectedRows(JSONArray jsonArray) {
+    public ExpectedRows(List<JsonObject> jsonArray) {
       rows = new ArrayList<>();
-      for (Object r : jsonArray) {
+      for (JsonObject jsonObject : jsonArray) {
         Map<String, Object> row = new HashMap<>();
-        JSONObject jsonObject = (JSONObject) r;
         for (String key : jsonObject.keySet()) {
           row.put(key, jsonObject.get(key));
         }
@@ -178,8 +188,7 @@ public class SQLonFHIRv2Test {
             break;
           }
           Object myValue = myRow.get(e.getName());
-          if (myValue instanceof JSONArray) {
-            List<Object> myList = ((JSONArray) myValue).toList();
+          if (myValue instanceof JsonArray myList) {
             List<IBase> otherList = e.getValues();
             if (myList.size() != otherList.size()) {
               matches = false;
@@ -193,7 +202,7 @@ public class SQLonFHIRv2Test {
             }
             if (!matches) break;
           } else {
-            if (myValue.equals(JSONObject.NULL)) {
+            if (myValue instanceof JsonNull) {
               if (e.getValues() != null && !e.getValues().isEmpty()) {
                 matches = false;
                 break;
@@ -217,23 +226,22 @@ public class SQLonFHIRv2Test {
       if (expected.equals(actual)) return true;
       // TODO add other types as required by tests.
       if (actual instanceof IPrimitiveType<?>) {
+        if (!(expected instanceof JsonPrimitive expectedPrimitive)) {
+          return false;
+        }
         if (actual instanceof IIdType) {
-          return ((IIdType) actual).getValue().equals(expected);
+          return ((IIdType) actual).getValue().equals(expectedPrimitive.getAsString());
         }
         if (actual instanceof IBaseDecimalDatatype) {
           BigDecimal expectedBigDecimal = null;
-          if (expected instanceof Integer) {
-            expectedBigDecimal = BigDecimal.valueOf((Integer) expected);
-          }
-          if (expected instanceof BigDecimal) {
-            expectedBigDecimal = (BigDecimal) expected;
+          if (expectedPrimitive.isNumber()) {
+            expectedBigDecimal = expectedPrimitive.getAsBigDecimal();
           }
           return (expectedBigDecimal != null)
               && ((IBaseDecimalDatatype) actual).getValue().compareTo(expectedBigDecimal) == 0;
         }
-        Object value = ((IPrimitiveType<?>) actual).getValue();
-        if (value.equals(expected)) return true;
-        if (((IPrimitiveType<?>) actual).getValueAsString().equals(expected)) return true;
+        String stringValue = ((IPrimitiveType<?>) actual).getValueAsString();
+        return stringValue.equals(expectedPrimitive.getAsString());
       }
       return false;
     }
