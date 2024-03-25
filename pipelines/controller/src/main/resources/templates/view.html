@@ -38,7 +38,7 @@
         // Handle errors.
         if (this.readyState === XMLHttpRequest.DONE && this.status != 200) {
           console.log('View generation failed: ' + this.response);
-          document.getElementById('viewError').innerHTML += ' ' + this.response;
+          document.getElementById('viewError').innerHTML = this.response;
           changeVisibility('viewError', true);
         }
       }
@@ -105,15 +105,15 @@
         <div id="viewHelp" class="form-text">
           Enter a ViewDefinition to be applied on the given FHIR resource on the right.
         </div>
-        <textarea class="form-control" id="inputView" aria-describedby="viewHelp" rows="40">
-        </textarea>
+        <textarea class="form-control" id="inputView" aria-describedby="viewHelp"
+                  rows="40"></textarea>
       </div>
       <div class="col">
         <div id="resourceHelp" class="form-text">
           Enter a valid FHIR resource.
         </div>
-        <textarea class="form-control" id="inputResource" aria-describedby="viewHelp" rows="40">
-        </textarea>
+        <textarea class="form-control" id="inputResource" aria-describedby="viewHelp"
+                  rows="40"></textarea>
       </div>
     </div>
 </div>
