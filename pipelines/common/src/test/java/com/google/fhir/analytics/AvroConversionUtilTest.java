@@ -27,8 +27,7 @@ import ca.uhn.fhir.context.FhirVersionEnum;
 import ca.uhn.fhir.parser.IParser;
 import com.cerner.bunsen.avro.AvroConverter;
 import com.cerner.bunsen.common.R4UsCoreProfileData;
-import com.cerner.bunsen.exception.HapiMergeException;
-import com.cerner.bunsen.exception.ProfileMapperException;
+import com.cerner.bunsen.exception.ProfileException;
 import com.google.common.io.Resources;
 import java.io.IOException;
 import java.io.InputStream;
@@ -60,7 +59,7 @@ public class AvroConversionUtilTest {
 
   @Before
   public void setup()
-      throws IOException, ClassNotFoundException, URISyntaxException, ProfileMapperException {
+      throws IOException, ClassNotFoundException, URISyntaxException, ProfileException {
     AvroConversionUtil.initializeAvroConverters();
     patientBundle =
         Resources.toString(Resources.getResource("patient_bundle.json"), StandardCharsets.UTF_8);
@@ -74,7 +73,7 @@ public class AvroConversionUtilTest {
   }
 
   @Test
-  public void getResourceSchema_Patient() throws HapiMergeException, ProfileMapperException {
+  public void getResourceSchema_Patient() throws ProfileException {
     AvroConversionUtil avroConversionUtil =
         AvroConversionUtil.getInstance(FhirVersionEnum.R4, null, null);
     Schema schema = avroConversionUtil.getResourceSchema("Patient");
@@ -84,7 +83,7 @@ public class AvroConversionUtilTest {
   }
 
   @Test
-  public void getResourceSchema_Observation() throws HapiMergeException, ProfileMapperException {
+  public void getResourceSchema_Observation() throws ProfileException {
     AvroConversionUtil avroConversionUtil =
         AvroConversionUtil.getInstance(FhirVersionEnum.R4, null, null);
     Schema schema = avroConversionUtil.getResourceSchema("Observation");
@@ -96,7 +95,7 @@ public class AvroConversionUtilTest {
   }
 
   @Test
-  public void getResourceSchema_Encounter() throws HapiMergeException, ProfileMapperException {
+  public void getResourceSchema_Encounter() throws ProfileException {
     AvroConversionUtil avroConversionUtil =
         AvroConversionUtil.getInstance(FhirVersionEnum.R4, null, null);
     Schema schema = avroConversionUtil.getResourceSchema("Encounter");
@@ -107,7 +106,7 @@ public class AvroConversionUtilTest {
   }
 
   @Test
-  public void generateRecords_BundleOfPatients() throws HapiMergeException, ProfileMapperException {
+  public void generateRecords_BundleOfPatients() throws ProfileException {
     AvroConversionUtil avroConversionUtil =
         AvroConversionUtil.getInstance(FhirVersionEnum.R4, null, null);
 
@@ -123,8 +122,7 @@ public class AvroConversionUtilTest {
   }
 
   @Test
-  public void generateRecords_BundleOfObservations()
-      throws HapiMergeException, ProfileMapperException {
+  public void generateRecords_BundleOfObservations() throws ProfileException {
     AvroConversionUtil avroConversionUtil =
         AvroConversionUtil.getInstance(FhirVersionEnum.R4, null, null);
     IParser parser = avroConversionUtil.getFhirContext().newJsonParser();
@@ -134,7 +132,7 @@ public class AvroConversionUtilTest {
   }
 
   @Test
-  public void generateRecordForPatient() throws HapiMergeException, ProfileMapperException {
+  public void generateRecordForPatient() throws ProfileException {
     AvroConversionUtil avroConversionUtil =
         AvroConversionUtil.getInstance(FhirVersionEnum.R4, null, null);
     IParser parser = avroConversionUtil.getFhirContext().newJsonParser();
@@ -150,8 +148,7 @@ public class AvroConversionUtilTest {
   }
 
   @Test
-  public void convertObservationWithBigDecimalValue()
-      throws HapiMergeException, IOException, ProfileMapperException {
+  public void convertObservationWithBigDecimalValue() throws IOException, ProfileException {
     AvroConversionUtil avroConversionUtil =
         AvroConversionUtil.getInstance(FhirVersionEnum.R4, null, null);
     String observationStr =
@@ -166,8 +163,7 @@ public class AvroConversionUtilTest {
   }
 
   @Test
-  public void checkForCorrectAvroConverterWithMultipleProfiles()
-      throws ProfileMapperException, HapiMergeException {
+  public void checkForCorrectAvroConverterWithMultipleProfiles() throws ProfileException {
     AvroConversionUtil avroConversionUtil =
         AvroConversionUtil.getInstance(
             FhirVersionEnum.R4, null, usCoreProfilesStructureDefinitionsPath);
@@ -194,8 +190,7 @@ public class AvroConversionUtilTest {
   }
 
   @Test
-  public void checkForCorrectAvroConverterWithBaseProfiles()
-      throws HapiMergeException, ProfileMapperException {
+  public void checkForCorrectAvroConverterWithBaseProfiles() throws ProfileException {
     AvroConversionUtil avroConversionUtil =
         AvroConversionUtil.getInstance(FhirVersionEnum.R4, null, null);
 
@@ -219,7 +214,7 @@ public class AvroConversionUtilTest {
   }
 
   @Test
-  public void testForAvroRecords() throws HapiMergeException, IOException, ProfileMapperException {
+  public void testForAvroRecords() throws IOException, ProfileException {
     AvroConversionUtil avroConversionUtil =
         AvroConversionUtil.getInstance(
             FhirVersionEnum.R4, null, usCoreProfilesStructureDefinitionsPath);

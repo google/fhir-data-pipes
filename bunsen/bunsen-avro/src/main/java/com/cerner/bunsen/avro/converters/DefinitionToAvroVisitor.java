@@ -13,12 +13,13 @@ import com.cerner.bunsen.definitions.HapiConverter;
 import com.cerner.bunsen.definitions.HapiConverter.HapiFieldSetter;
 import com.cerner.bunsen.definitions.HapiConverter.HapiObjectConverter;
 import com.cerner.bunsen.definitions.HapiConverter.MultiValueConverter;
+import com.cerner.bunsen.definitions.HapiConverterUtil;
 import com.cerner.bunsen.definitions.IdConverter;
 import com.cerner.bunsen.definitions.LeafExtensionConverter;
 import com.cerner.bunsen.definitions.PrimitiveConverter;
 import com.cerner.bunsen.definitions.StringConverter;
 import com.cerner.bunsen.definitions.StructureField;
-import com.cerner.bunsen.exception.HapiMergeException;
+import com.cerner.bunsen.exception.ProfileException;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableMap;
@@ -72,19 +73,9 @@ public class DefinitionToAvroVisitor implements DefinitionVisitor<HapiConverter<
         }
 
         @Override
-        public HapiConverter merge(HapiConverter other) throws HapiMergeException {
-          if (other != null
-              && other instanceof PrimitiveConverter
-              && "Boolean".equals(other.getElementType())) {
-            return this;
-          }
-          throw new HapiMergeException(
-              String.format(
-                  "Cannot merge Boolean FHIR Type PrimitiveConverter with %s ",
-                  other != null
-                      ? String.format(
-                          "%s FHIR Type %s", other.getElementType(), other.getClass().getName())
-                      : null));
+        public HapiConverter merge(HapiConverter other) throws ProfileException {
+          HapiConverterUtil.validateIfConvertersCanBeMerged(this, other);
+          return this;
         }
       };
 
@@ -99,19 +90,9 @@ public class DefinitionToAvroVisitor implements DefinitionVisitor<HapiConverter<
         }
 
         @Override
-        public HapiConverter merge(HapiConverter other) throws HapiMergeException {
-          if (other != null
-              && other instanceof PrimitiveConverter
-              && "Integer".equals(other.getElementType())) {
-            return this;
-          }
-          throw new HapiMergeException(
-              String.format(
-                  "Cannot merge Integer FHIR Type PrimitiveConverter with %s ",
-                  other != null
-                      ? String.format(
-                          "%s FHIR Type %s", other.getElementType(), other.getClass().getName())
-                      : null));
+        public HapiConverter merge(HapiConverter other) throws ProfileException {
+          HapiConverterUtil.validateIfConvertersCanBeMerged(this, other);
+          return this;
         }
       };
 
@@ -153,19 +134,9 @@ public class DefinitionToAvroVisitor implements DefinitionVisitor<HapiConverter<
         }
 
         @Override
-        public HapiConverter merge(HapiConverter other) throws HapiMergeException {
-          if (other != null
-              && other instanceof PrimitiveConverter
-              && "Double".equals(other.getElementType())) {
-            return this;
-          }
-          throw new HapiMergeException(
-              String.format(
-                  "Cannot merge Double FHIR Type PrimitiveConverter with %s ",
-                  other != null
-                      ? String.format(
-                          "%s FHIR Type %s", other.getElementType(), other.getClass().getName())
-                      : null));
+        public HapiConverter merge(HapiConverter other) throws ProfileException {
+          HapiConverterUtil.validateIfConvertersCanBeMerged(this, other);
+          return this;
         }
       };
 
@@ -254,20 +225,14 @@ public class DefinitionToAvroVisitor implements DefinitionVisitor<HapiConverter<
     }
 
     @Override
-    public HapiConverter merge(HapiConverter other) throws HapiMergeException {
-      if (other == null || !(other instanceof CompositeToAvroConverter)) {
-        throw new HapiMergeException(
-            String.format(
-                "Cannot merge CompositeToAvroConverter with %s",
-                other != null ? other.getClass().getName() : null));
-      }
-
+    public HapiConverter merge(HapiConverter other) throws ProfileException {
+      HapiConverterUtil.validateIfConvertersCanBeMerged(this, other);
       CompositeToAvroConverter otherConverter = (CompositeToAvroConverter) other;
       // For extensions
       if (!(Strings.isNullOrEmpty(this.extensionUrl())
           && Strings.isNullOrEmpty(otherConverter.extensionUrl()))) {
         if (!Objects.equals(this.extensionUrl(), otherConverter.extensionUrl())) {
-          throw new HapiMergeException(
+          throw new ProfileException(
               String.format(
                   "The extension URL must be the same to merge. currentExtensionUrl=%s,"
                       + " otherExtensionUrl=%s",
@@ -283,11 +248,9 @@ public class DefinitionToAvroVisitor implements DefinitionVisitor<HapiConverter<
 
       List<StructureField<HapiConverter<Schema>>> mergedList = new ArrayList<>();
       Map<String, StructureField> currentElementsMap =
-          currentElements.stream()
-              .collect(Collectors.toMap(structureField -> structureField.fieldName(), s -> s));
+          currentElements.stream().collect(Collectors.toMap(s -> s.fieldName(), s -> s));
       Map<String, StructureField> otherElementsMap =
-          rightElements.stream()
-              .collect(Collectors.toMap(structureField -> structureField.fieldName(), s -> s));
+          rightElements.stream().collect(Collectors.toMap(s -> s.fieldName(), s -> s));
 
       for (StructureField currentField : currentElements) {
         if (!otherElementsMap.containsKey(currentField.fieldName())) {
@@ -364,14 +327,8 @@ public class DefinitionToAvroVisitor implements DefinitionVisitor<HapiConverter<
     }
 
     @Override
-    public HapiConverter merge(HapiConverter other) throws HapiMergeException {
-      if (other == null || !(other instanceof HapiChoiceToAvroConverter)) {
-        throw new HapiMergeException(
-            String.format(
-                "Cannot merge HapiChoiceToAvroConverter with %s",
-                other != null ? other.getClass().getName() : null));
-      }
-
+    public HapiConverter merge(HapiConverter other) throws ProfileException {
+      HapiConverterUtil.validateIfConvertersCanBeMerged(this, other);
       HapiChoiceToAvroConverter otherConverter = (HapiChoiceToAvroConverter) other;
       Map<String, HapiConverter<Schema>> currentChoiceTypes = this.getElements();
       Map<String, HapiConverter<Schema>> otherChoiceTypes = otherConverter.getElements();
@@ -490,8 +447,8 @@ public class DefinitionToAvroVisitor implements DefinitionVisitor<HapiConverter<
     }
 
     @Override
-    public HapiConverter merge(HapiConverter other) throws HapiMergeException {
-      throw new HapiMergeException("Merging of HapiContainedToAvroConverter is not supported");
+    public HapiConverter merge(HapiConverter other) throws ProfileException {
+      throw new ProfileException("Merging of HapiContainedToAvroConverter is not supported");
     }
   }
 
@@ -567,14 +524,8 @@ public class DefinitionToAvroVisitor implements DefinitionVisitor<HapiConverter<
     }
 
     @Override
-    public HapiConverter merge(HapiConverter other) throws HapiMergeException {
-      if (other == null || !(other instanceof MultiValuedToAvroConverter)) {
-        throw new HapiMergeException(
-            String.format(
-                "Cannot merge MultiValuedToAvroConverter with %s",
-                other != null ? other.getClass().getName() : null));
-      }
-
+    public HapiConverter merge(HapiConverter other) throws ProfileException {
+      HapiConverterUtil.validateIfConvertersCanBeMerged(this, other);
       HapiConverter mergedElementConverter =
           this.elementConverter.merge(((MultiValuedToAvroConverter) other).getElementConverter());
       return new MultiValuedToAvroConverter(mergedElementConverter);
@@ -737,18 +688,12 @@ public class DefinitionToAvroVisitor implements DefinitionVisitor<HapiConverter<
     }
 
     @Override
-    public HapiConverter merge(HapiConverter other) throws HapiMergeException {
-      if (other == null || !(other instanceof RelativeValueConverter)) {
-        throw new HapiMergeException(
-            String.format(
-                "Cannot merge RelativeValueConverter with %s",
-                other != null ? other.getClass().getName() : null));
-      }
-
+    public HapiConverter merge(HapiConverter other) throws ProfileException {
+      HapiConverterUtil.validateIfConvertersCanBeMerged(this, other);
       String leftPrefix = Strings.nullToEmpty(this.prefix);
       String rightPrefix = Strings.nullToEmpty(((RelativeValueConverter) other).prefix);
       if (!Objects.equals(leftPrefix, rightPrefix)) {
-        throw new HapiMergeException(
+        throw new ProfileException(
             String.format(
                 "RelativeValueConverter prefixes should be equal for merging, leftPrefix=%s,"
                     + " rightPrefix=%s",

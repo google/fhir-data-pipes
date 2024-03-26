@@ -4,9 +4,7 @@ import ca.uhn.fhir.context.BaseRuntimeChildDefinition;
 import ca.uhn.fhir.context.BaseRuntimeElementCompositeDefinition;
 import ca.uhn.fhir.context.BaseRuntimeElementDefinition;
 import ca.uhn.fhir.context.RuntimeCompositeDatatypeDefinition;
-import com.cerner.bunsen.exception.HapiMergeException;
-import com.google.common.base.Strings;
-import java.util.Objects;
+import com.cerner.bunsen.exception.ProfileException;
 import org.hl7.fhir.instance.model.api.IBase;
 import org.hl7.fhir.instance.model.api.IBaseDatatype;
 import org.hl7.fhir.instance.model.api.IBaseExtension;
@@ -135,23 +133,8 @@ public class LeafExtensionConverter<T> extends HapiConverter<T> {
   }
 
   @Override
-  public HapiConverter merge(HapiConverter other) throws HapiMergeException {
-    if (other == null || !(other instanceof LeafExtensionConverter)) {
-      throw new HapiMergeException(
-          String.format(
-              "Cannot merge LeafExtensionConverter with %s",
-              other != null ? other.getClass().getName() : null));
-    }
-
-    if (Strings.isNullOrEmpty(this.extensionUrl())
-        || Strings.isNullOrEmpty(other.extensionUrl())
-        || !Objects.equals(this.extensionUrl(), other.extensionUrl())) {
-      throw new HapiMergeException(
-          String.format(
-              "Extension urls must not be empty and should be the same for merging,"
-                  + " currentExtensionUrl=%s, otherExtensionUrl=%s",
-              this.extensionUrl(), other.extensionUrl()));
-    }
+  public HapiConverter merge(HapiConverter other) throws ProfileException {
+    HapiConverterUtil.validateIfConvertersCanBeMerged(this, other);
     HapiConverter mergedValueConverter =
         this.valueConverter.merge(((LeafExtensionConverter) other).valueConverter);
     return new LeafExtensionConverter(this.extensionUrl, mergedValueConverter);

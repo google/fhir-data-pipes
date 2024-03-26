@@ -15,8 +15,7 @@
  */
 package com.google.fhir.analytics;
 
-import com.cerner.bunsen.exception.HapiMergeException;
-import com.cerner.bunsen.exception.ProfileMapperException;
+import com.cerner.bunsen.exception.ProfileException;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.fhir.analytics.model.DatabaseConfiguration;
 import com.google.fhir.analytics.model.EventConfiguration;
@@ -91,8 +90,7 @@ public class FhirConverter implements Processor {
     }
   }
 
-  public void process(Exchange exchange)
-      throws SQLException, ProfileMapperException, HapiMergeException {
+  public void process(Exchange exchange) throws SQLException, ProfileException {
     Message message = exchange.getMessage();
     final Map payload = message.getBody(Map.class);
     final Map sourceMetadata =

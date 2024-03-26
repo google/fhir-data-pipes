@@ -4,7 +4,7 @@ import ca.uhn.fhir.context.FhirContext;
 import ca.uhn.fhir.context.FhirVersionEnum;
 import com.cerner.bunsen.ProfileMapperFhirContexts;
 import com.cerner.bunsen.avro.AvroConverter;
-import com.cerner.bunsen.exception.ProfileMapperException;
+import com.cerner.bunsen.exception.ProfileException;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -27,7 +27,7 @@ public class GenerateSchemas {
    * @param args the output file followed by a list of resource type urls
    * @return the OS status code
    */
-  public static int main(String[] args) throws ProfileMapperException {
+  public static int main(String[] args) throws ProfileException {
 
     if (args.length < 2) {
       System.out.println("Usage: GenerateSchemas <output file> resourceTypeUrls...");

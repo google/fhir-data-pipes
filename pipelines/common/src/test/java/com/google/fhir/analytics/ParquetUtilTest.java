@@ -21,8 +21,7 @@ import static org.hamcrest.Matchers.matchesPattern;
 
 import ca.uhn.fhir.context.FhirVersionEnum;
 import ca.uhn.fhir.parser.IParser;
-import com.cerner.bunsen.exception.HapiMergeException;
-import com.cerner.bunsen.exception.ProfileMapperException;
+import com.cerner.bunsen.exception.ProfileException;
 import com.google.common.io.Resources;
 import java.io.File;
 import java.io.IOException;
@@ -61,7 +60,7 @@ public class ParquetUtilTest {
   @Rule public TemporaryFolder testFolder = new TemporaryFolder();
 
   @Before
-  public void setup() throws IOException, ProfileMapperException {
+  public void setup() throws IOException, ProfileException {
     File rootFolder = testFolder.newFolder(PARQUET_ROOT);
     rootPath = Paths.get(rootFolder.getPath());
     Files.createDirectories(rootPath);
@@ -105,7 +104,7 @@ public class ParquetUtilTest {
   }
 
   @Test
-  public void createSingleOutput() throws IOException, ProfileMapperException, HapiMergeException {
+  public void createSingleOutput() throws IOException, ProfileException {
     rootPath = Files.createTempDirectory("PARQUET_TEST");
     parquetUtil = new ParquetUtil(FhirVersionEnum.R4, "", "", rootPath.toString(), 0, 0, "");
     IParser parser = avroConversionUtil.getFhirContext().newJsonParser();
@@ -131,7 +130,7 @@ public class ParquetUtilTest {
 
   @Test
   public void createMultipleOutputByTime()
-      throws IOException, InterruptedException, ProfileMapperException, HapiMergeException {
+      throws IOException, InterruptedException, ProfileException {
     rootPath = Files.createTempDirectory("PARQUET_TEST");
     parquetUtil = new ParquetUtil(FhirVersionEnum.R4, "", "", rootPath.toString(), 1, 0, "");
     IParser parser = avroConversionUtil.getFhirContext().newJsonParser();
@@ -157,8 +156,7 @@ public class ParquetUtilTest {
   }
 
   @Test
-  public void createSingleOutputWithRowGroupSize()
-      throws IOException, ProfileMapperException, HapiMergeException {
+  public void createSingleOutputWithRowGroupSize() throws IOException, ProfileException {
     rootPath = Files.createTempDirectory("PARQUET_TEST");
     parquetUtil = new ParquetUtil(FhirVersionEnum.R4, "", "", rootPath.toString(), 0, 1, "");
     IParser parser = avroConversionUtil.getFhirContext().newJsonParser();
@@ -191,8 +189,7 @@ public class ParquetUtilTest {
    * https://github.com/GoogleCloudPlatform/openmrs-fhir-analytics/issues/156
    */
   @Test
-  public void writeObservationWithBigDecimalValue()
-      throws IOException, ProfileMapperException, HapiMergeException {
+  public void writeObservationWithBigDecimalValue() throws IOException, ProfileException {
     rootPath = Files.createTempDirectory("PARQUET_TEST");
     parquetUtil = new ParquetUtil(FhirVersionEnum.R4, "", "", rootPath.toString(), 0, 0, "");
     String observationStr =
@@ -206,7 +203,7 @@ public class ParquetUtilTest {
   /** This is similar to the above test but has more `decimal` examples with different scales. */
   @Test
   public void writeObservationBundleWithDecimalConversionIssue()
-      throws IOException, ProfileMapperException, HapiMergeException {
+      throws IOException, ProfileException {
     rootPath = Files.createTempDirectory("PARQUET_TEST");
     parquetUtil = new ParquetUtil(FhirVersionEnum.R4, "", "", rootPath.toString(), 0, 0, "");
     String observationBundleStr =
@@ -219,8 +216,7 @@ public class ParquetUtilTest {
 
   /** This test check if the same resource with multiple profiles get written to files. */
   @Test
-  public void writeObservationBundleWithMultipleProfiles()
-      throws IOException, ProfileMapperException, HapiMergeException {
+  public void writeObservationBundleWithMultipleProfiles() throws IOException, ProfileException {
     rootPath = Files.createTempDirectory("PARQUET_TEST");
     parquetUtil = new ParquetUtil(FhirVersionEnum.R4, "", "", rootPath.toString(), 0, 0, "");
 

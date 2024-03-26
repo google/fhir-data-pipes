@@ -4,7 +4,7 @@ import ca.uhn.fhir.context.FhirContext;
 import ca.uhn.fhir.context.FhirVersionEnum;
 import ca.uhn.fhir.context.RuntimeResourceDefinition;
 import ca.uhn.fhir.parser.IParser;
-import com.cerner.bunsen.exception.ProfileMapperException;
+import com.cerner.bunsen.exception.ProfileException;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import java.io.BufferedReader;
@@ -59,12 +59,12 @@ class ProfileMappingProvider {
    *     definitions to be used
    * @param isClasspath whether the structureDefinitionsPath is a classpath or not
    * @return the map containing the resource type and the list of profile urls mapped.
-   * @throws ProfileMapperException if there are any errors while loading and mapping the structure
+   * @throws ProfileException if there are any errors while loading and mapping the structure
    *     definitions
    */
   Map<String, List<String>> loadStructureDefinitions(
       FhirContext context, @Nullable String structureDefinitionsPath, boolean isClasspath)
-      throws ProfileMapperException {
+      throws ProfileException {
 
     // TODO: Add support for other versions (R4B and R5) and then remove this constraint
     // https://github.com/google/fhir-data-pipes/issues/958
@@ -75,7 +75,7 @@ class ProfileMappingProvider {
               "Cannot load FHIR profiles for FhirContext version %s as it is not %s or %s ",
               context.getVersion().getVersion(), FhirVersionEnum.DSTU3, FhirVersionEnum.R4);
       log.error(errorMsg);
-      throw new ProfileMapperException(errorMsg);
+      throw new ProfileException(errorMsg);
     }
 
     PrePopulatedValidationSupport support = new PrePopulatedValidationSupport(context);
@@ -119,7 +119,7 @@ class ProfileMappingProvider {
       String structureDefinitionsPath,
       boolean isClasspath,
       Map<String, List<String>> resourceProfileMap)
-      throws ProfileMapperException {
+      throws ProfileException {
     IParser jsonParser = context.newJsonParser();
     try {
       List<IBaseResource> resources =
@@ -136,18 +136,18 @@ class ProfileMappingProvider {
               "Cannot get the list of files at the directory=%s, classpath=%s, error=%s",
               structureDefinitionsPath, isClasspath, e.getMessage());
       log.error(errorMsg, e);
-      throw new ProfileMapperException(errorMsg);
+      throw new ProfileException(errorMsg);
     }
   }
 
   private List<IBaseResource> getResourcesFromClasspath(IParser parser, String classpath)
-      throws ProfileMapperException, URISyntaxException, IOException {
+      throws ProfileException, URISyntaxException, IOException {
 
     URL resourceURL = getClass().getResource(classpath);
     if (resourceURL == null) {
       String errorMsg = String.format("the classpath url=%s does not exist", classpath);
       log.error(errorMsg);
-      throw new ProfileMapperException(errorMsg);
+      throw new ProfileException(errorMsg);
     }
 
     URI uri = resourceURL.toURI();

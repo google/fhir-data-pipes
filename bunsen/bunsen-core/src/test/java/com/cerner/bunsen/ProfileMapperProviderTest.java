@@ -6,7 +6,7 @@ import ca.uhn.fhir.context.FhirContext;
 import ca.uhn.fhir.context.FhirVersionEnum;
 import com.cerner.bunsen.common.R4UsCoreProfileData;
 import com.cerner.bunsen.common.Stu3UsCoreProfileData;
-import com.cerner.bunsen.exception.ProfileMapperException;
+import com.cerner.bunsen.exception.ProfileException;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
@@ -16,7 +16,7 @@ import org.junit.Test;
 public class ProfileMapperProviderTest {
 
   @Test
-  public void testIfOnlyBaseProfilesAreMapped() throws ProfileMapperException {
+  public void testIfOnlyBaseProfilesAreMapped() throws ProfileException {
     ProfileMappingProvider profileMappingProvider = new ProfileMappingProvider();
     FhirContext fhirContext = new FhirContext(FhirVersionEnum.R4);
     Map<String, List<String>> profileMapping =
@@ -35,7 +35,7 @@ public class ProfileMapperProviderTest {
   }
 
   @Test
-  public void testIfUsCoreR4ProfilesAreMapped() throws ProfileMapperException {
+  public void testIfUsCoreR4ProfilesAreMapped() throws ProfileException {
     ProfileMappingProvider profileMappingProvider = new ProfileMappingProvider();
     FhirContext fhirContext = new FhirContext(FhirVersionEnum.R4);
     Map<String, List<String>> profileMapping =
@@ -56,7 +56,7 @@ public class ProfileMapperProviderTest {
   }
 
   @Test
-  public void testIfUsCoreStu3ProfilesAreMapped() throws ProfileMapperException {
+  public void testIfUsCoreStu3ProfilesAreMapped() throws ProfileException {
     ProfileMappingProvider profileMappingProvider = new ProfileMappingProvider();
     FhirContext fhirContext = new FhirContext(FhirVersionEnum.DSTU3);
     Map<String, List<String>> profileMapping =

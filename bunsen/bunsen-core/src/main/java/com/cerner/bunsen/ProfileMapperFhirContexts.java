@@ -2,7 +2,7 @@ package com.cerner.bunsen;
 
 import ca.uhn.fhir.context.FhirContext;
 import ca.uhn.fhir.context.FhirVersionEnum;
-import com.cerner.bunsen.exception.ProfileMapperException;
+import com.cerner.bunsen.exception.ProfileException;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Strings;
 import com.google.common.collect.Maps;
@@ -51,12 +51,12 @@ public class ProfileMapperFhirContexts {
    * @param fhirVersion the version of FHIR to use
    * @param structureDefinitionsPath The path containing the custom structure definitions
    * @return the FhirContext
-   * @throws ProfileMapperException if there are any errors while loading and mapping the structure
+   * @throws ProfileException if there are any errors while loading and mapping the structure
    *     definitions
    */
   public synchronized FhirContext contextFor(
       FhirVersionEnum fhirVersion, @Nullable String structureDefinitionsPath)
-      throws ProfileMapperException {
+      throws ProfileException {
     return contextFor(fhirVersion, structureDefinitionsPath, false);
   }
 
@@ -66,13 +66,13 @@ public class ProfileMapperFhirContexts {
    */
   public synchronized FhirContext contextFromClasspathFor(
       FhirVersionEnum fhirVersion, @Nullable String structureDefinitionsClasspath)
-      throws ProfileMapperException {
+      throws ProfileException {
     return contextFor(fhirVersion, structureDefinitionsClasspath, true);
   }
 
   private FhirContext contextFor(
       FhirVersionEnum fhirVersion, @Nullable String structureDefinitionsPath, boolean isClasspath)
-      throws ProfileMapperException {
+      throws ProfileException {
     structureDefinitionsPath = Strings.nullToEmpty(structureDefinitionsPath);
     FhirContextData fhirContextData = fhirContextMappings.get(fhirVersion);
     if (fhirContextData != null) {
@@ -93,7 +93,7 @@ public class ProfileMapperFhirContexts {
 
   private void isContextLoadedWithDifferentConfig(
       FhirContextData fhirContextData, String structureDefinitionsPath, boolean isClasspath)
-      throws ProfileMapperException {
+      throws ProfileException {
     if (!(Objects.equals(fhirContextData.isClasspath, isClasspath)
         && Objects.equals(fhirContextData.structureDefinitionsPath, structureDefinitionsPath))) {
       String errorMsg =
@@ -106,7 +106,7 @@ public class ProfileMapperFhirContexts {
               fhirContextData.structureDefinitionsPath,
               fhirContextData.isClasspath);
       logger.error(errorMsg);
-      throw new ProfileMapperException(errorMsg);
+      throw new ProfileException(errorMsg);
     }
   }
 
@@ -118,12 +118,12 @@ public class ProfileMapperFhirContexts {
    * @param structureDefinitionsPath the path containing the custom structure definitions
    * @param isClasspath whether the structureDefinitionsPath is a classpath or not
    * @return the map containing the resource to profile urls mappings
-   * @throws ProfileMapperException if there are any errors while loading and mapping the structure
+   * @throws ProfileException if there are any errors while loading and mapping the structure
    *     definitions
    */
   private Map<String, List<String>> loadStructureDefinitions(
       FhirContext context, @Nullable String structureDefinitionsPath, boolean isClasspath)
-      throws ProfileMapperException {
+      throws ProfileException {
     return profileMappingProvider.loadStructureDefinitions(
         context, structureDefinitionsPath, isClasspath);
   }
@@ -134,10 +134,10 @@ public class ProfileMapperFhirContexts {
    * @param fhirVersion the fhir version for which the mapping needs to be returned
    * @param resourceType the resource type
    * @return the list of profile urls
-   * @throws ProfileMapperException if the FhirContext is not initialised for the given fhirVersion
+   * @throws ProfileException if the FhirContext is not initialised for the given fhirVersion
    */
   public List<String> getMappedProfilesForResource(FhirVersionEnum fhirVersion, String resourceType)
-      throws ProfileMapperException {
+      throws ProfileException {
     FhirContextData fhirContextData = fhirContextMappings.get(fhirVersion);
     if (fhirContextData == null) {
       String errorMsg =
@@ -147,7 +147,7 @@ public class ProfileMapperFhirContexts {
                   + " the mapped profile.",
               fhirVersion);
       logger.error(errorMsg);
-      throw new ProfileMapperException(errorMsg);
+      throw new ProfileException(errorMsg);
     }
 
     Map<String, List<String>> profileMap = fhirContextData.profileMap;

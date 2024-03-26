@@ -7,7 +7,8 @@ import com.cerner.bunsen.avro.converters.DefinitionToAvroVisitor;
 import com.cerner.bunsen.definitions.HapiConverter;
 import com.cerner.bunsen.definitions.HapiConverter.HapiObjectConverter;
 import com.cerner.bunsen.definitions.StructureDefinitions;
-import com.cerner.bunsen.exception.HapiMergeException;
+import com.cerner.bunsen.exception.ProfileException;
+import com.google.common.base.Preconditions;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -19,6 +20,7 @@ import java.util.stream.Collectors;
 import org.apache.avro.Schema;
 import org.apache.avro.Schema.Field;
 import org.apache.avro.generic.IndexedRecord;
+import org.apache.commons.collections.CollectionUtils;
 import org.hl7.fhir.instance.model.api.IBaseResource;
 
 /** Converter to change HAPI objects into Avro structures and vice versa. */
@@ -149,7 +151,7 @@ public class AvroConverter {
    * @return the merged Avro converter
    */
   public static AvroConverter forResources(FhirContext context, List<String> resourceTypeUrls)
-      throws HapiMergeException {
+      throws ProfileException {
     List<AvroConverter> avroConverters = new ArrayList<>();
     for (String resourceTypeUrl : resourceTypeUrls) {
       AvroConverter avroConverter = forResource(context, resourceTypeUrl, Collections.emptyList());
@@ -227,11 +229,9 @@ public class AvroConverter {
    * of all the fields in the list of avroConverters
    */
   private static AvroConverter mergeAvroConverters(
-      List<AvroConverter> avroConverters, FhirContext context) throws HapiMergeException {
-    if (avroConverters == null || avroConverters.isEmpty()) {
-      throw new IllegalArgumentException("AvroConverter list cannot be empty for merging");
-    }
-
+      List<AvroConverter> avroConverters, FhirContext context) throws ProfileException {
+    Preconditions.checkArgument(
+        !CollectionUtils.isEmpty(avroConverters), "AvroConverter list cannot be empty for merging");
     Iterator<AvroConverter> iterator = avroConverters.iterator();
     AvroConverter mergedConverter = iterator.next();
     while (iterator.hasNext()) {
@@ -241,7 +241,7 @@ public class AvroConverter {
   }
 
   private static AvroConverter mergeAvroConverters(
-      AvroConverter left, AvroConverter right, FhirContext context) throws HapiMergeException {
+      AvroConverter left, AvroConverter right, FhirContext context) throws ProfileException {
     HapiConverter<Schema> mergedConverter =
         left.hapiToAvroConverter.merge(right.hapiToAvroConverter);
     RuntimeResourceDefinition[] resources = new RuntimeResourceDefinition[1];

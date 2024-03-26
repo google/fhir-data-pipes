@@ -16,8 +16,7 @@
 package com.google.fhir.analytics;
 
 import ca.uhn.fhir.context.FhirContext;
-import com.cerner.bunsen.exception.HapiMergeException;
-import com.cerner.bunsen.exception.ProfileMapperException;
+import com.cerner.bunsen.exception.ProfileException;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import com.google.common.collect.Lists;
@@ -117,7 +116,7 @@ public class FhirEtl {
       Set<String> patientAssociatedResources,
       FhirEtlOptions options,
       AvroConversionUtil avroConversionUtil)
-      throws ProfileMapperException, HapiMergeException {
+      throws ProfileException {
     PCollectionList<KV<String, Integer>> patientIdList =
         PCollectionList.<KV<String, Integer>>empty(pipeline).and(allPatientIds);
     PCollection<KV<String, Integer>> flattenedPatients =
@@ -134,8 +133,7 @@ public class FhirEtl {
   }
 
   private static List<Pipeline> buildFhirSearchPipeline(
-      FhirEtlOptions options, AvroConversionUtil avroConversionUtil)
-      throws ProfileMapperException, HapiMergeException {
+      FhirEtlOptions options, AvroConversionUtil avroConversionUtil) throws ProfileException {
     FhirSearchUtil fhirSearchUtil =
         createFhirSearchUtil(options, avroConversionUtil.getFhirContext());
     Map<String, List<SearchSegmentDescriptor>> segmentMap = Maps.newHashMap();
@@ -183,8 +181,7 @@ public class FhirEtl {
 
   private static List<Pipeline> buildOpenmrsJdbcPipeline(
       FhirEtlOptions options, AvroConversionUtil avroConversionUtil)
-      throws PropertyVetoException, IOException, SQLException, ProfileMapperException,
-          HapiMergeException {
+      throws PropertyVetoException, IOException, SQLException, ProfileException {
     // TODO add incremental support.
     Preconditions.checkArgument(Strings.isNullOrEmpty(options.getSince()));
     FhirSearchUtil fhirSearchUtil =
@@ -354,7 +351,7 @@ public class FhirEtl {
 
   private static List<Pipeline> buildParquetReadPipeline(
       FhirEtlOptions options, AvroConversionUtil avroConversionUtil)
-      throws IOException, ProfileMapperException, HapiMergeException {
+      throws IOException, ProfileException {
     Preconditions.checkArgument(!options.getParquetInputDwhRoot().isEmpty());
     DwhFiles dwhFiles =
         DwhFiles.forRoot(options.getParquetInputDwhRoot(), avroConversionUtil.getFhirContext());
@@ -417,7 +414,7 @@ public class FhirEtl {
   static List<Pipeline> setupAndBuildPipelines(
       FhirEtlOptions options, AvroConversionUtil avroConversionUtil)
       throws PropertyVetoException, IOException, SQLException, ViewDefinitionException,
-          ProfileMapperException, HapiMergeException {
+          ProfileException {
     if (!options.getSinkDbConfigPath().isEmpty()) {
       JdbcResourceWriter.createTables(options);
     }
@@ -436,7 +433,7 @@ public class FhirEtl {
 
   public static void main(String[] args)
       throws PropertyVetoException, IOException, SQLException, ViewDefinitionException,
-          ProfileMapperException, HapiMergeException {
+          ProfileException {
 
     AvroConversionUtil.initializeAvroConverters();
 

@@ -4,8 +4,7 @@ import ca.uhn.fhir.context.FhirContext;
 import ca.uhn.fhir.context.FhirVersionEnum;
 import com.cerner.bunsen.ProfileMapperFhirContexts;
 import com.cerner.bunsen.common.Stu3UsCoreProfileData;
-import com.cerner.bunsen.exception.HapiMergeException;
-import com.cerner.bunsen.exception.ProfileMapperException;
+import com.cerner.bunsen.exception.ProfileException;
 import com.cerner.bunsen.stu3.TestData;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
@@ -91,7 +90,7 @@ public class Stu3AvroConverterUsCoreTest {
 
   /** Initialize test data. */
   @BeforeClass
-  public static void convertTestData() throws ProfileMapperException, HapiMergeException {
+  public static void convertTestData() throws ProfileException {
     ProfileMapperFhirContexts.getInstance().deRegisterFhirContexts(FhirVersionEnum.DSTU3);
     fhirContext =
         ProfileMapperFhirContexts.getInstance()

@@ -21,7 +21,7 @@ import static org.mockito.Mockito.withSettings;
 
 import ca.uhn.fhir.context.FhirContext;
 import ca.uhn.fhir.parser.IParser;
-import com.cerner.bunsen.exception.ProfileMapperException;
+import com.cerner.bunsen.exception.ProfileException;
 import com.google.common.io.Resources;
 import com.google.fhir.analytics.model.DatabaseConfiguration;
 import java.beans.PropertyVetoException;
@@ -80,7 +80,7 @@ public class JdbcFetchOpenMrsTest extends TestCase {
   private DatabaseConfiguration dbConfig;
 
   @Before
-  public void setup() throws IOException, PropertyVetoException, ProfileMapperException {
+  public void setup() throws IOException, PropertyVetoException, ProfileException {
     URL url = Resources.getResource("encounter.json");
     resourceStr = Resources.toString(url, StandardCharsets.UTF_8);
     this.fhirContext = FhirContext.forR4Cached();

@@ -4,8 +4,7 @@ import ca.uhn.fhir.context.FhirContext;
 import ca.uhn.fhir.context.FhirVersionEnum;
 import com.cerner.bunsen.ProfileMapperFhirContexts;
 import com.cerner.bunsen.common.R4UsCoreProfileData;
-import com.cerner.bunsen.exception.HapiMergeException;
-import com.cerner.bunsen.exception.ProfileMapperException;
+import com.cerner.bunsen.exception.ProfileException;
 import com.cerner.bunsen.r4.TestData;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
@@ -106,7 +105,7 @@ public class R4AvroConverterUsCoreTest {
 
   /** Initialize test data. */
   @BeforeClass
-  public static void convertTestData() throws ProfileMapperException, HapiMergeException {
+  public static void convertTestData() throws ProfileException {
 
     // TODO update these conversions to actually use the wire/binary format, i.e., create
     //  the serialized format from the Avro object then re-read/convert that format back to an

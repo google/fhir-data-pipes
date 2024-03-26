@@ -1,6 +1,6 @@
 package com.cerner.bunsen.definitions;
 
-import com.cerner.bunsen.exception.HapiMergeException;
+import com.cerner.bunsen.exception.ProfileException;
 import org.hl7.fhir.instance.model.api.IIdType;
 import org.hl7.fhir.instance.model.api.IPrimitiveType;
 
@@ -21,16 +21,8 @@ public class IdConverter<T> extends StringConverter<T> {
   }
 
   @Override
-  public HapiConverter merge(HapiConverter other) throws HapiMergeException {
-    if (other != null && other instanceof IdConverter && "String".equals(other.getElementType())) {
-      return this;
-    }
-    throw new HapiMergeException(
-        String.format(
-            "Cannot merge String Fhir Type IdConverter with %s ",
-            other != null
-                ? String.format(
-                    "%s Fhir Type %s", other.getElementType(), other.getClass().getName())
-                : null));
+  public HapiConverter merge(HapiConverter other) throws ProfileException {
+    HapiConverterUtil.validateIfConvertersCanBeMerged(this, other);
+    return this;
   }
 }

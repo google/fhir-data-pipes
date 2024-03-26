@@ -3,7 +3,8 @@ package com.cerner.bunsen.avro.converters;
 import ca.uhn.fhir.context.BaseRuntimeChildDefinition;
 import ca.uhn.fhir.context.BaseRuntimeElementDefinition;
 import com.cerner.bunsen.definitions.HapiConverter;
-import com.cerner.bunsen.exception.HapiMergeException;
+import com.cerner.bunsen.definitions.HapiConverterUtil;
+import com.cerner.bunsen.exception.ProfileException;
 import org.apache.avro.Schema;
 import org.apache.avro.Schema.Type;
 import org.hl7.fhir.instance.model.api.IBase;
@@ -38,14 +39,9 @@ public class NoOpConverter extends HapiConverter<Schema> {
   }
 
   @Override
-  public HapiConverter merge(HapiConverter other) throws HapiMergeException {
-    if (other != null && other instanceof NoOpConverter) {
-      return this;
-    }
-    throw new HapiMergeException(
-        String.format(
-            "Cannot merge NoOpConverter with %s",
-            other != null ? other.getClass().getName() : null));
+  public HapiConverter merge(HapiConverter other) throws ProfileException {
+    HapiConverterUtil.validateIfConvertersCanBeMerged(this, other);
+    return this;
   }
 
   public static final NoOpConverter INSTANCE = new NoOpConverter();

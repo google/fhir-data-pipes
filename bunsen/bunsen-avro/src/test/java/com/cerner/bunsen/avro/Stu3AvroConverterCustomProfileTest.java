@@ -3,8 +3,7 @@ package com.cerner.bunsen.avro;
 import ca.uhn.fhir.context.FhirContext;
 import ca.uhn.fhir.context.FhirVersionEnum;
 import com.cerner.bunsen.ProfileMapperFhirContexts;
-import com.cerner.bunsen.exception.HapiMergeException;
-import com.cerner.bunsen.exception.ProfileMapperException;
+import com.cerner.bunsen.exception.ProfileException;
 import com.cerner.bunsen.stu3.TestData;
 import java.net.URISyntaxException;
 import java.util.Arrays;
@@ -34,11 +33,11 @@ public class Stu3AvroConverterCustomProfileTest {
   private static Patient testBunsenTestProfilePatientDecoded;
 
   @BeforeClass
-  public static void setUp() throws URISyntaxException, ProfileMapperException, HapiMergeException {
+  public static void setUp() throws URISyntaxException, ProfileException {
     ProfileMapperFhirContexts.getInstance().deRegisterFhirContexts(FhirVersionEnum.DSTU3);
     FhirContext fhirContext =
         ProfileMapperFhirContexts.getInstance()
-            .contextFromClasspathFor(FhirVersionEnum.DSTU3, "/other-profile-definitions");
+            .contextFromClasspathFor(FhirVersionEnum.DSTU3, "/stu3-custom-profile-definitions");
     List<String> patientProfiles =
         Arrays.asList(
             "http://hl7.org/fhir/StructureDefinition/Patient",

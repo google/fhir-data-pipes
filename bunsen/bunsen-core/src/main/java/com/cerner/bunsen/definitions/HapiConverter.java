@@ -2,7 +2,7 @@ package com.cerner.bunsen.definitions;
 
 import ca.uhn.fhir.context.BaseRuntimeChildDefinition;
 import ca.uhn.fhir.context.BaseRuntimeElementDefinition;
-import com.cerner.bunsen.exception.HapiMergeException;
+import com.cerner.bunsen.exception.ProfileException;
 import org.hl7.fhir.instance.model.api.IBase;
 
 /**
@@ -110,7 +110,7 @@ public abstract class HapiConverter<T> {
    *
    * @param other the HapiConverter to be merged
    * @return the merged HapiConverter
-   * @throws HapiMergeException
+   * @throws ProfileException
    */
-  public abstract HapiConverter merge(HapiConverter other) throws HapiMergeException;
+  public abstract HapiConverter merge(HapiConverter other) throws ProfileException;
 }

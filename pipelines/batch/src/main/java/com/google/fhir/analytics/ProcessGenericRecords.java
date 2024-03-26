@@ -15,8 +15,7 @@
  */
 package com.google.fhir.analytics;
 
-import com.cerner.bunsen.exception.HapiMergeException;
-import com.cerner.bunsen.exception.ProfileMapperException;
+import com.cerner.bunsen.exception.ProfileException;
 import com.google.fhir.analytics.view.ViewApplicationException;
 import java.beans.PropertyVetoException;
 import java.io.IOException;
@@ -52,7 +51,7 @@ public class ProcessGenericRecords extends FetchSearchPageFn<GenericRecord> {
   }
 
   @Override
-  public void setup() throws SQLException, PropertyVetoException, ProfileMapperException {
+  public void setup() throws SQLException, PropertyVetoException, ProfileException {
     super.setup();
     cachedResources = new ArrayList<>();
     totalAvroConversionTime =
@@ -70,10 +69,7 @@ public class ProcessGenericRecords extends FetchSearchPageFn<GenericRecord> {
     if (!cachedResources.isEmpty()) {
       try {
         processBundle(flushCachToBundle());
-      } catch (SQLException
-          | ViewApplicationException
-          | ProfileMapperException
-          | HapiMergeException e) {
+      } catch (SQLException | ViewApplicationException | ProfileException e) {
         // This is not perfect but the parent teardown only has IOException.
         log.error("Caught exception in teardown: ", e);
         throw new IOException(e);
@@ -93,8 +89,7 @@ public class ProcessGenericRecords extends FetchSearchPageFn<GenericRecord> {
 
   @ProcessElement
   public void processElement(@Element GenericRecord record)
-      throws IOException, SQLException, ViewApplicationException, ProfileMapperException,
-          HapiMergeException {
+      throws IOException, SQLException, ViewApplicationException, ProfileException {
     try {
       long startTime = System.currentTimeMillis();
       Resource resource = avroConversionUtil.convertToHapi(record, resourceType);
