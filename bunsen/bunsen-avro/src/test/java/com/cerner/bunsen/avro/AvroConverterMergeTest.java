@@ -15,9 +15,7 @@ import java.util.List;
 import org.apache.avro.Schema;
 import org.apache.avro.Schema.Parser;
 import org.apache.avro.generic.IndexedRecord;
-import org.apache.commons.collections.CollectionUtils;
 import org.hl7.fhir.instance.model.api.IBaseResource;
-import org.hl7.fhir.r4.model.Extension;
 import org.hl7.fhir.r4.model.Patient;
 import org.junit.Assert;
 import org.junit.Before;
@@ -118,7 +116,11 @@ public class AvroConverterMergeTest {
             loadResource(fhirContext, "/r4-us-core-resources/patient_us_core.json", Patient.class);
     IndexedRecord avroRecord = patientConverter.resourceToAvro(patient);
     Patient patientDecoded = (Patient) patientConverter.avroToResource(avroRecord);
-    validateR4Extensions(patient.getExtension(), patientDecoded.getExtension());
+    // TODO: When the objects are converted from HAPI->Avro->HAPI, in the resource ID only the
+    //  IDElement part is retained. This needs to be consistent and is tracked here:
+    // https://github.com/google/fhir-data-pipes/issues/1003
+    patientDecoded.setId(patient.getIdElement());
+    Assert.assertTrue(patient.equalsDeep(patientDecoded));
   }
 
   @Test
@@ -139,7 +141,11 @@ public class AvroConverterMergeTest {
     IndexedRecord avroRecord = patientConverter.resourceToAvro(patient);
     org.hl7.fhir.dstu3.model.Patient patientDecoded =
         (org.hl7.fhir.dstu3.model.Patient) patientConverter.avroToResource(avroRecord);
-    validateStu3Extensions(patient.getExtension(), patientDecoded.getExtension());
+    patientDecoded.setId(patient.getId());
+    // TODO : The test field is not properly copied to the decoded object back, hence manually
+    // copying it. This needs to be debugged.
+    patientDecoded.setText(patient.getText());
+    Assert.assertTrue(patient.equalsDeep(patientDecoded));
   }
 
   private void validateSchema(
@@ -149,34 +155,6 @@ public class AvroConverterMergeTest {
     InputStream inputStream = this.getClass().getResourceAsStream(expectedSchemaFile);
     Schema expectedSchema = new Parser().parse(inputStream);
     Assert.assertEquals(expectedSchema.toString(), converter.getSchema().toString());
-  }
-
-  private void validateR4Extensions(List<Extension> left, List<Extension> right) {
-    if (CollectionUtils.isEmpty(left) && CollectionUtils.isEmpty(right)) {
-      return;
-    }
-    Assert.assertTrue(
-        !CollectionUtils.isEmpty(left)
-            && !CollectionUtils.isEmpty(right)
-            && left.size() == right.size());
-    for (int i = 0; i < left.size(); i++) {
-      Assert.assertTrue(left.get(i).equalsDeep(right.get(i)));
-    }
-  }
-
-  private void validateStu3Extensions(
-      List<org.hl7.fhir.dstu3.model.Extension> left,
-      List<org.hl7.fhir.dstu3.model.Extension> right) {
-    if (CollectionUtils.isEmpty(left) && CollectionUtils.isEmpty(right)) {
-      return;
-    }
-    Assert.assertTrue(
-        !CollectionUtils.isEmpty(left)
-            && !CollectionUtils.isEmpty(right)
-            && left.size() == right.size());
-    for (int i = 0; i < left.size(); i++) {
-      Assert.assertTrue(left.get(i).equalsDeep(right.get(i)));
-    }
   }
 
   private <T extends IBaseResource> IBaseResource loadResource(
