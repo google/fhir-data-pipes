@@ -33,10 +33,6 @@ public class MainController {
 
   private static final Logger logger = LoggerFactory.getLogger(MainController.class.getName());
 
-  private static final String HTML_INDEX_PAGE = "index";
-
-  private static final String HTML_HELP_PAGE = "help";
-
   @Autowired private DataProperties dataProperties;
 
   @Autowired private PipelineManager pipelineManager;
@@ -78,11 +74,17 @@ public class MainController {
         pipelineConfigs.stream().filter(c -> c.def.equals(c.value)).collect(Collectors.toList()));
     model.addAttribute("lastRunDetails", pipelineManager.getLastRunDetails());
     logger.info("Done serving /");
-    return HTML_INDEX_PAGE;
+    return "index";
+  }
+
+  @GetMapping("/view")
+  public String view(Model model) {
+    logger.info("Done serving /view");
+    return "view";
   }
 
   @GetMapping("/help")
-  public String config(Model model) {
-    return HTML_HELP_PAGE;
+  public String help(Model model) {
+    return "help";
   }
 }
