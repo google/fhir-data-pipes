@@ -1,5 +1,6 @@
 package com.cerner.bunsen.definitions;
 
+import com.cerner.bunsen.exception.ProfileException;
 import org.hl7.fhir.instance.model.api.IIdType;
 import org.hl7.fhir.instance.model.api.IPrimitiveType;
 
@@ -17,5 +18,11 @@ public class IdConverter<T> extends StringConverter<T> {
       return ((IIdType) primitive).getIdPart();
     }
     return super.fromHapi(primitive);
+  }
+
+  @Override
+  public HapiConverter merge(HapiConverter other) throws ProfileException {
+    HapiConverterUtil.validateIfConvertersCanBeMerged(this, other);
+    return this;
   }
 }

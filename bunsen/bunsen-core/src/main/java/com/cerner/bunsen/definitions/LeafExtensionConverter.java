@@ -4,6 +4,7 @@ import ca.uhn.fhir.context.BaseRuntimeChildDefinition;
 import ca.uhn.fhir.context.BaseRuntimeElementCompositeDefinition;
 import ca.uhn.fhir.context.BaseRuntimeElementDefinition;
 import ca.uhn.fhir.context.RuntimeCompositeDatatypeDefinition;
+import com.cerner.bunsen.exception.ProfileException;
 import org.hl7.fhir.instance.model.api.IBase;
 import org.hl7.fhir.instance.model.api.IBaseDatatype;
 import org.hl7.fhir.instance.model.api.IBaseExtension;
@@ -129,5 +130,13 @@ public class LeafExtensionConverter<T> extends HapiConverter<T> {
     HapiObjectConverter sparkToHapi =
         (HapiObjectConverter) valueConverter.toHapiConverter(valueDefinition);
     return new LeafExensionFieldSetter(definition, sparkToHapi);
+  }
+
+  @Override
+  public HapiConverter merge(HapiConverter other) throws ProfileException {
+    HapiConverterUtil.validateIfConvertersCanBeMerged(this, other);
+    HapiConverter mergedValueConverter =
+        this.valueConverter.merge(((LeafExtensionConverter) other).valueConverter);
+    return new LeafExtensionConverter(this.extensionUrl, mergedValueConverter);
   }
 }
