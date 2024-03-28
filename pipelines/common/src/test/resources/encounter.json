@@ -1,0 +1,75 @@
+{
+  "resourceType": "Encounter",
+  "id": "46f919e2-2d3c-c055-e97b-f3ad7bbf110e",
+  "meta": {
+    "profile": [ "http://hl7.org/fhir/us/core/StructureDefinition/us-core-encounter" ]
+  },
+  "identifier": [ {
+    "use": "official",
+    "system": "https://github.com/synthetichealth/synthea",
+    "value": "46f919e2-2d3c-c055-e97b-f3ad7bbf110e"
+  } ],
+  "status": "finished",
+  "class": {
+    "system": "http://terminology.hl7.org/CodeSystem/v3-ActCode",
+    "code": "AMB"
+  },
+  "serviceProvider": {
+    "reference": "Organization/1",
+    "display": "A test org"
+  },
+  "episodeOfCare": {
+    "reference": "EpisodeOfCare/12",
+    "display": "test"
+  },
+  "type": [ {
+    "coding": [ {
+      "system": "http://snomed.info/sct",
+      "code": "410620009",
+      "display": "Well child visit (procedure)"
+    }, {
+      "system": "TEST_INNER",
+      "code": "91",
+      "display": "Well child visit (procedure)"
+    } ]
+  },
+    {
+      "coding": [ {
+        "system": "TEST",
+        "code": "419",
+        "display": "Well child visit (procedure)"
+      } ]
+    } ],
+  "subject": {
+    "reference": "Patient/123",
+    "display": "Mr. Loren192 Witting912"
+  },
+  "participant": [ {
+    "type": [ {
+      "coding": [ {
+        "system": "http://terminology.hl7.org/CodeSystem/v3-ParticipationType",
+        "code": "PPRF",
+        "display": "primary performer"
+      } ],
+      "text": "primary performer"
+    } ],
+    "period": {
+      "start": "1965-09-16T23:24:20+00:00",
+      "end": "1965-09-16T23:39:20+00:00"
+    },
+    "individual": {
+      "reference": "Practitioner/9999949959",
+      "display": "Dr. Blair400 Lebsack687"
+    }
+  } ],
+  "period": {
+    "start": "1965-09-16T23:24:20+00:00",
+    "end": "1965-09-16T23:39:20+00:00"
+  },
+  "location": [ {
+    "location": {
+      "reference": "Location/1212",
+      "display": "PCP140493"
+    }
+  } ]
+}

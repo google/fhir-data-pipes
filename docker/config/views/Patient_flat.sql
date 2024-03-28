@@ -1,5 +1,5 @@
 CREATE OR REPLACE VIEW Patient_flat AS
-SELECT P.id AS pat_id, P.active, PN.family, PNG AS given, P.gender,
+SELECT P.id AS id, P.active, PN.family, PNG AS given, P.gender,
   P.deceased.Boolean AS deceased,
   YEAR(current_date()) - YEAR(P.birthDate) AS age,
   PA.country, PG.practitionerId AS practitioner_id,

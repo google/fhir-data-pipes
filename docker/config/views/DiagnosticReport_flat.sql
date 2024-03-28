@@ -1,5 +1,5 @@
 CREATE OR REPLACE VIEW DiagnosticReport_flat AS
-SELECT D.id AS dr_id, D.subject.patientId AS patient_id,
+SELECT D.id AS id, D.subject.patientId AS patient_id,
   D.encounter.EncounterId AS encounter_id,
   DCC.system, DCC.code, DR.observationId AS result_obs_id,
   D.status, DP.PractitionerId AS practitioner_id,

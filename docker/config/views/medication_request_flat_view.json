@@ -1,0 +1,76 @@
+{
+  "resourceType": "http://hl7.org/fhir/uv/sql-on-fhir/StructureDefinition/ViewDefinition",
+  "text": "This is the SQL-on-FHIR-v2 version of MedicationRequest_flat.sql",
+  "select": [
+    {
+      "column": [
+        {
+          "path": "getResourceKey()",
+          "name": "id"
+        },
+        {
+          "path": "subject.getReferenceKey('Patient')",
+          "name": "patient_id"
+        },
+        {
+          "path": "encounter.getReferenceKey('Encounter')",
+          "name": "encounter_id"
+        },
+        {
+          "path": "status",
+          "name": "status"
+        },
+        {
+          "path": "intent",
+          "name": "intent"
+        },
+        {
+          "path": "doNotPerform",
+          "name": "doNotPerform",
+          "type": "boolean"
+        },
+        {
+          "path": "requester.getReferenceKey('Practitioner')",
+          "name": "req_practitioner_id"
+        },
+        {
+          "path": "performer.getReferenceKey('Practitioner')",
+          "name": "perf_practitioner_id"
+        },
+        {
+          "path": "medication.ofType(Reference).getReferenceKey('Medication')",
+          "name": "med_id"
+        }
+      ]
+    },
+    {
+      "forEachOrNull": "medication.ofType(CodeableConcept).coding",
+      "column": [
+        {
+          "path": "system",
+          "name": "med_system"
+        },
+        {
+          "path": "code",
+          "name": "med_code"
+        }
+      ]
+    },
+    {
+      "forEachOrNull": "statusReason.coding",
+      "column": [
+        {
+          "path": "system",
+          "name": "statusReason_sys"
+        },
+        {
+          "path": "code",
+          "name": "statusReason_code"
+        }
+      ]
+    }
+  ],
+  "name": "medication_request_flat",
+  "status": "draft",
+  "resource": "MedicationRequest"
+}

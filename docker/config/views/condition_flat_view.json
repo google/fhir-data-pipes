@@ -1,6 +1,6 @@
 {
   "resourceType": "http://hl7.org/fhir/uv/sql-on-fhir/StructureDefinition/ViewDefinition",
-  "text": "This is [almost] the SQL-on-FHIR-v2 version of Observation_flat.sql",
+  "text": "This is the SQL-on-FHIR-v2 version of Condition_flat.sql",
   "select": [
     {
       "column": [
@@ -17,18 +17,9 @@
           "name": "encounter_id"
         },
         {
-          "path": "status",
-          "name": "status"
-        },
-        {
-          "path": "effective.ofType(dateTime)",
-          "name": "obs_date",
+          "path": "onset.ofType(dateTime)",
+          "name": "onset_datetime",
           "type": "dateTime"
-        },
-        {
-          "path": "value.ofType(Quantity).value",
-          "name": "val_quantity",
-          "type": "decimal"
         }
       ]
     },
@@ -36,30 +27,44 @@
       "forEachOrNull": "code.coding",
       "column": [
         {
-          "path": "code",
-          "name": "code"
+          "path": "system",
+          "name": "system"
         },
         {
-          "path": "system",
-          "name": "code_sys"
+          "path": "code",
+          "name": "code"
         }
       ]
     },
     {
-      "forEachOrNull": "value.ofType(CodeableConcept).coding",
+      "forEachOrNull": "category.coding",
       "column": [
         {
           "path": "code",
-          "name": "val_code"
-        },
+          "name": "category"
+        }
+      ]
+    },
+    {
+      "forEachOrNull": "clinicalStatus.coding",
+      "column": [
         {
-          "path": "system",
-          "name": "val_sys"
+          "path": "code",
+          "name": "clinical_status"
+        }
+      ]
+    },
+    {
+      "forEachOrNull": "verificationStatus.coding",
+      "column": [
+        {
+          "path": "code",
+          "name": "verification_status"
         }
       ]
     }
   ],
-  "name": "observation_flat",
+  "name": "condition_flat",
   "status": "draft",
-  "resource": "Observation"
+  "resource": "Condition"
 }

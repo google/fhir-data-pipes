@@ -1,0 +1,39 @@
+{
+  "resourceType": "Immunization",
+  "id": "8db297e1-658f-6612-0e3a-7f9c0943b877",
+  "meta": {
+    "profile": [ "http://hl7.org/fhir/us/core/StructureDefinition/us-core-immunization" ]
+  },
+  "status": "completed",
+  "vaccineCode": {
+    "coding": [ {
+      "system": "http://hl7.org/fhir/sid/cvx",
+      "code": "10",
+      "display": "IPV"
+    } ],
+    "text": "IPV"
+  },
+  "patient": {
+    "reference": "Patient/cc4e734c-272f-170f-705a-28acede04ff9"
+  },
+  "encounter": {
+    "reference": "Encounter/c6ea7b81-bf2f-d7af-f681-f1b25805abd9"
+  },
+  "occurrenceDateTime": "1965-12-23T23:24:20+00:00",
+  "primarySource": true,
+  "performer": [ {
+    "actor": {
+      "reference": "Practitioner/9999999899",
+      "display": "Dr. Cecille691 Halvorson124"
+    }
+  }, {
+    "actor": {
+      "reference": "Organization/199",
+      "display": "TEST HOSPITAL"
+    }
+  }],
+  "location": {
+    "reference": "Location/ccde90ff-b14b-335c-ba02-8eac2ad9860d",
+    "display": "PCP140493"
+  }
+}

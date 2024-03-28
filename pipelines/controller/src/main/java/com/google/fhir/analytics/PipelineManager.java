@@ -242,6 +242,10 @@ public class PipelineManager implements ApplicationListener<ApplicationReadyEven
     }
   }
 
+  FhirContext getFhirContext() throws ProfileMapperException {
+    return avroConversionUtil.getFhirContext();
+  }
+
   private void initialiseFlinkConfiguration() {
     flinkConfiguration = new FlinkConfiguration();
     try {
