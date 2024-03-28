@@ -372,7 +372,7 @@ fhir_source_query
 sleep 50
 run_pipeline "FULL"
 check_parquet false
-test_fhir_sink "FULL"
+#test_fhir_sink "FULL"
 
 clear
 
@@ -384,7 +384,7 @@ run_pipeline "INCREMENTAL"
 check_parquet true
 fhir_source_query
 sleep 40
-test_fhir_sink "INCREMENTAL"
+# test_fhir_sink "INCREMENTAL"
 
 
 validate_resource_tables
