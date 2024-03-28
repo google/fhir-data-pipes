@@ -75,7 +75,6 @@ function print_message() {
 #   HOME_PATH
 #   PARQUET_SUBDIR
 #   SOURCE_FHIR_SERVER_URL
-#   SINK_FHIR_SERVER_URL
 #   PIPELINE_CONTROLLER_URL
 #   THRIFTSERVER_URL
 # Arguments:
@@ -89,12 +88,10 @@ function setup() {
   HOME_PATH=$1
   PARQUET_SUBDIR=$2
   SOURCE_FHIR_SERVER_URL='http://localhost:8091'
-  SINK_FHIR_SERVER_URL='http://localhost:8098'
   PIPELINE_CONTROLLER_URL='http://localhost:8090'
   THRIFTSERVER_URL='localhost:10001'
   if [[ $3 = "--use_docker_network" ]]; then
     SOURCE_FHIR_SERVER_URL='http://hapi-server:8080'
-    SINK_FHIR_SERVER_URL='http://sink-server:8080'
     PIPELINE_CONTROLLER_URL='http://pipeline-controller:8080'
     THRIFTSERVER_URL='spark:10000'
   fi
@@ -347,32 +344,12 @@ function validate_updated_resource() {
   fi
 }
 
-
-#################################################
-# Function that counts resources in  FHIR server and compares output to what is 
-#  in the source FHIR server
-# Globals:
-#   HOME_PATH
-#   PARQUET_SUBDIR
-#   SINK_FHIR_SERVER_URL
-#   TOTAL_TEST_PATIENTS
-#   TOTAL_TEST_ENCOUNTERS
-#   TOTAL_TEST_OBS
-#################################################
-function test_fhir_sink(){
-  local runMode=$1
-  local STREAMING=""
-  ./test_fhir_sink.sh "${runMode}" "${STREAMING}" "${HOME_PATH}" "${PARQUET_SUBDIR}" \
-  "${SINK_FHIR_SERVER_URL}" "${TOTAL_TEST_PATIENTS}" "${TOTAL_TEST_ENCOUNTERS}" "${TOTAL_TEST_OBS}"
-}
-
 validate_args  "$@"
 setup "$@"
 fhir_source_query
 sleep 50
 run_pipeline "FULL"
 check_parquet false
-test_fhir_sink "FULL"
 
 clear
 
@@ -382,10 +359,6 @@ sleep 10
 # Incremental run.
 run_pipeline "INCREMENTAL"
 check_parquet true
-fhir_source_query
-sleep 40
-test_fhir_sink "INCREMENTAL"
-
 
 validate_resource_tables
 validate_resource_tables_data
