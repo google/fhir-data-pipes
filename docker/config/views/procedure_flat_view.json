@@ -1,6 +1,6 @@
 {
   "resourceType": "http://hl7.org/fhir/uv/sql-on-fhir/StructureDefinition/ViewDefinition",
-  "text": "This is [almost] the SQL-on-FHIR-v2 version of Observation_flat.sql",
+  "text": "This is [almost] the SQL-on-FHIR-v2 version of Procedure_flat.sql",
   "select": [
     {
       "column": [
@@ -17,18 +17,26 @@
           "name": "encounter_id"
         },
         {
+          "path": "performer.actor.getReferenceKey('Practitioner')",
+          "name": "practitioner_id"
+        },
+        {
+          "path": "location.getReferenceKey('Location')",
+          "name": "location_id"
+        },
+        {
           "path": "status",
           "name": "status"
         },
         {
-          "path": "effective.ofType(dateTime)",
-          "name": "obs_date",
+          "path": "performed.ofType(Period).start",
+          "name": "period_start",
           "type": "dateTime"
         },
         {
-          "path": "value.ofType(Quantity).value",
-          "name": "val_quantity",
-          "type": "decimal"
+          "path": "performed.ofType(Period).end",
+          "name": "period_end",
+          "type": "dateTime"
         }
       ]
     },
@@ -41,25 +49,12 @@
         },
         {
           "path": "system",
-          "name": "code_sys"
-        }
-      ]
-    },
-    {
-      "forEachOrNull": "value.ofType(CodeableConcept).coding",
-      "column": [
-        {
-          "path": "code",
-          "name": "val_code"
-        },
-        {
-          "path": "system",
-          "name": "val_sys"
+          "name": "system"
         }
       ]
     }
   ],
-  "name": "observation_flat",
+  "name": "procedure_flat",
   "status": "draft",
-  "resource": "Observation"
+  "resource": "Procedure"
 }

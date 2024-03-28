@@ -20,6 +20,7 @@ import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableMap;
 import com.google.gson.Gson;
+import com.google.gson.JsonSyntaxException;
 import java.io.IOException;
 import java.io.Reader;
 import java.nio.charset.StandardCharsets;
@@ -36,10 +37,13 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import lombok.Builder;
 import lombok.Getter;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 // TODO: Generate this class from StructureDefinition using tools like:
 //  https://github.com/hapifhir/org.hl7.fhir.core/tree/master/org.hl7.fhir.core.generator
 public class ViewDefinition {
+  private static final Logger log = LoggerFactory.getLogger(ViewDefinition.class);
   private static Pattern CONSTANT_PATTERN = Pattern.compile("%[A-Za-z][A-Za-z0-9_]*");
   private static Pattern SQL_NAME_PATTERN = Pattern.compile("^[A-Za-z][A-Za-z0-9_]*$");
 
@@ -74,12 +78,17 @@ public class ViewDefinition {
 
   public static ViewDefinition createFromString(String jsonContent) throws ViewDefinitionException {
     Gson gson = new Gson();
-    ViewDefinition view = gson.fromJson(jsonContent, ViewDefinition.class);
-    if (view == null) {
-      throw new ViewDefinitionException("Error in parsing ViewDefinition JSON content!");
+    try {
+      ViewDefinition view = gson.fromJson(jsonContent, ViewDefinition.class);
+      if (view == null) {
+        throw new ViewDefinitionException("Error in parsing ViewDefinition JSON content!");
+      }
+      view.validateAndSetUp(true);
+      return view;
+    } catch (JsonSyntaxException e) {
+      log.error("Error in parsing ViewDefinition JSON: ", e);
+      throw new ViewDefinitionException(e.getMessage());
     }
-    view.validateAndSetUp(true);
-    return view;
   }
 
   /**
