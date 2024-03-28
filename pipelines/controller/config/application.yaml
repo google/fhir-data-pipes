@@ -171,6 +171,12 @@ fhirdata:
   # empty string disables this feature.
   sinkDbConfigPath: "config/hapi-postgres-config_local_views.json"
 
+  # The base URL of the FHIR Store/Sink server 
+  fhirSinkPath: 
+  # The following user-name/password should be set if the FHIR store supports Basic Auth.
+  #sinkUserName: "hapi"
+  #sinkPassword: "hapi123"
+
 # Enable spring boot actuator end points, use "*" to expose all endpoints, or a comma-separated
 # list to expose selected ones
 management:

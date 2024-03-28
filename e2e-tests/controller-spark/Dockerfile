@@ -19,6 +19,7 @@ RUN apt-get update && apt-get install -y jq curl python3 python3-pip
 RUN pip3 install virtualenv google-auth requests
 
 COPY controller_spark_sql_validation.sh controller_spark_sql_validation.sh
+COPY test_fhir_sink.sh  test_fhir_sink.sh
 COPY parquet-tools-1.11.1.jar  parquet-tools-1.11.1.jar
 ENV PARQUET_SUBDIR="dwh"
 ENV DOCKER_NETWORK="--use_docker_network"
