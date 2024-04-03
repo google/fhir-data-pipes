@@ -131,8 +131,8 @@ public class ApiController {
   public ResponseEntity<String> testView(
       @RequestParam(name = "resource", required = true) String resourceContent,
       @RequestParam(name = "viewDef", required = true) String viewDef) {
-    logger.debug("viewDef: " + viewDef);
-    logger.debug("resourceContent: " + resourceContent);
+    logger.debug("viewDef: {}", viewDef);
+    logger.debug("resourceContent: {}", resourceContent);
     String response = "";
     HttpStatus status = HttpStatus.OK;
     try {
