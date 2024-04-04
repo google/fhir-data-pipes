@@ -1,23 +1,26 @@
 import os
 import time
 
-DB_INSTANCE = "pipeline-scaling-1"
-SOURCE = "79_patients"
-# SOURCE = "7885_patients"
+DB_INSTANCE = os.environ["DB_INSTANCE"]
 FHIR_SERVER_URL = "http://localhost:8080/fhir"
 ENABLE_UPLOAD = True
 ENABLE_DOWNLOAD = True
 TMP_DIR = "/tmp/scaling"
-
+SOURCE = os.environ['PATIENTS']
 
 def main():
     shell(f"mkdir -p {TMP_DIR}")
 
-    if not os.path.exists(SOURCE):
+    input_dir = os.path.join(TMP_DIR, SOURCE)
+    parquet_dir = os.path.join(TMP_DIR, f"parquet_{SOURCE}")
+
+    if not os.path.exists(input_dir):
         shell_measure(
             description=f"Downloaded {SOURCE} from cloud storage",
             command=f'gsutil -m cp -r "gs://synthea-hiv/{SOURCE}" {TMP_DIR}'
         )
+
+    shell(f"rm -rf {parquet_dir}")
 
     # Test HAPI server readiness.
     shell_run_until_succeeds(
@@ -25,11 +28,9 @@ def main():
 
     if ENABLE_UPLOAD:
         # Re-create the database.
-        shell(f"gcloud sql databases delete {SOURCE} --instance={DB_INSTANCE}", exit_on_failure=False)
-        shell(f"gcloud sql databases create {SOURCE} --instance={DB_INSTANCE}")
         shell_measure(
             description=f"Upload {SOURCE} to HAPI FHIR server",
-            command=f"python3 synthea-hiv/uploader/main.py HAPI {FHIR_SERVER_URL} --input_dir {SOURCE}"
+            command=f"python3 synthea-hiv/uploader/main.py HAPI {FHIR_SERVER_URL} --input_dir {input_dir} --cores 8"
         )
     if ENABLE_DOWNLOAD:
         shell_measure(
@@ -37,7 +38,7 @@ def main():
             command=" ".join(["java -cp ./pipelines/batch/target/batch-bundled.jar",
                               "com.google.fhir.analytics.FhirEtl",
                               f"--fhirServerUrl={FHIR_SERVER_URL}",
-                              f"--outputParquetPath={TMP_DIR}/parquet_{SOURCE}"])
+                              f"--outputParquetPath={parquet_dir}"])
         )
 
 
