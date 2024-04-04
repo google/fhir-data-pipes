@@ -11,13 +11,13 @@ DIR_WITH_THIS_SCRIPT="$( cd -- "$(dirname "$0")" >/dev/null 2>&1 ; pwd -P )"
 source "$DIR_WITH_THIS_SCRIPT/variables.sh"
 
 GITS_DIR=~/gits
+VENV=venv_fhir
 
 cd $GITS_DIR/fhir-data-pipes
 
 # Install Python virtual env.
-[[ -d "venv" ]] || python3 -m venv venv
-source venv/bin/activate
-
+[[ -d $VENV ]] || python3 -m venv $VENV
+source $VENV/bin/activate
 # Install dependencies for uploader.
 pip install -r ./synthea-hiv/uploader/requirements.txt
 
