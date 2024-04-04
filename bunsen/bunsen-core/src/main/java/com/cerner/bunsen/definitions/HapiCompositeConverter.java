@@ -382,8 +382,8 @@ public abstract class HapiCompositeConverter<T> extends HapiConverter<T> {
     return elementType;
   }
 
-  @Override
-  public List<StructureField<HapiConverter<T>>> getElements() {
+  /** Returns the children fields that the current converter is responsible for conversion */
+  public List<StructureField<HapiConverter<T>>> getChildren() {
     return children;
   }
 }

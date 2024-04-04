@@ -22,7 +22,8 @@ public class IdConverter<T> extends StringConverter<T> {
 
   @Override
   public HapiConverter merge(HapiConverter other) throws ProfileException {
-    HapiConverterUtil.validateIfConvertersCanBeMerged(this, other);
+    HapiConverterUtil.validateIfImplementationClassesAreSame(this, other);
+    validateIfElementTypesAreSame(other);
     return this;
   }
 }

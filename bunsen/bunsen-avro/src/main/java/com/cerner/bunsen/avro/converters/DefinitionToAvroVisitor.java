@@ -74,7 +74,8 @@ public class DefinitionToAvroVisitor implements DefinitionVisitor<HapiConverter<
 
         @Override
         public HapiConverter merge(HapiConverter other) throws ProfileException {
-          HapiConverterUtil.validateIfConvertersCanBeMerged(this, other);
+          HapiConverterUtil.validateIfImplementationClassesAreSame(this, other);
+          validateIfElementTypesAreSame(other);
           return this;
         }
       };
@@ -91,7 +92,8 @@ public class DefinitionToAvroVisitor implements DefinitionVisitor<HapiConverter<
 
         @Override
         public HapiConverter merge(HapiConverter other) throws ProfileException {
-          HapiConverterUtil.validateIfConvertersCanBeMerged(this, other);
+          HapiConverterUtil.validateIfImplementationClassesAreSame(this, other);
+          validateIfElementTypesAreSame(other);
           return this;
         }
       };
@@ -135,7 +137,8 @@ public class DefinitionToAvroVisitor implements DefinitionVisitor<HapiConverter<
 
         @Override
         public HapiConverter merge(HapiConverter other) throws ProfileException {
-          HapiConverterUtil.validateIfConvertersCanBeMerged(this, other);
+          HapiConverterUtil.validateIfImplementationClassesAreSame(this, other);
+          validateIfElementTypesAreSame(other);
           return this;
         }
       };
@@ -226,7 +229,7 @@ public class DefinitionToAvroVisitor implements DefinitionVisitor<HapiConverter<
 
     @Override
     public HapiConverter merge(HapiConverter other) throws ProfileException {
-      HapiConverterUtil.validateIfConvertersCanBeMerged(this, other);
+      HapiConverterUtil.validateIfImplementationClassesAreSame(this, other);
       CompositeToAvroConverter otherConverter = (CompositeToAvroConverter) other;
       // For extensions
       if (!(Strings.isNullOrEmpty(this.extensionUrl())
@@ -243,16 +246,16 @@ public class DefinitionToAvroVisitor implements DefinitionVisitor<HapiConverter<
       }
 
       // For non-extensions
-      List<StructureField<HapiConverter<Schema>>> currentElements = this.getElements();
-      List<StructureField<HapiConverter<Schema>>> rightElements = otherConverter.getElements();
+      List<StructureField<HapiConverter<Schema>>> currentChildren = this.getChildren();
+      List<StructureField<HapiConverter<Schema>>> otherChildren = otherConverter.getChildren();
 
       List<StructureField<HapiConverter<Schema>>> mergedList = new ArrayList<>();
       Map<String, StructureField> currentElementsMap =
-          currentElements.stream().collect(Collectors.toMap(s -> s.fieldName(), s -> s));
+          currentChildren.stream().collect(Collectors.toMap(s -> s.fieldName(), s -> s));
       Map<String, StructureField> otherElementsMap =
-          rightElements.stream().collect(Collectors.toMap(s -> s.fieldName(), s -> s));
+          otherChildren.stream().collect(Collectors.toMap(s -> s.fieldName(), s -> s));
 
-      for (StructureField currentField : currentElements) {
+      for (StructureField currentField : currentChildren) {
         if (!otherElementsMap.containsKey(currentField.fieldName())) {
           // Add the current element since it's not available in the other converter.
           mergedList.add(currentField);
@@ -277,9 +280,9 @@ public class DefinitionToAvroVisitor implements DefinitionVisitor<HapiConverter<
       }
 
       // Add the remaining elements in the other converter
-      for (StructureField rightField : rightElements) {
-        if (!currentElementsMap.containsKey(rightField.fieldName())) {
-          mergedList.add(rightField);
+      for (StructureField otherField : otherChildren) {
+        if (!currentElementsMap.containsKey(otherField.fieldName())) {
+          mergedList.add(otherField);
         }
       }
 
@@ -328,10 +331,10 @@ public class DefinitionToAvroVisitor implements DefinitionVisitor<HapiConverter<
 
     @Override
     public HapiConverter merge(HapiConverter other) throws ProfileException {
-      HapiConverterUtil.validateIfConvertersCanBeMerged(this, other);
+      HapiConverterUtil.validateIfImplementationClassesAreSame(this, other);
       HapiChoiceToAvroConverter otherConverter = (HapiChoiceToAvroConverter) other;
-      Map<String, HapiConverter<Schema>> currentChoiceTypes = this.getElements();
-      Map<String, HapiConverter<Schema>> otherChoiceTypes = otherConverter.getElements();
+      Map<String, HapiConverter<Schema>> currentChoiceTypes = this.getChoiceTypes();
+      Map<String, HapiConverter<Schema>> otherChoiceTypes = otherConverter.getChoiceTypes();
 
       // Use a linked hash map to preserve the order of the fields in the merged converter
       Map<String, HapiConverter<Schema>> mergedChoiceTypes = new LinkedHashMap<>();
@@ -525,7 +528,7 @@ public class DefinitionToAvroVisitor implements DefinitionVisitor<HapiConverter<
 
     @Override
     public HapiConverter merge(HapiConverter other) throws ProfileException {
-      HapiConverterUtil.validateIfConvertersCanBeMerged(this, other);
+      HapiConverterUtil.validateIfImplementationClassesAreSame(this, other);
       HapiConverter mergedElementConverter =
           this.elementConverter.merge(((MultiValuedToAvroConverter) other).getElementConverter());
       return new MultiValuedToAvroConverter(mergedElementConverter);
@@ -689,7 +692,7 @@ public class DefinitionToAvroVisitor implements DefinitionVisitor<HapiConverter<
 
     @Override
     public HapiConverter merge(HapiConverter other) throws ProfileException {
-      HapiConverterUtil.validateIfConvertersCanBeMerged(this, other);
+      HapiConverterUtil.validateIfImplementationClassesAreSame(this, other);
       String leftPrefix = Strings.nullToEmpty(this.prefix);
       String rightPrefix = Strings.nullToEmpty(((RelativeValueConverter) other).prefix);
       if (!Objects.equals(leftPrefix, rightPrefix)) {

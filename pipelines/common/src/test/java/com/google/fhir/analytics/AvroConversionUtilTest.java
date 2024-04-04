@@ -175,8 +175,8 @@ public class AvroConversionUtilTest {
             avroConversionUtil.getFhirContext(), R4UsCoreProfileData.US_CORE_PATIENT_PROFILES);
     // Check if the schemas are equal
     assertThat(
-        patientConverterFetchedDirectly.getSchema().toString(),
-        Matchers.equalTo(patientConverterFromAvroConversionUtil.getSchema().toString()));
+        patientConverterFromAvroConversionUtil.getSchema(),
+        Matchers.equalTo(patientConverterFetchedDirectly.getSchema()));
 
     AvroConverter obsConverterFromAvroConversionUtil =
         avroConversionUtil.getConverter("Observation");
@@ -185,8 +185,8 @@ public class AvroConversionUtilTest {
             avroConversionUtil.getFhirContext(), R4UsCoreProfileData.US_CORE_OBSERVATION_PROFILES);
     // Check if the schemas are equal
     assertThat(
-        obsConverterFetchedDirectly.getSchema().toString(),
-        Matchers.equalTo(obsConverterFromAvroConversionUtil.getSchema().toString()));
+        obsConverterFromAvroConversionUtil.getSchema(),
+        Matchers.equalTo(obsConverterFetchedDirectly.getSchema()));
   }
 
   @Test
@@ -200,8 +200,8 @@ public class AvroConversionUtilTest {
         AvroConverter.forResource(avroConversionUtil.getFhirContext(), BASE_PATIENT);
     // Check if the schemas are equal
     assertThat(
-        patientConverterFromAvroConversionUtil.getSchema().toString(),
-        Matchers.equalTo(patientConverterFetchedDirectly.getSchema().toString()));
+        patientConverterFromAvroConversionUtil.getSchema(),
+        Matchers.equalTo(patientConverterFetchedDirectly.getSchema()));
 
     AvroConverter obsConverterFromAvroConversionUtil =
         avroConversionUtil.getConverter("Observation");
@@ -209,8 +209,8 @@ public class AvroConversionUtilTest {
         AvroConverter.forResource(avroConversionUtil.getFhirContext(), "Observation");
     // Check if the schemas are equal
     assertThat(
-        obsConverterFromAvroConversionUtil.getSchema().toString(),
-        Matchers.equalTo(obsConverterFetchedDirectly.getSchema().toString()));
+        obsConverterFromAvroConversionUtil.getSchema(),
+        Matchers.equalTo(obsConverterFetchedDirectly.getSchema()));
   }
 
   @Test

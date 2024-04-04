@@ -85,15 +85,6 @@ public abstract class HapiConverter<T> {
   }
 
   /**
-   * Returns the elements which the converter if responsible for conversion
-   *
-   * @return the elements which needs conversion
-   */
-  public Object getElements() {
-    return null;
-  }
-
-  /**
    * Returns a field setter to be used when converting an object of an alternative model to HAPI.
    * Choice types may have multiple element definitions, but in the common case there will be only
    * one.

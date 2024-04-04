@@ -115,8 +115,8 @@ public abstract class HapiChoiceConverter<T> extends HapiConverter<T> {
     return structType;
   }
 
-  @Override
-  public Map<String, HapiConverter<T>> getElements() {
+  /** Returns the choice type fields that the current converter is responsible for conversion */
+  public Map<String, HapiConverter<T>> getChoiceTypes() {
     return choiceTypes;
   }
 }

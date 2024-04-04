@@ -142,8 +142,8 @@ public class AvroConverterMergeTest {
     org.hl7.fhir.dstu3.model.Patient patientDecoded =
         (org.hl7.fhir.dstu3.model.Patient) patientConverter.avroToResource(avroRecord);
     patientDecoded.setId(patient.getId());
-    // TODO : The test field is not properly copied to the decoded object back, hence manually
-    // copying it. This needs to be debugged.
+    // TODO : The text field is not properly copied to the decoded object back, hence manually
+    // copying it, check here for details https://github.com/google/fhir-data-pipes/issues/1014
     patientDecoded.setText(patient.getText());
     Assert.assertTrue(patient.equalsDeep(patientDecoded));
   }

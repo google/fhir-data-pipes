@@ -82,7 +82,11 @@ public class ParquetMerger {
             .apply(FileIO.matchAll())
             .apply(FileIO.readMatches());
 
-    // TODO make the FHIR version configurable: https://github.com/google/fhir-data-pipes/issues/400
+    // The assumption here is that the schema of the old parquet files is same as the current
+    // schema, otherwise reading of the older records fail even if the new Schema is just an
+    // extension. In general, if the schema changes due to addition of new extensions, then the
+    // merging process fail. It is recommended to recreate the entire parquet files using the new
+    // schema again using the batch run.
     PCollection<GenericRecord> records =
         inputFiles.apply(ParquetIO.readFiles(avroConversionUtil.getResourceSchema(resourceType)));
 
