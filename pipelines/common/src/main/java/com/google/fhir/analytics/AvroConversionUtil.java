@@ -56,7 +56,7 @@ public class AvroConversionUtil {
 
   private ProfileMapperFhirContexts profileMapperFhirContexts;
 
-  private FhirContext fhirContext;
+  private final FhirContext fhirContext;
 
   private FhirVersionEnum fhirVersionEnum;
 
@@ -143,17 +143,11 @@ public class AvroConversionUtil {
     return instance;
   }
 
-  public synchronized FhirContext getFhirContext() throws ProfileMapperException {
+  public synchronized FhirContext getFhirContext() {
     // This should never be the case as creation of new instance makes sure the FhirContext is
     // initialised properly.
-    if (fhirContext == null) {
-      String errorMsg =
-          "The fhirContext is not initialised yet. Please initialise the fhirContext using"
-              + " the method getInstance(FhirVersionEnum fhirVersion, @Nullable String"
-              + " structureDefinitionsDir)";
-      log.error(errorMsg);
-      throw new ProfileMapperException(errorMsg);
-    }
+    Preconditions.checkNotNull(
+        fhirContext, "The fhirContext should have been initialised in the constructor!");
     return fhirContext;
   }
 
