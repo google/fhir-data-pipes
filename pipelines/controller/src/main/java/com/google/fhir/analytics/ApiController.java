@@ -127,7 +127,7 @@ public class ApiController {
     return new ResponseEntity<>(inputStreamResource, headers, HttpStatus.OK);
   }
 
-  @PostMapping("/testView")
+  @PostMapping("/test-view")
   public ResponseEntity<String> testView(
       @RequestParam(name = "resource", required = true) String resourceContent,
       @RequestParam(name = "viewDef", required = true) String viewDef) {

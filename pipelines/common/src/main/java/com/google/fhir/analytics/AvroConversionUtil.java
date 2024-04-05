@@ -143,7 +143,7 @@ public class AvroConversionUtil {
     return instance;
   }
 
-  public synchronized FhirContext getFhirContext() throws ProfileMapperException {
+  public synchronized FhirContext getFhirContext() {
     // This should never be the case as creation of new instance makes sure the FhirContext is
     // initialised properly.
     Preconditions.checkNotNull(

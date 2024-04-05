@@ -761,7 +761,7 @@ public class PipelineManager implements ApplicationListener<ApplicationReadyEven
       }
       dwhRunDetails.setStatus(status);
       this.lastRunDetails = dwhRunDetails;
-    } catch (IOException | ProfileMapperException e) {
+    } catch (IOException e) {
       logger.error("Error while updating last run details", e);
       throw new RuntimeException(e);
     }
