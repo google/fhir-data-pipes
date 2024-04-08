@@ -1,12 +1,12 @@
 import os
 import time
 
-DB_INSTANCE = os.environ["DB_INSTANCE"]
 FHIR_SERVER_URL = "http://localhost:8080/fhir"
 ENABLE_UPLOAD = True
 ENABLE_DOWNLOAD = True
 TMP_DIR = "/tmp/scaling"
-SOURCE = os.environ['PATIENTS']
+SOURCE = f"{os.environ['PATIENTS']}_patients"
+FHIR_UPLOADER_CORES = os.environ['FHIR_UPLOADER_CORES']
 
 def main():
     shell(f"mkdir -p {TMP_DIR}")
@@ -30,7 +30,7 @@ def main():
         # Re-create the database.
         shell_measure(
             description=f"Upload {SOURCE} to HAPI FHIR server",
-            command=f"python3 synthea-hiv/uploader/main.py HAPI {FHIR_SERVER_URL} --input_dir {input_dir} --cores 8"
+            command=f"python3 synthea-hiv/uploader/main.py HAPI {FHIR_SERVER_URL} --input_dir {input_dir} --cores {FHIR_UPLOADER_CORES}"
         )
     if ENABLE_DOWNLOAD:
         shell_measure(

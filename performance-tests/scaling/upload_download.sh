@@ -7,8 +7,7 @@
 set -e # Fail on errors.
 set -x # Show each command.
 
-DIR_WITH_THIS_SCRIPT="$( cd -- "$(dirname "$0")" >/dev/null 2>&1 ; pwd -P )"
-source "$DIR_WITH_THIS_SCRIPT/variables.sh"
+source ./variables.sh
 
 GITS_DIR=~/gits
 VENV=venv_fhir
