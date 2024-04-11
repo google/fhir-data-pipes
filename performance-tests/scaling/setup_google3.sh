@@ -34,5 +34,7 @@ APPLICATION_YAML="~/gits/hapi-fhir-jpaserver-starter/src/main/resources/applicat
 # Re-start the HAPI server.
 "${RUN_ON_HAPI_STANZA[@]}" "(cd ~/gits/fhir-data-pipes/performance-tests/scaling && bash ./start_hapi_server.sh)"
 
-sleep 30
-"$DIR_WITH_THIS_SCRIPT/hapi_port_forward.sh"
+if [ "$RUNNING_ON_HAPI_VM" = false ]; then
+  sleep 30
+  "$DIR_WITH_THIS_SCRIPT/hapi_port_forward.sh"
+fi

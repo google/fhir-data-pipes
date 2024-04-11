@@ -16,7 +16,7 @@ def main():
     input_dir = os.path.join(TMP_DIR, SOURCE)
     parquet_dir = os.path.join(TMP_DIR, f"parquet_{SOURCE}")
 
-    if not os.path.exists(input_dir):
+    if ENABLE_UPLOAD and not os.path.exists(input_dir):
         shell_measure(
             description=f"Downloaded {SOURCE} from cloud storage",
             command=f'gsutil -m cp -r "gs://synthea-hiv/{SOURCE}" {TMP_DIR}'
