@@ -2,11 +2,13 @@ import os
 import time
 
 FHIR_SERVER_URL = "http://localhost:8080/fhir"
-ENABLE_UPLOAD = True
-ENABLE_DOWNLOAD = True
+ENABLE_UPLOAD = os.environ['ENABLE_UPLOAD'] == 'true'
+ENABLE_DOWNLOAD = os.environ['ENABLE_DOWNLOAD'] == 'true'
 TMP_DIR = "/tmp/scaling"
 SOURCE = f"{os.environ['PATIENTS']}_patients"
 FHIR_UPLOADER_CORES = os.environ['FHIR_UPLOADER_CORES']
+DB_TYPE = os.environ['DB_TYPE']
+DIR_WITH_THIS_SCRIPT = os.environ['DIR_WITH_THIS_SCRIPT']
 
 def main():
     shell(f"mkdir -p {TMP_DIR}")
@@ -29,15 +31,24 @@ def main():
     if ENABLE_UPLOAD:
         # Re-create the database.
         shell_measure(
-            description=f"Upload {SOURCE} to HAPI FHIR server",
+            description=f"Upload {SOURCE} to HAPI FHIR server; {FHIR_UPLOADER_CORES} cores; {DB_TYPE}",
             command=f"python3 synthea-hiv/uploader/main.py HAPI {FHIR_SERVER_URL} --input_dir {input_dir} --cores {FHIR_UPLOADER_CORES}"
         )
-    if ENABLE_DOWNLOAD:
+    if False:
         shell_measure(
             description=f"Run FhirEtl for {SOURCE}",
             command=" ".join(["java -cp ./pipelines/batch/target/batch-bundled.jar",
                               "com.google.fhir.analytics.FhirEtl",
                               f"--fhirServerUrl={FHIR_SERVER_URL}",
+                              f"--outputParquetPath={parquet_dir}"])
+        )
+    if ENABLE_DOWNLOAD:
+        shell_measure(
+            description=f"Run FhirEtl for {SOURCE} JDBC mode",
+            command=" ".join(["java -Xmx128g -cp ./pipelines/batch/target/batch-bundled.jar",
+                              "com.google.fhir.analytics.FhirEtl",
+                              "--jdbcModeHapi=true",
+                              f"--fhirDatabaseConfigPath={DIR_WITH_THIS_SCRIPT}/../../utils/hapi-postgres-config.json",
                               f"--outputParquetPath={parquet_dir}"])
         )
 
