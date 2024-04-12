@@ -16,7 +16,6 @@
 package com.google.fhir.analytics;
 
 import ca.uhn.fhir.parser.DataFormatException;
-import com.cerner.bunsen.exception.ProfileMapperException;
 import com.google.common.base.Strings;
 import com.google.fhir.analytics.PipelineManager.RunMode;
 import com.google.fhir.analytics.metrics.CumulativeMetrics;
@@ -150,9 +149,6 @@ public class ApiController {
       status = HttpStatus.INTERNAL_SERVER_ERROR;
     } catch (ViewApplicationException e) {
       response = "Error in applying view on the resource: " + e.getMessage();
-      status = HttpStatus.INTERNAL_SERVER_ERROR;
-    } catch (ProfileMapperException e) {
-      response = "Error in creating FHIR context: " + e.getMessage();
       status = HttpStatus.INTERNAL_SERVER_ERROR;
     } catch (DataFormatException e) {
       response = "Error in parsing the FHIR resource: " + e.getMessage();

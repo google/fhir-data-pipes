@@ -30,7 +30,7 @@ public abstract class HapiCompositeConverter<T> extends HapiConverter<T> {
 
   private final String extensionUrl;
 
-  private final FhirConversionSupport fhirSupport;
+  protected final FhirConversionSupport fhirSupport;
 
   protected abstract Object getChild(Object composite, int index);
 
@@ -380,5 +380,10 @@ public abstract class HapiCompositeConverter<T> extends HapiConverter<T> {
   @Override
   public String getElementType() {
     return elementType;
+  }
+
+  /** Returns the children fields that the current converter is responsible for conversion */
+  public List<StructureField<HapiConverter<T>>> getChildren() {
+    return children;
   }
 }

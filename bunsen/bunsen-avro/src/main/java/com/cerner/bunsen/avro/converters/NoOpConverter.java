@@ -3,6 +3,8 @@ package com.cerner.bunsen.avro.converters;
 import ca.uhn.fhir.context.BaseRuntimeChildDefinition;
 import ca.uhn.fhir.context.BaseRuntimeElementDefinition;
 import com.cerner.bunsen.definitions.HapiConverter;
+import com.cerner.bunsen.definitions.HapiConverterUtil;
+import com.cerner.bunsen.exception.ProfileException;
 import org.apache.avro.Schema;
 import org.apache.avro.Schema.Type;
 import org.hl7.fhir.instance.model.api.IBase;
@@ -34,6 +36,12 @@ public class NoOpConverter extends HapiConverter<Schema> {
   public HapiFieldSetter toHapiConverter(BaseRuntimeElementDefinition... elementDefinitions) {
 
     return new FieldSetter();
+  }
+
+  @Override
+  public HapiConverter merge(HapiConverter other) throws ProfileException {
+    HapiConverterUtil.validateIfImplementationClassesAreSame(this, other);
+    return this;
   }
 
   public static final NoOpConverter INSTANCE = new NoOpConverter();
