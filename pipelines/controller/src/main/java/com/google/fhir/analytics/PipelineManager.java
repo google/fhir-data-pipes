@@ -242,6 +242,10 @@ public class PipelineManager implements ApplicationListener<ApplicationReadyEven
     }
   }
 
+  FhirContext getFhirContext() throws ProfileMapperException {
+    return avroConversionUtil.getFhirContext();
+  }
+
   private void initialiseFlinkConfiguration() {
     flinkConfiguration = new FlinkConfiguration();
     try {
@@ -757,7 +761,7 @@ public class PipelineManager implements ApplicationListener<ApplicationReadyEven
       }
       dwhRunDetails.setStatus(status);
       this.lastRunDetails = dwhRunDetails;
-    } catch (IOException | ProfileException e) {
+    } catch (IOException e) {
       logger.error("Error while updating last run details", e);
       throw new RuntimeException(e);
     }

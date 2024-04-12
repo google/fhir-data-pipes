@@ -19,6 +19,7 @@ import ca.uhn.fhir.context.FhirContext;
 import ca.uhn.fhir.context.FhirVersionEnum;
 import ca.uhn.fhir.fhirpath.FhirPathExecutionException;
 import ca.uhn.fhir.fhirpath.IFhirPath;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
@@ -27,6 +28,7 @@ import com.google.common.collect.Lists;
 import com.google.fhir.analytics.view.ViewDefinition.Column;
 import com.google.fhir.analytics.view.ViewDefinition.Select;
 import com.google.fhir.analytics.view.ViewDefinition.Where;
+import com.google.gson.Gson;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.LinkedHashMap;
@@ -35,6 +37,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import lombok.Builder;
 import lombok.Getter;
@@ -355,6 +358,64 @@ public class ViewApplicator {
     private RowList(List<FlatRow> rows, LinkedHashMap<String, Column> columnInfos) {
       this.rows = ImmutableList.copyOf(rows);
       this.columnInfos = ImmutableMap.copyOf(columnInfos);
+    }
+
+    /**
+     * Converts the view into CSV format; this is not production ready!
+     *
+     * @return the CSV representation of this.
+     */
+    @VisibleForTesting
+    String toCsv() {
+      // TODO escape comma and new-line in fields!
+      final String sep = ",";
+      StringBuilder builder = new StringBuilder();
+      builder.append(String.join(sep, columnInfos.keySet()));
+      for (FlatRow row : rows) {
+        builder.append('\n');
+        builder.append(
+            String.join(
+                sep,
+                row.getElements().stream().map(e -> e.getString()).collect(Collectors.toList())));
+      }
+      return builder.toString();
+    }
+
+    /**
+     * This method is good for exchanging the view with other systems, e.g., a frontend. It is
+     * currently not used as the simpler forms like `toCsv()` or `toHtml()` are preferred.
+     *
+     * @return the JSON representation of this.
+     */
+    public String toJson() {
+      Gson gson = new Gson();
+      return gson.toJson(this);
+    }
+
+    /**
+     * Create an HTML table from this view.
+     *
+     * @return the HTML content without enclosing {@code <table></table>} tags such that the table
+     *     can be easily decorated by the frontend.
+     */
+    public String toHtml() {
+      final String sep = "</td><td>";
+      StringBuilder builder = new StringBuilder();
+      builder
+          .append("<thead><tr><td>")
+          .append(String.join(sep, columnInfos.keySet()))
+          .append("</td></tr></thead>")
+          .append("<tbody>");
+      for (FlatRow row : rows) {
+        builder.append("<tr><td>");
+        builder.append(
+            String.join(
+                sep,
+                row.getElements().stream().map(e -> e.getString()).collect(Collectors.toList())));
+        builder.append("</td></tr>");
+      }
+      builder.append("</tbody>");
+      return builder.toString();
     }
 
     public boolean isEmpty() {

@@ -86,6 +86,14 @@
       <artifactId>micrometer-registry-prometheus</artifactId>
     </dependency>
 
+    <!-- This is to make it easier to hot-swap static content, i.e., to make
+     testing static content changes in a running server easier. -->
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-devtools</artifactId>
+      <optional>true</optional>
+    </dependency>
+
     <!-- Pipeline dependencies for execution and monitoring -->
     <dependency>
       <groupId>${project.parent.groupId}</groupId>
