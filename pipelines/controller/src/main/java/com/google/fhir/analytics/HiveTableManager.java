@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2023 Google LLC
+ * Copyright 2020-2024 Google LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,6 @@ package com.google.fhir.analytics;
 
 import com.google.common.base.Strings;
 import com.google.fhir.analytics.model.DatabaseConfiguration;
-import java.beans.PropertyVetoException;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -48,14 +47,11 @@ public class HiveTableManager {
 
   private static final String THRIFT_CONTAINER_PARQUET_DIR = "/dwh";
 
-  public HiveTableManager(DatabaseConfiguration hiveDbConfig, String viewsDir)
-      throws PropertyVetoException {
+  public HiveTableManager(DatabaseConfiguration hiveDbConfig, String viewsDir) {
     this.dataSource =
         JdbcConnectionPools.getInstance()
             .getPooledDataSource(
-                JdbcConnectionPools.dbConfigToDataSourceConfig(hiveDbConfig),
-                CONNECTION_POOL_SIZE,
-                CONNECTION_POOL_SIZE);
+                JdbcConnectionPools.dbConfigToDataSourceConfig(hiveDbConfig), CONNECTION_POOL_SIZE);
     this.viewsDir = Strings.nullToEmpty(viewsDir);
   }
 

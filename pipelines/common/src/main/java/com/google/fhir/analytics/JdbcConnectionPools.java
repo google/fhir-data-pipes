@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2023 Google LLC
+ * Copyright 2020-2024 Google LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,6 @@
 package com.google.fhir.analytics;
 
 import com.google.auto.value.AutoValue;
-import com.google.common.base.Preconditions;
 import com.google.fhir.analytics.model.DatabaseConfiguration;
 import com.mchange.v2.c3p0.ComboPooledDataSource;
 import java.beans.PropertyVetoException;
@@ -33,6 +32,8 @@ import org.slf4j.LoggerFactory;
  */
 public class JdbcConnectionPools {
   private static final Logger log = LoggerFactory.getLogger(JdbcConnectionPools.class);
+
+  static final int MIN_CONNECTIONS = 3;
 
   private static JdbcConnectionPools instance = null;
 
@@ -59,19 +60,15 @@ public class JdbcConnectionPools {
    * properly handle the singleton pattern needed for pooled data-sources.
    *
    * @param config the JDBC connection information
-   * @param initialPoolSize initial pool size if a new pool is created.
    * @param jdbcMaxPoolSize maximum pool size if a new pool is created.
    * @return a pooling DataSource for the given DB config
    */
-  public DataSource getPooledDataSource(
-      DataSourceConfig config, int initialPoolSize, int jdbcMaxPoolSize)
-      throws PropertyVetoException {
-    dataSources.computeIfAbsent(config, c -> createNewPool(c, initialPoolSize, jdbcMaxPoolSize));
+  public DataSource getPooledDataSource(DataSourceConfig config, int jdbcMaxPoolSize) {
+    dataSources.computeIfAbsent(config, c -> createNewPool(c, jdbcMaxPoolSize));
     return dataSources.get(config);
   }
 
-  private static DataSource createNewPool(
-      DataSourceConfig config, int initialPoolSize, int jdbcMaxPoolSize) {
+  private static DataSource createNewPool(DataSourceConfig config, int jdbcMaxPoolSize) {
     log.info(
         "Creating a JDBC connection pool for "
             + config.jdbcUrl()
@@ -79,9 +76,6 @@ public class JdbcConnectionPools {
             + config.jdbcDriverClass()
             + " and max pool size "
             + jdbcMaxPoolSize);
-    Preconditions.checkArgument(
-        initialPoolSize <= jdbcMaxPoolSize,
-        "initialPoolSize cannot be larger than jdbcMaxPoolSize");
     // Note caching of these connection-pools is important beyond just performance benefits. If a
     // `ComboPooledDataSource` goes out of scope without calling `close()` on it, then it can leak
     // connections (and memory) as its threads are not killed and can hold those objects; this was
@@ -97,13 +91,15 @@ public class JdbcConnectionPools {
     comboPooledDataSource.setJdbcUrl(config.jdbcUrl());
     comboPooledDataSource.setUser(config.dbUser());
     comboPooledDataSource.setPassword(config.dbPassword());
-    comboPooledDataSource.setMaxPoolSize(jdbcMaxPoolSize);
-    comboPooledDataSource.setInitialPoolSize(initialPoolSize);
-    // Setting an idle time to reduce the number of connections when idle.
-    comboPooledDataSource.setMaxIdleTime(30);
-    // Lowering the minimum pool size to limit the number of connections if multiple pools are
-    // created for the same DB.
-    comboPooledDataSource.setMinPoolSize(1);
+    comboPooledDataSource.setMaxPoolSize(Math.max(MIN_CONNECTIONS, jdbcMaxPoolSize));
+    comboPooledDataSource.setMinPoolSize(MIN_CONNECTIONS);
+    // Setting an idle time to reduce the number of connections when idle; avoid setting
+    // maxIdleTime! Instead, use connection testing as done below; see:
+    // https://www.mchange.com/projects/c3p0/#managing_pool_size
+    comboPooledDataSource.setMaxIdleTimeExcessConnections(30);
+    // See https://www.mchange.com/projects/c3p0/#configuring_connection_testing
+    comboPooledDataSource.setIdleConnectionTestPeriod(30);
+    comboPooledDataSource.setTestConnectionOnCheckin(true);
     return comboPooledDataSource;
   }
 

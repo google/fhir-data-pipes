@@ -116,8 +116,7 @@ public class JdbcResourceWriter {
             DatabaseConfiguration.createConfigFromFile(options.getSinkDbConfigPath()));
     DataSource jdbcSource =
         JdbcConnectionPools.getInstance()
-            .getPooledDataSource(
-                dbConfig, options.getJdbcInitialPoolSize(), options.getJdbcMaxPoolSize());
+            .getPooledDataSource(dbConfig, options.getJdbcMaxPoolSize());
     log.info(
         String.format(
             "Connecting to DB url %s with user %s.", dbConfig.jdbcUrl(), dbConfig.dbUser()));

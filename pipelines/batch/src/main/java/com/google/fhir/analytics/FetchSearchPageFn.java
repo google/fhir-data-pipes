@@ -25,7 +25,6 @@ import com.google.common.base.Strings;
 import com.google.fhir.analytics.JdbcConnectionPools.DataSourceConfig;
 import com.google.fhir.analytics.model.DatabaseConfiguration;
 import com.google.fhir.analytics.view.ViewApplicationException;
-import java.beans.PropertyVetoException;
 import java.io.IOException;
 import java.sql.SQLException;
 import java.util.Set;
@@ -92,8 +91,6 @@ abstract class FetchSearchPageFn<T> extends DoFn<T, KV<String, Integer>> {
 
   protected final String viewDefinitionsDir;
 
-  private final int initialPoolSize;
-
   private final int maxPoolSize;
 
   @VisibleForTesting protected ParquetUtil parquetUtil;
@@ -147,7 +144,6 @@ abstract class FetchSearchPageFn<T> extends DoFn<T, KV<String, Integer>> {
         throw new IllegalArgumentException(error);
       }
     }
-    this.initialPoolSize = options.getJdbcInitialPoolSize();
     this.maxPoolSize = options.getJdbcMaxPoolSize();
     this.numFetchedResources =
         Metrics.counter(
@@ -168,7 +164,7 @@ abstract class FetchSearchPageFn<T> extends DoFn<T, KV<String, Integer>> {
   }
 
   @Setup
-  public void setup() throws SQLException, PropertyVetoException, ProfileMapperException {
+  public void setup() throws SQLException, ProfileMapperException {
     log.debug("Starting setup for stage " + stageIdentifier);
     avroConversionUtil =
         AvroConversionUtil.getInstance(
@@ -213,8 +209,7 @@ abstract class FetchSearchPageFn<T> extends DoFn<T, KV<String, Integer>> {
     }
     if (sinkDbConfig != null) {
       DataSource jdbcSink =
-          JdbcConnectionPools.getInstance()
-              .getPooledDataSource(sinkDbConfig, initialPoolSize, maxPoolSize);
+          JdbcConnectionPools.getInstance().getPooledDataSource(sinkDbConfig, maxPoolSize);
       // TODO separate view generation from writing; TBD in a more generic version of:
       //  https://github.com/google/fhir-data-pipes/issues/288
       jdbcWriter = new JdbcResourceWriter(jdbcSink, viewDefinitionsDir, fhirContext);
