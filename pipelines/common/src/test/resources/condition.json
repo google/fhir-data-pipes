@@ -1,0 +1,63 @@
+{
+  "resourceType": "Condition",
+  "id": "610e4380-aa0d-4d86-0104-479010ef0471",
+  "meta": {
+    "profile": [
+      "http://hl7.org/fhir/us/core/StructureDefinition/us-core-condition"
+    ]
+  },
+  "clinicalStatus": {
+    "coding": [
+      {
+        "system": "http://terminology.hl7.org/CodeSystem/condition-clinical",
+        "code": "active"
+      },
+      {
+        "system": "TST_STATUS",
+        "code": "active_test"
+      }
+    ]
+  },
+  "verificationStatus": {
+    "coding": [
+      {
+        "system": "http://terminology.hl7.org/CodeSystem/condition-ver-status",
+        "code": "confirmed"
+      }
+    ]
+  },
+  "category": [
+    {
+      "coding": [
+        {
+          "system": "http://terminology.hl7.org/CodeSystem/condition-category",
+          "code": "encounter-diagnosis",
+          "display": "Encounter Diagnosis"
+        }
+      ]
+    }
+  ],
+  "code": {
+    "coding": [
+      {
+        "system": "http://snomed.info/sct",
+        "code": "112141A",
+        "display": "Tuberculosis"
+      },
+      {
+        "system": "TEST",
+        "code": "11",
+        "display": "Tuberculosis"
+      }
+    ],
+    "text": "Tuberculosis"
+  },
+  "subject": {
+    "reference": "Patient/6d44fe03-2478-a82d-7495-3a7c433ed921"
+  },
+  "encounter": {
+    "reference": "Encounter/01fef7c5-8f05-373b-fa2f-74c060a3bdb0"
+  },
+  "onsetDateTime": "1982-04-24T19:45:21+00:00",
+  "recordedDate": "1982-04-24T19:45:21+00:00"
+}

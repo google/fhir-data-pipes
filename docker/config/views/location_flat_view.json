@@ -1,0 +1,49 @@
+{
+  "resourceType": "http://hl7.org/fhir/uv/sql-on-fhir/StructureDefinition/ViewDefinition",
+  "text": "This is the SQL-on-FHIR-v2 version of Location_flat.sql",
+  "select": [
+    {
+      "column": [
+        {
+          "path": "getResourceKey()",
+          "name": "id"
+        },
+        {
+          "path": "status",
+          "name": "status"
+        },
+        {
+          "path": "name",
+          "name": "name"
+        },
+        {
+          "path": "address.city",
+          "name": "city"
+        },
+        {
+          "path": "address.country",
+          "name": "country"
+        },
+        {
+          "path": "position.longitude",
+          "name": "longitude"
+        },
+        {
+          "path": "position.latitude",
+          "name": "latitude"
+        },
+        {
+          "path": "position.altitude",
+          "name": "altitude"
+        },
+        {
+          "path": "managingOrganization.getReferenceKey('Organization')",
+          "name": "org_id"
+        }
+      ]
+    }
+  ],
+  "name": "location_flat",
+  "status": "draft",
+  "resource": "Location"
+}

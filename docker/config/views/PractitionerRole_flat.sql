@@ -1,5 +1,5 @@
 CREATE OR REPLACE VIEW PractitionerRole_flat AS
-SELECT P.id AS pr_id, P.practitioner.practitionerId as practitioner_id,
+SELECT P.id AS id, P.practitioner.practitionerId as practitioner_id,
   P.active, P.organization.organizationId AS organization_id,
   PCC.system, PCC.code,
   PSC.system AS specialty_sys, PSC.code AS specialty_code,

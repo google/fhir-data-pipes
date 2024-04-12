@@ -23,7 +23,7 @@
           "type": "boolean"
         },
         {
-          "path": "managingOrganization.organizationId",
+          "path": "managingOrganization.getReferenceKey('Organization')",
           "name": "organization_id"
         }
       ]
