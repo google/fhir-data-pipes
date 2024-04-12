@@ -22,7 +22,7 @@ import static org.mockito.Mockito.verify;
 
 import ca.uhn.fhir.context.FhirContext;
 import ca.uhn.fhir.parser.IParser;
-import com.cerner.bunsen.exception.ProfileMapperException;
+import com.cerner.bunsen.exception.ProfileException;
 import com.google.common.io.Resources;
 import com.google.fhir.analytics.view.ViewApplicationException;
 import java.beans.PropertyVetoException;
@@ -51,7 +51,7 @@ public class FetchSearchPageFnTest {
   @Captor private ArgumentCaptor<Bundle> bundleCaptor;
 
   @Before
-  public void setUp() throws SQLException, PropertyVetoException, ProfileMapperException {
+  public void setUp() throws SQLException, PropertyVetoException, ProfileException {
     String[] args = {"--outputParquetPath=SOME_PATH"};
     FhirEtlOptions options =
         PipelineOptionsFactory.fromArgs(args).withValidation().as(FhirEtlOptions.class);
@@ -59,7 +59,7 @@ public class FetchSearchPageFnTest {
         new FetchSearchPageFn<String>(options, "TEST") {
 
           @Override
-          public void setup() throws SQLException, ProfileMapperException {
+          public void setup() throws SQLException, ProfileException {
             super.setup();
             parquetUtil = mockParquetUtil;
           }
@@ -71,7 +71,7 @@ public class FetchSearchPageFnTest {
 
   @Test
   public void testProcessObservationBundle()
-      throws IOException, SQLException, ViewApplicationException, ProfileMapperException {
+      throws IOException, SQLException, ViewApplicationException, ProfileException {
     String observationBundleStr =
         Resources.toString(
             Resources.getResource("observation_decimal_bundle.json"), StandardCharsets.UTF_8);

@@ -21,7 +21,7 @@ import static org.hamcrest.Matchers.notNullValue;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
-import com.cerner.bunsen.exception.ProfileMapperException;
+import com.cerner.bunsen.exception.ProfileException;
 import com.google.common.io.Resources;
 import com.google.fhir.analytics.view.ViewApplicationException;
 import java.beans.PropertyVetoException;
@@ -53,15 +53,14 @@ public class ConvertResourceFnTest {
 
   @Captor private ArgumentCaptor<Resource> resourceCaptor;
 
-  private void setUp(String args[])
-      throws PropertyVetoException, SQLException, ProfileMapperException {
+  private void setUp(String args[]) throws PropertyVetoException, SQLException, ProfileException {
     FhirEtlOptions options =
         PipelineOptionsFactory.fromArgs(args).withValidation().as(FhirEtlOptions.class);
     convertResourceFn =
         new ConvertResourceFn(options, "Test") {
 
           @Override
-          public void setup() throws SQLException, ProfileMapperException {
+          public void setup() throws SQLException, ProfileException {
             super.setup();
             parquetUtil = mockParquetUtil;
           }
@@ -73,7 +72,7 @@ public class ConvertResourceFnTest {
   @Test
   public void testProcessPatientResource_withoutForcedId()
       throws IOException, java.text.ParseException, SQLException, PropertyVetoException,
-          ViewApplicationException, ProfileMapperException {
+          ViewApplicationException, ProfileException {
     String[] args = {"--outputParquetPath=SOME_PATH"};
     setUp(args);
     String patientResourceStr =
@@ -98,7 +97,7 @@ public class ConvertResourceFnTest {
   @Test
   public void testProcessPatientResource_withForcedId()
       throws IOException, java.text.ParseException, SQLException, PropertyVetoException,
-          ViewApplicationException, ProfileMapperException {
+          ViewApplicationException, ProfileException {
     String[] args = {"--outputParquetPath=SOME_PATH"};
     setUp(args);
     String patientResourceStr =
@@ -129,7 +128,7 @@ public class ConvertResourceFnTest {
   @Test
   public void testProcessDeletedPatientResourceFullMode()
       throws SQLException, IOException, ParseException, PropertyVetoException,
-          ViewApplicationException, ProfileMapperException {
+          ViewApplicationException, ProfileException {
     String[] args = {"--outputParquetPath=SOME_PATH", "--since="};
     setUp(args);
     // Deleted Patient resource
@@ -144,7 +143,7 @@ public class ConvertResourceFnTest {
   @Test
   public void testProcessDeletedPatientResourceIncrementalMode()
       throws SQLException, IOException, ParseException, PropertyVetoException,
-          ViewApplicationException, ProfileMapperException {
+          ViewApplicationException, ProfileException {
     String[] args = {"--outputParquetPath=SOME_PATH", "--since=NON-EMPTY"};
     setUp(args);
     // Deleted Patient resource
@@ -172,7 +171,7 @@ public class ConvertResourceFnTest {
   @Test
   public void testResourceMetaTags()
       throws IOException, java.text.ParseException, SQLException, PropertyVetoException,
-          ViewApplicationException, ProfileMapperException {
+          ViewApplicationException, ProfileException {
     String[] args = {"--outputParquetPath=SOME_PATH", "--since="};
     setUp(args);
     String patientResourceStr =

@@ -16,7 +16,7 @@
 package com.google.fhir.analytics;
 
 import ca.uhn.fhir.context.FhirContext;
-import com.cerner.bunsen.exception.ProfileMapperException;
+import com.cerner.bunsen.exception.ProfileException;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import com.google.fhir.analytics.metrics.CumulativeMetrics;
@@ -168,7 +168,7 @@ public class PipelineManager implements ApplicationListener<ApplicationReadyEven
   }
 
   @PostConstruct
-  private void initDwhStatus() throws ProfileMapperException {
+  private void initDwhStatus() throws ProfileException {
 
     // Initialise the Flink configurations for all the pipelines
     initialiseFlinkConfiguration();
@@ -242,7 +242,7 @@ public class PipelineManager implements ApplicationListener<ApplicationReadyEven
     }
   }
 
-  FhirContext getFhirContext() throws ProfileMapperException {
+  FhirContext getFhirContext() {
     return avroConversionUtil.getFhirContext();
   }
 
@@ -261,7 +261,7 @@ public class PipelineManager implements ApplicationListener<ApplicationReadyEven
    * an incremental run exists in the snapshot, the status is set based on the incremental run.
    */
   private void initialiseLastRunDetails(String baseDir, String dwhDirectory)
-      throws ProfileMapperException {
+      throws ProfileException {
     try {
       ResourceId dwhDirectoryPath =
           FileSystems.matchNewResource(baseDir, true)
@@ -292,7 +292,7 @@ public class PipelineManager implements ApplicationListener<ApplicationReadyEven
    * Validate the FHIR source configuration parameters during the launch of the application. This is
    * to detect any mis-configurations earlier enough and avoid failures during pipeline runs.
    */
-  void validateFhirSourceConfiguration(FhirEtlOptions options) throws ProfileMapperException {
+  void validateFhirSourceConfiguration(FhirEtlOptions options) throws ProfileException {
     if (Boolean.TRUE.equals(options.isJdbcModeHapi())) {
       validateDbConfigParameters(options.getFhirDatabaseConfigPath());
     } else if (!Strings.isNullOrEmpty(options.getFhirServerUrl())) {
@@ -317,7 +317,7 @@ public class PipelineManager implements ApplicationListener<ApplicationReadyEven
     }
   }
 
-  private void validateFhirSearchParameters(FhirEtlOptions options) throws ProfileMapperException {
+  private void validateFhirSearchParameters(FhirEtlOptions options) throws ProfileException {
     FhirSearchUtil fhirSearchUtil =
         new FhirSearchUtil(
             new FetchUtil(
@@ -365,7 +365,7 @@ public class PipelineManager implements ApplicationListener<ApplicationReadyEven
   @Scheduled(fixedDelay = 30000)
   private void checkSchedule()
       throws IOException, PropertyVetoException, SQLException, ViewDefinitionException,
-          ProfileMapperException {
+          ProfileException {
     LocalDateTime next = getNextIncrementalTime();
     if (next == null) {
       return;
@@ -379,7 +379,7 @@ public class PipelineManager implements ApplicationListener<ApplicationReadyEven
 
   synchronized void runBatchPipeline(boolean isRecreateViews)
       throws IOException, PropertyVetoException, SQLException, ViewDefinitionException,
-          ProfileMapperException {
+          ProfileException {
     Preconditions.checkState(!isRunning(), "cannot start a pipeline while another one is running");
     Preconditions.checkState(
         !Strings.isNullOrEmpty(getCurrentDwhRoot()) || !isRecreateViews,
@@ -423,7 +423,7 @@ public class PipelineManager implements ApplicationListener<ApplicationReadyEven
 
   synchronized void runIncrementalPipeline()
       throws IOException, PropertyVetoException, SQLException, ViewDefinitionException,
-          ProfileMapperException {
+          ProfileException {
     // TODO do the same as above but read/set --since
     Preconditions.checkState(!isRunning(), "cannot start a pipeline while another one is running");
     Preconditions.checkState(
@@ -584,7 +584,7 @@ public class PipelineManager implements ApplicationListener<ApplicationReadyEven
     return hiveTableManager;
   }
 
-  private synchronized void updateDwh(String newRoot) throws ProfileMapperException {
+  private synchronized void updateDwh(String newRoot) throws ProfileException {
     currentDwh = DwhFiles.forRoot(newRoot, avroConversionUtil.getFhirContext());
   }
 

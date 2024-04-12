@@ -3,14 +3,14 @@ package com.cerner.bunsen.avro;
 import ca.uhn.fhir.context.FhirContext;
 import ca.uhn.fhir.context.FhirVersionEnum;
 import com.cerner.bunsen.ProfileMapperFhirContexts;
-import com.cerner.bunsen.exception.ProfileMapperException;
+import com.cerner.bunsen.common.Stu3UsCoreProfileData;
+import com.cerner.bunsen.exception.ProfileException;
 import com.cerner.bunsen.stu3.TestData;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import java.io.File;
 import java.io.IOException;
 import java.math.BigDecimal;
-import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Arrays;
@@ -90,13 +90,13 @@ public class Stu3AvroConverterUsCoreTest {
 
   /** Initialize test data. */
   @BeforeClass
-  public static void convertTestData()
-      throws IOException, URISyntaxException, ProfileMapperException {
+  public static void convertTestData() throws ProfileException {
     ProfileMapperFhirContexts.getInstance().deRegisterFhirContexts(FhirVersionEnum.DSTU3);
     fhirContext =
         ProfileMapperFhirContexts.getInstance()
             .contextFromClasspathFor(FhirVersionEnum.DSTU3, "/stu3-us-core-definitions");
-    AvroConverter observationConverter = AvroConverter.forResource(fhirContext, "Observation");
+    AvroConverter observationConverter =
+        AvroConverter.forResources(fhirContext, Stu3UsCoreProfileData.US_CORE_OBSERVATION_PROFILES);
 
     avroObservation = (Record) observationConverter.resourceToAvro(testObservation);
 
@@ -109,26 +109,27 @@ public class Stu3AvroConverterUsCoreTest {
         (Observation) observationConverter.avroToResource(avroObservationNullStatus);
 
     AvroConverter patientConverter =
-        AvroConverter.forResource(fhirContext, TestData.US_CORE_PATIENT);
+        AvroConverter.forResources(fhirContext, Stu3UsCoreProfileData.US_CORE_PATIENT_PROFILES);
 
     avroPatient = (Record) patientConverter.resourceToAvro(testPatient);
 
     testPatientDecoded = (Patient) patientConverter.avroToResource(avroPatient);
 
     AvroConverter conditionConverter =
-        AvroConverter.forResource(fhirContext, TestData.US_CORE_CONDITION);
+        AvroConverter.forResources(fhirContext, Stu3UsCoreProfileData.US_CORE_CONDITION_PROFILES);
 
     avroCondition = (Record) conditionConverter.resourceToAvro(testCondition);
 
     testConditionDecoded = (Condition) conditionConverter.avroToResource(avroCondition);
 
     AvroConverter medicationConverter =
-        AvroConverter.forResource(fhirContext, TestData.US_CORE_MEDICATION);
+        AvroConverter.forResources(fhirContext, Stu3UsCoreProfileData.US_CORE_MEDICATION_PROFILES);
 
     Record avroMedication = (Record) medicationConverter.resourceToAvro(testMedicationOne);
 
     testMedicationDecoded = (Medication) medicationConverter.avroToResource(avroMedication);
 
+    // TODO: Contained resources are not supported yet for multiple profiles
     AvroConverter medicationRequestConverter =
         AvroConverter.forResource(
             fhirContext,

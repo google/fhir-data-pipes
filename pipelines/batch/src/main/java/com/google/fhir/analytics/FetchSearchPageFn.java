@@ -19,7 +19,7 @@ import ca.uhn.fhir.context.FhirContext;
 import ca.uhn.fhir.context.FhirVersionEnum;
 import ca.uhn.fhir.context.ParserOptions;
 import ca.uhn.fhir.parser.IParser;
-import com.cerner.bunsen.exception.ProfileMapperException;
+import com.cerner.bunsen.exception.ProfileException;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Strings;
 import com.google.fhir.analytics.JdbcConnectionPools.DataSourceConfig;
@@ -164,7 +164,7 @@ abstract class FetchSearchPageFn<T> extends DoFn<T, KV<String, Integer>> {
   }
 
   @Setup
-  public void setup() throws SQLException, ProfileMapperException {
+  public void setup() throws SQLException, ProfileException {
     log.debug("Starting setup for stage " + stageIdentifier);
     avroConversionUtil =
         AvroConversionUtil.getInstance(
@@ -228,12 +228,12 @@ abstract class FetchSearchPageFn<T> extends DoFn<T, KV<String, Integer>> {
   }
 
   protected void processBundle(Bundle bundle)
-      throws IOException, SQLException, ViewApplicationException, ProfileMapperException {
+      throws IOException, SQLException, ViewApplicationException, ProfileException {
     this.processBundle(bundle, null);
   }
 
   protected void processBundle(Bundle bundle, @Nullable Set<String> resourceTypes)
-      throws IOException, SQLException, ViewApplicationException, ProfileMapperException {
+      throws IOException, SQLException, ViewApplicationException, ProfileException {
     if (bundle != null && bundle.getEntry() != null) {
       numFetchedResources.inc(bundle.getEntry().size());
       if (parquetUtil != null) {

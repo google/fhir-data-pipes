@@ -15,7 +15,7 @@
  */
 package com.google.fhir.analytics;
 
-import com.cerner.bunsen.exception.ProfileMapperException;
+import com.cerner.bunsen.exception.ProfileException;
 import io.debezium.data.Envelope.Operation;
 import java.io.IOException;
 import java.sql.SQLException;
@@ -85,8 +85,7 @@ public class FhirConverterTest extends CamelTestSupport {
   }
 
   @Test
-  public void shouldFetchFhirResourceAndUploadToFhirStore()
-      throws IOException, ProfileMapperException {
+  public void shouldFetchFhirResourceAndUploadToFhirStore() throws IOException, ProfileException {
     Map<String, String> messageBody = DebeziumTestUtil.genExpectedBody();
     Map<String, Object> messageHeaders =
         DebeziumTestUtil.genExpectedHeaders(Operation.UPDATE, "encounter");
@@ -121,7 +120,7 @@ public class FhirConverterTest extends CamelTestSupport {
   }
 
   @Test
-  public void shouldFetchFhirResourceAndOutputParquet() throws IOException, ProfileMapperException {
+  public void shouldFetchFhirResourceAndOutputParquet() throws IOException, ProfileException {
     Map<String, String> messageBody = DebeziumTestUtil.genExpectedBody();
     Map<String, Object> messageHeaders =
         DebeziumTestUtil.genExpectedHeaders(Operation.UPDATE, "encounter");
@@ -143,7 +142,7 @@ public class FhirConverterTest extends CamelTestSupport {
 
   @Test
   public void shouldFetchFhirResourceAndOutputParquetAndUploadToFhirSink()
-      throws IOException, ProfileMapperException {
+      throws IOException, ProfileException {
     Map<String, String> messageBody = DebeziumTestUtil.genExpectedBody();
     Map<String, Object> messageHeaders =
         DebeziumTestUtil.genExpectedHeaders(Operation.UPDATE, "encounter");
