@@ -282,7 +282,17 @@ public abstract class StructureDefinitions {
       return Collections.emptyList();
     } else if (element.hasSingleType()
         && PRIMITIVE_TYPES.contains(element.getFirstTypeCode())
-        // Allow for choice types only if they are not Extensions
+        // The below condition is added so that cases like - elements with multiple choice types in
+        // the base resource, that are restricted to include only one data type in the profiled
+        // version are not matched. One such example is the R4, US Core Profile Observation resource
+        // i.e. in the classpath, the resource
+        // /r4-us-core-definitions/StructureDefinition-us-core-smokingstatus.json has element with
+        // path `Observation.effective[x]` and is restricted to contain only one data type, the
+        // below condition makes sure such fields are not matched here. However, the Extension
+        // fields even though containing single type are defined with paths ending with [x]. Refer
+        // /r4-us-core-definitions/StructureDefinition-us-core-race.json which contains a field
+        // Extension.extension:text.value[x] that has a single type and the below condition
+        // matches this case.
         && (element.getPath().startsWith("Extension") || !element.getPath().endsWith("[x]"))) {
       T primitiveConverter = visitor.visitPrimitive(elementName, element.getFirstTypeCode());
       if (!element.getMax().equals("1")) {

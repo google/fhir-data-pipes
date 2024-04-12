@@ -46,7 +46,7 @@ public class AvroConverterMergeTest {
         this.getClass().getResourceAsStream("/r4-custom-schemas/bunsen-test-patient-schema.json");
     Schema expectedSchema = new Parser().parse(inputStream);
 
-    Assert.assertEquals(expectedSchema.toString(), mergedConverter.getSchema().toString());
+    Assert.assertEquals(expectedSchema, mergedConverter.getSchema());
   }
 
   @Test
@@ -66,7 +66,7 @@ public class AvroConverterMergeTest {
         this.getClass().getResourceAsStream("/stu3-custom-schemas/bunsen-test-patient-schema.json");
     Schema expectedSchema = new Parser().parse(inputStream);
 
-    Assert.assertEquals(expectedSchema.toString(), mergedConverter.getSchema().toString());
+    Assert.assertEquals(expectedSchema, mergedConverter.getSchema());
   }
 
   @Test
@@ -154,7 +154,7 @@ public class AvroConverterMergeTest {
     AvroConverter converter = AvroConverter.forResources(fhirContext, profileResourceTypeUrls);
     InputStream inputStream = this.getClass().getResourceAsStream(expectedSchemaFile);
     Schema expectedSchema = new Parser().parse(inputStream);
-    Assert.assertEquals(expectedSchema.toString(), converter.getSchema().toString());
+    Assert.assertEquals(expectedSchema, converter.getSchema());
   }
 
   private <T extends IBaseResource> IBaseResource loadResource(

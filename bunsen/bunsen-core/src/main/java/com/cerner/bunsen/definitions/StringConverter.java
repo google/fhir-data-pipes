@@ -1,6 +1,5 @@
 package com.cerner.bunsen.definitions;
 
-import com.cerner.bunsen.exception.ProfileException;
 import org.hl7.fhir.instance.model.api.IPrimitiveType;
 
 public class StringConverter<T> extends PrimitiveConverter<T> {
@@ -32,12 +31,5 @@ public class StringConverter<T> extends PrimitiveConverter<T> {
   public T getDataType() {
 
     return dataType;
-  }
-
-  @Override
-  public HapiConverter merge(HapiConverter other) throws ProfileException {
-    HapiConverterUtil.validateIfImplementationClassesAreSame(this, other);
-    validateIfElementTypesAreSame(other);
-    return this;
   }
 }

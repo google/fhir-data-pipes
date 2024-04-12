@@ -1,6 +1,5 @@
 package com.cerner.bunsen.definitions;
 
-import com.cerner.bunsen.exception.ProfileException;
 import org.hl7.fhir.instance.model.api.IPrimitiveType;
 
 public class EnumConverter<T> extends StringConverter<T> {
@@ -28,12 +27,5 @@ public class EnumConverter<T> extends StringConverter<T> {
   protected Object fromHapi(IPrimitiveType primitive) {
 
     return "?".equals(primitive.getValueAsString()) ? null : primitive.getValueAsString();
-  }
-
-  @Override
-  public HapiConverter merge(HapiConverter other) throws ProfileException {
-    HapiConverterUtil.validateIfImplementationClassesAreSame(this, other);
-    validateIfElementTypesAreSame(other);
-    return this;
   }
 }

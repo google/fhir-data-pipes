@@ -71,13 +71,6 @@ public class DefinitionToAvroVisitor implements DefinitionVisitor<HapiConverter<
         public Schema getDataType() {
           return BOOLEAN_SCHEMA;
         }
-
-        @Override
-        public HapiConverter merge(HapiConverter other) throws ProfileException {
-          HapiConverterUtil.validateIfImplementationClassesAreSame(this, other);
-          validateIfElementTypesAreSame(other);
-          return this;
-        }
       };
 
   private static final Schema INTEGER_SCHEMA = Schema.create(Type.INT);
@@ -88,13 +81,6 @@ public class DefinitionToAvroVisitor implements DefinitionVisitor<HapiConverter<
         @Override
         public Schema getDataType() {
           return INTEGER_SCHEMA;
-        }
-
-        @Override
-        public HapiConverter merge(HapiConverter other) throws ProfileException {
-          HapiConverterUtil.validateIfImplementationClassesAreSame(this, other);
-          validateIfElementTypesAreSame(other);
-          return this;
         }
       };
 
@@ -133,13 +119,6 @@ public class DefinitionToAvroVisitor implements DefinitionVisitor<HapiConverter<
         @Override
         public Schema getDataType() {
           return DOUBLE_SCHEMA;
-        }
-
-        @Override
-        public HapiConverter merge(HapiConverter other) throws ProfileException {
-          HapiConverterUtil.validateIfImplementationClassesAreSame(this, other);
-          validateIfElementTypesAreSame(other);
-          return this;
         }
       };
 

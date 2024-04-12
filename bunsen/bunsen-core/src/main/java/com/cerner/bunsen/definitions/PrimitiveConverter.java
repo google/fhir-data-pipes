@@ -77,7 +77,14 @@ public abstract class PrimitiveConverter<T> extends HapiConverter<T> {
     return elementType;
   }
 
-  protected void validateIfElementTypesAreSame(HapiConverter other) throws ProfileException {
+  @Override
+  public HapiConverter merge(HapiConverter other) throws ProfileException {
+    HapiConverterUtil.validateIfImplementationClassesAreSame(this, other);
+    validateIfElementTypesAreSame(other);
+    return this;
+  }
+
+  private void validateIfElementTypesAreSame(HapiConverter other) throws ProfileException {
     Preconditions.checkNotNull(other, "The other HapiConverter cannot be null");
     if (!(other instanceof PrimitiveConverter
         && Objects.equals(this.elementType, other.getElementType()))) {

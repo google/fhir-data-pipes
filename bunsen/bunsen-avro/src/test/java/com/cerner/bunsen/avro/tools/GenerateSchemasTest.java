@@ -30,18 +30,16 @@ public class GenerateSchemasTest {
     Path outputFile = generatedCodePath.resolve("out.asvc");
 
     ProfileMapperFhirContexts.getInstance().deRegisterFhirContexts(FhirVersionEnum.DSTU3);
-    int result =
-        GenerateSchemas.main(
-            new String[] {
-              outputFile.toString(),
-              "/stu3-us-core-definitions",
-              TestData.US_CORE_PATIENT,
-              TestData.US_CORE_CONDITION,
-              TestData.US_CORE_MEDICATION,
-              TestData.US_CORE_MEDICATION_REQUEST
-            });
-
-    Assert.assertEquals(0, result);
+    GenerateSchemas.main(
+        new String[] {
+          outputFile.toString(),
+          "DSTU3",
+          "/stu3-us-core-definitions",
+          TestData.US_CORE_PATIENT,
+          TestData.US_CORE_CONDITION,
+          TestData.US_CORE_MEDICATION,
+          TestData.US_CORE_MEDICATION_REQUEST
+        });
 
     Assert.assertTrue(outputFile.toFile().exists());
   }
