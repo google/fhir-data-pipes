@@ -28,7 +28,7 @@ public class GenerateSchemas {
    */
   public static void main(String[] args) throws ProfileException {
 
-    if (args.length < 2) {
+    if (args.length < 4) {
       System.out.println(
           "The arguments should be of the format: <output file> <fhirVersion> <structure"
               + " definitions path> resourceTypeUrls...");

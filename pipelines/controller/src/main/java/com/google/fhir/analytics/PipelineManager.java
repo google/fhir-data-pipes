@@ -242,7 +242,7 @@ public class PipelineManager implements ApplicationListener<ApplicationReadyEven
     }
   }
 
-  FhirContext getFhirContext() throws ProfileMapperException {
+  FhirContext getFhirContext() {
     return avroConversionUtil.getFhirContext();
   }
 
