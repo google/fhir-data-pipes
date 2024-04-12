@@ -1,0 +1,72 @@
+{
+  "resourceType": "http://hl7.org/fhir/uv/sql-on-fhir/StructureDefinition/ViewDefinition",
+  "text": "This is the SQL-on-FHIR-v2 version of Encounter_flat.sql",
+  "select": [
+    {
+      "column": [
+        {
+          "path": "getResourceKey()",
+          "name": "id"
+        },
+        {
+          "path": "status",
+          "name": "status"
+        },
+        {
+          "path": "subject.getReferenceKey('Patient')",
+          "name": "patient_id"
+        },
+        {
+          "path": "serviceProvider.getReferenceKey('Organization')",
+          "name": "service_org_id"
+        },
+        {
+          "path": "period.start",
+          "name": "start"
+        },
+        {
+          "path": "period.end",
+          "name": "end"
+        },
+        {
+          "path": "episodeOfCare.getReferenceKey('EpisodeOfCare')",
+          "name": "EpisodeOfCareId"
+        }
+      ]
+    },
+    {
+      "forEachOrNull": "type.coding",
+      "column": [
+        {
+          "path": "system",
+          "name": "type_sys"
+        },
+        {
+          "path": "code",
+          "name": "type_code"
+        }
+      ]
+    },
+    {
+      "forEachOrNull": "participant",
+      "column": [
+        {
+          "path": "individual.getReferenceKey('Practitioner')",
+          "name": "practitioner_id"
+        }
+      ]
+    },
+    {
+      "forEachOrNull": "location",
+      "column": [
+        {
+          "path": "location.getReferenceKey('Location')",
+          "name": "location_id"
+        }
+      ]
+    }
+  ],
+  "name": "encounter_flat",
+  "status": "draft",
+  "resource": "Encounter"
+}

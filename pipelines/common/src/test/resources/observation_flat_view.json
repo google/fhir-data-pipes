@@ -59,6 +59,12 @@
       ]
     }
   ],
+  "where": [
+    {
+      "path": "subject.exists()",
+      "description": "Drop resources that do not have a subject."
+    }
+  ],
   "name": "observation_flat",
   "status": "draft",
   "resource": "Observation"

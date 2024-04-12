@@ -32,16 +32,23 @@ import java.nio.charset.StandardCharsets;
 import java.text.ParseException;
 import java.util.Set;
 import org.hl7.fhir.instance.model.api.IBaseResource;
+import org.hl7.fhir.r4.model.Condition;
 import org.hl7.fhir.r4.model.DateTimeType;
+import org.hl7.fhir.r4.model.Encounter;
+import org.hl7.fhir.r4.model.Immunization;
 import org.hl7.fhir.r4.model.Observation;
 import org.hl7.fhir.r4.model.Patient;
 import org.joda.time.DateTime;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.junit.MockitoJUnitRunner;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @RunWith(MockitoJUnitRunner.class)
 public class ViewApplicatorTest {
+
+  private static final Logger log = LoggerFactory.getLogger(ViewApplicatorTest.class);
 
   private ViewDefinition loadDefinition(String viewFile) throws IOException {
     String viewJson = Resources.toString(Resources.getResource(viewFile), StandardCharsets.UTF_8);
@@ -50,6 +57,7 @@ public class ViewApplicatorTest {
       viewDef = ViewDefinition.createFromString(viewJson);
     } catch (ViewDefinitionException e) {
       // This is just for convenience, in production code this exception should be properly handled.
+      log.error("View validation for file {} failed with ", viewFile, e);
       throw new IllegalArgumentException("Failed to validate the view in " + viewFile);
     }
     return viewDef;
@@ -284,5 +292,60 @@ public class ViewApplicatorTest {
         .append("<tr><td>Patient/12345</td><td>null</td><td>female</td><td>null</td><td>null</td>")
         .append("<td>Practitioner/prac2</td><td>Emily</td><td>Stevenson</td></tr></tbody>");
     assertThat(rows.toHtml(), equalTo(expected.toString()));
+  }
+
+  @Test
+  public void encounterFlat() throws IOException, ViewApplicationException {
+    RowList rows =
+        applyViewOnResource("encounter_flat_view.json", "encounter.json", Encounter.class);
+    assertThat(rows.getRows().size(), equalTo(3));
+    assertThat(rows.getRows().get(0).getElements().get(0).getName(), equalTo("id"));
+    assertThat(
+        rows.getRows().get(0).getElements().get(0).getSingleIdPart(),
+        equalTo("46f919e2-2d3c-c055-e97b-f3ad7bbf110e"));
+    assertThat(rows.getRows().get(2).getElements().get(3).getName(), equalTo("service_org_id"));
+    assertThat(rows.getRows().get(2).getElements().get(3).getSingleIdPart(), equalTo("1"));
+  }
+
+  @Test
+  public void observationFlat() throws IOException, ViewApplicationException {
+    RowList rows =
+        applyViewOnResource(
+            "observation_flat_view.json", "observation_codeable_concept.json", Observation.class);
+    assertThat(rows.getRows().size(), equalTo(2));
+    assertThat(rows.getRows().get(0).getElements().get(0).getName(), equalTo("id"));
+    assertThat(rows.getRows().get(0).getElements().get(0).getSingleIdPart(), equalTo("obs1"));
+    assertThat(rows.getRows().get(0).getElements().get(9).getName(), equalTo("val_sys"));
+    assertThat(rows.getRows().get(0).getElements().get(9).getPrimitive(), equalTo("VAL_SYS1"));
+    assertThat(rows.getRows().get(1).getElements().get(8).getName(), equalTo("val_code"));
+    assertThat(rows.getRows().get(1).getElements().get(8).getPrimitive(), equalTo("VAL_CODE2"));
+  }
+
+  @Test
+  public void conditionFlat() throws IOException, ViewApplicationException {
+    RowList rows =
+        applyViewOnResource("condition_flat_view.json", "condition.json", Condition.class);
+    assertThat(rows.getRows().size(), equalTo(4));
+    assertThat(rows.getRows().get(0).getElements().get(0).getName(), equalTo("id"));
+    assertThat(
+        rows.getRows().get(0).getElements().get(0).getSingleIdPart(),
+        equalTo("610e4380-aa0d-4d86-0104-479010ef0471"));
+    assertThat(rows.getRows().get(2).getElements().get(7).getName(), equalTo("clinical_status"));
+    assertThat(rows.getRows().get(2).getElements().get(7).getPrimitive(), equalTo("active"));
+  }
+
+  @Test
+  public void immunizationFlat() throws IOException, ViewApplicationException {
+    RowList rows =
+        applyViewOnResource("imminization_flat_view.json", "immunization.json", Immunization.class);
+    assertThat(rows.getRows().size(), equalTo(2));
+    assertThat(rows.getRows().get(0).getElements().get(0).getName(), equalTo("id"));
+    assertThat(
+        rows.getRows().get(0).getElements().get(0).getSingleIdPart(),
+        equalTo("8db297e1-658f-6612-0e3a-7f9c0943b877"));
+    assertThat(rows.getRows().get(0).getElements().get(9).getName(), equalTo("practitioner_id"));
+    assertThat(rows.getRows().get(0).getElements().get(9).getSingleIdPart(), equalTo("9999999899"));
+    assertThat(rows.getRows().get(1).getElements().get(10).getName(), equalTo("organization_id"));
+    assertThat(rows.getRows().get(1).getElements().get(10).getSingleIdPart(), equalTo("199"));
   }
 }

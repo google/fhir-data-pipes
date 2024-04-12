@@ -1,0 +1,72 @@
+{
+  "resourceType": "http://hl7.org/fhir/uv/sql-on-fhir/StructureDefinition/ViewDefinition",
+  "text": "This is the SQL-on-FHIR-v2 version of Immunization_flat.sql",
+  "select": [
+    {
+      "column": [
+        {
+          "path": "getResourceKey()",
+          "name": "id"
+        },
+        {
+          "path": "patient.getReferenceKey('Patient')",
+          "name": "patient_id"
+        },
+        {
+          "path": "encounter.getReferenceKey('Encounter')",
+          "name": "encounter_id"
+        },
+        {
+          "path": "status",
+          "name": "status"
+        },
+        {
+          "path": "location.getReferenceKey('Location')",
+          "name": "location_id"
+        }
+      ]
+    },
+    {
+      "forEachOrNull": "statusReason.coding",
+      "column": [
+        {
+          "path": "system",
+          "name": "statusReason_sys"
+        },
+        {
+          "path": "code",
+          "name": "statusReason_code"
+        }
+      ]
+    },
+    {
+      "forEachOrNull": "vaccineCode.coding",
+      "column": [
+        {
+          "path": "system",
+          "name": "vaccine_sys"
+        },
+        {
+          "path": "code",
+          "name": "vaccine_code"
+        }
+      ]
+    },
+    {
+      "forEachOrNull": "performer",
+      "column": [
+        {
+          "path": "actor.getReferenceKey('Practitioner')",
+          "name": "practitioner_id"
+        },
+        {
+          "path": "actor.getReferenceKey('Organization')",
+          "name": "organization_id"
+        }
+      ]
+    }
+  ],
+  "name": "immunization_flat",
+  "status": "draft",
+  "resource": "Immunization"
+}
