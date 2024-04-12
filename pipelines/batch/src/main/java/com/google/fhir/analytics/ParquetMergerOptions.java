@@ -40,7 +40,12 @@ public interface ParquetMergerOptions extends BasePipelineOptions {
 
   void setDwh2(String value);
 
-  @Description("The path to the final merged Parquet files with the same file structure. ")
+  @Description(
+      "The path to the final merged Parquet files with the same file structure. The schema of the"
+          + " first and second set of Parquet files should be the same for the merge to happen"
+          + " successfully. Otherwise, the parquet files have to be regenerated from beginning"
+          + " using the batch run and the same schema has to be maintained for the subsequent runs"
+          + " when the files are being merged. ")
   @Required
   @Default.String("")
   String getMergedDwh();
