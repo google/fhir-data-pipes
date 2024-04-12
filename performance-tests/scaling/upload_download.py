@@ -1,3 +1,4 @@
+import json
 import os
 import time
 
@@ -9,6 +10,10 @@ SOURCE = f"{os.environ['PATIENTS']}_patients"
 FHIR_UPLOADER_CORES = os.environ['FHIR_UPLOADER_CORES']
 DB_TYPE = os.environ['DB_TYPE']
 DIR_WITH_THIS_SCRIPT = os.environ['DIR_WITH_THIS_SCRIPT']
+DB_USERNAME = os.environ["DB_USERNAME"]
+DB_PASSWORD = os.environ["DB_PASSWORD"]
+DB_PATIENTS = os.environ["DB_PATIENTS"]
+
 
 def main():
     shell(f"mkdir -p {TMP_DIR}")
@@ -24,31 +29,47 @@ def main():
 
     shell(f"rm -rf {parquet_dir}")
 
-    # Test HAPI server readiness.
-    shell_run_until_succeeds(
-        f"""curl -H "Content-Type: application/json; charset=utf-8" '{FHIR_SERVER_URL}/Patient' -v""")
-
     if ENABLE_UPLOAD:
+        # Test HAPI server readiness.
+        shell_run_until_succeeds(
+            f"""curl -H "Content-Type: application/json; charset=utf-8" '{FHIR_SERVER_URL}/Patient' -v""")
+
         # Re-create the database.
         shell_measure(
             description=f"Upload {SOURCE} to HAPI FHIR server; {FHIR_UPLOADER_CORES} cores; {DB_TYPE}",
             command=f"python3 synthea-hiv/uploader/main.py HAPI {FHIR_SERVER_URL} --input_dir {input_dir} --cores {FHIR_UPLOADER_CORES}"
         )
+
     if False:
         shell_measure(
             description=f"Run FhirEtl for {SOURCE}",
             command=" ".join(["java -cp ./pipelines/batch/target/batch-bundled.jar",
                               "com.google.fhir.analytics.FhirEtl",
+                              "--runner=FlinkRunner",
                               f"--fhirServerUrl={FHIR_SERVER_URL}",
                               f"--outputParquetPath={parquet_dir}"])
         )
+
     if ENABLE_DOWNLOAD:
+        config_path = os.path.join(TMP_DIR, "hapi-postgres-config.json")
+        json_config = {
+            "jdbcDriverClass" : "org.postgresql.Driver",
+            "databaseService" : "postgresql",
+            "databaseHostName" : "127.0.0.1",
+            "databasePort" : "5432",
+            "databaseUser" : DB_USERNAME,
+            "databasePassword" : DB_PASSWORD,
+            "databaseName" : DB_PATIENTS
+        }
+        with open(config_path, "w") as f:
+            f.write(json.dumps(json_config, indent=4))
         shell_measure(
             description=f"Run FhirEtl for {SOURCE} JDBC mode",
             command=" ".join(["java -Xmx128g -cp ./pipelines/batch/target/batch-bundled.jar",
                               "com.google.fhir.analytics.FhirEtl",
                               "--jdbcModeHapi=true",
-                              f"--fhirDatabaseConfigPath={DIR_WITH_THIS_SCRIPT}/../../utils/hapi-postgres-config.json",
+                              "--runner=FlinkRunner",
+                              f"--fhirDatabaseConfigPath={config_path}",
                               f"--outputParquetPath={parquet_dir}"])
         )
 
@@ -62,7 +83,7 @@ def log(description, start):
 def shell_measure(description, command):
     start = time.time()
     shell(command)
-    log(description, start)
+    log(description + "; " + command.replace('\n', ' '), start)
 
 
 def shell(command, exit_on_failure=True):
