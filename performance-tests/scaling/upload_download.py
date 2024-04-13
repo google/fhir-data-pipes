@@ -13,7 +13,7 @@ DIR_WITH_THIS_SCRIPT = os.environ['DIR_WITH_THIS_SCRIPT']
 DB_USERNAME = os.environ["DB_USERNAME"]
 DB_PASSWORD = os.environ["DB_PASSWORD"]
 DB_PATIENTS = os.environ["DB_PATIENTS"]
-
+SQL_ZONE = os.environ["SQL_ZONE"]
 
 def main():
     shell(f"mkdir -p {TMP_DIR}")
@@ -68,7 +68,11 @@ def main():
             command=" ".join(["java -Xmx128g -cp ./pipelines/batch/target/batch-bundled.jar",
                               "com.google.fhir.analytics.FhirEtl",
                               "--jdbcModeHapi=true",
-                              "--runner=FlinkRunner",
+                              #"--runner=FlinkRunner",
+                              "--fasterCopy=true",
+                              "--runner=DataflowRunner",
+                              f"--region={SQL_ZONE}",
+                              "--numWorkers=30",
                               f"--fhirDatabaseConfigPath={config_path}",
                               f"--outputParquetPath={parquet_dir}"])
         )
