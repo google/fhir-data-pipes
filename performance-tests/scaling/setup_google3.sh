@@ -43,8 +43,8 @@ nohup "${RUN_ON_HAPI_STANZA[@]}" "~/gits/fhir-data-pipes/performance-tests/scali
 
 if [ "$RUNNING_ON_HAPI_VM" = false ]; then
   sleep 15
-  "sudo killall /usr/bin/ssh || true"
-  "$DIR_WITH_THIS_SCRIPT/hapi_port_forward.sh"
+  sudo killall /usr/bin/ssh || true
+  "$DIR_WITH_THIS_SCRIPT/hapi_port_forward.sh" || true
 fi
 
 tail -F ~/nohup-hapi.out

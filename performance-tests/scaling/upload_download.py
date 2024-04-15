@@ -14,6 +14,10 @@ DB_USERNAME = os.environ["DB_USERNAME"]
 DB_PASSWORD = os.environ["DB_PASSWORD"]
 DB_PATIENTS = os.environ["DB_PATIENTS"]
 SQL_ZONE = os.environ["SQL_ZONE"]
+PROJECT_ID = os.environ["PROJECT_ID"]
+POSTGRES_DB_INSTANCE = os.environ["POSTGRES_DB_INSTANCE"]
+JDBC_MODE = os.environ["JDBC_MODE"] == 'true'
+FHIR_ETL_RUNNER = os.environ["FHIR_ETL_RUNNER"]
 
 def main():
     shell(f"mkdir -p {TMP_DIR}")
@@ -40,41 +44,56 @@ def main():
             command=f"python3 synthea-hiv/uploader/main.py HAPI {FHIR_SERVER_URL} --input_dir {input_dir} --cores {FHIR_UPLOADER_CORES}"
         )
 
-    if False:
+    if not ENABLE_DOWNLOAD:
+        return
+
+    common_etl_args = [
+        "--fasterCopy=true",
+        f"--runner={FHIR_ETL_RUNNER}",
+        f"--region={SQL_ZONE}",
+        "--numWorkers=30",
+        f"--resourceList=Patient,Encounter,Observation",
+        f"--outputParquetPath={parquet_dir}"
+    ]
+
+    if not JDBC_MODE:
+        # Test HAPI server readiness.
+        shell_run_until_succeeds(
+            f"""curl -H "Content-Type: application/json; charset=utf-8" '{FHIR_SERVER_URL}/Patient' -v""")
         shell_measure(
-            description=f"Run FhirEtl for {SOURCE}",
+            description=f"Run FhirEtl for {SOURCE} search mode",
             command=" ".join(["java -cp ./pipelines/batch/target/batch-bundled.jar",
                               "com.google.fhir.analytics.FhirEtl",
-                              "--runner=FlinkRunner",
-                              f"--fhirServerUrl={FHIR_SERVER_URL}",
-                              f"--outputParquetPath={parquet_dir}"])
+                              f"--fhirServerUrl={FHIR_SERVER_URL}"] + common_etl_args)
         )
 
-    if ENABLE_DOWNLOAD:
+    if JDBC_MODE:
         config_path = os.path.join(TMP_DIR, "hapi-postgres-config.json")
-        json_config = {
-            "jdbcDriverClass" : "org.postgresql.Driver",
-            "databaseService" : "postgresql",
-            "databaseHostName" : "127.0.0.1",
-            "databasePort" : "5432",
-            "databaseUser" : DB_USERNAME,
-            "databasePassword" : DB_PASSWORD,
-            "databaseName" : DB_PATIENTS
-        }
+        if DB_TYPE == "postgres":
+            json_config = {
+                "jdbcDriverClass" : "org.postgresql.Driver",
+                "databaseUser" : DB_USERNAME,
+                "databasePassword" : DB_PASSWORD,
+                "jdbcUri": f"jdbc:postgresql:///{DB_PATIENTS}?cloudSqlInstance={PROJECT_ID}:{SQL_ZONE}:{POSTGRES_DB_INSTANCE}&socketFactory=com.google.cloud.sql.postgres.SocketFactory"
+            }
+        else:
+            json_config = {
+                "jdbcDriverClass" : "org.postgresql.Driver",
+                "databaseService" : "postgresql",
+                "databaseHostName" : "127.0.0.1",
+                "databasePort" : "5432",
+                "databaseUser" : DB_USERNAME,
+                "databasePassword" : DB_PASSWORD,
+                "databaseName" : DB_PATIENTS
+            }
         with open(config_path, "w") as f:
             f.write(json.dumps(json_config, indent=4))
         shell_measure(
             description=f"Run FhirEtl for {SOURCE} JDBC mode",
-            command=" ".join(["java -Xmx128g -cp ./pipelines/batch/target/batch-bundled.jar",
+            command=" ".join(["java -Xmx64g -cp ./pipelines/batch/target/batch-bundled.jar",
                               "com.google.fhir.analytics.FhirEtl",
                               "--jdbcModeHapi=true",
-                              #"--runner=FlinkRunner",
-                              "--fasterCopy=true",
-                              "--runner=DataflowRunner",
-                              f"--region={SQL_ZONE}",
-                              "--numWorkers=30",
-                              f"--fhirDatabaseConfigPath={config_path}",
-                              f"--outputParquetPath={parquet_dir}"])
+                              f"--fhirDatabaseConfigPath={config_path}"] + common_etl_args)
         )
 
 

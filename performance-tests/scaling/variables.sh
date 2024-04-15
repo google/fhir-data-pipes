@@ -1,11 +1,13 @@
 # 79,768,7885,79370,791562
 export PATIENTS=7885
 # alloy or postgres
-export DB_TYPE=alloy
+export DB_TYPE=postgres
 export RUNNING_ON_HAPI_VM=false
 export FHIR_UPLOADER_CORES=8
 export ENABLE_UPLOAD=false
 export ENABLE_DOWNLOAD=true
+export JDBC_MODE=false
+export FHIR_ETL_RUNNER=DataflowRunner
 
 export DB_PATIENTS="patients_$PATIENTS"
 # pipeline-scaling-2 or pipeline-scaling-belgium
