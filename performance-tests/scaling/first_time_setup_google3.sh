@@ -11,7 +11,7 @@ cd fhir-data-pipes
 chmod -R 755 ./utils
 sudo apt-get -y install maven
 sudo apt install npm
-mvn clean install -P dataflow-runner
+mvn clean install -P dataflow-runner,cloudsql-postgres
 
 sudo apt-get install postgresql-client
 wget https://storage.googleapis.com/alloydb-auth-proxy/v1.7.1/alloydb-auth-proxy.linux.amd64 -O ~/Downloads/alloydb-auth-proxy

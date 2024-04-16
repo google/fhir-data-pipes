@@ -22,8 +22,8 @@ case "$DB_TYPE" in
     ;;
   "postgres")
     if [[ "$ENABLE_UPLOAD" = true ]]; then
-      gcloud sql databases delete "$DB_PATIENTS" --instance="$DB_INSTANCE" --quiet || true
-      gcloud sql databases create "$DB_PATIENTS" --instance="$DB_INSTANCE"
+      gcloud sql databases delete "$DB_PATIENTS" --instance="$POSTGRES_DB_INSTANCE" --quiet || true
+      gcloud sql databases create "$DB_PATIENTS" --instance="$POSTGRES_DB_INSTANCE"
     fi
     DB_CONNECTION="jdbc:postgresql:///${DB_PATIENTS}?cloudSqlInstance=${PROJECT_ID}:${SQL_ZONE}:${POSTGRES_DB_INSTANCE}&socketFactory=com.google.cloud.sql.postgres.SocketFactory"
     ;;
