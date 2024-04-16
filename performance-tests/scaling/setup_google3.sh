@@ -42,9 +42,7 @@ APPLICATION_YAML="~/gits/hapi-fhir-jpaserver-starter/src/main/resources/applicat
 nohup "${RUN_ON_HAPI_STANZA[@]}" "~/gits/fhir-data-pipes/performance-tests/scaling/start_hapi_server.sh" >> ~/nohup-hapi.out 2>&1 &
 
 if [ "$RUNNING_ON_HAPI_VM" = false ]; then
-  sleep 15
-  sudo killall /usr/bin/ssh || true
-  "$DIR_WITH_THIS_SCRIPT/hapi_port_forward.sh" || true
+  (sleep 15; "$DIR_WITH_THIS_SCRIPT/hapi_port_forward.sh") &
 fi
 
 tail -F ~/nohup-hapi.out
