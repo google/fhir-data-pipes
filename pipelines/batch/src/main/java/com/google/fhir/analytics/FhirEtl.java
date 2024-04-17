@@ -391,28 +391,21 @@ public class FhirEtl {
     return pipelineList;
   }
 
-  private static List<Pipeline> buildJsonReadPipeline(FhirEtlOptions options) {
-    PCollection<FileIO.ReadableFile> files =
-        buildPipelineForFilePattern(options, options.getSourceJsonFilePattern());
-    files.apply("Read JSON files", ParDo.of(new ReadJsonFilesFn(options)));
-    return Arrays.asList(files.getPipeline());
-  }
-
-  private static List<Pipeline> buildNDJsonReadPipeline(FhirEtlOptions options) {
-    PCollection<FileIO.ReadableFile> files =
-        buildPipelineForFilePattern(options, options.getSourceNDJsonFilePattern());
-    files.apply("Read NDJSON files", ParDo.of(new ReadNDJsonFilesFn(options)));
-    return Arrays.asList(files.getPipeline());
-  }
-
-  private static PCollection<FileIO.ReadableFile> buildPipelineForFilePattern(
-      FhirEtlOptions options, String filePattern) {
+  private static List<Pipeline> buildJsonReadPipeline(
+      FhirEtlOptions options, String filePattern, boolean isFileNDJson) {
     Preconditions.checkArgument(!filePattern.isEmpty());
     Preconditions.checkArgument(Strings.isNullOrEmpty(options.getSince()));
     Preconditions.checkArgument(!options.isJdbcModeEnabled());
     Preconditions.checkArgument(options.getActivePeriod().isEmpty());
+
     Pipeline pipeline = Pipeline.create(options);
-    return pipeline.apply(FileIO.match().filepattern(filePattern)).apply(FileIO.readMatches());
+    pipeline
+        .apply(FileIO.match().filepattern(filePattern))
+        .apply(FileIO.readMatches())
+        .apply(
+            isFileNDJson ? "Read NDJson Files" : "Read JSON Files",
+            ParDo.of(new ReadJsonFilesFn(options, isFileNDJson)));
+    return Arrays.asList(pipeline);
   }
 
   /**
@@ -447,9 +440,9 @@ public class FhirEtl {
     } else if (!options.getParquetInputDwhRoot().isEmpty()) {
       return buildParquetReadPipeline(options, avroConversionUtil);
     } else if (!options.getSourceJsonFilePattern().isEmpty()) {
-      return buildJsonReadPipeline(options);
+      return buildJsonReadPipeline(options, options.getSourceJsonFilePattern(), false);
     } else if (!options.getSourceNDJsonFilePattern().isEmpty()) {
-      return buildNDJsonReadPipeline(options);
+      return buildJsonReadPipeline(options, options.getSourceNDJsonFilePattern(), true);
     } else {
       return buildFhirSearchPipeline(options, avroConversionUtil);
     }

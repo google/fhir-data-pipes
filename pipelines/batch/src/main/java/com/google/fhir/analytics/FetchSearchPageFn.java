@@ -28,7 +28,6 @@ import com.google.fhir.analytics.view.ViewApplicationException;
 import java.beans.PropertyVetoException;
 import java.io.IOException;
 import java.sql.SQLException;
-import java.util.List;
 import java.util.Set;
 import javax.annotation.Nullable;
 import javax.sql.DataSource;
@@ -36,8 +35,6 @@ import org.apache.beam.sdk.metrics.Counter;
 import org.apache.beam.sdk.metrics.Metrics;
 import org.apache.beam.sdk.transforms.DoFn;
 import org.apache.beam.sdk.values.KV;
-import org.hl7.fhir.instance.model.api.IBaseReference;
-import org.hl7.fhir.instance.model.api.IBaseResource;
 import org.hl7.fhir.r4.model.Bundle;
 import org.hl7.fhir.r4.model.Bundle.BundleEntryComponent;
 import org.hl7.fhir.r4.model.Resource;
@@ -263,42 +260,6 @@ abstract class FetchSearchPageFn<T> extends DoFn<T, KV<String, Integer>> {
           Resource resource = entry.getResource();
           if (resourceTypes == null || resourceTypes.contains(resource.getResourceType().name())) {
             jdbcWriter.writeResource(resource);
-          }
-        }
-      }
-    }
-  }
-
-  /**
-   * For every URN reference whose target is found in this bundle, updates the reference to the
-   * relative URL of the found resource. This is needed when original references are not URLs
-   * (relative or absolute) and instead are URNs, e.g., `urn:uuid:...`. During parsing, these
-   * references are resolved properly, i.e., if the referenced resource is in the Bundle, it is
-   * found. However, the references are kept as original URNs. With this function we are trying to
-   * simulate the logic of uploading the Bundle to a FHIR server and then downloading those
-   * resources. The logic implemented here is based on how HAPI parser resolves the same references
-   * within a Bundle; see {@code ca.uhn.fhir.parser.ParserState.stitchBundleCrossReferences}.
-   *
-   * @param bundle the bundle whose references are updated.
-   */
-  protected void updateResolvedRefIds(Bundle bundle) throws ProfileMapperException {
-    for (BundleEntryComponent entry : bundle.getEntry()) {
-      List<IBaseReference> refs =
-          avroConversionUtil
-              .getFhirContext()
-              .newTerser()
-              .getAllPopulatedChildElementsOfType(entry.getResource(), IBaseReference.class);
-      for (IBaseReference ref : refs) {
-        IBaseResource resource = ref.getResource();
-        if (resource != null) {
-          if (ref.getReferenceElement() == null
-              || ref.getReferenceElement().getIdPart() == null
-              || ref.getReferenceElement().getIdPart().startsWith("urn:")) {
-            log.debug(
-                String.format(
-                    "Updating URN reference %s to the resolved resource ID %s",
-                    ref.getReferenceElement(), resource.getIdElement()));
-            ref.setReference(resource.getIdElement().getValue());
           }
         }
       }
