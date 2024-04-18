@@ -92,13 +92,20 @@ public class JdbcConnectionPools {
     comboPooledDataSource.setUser(config.dbUser());
     comboPooledDataSource.setPassword(config.dbPassword());
     comboPooledDataSource.setMaxPoolSize(Math.max(MIN_CONNECTIONS, jdbcMaxPoolSize));
+    if (MIN_CONNECTIONS > jdbcMaxPoolSize) {
+      log.warn(
+          "The requested max pool size {} is less than {}; adjusting max pool size to {}.",
+          jdbcMaxPoolSize,
+          MIN_CONNECTIONS,
+          MIN_CONNECTIONS);
+    }
     comboPooledDataSource.setMinPoolSize(MIN_CONNECTIONS);
     // Setting an idle time to reduce the number of connections when idle; avoid setting
     // maxIdleTime! Instead, use connection testing as done below; see:
     // https://www.mchange.com/projects/c3p0/#managing_pool_size
     comboPooledDataSource.setMaxIdleTimeExcessConnections(30);
     // See https://www.mchange.com/projects/c3p0/#configuring_connection_testing
-    comboPooledDataSource.setIdleConnectionTestPeriod(30);
+    comboPooledDataSource.setIdleConnectionTestPeriod(40);
     comboPooledDataSource.setTestConnectionOnCheckin(true);
     return comboPooledDataSource;
   }
