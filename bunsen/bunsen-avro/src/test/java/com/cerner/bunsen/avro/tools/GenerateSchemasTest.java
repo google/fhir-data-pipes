@@ -34,7 +34,7 @@ public class GenerateSchemasTest {
         new String[] {
           outputFile.toString(),
           "DSTU3",
-          "/stu3-us-core-definitions",
+          "classpath:/stu3-us-core-definitions",
           TestData.US_CORE_PATIENT,
           TestData.US_CORE_CONDITION,
           TestData.US_CORE_MEDICATION,

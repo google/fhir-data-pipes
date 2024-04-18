@@ -114,7 +114,7 @@ public class R4AvroConverterUsCoreTest {
     ProfileMapperFhirContexts.getInstance().deRegisterFhirContexts(FhirVersionEnum.R4);
     fhirContext =
         ProfileMapperFhirContexts.getInstance()
-            .contextFromClasspathFor(FhirVersionEnum.R4, "/r4-us-core-definitions");
+            .contextFor(FhirVersionEnum.R4, "classpath:/r4-us-core-definitions");
 
     AvroConverter observationConverter =
         AvroConverter.forResources(fhirContext, R4UsCoreProfileData.US_CORE_OBSERVATION_PROFILES);

@@ -94,7 +94,7 @@ public class Stu3AvroConverterUsCoreTest {
     ProfileMapperFhirContexts.getInstance().deRegisterFhirContexts(FhirVersionEnum.DSTU3);
     fhirContext =
         ProfileMapperFhirContexts.getInstance()
-            .contextFromClasspathFor(FhirVersionEnum.DSTU3, "/stu3-us-core-definitions");
+            .contextFor(FhirVersionEnum.DSTU3, "classpath:/stu3-us-core-definitions");
     AvroConverter observationConverter =
         AvroConverter.forResources(fhirContext, Stu3UsCoreProfileData.US_CORE_OBSERVATION_PROFILES);
 

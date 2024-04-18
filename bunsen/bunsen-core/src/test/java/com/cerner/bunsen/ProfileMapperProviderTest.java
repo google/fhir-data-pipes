@@ -20,7 +20,7 @@ public class ProfileMapperProviderTest {
     ProfileMappingProvider profileMappingProvider = new ProfileMappingProvider();
     FhirContext fhirContext = new FhirContext(FhirVersionEnum.R4);
     Map<String, List<String>> profileMapping =
-        profileMappingProvider.loadStructureDefinitions(fhirContext, null, false);
+        profileMappingProvider.loadStructureDefinitions(fhirContext, null);
     assertThat(profileMapping.get("Patient"), Matchers.notNullValue());
     assertThat(
         profileMapping.get("Patient").toArray(),
@@ -40,7 +40,7 @@ public class ProfileMapperProviderTest {
     FhirContext fhirContext = new FhirContext(FhirVersionEnum.R4);
     Map<String, List<String>> profileMapping =
         profileMappingProvider.loadStructureDefinitions(
-            fhirContext, "/r4-us-core-definitions", true);
+            fhirContext, "classpath:/r4-us-core-definitions");
 
     assertThat(profileMapping.get("Patient"), Matchers.notNullValue());
     assertThat(
@@ -61,7 +61,7 @@ public class ProfileMapperProviderTest {
     FhirContext fhirContext = new FhirContext(FhirVersionEnum.DSTU3);
     Map<String, List<String>> profileMapping =
         profileMappingProvider.loadStructureDefinitions(
-            fhirContext, "/stu3-us-core-definitions", true);
+            fhirContext, "classpath:/stu3-us-core-definitions");
 
     assertThat(profileMapping.get("Patient"), Matchers.notNullValue());
     assertThat(

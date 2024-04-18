@@ -104,9 +104,7 @@ public class DataProperties {
 
   private String fhirServerOAuthClientSecret;
 
-  private String structureDefinitionsDir;
-
-  private String structureDefinitionsClasspath;
+  private String structureDefinitionsPath;
 
   private int rowGroupSizeForParquetFiles;
 
@@ -160,8 +158,7 @@ public class DataProperties {
     options.setViewDefinitionsDir(viewDefinitionsDir);
     options.setSinkDbConfigPath(sinkDbConfigPath);
     options.setRecreateSinkTables(true);
-    options.setStructureDefinitionsDir(Strings.nullToEmpty(structureDefinitionsDir));
-    options.setStructureDefinitionsClasspath(Strings.nullToEmpty(structureDefinitionsClasspath));
+    options.setStructureDefinitionsPath(Strings.nullToEmpty(structureDefinitionsPath));
     options.setFhirVersion(fhirVersion);
     if (rowGroupSizeForParquetFiles > 0) {
       options.setRowGroupSizeForParquetFiles(rowGroupSizeForParquetFiles);
@@ -190,8 +187,7 @@ public class DataProperties {
     }
     options.setViewDefinitionsDir(Strings.nullToEmpty(viewDefinitionsDir));
     options.setSinkDbConfigPath(Strings.nullToEmpty(sinkDbConfigPath));
-    options.setStructureDefinitionsDir(Strings.nullToEmpty(structureDefinitionsDir));
-    options.setStructureDefinitionsClasspath(Strings.nullToEmpty(structureDefinitionsClasspath));
+    options.setStructureDefinitionsPath(Strings.nullToEmpty(structureDefinitionsPath));
     options.setFhirVersion(fhirVersion);
     if (rowGroupSizeForParquetFiles > 0) {
       options.setRowGroupSizeForParquetFiles(rowGroupSizeForParquetFiles);
@@ -231,9 +227,7 @@ public class DataProperties {
         new ConfigFields("fhirdata.dbConfig", dbConfig, "", ""),
         new ConfigFields("fhirdata.viewDefinitionsDir", viewDefinitionsDir, "", ""),
         new ConfigFields("fhirdata.sinkDbConfigPath", sinkDbConfigPath, "", ""),
-        new ConfigFields("fhirdata.structureDefinitionsDir", structureDefinitionsDir, "", ""),
-        new ConfigFields(
-            "fhirdata.structureDefinitionsClasspath", structureDefinitionsClasspath, "", ""),
+        new ConfigFields("fhirdata.structureDefinitionsPath", structureDefinitionsPath, "", ""),
         new ConfigFields("fhirdata.fhirVersion", fhirVersion.name(), "", ""),
         new ConfigFields(
             "fhirdata.rowGroupSizeForParquetFiles",

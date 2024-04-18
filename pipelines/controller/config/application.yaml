@@ -135,15 +135,11 @@ fhirdata:
   hiveResourceViewsDir: "config/views"
 
   # Directory path containing the structure definition files for any custom profiles that needs to be
-  # supported. Currently only one profile is supported for any given resource type.
-  #structureDefinitionsDir: "config/r4-us-core-definitions"
-
-  # Similar to the structureDefinitionsDir, this path should also contain the structure definition
-  # files for any custom profiles that needs to be supported. But the difference is that this is the
-  # classpath name instead of a directory name and should always start with a '/'. Also, only one of
-  # the structureDefinitionsDir or structureDefinitionsClasspath parameters can be configured, do
-  # not configure anything if custom profiles are not needed.
-  structureDefinitionsClasspath: "/r4-us-core-definitions"
+  # supported. If this starts with `classpath:` then the a classpath resource is
+  # assumed and the path should always start with a `/`.
+  # Do not configure anything if custom profiles are not needed.
+  #structureDefinitionsPath: "config/r4-us-core-definitions"
+  structureDefinitionsPath: "classpath:/r4-us-core-definitions"
 
   # The fhir version to be used for the FHIR Context APIs. This is an enum value and the possible
   # values should be one from the list mentioned in the below link

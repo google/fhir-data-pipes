@@ -110,9 +110,7 @@ abstract class FetchSearchPageFn<T> extends DoFn<T, KV<String, Integer>> {
 
   private FhirVersionEnum fhirVersionEnum;
 
-  private String structureDefinitionsDir;
-
-  private String structureDefinitionsClasspath;
+  private String structureDefinitionsPath;
 
   protected AvroConversionUtil avroConversionUtil;
 
@@ -131,8 +129,7 @@ abstract class FetchSearchPageFn<T> extends DoFn<T, KV<String, Integer>> {
     this.secondsToFlush = options.getSecondsToFlushParquetFiles();
     this.rowGroupSize = options.getRowGroupSizeForParquetFiles();
     this.viewDefinitionsDir = options.getViewDefinitionsDir();
-    this.structureDefinitionsDir = options.getStructureDefinitionsDir();
-    this.structureDefinitionsClasspath = options.getStructureDefinitionsClasspath();
+    this.structureDefinitionsPath = options.getStructureDefinitionsPath();
     this.fhirVersionEnum = options.getFhirVersion();
     if (options.getSinkDbConfigPath().isEmpty()) {
       this.sinkDbConfig = null;
@@ -170,9 +167,7 @@ abstract class FetchSearchPageFn<T> extends DoFn<T, KV<String, Integer>> {
   @Setup
   public void setup() throws SQLException, PropertyVetoException, ProfileException {
     log.debug("Starting setup for stage " + stageIdentifier);
-    avroConversionUtil =
-        AvroConversionUtil.getInstance(
-            fhirVersionEnum, structureDefinitionsDir, structureDefinitionsClasspath);
+    avroConversionUtil = AvroConversionUtil.getInstance(fhirVersionEnum, structureDefinitionsPath);
     FhirContext fhirContext = avroConversionUtil.getFhirContext();
     // The documentation for `FhirContext` claims that it is thread-safe but looking at the code,
     // it is not obvious if it is. This might be an issue when we write to it, like the next line.
@@ -204,8 +199,7 @@ abstract class FetchSearchPageFn<T> extends DoFn<T, KV<String, Integer>> {
       parquetUtil =
           new ParquetUtil(
               fhirContext.getVersion().getVersion(),
-              structureDefinitionsDir,
-              structureDefinitionsClasspath,
+              structureDefinitionsPath,
               parquetFile,
               secondsToFlush,
               rowGroupSize,

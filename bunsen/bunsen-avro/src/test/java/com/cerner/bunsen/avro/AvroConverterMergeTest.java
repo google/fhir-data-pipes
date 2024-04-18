@@ -33,7 +33,7 @@ public class AvroConverterMergeTest {
   public void validateMergedR4CustomPatientSchema() throws ProfileException, IOException {
     FhirContext fhirContext =
         ProfileMapperFhirContexts.getInstance()
-            .contextFromClasspathFor(FhirVersionEnum.R4, "/r4-custom-profile-definitions");
+            .contextFor(FhirVersionEnum.R4, "classpath:/r4-custom-profile-definitions");
 
     List<String> patientProfiles =
         Arrays.asList(
@@ -53,7 +53,7 @@ public class AvroConverterMergeTest {
   public void validateMergedStu3CustomPatientSchema() throws ProfileException, IOException {
     FhirContext fhirContext =
         ProfileMapperFhirContexts.getInstance()
-            .contextFromClasspathFor(FhirVersionEnum.DSTU3, "/stu3-custom-profile-definitions");
+            .contextFor(FhirVersionEnum.DSTU3, "classpath:/stu3-custom-profile-definitions");
 
     List<String> patientProfiles =
         Arrays.asList(
@@ -73,7 +73,7 @@ public class AvroConverterMergeTest {
   public void validateMergedR4UsCoreSchemas() throws ProfileException, IOException {
     FhirContext fhirContext =
         ProfileMapperFhirContexts.getInstance()
-            .contextFromClasspathFor(FhirVersionEnum.R4, "/r4-us-core-definitions");
+            .contextFor(FhirVersionEnum.R4, "classpath:/r4-us-core-definitions");
     validateSchema(
         "/r4-us-core-schemas/us-core-patient-schema.json",
         R4UsCoreProfileData.US_CORE_PATIENT_PROFILES,
@@ -92,7 +92,7 @@ public class AvroConverterMergeTest {
   public void validateMergedStu3UsCoreSchemas() throws ProfileException, IOException {
     FhirContext fhirContext =
         ProfileMapperFhirContexts.getInstance()
-            .contextFromClasspathFor(FhirVersionEnum.DSTU3, "/stu3-us-core-definitions");
+            .contextFor(FhirVersionEnum.DSTU3, "classpath:/stu3-us-core-definitions");
     validateSchema(
         "/stu3-us-core-schemas/us-core-patient-schema.json",
         Stu3UsCoreProfileData.US_CORE_PATIENT_PROFILES,
@@ -107,7 +107,7 @@ public class AvroConverterMergeTest {
   public void validateR4UsCoreResourceWithExtension() throws ProfileException, IOException {
     FhirContext fhirContext =
         ProfileMapperFhirContexts.getInstance()
-            .contextFromClasspathFor(FhirVersionEnum.R4, "/r4-us-core-definitions");
+            .contextFor(FhirVersionEnum.R4, "classpath:/r4-us-core-definitions");
 
     AvroConverter patientConverter =
         AvroConverter.forResources(fhirContext, R4UsCoreProfileData.US_CORE_PATIENT_PROFILES);
@@ -128,7 +128,7 @@ public class AvroConverterMergeTest {
       throws ProfileException, IOException {
     FhirContext fhirContext =
         ProfileMapperFhirContexts.getInstance()
-            .contextFromClasspathFor(FhirVersionEnum.DSTU3, "/stu3-us-core-definitions");
+            .contextFor(FhirVersionEnum.DSTU3, "classpath:/stu3-us-core-definitions");
 
     AvroConverter patientConverter =
         AvroConverter.forResources(fhirContext, Stu3UsCoreProfileData.US_CORE_PATIENT_PROFILES);

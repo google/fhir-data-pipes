@@ -174,9 +174,7 @@ public class PipelineManager implements ApplicationListener<ApplicationReadyEven
     initialiseFlinkConfiguration();
     avroConversionUtil =
         AvroConversionUtil.getInstance(
-            dataProperties.getFhirVersion(),
-            dataProperties.getStructureDefinitionsDir(),
-            dataProperties.getStructureDefinitionsClasspath());
+            dataProperties.getFhirVersion(), dataProperties.getStructureDefinitionsPath());
 
     PipelineConfig pipelineConfig = dataProperties.createBatchOptions();
     FileSystems.setDefaultPipelineOptions(pipelineConfig.getFhirEtlOptions());
@@ -459,10 +457,8 @@ public class PipelineManager implements ApplicationListener<ApplicationReadyEven
             ? dataProperties.getNumThreads()
             : Runtime.getRuntime().availableProcessors();
     mergerOptions.setNumShards(numShards);
-    mergerOptions.setStructureDefinitionsDir(
-        Strings.nullToEmpty(dataProperties.getStructureDefinitionsDir()));
-    mergerOptions.setStructureDefinitionsClasspath(
-        Strings.nullToEmpty(dataProperties.getStructureDefinitionsClasspath()));
+    mergerOptions.setStructureDefinitionsPath(
+        Strings.nullToEmpty(dataProperties.getStructureDefinitionsPath()));
     mergerOptions.setFhirVersion(dataProperties.getFhirVersion());
     if (dataProperties.getRowGroupSizeForParquetFiles() > 0) {
       mergerOptions.setRowGroupSizeForParquetFiles(dataProperties.getRowGroupSizeForParquetFiles());

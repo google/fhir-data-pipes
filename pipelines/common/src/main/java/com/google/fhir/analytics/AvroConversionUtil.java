@@ -54,15 +54,13 @@ public class AvroConversionUtil {
 
   private final Map<String, AvroConverter> converterMap;
 
-  private ProfileMapperFhirContexts profileMapperFhirContexts;
+  private final ProfileMapperFhirContexts profileMapperFhirContexts;
 
   private final FhirContext fhirContext;
 
-  private FhirVersionEnum fhirVersionEnum;
+  private final FhirVersionEnum fhirVersionEnum;
 
-  private String structureDefinitionsDir;
-
-  private String structureDefinitionsClasspath;
+  private final String structureDefinitionsPath;
 
   /**
    * This is to fix the logical type conversions for BigDecimal. This should be called once before
@@ -79,64 +77,36 @@ public class AvroConversionUtil {
   }
 
   private AvroConversionUtil(
-      FhirVersionEnum fhirVersionEnum,
-      @Nullable String structureDefinitionsDir,
-      @Nullable String structureDefinitionsClasspath)
+      FhirVersionEnum fhirVersionEnum, @Nullable String structureDefinitionsPath)
       throws ProfileException {
     this.fhirVersionEnum = fhirVersionEnum;
-    this.structureDefinitionsDir = structureDefinitionsDir;
-    this.structureDefinitionsClasspath = structureDefinitionsClasspath;
+    this.structureDefinitionsPath = structureDefinitionsPath;
     this.converterMap = Maps.newHashMap();
     this.profileMapperFhirContexts = ProfileMapperFhirContexts.getInstance();
-    if (!Strings.isNullOrEmpty(structureDefinitionsClasspath)) {
-      this.fhirContext =
-          profileMapperFhirContexts.contextFromClasspathFor(
-              fhirVersionEnum, structureDefinitionsClasspath);
-    } else {
-      this.fhirContext =
-          profileMapperFhirContexts.contextFor(fhirVersionEnum, structureDefinitionsDir);
-    }
+    this.fhirContext =
+        profileMapperFhirContexts.contextFor(fhirVersionEnum, structureDefinitionsPath);
   }
 
   static synchronized AvroConversionUtil getInstance(
-      FhirVersionEnum fhirVersionEnum,
-      @Nullable String structureDefinitionsDir,
-      @Nullable String structureDefinitionsClasspath)
+      FhirVersionEnum fhirVersionEnum, @Nullable String structureDefinitionsPath)
       throws ProfileException {
     Preconditions.checkNotNull(fhirVersionEnum, "fhirVersionEnum cannot be null");
-    structureDefinitionsDir = Strings.nullToEmpty(structureDefinitionsDir);
-    structureDefinitionsClasspath = Strings.nullToEmpty(structureDefinitionsClasspath);
-    if (!structureDefinitionsDir.isEmpty() && !structureDefinitionsClasspath.isEmpty()) {
-      String errorMsg =
-          String.format(
-              "Please configure only one of the parameter between structureDefinitionsDir=%s and"
-                  + " structureDefinitionsClasspath=%s, leave both empty if custom profiles are not"
-                  + " needed.",
-              structureDefinitionsDir, structureDefinitionsClasspath);
-      log.error(errorMsg);
-      throw new ProfileException(errorMsg);
-    }
+    structureDefinitionsPath = Strings.nullToEmpty(structureDefinitionsPath);
 
     if (instance == null) {
-      instance =
-          new AvroConversionUtil(
-              fhirVersionEnum, structureDefinitionsDir, structureDefinitionsClasspath);
+      instance = new AvroConversionUtil(fhirVersionEnum, structureDefinitionsPath);
     } else if (!fhirVersionEnum.equals(instance.fhirVersionEnum)
-        || !structureDefinitionsDir.equals(instance.structureDefinitionsDir)
-        || !structureDefinitionsClasspath.equals(instance.structureDefinitionsClasspath)) {
+        || !structureDefinitionsPath.equals(instance.structureDefinitionsPath)) {
       String errorMsg =
           String.format(
               "AvroConversionUtil has been initialised with different set of parameters earlier"
-                  + " with fhirVersionEnum=%s, structureDefinitionsDir=%s and"
-                  + " structureDefinitionsClasspath=%s, compared to what is being passed now with"
-                  + " fhirVersionEnum=%s, structureDefinitionsDir=%s and"
-                  + " structureDefinitionsClasspath=%s",
+                  + " with fhirVersionEnum=%s, structureDefinitionsPath=%s"
+                  + " compared to what is being passed now with"
+                  + " fhirVersionEnum=%s, structureDefinitionsPath=%s",
               instance.fhirVersionEnum,
-              instance.structureDefinitionsDir,
-              instance.structureDefinitionsClasspath,
+              instance.structureDefinitionsPath,
               fhirVersionEnum,
-              structureDefinitionsDir,
-              structureDefinitionsClasspath);
+              structureDefinitionsPath);
       log.error(errorMsg);
       throw new ProfileException(errorMsg);
     }
