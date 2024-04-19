@@ -68,6 +68,7 @@ public class ReadJsonFilesFn extends FetchSearchPageFn<FileIO.ReadableFile> {
     log.info("Reading file with metadata " + file.getMetadata());
     try {
       IBaseResource resource = parser.parseResource(Channels.newInputStream(file.open()));
+      log.warn("processElement " + resource.fhirType());
       if (!"Bundle".equals(resource.fhirType())) {
         log.error(
             String.format(

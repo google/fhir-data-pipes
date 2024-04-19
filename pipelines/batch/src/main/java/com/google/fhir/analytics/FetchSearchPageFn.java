@@ -260,10 +260,12 @@ abstract class FetchSearchPageFn<T> extends DoFn<T, KV<String, Integer>> {
       throws IOException, SQLException, ViewApplicationException, ProfileException {
     if (bundle != null && bundle.getEntry() != null) {
       numFetchedResources.inc(bundle.getEntry().size());
+      log.warn("processBundle 2 size " + bundle.getEntry().size());
       if (parquetUtil != null) {
         long startTime = System.currentTimeMillis();
         parquetUtil.writeRecords(bundle, resourceTypes);
         totalGenerateTimeMillis.inc(System.currentTimeMillis() - startTime);
+        log.warn("processBundle 3 writeRecords");
       }
       if (!this.sinkPath.isEmpty()) {
         long pushStartTime = System.currentTimeMillis();
@@ -274,6 +276,7 @@ abstract class FetchSearchPageFn<T> extends DoFn<T, KV<String, Integer>> {
         if (bundle.getEntry() == null) {
           return;
         }
+        log.warn("processBundle 4 sinkDbConfig");
         // TODO consider processing the whole Bundle in one batched DB update.
         for (BundleEntryComponent entry : bundle.getEntry()) {
           Resource resource = entry.getResource();
