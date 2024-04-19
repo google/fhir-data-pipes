@@ -38,9 +38,6 @@ public class HiveTableManager {
 
   private static final Logger logger = LoggerFactory.getLogger(HiveTableManager.class.getName());
 
-  // We don't expect many Hive queries hence choosing a fixed/low number of connections.
-  private static final int CONNECTION_POOL_SIZE = 3;
-
   private final DataSource dataSource;
 
   private final String viewsDir;
@@ -48,10 +45,15 @@ public class HiveTableManager {
   private static final String THRIFT_CONTAINER_PARQUET_DIR = "/dwh";
 
   public HiveTableManager(DatabaseConfiguration hiveDbConfig, String viewsDir) {
+    // We don't expect many Hive queries hence choosing a fixed/low number of connections.
+    // Also, we set the max number of connections equal to MIN_CONNECTIONS such that we never have
+    // "excess" connections to be closed. This is to address this HiveDriver/Thrift-Server issue:
+    // https://github.com/google/fhir-data-pipes/issues/483
     this.dataSource =
         JdbcConnectionPools.getInstance()
             .getPooledDataSource(
-                JdbcConnectionPools.dbConfigToDataSourceConfig(hiveDbConfig), CONNECTION_POOL_SIZE);
+                JdbcConnectionPools.dbConfigToDataSourceConfig(hiveDbConfig),
+                JdbcConnectionPools.MIN_CONNECTIONS);
     this.viewsDir = Strings.nullToEmpty(viewsDir);
   }
 
