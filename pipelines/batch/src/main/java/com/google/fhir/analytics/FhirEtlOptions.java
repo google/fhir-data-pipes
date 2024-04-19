@@ -252,4 +252,12 @@ public interface FhirEtlOptions extends BasePipelineOptions {
   String getSourceJsonFilePattern();
 
   void setSourceJsonFilePattern(String value);
+
+  @Description(
+      "The pattern for input NDJSON files, e.g., 'PATH/*'. Each file contain FHIR resources"
+          + " serialized with no whitespace, and separated by a newline pair.")
+  @Default.String("")
+  String getSourceNDJsonFilePattern();
+
+  void setSourceNDJsonFilePattern(String value);
 }
