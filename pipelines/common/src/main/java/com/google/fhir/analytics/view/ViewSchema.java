@@ -117,6 +117,9 @@ public class ViewSchema {
         // TODO add unit-tests for all cases and add extra cases too if needed!
         if (ViewApplicator.ID_TYPE.equals(re.getColumnInfo().getInferredType())) {
           statement.setString(ind, re.getSingleIdPart());
+          // TODO remove the following and also the `fullId` option (before merge).
+          // statement.setString(ind, re.getSingleValue().toString());
+          // statement.setString(ind, re.getString());
         } else {
           switch (fhirTypeToDb(re.getColumnInfo().getType())) {
             case BOOLEAN:

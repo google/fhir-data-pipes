@@ -97,7 +97,8 @@ public class GenerateAggregatedSchemas {
       List<String> resourceTypeURLs =
           ProfileMapperFhirContexts.getInstance()
               .getMappedProfilesForResource(FhirVersionEnum.R4, resourceType);
-      AvroConverter aggregatedConverter = AvroConverter.forResources(fhirContext, resourceTypeURLs);
+      AvroConverter aggregatedConverter =
+          AvroConverter.forResources(fhirContext, resourceTypeURLs, 1, false);
       createOutputFile(resourceType, aggregatedConverter.getSchema(), outputDir);
     }
   }

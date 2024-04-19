@@ -20,6 +20,7 @@ import com.cerner.bunsen.definitions.PrimitiveConverter;
 import com.cerner.bunsen.definitions.StringConverter;
 import com.cerner.bunsen.definitions.StructureField;
 import com.cerner.bunsen.exception.ProfileException;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableMap;
@@ -50,11 +51,18 @@ public class DefinitionToAvroVisitor implements DefinitionVisitor<HapiConverter<
 
   private final Map<String, HapiConverter<Schema>> visitedConverters;
 
+  private final int recursiveDepth;
+
+  private final boolean fullId;
+
   private static final HapiConverter<Schema> STRING_CONVERTER =
       new StringConverter<>(Schema.create(Type.STRING));
 
   private static final HapiConverter<Schema> ID_CONVERTER =
-      new IdConverter<>(Schema.create(Type.STRING));
+      new IdConverter<>(Schema.create(Type.STRING), false);
+
+  private static final HapiConverter<Schema> FULL_ID_CONVERTER =
+      new IdConverter<>(Schema.create(Type.STRING), true);
 
   private static final HapiConverter<Schema> ENUM_CONVERTER =
       new EnumConverter<>(Schema.create(Type.STRING));
@@ -124,9 +132,9 @@ public class DefinitionToAvroVisitor implements DefinitionVisitor<HapiConverter<
 
   // The key set of this map should be exactly the same as StructureDefinitions.PRIMITIVE_TYPES.
   // TODO refactor/consolidate these two.
+  @VisibleForTesting
   static final Map<String, HapiConverter<Schema>> TYPE_TO_CONVERTER =
       ImmutableMap.<String, HapiConverter<Schema>>builder()
-          .put(ID_TYPE, ID_CONVERTER)
           .put("boolean", BOOLEAN_CONVERTER)
           .put("code", ENUM_CONVERTER)
           .put("markdown", STRING_CONVERTER)
@@ -525,11 +533,14 @@ public class DefinitionToAvroVisitor implements DefinitionVisitor<HapiConverter<
   public DefinitionToAvroVisitor(
       FhirConversionSupport fhirSupport,
       String basePackage,
-      Map<String, HapiConverter<Schema>> visitedConverters) {
-
+      Map<String, HapiConverter<Schema>> visitedConverters,
+      int recursiveDepth,
+      boolean fullId) {
     this.fhirSupport = fhirSupport;
     this.basePackage = basePackage;
     this.visitedConverters = visitedConverters;
+    this.recursiveDepth = recursiveDepth;
+    this.fullId = fullId;
   }
 
   @Override
@@ -540,6 +551,9 @@ public class DefinitionToAvroVisitor implements DefinitionVisitor<HapiConverter<
     String realType = primitiveType;
     if (ID_TYPE.equals(elementName) && R4_STRING_TYPE.equals(primitiveType)) {
       realType = ID_TYPE;
+    }
+    if (realType.equals(ID_TYPE)) {
+      return this.fullId ? FULL_ID_CONVERTER : ID_CONVERTER;
     }
     Preconditions.checkNotNull(
         TYPE_TO_CONVERTER.get(realType),
@@ -842,8 +856,7 @@ public class DefinitionToAvroVisitor implements DefinitionVisitor<HapiConverter<
 
   @Override
   public int getMaxDepth(String elementTypeUrl, String path) {
-    // return 2;
-    return 1;
+    return this.recursiveDepth;
   }
 
   private static HapiCompositeConverter createCompositeConverter(

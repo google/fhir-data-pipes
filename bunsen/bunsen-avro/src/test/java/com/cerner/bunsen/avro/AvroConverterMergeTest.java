@@ -40,7 +40,8 @@ public class AvroConverterMergeTest {
             "http://hl7.org/fhir/StructureDefinition/Patient",
             "http://hl7.org/fhir/bunsen/test/StructureDefinition/bunsen-test-patient");
 
-    AvroConverter mergedConverter = AvroConverter.forResources(fhirContext, patientProfiles);
+    AvroConverter mergedConverter =
+        AvroConverter.forResources(fhirContext, patientProfiles, 1, false);
 
     InputStream inputStream =
         this.getClass().getResourceAsStream("/r4-custom-schemas/bunsen-test-patient-schema.json");
@@ -60,7 +61,8 @@ public class AvroConverterMergeTest {
             "http://hl7.org/fhir/StructureDefinition/Patient",
             "http://hl7.org/fhir/bunsen/test/StructureDefinition/bunsen-test-patient");
 
-    AvroConverter mergedConverter = AvroConverter.forResources(fhirContext, patientProfiles);
+    AvroConverter mergedConverter =
+        AvroConverter.forResources(fhirContext, patientProfiles, 1, false);
 
     InputStream inputStream =
         this.getClass().getResourceAsStream("/stu3-custom-schemas/bunsen-test-patient-schema.json");
@@ -109,17 +111,15 @@ public class AvroConverterMergeTest {
         ProfileMapperFhirContexts.getInstance()
             .contextFor(FhirVersionEnum.R4, "classpath:/r4-us-core-definitions");
 
+    // We keep the fullId such that after HAPI->Avro->HAPI conversion, we get the same object.
     AvroConverter patientConverter =
-        AvroConverter.forResources(fhirContext, R4UsCoreProfileData.US_CORE_PATIENT_PROFILES);
+        AvroConverter.forResources(
+            fhirContext, R4UsCoreProfileData.US_CORE_PATIENT_PROFILES, 1, true);
     Patient patient =
         (Patient)
             loadResource(fhirContext, "/r4-us-core-resources/patient_us_core.json", Patient.class);
     IndexedRecord avroRecord = patientConverter.resourceToAvro(patient);
     Patient patientDecoded = (Patient) patientConverter.avroToResource(avroRecord);
-    // TODO: When the objects are converted from HAPI->Avro->HAPI, in the resource ID only the
-    //  IDElement part is retained. This needs to be consistent and is tracked here:
-    // https://github.com/google/fhir-data-pipes/issues/1003
-    patientDecoded.setId(patient.getIdElement());
     Assert.assertTrue(patient.equalsDeep(patientDecoded));
   }
 
@@ -131,7 +131,8 @@ public class AvroConverterMergeTest {
             .contextFor(FhirVersionEnum.DSTU3, "classpath:/stu3-us-core-definitions");
 
     AvroConverter patientConverter =
-        AvroConverter.forResources(fhirContext, Stu3UsCoreProfileData.US_CORE_PATIENT_PROFILES);
+        AvroConverter.forResources(
+            fhirContext, Stu3UsCoreProfileData.US_CORE_PATIENT_PROFILES, 1, false);
     org.hl7.fhir.dstu3.model.Patient patient =
         (org.hl7.fhir.dstu3.model.Patient)
             loadResource(
@@ -151,7 +152,8 @@ public class AvroConverterMergeTest {
   private void validateSchema(
       String expectedSchemaFile, List<String> profileResourceTypeUrls, FhirContext fhirContext)
       throws ProfileException, IOException {
-    AvroConverter converter = AvroConverter.forResources(fhirContext, profileResourceTypeUrls);
+    AvroConverter converter =
+        AvroConverter.forResources(fhirContext, profileResourceTypeUrls, 1, false);
     InputStream inputStream = this.getClass().getResourceAsStream(expectedSchemaFile);
     Schema expectedSchema = new Parser().parse(inputStream);
     Assert.assertEquals(expectedSchema, converter.getSchema());

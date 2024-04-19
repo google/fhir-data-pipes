@@ -167,6 +167,15 @@ fhirdata:
   # empty string disables this feature.
   sinkDbConfigPath: "config/hapi-postgres-config_local_views.json"
 
+  #  The maximum depth for traversing StructureDefinitions in Parquet schema generation.
+  #  Please note in most cases, the default 1 is sufficient and increasing that can
+  #  result in significantly larger schema and more complexity. For details see:
+  #  https://github.com/FHIR/sql-on-fhir/blob/master/sql-on-fhir.md#recursive-structures
+  recursiveDepth: 1
+
+  # Whether to generate the full ID (including type) or only the logical part.
+  fullId: false
+
 # Enable spring boot actuator end points, use "*" to expose all endpoints, or a comma-separated
 # list to expose selected ones
 management:

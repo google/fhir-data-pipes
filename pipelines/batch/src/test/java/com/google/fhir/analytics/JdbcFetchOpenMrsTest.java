@@ -71,8 +71,6 @@ public class JdbcFetchOpenMrsTest extends TestCase {
 
   private JdbcFetchOpenMrs jdbcFetchUtil;
 
-  private ParquetUtil parquetUtil;
-
   private String basePath = "/tmp/JUNIT/Parquet/TEST/";
 
   private DataSource mockedDataSource;
@@ -97,7 +95,6 @@ public class JdbcFetchOpenMrsTest extends TestCase {
 
     mockedDataSource = mock(DataSource.class, withSettings().serializable());
     jdbcFetchUtil = new JdbcFetchOpenMrs(mockedDataSource);
-    parquetUtil = new ParquetUtil(fhirContext.getVersion().getVersion(), basePath);
     // clean up if folder exists
     File file = new File(basePath);
     if (file.exists()) FileUtils.cleanDirectory(file);

@@ -41,7 +41,7 @@ public class R4AvroConverterCustomProfileTest {
             "http://hl7.org/fhir/StructureDefinition/Patient",
             "http://hl7.org/fhir/bunsen/test/StructureDefinition/bunsen-test-patient");
     AvroConverter converterBunsenTestProfilePatient =
-        AvroConverter.forResources(fhirContext, patientProfiles);
+        AvroConverter.forResources(fhirContext, patientProfiles, 1, false);
 
     avroBunsenTestProfilePatient =
         (Record) converterBunsenTestProfilePatient.resourceToAvro(testBunsenTestProfilePatient);

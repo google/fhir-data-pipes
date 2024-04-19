@@ -110,6 +110,10 @@ public class DataProperties {
 
   private FhirVersionEnum fhirVersion;
 
+  private int recursiveDepth;
+
+  private boolean fullId;
+
   @PostConstruct
   void validateProperties() {
     CronExpression.parse(incrementalSchedule);
@@ -233,7 +237,9 @@ public class DataProperties {
             "fhirdata.rowGroupSizeForParquetFiles",
             String.valueOf(rowGroupSizeForParquetFiles),
             "",
-            ""));
+            ""),
+        new ConfigFields("fhirdata.recursiveDepth", String.valueOf(recursiveDepth), "", ""),
+        new ConfigFields("fhirdata.fullId", String.valueOf(fullId), "", ""));
   }
 
   ConfigFields getConfigFields(FhirEtlOptions options, Method getMethod) {

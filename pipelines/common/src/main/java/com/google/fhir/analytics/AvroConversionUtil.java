@@ -62,6 +62,10 @@ public class AvroConversionUtil {
 
   private final String structureDefinitionsPath;
 
+  private final int recursiveDepth;
+
+  private final boolean fullId;
+
   /**
    * This is to fix the logical type conversions for BigDecimal. This should be called once before
    * any FHIR resource conversion to Avro.
@@ -77,7 +81,10 @@ public class AvroConversionUtil {
   }
 
   private AvroConversionUtil(
-      FhirVersionEnum fhirVersionEnum, @Nullable String structureDefinitionsPath)
+      FhirVersionEnum fhirVersionEnum,
+      @Nullable String structureDefinitionsPath,
+      int recursiveDepth,
+      boolean fullId)
       throws ProfileException {
     this.fhirVersionEnum = fhirVersionEnum;
     this.structureDefinitionsPath = structureDefinitionsPath;
@@ -85,16 +92,22 @@ public class AvroConversionUtil {
     this.profileMapperFhirContexts = ProfileMapperFhirContexts.getInstance();
     this.fhirContext =
         profileMapperFhirContexts.contextFor(fhirVersionEnum, structureDefinitionsPath);
+    this.fullId = fullId;
+    this.recursiveDepth = recursiveDepth;
   }
 
   static synchronized AvroConversionUtil getInstance(
-      FhirVersionEnum fhirVersionEnum, @Nullable String structureDefinitionsPath)
+      FhirVersionEnum fhirVersionEnum,
+      @Nullable String structureDefinitionsPath,
+      int recursiveDepth,
+      boolean fullId)
       throws ProfileException {
     Preconditions.checkNotNull(fhirVersionEnum, "fhirVersionEnum cannot be null");
     structureDefinitionsPath = Strings.nullToEmpty(structureDefinitionsPath);
 
     if (instance == null) {
-      instance = new AvroConversionUtil(fhirVersionEnum, structureDefinitionsPath);
+      instance =
+          new AvroConversionUtil(fhirVersionEnum, structureDefinitionsPath, recursiveDepth, fullId);
     } else if (!fhirVersionEnum.equals(instance.fhirVersionEnum)
         || !structureDefinitionsPath.equals(instance.structureDefinitionsPath)) {
       String errorMsg =
@@ -137,7 +150,8 @@ public class AvroConversionUtil {
         log.error(errorMsg);
         throw new ProfileException(errorMsg);
       }
-      AvroConverter converter = AvroConverter.forResources(fhirContext, profiles);
+      AvroConverter converter =
+          AvroConverter.forResources(fhirContext, profiles, recursiveDepth, fullId);
       converterMap.put(resourceType, converter);
     }
     return converterMap.get(resourceType);

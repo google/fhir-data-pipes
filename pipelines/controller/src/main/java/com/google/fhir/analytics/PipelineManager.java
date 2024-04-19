@@ -174,7 +174,10 @@ public class PipelineManager implements ApplicationListener<ApplicationReadyEven
     initialiseFlinkConfiguration();
     avroConversionUtil =
         AvroConversionUtil.getInstance(
-            dataProperties.getFhirVersion(), dataProperties.getStructureDefinitionsPath());
+            dataProperties.getFhirVersion(),
+            dataProperties.getStructureDefinitionsPath(),
+            dataProperties.getRecursiveDepth(),
+            dataProperties.isFullId());
 
     PipelineConfig pipelineConfig = dataProperties.createBatchOptions();
     FileSystems.setDefaultPipelineOptions(pipelineConfig.getFhirEtlOptions());

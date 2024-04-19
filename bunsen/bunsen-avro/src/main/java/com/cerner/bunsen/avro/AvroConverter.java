@@ -32,7 +32,6 @@ public class AvroConverter {
 
   private AvroConverter(
       HapiConverter<Schema> hapiToAvroConverter, RuntimeResourceDefinition... resources) {
-
     this.hapiToAvroConverter = hapiToAvroConverter;
     this.avroToHapiConverter = (HapiObjectConverter) hapiToAvroConverter.toHapiConverter(resources);
   }
@@ -42,7 +41,9 @@ public class AvroConverter {
       StructureDefinitions structureDefinitions,
       String resourceTypeUrl,
       List<String> containedResourceTypeUrls,
-      Map<String, HapiConverter<Schema>> compositeConverters) {
+      Map<String, HapiConverter<Schema>> compositeConverters,
+      int recursiveDepth,
+      boolean fullId) {
 
     FhirVersionEnum fhirVersion = context.getVersion().getVersion();
 
@@ -63,7 +64,11 @@ public class AvroConverter {
 
     DefinitionToAvroVisitor visitor =
         new DefinitionToAvroVisitor(
-            structureDefinitions.conversionSupport(), basePackage, compositeConverters);
+            structureDefinitions.conversionSupport(),
+            basePackage,
+            compositeConverters,
+            recursiveDepth,
+            fullId);
 
     HapiConverter<Schema> converter =
         structureDefinitions.transform(visitor, resourceTypeUrl, containedResourceTypeUrls);
@@ -102,7 +107,10 @@ public class AvroConverter {
    * @return a list of Avro schemas
    */
   public static List<Schema> generateSchemas(
-      FhirContext context, Map<String, List<String>> resourceTypeUrls) {
+      FhirContext context,
+      Map<String, List<String>> resourceTypeUrls,
+      int recursiveDepth,
+      boolean fullId) {
 
     StructureDefinitions structureDefinitions = StructureDefinitions.create(context);
 
@@ -115,7 +123,9 @@ public class AvroConverter {
           structureDefinitions,
           resourceTypeUrlEntry.getKey(),
           resourceTypeUrlEntry.getValue(),
-          converters);
+          converters,
+          recursiveDepth,
+          fullId);
     }
 
     return converters.values().stream()
@@ -133,15 +143,16 @@ public class AvroConverter {
    * @param resourceTypeUrl the URL of the resource type
    * @return an Avro converter instance.
    */
-  public static AvroConverter forResource(FhirContext context, String resourceTypeUrl) {
+  public static AvroConverter forResource(
+      FhirContext context, String resourceTypeUrl, int recursiveDepth, boolean fullId) {
 
-    return forResource(context, resourceTypeUrl, Collections.emptyList());
+    return forResource(context, resourceTypeUrl, Collections.emptyList(), recursiveDepth, fullId);
   }
 
   /**
-   * Similar to {@link #forResource(FhirContext, String)} this method returns an Avro converter, but
-   * the returned Avro converter is a union of all the converters for the given resourceTypeUrls,
-   * the union is formed by merging all the fields in each converter.
+   * Similar to {@link #forResource(FhirContext, String, int, boolean)} this method returns an Avro
+   * converter, but the returned Avro converter is a union of all the converters for the given
+   * resourceTypeUrls, the union is formed by merging all the fields in each converter.
    *
    * @param context the FHIR context
    * @param resourceTypeUrls the list of resource type profile urls. The resourceTypeUrl can either
@@ -150,14 +161,16 @@ public class AvroConverter {
    *     "http://hl7.org/fhir/us/core/StructureDefinition/us-core-patient".
    * @return the merged Avro converter
    */
-  public static AvroConverter forResources(FhirContext context, List<String> resourceTypeUrls)
+  public static AvroConverter forResources(
+      FhirContext context, List<String> resourceTypeUrls, int recursiveDepth, boolean fullId)
       throws ProfileException {
     List<AvroConverter> avroConverters = new ArrayList<>();
     for (String resourceTypeUrl : resourceTypeUrls) {
-      AvroConverter avroConverter = forResource(context, resourceTypeUrl, Collections.emptyList());
+      AvroConverter avroConverter =
+          forResource(context, resourceTypeUrl, Collections.emptyList(), recursiveDepth, fullId);
       avroConverters.add(avroConverter);
     }
-    return mergeAvroConverters(avroConverters, context);
+    return mergeAvroConverters(avroConverters, context, recursiveDepth, fullId);
   }
 
   /**
@@ -175,12 +188,22 @@ public class AvroConverter {
    * @return an Avro converter instance.
    */
   public static AvroConverter forResource(
-      FhirContext context, String resourceTypeUrl, List<String> containedResourceTypeUrls) {
+      FhirContext context,
+      String resourceTypeUrl,
+      List<String> containedResourceTypeUrls,
+      int recursiveDepth,
+      boolean fullId) {
 
     StructureDefinitions structureDefinitions = StructureDefinitions.create(context);
 
     return visitResource(
-        context, structureDefinitions, resourceTypeUrl, containedResourceTypeUrls, new HashMap<>());
+        context,
+        structureDefinitions,
+        resourceTypeUrl,
+        containedResourceTypeUrls,
+        new HashMap<>(),
+        recursiveDepth,
+        fullId);
   }
 
   /**
@@ -229,7 +252,8 @@ public class AvroConverter {
    * of all the fields in the list of avroConverters
    */
   private static AvroConverter mergeAvroConverters(
-      List<AvroConverter> avroConverters, FhirContext context) throws ProfileException {
+      List<AvroConverter> avroConverters, FhirContext context, int recursiveDepth, boolean fullId)
+      throws ProfileException {
     Preconditions.checkArgument(
         !CollectionUtils.isEmpty(avroConverters), "AvroConverter list cannot be empty for merging");
     Iterator<AvroConverter> iterator = avroConverters.iterator();
