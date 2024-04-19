@@ -44,7 +44,6 @@ fhirdata:
   viewDefinitionsDir: "config/views"
   sinkDbConfigPath: "config/hapi-postgres-config_local_views.json"
   recursiveDepth: 1
-  fullId: false
 
 # Enable spring boot actuator end points, use "*" to expose all endpoints, or a comma-separated
 # list to expose selected ones

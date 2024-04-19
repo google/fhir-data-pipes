@@ -10,32 +10,25 @@ import org.junit.Test;
 public class IdConverterTest {
 
   private IdConverter<ArbitraryDataType> idConverter;
-  private IdConverter<ArbitraryDataType> fullIdConverter;
 
   @Before
   public void setUp() {
-    idConverter = new IdConverter<ArbitraryDataType>(new ArbitraryDataType(), false);
-    fullIdConverter = new IdConverter<ArbitraryDataType>(new ArbitraryDataType(), true);
+    idConverter = new IdConverter<ArbitraryDataType>(new ArbitraryDataType());
   }
 
   @Test
   public void relativePathTest() {
     assertThat(idConverter.fromHapi(new IdType("Patient/123")), equalTo("123"));
-    assertThat(fullIdConverter.fromHapi(new IdType("Patient/123")), equalTo("Patient/123"));
   }
 
   @Test
   public void absoluteUrlTest() {
     assertThat(idConverter.fromHapi(new IdType("http://fhir.server/Patient/123")), equalTo("123"));
-    assertThat(
-        fullIdConverter.fromHapi(new IdType("http://fhir.server/Patient/123")),
-        equalTo("http://fhir.server/Patient/123"));
   }
 
   @Test
   public void idPartTest() {
     assertThat(idConverter.fromHapi(new IdType("123")), equalTo("123"));
-    assertThat(fullIdConverter.fromHapi(new IdType("123")), equalTo("123"));
   }
 
   // In real scenarios this would be the specific type to/from which the HAPI conversion happens,

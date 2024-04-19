@@ -96,8 +96,7 @@ public class DebeziumListener extends RouteBuilder {
             params.secondsToFlushParquetFiles,
             params.rowGroupSizeForParquetFiles,
             "streaming_",
-            1,
-            false);
+            1);
     DataSource jdbcSource =
         JdbcConnectionPools.getInstance()
             .getPooledDataSource(

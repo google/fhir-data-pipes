@@ -39,7 +39,7 @@ public class NoOpConverter extends HapiConverter<Schema> {
   }
 
   @Override
-  public HapiConverter merge(HapiConverter other) throws ProfileException {
+  public HapiConverter<Schema> merge(HapiConverter<Schema> other) throws ProfileException {
     HapiConverterUtil.validateIfImplementationClassesAreSame(this, other);
     return this;
   }

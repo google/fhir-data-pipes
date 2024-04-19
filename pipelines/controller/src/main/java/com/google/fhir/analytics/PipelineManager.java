@@ -176,8 +176,7 @@ public class PipelineManager implements ApplicationListener<ApplicationReadyEven
         AvroConversionUtil.getInstance(
             dataProperties.getFhirVersion(),
             dataProperties.getStructureDefinitionsPath(),
-            dataProperties.getRecursiveDepth(),
-            dataProperties.isFullId());
+            dataProperties.getRecursiveDepth());
 
     PipelineConfig pipelineConfig = dataProperties.createBatchOptions();
     FileSystems.setDefaultPipelineOptions(pipelineConfig.getFhirEtlOptions());

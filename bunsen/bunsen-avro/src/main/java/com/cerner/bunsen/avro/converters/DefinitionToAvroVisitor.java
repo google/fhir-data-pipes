@@ -53,16 +53,11 @@ public class DefinitionToAvroVisitor implements DefinitionVisitor<HapiConverter<
 
   private final int recursiveDepth;
 
-  private final boolean fullId;
-
   private static final HapiConverter<Schema> STRING_CONVERTER =
       new StringConverter<>(Schema.create(Type.STRING));
 
   private static final HapiConverter<Schema> ID_CONVERTER =
-      new IdConverter<>(Schema.create(Type.STRING), false);
-
-  private static final HapiConverter<Schema> FULL_ID_CONVERTER =
-      new IdConverter<>(Schema.create(Type.STRING), true);
+      new IdConverter<>(Schema.create(Type.STRING));
 
   private static final HapiConverter<Schema> ENUM_CONVERTER =
       new EnumConverter<>(Schema.create(Type.STRING));
@@ -135,6 +130,7 @@ public class DefinitionToAvroVisitor implements DefinitionVisitor<HapiConverter<
   @VisibleForTesting
   static final Map<String, HapiConverter<Schema>> TYPE_TO_CONVERTER =
       ImmutableMap.<String, HapiConverter<Schema>>builder()
+          .put(ID_TYPE, ID_CONVERTER)
           .put("boolean", BOOLEAN_CONVERTER)
           .put("code", ENUM_CONVERTER)
           .put("markdown", STRING_CONVERTER)
@@ -215,7 +211,7 @@ public class DefinitionToAvroVisitor implements DefinitionVisitor<HapiConverter<
     }
 
     @Override
-    public HapiConverter merge(HapiConverter other) throws ProfileException {
+    public HapiConverter<Schema> merge(HapiConverter<Schema> other) throws ProfileException {
       HapiConverterUtil.validateIfImplementationClassesAreSame(this, other);
       CompositeToAvroConverter otherConverter = (CompositeToAvroConverter) other;
       // For extensions
@@ -317,7 +313,7 @@ public class DefinitionToAvroVisitor implements DefinitionVisitor<HapiConverter<
     }
 
     @Override
-    public HapiConverter merge(HapiConverter other) throws ProfileException {
+    public HapiConverter<Schema> merge(HapiConverter<Schema> other) throws ProfileException {
       HapiConverterUtil.validateIfImplementationClassesAreSame(this, other);
       HapiChoiceToAvroConverter otherConverter = (HapiChoiceToAvroConverter) other;
       Map<String, HapiConverter<Schema>> currentChoiceTypes = this.getChoiceTypes();
@@ -437,7 +433,7 @@ public class DefinitionToAvroVisitor implements DefinitionVisitor<HapiConverter<
     }
 
     @Override
-    public HapiConverter merge(HapiConverter other) throws ProfileException {
+    public HapiConverter<Schema> merge(HapiConverter<Schema> other) throws ProfileException {
       throw new ProfileException("Merging of HapiContainedToAvroConverter is not supported");
     }
   }
@@ -514,9 +510,9 @@ public class DefinitionToAvroVisitor implements DefinitionVisitor<HapiConverter<
     }
 
     @Override
-    public HapiConverter merge(HapiConverter other) throws ProfileException {
+    public HapiConverter<Schema> merge(HapiConverter<Schema> other) throws ProfileException {
       HapiConverterUtil.validateIfImplementationClassesAreSame(this, other);
-      HapiConverter mergedElementConverter =
+      HapiConverter<Schema> mergedElementConverter =
           this.elementConverter.merge(((MultiValuedToAvroConverter) other).getElementConverter());
       return new MultiValuedToAvroConverter(mergedElementConverter);
     }
@@ -534,13 +530,11 @@ public class DefinitionToAvroVisitor implements DefinitionVisitor<HapiConverter<
       FhirConversionSupport fhirSupport,
       String basePackage,
       Map<String, HapiConverter<Schema>> visitedConverters,
-      int recursiveDepth,
-      boolean fullId) {
+      int recursiveDepth) {
     this.fhirSupport = fhirSupport;
     this.basePackage = basePackage;
     this.visitedConverters = visitedConverters;
     this.recursiveDepth = recursiveDepth;
-    this.fullId = fullId;
   }
 
   @Override
@@ -551,9 +545,6 @@ public class DefinitionToAvroVisitor implements DefinitionVisitor<HapiConverter<
     String realType = primitiveType;
     if (ID_TYPE.equals(elementName) && R4_STRING_TYPE.equals(primitiveType)) {
       realType = ID_TYPE;
-    }
-    if (realType.equals(ID_TYPE)) {
-      return this.fullId ? FULL_ID_CONVERTER : ID_CONVERTER;
     }
     Preconditions.checkNotNull(
         TYPE_TO_CONVERTER.get(realType),
@@ -684,7 +675,7 @@ public class DefinitionToAvroVisitor implements DefinitionVisitor<HapiConverter<
     }
 
     @Override
-    public HapiConverter merge(HapiConverter other) throws ProfileException {
+    public HapiConverter<Schema> merge(HapiConverter<Schema> other) throws ProfileException {
       HapiConverterUtil.validateIfImplementationClassesAreSame(this, other);
       String leftPrefix = Strings.nullToEmpty(this.prefix);
       String rightPrefix = Strings.nullToEmpty(((RelativeValueConverter) other).prefix);

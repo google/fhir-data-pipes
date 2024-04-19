@@ -586,7 +586,11 @@ public class ViewApplicator {
     public String getString() {
       IPrimitiveType primitiveType = getPrimitiveType();
       if (primitiveType != null) {
-        return primitiveType.getValueAsString();
+        // TODO: This is a temporary solution to handle IDs properly. We should implement proper
+        //  polymorphism to properly handle primitive types when we add type inference. This can
+        //  be similar to how we convert primitives to Avro fields in Bunsen.
+        String maybeId = getSingleIdPart();
+        return maybeId != null ? maybeId : primitiveType.getValueAsString();
       }
       return getSingleValue() == null ? null : getSingleValue().toString();
     }
@@ -620,7 +624,7 @@ public class ViewApplicator {
     }
 
     @Nullable
-    public String getSingleIdPart() {
+    private String getSingleIdPart() {
       Preconditions.checkState(!isCollection());
       if (values != null && !values.isEmpty() && ID_TYPE.equals(columnInfo.getInferredType())) {
         IBase elem = values.get(0);

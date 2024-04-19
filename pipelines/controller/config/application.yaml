@@ -173,9 +173,6 @@ fhirdata:
   #  https://github.com/FHIR/sql-on-fhir/blob/master/sql-on-fhir.md#recursive-structures
   recursiveDepth: 1
 
-  # Whether to generate the full ID (including type) or only the logical part.
-  fullId: false
-
 # Enable spring boot actuator end points, use "*" to expose all endpoints, or a comma-separated
 # list to expose selected ones
 management:

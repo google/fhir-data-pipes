@@ -66,7 +66,7 @@ public class GenerateSchemas {
     FhirContext fhirContext =
         ProfileMapperFhirContexts.getInstance()
             .contextFor(fhirVersionEnum, structureDefinitionsPath);
-    List<Schema> schemas = AvroConverter.generateSchemas(fhirContext, resourceTypeUrls, 1, false);
+    List<Schema> schemas = AvroConverter.generateSchemas(fhirContext, resourceTypeUrls, 1);
 
     // Wrap the schemas in a protocol to simplify the invocation of the compiler.
     Protocol protocol =

@@ -90,8 +90,6 @@ abstract class FetchSearchPageFn<T> extends DoFn<T, KV<String, Integer>> {
 
   private final int recursiveDepth;
 
-  private final boolean fullId;
-
   protected final DataSourceConfig sinkDbConfig;
 
   protected final String viewDefinitionsDir;
@@ -136,7 +134,6 @@ abstract class FetchSearchPageFn<T> extends DoFn<T, KV<String, Integer>> {
     this.structureDefinitionsPath = options.getStructureDefinitionsPath();
     this.fhirVersionEnum = options.getFhirVersion();
     this.recursiveDepth = options.getRecursiveDepth();
-    this.fullId = options.getFullId();
     if (options.getSinkDbConfigPath().isEmpty()) {
       this.sinkDbConfig = null;
     } else {
@@ -174,8 +171,7 @@ abstract class FetchSearchPageFn<T> extends DoFn<T, KV<String, Integer>> {
   public void setup() throws SQLException, PropertyVetoException, ProfileException {
     log.debug("Starting setup for stage " + stageIdentifier);
     avroConversionUtil =
-        AvroConversionUtil.getInstance(
-            fhirVersionEnum, structureDefinitionsPath, recursiveDepth, fullId);
+        AvroConversionUtil.getInstance(fhirVersionEnum, structureDefinitionsPath, recursiveDepth);
     FhirContext fhirContext = avroConversionUtil.getFhirContext();
     // The documentation for `FhirContext` claims that it is thread-safe but looking at the code,
     // it is not obvious if it is. This might be an issue when we write to it, like the next line.
@@ -212,8 +208,7 @@ abstract class FetchSearchPageFn<T> extends DoFn<T, KV<String, Integer>> {
               secondsToFlush,
               rowGroupSize,
               stageIdentifier + "_",
-              recursiveDepth,
-              fullId);
+              recursiveDepth);
     }
     if (sinkDbConfig != null) {
       DataSource jdbcSink =

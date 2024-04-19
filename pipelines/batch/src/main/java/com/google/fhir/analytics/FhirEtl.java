@@ -446,8 +446,7 @@ public class FhirEtl {
         AvroConversionUtil.getInstance(
             options.getFhirVersion(),
             options.getStructureDefinitionsPath(),
-            options.getRecursiveDepth(),
-            options.getFullId());
+            options.getRecursiveDepth());
     List<Pipeline> pipelines = setupAndBuildPipelines(options, avroConversionUtil);
     EtlUtils.runMultiplePipelinesWithTimestamp(
         pipelines, options, avroConversionUtil.getFhirContext());

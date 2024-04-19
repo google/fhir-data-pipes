@@ -64,8 +64,6 @@ public class AvroConversionUtil {
 
   private final int recursiveDepth;
 
-  private final boolean fullId;
-
   /**
    * This is to fix the logical type conversions for BigDecimal. This should be called once before
    * any FHIR resource conversion to Avro.
@@ -83,8 +81,7 @@ public class AvroConversionUtil {
   private AvroConversionUtil(
       FhirVersionEnum fhirVersionEnum,
       @Nullable String structureDefinitionsPath,
-      int recursiveDepth,
-      boolean fullId)
+      int recursiveDepth)
       throws ProfileException {
     this.fhirVersionEnum = fhirVersionEnum;
     this.structureDefinitionsPath = structureDefinitionsPath;
@@ -92,24 +89,22 @@ public class AvroConversionUtil {
     this.profileMapperFhirContexts = ProfileMapperFhirContexts.getInstance();
     this.fhirContext =
         profileMapperFhirContexts.contextFor(fhirVersionEnum, structureDefinitionsPath);
-    this.fullId = fullId;
     this.recursiveDepth = recursiveDepth;
   }
 
   static synchronized AvroConversionUtil getInstance(
       FhirVersionEnum fhirVersionEnum,
       @Nullable String structureDefinitionsPath,
-      int recursiveDepth,
-      boolean fullId)
+      int recursiveDepth)
       throws ProfileException {
     Preconditions.checkNotNull(fhirVersionEnum, "fhirVersionEnum cannot be null");
     structureDefinitionsPath = Strings.nullToEmpty(structureDefinitionsPath);
 
     if (instance == null) {
-      instance =
-          new AvroConversionUtil(fhirVersionEnum, structureDefinitionsPath, recursiveDepth, fullId);
+      instance = new AvroConversionUtil(fhirVersionEnum, structureDefinitionsPath, recursiveDepth);
     } else if (!fhirVersionEnum.equals(instance.fhirVersionEnum)
-        || !structureDefinitionsPath.equals(instance.structureDefinitionsPath)) {
+        || !structureDefinitionsPath.equals(instance.structureDefinitionsPath)
+        || recursiveDepth != instance.recursiveDepth) {
       String errorMsg =
           String.format(
               "AvroConversionUtil has been initialised with different set of parameters earlier"
@@ -150,8 +145,7 @@ public class AvroConversionUtil {
         log.error(errorMsg);
         throw new ProfileException(errorMsg);
       }
-      AvroConverter converter =
-          AvroConverter.forResources(fhirContext, profiles, recursiveDepth, fullId);
+      AvroConverter converter = AvroConverter.forResources(fhirContext, profiles, recursiveDepth);
       converterMap.put(resourceType, converter);
     }
     return converterMap.get(resourceType);

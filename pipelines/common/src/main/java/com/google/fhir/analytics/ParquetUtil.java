@@ -78,13 +78,11 @@ public class ParquetUtil {
       int secondsToFlush,
       int rowGroupSize,
       String namePrefix,
-      int recursiveDepth,
-      boolean fullId)
+      int recursiveDepth)
       throws ProfileException {
     if (fhirVersionEnum == FhirVersionEnum.DSTU3 || fhirVersionEnum == FhirVersionEnum.R4) {
       this.conversionUtil =
-          AvroConversionUtil.getInstance(
-              fhirVersionEnum, structureDefinitionsPath, recursiveDepth, fullId);
+          AvroConversionUtil.getInstance(fhirVersionEnum, structureDefinitionsPath, recursiveDepth);
     } else {
       throw new IllegalArgumentException("Only versions 3 and 4 of FHIR are supported!");
     }

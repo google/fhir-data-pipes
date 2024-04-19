@@ -193,6 +193,8 @@ public class DataProperties {
     options.setSinkDbConfigPath(Strings.nullToEmpty(sinkDbConfigPath));
     options.setStructureDefinitionsPath(Strings.nullToEmpty(structureDefinitionsPath));
     options.setFhirVersion(fhirVersion);
+    options.setRecursiveDepth(recursiveDepth);
+    // options.setFullId(fullId);
     if (rowGroupSizeForParquetFiles > 0) {
       options.setRowGroupSizeForParquetFiles(rowGroupSizeForParquetFiles);
     }
