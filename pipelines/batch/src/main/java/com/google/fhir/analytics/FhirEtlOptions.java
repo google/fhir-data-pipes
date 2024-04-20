@@ -128,8 +128,8 @@ public interface FhirEtlOptions extends BasePipelineOptions {
 
   void setJdbcMaxPoolSize(int value);
 
-  @Description("JDBC initial pool size")
-  @Default.Integer(10)
+  @Description("DEPRECATED! This is ignored; by default 3 connections are used initially.")
+  @Default.Integer(JdbcConnectionPools.MIN_CONNECTIONS)
   int getJdbcInitialPoolSize();
 
   void setJdbcInitialPoolSize(int value);

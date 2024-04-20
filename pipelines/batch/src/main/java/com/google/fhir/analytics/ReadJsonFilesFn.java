@@ -49,7 +49,7 @@ public class ReadJsonFilesFn extends FetchSearchPageFn<FileIO.ReadableFile> {
   }
 
   @Override
-  public void setup() throws SQLException, PropertyVetoException, ProfileException {
+  public void setup() throws SQLException, ProfileException {
     super.setup();
     if (isFileNDJson) {
       // Update the parser with the NDJsonParser. The NDJsonParser efficiently reads one record at a

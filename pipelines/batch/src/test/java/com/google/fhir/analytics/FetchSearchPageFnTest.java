@@ -59,7 +59,7 @@ public class FetchSearchPageFnTest {
         new FetchSearchPageFn<String>(options, "TEST") {
 
           @Override
-          public void setup() throws SQLException, PropertyVetoException, ProfileException {
+          public void setup() throws SQLException, ProfileException {
             super.setup();
             parquetUtil = mockParquetUtil;
           }

@@ -172,12 +172,13 @@ public class FhirEtl {
   }
 
   private static DataSource createJdbcPooledDataSource(
-      FhirEtlOptions options, DatabaseConfiguration dbConfig) throws PropertyVetoException {
+      FhirEtlOptions options, DatabaseConfiguration dbConfig) {
+    if (options.getJdbcInitialPoolSize() != JdbcConnectionPools.MIN_CONNECTIONS) {
+      log.warn("Setting jdbcInitialPoolSize has no effect; it is deprecated and will be removed.");
+    }
     return JdbcConnectionPools.getInstance()
         .getPooledDataSource(
-            JdbcConnectionPools.dbConfigToDataSourceConfig(dbConfig),
-            options.getJdbcInitialPoolSize(),
-            options.getJdbcMaxPoolSize());
+            JdbcConnectionPools.dbConfigToDataSourceConfig(dbConfig), options.getJdbcMaxPoolSize());
   }
 
   private static List<Pipeline> buildOpenmrsJdbcPipeline(
