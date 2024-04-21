@@ -1,6 +1,7 @@
 import json
 import os
 import time
+import datetime
 
 FHIR_SERVER_URL = "http://localhost:8080/fhir"
 ENABLE_UPLOAD = os.environ['ENABLE_UPLOAD'] == 'true'
@@ -28,22 +29,26 @@ def main():
 
 
 def download():
-    parquet_dir = os.path.join(TMP_DIR, f"parquet_{SOURCE}")
-    shell(f"rm -rf {parquet_dir}")
+    formatted_datetime = datetime.datetime.now().strftime('%Y%m%d_%H%M%S')
+    parquet_subdir = f"parquet_{formatted_datetime}_{SOURCE}_{FHIR_ETL_RUNNER}_jdbcMode{JDBC_MODE}"
+    parquet_dir = f"gs://fhir-analytics-test/{parquet_subdir}"
     run_fhir_etl(parquet_dir)
-    shell(f"du -hd0 {parquet_dir}")
+    local_parquet_dir = f"{TMP_DIR}/{parquet_subdir}"
+    f'gsutil -m cp -r {parquet_dir} {TMP_DIR}'
     for resource in ["Patient", "Encounter", "Observation"]:
-        shell(f"java -jar ./e2e-tests/controller-spark/parquet-tools-1.11.1.jar rowcount {parquet_dir}/{resource}/")
+        shell(f"java -jar ./e2e-tests/controller-spark/parquet-tools-1.11.1.jar rowcount {local_parquet_dir}/{resource}/")
 
 
 def run_fhir_etl(parquet_dir):
     common_etl_args = [
         "--fasterCopy=true",
         f"--runner={FHIR_ETL_RUNNER}",
+        f"--resourceList=Patient,Encounter,Observation",
+        f"--outputParquetPath={parquet_dir}",
+        # Dataflow runner:
         f"--region={SQL_ZONE}",
         "--numWorkers=30",
-        f"--resourceList=Patient,Encounter,Observation",
-        f"--outputParquetPath={parquet_dir}"
+        "--gcpTempLocation=gs://fhir-analytics-test/dataflow_temp"
     ]
 
     if not JDBC_MODE:
@@ -66,7 +71,7 @@ def run_fhir_etl(parquet_dir):
                 "databasePassword" : DB_PASSWORD,
                 "jdbcUri": f"jdbc:postgresql:///{DB_PATIENTS}?cloudSqlInstance={PROJECT_ID}:{SQL_ZONE}:{POSTGRES_DB_INSTANCE}&socketFactory=com.google.cloud.sql.postgres.SocketFactory"
             }
-        else:
+        elif DB_TYPE == "alloy":
             json_config = {
                 "jdbcDriverClass" : "org.postgresql.Driver",
                 "databaseService" : "postgresql",
@@ -76,6 +81,8 @@ def run_fhir_etl(parquet_dir):
                 "databasePassword" : DB_PASSWORD,
                 "databaseName" : DB_PATIENTS
             }
+        else:
+            raise Exception(f"Unknown DB type {DB_TYPE}")
         with open(config_path, "w") as f:
             f.write(json.dumps(json_config, indent=4))
         shell_measure(
