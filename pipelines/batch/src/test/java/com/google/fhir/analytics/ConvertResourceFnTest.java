@@ -60,7 +60,7 @@ public class ConvertResourceFnTest {
         new ConvertResourceFn(options, "Test") {
 
           @Override
-          public void setup() throws PropertyVetoException, SQLException, ProfileException {
+          public void setup() throws SQLException, ProfileException {
             super.setup();
             parquetUtil = mockParquetUtil;
           }

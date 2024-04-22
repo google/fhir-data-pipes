@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2023 Google LLC
+ * Copyright 2020-2024 Google LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,6 @@ package com.google.fhir.analytics;
 
 import com.google.common.base.Strings;
 import com.google.fhir.analytics.model.DatabaseConfiguration;
-import java.beans.PropertyVetoException;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -39,23 +38,22 @@ public class HiveTableManager {
 
   private static final Logger logger = LoggerFactory.getLogger(HiveTableManager.class.getName());
 
-  // We don't expect many Hive queries hence choosing a fixed/low number of connections.
-  private static final int CONNECTION_POOL_SIZE = 3;
-
   private final DataSource dataSource;
 
   private final String viewsDir;
 
   private static final String THRIFT_CONTAINER_PARQUET_DIR = "/dwh";
 
-  public HiveTableManager(DatabaseConfiguration hiveDbConfig, String viewsDir)
-      throws PropertyVetoException {
+  public HiveTableManager(DatabaseConfiguration hiveDbConfig, String viewsDir) {
+    // We don't expect many Hive queries hence choosing a fixed/low number of connections.
+    // Also, we set the max number of connections equal to MIN_CONNECTIONS such that we never have
+    // "excess" connections to be closed. This is to address this HiveDriver/Thrift-Server issue:
+    // https://github.com/google/fhir-data-pipes/issues/483
     this.dataSource =
         JdbcConnectionPools.getInstance()
             .getPooledDataSource(
                 JdbcConnectionPools.dbConfigToDataSourceConfig(hiveDbConfig),
-                CONNECTION_POOL_SIZE,
-                CONNECTION_POOL_SIZE);
+                JdbcConnectionPools.MIN_CONNECTIONS);
     this.viewsDir = Strings.nullToEmpty(viewsDir);
   }
 

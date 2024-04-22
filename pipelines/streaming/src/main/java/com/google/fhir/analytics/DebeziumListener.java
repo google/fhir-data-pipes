@@ -105,7 +105,6 @@ public class DebeziumListener extends RouteBuilder {
                     databaseConfiguration.makeJdbsUrlFromConfig(),
                     databaseConfiguration.getDatabaseUser(),
                     databaseConfiguration.getDatabasePassword()),
-                params.initialPoolSize,
                 params.jdbcMaxPoolSize);
     UuidUtil uuidUtil = new UuidUtil(jdbcSource);
     camelContext.addService(new ParquetService(parquetUtil), true);

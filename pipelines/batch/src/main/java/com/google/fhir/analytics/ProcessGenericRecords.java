@@ -17,7 +17,6 @@ package com.google.fhir.analytics;
 
 import com.cerner.bunsen.exception.ProfileException;
 import com.google.fhir.analytics.view.ViewApplicationException;
-import java.beans.PropertyVetoException;
 import java.io.IOException;
 import java.sql.SQLException;
 import java.util.ArrayList;
@@ -51,7 +50,7 @@ public class ProcessGenericRecords extends FetchSearchPageFn<GenericRecord> {
   }
 
   @Override
-  public void setup() throws SQLException, PropertyVetoException, ProfileException {
+  public void setup() throws SQLException, ProfileException {
     super.setup();
     cachedResources = new ArrayList<>();
     totalAvroConversionTime =
