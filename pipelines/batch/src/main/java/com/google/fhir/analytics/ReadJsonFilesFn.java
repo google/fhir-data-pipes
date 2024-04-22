@@ -19,7 +19,6 @@ import ca.uhn.fhir.parser.DataFormatException;
 import com.cerner.bunsen.exception.ProfileException;
 import com.google.common.collect.Sets;
 import com.google.fhir.analytics.view.ViewApplicationException;
-import java.beans.PropertyVetoException;
 import java.io.IOException;
 import java.nio.channels.Channels;
 import java.sql.SQLException;

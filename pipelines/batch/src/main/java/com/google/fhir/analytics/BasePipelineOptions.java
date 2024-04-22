@@ -63,10 +63,4 @@ public interface BasePipelineOptions extends PipelineOptions {
   Integer getRecursiveDepth();
 
   void setRecursiveDepth(Integer value);
-
-  @Description("Whether to generate the full ID (including type) or only the logical part.")
-  @Default.Boolean(false)
-  Boolean getFullId();
-
-  void setFullId(Boolean value);
 }

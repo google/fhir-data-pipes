@@ -103,6 +103,5 @@ public abstract class HapiConverter<T> {
    * @return the merged HapiConverter
    * @throws ProfileException
    */
-  // TODO this should have type parameter, i.e., HapiConverter<T>
   public abstract HapiConverter<T> merge(HapiConverter<T> other) throws ProfileException;
 }
