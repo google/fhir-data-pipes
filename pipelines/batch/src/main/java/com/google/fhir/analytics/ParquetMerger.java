@@ -259,8 +259,8 @@ public class ParquetMerger {
     AvroConversionUtil avroConversionUtil =
         AvroConversionUtil.getInstance(
             options.getFhirVersion(),
-            options.getStructureDefinitionsDir(),
-            options.getStructureDefinitionsClasspath());
+            options.getStructureDefinitionsPath(),
+            options.getRecursiveDepth());
     if (options.getDwh1().isEmpty()
         || options.getDwh2().isEmpty()
         || options.getMergedDwh().isEmpty()) {

@@ -78,7 +78,7 @@ public abstract class PrimitiveConverter<T> extends HapiConverter<T> {
   }
 
   @Override
-  public HapiConverter merge(HapiConverter other) throws ProfileException {
+  public HapiConverter<T> merge(HapiConverter<T> other) throws ProfileException {
     HapiConverterUtil.validateIfImplementationClassesAreSame(this, other);
     validateIfElementTypesAreSame(other);
     return this;

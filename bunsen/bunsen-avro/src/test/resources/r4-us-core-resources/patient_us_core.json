@@ -1,6 +1,6 @@
 {
   "resourceType" : "Patient",
-  "id" : "http://example.com/Patient/123",
+  "id" : "123",
   "meta" : {
     "profile" : [
       "http://hl7.org/fhir/us/core/StructureDefinition/us-core-patient|7.0.0-ballot"

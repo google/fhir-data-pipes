@@ -116,7 +116,7 @@ public class ViewSchema {
       if (re.getPrimitive() != null) {
         // TODO add unit-tests for all cases and add extra cases too if needed!
         if (ViewApplicator.ID_TYPE.equals(re.getColumnInfo().getInferredType())) {
-          statement.setString(ind, re.getSingleIdPart());
+          statement.setString(ind, re.getString());
         } else {
           switch (fhirTypeToDb(re.getColumnInfo().getType())) {
             case BOOLEAN:

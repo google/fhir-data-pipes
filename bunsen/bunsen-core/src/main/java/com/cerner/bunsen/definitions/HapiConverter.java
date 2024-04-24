@@ -103,5 +103,5 @@ public abstract class HapiConverter<T> {
    * @return the merged HapiConverter
    * @throws ProfileException
    */
-  public abstract HapiConverter merge(HapiConverter other) throws ProfileException;
+  public abstract HapiConverter<T> merge(HapiConverter<T> other) throws ProfileException;
 }

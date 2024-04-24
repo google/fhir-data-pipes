@@ -39,28 +39,29 @@ public interface BasePipelineOptions extends PipelineOptions {
 
   @Description(
       "Directory containing the structure definition files for any custom profiles that needs to be"
-          + " supported")
+          + " supported. If it starts with `classpath:` then the classpath is searched; and the"
+          + " path should always start with `/`. Do not use this if custom profiles are not needed."
+          + " Example: `classpath:/r4-us-core-definitions` is the classpath name under the"
+          + " resources folder of module `extension-structure-definitions`.")
   @Default.String("")
-  String getStructureDefinitionsDir();
+  String getStructureDefinitionsPath();
 
-  void setStructureDefinitionsDir(String value);
-
-  @Description(
-      "Similar to the structureDefinitionsDir, this path should also contain the structure"
-          + " definition files for any custom profiles that needs to be supported. But the"
-          + " difference is that, this is the classpath name instead of a directory name and should"
-          + " always start with a '/'. Also, only one of the structureDefinitionsDir or"
-          + " structureDefinitionsClasspath parameters can be configured, do not configure anything"
-          + " if custom profiles are not needed. e.g., /r4-us-core-definitions is the"
-          + " classpath name under the resources folder of module extension-structure-definitions")
-  @Default.String("")
-  String getStructureDefinitionsClasspath();
-
-  void setStructureDefinitionsClasspath(String value);
+  void setStructureDefinitionsPath(String value);
 
   @Description("The fhir version to be used for the FHIR Context APIs")
   @Default.Enum("R4")
   FhirVersionEnum getFhirVersion();
 
   void setFhirVersion(FhirVersionEnum fhirVersionEnum);
+
+  @Description(
+      "The maximum depth for traversing StructureDefinitions in Parquet schema generation"
+          + " (if it is non-positive, the default 1 will be used). Note in most cases, "
+          + " the default 1 is sufficient and increasing that can result in significantly "
+          + " larger schema and more complexity. For details see:"
+          + " https://github.com/FHIR/sql-on-fhir/blob/master/sql-on-fhir.md#recursive-structures")
+  @Default.Integer(1)
+  Integer getRecursiveDepth();
+
+  void setRecursiveDepth(Integer value);
 }

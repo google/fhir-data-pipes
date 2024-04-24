@@ -135,7 +135,7 @@ public class LeafExtensionConverter<T> extends HapiConverter<T> {
   }
 
   @Override
-  public HapiConverter merge(HapiConverter other) throws ProfileException {
+  public HapiConverter<T> merge(HapiConverter<T> other) throws ProfileException {
     HapiConverterUtil.validateIfImplementationClassesAreSame(this, other);
     if (Strings.isNullOrEmpty(this.extensionUrl())
         || Strings.isNullOrEmpty(other.extensionUrl())

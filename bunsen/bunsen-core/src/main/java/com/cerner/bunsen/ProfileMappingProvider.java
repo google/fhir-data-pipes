@@ -44,6 +44,7 @@ import org.slf4j.LoggerFactory;
 class ProfileMappingProvider {
 
   private static final Logger log = LoggerFactory.getLogger(ProfileMappingProvider.class);
+  private static final String CLASSPATH_PREFIX = "classpath:";
   private static final String JSON_EXT = ".json";
   private static String STRUCTURE_DEFINITION = "StructureDefinition";
 
@@ -56,15 +57,14 @@ class ProfileMappingProvider {
    *
    * @param context The context to which the profiles are added.
    * @param structureDefinitionsPath the path containing the list of additional structure
-   *     definitions to be used
-   * @param isClasspath whether the structureDefinitionsPath is a classpath or not
+   *     definitions to be used; if it starts with `classpath:` then the StructureDefinitions in
+   *     classpath are used instead
    * @return the map containing the resource type and the list of profile urls mapped.
    * @throws ProfileException if there are any errors while loading and mapping the structure
    *     definitions
    */
   Map<String, List<String>> loadStructureDefinitions(
-      FhirContext context, @Nullable String structureDefinitionsPath, boolean isClasspath)
-      throws ProfileException {
+      FhirContext context, @Nullable String structureDefinitionsPath) throws ProfileException {
 
     // TODO: Add support for other versions (R4B and R5) and then remove this constraint
     // https://github.com/google/fhir-data-pipes/issues/958
@@ -82,7 +82,7 @@ class ProfileMappingProvider {
     Map<String, List<String>> resourceProfileMap = loadBaseStructureDefinitions(context, support);
     if (!Strings.isNullOrEmpty(structureDefinitionsPath)) {
       loadCustomStructureDefinitions(
-          context, support, structureDefinitionsPath, isClasspath, resourceProfileMap);
+          context, support, structureDefinitionsPath, resourceProfileMap);
     }
     context.setValidationSupport(support);
     return resourceProfileMap;
@@ -117,14 +117,17 @@ class ProfileMappingProvider {
       FhirContext context,
       PrePopulatedValidationSupport support,
       String structureDefinitionsPath,
-      boolean isClasspath,
       Map<String, List<String>> resourceProfileMap)
       throws ProfileException {
     IParser jsonParser = context.newJsonParser();
+    String classPathStructureDefinitions =
+        structureDefinitionsPath == null || !structureDefinitionsPath.startsWith(CLASSPATH_PREFIX)
+            ? null
+            : structureDefinitionsPath.substring(CLASSPATH_PREFIX.length());
     try {
       List<IBaseResource> resources =
-          isClasspath
-              ? getResourcesFromClasspath(jsonParser, structureDefinitionsPath)
+          classPathStructureDefinitions != null
+              ? getResourcesFromClasspath(jsonParser, classPathStructureDefinitions)
               : getResourcesFromPath(jsonParser, structureDefinitionsPath);
 
       for (IBaseResource baseResource : resources) {
@@ -133,8 +136,10 @@ class ProfileMappingProvider {
     } catch (IOException | URISyntaxException e) {
       String errorMsg =
           String.format(
-              "Cannot get the list of files at the directory=%s, classpath=%s, error=%s",
-              structureDefinitionsPath, isClasspath, e.getMessage());
+              "Cannot get the list of files from %s %s, error=%s",
+              classPathStructureDefinitions != null ? "classpath" : "directory",
+              structureDefinitionsPath,
+              e.getMessage());
       log.error(errorMsg, e);
       throw new ProfileException(errorMsg);
     }

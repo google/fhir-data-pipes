@@ -35,13 +35,13 @@ public class R4AvroConverterCustomProfileTest {
     ProfileMapperFhirContexts.getInstance().deRegisterFhirContexts(FhirVersionEnum.R4);
     FhirContext fhirContext =
         ProfileMapperFhirContexts.getInstance()
-            .contextFromClasspathFor(FhirVersionEnum.R4, "/r4-custom-profile-definitions");
+            .contextFor(FhirVersionEnum.R4, "classpath:/r4-custom-profile-definitions");
     List<String> patientProfiles =
         Arrays.asList(
             "http://hl7.org/fhir/StructureDefinition/Patient",
             "http://hl7.org/fhir/bunsen/test/StructureDefinition/bunsen-test-patient");
     AvroConverter converterBunsenTestProfilePatient =
-        AvroConverter.forResources(fhirContext, patientProfiles);
+        AvroConverter.forResources(fhirContext, patientProfiles, 1);
 
     avroBunsenTestProfilePatient =
         (Record) converterBunsenTestProfilePatient.resourceToAvro(testBunsenTestProfilePatient);

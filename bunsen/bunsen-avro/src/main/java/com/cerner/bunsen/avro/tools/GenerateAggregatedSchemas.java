@@ -44,18 +44,18 @@ public class GenerateAggregatedSchemas {
       }
       String outputDir = pairs.get(OUTPUT_DIR);
       generateAggregatedSchemas(
-          fhirVersionEnum, structureDefinitionsPath, isClasspath, resourceTypes, outputDir);
+          fhirVersionEnum, structureDefinitionsPath, resourceTypes, outputDir);
     } catch (Exception e) {
       System.out.println("Unable to generate aggregated schema, error=" + e.getMessage());
       System.out.println(
           "The arguments should be of the format: fhirVersion=<fhirVersion>"
-              + " structureDefinitionsPath=<Path for structure definitions> isClasspath=<Boolean>"
+              + " structureDefinitionsPath=<Path for structure definitions>"
               + " resourceTypes=<Comma Separated resource types> outputDir=<Path for generated"
               + " schemas>");
       System.out.println("Example Arguments:");
       System.out.println(
           "fhirVersion=R4"
-              + " structureDefinitionsPath=/r4-us-core-definitions isClasspath=true"
+              + " structureDefinitionsPath=classpath:/r4-us-core-definitions"
               + " resourceTypes=Patient,Observation outputDir=/usr/tmp");
       System.out.println();
       e.printStackTrace();
@@ -78,7 +78,6 @@ public class GenerateAggregatedSchemas {
   private static void generateAggregatedSchemas(
       FhirVersionEnum fhirVersionEnum,
       String structureDefinitionsPath,
-      boolean isClasspath,
       List<String> resourceTypes,
       String outputDir)
       throws ProfileException, IOException {
@@ -90,21 +89,16 @@ public class GenerateAggregatedSchemas {
         String.format("%s cannot be empty", RESOURCE_TYPES));
     Preconditions.checkNotNull(outputDir, String.format("%s cannot be empty", OUTPUT_DIR));
     FhirContext fhirContext;
-    if (isClasspath) {
-      fhirContext =
-          ProfileMapperFhirContexts.getInstance()
-              .contextFromClasspathFor(fhirVersionEnum, structureDefinitionsPath);
-    } else {
-      fhirContext =
-          ProfileMapperFhirContexts.getInstance()
-              .contextFor(fhirVersionEnum, structureDefinitionsPath);
-    }
+    fhirContext =
+        ProfileMapperFhirContexts.getInstance()
+            .contextFor(fhirVersionEnum, structureDefinitionsPath);
 
     for (String resourceType : resourceTypes) {
       List<String> resourceTypeURLs =
           ProfileMapperFhirContexts.getInstance()
               .getMappedProfilesForResource(FhirVersionEnum.R4, resourceType);
-      AvroConverter aggregatedConverter = AvroConverter.forResources(fhirContext, resourceTypeURLs);
+      AvroConverter aggregatedConverter =
+          AvroConverter.forResources(fhirContext, resourceTypeURLs, 1);
       createOutputFile(resourceType, aggregatedConverter.getSchema(), outputDir);
     }
   }

@@ -114,10 +114,11 @@ public class R4AvroConverterUsCoreTest {
     ProfileMapperFhirContexts.getInstance().deRegisterFhirContexts(FhirVersionEnum.R4);
     fhirContext =
         ProfileMapperFhirContexts.getInstance()
-            .contextFromClasspathFor(FhirVersionEnum.R4, "/r4-us-core-definitions");
+            .contextFor(FhirVersionEnum.R4, "classpath:/r4-us-core-definitions");
 
     AvroConverter observationConverter =
-        AvroConverter.forResources(fhirContext, R4UsCoreProfileData.US_CORE_OBSERVATION_PROFILES);
+        AvroConverter.forResources(
+            fhirContext, R4UsCoreProfileData.US_CORE_OBSERVATION_PROFILES, 1);
 
     avroObservation = (Record) observationConverter.resourceToAvro(testObservation);
 
@@ -129,28 +130,28 @@ public class R4AvroConverterUsCoreTest {
     testObservationDecodedNullStatus =
         (Observation) observationConverter.avroToResource(avroObservationNullStatus);
 
-    AvroConverter taskConverter = AvroConverter.forResource(fhirContext, "Task");
+    AvroConverter taskConverter = AvroConverter.forResource(fhirContext, "Task", 1);
 
     avroTask = (Record) taskConverter.resourceToAvro(testTask);
 
     testTaskDecoded = (Task) taskConverter.avroToResource(avroTask);
 
     AvroConverter patientConverter =
-        AvroConverter.forResources(fhirContext, R4UsCoreProfileData.US_CORE_PATIENT_PROFILES);
+        AvroConverter.forResources(fhirContext, R4UsCoreProfileData.US_CORE_PATIENT_PROFILES, 1);
 
     avroPatient = (Record) patientConverter.resourceToAvro(testPatient);
 
     testPatientDecoded = (Patient) patientConverter.avroToResource(avroPatient);
 
     AvroConverter conditionConverter =
-        AvroConverter.forResources(fhirContext, R4UsCoreProfileData.US_CORE_CONDITION_PROFILES);
+        AvroConverter.forResources(fhirContext, R4UsCoreProfileData.US_CORE_CONDITION_PROFILES, 1);
 
     avroCondition = (Record) conditionConverter.resourceToAvro(testCondition);
 
     testConditionDecoded = (Condition) conditionConverter.avroToResource(avroCondition);
 
     AvroConverter medicationConverter =
-        AvroConverter.forResources(fhirContext, R4UsCoreProfileData.US_CORE_MEDICATION_PROFILES);
+        AvroConverter.forResources(fhirContext, R4UsCoreProfileData.US_CORE_MEDICATION_PROFILES, 1);
 
     Record avroMedication = (Record) medicationConverter.resourceToAvro(testMedicationOne);
 
@@ -161,7 +162,8 @@ public class R4AvroConverterUsCoreTest {
         AvroConverter.forResource(
             fhirContext,
             TestData.US_CORE_MEDICATION_REQUEST,
-            Arrays.asList(TestData.US_CORE_MEDICATION, TestData.PROVENANCE));
+            Arrays.asList(TestData.US_CORE_MEDICATION, TestData.PROVENANCE),
+            1);
 
     avroMedicationRequest =
         (Record) medicationRequestConverter.resourceToAvro(testMedicationRequest);
@@ -170,7 +172,7 @@ public class R4AvroConverterUsCoreTest {
         (MedicationRequest) medicationRequestConverter.avroToResource(avroMedicationRequest);
 
     AvroConverter encounterConverter =
-        AvroConverter.forResources(fhirContext, R4UsCoreProfileData.US_CORE_ENCOUNTER_PROFILES);
+        AvroConverter.forResources(fhirContext, R4UsCoreProfileData.US_CORE_ENCOUNTER_PROFILES, 1);
     avroEncounter = (Record) encounterConverter.resourceToAvro(testEncounter);
     testEncounterDecoded = (Encounter) encounterConverter.avroToResource(avroEncounter);
   }
@@ -488,7 +490,8 @@ public class R4AvroConverterUsCoreTest {
                 TestData.VALUE_SET,
                 Collections.emptyList(),
                 TestData.US_CORE_MEDICATION_REQUEST,
-                ImmutableList.of(TestData.US_CORE_MEDICATION)));
+                ImmutableList.of(TestData.US_CORE_MEDICATION)),
+            1);
 
     // Wrap the schemas in a protocol to simplify the invocation of the compiler.
     Protocol protocol = new Protocol("fhir-test", "FHIR Resources for Testing", null);

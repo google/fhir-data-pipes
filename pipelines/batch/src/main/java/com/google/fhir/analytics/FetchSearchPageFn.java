@@ -87,6 +87,8 @@ abstract class FetchSearchPageFn<T> extends DoFn<T, KV<String, Integer>> {
 
   private final int rowGroupSize;
 
+  private final int recursiveDepth;
+
   protected final DataSourceConfig sinkDbConfig;
 
   protected final String viewDefinitionsDir;
@@ -107,9 +109,7 @@ abstract class FetchSearchPageFn<T> extends DoFn<T, KV<String, Integer>> {
 
   private FhirVersionEnum fhirVersionEnum;
 
-  private String structureDefinitionsDir;
-
-  private String structureDefinitionsClasspath;
+  private String structureDefinitionsPath;
 
   protected AvroConversionUtil avroConversionUtil;
 
@@ -128,9 +128,9 @@ abstract class FetchSearchPageFn<T> extends DoFn<T, KV<String, Integer>> {
     this.secondsToFlush = options.getSecondsToFlushParquetFiles();
     this.rowGroupSize = options.getRowGroupSizeForParquetFiles();
     this.viewDefinitionsDir = options.getViewDefinitionsDir();
-    this.structureDefinitionsDir = options.getStructureDefinitionsDir();
-    this.structureDefinitionsClasspath = options.getStructureDefinitionsClasspath();
+    this.structureDefinitionsPath = options.getStructureDefinitionsPath();
     this.fhirVersionEnum = options.getFhirVersion();
+    this.recursiveDepth = options.getRecursiveDepth();
     if (options.getSinkDbConfigPath().isEmpty()) {
       this.sinkDbConfig = null;
     } else {
@@ -167,8 +167,7 @@ abstract class FetchSearchPageFn<T> extends DoFn<T, KV<String, Integer>> {
   public void setup() throws SQLException, ProfileException {
     log.debug("Starting setup for stage " + stageIdentifier);
     avroConversionUtil =
-        AvroConversionUtil.getInstance(
-            fhirVersionEnum, structureDefinitionsDir, structureDefinitionsClasspath);
+        AvroConversionUtil.getInstance(fhirVersionEnum, structureDefinitionsPath, recursiveDepth);
     FhirContext fhirContext = avroConversionUtil.getFhirContext();
     // The documentation for `FhirContext` claims that it is thread-safe but looking at the code,
     // it is not obvious if it is. This might be an issue when we write to it, like the next line.
@@ -200,12 +199,12 @@ abstract class FetchSearchPageFn<T> extends DoFn<T, KV<String, Integer>> {
       parquetUtil =
           new ParquetUtil(
               fhirContext.getVersion().getVersion(),
-              structureDefinitionsDir,
-              structureDefinitionsClasspath,
+              structureDefinitionsPath,
               parquetFile,
               secondsToFlush,
               rowGroupSize,
-              stageIdentifier + "_");
+              stageIdentifier + "_",
+              recursiveDepth);
     }
     if (sinkDbConfig != null) {
       DataSource jdbcSink =
