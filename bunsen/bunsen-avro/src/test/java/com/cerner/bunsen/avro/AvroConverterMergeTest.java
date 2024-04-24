@@ -109,7 +109,6 @@ public class AvroConverterMergeTest {
         ProfileMapperFhirContexts.getInstance()
             .contextFor(FhirVersionEnum.R4, "classpath:/r4-us-core-definitions");
 
-    // We keep the fullId such that after HAPI->Avro->HAPI conversion, we get the same object.
     AvroConverter patientConverter =
         AvroConverter.forResources(fhirContext, R4UsCoreProfileData.US_CORE_PATIENT_PROFILES, 1);
     Patient patient =

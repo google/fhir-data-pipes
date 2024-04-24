@@ -80,8 +80,8 @@ public class ProfileMapperFhirContexts {
     if (!Objects.equals(fhirContextData.structureDefinitionsPath, structureDefinitionsPath)) {
       String errorMsg =
           String.format(
-              "Failed to initialise FhirContext with configs structureDefinitionsPath=%s, it is"
-                  + " already initialised with different configs structureDefinitionsPath=%s",
+              "Failed to initialise FhirContext with structureDefinitionsPath=%s, it is"
+                  + " already initialised with different structureDefinitionsPath=%s",
               structureDefinitionsPath, fhirContextData.structureDefinitionsPath);
       logger.error(errorMsg);
       throw new ProfileException(errorMsg);
