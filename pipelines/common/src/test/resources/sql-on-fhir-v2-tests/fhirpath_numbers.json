@@ -36,17 +36,17 @@
               {
                 "name": "add",
                 "path": "value.ofType(Range).low.value + value.ofType(Range).high.value",
-                "type": "decimal"
+                "type": "integer"
               },
               {
                 "name": "sub",
                 "path": "value.ofType(Range).high.value - value.ofType(Range).low.value",
-                "type": "decimal"
+                "type": "integer"
               },
               {
                 "name": "mul",
                 "path": "value.ofType(Range).low.value * value.ofType(Range).high.value",
-                "type": "decimal"
+                "type": "integer"
               },
               {
                 "name": "div",
