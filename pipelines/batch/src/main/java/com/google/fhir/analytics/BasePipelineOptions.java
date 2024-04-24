@@ -55,9 +55,10 @@ public interface BasePipelineOptions extends PipelineOptions {
   void setFhirVersion(FhirVersionEnum fhirVersionEnum);
 
   @Description(
-      "The maximum depth for traversing StructureDefinitions in Parquet schema generation."
-          + " Please note in most cases, the default 1 is sufficient and increasing that can"
-          + " result in significantly larger schema and more complexity. For details see:"
+      "The maximum depth for traversing StructureDefinitions in Parquet schema generation"
+          + " (if it is non-positive, the default 1 will be used). Note in most cases, "
+          + " the default 1 is sufficient and increasing that can result in significantly "
+          + " larger schema and more complexity. For details see:"
           + " https://github.com/FHIR/sql-on-fhir/blob/master/sql-on-fhir.md#recursive-structures")
   @Default.Integer(1)
   Integer getRecursiveDepth();

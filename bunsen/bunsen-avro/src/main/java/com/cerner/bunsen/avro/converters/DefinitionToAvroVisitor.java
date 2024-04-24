@@ -847,7 +847,7 @@ public class DefinitionToAvroVisitor implements DefinitionVisitor<HapiConverter<
 
   @Override
   public int getMaxDepth(String elementTypeUrl, String path) {
-    return this.recursiveDepth;
+    return Math.max(1, this.recursiveDepth);
   }
 
   private static HapiCompositeConverter createCompositeConverter(
