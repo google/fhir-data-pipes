@@ -8,7 +8,7 @@
           "name": "id"
         },
         {
-          "path": "subject.getReferenceKey('Patient')",
+          "path": "subject.getReferenceKey(Patient)",
           "name": "patient_id"
         },
         {

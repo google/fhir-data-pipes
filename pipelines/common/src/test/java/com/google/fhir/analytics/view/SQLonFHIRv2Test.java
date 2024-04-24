@@ -111,7 +111,7 @@ public class SQLonFHIRv2Test {
       }
       for (SingleTest test : testDef.tests) {
         if (SKIPPED_TESTS.contains(testDef.title + "." + test.title)) {
-          test.result = new SingleTestResult(false, "skipped");
+          test.result = new SingleTestResult("skipped");
           continue;
         }
         // Note: To debug a single test case we can do the following:
@@ -138,7 +138,7 @@ public class SQLonFHIRv2Test {
               String.format(
                   "Number of rows does not match %d vs %d", totalRows, expectedRows.getNumRows()),
               totalRows == expectedRows.getNumRows());
-          test.result = new SingleTestResult();
+          test.result = new SingleTestResult(true);
         } catch (ViewApplicationException | ViewDefinitionException | FHIRLexerException e) {
           assertThat("View exceptions were thrown while none was expected!", expectedRows == null);
         }
@@ -176,17 +176,17 @@ public class SQLonFHIRv2Test {
 
   private static class SingleTestResult {
     final boolean passed;
-    final String reason;
+    final String failureReason;
     // TODO add actual result rows too.
 
-    SingleTestResult() {
-      this.passed = true;
-      this.reason = null;
+    SingleTestResult(boolean passed) {
+      this.passed = passed;
+      this.failureReason = null;
     }
 
-    SingleTestResult(boolean passed, String reason) {
-      this.passed = passed;
-      this.reason = reason;
+    SingleTestResult(String failureReason) {
+      this.passed = false;
+      this.failureReason = failureReason;
     }
   }
 

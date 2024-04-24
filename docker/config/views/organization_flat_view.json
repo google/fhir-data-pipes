@@ -18,7 +18,7 @@
           "name": "name"
         },
         {
-          "path": "partOf.getReferenceKey('Organization')",
+          "path": "partOf.getReferenceKey(Organization)",
           "name": "partOf_org_id"
         }
       ]

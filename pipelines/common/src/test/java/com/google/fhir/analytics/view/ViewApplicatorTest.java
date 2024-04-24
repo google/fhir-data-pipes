@@ -206,7 +206,7 @@ public class ViewApplicatorTest {
     assertThat(rows.getRows().get(1).getElements().get(0).getString(), equalTo("12345"));
     assertThat(rows.getRows().get(1).getElements().get(1).getName(), equalTo("practitioner_id"));
     // The second `generalPractitioner` is of type `Organization` hence it should not match
-    // `getReferenceKey('Practitioner')`.
+    // `getReferenceKey(Practitioner)`.
     assertThat(rows.getRows().get(1).getElements().get(1).getString(), equalTo(null));
     assertThat(rows.getRows().get(2).getElements().get(0).getName(), equalTo("id"));
     assertThat(rows.getRows().get(2).getElements().get(0).getString(), equalTo("12345"));
@@ -336,7 +336,7 @@ public class ViewApplicatorTest {
   @Test
   public void immunizationFlat() throws IOException, ViewApplicationException {
     RowList rows =
-        applyViewOnResource("imminization_flat_view.json", "immunization.json", Immunization.class);
+        applyViewOnResource("immunization_flat_view.json", "immunization.json", Immunization.class);
     assertThat(rows.getRows().size(), equalTo(2));
     assertThat(rows.getRows().get(0).getElements().get(0).getName(), equalTo("id"));
     assertThat(

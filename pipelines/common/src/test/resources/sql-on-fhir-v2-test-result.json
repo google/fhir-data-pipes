@@ -319,7 +319,7 @@
       ],
       "result": {
         "passed": false,
-        "reason": "skipped"
+        "failureReason": "skipped"
       }
     }
   ]
@@ -889,7 +889,7 @@
       ],
       "result": {
         "passed": false,
-        "reason": "skipped"
+        "failureReason": "skipped"
       }
     }
   ]
@@ -1580,7 +1580,7 @@
       ],
       "result": {
         "passed": false,
-        "reason": "skipped"
+        "failureReason": "skipped"
       }
     },
     {
@@ -1617,7 +1617,7 @@
       ],
       "result": {
         "passed": false,
-        "reason": "skipped"
+        "failureReason": "skipped"
       }
     },
     {
@@ -4108,7 +4108,7 @@
       "expectError": true,
       "result": {
         "passed": false,
-        "reason": "skipped"
+        "failureReason": "skipped"
       }
     },
     {
@@ -6457,7 +6457,7 @@
                 "inferredCollection": false
               },
               {
-                "path": "link.other.getReferenceKey('Patient')",
+                "path": "link.other.getReferenceKey(Patient)",
                 "name": "referenceKey",
                 "collection": false,
                 "inferredCollection": false
@@ -6474,7 +6474,7 @@
             "inferredCollection": false
           },
           "referenceKey": {
-            "path": "link.other.getReferenceKey('Patient')",
+            "path": "link.other.getReferenceKey(Patient)",
             "name": "referenceKey",
             "collection": false,
             "inferredCollection": false
@@ -6503,7 +6503,7 @@
           {
             "column": [
               {
-                "path": "link.other.getReferenceKey('Observation')",
+                "path": "link.other.getReferenceKey(Observation)",
                 "name": "referenceKey",
                 "type": "string",
                 "collection": false,
@@ -6522,7 +6522,7 @@
         "constMap": {},
         "allColumns": {
           "referenceKey": {
-            "path": "link.other.getReferenceKey('Observation')",
+            "path": "link.other.getReferenceKey(Observation)",
             "name": "referenceKey",
             "type": "string",
             "collection": false,

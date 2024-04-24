@@ -9,11 +9,11 @@
           "name": "id"
         },
         {
-          "path": "subject.getReferenceKey('Patient')",
+          "path": "subject.getReferenceKey(Patient)",
           "name": "patient_id"
         },
         {
-          "path": "encounter.getReferenceKey('Encounter')",
+          "path": "encounter.getReferenceKey(Encounter)",
           "name": "encounter_id"
         },
         {
@@ -43,7 +43,7 @@
       "forEachOrNull": "result",
       "column": [
         {
-          "path": "getReferenceKey('Observation')",
+          "path": "getReferenceKey(Observation)",
           "name": "result_obs_id"
         }
       ]
@@ -78,7 +78,7 @@
       "forEachOrNull": "performer",
       "column": [
         {
-          "path": "getReferenceKey('Practitioner')",
+          "path": "getReferenceKey(Practitioner)",
           "name": "practitioner_id"
         }
       ]

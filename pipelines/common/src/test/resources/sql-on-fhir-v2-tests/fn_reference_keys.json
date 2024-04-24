@@ -68,7 +68,7 @@
                 "name": "resourceKey"
               },
               {
-                "path": "link.other.getReferenceKey('Patient')",
+                "path": "link.other.getReferenceKey(Patient)",
                 "name": "referenceKey"
               }
             ]
@@ -94,7 +94,7 @@
           {
             "column": [
               {
-                "path": "link.other.getReferenceKey('Observation')",
+                "path": "link.other.getReferenceKey(Observation)",
                 "name": "referenceKey",
                 "type": "string"
               },

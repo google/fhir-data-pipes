@@ -58,7 +58,7 @@ public class ViewApplicator {
   public static String ID_TYPE = "id";
   public static final String GET_RESOURCE_KEY = "getResourceKey()";
   private static final Pattern GET_REF_KEY_PATTERN =
-      Pattern.compile("(?<fhirPath>.*)getReferenceKey\\(('(?<resourceType>[a-zA-Z]*)')?\\)");
+      Pattern.compile("(?<fhirPath>.*)getReferenceKey\\(((?<resourceType>[a-zA-Z]*))?\\)");
   private static final RowList EMPTY_LIST = RowList.builder().build();
   private final ViewDefinition viewDef;
   private final IFhirPath fhirPath;
@@ -314,9 +314,6 @@ public class ViewApplicator {
                 "getReferenceKey can only be applied to Reference elements; got " + fhirPathForRef);
           }
           IIdType ref = ((IBaseReference) refElem).getReferenceElement();
-          // TODO there is a confusion in the ViewDefinition spec re. how multiple references to
-          //  multiple types should be handled. For now, we keep the full IIdType but this may need
-          //  to be revisited (for writing to DB, we extract the IdPart but that's not ideal).
           if (resType.isEmpty()) {
             refs.add(ref);
           } else {

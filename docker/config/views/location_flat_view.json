@@ -37,7 +37,7 @@
           "name": "altitude"
         },
         {
-          "path": "managingOrganization.getReferenceKey('Organization')",
+          "path": "managingOrganization.getReferenceKey(Organization)",
           "name": "org_id"
         }
       ]

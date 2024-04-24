@@ -9,11 +9,11 @@
           "name": "id"
         },
         {
-          "path": "patient.getReferenceKey('Patient')",
+          "path": "patient.getReferenceKey(Patient)",
           "name": "patient_id"
         },
         {
-          "path": "encounter.getReferenceKey('Encounter')",
+          "path": "encounter.getReferenceKey(Encounter)",
           "name": "encounter_id"
         },
         {
@@ -21,7 +21,7 @@
           "name": "status"
         },
         {
-          "path": "location.getReferenceKey('Location')",
+          "path": "location.getReferenceKey(Location)",
           "name": "location_id"
         }
       ]
@@ -56,11 +56,11 @@
       "forEachOrNull": "performer",
       "column": [
         {
-          "path": "actor.getReferenceKey('Practitioner')",
+          "path": "actor.getReferenceKey(Practitioner)",
           "name": "practitioner_id"
         },
         {
-          "path": "actor.getReferenceKey('Organization')",
+          "path": "actor.getReferenceKey(Organization)",
           "name": "organization_id"
         }
       ]
