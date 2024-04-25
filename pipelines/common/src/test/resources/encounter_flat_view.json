@@ -13,11 +13,11 @@
           "name": "status"
         },
         {
-          "path": "subject.getReferenceKey('Patient')",
+          "path": "subject.getReferenceKey(Patient)",
           "name": "patient_id"
         },
         {
-          "path": "serviceProvider.getReferenceKey('Organization')",
+          "path": "serviceProvider.getReferenceKey(Organization)",
           "name": "service_org_id"
         },
         {
@@ -29,7 +29,7 @@
           "name": "end"
         },
         {
-          "path": "episodeOfCare.getReferenceKey('EpisodeOfCare')",
+          "path": "episodeOfCare.getReferenceKey(EpisodeOfCare)",
           "name": "EpisodeOfCareId"
         }
       ]
@@ -51,7 +51,7 @@
       "forEachOrNull": "participant",
       "column": [
         {
-          "path": "individual.getReferenceKey('Practitioner')",
+          "path": "individual.getReferenceKey(Practitioner)",
           "name": "practitioner_id"
         }
       ]
@@ -60,7 +60,7 @@
       "forEachOrNull": "location",
       "column": [
         {
-          "path": "location.getReferenceKey('Location')",
+          "path": "location.getReferenceKey(Location)",
           "name": "location_id"
         }
       ]

@@ -9,11 +9,11 @@
           "name": "id"
         },
         {
-          "path": "subject.getReferenceKey('Patient')",
+          "path": "subject.getReferenceKey(Patient)",
           "name": "patient_id"
         },
         {
-          "path": "encounter.getReferenceKey('Encounter')",
+          "path": "encounter.getReferenceKey(Encounter)",
           "name": "encounter_id"
         },
         {
@@ -30,15 +30,15 @@
           "type": "boolean"
         },
         {
-          "path": "requester.getReferenceKey('Practitioner')",
+          "path": "requester.getReferenceKey(Practitioner)",
           "name": "req_practitioner_id"
         },
         {
-          "path": "performer.getReferenceKey('Practitioner')",
+          "path": "performer.getReferenceKey(Practitioner)",
           "name": "perf_practitioner_id"
         },
         {
-          "path": "medication.ofType(Reference).getReferenceKey('Medication')",
+          "path": "medication.ofType(Reference).getReferenceKey(Medication)",
           "name": "med_id"
         }
       ]

@@ -14,11 +14,11 @@
           "type": "boolean"
         },
         {
-          "path": "practitioner.getReferenceKey('Practitioner')",
+          "path": "practitioner.getReferenceKey(Practitioner)",
           "name": "practitioner_id"
         },
         {
-          "path": "organization.getReferenceKey('Organization')",
+          "path": "organization.getReferenceKey(Organization)",
           "name": "organization_id"
         }
       ]
@@ -53,7 +53,7 @@
       "forEachOrNull": "location",
       "column": [
         {
-          "path": "getReferenceKey('Location')",
+          "path": "getReferenceKey(Location)",
           "name": "location_id"
         }
       ]
@@ -62,7 +62,7 @@
       "forEachOrNull": "healthcareService",
       "column": [
         {
-          "path": "getReferenceKey('HealthcareService')",
+          "path": "getReferenceKey(HealthcareService)",
           "name": "healthcare_service_id"
         }
       ]

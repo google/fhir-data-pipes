@@ -12,7 +12,7 @@
         {
           "column": [
             {
-              "path": "getReferenceKey('Practitioner')",
+              "path": "getReferenceKey(Practitioner)",
               "name": "practitioner_id"
             }
           ],

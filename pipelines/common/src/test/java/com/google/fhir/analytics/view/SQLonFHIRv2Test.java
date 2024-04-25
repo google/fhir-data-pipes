@@ -25,11 +25,14 @@ import com.google.fhir.analytics.view.ViewApplicator.FlatRow;
 import com.google.fhir.analytics.view.ViewApplicator.RowElement;
 import com.google.fhir.analytics.view.ViewApplicator.RowList;
 import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonNull;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonPrimitive;
+import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.math.BigDecimal;
@@ -77,18 +80,14 @@ public class SQLonFHIRv2Test {
           "fn_boundary.date highBoundary",
 
           // TODO the error condition here does not seem right.
-          "validate.wrong type in forEach",
-
-          // Reason: getResourceKey is used inside the FHIRPath which we don't support yet.
-          // TODO: Implement the above feature.
-          "fn_reference_keys.getReferenceKey result matches getResourceKey without type specifier",
-          "fn_reference_keys.getReferenceKey result matches getResourceKey with right type"
-              + " specifier",
-          "fn_reference_keys.getReferenceKey result matches getResourceKey with wrong type"
-              + " specifier");
+          "validate.wrong type in forEach");
 
   @Test
   public void runAllTests() throws IOException {
+    File tempFile = File.createTempFile("sql-on-fhir-v2-test-result-", ".json");
+    FileWriter writer = new FileWriter(tempFile);
+    writer.append('[');
+    boolean firstTest = true;
     // TODO make the FHIR version optional.
     IParser parser = FhirContext.forR4Cached().newJsonParser();
     String testsRoot = Resources.getResource("sql-on-fhir-v2-tests").getPath();
@@ -111,7 +110,10 @@ public class SQLonFHIRv2Test {
         resources.add(parser.parseResource(r.toString()));
       }
       for (SingleTest test : testDef.tests) {
-        if (SKIPPED_TESTS.contains(testDef.title + "." + test.title)) continue;
+        if (SKIPPED_TESTS.contains(testDef.title + "." + test.title)) {
+          test.result = new SingleTestResult("skipped");
+          continue;
+        }
         // Note: To debug a single test case we can do the following:
         // if (!test.title.equals("two elements + first")) continue;
         log.info("Next test: " + test.title);
@@ -136,11 +138,24 @@ public class SQLonFHIRv2Test {
               String.format(
                   "Number of rows does not match %d vs %d", totalRows, expectedRows.getNumRows()),
               totalRows == expectedRows.getNumRows());
+          test.result = new SingleTestResult(true);
         } catch (ViewApplicationException | ViewDefinitionException | FHIRLexerException e) {
-          assertThat("Expected errors but no view exceptions was thrown!", expectedRows == null);
+          assertThat("View exceptions were thrown while none was expected!", expectedRows == null);
         }
       }
+      if (!firstTest) {
+        writer.append(",\n");
+      }
+      writeResult(testDef, writer);
+      firstTest = false;
     }
+    writer.append(']');
+    writer.close();
+  }
+
+  private void writeResult(TestDef testDef, FileWriter writer) {
+    Gson gson = new GsonBuilder().setPrettyPrinting().disableHtmlEscaping().create();
+    gson.toJson(testDef, writer);
   }
 
   private static class TestDef {
@@ -154,6 +169,25 @@ public class SQLonFHIRv2Test {
     ViewDefinition view;
     List<JsonObject> expect;
     Boolean expectError;
+
+    // This is filled after the test is run and the expectations are validated.
+    SingleTestResult result;
+  }
+
+  private static class SingleTestResult {
+    final boolean passed;
+    final String failureReason;
+    // TODO add actual result rows too.
+
+    SingleTestResult(boolean passed) {
+      this.passed = passed;
+      this.failureReason = null;
+    }
+
+    SingleTestResult(String failureReason) {
+      this.passed = false;
+      this.failureReason = failureReason;
+    }
   }
 
   private static class ExpectedRows {
@@ -168,11 +202,6 @@ public class SQLonFHIRv2Test {
         }
         rows.add(row);
       }
-    }
-
-    public static ExpectedRows parse(String jsonStr) {
-      Gson gson = new Gson();
-      return gson.fromJson(jsonStr, ExpectedRows.class);
     }
 
     int getNumRows() {
@@ -230,7 +259,7 @@ public class SQLonFHIRv2Test {
           return false;
         }
         if (actual instanceof IIdType) {
-          return ((IIdType) actual).getValue().equals(expectedPrimitive.getAsString());
+          return ((IIdType) actual).getIdPart().equals(expectedPrimitive.getAsString());
         }
         if (actual instanceof IBaseDecimalDatatype) {
           BigDecimal expectedBigDecimal = null;
