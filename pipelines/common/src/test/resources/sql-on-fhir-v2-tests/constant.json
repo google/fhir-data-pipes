@@ -1,6 +1,10 @@
 {
   "title": "constant",
   "description": "constant substitution",
+  "fhirVersion": [
+    "5.0",
+    "4.0"
+  ],
   "resources": [
     {
       "resourceType": "Patient",
