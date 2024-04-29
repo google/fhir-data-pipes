@@ -31,10 +31,12 @@ import com.google.fhir.analytics.view.ViewDefinition.Where;
 import com.google.gson.Gson;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -48,6 +50,7 @@ import org.hl7.fhir.instance.model.api.IBaseResource;
 import org.hl7.fhir.instance.model.api.IIdType;
 import org.hl7.fhir.instance.model.api.IPrimitiveType;
 import org.hl7.fhir.r4.hapi.fluentpath.FhirPathR4;
+import org.hl7.fhir.r4b.hapi.fhirpath.FhirPathR4B;
 import org.hl7.fhir.r5.hapi.fhirpath.FhirPathR5;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -65,20 +68,26 @@ public class ViewApplicator {
 
   public ViewApplicator(ViewDefinition viewDefinition) {
     this.viewDef = viewDefinition;
-    if (viewDefinition.getResourceVersion() == null
-        || viewDefinition.getResourceVersion().equals(FhirVersionEnum.R4.getFhirVersionString())) {
+    Set<FhirVersionEnum> fhirVersions = new HashSet<>();
+    if (viewDefinition.getFhirVersion() != null) {
+      for (String version : viewDefinition.getFhirVersion()) {
+        fhirVersions.add(ViewDefinition.convertFhirVersion(version));
+      }
+    } else {
+      fhirVersions.add(FhirVersionEnum.R4);
+    }
+    // This order is kind of arbitrary; going with this as we usually pick R4 as the default!
+    if (fhirVersions.contains(FhirVersionEnum.R4)) {
       this.fhirPath = new FhirPathR4(FhirContext.forCached(FhirVersionEnum.R4));
-    } else if (viewDefinition
-        .getResourceVersion()
-        .equals(FhirVersionEnum.R5.getFhirVersionString())) {
+    } else if (fhirVersions.contains(FhirVersionEnum.R4B)) {
+      this.fhirPath = new FhirPathR4B(FhirContext.forCached(FhirVersionEnum.R4B));
+    } else if (fhirVersions.contains(FhirVersionEnum.R5)) {
       this.fhirPath = new FhirPathR5(FhirContext.forCached(FhirVersionEnum.R5));
-    } else if (viewDefinition
-        .getResourceVersion()
-        .equals(FhirVersionEnum.DSTU3.getFhirVersionString())) {
+    } else if (fhirVersions.contains(FhirVersionEnum.DSTU3)) {
       this.fhirPath = new FhirPathDstu3(FhirContext.forCached(FhirVersionEnum.DSTU3));
     } else {
       throw new IllegalArgumentException(
-          "ViewDefinition version not supported: " + viewDefinition.getResourceVersion());
+          "ViewDefinition version not supported: " + viewDefinition.getFhirVersion());
     }
   }
 

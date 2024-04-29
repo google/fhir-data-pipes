@@ -1,6 +1,11 @@
 {
   "title": "view_resource",
   "description": "TBD",
+  "fhirVersion": [
+    "5.0",
+    "4.0",
+    "3.0"
+  ],
   "resources": [
     {
       "id": "pt1",

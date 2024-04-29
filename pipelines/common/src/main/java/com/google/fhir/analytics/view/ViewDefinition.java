@@ -15,6 +15,7 @@
  */
 package com.google.fhir.analytics.view;
 
+import ca.uhn.fhir.context.FhirVersionEnum;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
@@ -49,7 +50,7 @@ public class ViewDefinition {
 
   @Getter private String name;
   @Getter private String resource;
-  @Getter private String resourceVersion;
+  @Getter private List<String> fhirVersion;
   @Getter private List<Select> select;
   @Getter private List<Where> where;
   // We don't need to expose constants because we do the replacement as part of the setup.
@@ -71,7 +72,7 @@ public class ViewDefinition {
     Gson gson = new Gson();
     try (Reader reader = Files.newBufferedReader(jsonFile, StandardCharsets.UTF_8)) {
       ViewDefinition view = gson.fromJson(reader, ViewDefinition.class);
-      view.validateAndSetUp(true);
+      view.validateAndSetUp(true, null);
       return view;
     }
   }
@@ -83,7 +84,7 @@ public class ViewDefinition {
       if (view == null) {
         throw new ViewDefinitionException("Error in parsing ViewDefinition JSON content!");
       }
-      view.validateAndSetUp(true);
+      view.validateAndSetUp(true, null);
       return view;
     } catch (JsonSyntaxException e) {
       log.error("Error in parsing ViewDefinition JSON: ", e);
@@ -99,10 +100,13 @@ public class ViewDefinition {
    * @throws ViewDefinitionException if there is any column inconsistency, e.g., duplicates.
    */
   @VisibleForTesting
-  void validateAndSetUp(boolean checkName) throws ViewDefinitionException {
+  void validateAndSetUp(boolean checkName, String fhirVersion) throws ViewDefinitionException {
     if (Strings.isNullOrEmpty(resource)) {
       throw new ViewDefinitionException(
           "The resource field of a view should be a valid FHIR resource type.");
+    }
+    if (fhirVersion != null) {
+      this.fhirVersion = List.of(fhirVersion);
     }
     if (checkName
         && (Strings.isNullOrEmpty(this.name) || !SQL_NAME_PATTERN.matcher(this.name).matches())) {
@@ -407,6 +411,22 @@ public class ViewDefinition {
             "Exactly one the value[x] elements should be set; got " + c);
       }
       return stringValue;
+    }
+  }
+
+  /** Coverts the given FHIR version string to a {@link FhirVersionEnum}. */
+  public static FhirVersionEnum convertFhirVersion(String fhirVersion) {
+    switch (fhirVersion.substring(0, 3)) {
+      case "3.0":
+        return FhirVersionEnum.DSTU3;
+      case "4.0":
+        return FhirVersionEnum.R4;
+      case "4.3":
+        return FhirVersionEnum.R4B;
+      case "5.0":
+        return FhirVersionEnum.R5;
+      default:
+        throw new IllegalArgumentException("FHIR version not supported!");
     }
   }
 }

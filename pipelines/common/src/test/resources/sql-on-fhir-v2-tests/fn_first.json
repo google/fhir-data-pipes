@@ -1,6 +1,11 @@
 {
   "title": "fn_first",
   "description": "FHIRPath `first` function.",
+  "fhirVersion": [
+    "5.0",
+    "4.0",
+    "3.0"
+  ],
   "resources": [
     {
       "resourceType": "Patient",

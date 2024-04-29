@@ -1,6 +1,11 @@
 {
   "title": "basic",
   "description": "basic view definition",
+  "fhirVersion": [
+    "5.0",
+    "4.0",
+    "3.0"
+  ],
   "resources": [
     {
       "resourceType": "Patient",
