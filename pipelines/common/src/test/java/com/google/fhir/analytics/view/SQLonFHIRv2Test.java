@@ -185,20 +185,26 @@ public class SQLonFHIRv2Test {
 
   private static class SingleTestResult {
     final String name;
-    final boolean passed;
-    final String failureReason;
-    // TODO add actual result rows too.
+    final Result result;
+
+    private static class Result {
+      final boolean passed;
+      final String reason;
+
+      private Result(boolean passed, String reason) {
+        this.passed = passed;
+        this.reason = reason;
+      }
+    }
 
     SingleTestResult(String name, boolean passed) {
       this.name = name;
-      this.passed = passed;
-      this.failureReason = null;
+      result = new Result(passed, null);
     }
 
     SingleTestResult(String name, String failureReason) {
       this.name = name;
-      this.passed = false;
-      this.failureReason = failureReason;
+      result = new Result(false, failureReason);
     }
   }
 
