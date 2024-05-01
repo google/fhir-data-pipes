@@ -3,15 +3,21 @@
     "tests": [
       {
         "name": "filtering with 'and'",
-        "passed": true
+        "result": {
+          "passed": true
+        }
       },
       {
         "name": "filtering with 'or'",
-        "passed": true
+        "result": {
+          "passed": true
+        }
       },
       {
         "name": "filtering with 'not'",
-        "passed": true
+        "result": {
+          "passed": true
+        }
       }
     ]
   },
@@ -19,16 +25,22 @@
     "tests": [
       {
         "name": "join with comma",
-        "passed": true
+        "result": {
+          "passed": true
+        }
       },
       {
         "name": "join with empty value",
-        "passed": true
+        "result": {
+          "passed": true
+        }
       },
       {
         "name": "fn_join",
-        "passed": false,
-        "failureReason": "skipped"
+        "result": {
+          "passed": false,
+          "reason": "skipped"
+        }
       }
     ]
   },
@@ -36,48 +48,70 @@
     "tests": [
       {
         "name": "one element",
-        "passed": true
+        "result": {
+          "passed": true
+        }
       },
       {
         "name": "two elements + first",
-        "passed": true
+        "result": {
+          "passed": true
+        }
       },
       {
         "name": "collection",
-        "passed": true
+        "result": {
+          "passed": true
+        }
       },
       {
         "name": "index[0]",
-        "passed": true
+        "result": {
+          "passed": true
+        }
       },
       {
         "name": "index[1]",
-        "passed": true
+        "result": {
+          "passed": true
+        }
       },
       {
         "name": "out of index",
-        "passed": true
+        "result": {
+          "passed": true
+        }
       },
       {
         "name": "where",
-        "passed": true
+        "result": {
+          "passed": true
+        }
       },
       {
         "name": "exists",
-        "passed": true
+        "result": {
+          "passed": true
+        }
       },
       {
         "name": "nested exists",
-        "passed": true
+        "result": {
+          "passed": true
+        }
       },
       {
         "name": "string join",
-        "passed": true
+        "result": {
+          "passed": true
+        }
       },
       {
         "name": "fhirpath",
-        "passed": false,
-        "failureReason": "skipped"
+        "result": {
+          "passed": false,
+          "reason": "skipped"
+        }
       }
     ]
   },
@@ -85,11 +119,15 @@
     "tests": [
       {
         "name": "select string values",
-        "passed": true
+        "result": {
+          "passed": true
+        }
       },
       {
         "name": "select integer values",
-        "passed": true
+        "result": {
+          "passed": true
+        }
       }
     ]
   },
@@ -97,11 +135,15 @@
     "tests": [
       {
         "name": "simple extension",
-        "passed": true
+        "result": {
+          "passed": true
+        }
       },
       {
         "name": "nested extension",
-        "passed": true
+        "result": {
+          "passed": true
+        }
       }
     ]
   },
@@ -109,32 +151,46 @@
     "tests": [
       {
         "name": "decimal lowBoundary",
-        "passed": true
+        "result": {
+          "passed": true
+        }
       },
       {
         "name": "decimal highBoundary",
-        "passed": true
+        "result": {
+          "passed": true
+        }
       },
       {
         "name": "datetime lowBoundary",
-        "passed": true
+        "result": {
+          "passed": true
+        }
       },
       {
         "name": "datetime highBoundary",
-        "passed": true
+        "result": {
+          "passed": true
+        }
       },
       {
         "name": "fn_boundary",
-        "passed": false,
-        "failureReason": "skipped"
+        "result": {
+          "passed": false,
+          "reason": "skipped"
+        }
       },
       {
         "name": "time lowBoundary",
-        "passed": true
+        "result": {
+          "passed": true
+        }
       },
       {
         "name": "time highBoundary",
-        "passed": true
+        "result": {
+          "passed": true
+        }
       }
     ]
   },
@@ -142,15 +198,21 @@
     "tests": [
       {
         "name": "only pts",
-        "passed": true
+        "result": {
+          "passed": true
+        }
       },
       {
         "name": "only obs",
-        "passed": true
+        "result": {
+          "passed": true
+        }
       },
       {
         "name": "resource not specified",
-        "passed": true
+        "result": {
+          "passed": true
+        }
       }
     ]
   },
@@ -158,35 +220,51 @@
     "tests": [
       {
         "name": "constant in path",
-        "passed": true
+        "result": {
+          "passed": true
+        }
       },
       {
         "name": "constant in forEach",
-        "passed": true
+        "result": {
+          "passed": true
+        }
       },
       {
         "name": "constant in where element",
-        "passed": true
+        "result": {
+          "passed": true
+        }
       },
       {
         "name": "constant in unionAll",
-        "passed": true
+        "result": {
+          "passed": true
+        }
       },
       {
         "name": "integer constant",
-        "passed": true
+        "result": {
+          "passed": true
+        }
       },
       {
         "name": "boolean constant",
-        "passed": true
+        "result": {
+          "passed": true
+        }
       },
       {
         "name": "accessing an undefined constant",
-        "passed": true
+        "result": {
+          "passed": true
+        }
       },
       {
         "name": "incorrect constant definition",
-        "passed": true
+        "result": {
+          "passed": true
+        }
       }
     ]
   },
@@ -194,7 +272,9 @@
     "tests": [
       {
         "name": "empty names",
-        "passed": true
+        "result": {
+          "passed": true
+        }
       }
     ]
   },
@@ -202,43 +282,63 @@
     "tests": [
       {
         "name": "basic",
-        "passed": true
+        "result": {
+          "passed": true
+        }
       },
       {
         "name": "unionAll + column",
-        "passed": true
+        "result": {
+          "passed": true
+        }
       },
       {
         "name": "duplicates",
-        "passed": true
+        "result": {
+          "passed": true
+        }
       },
       {
         "name": "empty results",
-        "passed": true
+        "result": {
+          "passed": true
+        }
       },
       {
         "name": "empty with forEachOrNull",
-        "passed": true
+        "result": {
+          "passed": true
+        }
       },
       {
         "name": "forEachOrNull and forEach",
-        "passed": true
+        "result": {
+          "passed": true
+        }
       },
       {
         "name": "nested",
-        "passed": true
+        "result": {
+          "passed": true
+        }
       },
       {
         "name": "one empty operand",
-        "passed": true
+        "result": {
+          "passed": true
+        }
       },
       {
         "name": "column mismatch",
-        "passed": true
+        "result": {
+          "passed": true
+        }
       },
       {
         "name": "column order mismatch",
-        "passed": true
+        "result": {
+          "passed": true
+        }
       }
     ]
   },
@@ -246,7 +346,9 @@
     "tests": [
       {
         "name": "add observation",
-        "passed": true
+        "result": {
+          "passed": true
+        }
       }
     ]
   },
@@ -254,27 +356,39 @@
     "tests": [
       {
         "name": "select",
-        "passed": true
+        "result": {
+          "passed": true
+        }
       },
       {
         "name": "column + select",
-        "passed": true
+        "result": {
+          "passed": true
+        }
       },
       {
         "name": "sibling select",
-        "passed": true
+        "result": {
+          "passed": true
+        }
       },
       {
         "name": "sibling select inside a select",
-        "passed": true
+        "result": {
+          "passed": true
+        }
       },
       {
         "name": "column + select, with where",
-        "passed": true
+        "result": {
+          "passed": true
+        }
       },
       {
         "name": "unionAll + forEach + column + select",
-        "passed": true
+        "result": {
+          "passed": true
+        }
       }
     ]
   },
@@ -282,24 +396,34 @@
     "tests": [
       {
         "name": "empty",
-        "passed": true
+        "result": {
+          "passed": true
+        }
       },
       {
         "name": "missing resource",
-        "passed": true
+        "result": {
+          "passed": true
+        }
       },
       {
         "name": "wrong fhirpath",
-        "passed": true
+        "result": {
+          "passed": true
+        }
       },
       {
         "name": "validate",
-        "passed": false,
-        "failureReason": "skipped"
+        "result": {
+          "passed": false,
+          "reason": "skipped"
+        }
       },
       {
         "name": "where with path resolving to not boolean",
-        "passed": true
+        "result": {
+          "passed": true
+        }
       }
     ]
   },
@@ -307,35 +431,51 @@
     "tests": [
       {
         "name": "simple where path with result",
-        "passed": true
+        "result": {
+          "passed": true
+        }
       },
       {
         "name": "where path with no results",
-        "passed": true
+        "result": {
+          "passed": true
+        }
       },
       {
         "name": "where path with greater than inequality",
-        "passed": true
+        "result": {
+          "passed": true
+        }
       },
       {
         "name": "where path with less than inequality",
-        "passed": true
+        "result": {
+          "passed": true
+        }
       },
       {
         "name": "multiple where paths",
-        "passed": true
+        "result": {
+          "passed": true
+        }
       },
       {
         "name": "where path with an 'and' connector",
-        "passed": true
+        "result": {
+          "passed": true
+        }
       },
       {
         "name": "where path with an 'or' connector",
-        "passed": true
+        "result": {
+          "passed": true
+        }
       },
       {
         "name": "where path that evaluates to true when empty",
-        "passed": true
+        "result": {
+          "passed": true
+        }
       }
     ]
   },
@@ -343,43 +483,63 @@
     "tests": [
       {
         "name": "basic attribute",
-        "passed": true
+        "result": {
+          "passed": true
+        }
       },
       {
         "name": "boolean attribute with false",
-        "passed": true
+        "result": {
+          "passed": true
+        }
       },
       {
         "name": "two columns",
-        "passed": true
+        "result": {
+          "passed": true
+        }
       },
       {
         "name": "two selects with columns",
-        "passed": true
+        "result": {
+          "passed": true
+        }
       },
       {
         "name": "where - 1",
-        "passed": true
+        "result": {
+          "passed": true
+        }
       },
       {
         "name": "where - 2",
-        "passed": true
+        "result": {
+          "passed": true
+        }
       },
       {
         "name": "where returns non-boolean for some cases",
-        "passed": true
+        "result": {
+          "passed": true
+        }
       },
       {
         "name": "where as expr - 1",
-        "passed": true
+        "result": {
+          "passed": true
+        }
       },
       {
         "name": "where as expr - 2",
-        "passed": true
+        "result": {
+          "passed": true
+        }
       },
       {
         "name": "select & column",
-        "passed": true
+        "result": {
+          "passed": true
+        }
       }
     ]
   },
@@ -387,55 +547,81 @@
     "tests": [
       {
         "name": "forEach: normal",
-        "passed": true
+        "result": {
+          "passed": true
+        }
       },
       {
         "name": "forEachOrNull: basic",
-        "passed": true
+        "result": {
+          "passed": true
+        }
       },
       {
         "name": "forEach: empty",
-        "passed": true
+        "result": {
+          "passed": true
+        }
       },
       {
         "name": "forEach: two on the same level",
-        "passed": true
+        "result": {
+          "passed": true
+        }
       },
       {
         "name": "forEach: two on the same level (empty result)",
-        "passed": true
+        "result": {
+          "passed": true
+        }
       },
       {
         "name": "forEachOrNull: null case",
-        "passed": true
+        "result": {
+          "passed": true
+        }
       },
       {
         "name": "forEach and forEachOrNull on the same level",
-        "passed": true
+        "result": {
+          "passed": true
+        }
       },
       {
         "name": "nested forEach",
-        "passed": true
+        "result": {
+          "passed": true
+        }
       },
       {
         "name": "nested forEach: select & column",
-        "passed": true
+        "result": {
+          "passed": true
+        }
       },
       {
         "name": "forEachOrNull & unionAll on the same level",
-        "passed": true
+        "result": {
+          "passed": true
+        }
       },
       {
         "name": "forEach & unionAll on the same level",
-        "passed": true
+        "result": {
+          "passed": true
+        }
       },
       {
         "name": "forEach & unionAll & column & select on the same level",
-        "passed": true
+        "result": {
+          "passed": true
+        }
       },
       {
         "name": "forEachOrNull & unionAll & column & select on the same level",
-        "passed": true
+        "result": {
+          "passed": true
+        }
       }
     ]
   },
@@ -443,11 +629,15 @@
     "tests": [
       {
         "name": "table level first()",
-        "passed": true
+        "result": {
+          "passed": true
+        }
       },
       {
         "name": "table and field level first()",
-        "passed": true
+        "result": {
+          "passed": true
+        }
       }
     ]
   },
@@ -455,15 +645,21 @@
     "tests": [
       {
         "name": "getReferenceKey result matches getResourceKey without type specifier",
-        "passed": true
+        "result": {
+          "passed": true
+        }
       },
       {
         "name": "getReferenceKey result matches getResourceKey with right type specifier",
-        "passed": true
+        "result": {
+          "passed": true
+        }
       },
       {
         "name": "getReferenceKey result matches getResourceKey with wrong type specifier",
-        "passed": true
+        "result": {
+          "passed": true
+        }
       }
     ]
   },
@@ -471,19 +667,27 @@
     "tests": [
       {
         "name": "fail when 'collection' is not true",
-        "passed": true
+        "result": {
+          "passed": true
+        }
       },
       {
         "name": "collection = true",
-        "passed": true
+        "result": {
+          "passed": true
+        }
       },
       {
         "name": "collection = false relative to forEach parent",
-        "passed": true
+        "result": {
+          "passed": true
+        }
       },
       {
         "name": "collection = false relative to forEachOrNull parent",
-        "passed": true
+        "result": {
+          "passed": true
+        }
       }
     ]
   }
