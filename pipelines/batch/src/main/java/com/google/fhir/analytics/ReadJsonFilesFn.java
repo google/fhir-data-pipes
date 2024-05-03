@@ -57,6 +57,11 @@ public class ReadJsonFilesFn extends FetchSearchPageFn<FileIO.ReadableFile> {
     }
   }
 
+  @Override
+  public void finishBundle(FinishBundleContext context) {
+    super.finishBundle(context);
+  }
+
   @ProcessElement
   public void processElement(@Element FileIO.ReadableFile file)
       throws IOException, SQLException, ViewApplicationException, ProfileException {

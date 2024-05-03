@@ -53,6 +53,10 @@ public class FetchPatientHistory extends PTransform<PCollection<KV<String, Integ
 
     fetchSearchPageFn =
         new FetchSearchPageFn<KV<String, Integer>>(options, stageId) {
+          @Override
+          public void finishBundle(FinishBundleContext context) {
+            super.finishBundle(context);
+          }
 
           @ProcessElement
           public void ProcessElement(@Element KV<String, Integer> patientIdCount)

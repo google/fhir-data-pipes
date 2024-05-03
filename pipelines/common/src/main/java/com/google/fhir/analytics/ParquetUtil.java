@@ -52,6 +52,11 @@ public class ParquetUtil {
   private final Timer timer;
   private final Random random;
   private final String namePrefix;
+  private boolean flushedInCurrentPeriod;
+
+  private synchronized void setFlushedInCurrentPeriod(boolean value) {
+    flushedInCurrentPeriod = value;
+  }
 
   public String getParquetPath() {
     return dwhFiles.getRoot();
@@ -90,6 +95,7 @@ public class ParquetUtil {
     this.writerMap = new HashMap<>();
     this.rowGroupSize = rowGroupSize;
     this.namePrefix = namePrefix;
+    setFlushedInCurrentPeriod(false);
     if (secondsToFlush > 0) {
       TimerTask task =
           new TimerTask() {
@@ -97,9 +103,11 @@ public class ParquetUtil {
             @Override
             public void run() {
               try {
-                log.info(
-                    "Flushing all Parquet writers for thread " + Thread.currentThread().getId());
-                flushAll();
+                if (!flushedInCurrentPeriod) {
+                  log.info("Flush timed out for thread " + Thread.currentThread().getId());
+                  flushAll();
+                }
+                setFlushedInCurrentPeriod(false);
               } catch (IOException | ProfileException e) {
                 log.error("Could not flush Parquet files: " + e);
               }
@@ -174,10 +182,12 @@ public class ParquetUtil {
     }
   }
 
-  private synchronized void flushAll() throws IOException, ProfileException {
+  synchronized void flushAll() throws IOException, ProfileException {
+    log.info("Flushing all Parquet writers for thread " + Thread.currentThread().getId());
     for (String resourceType : writerMap.keySet()) {
       flush(resourceType);
     }
+    setFlushedInCurrentPeriod(true);
   }
 
   public synchronized void closeAllWriters() throws IOException {

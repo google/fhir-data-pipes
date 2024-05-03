@@ -45,7 +45,10 @@ import org.slf4j.LoggerFactory;
  * to Avro and JSON records. The non-abstract sub-classes should implement `ProcessElement` using
  * `processBundle` auxiliary method. Note the code reuse pattern that we really need here is
  * composition (not inheritance) but because of Beam complexities (e.g., certain work need to be
- * done during `setup()` where PipelienOptions not available) we use inheritance.
+ * done during `setup()` where PipelienOptions not available) we use inheritance. A better approach
+ * is to create the utility instances (e.g., `fetchUtil`) once at the beginning of ParDo or
+ * StartBundle method using a synchronized method. Those functions have acccess to PipelienOptions.
+ * That way we can get rid of many instance variables that mirror PipelienOptions fields.
  *
  * @param <T> The type of the elements of the input PCollection.
  */
@@ -215,8 +218,30 @@ abstract class FetchSearchPageFn<T> extends DoFn<T, KV<String, Integer>> {
     }
   }
 
+  /**
+   * This should be overridden by all subclasses because the `context` type is not fully specified
+   * at this parent class (because of the T type argument). All subclass implementations should call
+   * `super.finishBundle` though. TODO: implement a way to enforce this at compile time; this is
+   * currently caught at run time.
+   */
+  @FinishBundle
+  public void finishBundle(FinishBundleContext context) {
+    try {
+      if (parquetUtil != null) {
+        parquetUtil.flushAll();
+      }
+    } catch (IOException | ProfileException e) {
+      // There is not much that we can do at finishBundle so just throw a RuntimeException
+      log.error("At finishBundle caught exception ", e);
+      throw new IllegalStateException(e);
+    }
+  }
+
   @Teardown
   public void teardown() throws IOException {
+    // Note this is _not_ guaranteed to be called; for example when the worker process is being
+    // stopped, the runner may choose not to call teardown. Only keep closing/cleanups here. See:
+    // https://beam.apache.org/releases/javadoc/current/org/apache/beam/sdk/transforms/DoFn.Teardown.html
     if (parquetUtil != null) {
       parquetUtil.closeAllWriters();
     }
