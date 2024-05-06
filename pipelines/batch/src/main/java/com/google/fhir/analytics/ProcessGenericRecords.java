@@ -64,17 +64,17 @@ public class ProcessGenericRecords extends FetchSearchPageFn<GenericRecord> {
   }
 
   @Override
-  public void teardown() throws IOException {
+  public void finishBundle(FinishBundleContext context) {
     if (!cachedResources.isEmpty()) {
       try {
         processBundle(flushCachToBundle());
-      } catch (SQLException | ViewApplicationException | ProfileException e) {
-        // This is not perfect but the parent teardown only has IOException.
-        log.error("Caught exception in teardown: ", e);
-        throw new IOException(e);
+      } catch (SQLException | ViewApplicationException | ProfileException | IOException e) {
+        // We cannot do much at finishBundle!
+        log.error("At finishBundle caught exception ", e);
+        throw new IllegalStateException(e);
       }
     }
-    super.teardown();
+    super.finishBundle(context);
   }
 
   private Bundle flushCachToBundle() {

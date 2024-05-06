@@ -52,6 +52,11 @@ public class FetchPatients extends PTransform<PCollection<KV<String, Integer>>, 
     fetchSearchPageFn =
         new FetchSearchPageFn<KV<String, Integer>>(options, "PatientById") {
 
+          @Override
+          public void finishBundle(FinishBundleContext context) {
+            super.finishBundle(context);
+          }
+
           @ProcessElement
           public void processElement(@Element KV<String, Integer> patientIdCount)
               throws IOException, SQLException, ViewApplicationException, ProfileException {

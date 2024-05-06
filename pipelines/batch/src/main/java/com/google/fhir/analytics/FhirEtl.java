@@ -26,7 +26,6 @@ import com.google.fhir.analytics.metrics.PipelineMetrics;
 import com.google.fhir.analytics.metrics.PipelineMetricsProvider;
 import com.google.fhir.analytics.model.DatabaseConfiguration;
 import com.google.fhir.analytics.view.ViewDefinitionException;
-import java.beans.PropertyVetoException;
 import java.io.IOException;
 import java.sql.SQLException;
 import java.util.ArrayList;
@@ -183,7 +182,7 @@ public class FhirEtl {
 
   private static List<Pipeline> buildOpenmrsJdbcPipeline(
       FhirEtlOptions options, AvroConversionUtil avroConversionUtil)
-      throws PropertyVetoException, IOException, SQLException, ProfileException {
+      throws IOException, SQLException, ProfileException {
     // TODO add incremental support.
     Preconditions.checkArgument(Strings.isNullOrEmpty(options.getSince()));
     FhirSearchUtil fhirSearchUtil =
@@ -310,7 +309,7 @@ public class FhirEtl {
 
   // TODO: Implement active period feature for JDBC mode with a HAPI source server (issue #278).
   private static List<Pipeline> buildHapiJdbcPipeline(FhirEtlOptions options)
-      throws PropertyVetoException, SQLException, IOException {
+      throws SQLException, IOException {
     Preconditions.checkArgument(!Strings.isNullOrEmpty(options.getFhirDatabaseConfigPath()));
     DatabaseConfiguration dbConfig =
         DatabaseConfiguration.createConfigFromFile(options.getFhirDatabaseConfigPath());
@@ -429,8 +428,7 @@ public class FhirEtl {
    */
   static List<Pipeline> setupAndBuildPipelines(
       FhirEtlOptions options, AvroConversionUtil avroConversionUtil)
-      throws PropertyVetoException, IOException, SQLException, ViewDefinitionException,
-          ProfileException {
+      throws IOException, SQLException, ViewDefinitionException, ProfileException {
     if (!options.getSinkDbConfigPath().isEmpty()) {
       JdbcResourceWriter.createTables(options);
     }
@@ -450,8 +448,7 @@ public class FhirEtl {
   }
 
   public static void main(String[] args)
-      throws PropertyVetoException, IOException, SQLException, ViewDefinitionException,
-          ProfileException {
+      throws IOException, SQLException, ViewDefinitionException, ProfileException {
 
     AvroConversionUtil.initializeAvroConverters();
 

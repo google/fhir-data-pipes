@@ -63,6 +63,8 @@ public class FetchResources
   @VisibleForTesting
   static String getSubjectPatientIdOrNull(Resource resource) {
     String patientId = null;
+    // TODO: Instead of hard-coding `subject` here, use Patient Compartment:
+    //  https://hl7.org/fhir/compartmentdefinition-patient.html
     Property subject = resource.getNamedProperty("subject");
     if (subject != null) {
       List<Base> values = subject.getValues();
@@ -119,12 +121,13 @@ public class FetchResources
       patientCount.put(patientId, current + 1);
     }
 
-    @FinishBundle
+    @Override
     public void finishBundle(FinishBundleContext context) {
       for (Map.Entry<String, Integer> entry : patientCount.entrySet()) {
         context.output(
             KV.of(entry.getKey(), entry.getValue()), Instant.now(), GlobalWindow.INSTANCE);
       }
+      super.finishBundle(context);
     }
 
     @ProcessElement

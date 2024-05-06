@@ -192,6 +192,11 @@ public class ConvertResourceFn extends FetchSearchPageFn<HapiRowDescriptor> {
     }
   }
 
+  @Override
+  public void finishBundle(FinishBundleContext context) {
+    super.finishBundle(context);
+  }
+
   @ProcessElement
   public void processElement(ProcessContext processContext)
       throws IOException, ParseException, SQLException, ViewApplicationException, ProfileException {
