@@ -110,9 +110,9 @@ abstract class FetchSearchPageFn<T> extends DoFn<T, KV<String, Integer>> {
 
   protected IParser parser;
 
-  private FhirVersionEnum fhirVersionEnum;
+  private final FhirVersionEnum fhirVersionEnum;
 
-  private String structureDefinitionsPath;
+  private final String structureDefinitionsPath;
 
   protected AvroConversionUtil avroConversionUtil;
 

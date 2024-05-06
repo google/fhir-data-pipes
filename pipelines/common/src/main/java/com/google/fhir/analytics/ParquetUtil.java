@@ -103,6 +103,9 @@ public class ParquetUtil {
             @Override
             public void run() {
               try {
+                // If a flush has happened recently, e.g., through a `FinishBundle` call, we don't
+                // need to do that again; the timer here is just to make sure the data is flushed
+                // into Parquet files _at least_ once in every `secondsToFlush`.
                 if (!flushedInCurrentPeriod) {
                   log.info("Flush timed out for thread " + Thread.currentThread().getId());
                   flushAll();
