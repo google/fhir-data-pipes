@@ -32,10 +32,13 @@ def main():
 def download():
     formatted_datetime = datetime.datetime.now().strftime('%Y%m%d_%H%M%S')
     parquet_subdir = f"parquet_{formatted_datetime}_{SOURCE}_{FHIR_ETL_RUNNER}_jdbcMode{JDBC_MODE}"
-    parquet_dir = f"gs://fhir-analytics-test/{parquet_subdir}"
-    run_fhir_etl(parquet_dir)
     local_parquet_dir = f"{TMP_DIR}/{parquet_subdir}"
-    shell(f'gsutil -m cp -r {parquet_dir} {TMP_DIR}')
+    if FHIR_ETL_RUNNER == "DataflowRunner":
+        parquet_dir = f"gs://fhir-analytics-test/{parquet_subdir}"
+        run_fhir_etl(parquet_dir)
+        shell(f'gsutil -m cp -r {parquet_dir} {TMP_DIR}')
+    else:
+        run_fhir_etl(local_parquet_dir)
     for resource in ["Patient", "Encounter", "Observation"]:
         shell(f"java -jar ./e2e-tests/controller-spark/parquet-tools-1.11.1.jar rowcount {local_parquet_dir}/{resource}/")
 
