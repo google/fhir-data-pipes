@@ -16,10 +16,14 @@ NOHUP_OUT=~/nohup-up.out
 cd $GITS_DIR/fhir-data-pipes
 
 # Install Python virtual env.
-[[ -d $VENV ]] || python3 -m venv $VENV
-source $VENV/bin/activate
-# Install dependencies for uploader.
-pip install -r ./synthea-hiv/uploader/requirements.txt
+if [[ -d $VENV ]]; then
+  source $VENV/bin/activate
+else
+  python3 -m venv $VENV
+  source $VENV/bin/activate
+  # Install dependencies for uploader.
+  pip install -r ./synthea-hiv/uploader/requirements.txt
+fi
 
 nohup python "$DIR_WITH_THIS_SCRIPT/upload_download.py" >> $NOHUP_OUT 2>&1 &
 tail -F $NOHUP_OUT

@@ -34,7 +34,7 @@ def download():
     parquet_dir = f"gs://fhir-analytics-test/{parquet_subdir}"
     run_fhir_etl(parquet_dir)
     local_parquet_dir = f"{TMP_DIR}/{parquet_subdir}"
-    f'gsutil -m cp -r {parquet_dir} {TMP_DIR}'
+    shell(f'gsutil -m cp -r {parquet_dir} {TMP_DIR}')
     for resource in ["Patient", "Encounter", "Observation"]:
         shell(f"java -jar ./e2e-tests/controller-spark/parquet-tools-1.11.1.jar rowcount {local_parquet_dir}/{resource}/")
 
