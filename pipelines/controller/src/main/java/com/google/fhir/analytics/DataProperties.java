@@ -110,10 +110,6 @@ public class DataProperties {
 
   public String sinkPassword;
 
-  private String structureDefinitionsDir;
-
-  private String structureDefinitionsClasspath;
-
   private String structureDefinitionsPath;
 
   private int rowGroupSizeForParquetFiles;
@@ -249,9 +245,6 @@ public class DataProperties {
         new ConfigFields("fhirdata.fhirSinkPath", fhirSinkPath, "", ""),
         new ConfigFields("fhirdata.sinkUserName", sinkUserName, "", ""),
         new ConfigFields("fhirdata.sinkPassword", sinkPassword, "", ""),
-        new ConfigFields("fhirdata.structureDefinitionsDir", structureDefinitionsDir, "", ""),
-        new ConfigFields(
-            "fhirdata.structureDefinitionsClasspath", structureDefinitionsClasspath, "", ""),
         new ConfigFields("fhirdata.structureDefinitionsPath", structureDefinitionsPath, "", ""),
         new ConfigFields("fhirdata.fhirVersion", fhirVersion.name(), "", ""),
         new ConfigFields(

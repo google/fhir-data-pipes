@@ -119,6 +119,14 @@ steps:
           '-c', 'CREATE DATABASE views;']
 
 - name: 'docker/compose'
+  id: 'Turn down FHIR Sink Server'
+  args: [ '-f', './docker/sink-compose.yml', 'down' ,'-v']
+
+- name: 'docker/compose'
+  id: 'Launch HAPI FHIR Sink Server'
+  args: [ '-f', './docker/sink-compose.yml', 'up','--force-recreate', '-d' ]  
+
+- name: 'docker/compose'
   id: 'Bring up controller and Spark containers'
   env:
     - PIPELINE_CONFIG=/workspace/docker/config
