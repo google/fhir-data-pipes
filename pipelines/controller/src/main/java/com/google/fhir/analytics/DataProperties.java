@@ -114,9 +114,13 @@ public class DataProperties {
 
   private String structureDefinitionsClasspath;
 
+  private String structureDefinitionsPath;
+
   private int rowGroupSizeForParquetFiles;
 
   private FhirVersionEnum fhirVersion;
+
+  private int recursiveDepth;
 
   @PostConstruct
   void validateProperties() {
@@ -166,8 +170,7 @@ public class DataProperties {
     options.setViewDefinitionsDir(viewDefinitionsDir);
     options.setSinkDbConfigPath(sinkDbConfigPath);
     options.setRecreateSinkTables(true);
-    options.setStructureDefinitionsDir(Strings.nullToEmpty(structureDefinitionsDir));
-    options.setStructureDefinitionsClasspath(Strings.nullToEmpty(structureDefinitionsClasspath));
+    options.setStructureDefinitionsPath(Strings.nullToEmpty(structureDefinitionsPath));
     options.setFhirVersion(fhirVersion);
     if (rowGroupSizeForParquetFiles > 0) {
       options.setRowGroupSizeForParquetFiles(rowGroupSizeForParquetFiles);
@@ -196,9 +199,9 @@ public class DataProperties {
     }
     options.setViewDefinitionsDir(Strings.nullToEmpty(viewDefinitionsDir));
     options.setSinkDbConfigPath(Strings.nullToEmpty(sinkDbConfigPath));
-    options.setStructureDefinitionsDir(Strings.nullToEmpty(structureDefinitionsDir));
-    options.setStructureDefinitionsClasspath(Strings.nullToEmpty(structureDefinitionsClasspath));
+    options.setStructureDefinitionsPath(Strings.nullToEmpty(structureDefinitionsPath));
     options.setFhirVersion(fhirVersion);
+    options.setRecursiveDepth(recursiveDepth);
     if (rowGroupSizeForParquetFiles > 0) {
       options.setRowGroupSizeForParquetFiles(rowGroupSizeForParquetFiles);
     }
@@ -249,12 +252,14 @@ public class DataProperties {
         new ConfigFields("fhirdata.structureDefinitionsDir", structureDefinitionsDir, "", ""),
         new ConfigFields(
             "fhirdata.structureDefinitionsClasspath", structureDefinitionsClasspath, "", ""),
+        new ConfigFields("fhirdata.structureDefinitionsPath", structureDefinitionsPath, "", ""),
         new ConfigFields("fhirdata.fhirVersion", fhirVersion.name(), "", ""),
         new ConfigFields(
             "fhirdata.rowGroupSizeForParquetFiles",
             String.valueOf(rowGroupSizeForParquetFiles),
             "",
-            ""));
+            ""),
+        new ConfigFields("fhirdata.recursiveDepth", String.valueOf(recursiveDepth), "", ""));
   }
 
   ConfigFields getConfigFields(FhirEtlOptions options, Method getMethod) {

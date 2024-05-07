@@ -1,6 +1,10 @@
 {
   "title": "fn_join",
   "description": "FHIRPath `join` function.",
+  "fhirVersion": [
+    "5.0",
+    "4.0"
+  ],
   "resources": [
     {
       "resourceType": "Patient",

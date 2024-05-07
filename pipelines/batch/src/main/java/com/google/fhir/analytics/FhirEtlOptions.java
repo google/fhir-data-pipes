@@ -128,8 +128,8 @@ public interface FhirEtlOptions extends BasePipelineOptions {
 
   void setJdbcMaxPoolSize(int value);
 
-  @Description("JDBC initial pool size")
-  @Default.Integer(10)
+  @Description("DEPRECATED! This is ignored; by default 3 connections are used initially.")
+  @Default.Integer(JdbcConnectionPools.MIN_CONNECTIONS)
   int getJdbcInitialPoolSize();
 
   void setJdbcInitialPoolSize(int value);
@@ -252,4 +252,12 @@ public interface FhirEtlOptions extends BasePipelineOptions {
   String getSourceJsonFilePattern();
 
   void setSourceJsonFilePattern(String value);
+
+  @Description(
+      "The pattern for input NDJSON files, e.g., 'PATH/*'. Each file contain FHIR resources"
+          + " serialized with no whitespace, and separated by a newline pair.")
+  @Default.String("")
+  String getSourceNDJsonFilePattern();
+
+  void setSourceNDJsonFilePattern(String value);
 }

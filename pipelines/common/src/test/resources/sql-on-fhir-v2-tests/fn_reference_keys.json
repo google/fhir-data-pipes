@@ -1,6 +1,11 @@
 {
   "title": "fn_reference_keys",
   "description": "TBD",
+  "fhirVersion": [
+    "5.0",
+    "4.0",
+    "3.0"
+  ],
   "resources": [
     {
       "resourceType": "Patient",
@@ -34,9 +39,12 @@
           {
             "column": [
               {
-                "path": "getResourceKey() = link.other.getReferenceKey()",
-                "name": "key_equal_ref",
-                "type": "boolean"
+                "path": "getResourceKey()",
+                "name": "resourceKey"
+              },
+              {
+                "path": "link.other.getReferenceKey()",
+                "name": "referenceKey"
               }
             ]
           }
@@ -44,10 +52,12 @@
       },
       "expect": [
         {
-          "key_equal_ref": true
+          "resourceKey": "p1",
+          "referenceKey": "p1"
         },
         {
-          "key_equal_ref": false
+          "resourceKey": "p2",
+          "referenceKey": "p3"
         }
       ]
     },
@@ -59,9 +69,12 @@
           {
             "column": [
               {
-                "path": "getResourceKey() = link.other.getReferenceKey(Patient)",
-                "name": "key_equal_ref",
-                "type": "boolean"
+                "path": "getResourceKey()",
+                "name": "resourceKey"
+              },
+              {
+                "path": "link.other.getReferenceKey(Patient)",
+                "name": "referenceKey"
               }
             ]
           }
@@ -69,10 +82,12 @@
       },
       "expect": [
         {
-          "key_equal_ref": true
+          "resourceKey": "p1",
+          "referenceKey": "p1"
         },
         {
-          "key_equal_ref": false
+          "resourceKey": "p2",
+          "referenceKey": "p3"
         }
       ]
     },
@@ -89,8 +104,8 @@
                 "type": "string"
               },
               {
-                "path": "getResourceKey() = link.other.getReferenceKey(Observation)",
-                "name": "key_equal_ref",
+                "path": "getResourceKey()",
+                "name": "resourceKey",
                 "type": "string"
               }
             ]
@@ -100,11 +115,11 @@
       "expect": [
         {
           "referenceKey": null,
-          "key_equal_ref": null
+          "resourceKey": "p1"
         },
         {
           "referenceKey": null,
-          "key_equal_ref": null
+          "resourceKey": "p2"
         }
       ]
     }

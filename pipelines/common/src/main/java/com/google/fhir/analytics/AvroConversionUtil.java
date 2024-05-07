@@ -19,7 +19,7 @@ import ca.uhn.fhir.context.FhirContext;
 import ca.uhn.fhir.context.FhirVersionEnum;
 import com.cerner.bunsen.ProfileMapperFhirContexts;
 import com.cerner.bunsen.avro.AvroConverter;
-import com.cerner.bunsen.exception.ProfileMapperException;
+import com.cerner.bunsen.exception.ProfileException;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
@@ -54,15 +54,15 @@ public class AvroConversionUtil {
 
   private final Map<String, AvroConverter> converterMap;
 
-  private ProfileMapperFhirContexts profileMapperFhirContexts;
+  private final ProfileMapperFhirContexts profileMapperFhirContexts;
 
-  private FhirContext fhirContext;
+  private final FhirContext fhirContext;
 
-  private FhirVersionEnum fhirVersionEnum;
+  private final FhirVersionEnum fhirVersionEnum;
 
-  private String structureDefinitionsDir;
+  private final String structureDefinitionsPath;
 
-  private String structureDefinitionsClasspath;
+  private final int recursiveDepth;
 
   /**
    * This is to fix the logical type conversions for BigDecimal. This should be called once before
@@ -80,96 +80,72 @@ public class AvroConversionUtil {
 
   private AvroConversionUtil(
       FhirVersionEnum fhirVersionEnum,
-      @Nullable String structureDefinitionsDir,
-      @Nullable String structureDefinitionsClasspath)
-      throws ProfileMapperException {
+      @Nullable String structureDefinitionsPath,
+      int recursiveDepth)
+      throws ProfileException {
     this.fhirVersionEnum = fhirVersionEnum;
-    this.structureDefinitionsDir = structureDefinitionsDir;
-    this.structureDefinitionsClasspath = structureDefinitionsClasspath;
+    this.structureDefinitionsPath = structureDefinitionsPath;
     this.converterMap = Maps.newHashMap();
     this.profileMapperFhirContexts = ProfileMapperFhirContexts.getInstance();
-    if (!Strings.isNullOrEmpty(structureDefinitionsClasspath)) {
-      this.fhirContext =
-          profileMapperFhirContexts.contextFromClasspathFor(
-              fhirVersionEnum, structureDefinitionsClasspath);
-    } else {
-      this.fhirContext =
-          profileMapperFhirContexts.contextFor(fhirVersionEnum, structureDefinitionsDir);
-    }
+    this.fhirContext =
+        profileMapperFhirContexts.contextFor(fhirVersionEnum, structureDefinitionsPath);
+    this.recursiveDepth = recursiveDepth;
   }
 
   static synchronized AvroConversionUtil getInstance(
       FhirVersionEnum fhirVersionEnum,
-      @Nullable String structureDefinitionsDir,
-      @Nullable String structureDefinitionsClasspath)
-      throws ProfileMapperException {
+      @Nullable String structureDefinitionsPath,
+      int recursiveDepth)
+      throws ProfileException {
     Preconditions.checkNotNull(fhirVersionEnum, "fhirVersionEnum cannot be null");
-    structureDefinitionsDir = Strings.nullToEmpty(structureDefinitionsDir);
-    structureDefinitionsClasspath = Strings.nullToEmpty(structureDefinitionsClasspath);
-    if (!structureDefinitionsDir.isEmpty() && !structureDefinitionsClasspath.isEmpty()) {
-      String errorMsg =
-          String.format(
-              "Please configure only one of the parameter between structureDefinitionsDir=%s and"
-                  + " structureDefinitionsClasspath=%s, leave both empty if custom profiles are not"
-                  + " needed.",
-              structureDefinitionsDir, structureDefinitionsClasspath);
-      log.error(errorMsg);
-      throw new ProfileMapperException(errorMsg);
-    }
+    structureDefinitionsPath = Strings.nullToEmpty(structureDefinitionsPath);
 
     if (instance == null) {
-      instance =
-          new AvroConversionUtil(
-              fhirVersionEnum, structureDefinitionsDir, structureDefinitionsClasspath);
+      instance = new AvroConversionUtil(fhirVersionEnum, structureDefinitionsPath, recursiveDepth);
     } else if (!fhirVersionEnum.equals(instance.fhirVersionEnum)
-        || !structureDefinitionsDir.equals(instance.structureDefinitionsDir)
-        || !structureDefinitionsClasspath.equals(instance.structureDefinitionsClasspath)) {
+        || !structureDefinitionsPath.equals(instance.structureDefinitionsPath)
+        || recursiveDepth != instance.recursiveDepth) {
       String errorMsg =
           String.format(
               "AvroConversionUtil has been initialised with different set of parameters earlier"
-                  + " with fhirVersionEnum=%s, structureDefinitionsDir=%s and"
-                  + " structureDefinitionsClasspath=%s, compared to what is being passed now with"
-                  + " fhirVersionEnum=%s, structureDefinitionsDir=%s and"
-                  + " structureDefinitionsClasspath=%s",
+                  + " with fhirVersionEnum=%s, structureDefinitionsPath=%s"
+                  + " compared to what is being passed now with"
+                  + " fhirVersionEnum=%s, structureDefinitionsPath=%s",
               instance.fhirVersionEnum,
-              instance.structureDefinitionsDir,
-              instance.structureDefinitionsClasspath,
+              instance.structureDefinitionsPath,
               fhirVersionEnum,
-              structureDefinitionsDir,
-              structureDefinitionsClasspath);
+              structureDefinitionsPath);
       log.error(errorMsg);
-      throw new ProfileMapperException(errorMsg);
+      throw new ProfileException(errorMsg);
     }
     return instance;
   }
 
-  public synchronized FhirContext getFhirContext() throws ProfileMapperException {
+  public synchronized FhirContext getFhirContext() {
     // This should never be the case as creation of new instance makes sure the FhirContext is
     // initialised properly.
-    if (fhirContext == null) {
-      String errorMsg =
-          "The fhirContext is not initialised yet. Please initialise the fhirContext using"
-              + " the method getInstance(FhirVersionEnum fhirVersion, @Nullable String"
-              + " structureDefinitionsDir)";
-      log.error(errorMsg);
-      throw new ProfileMapperException(errorMsg);
-    }
+    Preconditions.checkNotNull(
+        fhirContext, "The fhirContext should have been initialised in the constructor!");
     return fhirContext;
   }
 
-  synchronized AvroConverter getConverter(String resourceType) throws ProfileMapperException {
+  /**
+   * Returns the Avro converter for the given resource type, which is the union of all converters
+   * configured via the fhir profiles for the given resource type.
+   */
+  synchronized AvroConverter getConverter(String resourceType) throws ProfileException {
     if (!converterMap.containsKey(resourceType)) {
       FhirContext fhirContext = getFhirContext();
-      String profile =
-          profileMapperFhirContexts.getMappedProfileForResource(
+      List<String> profiles =
+          profileMapperFhirContexts.getMappedProfilesForResource(
               fhirContext.getVersion().getVersion(), resourceType);
-      if (Strings.isNullOrEmpty(profile)) {
+      if (profiles == null || profiles.isEmpty()) {
         String errorMsg =
-            String.format("No mapped profile found for resourceType=%s", resourceType);
+            String.format("No mapped profiles found for resourceType=%s", resourceType);
         log.error(errorMsg);
-        throw new ProfileMapperException(errorMsg);
+        throw new ProfileException(errorMsg);
       }
-      AvroConverter converter = AvroConverter.forResource(fhirContext, profile);
+      AvroConverter converter = AvroConverter.forResources(fhirContext, profiles, recursiveDepth);
       converterMap.put(resourceType, converter);
     }
     return converterMap.get(resourceType);
@@ -177,14 +153,14 @@ public class AvroConversionUtil {
 
   @VisibleForTesting
   @Nullable
-  GenericRecord convertToAvro(Resource resource) throws ProfileMapperException {
+  GenericRecord convertToAvro(Resource resource) throws ProfileException {
     AvroConverter converter = getConverter(resource.getResourceType().name());
     // TODO: Check why Bunsen returns IndexedRecord instead of GenericRecord.
     return (GenericRecord) converter.resourceToAvro(resource);
   }
 
   @VisibleForTesting
-  Resource convertToHapi(GenericRecord record, String resourceType) throws ProfileMapperException {
+  Resource convertToHapi(GenericRecord record, String resourceType) throws ProfileException {
     // Note resourceType can also be inferred from the record (through fhirType).
     AvroConverter converter = getConverter(resourceType);
     IBaseResource resource = converter.avroToResource(record);
@@ -195,14 +171,19 @@ public class AvroConversionUtil {
     return (Resource) resource;
   }
 
-  public Schema getResourceSchema(String resourceType) throws ProfileMapperException {
+  /**
+   * Returns the Avro schema for the given resource type. The avro schema is the union of all the
+   * schemas configured for the given resource type (i.e. for all the profiles/extensions
+   * configured). If none are configured then the default base schema is returned.
+   */
+  public Schema getResourceSchema(String resourceType) throws ProfileException {
     AvroConverter converter = getConverter(resourceType);
     Schema schema = converter.getSchema();
     log.debug(String.format("Schema for resource type %s is %s", resourceType, schema));
     return schema;
   }
 
-  public List<GenericRecord> generateRecords(Bundle bundle) throws ProfileMapperException {
+  public List<GenericRecord> generateRecords(Bundle bundle) throws ProfileException {
     List<GenericRecord> records = new ArrayList<>();
     if (bundle.getTotal() == 0) {
       return records;

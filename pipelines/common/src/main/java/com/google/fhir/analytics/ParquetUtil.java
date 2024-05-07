@@ -16,7 +16,7 @@
 package com.google.fhir.analytics;
 
 import ca.uhn.fhir.context.FhirVersionEnum;
-import com.cerner.bunsen.exception.ProfileMapperException;
+import com.cerner.bunsen.exception.ProfileException;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import java.io.IOException;
@@ -52,55 +52,42 @@ public class ParquetUtil {
   private final Timer timer;
   private final Random random;
   private final String namePrefix;
+  private boolean flushedInCurrentPeriod;
+
+  private synchronized void setFlushedInCurrentPeriod(boolean value) {
+    flushedInCurrentPeriod = value;
+  }
 
   public String getParquetPath() {
     return dwhFiles.getRoot();
   }
 
-  /**
-   * Note using this constructor may cause the files not be flushed until `closeAllWriters` is
-   * called.
-   *
-   * @param fhirVersionEnum the FHIR version
-   * @param parquetFilePath The directory under which the Parquet files are written.
-   * @throws ProfileMapperException if any errors are encountered during initialisation of
-   *     FhirContext
-   */
-  public ParquetUtil(FhirVersionEnum fhirVersionEnum, String parquetFilePath)
-      throws ProfileMapperException {
-    this(fhirVersionEnum, "", "", parquetFilePath, 0, 0, "");
-  }
-
   // TODO remove this constructor and only expose a similar one in `DwhFiles` (for testing).
   /**
    * @param fhirVersionEnum This should match the resources intended to be converted.
-   * @param structureDefinitionsDir Directory path containing the structure definitions for custom
-   *     fhir profiles
-   * @param structureDefinitionsClasspath Classpath name containing the structure definitions for
-   *     custom fhir profiles
+   * @param structureDefinitionsPath Directory path containing the structure definitions for custom
+   *     fhir profiles; if it starts with `classpath:` then classpath will be searched instead.
    * @param parquetFilePath The directory under which the Parquet files are written.
    * @param secondsToFlush The interval after which the content of Parquet writers is flushed to
    *     disk.
    * @param rowGroupSize The approximate size of row-groups in the Parquet files (0 means use
    *     default).
    * @param namePrefix The prefix directory at which the Parquet files are written
-   * @throws ProfileMapperException if any errors are encountered during initialisation of
-   *     FhirContext
+   * @throws ProfileException if any errors are encountered during initialisation of FhirContext
    */
   @VisibleForTesting
   ParquetUtil(
       FhirVersionEnum fhirVersionEnum,
-      String structureDefinitionsDir,
-      String structureDefinitionsClasspath,
+      String structureDefinitionsPath,
       String parquetFilePath,
       int secondsToFlush,
       int rowGroupSize,
-      String namePrefix)
-      throws ProfileMapperException {
+      String namePrefix,
+      int recursiveDepth)
+      throws ProfileException {
     if (fhirVersionEnum == FhirVersionEnum.DSTU3 || fhirVersionEnum == FhirVersionEnum.R4) {
       this.conversionUtil =
-          AvroConversionUtil.getInstance(
-              fhirVersionEnum, structureDefinitionsDir, structureDefinitionsClasspath);
+          AvroConversionUtil.getInstance(fhirVersionEnum, structureDefinitionsPath, recursiveDepth);
     } else {
       throw new IllegalArgumentException("Only versions 3 and 4 of FHIR are supported!");
     }
@@ -108,6 +95,7 @@ public class ParquetUtil {
     this.writerMap = new HashMap<>();
     this.rowGroupSize = rowGroupSize;
     this.namePrefix = namePrefix;
+    setFlushedInCurrentPeriod(false);
     if (secondsToFlush > 0) {
       TimerTask task =
           new TimerTask() {
@@ -115,10 +103,15 @@ public class ParquetUtil {
             @Override
             public void run() {
               try {
-                log.info(
-                    "Flushing all Parquet writers for thread " + Thread.currentThread().getId());
-                flushAll();
-              } catch (IOException | ProfileMapperException e) {
+                // If a flush has happened recently, e.g., through a `FinishBundle` call, we don't
+                // need to do that again; the timer here is just to make sure the data is flushed
+                // into Parquet files _at least_ once in every `secondsToFlush`.
+                if (!flushedInCurrentPeriod) {
+                  log.info("Flush timed out for thread " + Thread.currentThread().getId());
+                  flushAll();
+                }
+                setFlushedInCurrentPeriod(false);
+              } catch (IOException | ProfileException e) {
                 log.error("Could not flush Parquet files: " + e);
               }
             }
@@ -146,8 +139,7 @@ public class ParquetUtil {
     return resourceId.resolve(uniquetFileName, StandardResolveOptions.RESOLVE_FILE);
   }
 
-  private synchronized void createWriter(String resourceType)
-      throws IOException, ProfileMapperException {
+  private synchronized void createWriter(String resourceType) throws IOException, ProfileException {
 
     ResourceId resourceId = getUniqueOutputFilePath(resourceType);
     WritableByteChannel writableByteChannel =
@@ -172,7 +164,7 @@ public class ParquetUtil {
    * not be used in its current form once we move the streaming pipeline to Beam; the I/O should be
    * left to Beam similar to the batch mode.
    */
-  public synchronized void write(Resource resource) throws IOException, ProfileMapperException {
+  public synchronized void write(Resource resource) throws IOException, ProfileException {
     Preconditions.checkNotNull(resource.fhirType());
     String resourceType = resource.fhirType();
     if (!writerMap.containsKey(resourceType)) {
@@ -185,7 +177,7 @@ public class ParquetUtil {
     }
   }
 
-  private synchronized void flush(String resourceType) throws IOException, ProfileMapperException {
+  private synchronized void flush(String resourceType) throws IOException, ProfileException {
     ParquetWriter<GenericRecord> writer = writerMap.get(resourceType);
     if (writer != null && writer.getDataSize() > 0) {
       writer.close();
@@ -193,10 +185,12 @@ public class ParquetUtil {
     }
   }
 
-  private synchronized void flushAll() throws IOException, ProfileMapperException {
+  synchronized void flushAll() throws IOException, ProfileException {
+    log.info("Flushing all Parquet writers for thread " + Thread.currentThread().getId());
     for (String resourceType : writerMap.keySet()) {
       flush(resourceType);
     }
+    setFlushedInCurrentPeriod(true);
   }
 
   public synchronized void closeAllWriters() throws IOException {
@@ -210,7 +204,7 @@ public class ParquetUtil {
   }
 
   public void writeRecords(Bundle bundle, Set<String> resourceTypes)
-      throws IOException, ProfileMapperException {
+      throws IOException, ProfileException {
     if (bundle.getEntry() == null) {
       return;
     }

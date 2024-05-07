@@ -1,0 +1,56 @@
+{
+  "resourceType": "http://hl7.org/fhir/uv/sql-on-fhir/StructureDefinition/ViewDefinition",
+  "text": "This is the SQL-on-FHIR-v2 version of Organization_flat.sql",
+  "select": [
+    {
+      "column": [
+        {
+          "path": "getResourceKey()",
+          "name": "id"
+        },
+        {
+          "path": "active",
+          "name": "active",
+          "type": "boolean"
+        },
+        {
+          "path": "name",
+          "name": "name"
+        },
+        {
+          "path": "partOf.getReferenceKey(Organization)",
+          "name": "partOf_org_id"
+        }
+      ]
+    },
+    {
+      "forEachOrNull": "address",
+      "column": [
+        {
+          "path": "city",
+          "name": "city"
+        },
+        {
+          "path": "country",
+          "name": "country"
+        }
+      ]
+    },
+    {
+      "forEachOrNull": "type.coding",
+      "column": [
+        {
+          "path": "system",
+          "name": "type_sys"
+        },
+        {
+          "path": "code",
+          "name": "type_code"
+        }
+      ]
+    }
+  ],
+  "name": "organization_flat",
+  "status": "draft",
+  "resource": "Organization"
+}

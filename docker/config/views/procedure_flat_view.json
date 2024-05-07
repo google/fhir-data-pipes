@@ -1,0 +1,60 @@
+{
+  "resourceType": "http://hl7.org/fhir/uv/sql-on-fhir/StructureDefinition/ViewDefinition",
+  "text": "This is [almost] the SQL-on-FHIR-v2 version of Procedure_flat.sql",
+  "select": [
+    {
+      "column": [
+        {
+          "path": "getResourceKey()",
+          "name": "id"
+        },
+        {
+          "path": "subject.getReferenceKey(Patient)",
+          "name": "patient_id"
+        },
+        {
+          "path": "encounter.getReferenceKey(Encounter)",
+          "name": "encounter_id"
+        },
+        {
+          "path": "performer.actor.getReferenceKey(Practitioner)",
+          "name": "practitioner_id"
+        },
+        {
+          "path": "location.getReferenceKey(Location)",
+          "name": "location_id"
+        },
+        {
+          "path": "status",
+          "name": "status"
+        },
+        {
+          "path": "performed.ofType(Period).start",
+          "name": "period_start",
+          "type": "dateTime"
+        },
+        {
+          "path": "performed.ofType(Period).end",
+          "name": "period_end",
+          "type": "dateTime"
+        }
+      ]
+    },
+    {
+      "forEachOrNull": "code.coding",
+      "column": [
+        {
+          "path": "code",
+          "name": "code"
+        },
+        {
+          "path": "system",
+          "name": "system"
+        }
+      ]
+    }
+  ],
+  "name": "procedure_flat",
+  "status": "draft",
+  "resource": "Procedure"
+}

@@ -18,6 +18,7 @@ package com.google.fhir.analytics.view;
 import static org.hamcrest.MatcherAssert.assertThat;
 
 import ca.uhn.fhir.context.FhirContext;
+import ca.uhn.fhir.context.FhirVersionEnum;
 import ca.uhn.fhir.parser.IParser;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.io.Resources;
@@ -25,11 +26,14 @@ import com.google.fhir.analytics.view.ViewApplicator.FlatRow;
 import com.google.fhir.analytics.view.ViewApplicator.RowElement;
 import com.google.fhir.analytics.view.ViewApplicator.RowList;
 import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonNull;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonPrimitive;
+import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.math.BigDecimal;
@@ -39,8 +43,10 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 import java.util.stream.Collectors;
 import org.apache.commons.io.IOUtils;
@@ -77,20 +83,11 @@ public class SQLonFHIRv2Test {
           "fn_boundary.date highBoundary",
 
           // TODO the error condition here does not seem right.
-          "validate.wrong type in forEach",
-
-          // Reason: getResourceKey is used inside the FHIRPath which we don't support yet.
-          // TODO: Implement the above feature.
-          "fn_reference_keys.getReferenceKey result matches getResourceKey without type specifier",
-          "fn_reference_keys.getReferenceKey result matches getResourceKey with right type"
-              + " specifier",
-          "fn_reference_keys.getReferenceKey result matches getResourceKey with wrong type"
-              + " specifier");
+          "validate.wrong type in forEach");
 
   @Test
   public void runAllTests() throws IOException {
-    // TODO make the FHIR version optional.
-    IParser parser = FhirContext.forR4Cached().newJsonParser();
+    Map<String, AllTestResults> allTestResults = new LinkedHashMap<>();
     String testsRoot = Resources.getResource("sql-on-fhir-v2-tests").getPath();
     Path testsPath = Paths.get(testsRoot);
     List<Path> testFiles =
@@ -104,47 +101,77 @@ public class SQLonFHIRv2Test {
         jsonContent = IOUtils.toString(stream, StandardCharsets.UTF_8);
       }
       TestDef testDef = gson.fromJson(jsonContent, TestDef.class);
-
-      log.info("Next test-collection: " + testDef.title);
-      List<IBaseResource> resources = new ArrayList<>();
-      for (JsonObject r : testDef.resources) {
-        resources.add(parser.parseResource(r.toString()));
+      List<String> fhirVersions = testDef.fhirVersion;
+      if (fhirVersions == null || fhirVersions.isEmpty()) {
+        // Use FHIR version R4 as the default.
+        fhirVersions = List.of("4.0");
       }
-      for (SingleTest test : testDef.tests) {
-        if (SKIPPED_TESTS.contains(testDef.title + "." + test.title)) continue;
-        // Note: To debug a single test case we can do the following:
-        // if (!test.title.equals("two elements + first")) continue;
-        log.info("Next test: " + test.title);
-        ExpectedRows expectedRows = null; // will be null if `expectError` is set.
-        if (test.expectError == null || !test.expectError) {
-          expectedRows = new ExpectedRows(test.expect);
+      Map<String, Boolean> success = new LinkedHashMap<>();
+      for (String fhirVersion : fhirVersions) {
+        FhirVersionEnum version = ViewDefinition.convertFhirVersion(fhirVersion);
+        IParser parser = FhirContext.forCached(version).newJsonParser();
+        log.info("Next test-collection: {} fhirVersion: {}", testDef.title, fhirVersion);
+        List<IBaseResource> resources = new ArrayList<>();
+        for (JsonObject r : testDef.resources) {
+          resources.add(parser.parseResource(r.toString()));
         }
-        try {
-          test.view.validateAndSetUp(false);
-          ViewApplicator applicator = new ViewApplicator(test.view);
-          int totalRows = 0;
-          for (IBaseResource resource : resources) {
-            if (!test.view.getResource().equals(resource.fhirType())) continue;
-            RowList rowList = applicator.apply(resource);
-            for (FlatRow row : rowList.getRows()) {
-              assertThat("Row not found; index " + totalRows, expectedRows.hasRow(row));
-              totalRows++;
-            }
+        for (SingleTest test : testDef.tests) {
+          if (SKIPPED_TESTS.contains(testDef.title + "." + test.title)) {
+            success.put(testDef.title, false);
+            continue;
           }
-          assertThat("No exceptions were thrown", expectedRows != null);
-          assertThat(
-              String.format(
-                  "Number of rows does not match %d vs %d", totalRows, expectedRows.getNumRows()),
-              totalRows == expectedRows.getNumRows());
-        } catch (ViewApplicationException | ViewDefinitionException | FHIRLexerException e) {
-          assertThat("Expected errors but no view exceptions was thrown!", expectedRows == null);
+          // Note: To debug a single test case we can do the following:
+          // if (!test.title.equals("basic attribute")) continue;
+          log.info("Next test: " + test.title);
+          ExpectedRows expectedRows = null; // will be null if `expectError` is set.
+          if (test.expectError == null || !test.expectError) {
+            expectedRows = new ExpectedRows(test.expect);
+          }
+          try {
+            test.view.validateAndSetUp(false, fhirVersion);
+            ViewApplicator applicator = new ViewApplicator(test.view);
+            int totalRows = 0;
+            for (IBaseResource resource : resources) {
+              if (!test.view.getResource().equals(resource.fhirType())) continue;
+              RowList rowList = applicator.apply(resource);
+              for (FlatRow row : rowList.getRows()) {
+                assertThat("Row not found; index " + totalRows, expectedRows.hasRow(row));
+                totalRows++;
+              }
+            }
+            assertThat("No exceptions were thrown", expectedRows != null);
+            assertThat(
+                String.format(
+                    "Number of rows does not match %d vs %d", totalRows, expectedRows.getNumRows()),
+                totalRows == expectedRows.getNumRows());
+          } catch (ViewApplicationException | ViewDefinitionException | FHIRLexerException e) {
+            assertThat(
+                "View exceptions were thrown while none was expected!", expectedRows == null);
+          }
+          // This is not really accurate as we should report success/failure per FHIR version.
+          success.put(test.title, true);
         }
       }
+      List<SingleTestResult> resultList = new ArrayList<>();
+      for (Entry<String, Boolean> kv : success.entrySet()) {
+        if (kv.getValue()) {
+          resultList.add(new SingleTestResult(kv.getKey(), true));
+        } else {
+          resultList.add(new SingleTestResult(kv.getKey(), "skipped"));
+        }
+        allTestResults.put(p.getFileName().toString(), new AllTestResults(resultList));
+      }
+    }
+    File tempFile = File.createTempFile("sql-on-fhir-v2-test-result-", ".json");
+    try (FileWriter writer = new FileWriter(tempFile)) {
+      Gson writerGson = new GsonBuilder().setPrettyPrinting().disableHtmlEscaping().create();
+      writerGson.toJson(allTestResults, writer);
     }
   }
 
   private static class TestDef {
     String title;
+    List<String> fhirVersion;
     List<JsonObject> resources;
     List<SingleTest> tests;
   }
@@ -154,6 +181,39 @@ public class SQLonFHIRv2Test {
     ViewDefinition view;
     List<JsonObject> expect;
     Boolean expectError;
+  }
+
+  private static class SingleTestResult {
+    final String name;
+    final Result result;
+
+    private static class Result {
+      final boolean passed;
+      final String reason;
+
+      private Result(boolean passed, String reason) {
+        this.passed = passed;
+        this.reason = reason;
+      }
+    }
+
+    SingleTestResult(String name, boolean passed) {
+      this.name = name;
+      result = new Result(passed, null);
+    }
+
+    SingleTestResult(String name, String failureReason) {
+      this.name = name;
+      result = new Result(false, failureReason);
+    }
+  }
+
+  private static class AllTestResults {
+    List<SingleTestResult> tests;
+
+    AllTestResults(List<SingleTestResult> testResults) {
+      this.tests = testResults;
+    }
   }
 
   private static class ExpectedRows {
@@ -168,11 +228,6 @@ public class SQLonFHIRv2Test {
         }
         rows.add(row);
       }
-    }
-
-    public static ExpectedRows parse(String jsonStr) {
-      Gson gson = new Gson();
-      return gson.fromJson(jsonStr, ExpectedRows.class);
     }
 
     int getNumRows() {
@@ -230,7 +285,7 @@ public class SQLonFHIRv2Test {
           return false;
         }
         if (actual instanceof IIdType) {
-          return ((IIdType) actual).getValue().equals(expectedPrimitive.getAsString());
+          return ((IIdType) actual).getIdPart().equals(expectedPrimitive.getAsString());
         }
         if (actual instanceof IBaseDecimalDatatype) {
           BigDecimal expectedBigDecimal = null;

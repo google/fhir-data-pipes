@@ -92,11 +92,11 @@ public class DebeziumListener extends RouteBuilder {
         new ParquetUtil(
             fhirContext.getVersion().getVersion(),
             "",
-            "",
             params.outputParquetPath,
             params.secondsToFlushParquetFiles,
             params.rowGroupSizeForParquetFiles,
-            "streaming_");
+            "streaming_",
+            1);
     DataSource jdbcSource =
         JdbcConnectionPools.getInstance()
             .getPooledDataSource(
@@ -105,7 +105,6 @@ public class DebeziumListener extends RouteBuilder {
                     databaseConfiguration.makeJdbsUrlFromConfig(),
                     databaseConfiguration.getDatabaseUser(),
                     databaseConfiguration.getDatabasePassword()),
-                params.initialPoolSize,
                 params.jdbcMaxPoolSize);
     UuidUtil uuidUtil = new UuidUtil(jdbcSource);
     camelContext.addService(new ParquetService(parquetUtil), true);

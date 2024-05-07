@@ -26,7 +26,8 @@ import ca.uhn.fhir.context.FhirContext;
 import ca.uhn.fhir.context.FhirVersionEnum;
 import ca.uhn.fhir.parser.IParser;
 import com.cerner.bunsen.avro.AvroConverter;
-import com.cerner.bunsen.exception.ProfileMapperException;
+import com.cerner.bunsen.common.R4UsCoreProfileData;
+import com.cerner.bunsen.exception.ProfileException;
 import com.google.common.io.Resources;
 import java.io.IOException;
 import java.io.InputStream;
@@ -55,30 +56,26 @@ public class AvroConversionUtilTest {
   private String observationBundle;
   private String usCoreProfilesStructureDefinitionsPath;
   public static final String BASE_PATIENT = "http://hl7.org/fhir/StructureDefinition/Patient";
-  public static final String US_CORE_PATIENT =
-      "http://hl7.org/fhir/us/core/StructureDefinition/us-core-patient";
-  public static final String HEAD_OCCIPITAL_FRONT_CIRCUMFERENCE_PERCENTILE =
-      "http://hl7.org/fhir/us/core/StructureDefinition/head-occipital-frontal-circumference-percentile";
 
   @Before
   public void setup()
-      throws IOException, ClassNotFoundException, URISyntaxException, ProfileMapperException {
+      throws IOException, ClassNotFoundException, URISyntaxException, ProfileException {
     AvroConversionUtil.initializeAvroConverters();
     patientBundle =
         Resources.toString(Resources.getResource("patient_bundle.json"), StandardCharsets.UTF_8);
     observationBundle =
         Resources.toString(
             Resources.getResource("observation_bundle.json"), StandardCharsets.UTF_8);
-    usCoreProfilesStructureDefinitionsPath = "/r4-us-core-definitions";
+    usCoreProfilesStructureDefinitionsPath = "classpath:/r4-us-core-definitions";
     // This is needed because the mappings are carried across unit test classes due to the static
     // instance being used.
     AvroConversionUtil.deRegisterMappingsFor(FhirVersionEnum.R4);
   }
 
   @Test
-  public void getResourceSchema_Patient() throws ProfileMapperException {
+  public void getResourceSchema_Patient() throws ProfileException {
     AvroConversionUtil avroConversionUtil =
-        AvroConversionUtil.getInstance(FhirVersionEnum.R4, null, null);
+        AvroConversionUtil.getInstance(FhirVersionEnum.R4, null, 1);
     Schema schema = avroConversionUtil.getResourceSchema("Patient");
     assertThat(schema.getField("id").toString(), notNullValue());
     assertThat(schema.getField("identifier").toString(), notNullValue());
@@ -86,9 +83,9 @@ public class AvroConversionUtilTest {
   }
 
   @Test
-  public void getResourceSchema_Observation() throws ProfileMapperException {
+  public void getResourceSchema_Observation() throws ProfileException {
     AvroConversionUtil avroConversionUtil =
-        AvroConversionUtil.getInstance(FhirVersionEnum.R4, null, null);
+        AvroConversionUtil.getInstance(FhirVersionEnum.R4, null, 1);
     Schema schema = avroConversionUtil.getResourceSchema("Observation");
     assertThat(schema.getField("id").toString(), notNullValue());
     assertThat(schema.getField("identifier").toString(), notNullValue());
@@ -98,9 +95,9 @@ public class AvroConversionUtilTest {
   }
 
   @Test
-  public void getResourceSchema_Encounter() throws ProfileMapperException {
+  public void getResourceSchema_Encounter() throws ProfileException {
     AvroConversionUtil avroConversionUtil =
-        AvroConversionUtil.getInstance(FhirVersionEnum.R4, null, null);
+        AvroConversionUtil.getInstance(FhirVersionEnum.R4, null, 1);
     Schema schema = avroConversionUtil.getResourceSchema("Encounter");
     assertThat(schema.getField("id").toString(), notNullValue());
     assertThat(schema.getField("identifier").toString(), notNullValue());
@@ -109,9 +106,9 @@ public class AvroConversionUtilTest {
   }
 
   @Test
-  public void generateRecords_BundleOfPatients() throws ProfileMapperException {
+  public void generateRecords_BundleOfPatients() throws ProfileException {
     AvroConversionUtil avroConversionUtil =
-        AvroConversionUtil.getInstance(FhirVersionEnum.R4, null, null);
+        AvroConversionUtil.getInstance(FhirVersionEnum.R4, null, 1);
 
     IParser parser = avroConversionUtil.getFhirContext().newJsonParser();
     Bundle bundle = parser.parseResource(Bundle.class, patientBundle);
@@ -125,9 +122,9 @@ public class AvroConversionUtilTest {
   }
 
   @Test
-  public void generateRecords_BundleOfObservations() throws ProfileMapperException {
+  public void generateRecords_BundleOfObservations() throws ProfileException {
     AvroConversionUtil avroConversionUtil =
-        AvroConversionUtil.getInstance(FhirVersionEnum.R4, null, null);
+        AvroConversionUtil.getInstance(FhirVersionEnum.R4, null, 1);
     IParser parser = avroConversionUtil.getFhirContext().newJsonParser();
     Bundle bundle = parser.parseResource(Bundle.class, observationBundle);
     List<GenericRecord> recordList = avroConversionUtil.generateRecords(bundle);
@@ -135,9 +132,9 @@ public class AvroConversionUtilTest {
   }
 
   @Test
-  public void generateRecordForPatient() throws ProfileMapperException {
+  public void generateRecordForPatient() throws ProfileException {
     AvroConversionUtil avroConversionUtil =
-        AvroConversionUtil.getInstance(FhirVersionEnum.R4, null, null);
+        AvroConversionUtil.getInstance(FhirVersionEnum.R4, null, 1);
     IParser parser = avroConversionUtil.getFhirContext().newJsonParser();
     Bundle bundle = parser.parseResource(Bundle.class, patientBundle);
     GenericRecord record = avroConversionUtil.convertToAvro(bundle.getEntry().get(0).getResource());
@@ -151,9 +148,9 @@ public class AvroConversionUtilTest {
   }
 
   @Test
-  public void convertObservationWithBigDecimalValue() throws IOException, ProfileMapperException {
+  public void convertObservationWithBigDecimalValue() throws IOException, ProfileException {
     AvroConversionUtil avroConversionUtil =
-        AvroConversionUtil.getInstance(FhirVersionEnum.R4, null, null);
+        AvroConversionUtil.getInstance(FhirVersionEnum.R4, null, 1);
     String observationStr =
         Resources.toString(
             Resources.getResource("observation_decimal.json"), StandardCharsets.UTF_8);
@@ -166,38 +163,16 @@ public class AvroConversionUtilTest {
   }
 
   @Test
-  public void checkForCorrectAvroConverterWithOverloadedProfiles() throws ProfileMapperException {
+  public void checkForCorrectAvroConverterWithMultipleProfiles() throws ProfileException {
     AvroConversionUtil avroConversionUtil =
         AvroConversionUtil.getInstance(
-            FhirVersionEnum.R4, null, usCoreProfilesStructureDefinitionsPath);
-
-    AvroConverter patientUtilAvroConverter = avroConversionUtil.getConverter("Patient");
-    AvroConverter patientDirectAvroConverter =
-        AvroConverter.forResource(avroConversionUtil.getFhirContext(), US_CORE_PATIENT);
-    // Check if the schemas are equal
-    assertThat(
-        patientUtilAvroConverter.getSchema(),
-        Matchers.equalTo(patientDirectAvroConverter.getSchema()));
-
-    AvroConverter obsUtilAvroConverter = avroConversionUtil.getConverter("Observation");
-    AvroConverter obsDirectAvroConverter =
-        AvroConverter.forResource(
-            avroConversionUtil.getFhirContext(), HEAD_OCCIPITAL_FRONT_CIRCUMFERENCE_PERCENTILE);
-    // Check if the schemas are equal
-    assertThat(
-        obsUtilAvroConverter.getSchema(), Matchers.equalTo(obsDirectAvroConverter.getSchema()));
-  }
-
-  @Test
-  public void checkForCorrectAvroConverterWithoutOverloadedProfiles()
-      throws ProfileMapperException {
-    AvroConversionUtil avroConversionUtil =
-        AvroConversionUtil.getInstance(FhirVersionEnum.R4, null, null);
+            FhirVersionEnum.R4, usCoreProfilesStructureDefinitionsPath, 1);
 
     AvroConverter patientConverterFromAvroConversionUtil =
         avroConversionUtil.getConverter("Patient");
     AvroConverter patientConverterFetchedDirectly =
-        AvroConverter.forResource(avroConversionUtil.getFhirContext(), BASE_PATIENT);
+        AvroConverter.forResources(
+            avroConversionUtil.getFhirContext(), R4UsCoreProfileData.US_CORE_PATIENT_PROFILES, 1);
     // Check if the schemas are equal
     assertThat(
         patientConverterFromAvroConversionUtil.getSchema(),
@@ -206,7 +181,10 @@ public class AvroConversionUtilTest {
     AvroConverter obsConverterFromAvroConversionUtil =
         avroConversionUtil.getConverter("Observation");
     AvroConverter obsConverterFetchedDirectly =
-        AvroConverter.forResource(avroConversionUtil.getFhirContext(), "Observation");
+        AvroConverter.forResources(
+            avroConversionUtil.getFhirContext(),
+            R4UsCoreProfileData.US_CORE_OBSERVATION_PROFILES,
+            1);
     // Check if the schemas are equal
     assertThat(
         obsConverterFromAvroConversionUtil.getSchema(),
@@ -214,10 +192,34 @@ public class AvroConversionUtilTest {
   }
 
   @Test
-  public void testForAvroRecords() throws IOException, ProfileMapperException {
+  public void checkForCorrectAvroConverterWithBaseProfiles() throws ProfileException {
+    AvroConversionUtil avroConversionUtil =
+        AvroConversionUtil.getInstance(FhirVersionEnum.R4, null, 1);
+
+    AvroConverter patientConverterFromAvroConversionUtil =
+        avroConversionUtil.getConverter("Patient");
+    AvroConverter patientConverterFetchedDirectly =
+        AvroConverter.forResource(avroConversionUtil.getFhirContext(), BASE_PATIENT, 1);
+    // Check if the schemas are equal
+    assertThat(
+        patientConverterFromAvroConversionUtil.getSchema(),
+        Matchers.equalTo(patientConverterFetchedDirectly.getSchema()));
+
+    AvroConverter obsConverterFromAvroConversionUtil =
+        avroConversionUtil.getConverter("Observation");
+    AvroConverter obsConverterFetchedDirectly =
+        AvroConverter.forResource(avroConversionUtil.getFhirContext(), "Observation", 1);
+    // Check if the schemas are equal
+    assertThat(
+        obsConverterFromAvroConversionUtil.getSchema(),
+        Matchers.equalTo(obsConverterFetchedDirectly.getSchema()));
+  }
+
+  @Test
+  public void testForAvroRecords() throws IOException, ProfileException {
     AvroConversionUtil avroConversionUtil =
         AvroConversionUtil.getInstance(
-            FhirVersionEnum.R4, null, usCoreProfilesStructureDefinitionsPath);
+            FhirVersionEnum.R4, usCoreProfilesStructureDefinitionsPath, 1);
     IBaseResource baseResource = loadResource("patient_us_core.json", Patient.class);
     GenericRecord avroRecord = avroConversionUtil.convertToAvro((Resource) baseResource);
 

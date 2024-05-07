@@ -15,11 +15,13 @@
  */
 package com.google.fhir.analytics.view;
 
+import ca.uhn.fhir.context.FhirVersionEnum;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableMap;
 import com.google.gson.Gson;
+import com.google.gson.JsonSyntaxException;
 import java.io.IOException;
 import java.io.Reader;
 import java.nio.charset.StandardCharsets;
@@ -36,16 +38,19 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import lombok.Builder;
 import lombok.Getter;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 // TODO: Generate this class from StructureDefinition using tools like:
 //  https://github.com/hapifhir/org.hl7.fhir.core/tree/master/org.hl7.fhir.core.generator
 public class ViewDefinition {
+  private static final Logger log = LoggerFactory.getLogger(ViewDefinition.class);
   private static Pattern CONSTANT_PATTERN = Pattern.compile("%[A-Za-z][A-Za-z0-9_]*");
   private static Pattern SQL_NAME_PATTERN = Pattern.compile("^[A-Za-z][A-Za-z0-9_]*$");
 
   @Getter private String name;
   @Getter private String resource;
-  @Getter private String resourceVersion;
+  @Getter private List<String> fhirVersion;
   @Getter private List<Select> select;
   @Getter private List<Where> where;
   // We don't need to expose constants because we do the replacement as part of the setup.
@@ -67,16 +72,24 @@ public class ViewDefinition {
     Gson gson = new Gson();
     try (Reader reader = Files.newBufferedReader(jsonFile, StandardCharsets.UTF_8)) {
       ViewDefinition view = gson.fromJson(reader, ViewDefinition.class);
-      view.validateAndSetUp(true);
+      view.validateAndSetUp(true, null);
       return view;
     }
   }
 
   public static ViewDefinition createFromString(String jsonContent) throws ViewDefinitionException {
     Gson gson = new Gson();
-    ViewDefinition view = gson.fromJson(jsonContent, ViewDefinition.class);
-    view.validateAndSetUp(true);
-    return view;
+    try {
+      ViewDefinition view = gson.fromJson(jsonContent, ViewDefinition.class);
+      if (view == null) {
+        throw new ViewDefinitionException("Error in parsing ViewDefinition JSON content!");
+      }
+      view.validateAndSetUp(true, null);
+      return view;
+    } catch (JsonSyntaxException e) {
+      log.error("Error in parsing ViewDefinition JSON: ", e);
+      throw new ViewDefinitionException(e.getMessage());
+    }
   }
 
   /**
@@ -87,10 +100,13 @@ public class ViewDefinition {
    * @throws ViewDefinitionException if there is any column inconsistency, e.g., duplicates.
    */
   @VisibleForTesting
-  void validateAndSetUp(boolean checkName) throws ViewDefinitionException {
+  void validateAndSetUp(boolean checkName, String fhirVersion) throws ViewDefinitionException {
     if (Strings.isNullOrEmpty(resource)) {
       throw new ViewDefinitionException(
           "The resource field of a view should be a valid FHIR resource type.");
+    }
+    if (fhirVersion != null) {
+      this.fhirVersion = List.of(fhirVersion);
     }
     if (checkName
         && (Strings.isNullOrEmpty(this.name) || !SQL_NAME_PATTERN.matcher(this.name).matches())) {
@@ -395,6 +411,22 @@ public class ViewDefinition {
             "Exactly one the value[x] elements should be set; got " + c);
       }
       return stringValue;
+    }
+  }
+
+  /** Coverts the given FHIR version string to a {@link FhirVersionEnum}. */
+  public static FhirVersionEnum convertFhirVersion(String fhirVersion) {
+    switch (fhirVersion.substring(0, 3)) {
+      case "3.0":
+        return FhirVersionEnum.DSTU3;
+      case "4.0":
+        return FhirVersionEnum.R4;
+      case "4.3":
+        return FhirVersionEnum.R4B;
+      case "5.0":
+        return FhirVersionEnum.R5;
+      default:
+        throw new IllegalArgumentException("FHIR version not supported!");
     }
   }
 }

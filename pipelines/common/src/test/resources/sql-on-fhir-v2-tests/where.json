@@ -1,6 +1,10 @@
 {
   "title": "where",
   "description": "FHIRPath `where` function.",
+  "fhirVersion": [
+    "5.0",
+    "4.0"
+  ],
   "resources": [
     {
       "resourceType": "Patient",

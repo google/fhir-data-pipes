@@ -1,0 +1,69 @@
+{
+  "resourceType": "http://hl7.org/fhir/uv/sql-on-fhir/StructureDefinition/ViewDefinition",
+  "text": "This is the SQL-on-FHIR-v2 version of Condition_flat.sql",
+  "select": [
+    {
+      "column": [
+        {
+          "path": "getResourceKey()",
+          "name": "id"
+        },
+        {
+          "path": "subject.getReferenceKey(Patient)",
+          "name": "patient_id"
+        },
+        {
+          "path": "encounter.getReferenceKey(Encounter)",
+          "name": "encounter_id"
+        },
+        {
+          "path": "onset.ofType(dateTime)",
+          "name": "onset_datetime"
+        }
+      ]
+    },
+    {
+      "forEachOrNull": "code.coding",
+      "column": [
+        {
+          "path": "system",
+          "name": "system"
+        },
+        {
+          "path": "code",
+          "name": "code"
+        }
+      ]
+    },
+    {
+      "forEachOrNull": "category.coding",
+      "column": [
+        {
+          "path": "code",
+          "name": "category"
+        }
+      ]
+    },
+    {
+      "forEachOrNull": "clinicalStatus.coding",
+      "column": [
+        {
+          "path": "code",
+          "name": "clinical_status"
+        }
+      ]
+    },
+    {
+      "forEachOrNull": "verificationStatus.coding",
+      "column": [
+        {
+          "path": "code",
+          "name": "verification_status"
+        }
+      ]
+    }
+  ],
+  "name": "condition_flat",
+  "status": "draft",
+  "resource": "Condition"
+}

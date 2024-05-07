@@ -1,0 +1,90 @@
+{
+  "resourceType": "http://hl7.org/fhir/uv/sql-on-fhir/StructureDefinition/ViewDefinition",
+  "text": "This is the SQL-on-FHIR-v2 version of DiagnosticReport_flat.sql",
+  "select": [
+    {
+      "column": [
+        {
+          "path": "getResourceKey()",
+          "name": "id"
+        },
+        {
+          "path": "subject.getReferenceKey(Patient)",
+          "name": "patient_id"
+        },
+        {
+          "path": "encounter.getReferenceKey(Encounter)",
+          "name": "encounter_id"
+        },
+        {
+          "path": "status",
+          "name": "status"
+        },
+        {
+          "path": "conclusion",
+          "name": "conclusion"
+        }
+      ]
+    },
+    {
+      "forEachOrNull": "code.coding",
+      "column": [
+        {
+          "path": "system",
+          "name": "system"
+        },
+        {
+          "path": "code",
+          "name": "code"
+        }
+      ]
+    },
+    {
+      "forEachOrNull": "result",
+      "column": [
+        {
+          "path": "getReferenceKey(Observation)",
+          "name": "result_obs_id"
+        }
+      ]
+    },
+    {
+      "forEachOrNull": "category.coding",
+      "column": [
+        {
+          "path": "code",
+          "name": "category_code"
+        },
+        {
+          "path": "system",
+          "name": "category_sys"
+        }
+      ]
+    },
+    {
+      "forEachOrNull": "conclusion.coding",
+      "column": [
+        {
+          "path": "code",
+          "name": "conclusion_code"
+        },
+        {
+          "path": "system",
+          "name": "conclusion_sys"
+        }
+      ]
+    },
+    {
+      "forEachOrNull": "performer",
+      "column": [
+        {
+          "path": "getReferenceKey(Practitioner)",
+          "name": "practitioner_id"
+        }
+      ]
+    }
+  ],
+  "name": "diagnostic_report_flat",
+  "status": "draft",
+  "resource": "DiagnosticReport"
+}

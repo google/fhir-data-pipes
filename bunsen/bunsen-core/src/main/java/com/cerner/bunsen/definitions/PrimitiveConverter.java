@@ -2,6 +2,9 @@ package com.cerner.bunsen.definitions;
 
 import ca.uhn.fhir.context.BaseRuntimeChildDefinition;
 import ca.uhn.fhir.context.BaseRuntimeElementDefinition;
+import com.cerner.bunsen.exception.ProfileException;
+import com.google.common.base.Preconditions;
+import java.util.Objects;
 import org.hl7.fhir.instance.model.api.IBase;
 import org.hl7.fhir.instance.model.api.IPrimitiveType;
 
@@ -72,5 +75,26 @@ public abstract class PrimitiveConverter<T> extends HapiConverter<T> {
   @Override
   public String getElementType() {
     return elementType;
+  }
+
+  @Override
+  public HapiConverter<T> merge(HapiConverter<T> other) throws ProfileException {
+    HapiConverterUtil.validateIfImplementationClassesAreSame(this, other);
+    validateIfElementTypesAreSame(other);
+    return this;
+  }
+
+  private void validateIfElementTypesAreSame(HapiConverter other) throws ProfileException {
+    Preconditions.checkNotNull(other, "The other HapiConverter cannot be null");
+    if (!(other instanceof PrimitiveConverter
+        && Objects.equals(this.elementType, other.getElementType()))) {
+      throw new ProfileException(
+          String.format(
+              "Cannot merge %s FHIR Type %s with %s FHIR Type %s",
+              this.getElementType(),
+              this.getClass().getName(),
+              other.getElementType(),
+              other.getClass().getName()));
+    }
   }
 }

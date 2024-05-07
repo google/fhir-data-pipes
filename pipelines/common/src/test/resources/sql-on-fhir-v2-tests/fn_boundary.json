@@ -1,6 +1,10 @@
 {
   "title": "fn_boundary",
   "description": "TBD",
+  "fhirVersion": [
+    "5.0",
+    "4.0"
+  ],
   "resources": [
     {
       "resourceType": "Observation",
@@ -10,7 +14,7 @@
       },
       "status": "final",
       "valueQuantity": {
-        "value": 1
+        "value": 1.0
       }
     },
     {
@@ -70,7 +74,7 @@
       "expect": [
         {
           "id": "o1",
-          "decimal": 0.5
+          "decimal": 0.95
         },
         {
           "id": "o2",
@@ -111,7 +115,7 @@
       "expect": [
         {
           "id": "o1",
-          "decimal": 1.5
+          "decimal": 1.05
         },
         {
           "id": "o2",

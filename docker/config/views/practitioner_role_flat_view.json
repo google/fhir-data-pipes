@@ -1,0 +1,74 @@
+{
+  "resourceType": "http://hl7.org/fhir/uv/sql-on-fhir/StructureDefinition/ViewDefinition",
+  "text": "This is the SQL-on-FHIR-v2 version of PractitionerRole_flat.sql",
+  "select": [
+    {
+      "column": [
+        {
+          "path": "getResourceKey()",
+          "name": "id"
+        },
+        {
+          "path": "active",
+          "name": "active",
+          "type": "boolean"
+        },
+        {
+          "path": "practitioner.getReferenceKey(Practitioner)",
+          "name": "practitioner_id"
+        },
+        {
+          "path": "organization.getReferenceKey(Organization)",
+          "name": "organization_id"
+        }
+      ]
+    },
+    {
+      "forEachOrNull": "code.coding",
+      "column": [
+        {
+          "path": "system",
+          "name": "system"
+        },
+        {
+          "path": "code",
+          "name": "code"
+        }
+      ]
+    },
+    {
+      "forEachOrNull": "specialty.coding",
+      "column": [
+        {
+          "path": "system",
+          "name": "specialty_sys"
+        },
+        {
+          "path": "code",
+          "name": "specialty_code"
+        }
+      ]
+    },
+    {
+      "forEachOrNull": "location",
+      "column": [
+        {
+          "path": "getReferenceKey(Location)",
+          "name": "location_id"
+        }
+      ]
+    },
+    {
+      "forEachOrNull": "healthcareService",
+      "column": [
+        {
+          "path": "getReferenceKey(HealthcareService)",
+          "name": "healthcare_service_id"
+        }
+      ]
+    }
+  ],
+  "name": "practitioner_role_flat",
+  "status": "draft",
+  "resource": "PractitionerRole"
+}

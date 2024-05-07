@@ -16,15 +16,15 @@
 package com.google.fhir.analytics;
 
 import ca.uhn.fhir.parser.DataFormatException;
-import com.cerner.bunsen.exception.ProfileMapperException;
+import com.cerner.bunsen.exception.ProfileException;
 import com.google.common.collect.Sets;
 import com.google.fhir.analytics.view.ViewApplicationException;
 import java.io.IOException;
+import java.nio.channels.Channels;
 import java.sql.SQLException;
 import java.util.List;
 import java.util.Set;
 import org.apache.beam.sdk.io.FileIO;
-import org.apache.beam.sdk.values.KV;
 import org.hl7.fhir.instance.model.api.IBaseReference;
 import org.hl7.fhir.instance.model.api.IBaseResource;
 import org.hl7.fhir.r4.model.Bundle;
@@ -32,36 +32,53 @@ import org.hl7.fhir.r4.model.Bundle.BundleEntryComponent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/** This class reads the contents of a json/ndjson file and converts them into FHIR resources. */
 public class ReadJsonFilesFn extends FetchSearchPageFn<FileIO.ReadableFile> {
 
   private static final Logger log = LoggerFactory.getLogger(ReadJsonFilesFn.class);
 
   private final Set<String> resourceTypes;
 
-  ReadJsonFilesFn(FhirEtlOptions options) {
-    super(options, "ReadJsonFiles");
+  private final boolean isFileNDJson;
+
+  ReadJsonFilesFn(FhirEtlOptions options, boolean isFileNDJson) {
+    super(options, isFileNDJson ? "ReadNDJsonFiles" : "ReadJsonFiles");
+    this.isFileNDJson = isFileNDJson;
     resourceTypes = Sets.newHashSet(options.getResourceList().split(","));
   }
 
+  @Override
+  public void setup() throws SQLException, ProfileException {
+    super.setup();
+    if (isFileNDJson) {
+      // Update the parser with the NDJsonParser. The NDJsonParser efficiently reads one record at a
+      // time into memory and converts into a FHIR resource.
+      parser = avroConversionUtil.getFhirContext().newNDJsonParser();
+    }
+  }
+
+  @Override
+  public void finishBundle(FinishBundleContext context) {
+    super.finishBundle(context);
+  }
+
   @ProcessElement
-  public void processElement(
-      @Element FileIO.ReadableFile file, OutputReceiver<KV<String, Integer>> out)
-      throws IOException, SQLException, ViewApplicationException, ProfileMapperException {
+  public void processElement(@Element FileIO.ReadableFile file)
+      throws IOException, SQLException, ViewApplicationException, ProfileException {
     log.info("Reading file with metadata " + file.getMetadata());
-    String fileContent = file.readFullyAsUTF8String();
     try {
-      IBaseResource resource = parser.parseResource(fileContent);
+      IBaseResource resource = parser.parseResource(Channels.newInputStream(file.open()));
       if (!"Bundle".equals(resource.fhirType())) {
         log.error(
             String.format(
-                "The content of file %s is not a Bundle; type is %s.",
-                file.getMetadata().toString(), resource.fhirType()));
+                "The output type of the JsonParser should be a Bundle; type is %s, for file %s.",
+                resource.fhirType(), file.getMetadata()));
       }
       Bundle bundle = (Bundle) resource;
       updateResolvedRefIds(bundle);
       processBundle(bundle, resourceTypes);
     } catch (DataFormatException | ClassCastException e) {
-      log.error("Cannot parse content of file " + file.getMetadata().toString() + e);
+      log.error(String.format("Cannot parse content of file: %s", file.getMetadata()), e);
     }
   }
 
@@ -77,7 +94,7 @@ public class ReadJsonFilesFn extends FetchSearchPageFn<FileIO.ReadableFile> {
    *
    * @param bundle the bundle whose references are updated.
    */
-  private void updateResolvedRefIds(Bundle bundle) throws ProfileMapperException {
+  protected void updateResolvedRefIds(Bundle bundle) {
     for (BundleEntryComponent entry : bundle.getEntry()) {
       List<IBaseReference> refs =
           avroConversionUtil

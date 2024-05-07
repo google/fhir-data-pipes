@@ -18,12 +18,12 @@ public class IdConverterTest {
 
   @Test
   public void relativePathTest() {
-    assertThat(idConverter.fromHapi(new IdType("Patinet/123")), equalTo("123"));
+    assertThat(idConverter.fromHapi(new IdType("Patient/123")), equalTo("123"));
   }
 
   @Test
   public void absoluteUrlTest() {
-    assertThat(idConverter.fromHapi(new IdType("http://fhir.server/Patinet/123")), equalTo("123"));
+    assertThat(idConverter.fromHapi(new IdType("http://fhir.server/Patient/123")), equalTo("123"));
   }
 
   @Test

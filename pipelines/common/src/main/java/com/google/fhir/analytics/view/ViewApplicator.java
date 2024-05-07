@@ -19,6 +19,7 @@ import ca.uhn.fhir.context.FhirContext;
 import ca.uhn.fhir.context.FhirVersionEnum;
 import ca.uhn.fhir.fhirpath.FhirPathExecutionException;
 import ca.uhn.fhir.fhirpath.IFhirPath;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
@@ -27,14 +28,18 @@ import com.google.common.collect.Lists;
 import com.google.fhir.analytics.view.ViewDefinition.Column;
 import com.google.fhir.analytics.view.ViewDefinition.Select;
 import com.google.fhir.analytics.view.ViewDefinition.Where;
+import com.google.gson.Gson;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import lombok.Builder;
 import lombok.Getter;
@@ -45,6 +50,7 @@ import org.hl7.fhir.instance.model.api.IBaseResource;
 import org.hl7.fhir.instance.model.api.IIdType;
 import org.hl7.fhir.instance.model.api.IPrimitiveType;
 import org.hl7.fhir.r4.hapi.fluentpath.FhirPathR4;
+import org.hl7.fhir.r4b.hapi.fhirpath.FhirPathR4B;
 import org.hl7.fhir.r5.hapi.fhirpath.FhirPathR5;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -55,27 +61,33 @@ public class ViewApplicator {
   public static String ID_TYPE = "id";
   public static final String GET_RESOURCE_KEY = "getResourceKey()";
   private static final Pattern GET_REF_KEY_PATTERN =
-      Pattern.compile("(?<fhirPath>.*)getReferenceKey\\(('(?<resourceType>[a-zA-Z]*)')?\\)");
+      Pattern.compile("(?<fhirPath>.*)getReferenceKey\\(((?<resourceType>[a-zA-Z]*))?\\)");
   private static final RowList EMPTY_LIST = RowList.builder().build();
   private final ViewDefinition viewDef;
   private final IFhirPath fhirPath;
 
   public ViewApplicator(ViewDefinition viewDefinition) {
     this.viewDef = viewDefinition;
-    if (viewDefinition.getResourceVersion() == null
-        || viewDefinition.getResourceVersion().equals(FhirVersionEnum.R4.getFhirVersionString())) {
+    Set<FhirVersionEnum> fhirVersions = new HashSet<>();
+    if (viewDefinition.getFhirVersion() != null) {
+      for (String version : viewDefinition.getFhirVersion()) {
+        fhirVersions.add(ViewDefinition.convertFhirVersion(version));
+      }
+    } else {
+      fhirVersions.add(FhirVersionEnum.R4);
+    }
+    // This order is kind of arbitrary; going with this as we usually pick R4 as the default!
+    if (fhirVersions.contains(FhirVersionEnum.R4)) {
       this.fhirPath = new FhirPathR4(FhirContext.forCached(FhirVersionEnum.R4));
-    } else if (viewDefinition
-        .getResourceVersion()
-        .equals(FhirVersionEnum.R5.getFhirVersionString())) {
+    } else if (fhirVersions.contains(FhirVersionEnum.R4B)) {
+      this.fhirPath = new FhirPathR4B(FhirContext.forCached(FhirVersionEnum.R4B));
+    } else if (fhirVersions.contains(FhirVersionEnum.R5)) {
       this.fhirPath = new FhirPathR5(FhirContext.forCached(FhirVersionEnum.R5));
-    } else if (viewDefinition
-        .getResourceVersion()
-        .equals(FhirVersionEnum.DSTU3.getFhirVersionString())) {
+    } else if (fhirVersions.contains(FhirVersionEnum.DSTU3)) {
       this.fhirPath = new FhirPathDstu3(FhirContext.forCached(FhirVersionEnum.DSTU3));
     } else {
       throw new IllegalArgumentException(
-          "ViewDefinition version not supported: " + viewDefinition.getResourceVersion());
+          "ViewDefinition version not supported: " + viewDefinition.getFhirVersion());
     }
   }
 
@@ -311,9 +323,6 @@ public class ViewApplicator {
                 "getReferenceKey can only be applied to Reference elements; got " + fhirPathForRef);
           }
           IIdType ref = ((IBaseReference) refElem).getReferenceElement();
-          // TODO there is a confusion in the ViewDefinition spec re. how multiple references to
-          //  multiple types should be handled. For now, we keep the full IIdType but this may need
-          //  to be revisited (for writing to DB, we extract the IdPart but that's not ideal).
           if (resType.isEmpty()) {
             refs.add(ref);
           } else {
@@ -355,6 +364,64 @@ public class ViewApplicator {
     private RowList(List<FlatRow> rows, LinkedHashMap<String, Column> columnInfos) {
       this.rows = ImmutableList.copyOf(rows);
       this.columnInfos = ImmutableMap.copyOf(columnInfos);
+    }
+
+    /**
+     * Converts the view into CSV format; this is not production ready!
+     *
+     * @return the CSV representation of this.
+     */
+    @VisibleForTesting
+    String toCsv() {
+      // TODO escape comma and new-line in fields!
+      final String sep = ",";
+      StringBuilder builder = new StringBuilder();
+      builder.append(String.join(sep, columnInfos.keySet()));
+      for (FlatRow row : rows) {
+        builder.append('\n');
+        builder.append(
+            String.join(
+                sep,
+                row.getElements().stream().map(e -> e.getString()).collect(Collectors.toList())));
+      }
+      return builder.toString();
+    }
+
+    /**
+     * This method is good for exchanging the view with other systems, e.g., a frontend. It is
+     * currently not used as the simpler forms like `toCsv()` or `toHtml()` are preferred.
+     *
+     * @return the JSON representation of this.
+     */
+    public String toJson() {
+      Gson gson = new Gson();
+      return gson.toJson(this);
+    }
+
+    /**
+     * Create an HTML table from this view.
+     *
+     * @return the HTML content without enclosing {@code <table></table>} tags such that the table
+     *     can be easily decorated by the frontend.
+     */
+    public String toHtml() {
+      final String sep = "</td><td>";
+      StringBuilder builder = new StringBuilder();
+      builder
+          .append("<thead><tr><td>")
+          .append(String.join(sep, columnInfos.keySet()))
+          .append("</td></tr></thead>")
+          .append("<tbody>");
+      for (FlatRow row : rows) {
+        builder.append("<tr><td>");
+        builder.append(
+            String.join(
+                sep,
+                row.getElements().stream().map(e -> e.getString()).collect(Collectors.toList())));
+        builder.append("</td></tr>");
+      }
+      builder.append("</tbody>");
+      return builder.toString();
     }
 
     public boolean isEmpty() {
@@ -525,7 +592,11 @@ public class ViewApplicator {
     public String getString() {
       IPrimitiveType primitiveType = getPrimitiveType();
       if (primitiveType != null) {
-        return primitiveType.getValueAsString();
+        // TODO: This is a temporary solution to handle IDs properly. We should implement proper
+        //  polymorphism to properly handle primitive types when we add type inference. This can
+        //  be similar to how we convert primitives to Avro fields in Bunsen.
+        String maybeId = getSingleIdPart();
+        return maybeId != null ? maybeId : primitiveType.getValueAsString();
       }
       return getSingleValue() == null ? null : getSingleValue().toString();
     }
@@ -559,7 +630,7 @@ public class ViewApplicator {
     }
 
     @Nullable
-    public String getSingleIdPart() {
+    private String getSingleIdPart() {
       Preconditions.checkState(!isCollection());
       if (values != null && !values.isEmpty() && ID_TYPE.equals(columnInfo.getInferredType())) {
         IBase elem = values.get(0);

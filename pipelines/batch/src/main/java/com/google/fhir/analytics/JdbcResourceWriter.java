@@ -30,7 +30,6 @@ import com.google.fhir.analytics.view.ViewDefinition;
 import com.google.fhir.analytics.view.ViewDefinitionException;
 import com.google.fhir.analytics.view.ViewManager;
 import com.google.fhir.analytics.view.ViewSchema;
-import java.beans.PropertyVetoException;
 import java.io.IOException;
 import java.sql.Connection;
 import java.sql.JDBCType;
@@ -107,7 +106,7 @@ public class JdbcResourceWriter {
   }
 
   static void createTables(FhirEtlOptions options)
-      throws PropertyVetoException, IOException, SQLException, ViewDefinitionException {
+      throws IOException, SQLException, ViewDefinitionException {
     // This should not be triggered in pipeline workers because concurrent CREATEs lead to failures:
     // https://stackoverflow.com/questions/54351783/duplicate-key-value-violates-unique-constraint
     Preconditions.checkArgument(!Strings.nullToEmpty(options.getSinkDbConfigPath()).isEmpty());
@@ -116,8 +115,7 @@ public class JdbcResourceWriter {
             DatabaseConfiguration.createConfigFromFile(options.getSinkDbConfigPath()));
     DataSource jdbcSource =
         JdbcConnectionPools.getInstance()
-            .getPooledDataSource(
-                dbConfig, options.getJdbcInitialPoolSize(), options.getJdbcMaxPoolSize());
+            .getPooledDataSource(dbConfig, options.getJdbcMaxPoolSize());
     log.info(
         String.format(
             "Connecting to DB url %s with user %s.", dbConfig.jdbcUrl(), dbConfig.dbUser()));

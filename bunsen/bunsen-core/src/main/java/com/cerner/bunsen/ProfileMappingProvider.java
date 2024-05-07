@@ -4,7 +4,7 @@ import ca.uhn.fhir.context.FhirContext;
 import ca.uhn.fhir.context.FhirVersionEnum;
 import ca.uhn.fhir.context.RuntimeResourceDefinition;
 import ca.uhn.fhir.parser.IParser;
-import com.cerner.bunsen.exception.ProfileMapperException;
+import com.cerner.bunsen.exception.ProfileException;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import java.io.BufferedReader;
@@ -44,35 +44,27 @@ import org.slf4j.LoggerFactory;
 class ProfileMappingProvider {
 
   private static final Logger log = LoggerFactory.getLogger(ProfileMappingProvider.class);
+  private static final String CLASSPATH_PREFIX = "classpath:";
   private static final String JSON_EXT = ".json";
   private static String STRUCTURE_DEFINITION = "StructureDefinition";
 
   /**
    * This method initially loads all the default base structure definitions into the context and
    * additionally loads any custom structure definitions in the given structureDefinitionsPath. A
-   * mapping is maintained between the resource type and the profile url that is configured against
-   * it. This mapping is initially created using the default base structure definitions and gets
-   * overridden with the definitions in the structureDefinitionsPath. In case of multiple structure
-   * definitions being defined for the same resource type, lexicographically choose the smaller
-   * profile url (which is always deterministic for the given set of definitions).
-   *
-   * <p>The client can use the mapped profile for the Avro conversion, in case of multiple profiles
-   * a better approach would be to come up with a generic solution which can consider all the
-   * profiles defined in the structureDefinitionsPath. TODO: Create a generic solution for
-   * supporting multiple extensions for same resource type
-   * https://github.com/google/fhir-data-pipes/issues/980
+   * mapping is maintained between the resource type and the list of profile urls that are
+   * configured against it. This mapping is initially created using the url of default base
+   * structure definition and then is appended with the definitions in the structureDefinitionsPath.
    *
    * @param context The context to which the profiles are added.
-   * @param structureDefinitionsPath the path containing the list of structure definitions to be
-   *     used
-   * @param isClasspath whether the structureDefinitionsPath is a classpath or not
-   * @return the map containing the resource type to profile mapping.
-   * @throws ProfileMapperException if there are any errors while loading and mapping the structure
+   * @param structureDefinitionsPath the path containing the list of additional structure
+   *     definitions to be used; if it starts with `classpath:` then the StructureDefinitions in
+   *     classpath are used instead
+   * @return the map containing the resource type and the list of profile urls mapped.
+   * @throws ProfileException if there are any errors while loading and mapping the structure
    *     definitions
    */
-  Map<String, String> loadStructureDefinitions(
-      FhirContext context, @Nullable String structureDefinitionsPath, boolean isClasspath)
-      throws ProfileMapperException {
+  Map<String, List<String>> loadStructureDefinitions(
+      FhirContext context, @Nullable String structureDefinitionsPath) throws ProfileException {
 
     // TODO: Add support for other versions (R4B and R5) and then remove this constraint
     // https://github.com/google/fhir-data-pipes/issues/958
@@ -83,24 +75,22 @@ class ProfileMappingProvider {
               "Cannot load FHIR profiles for FhirContext version %s as it is not %s or %s ",
               context.getVersion().getVersion(), FhirVersionEnum.DSTU3, FhirVersionEnum.R4);
       log.error(errorMsg);
-      throw new ProfileMapperException(errorMsg);
+      throw new ProfileException(errorMsg);
     }
 
     PrePopulatedValidationSupport support = new PrePopulatedValidationSupport(context);
-    Map<String, String> baseResourcePofileMap = loadBaseStructureDefinitions(context, support);
+    Map<String, List<String>> resourceProfileMap = loadBaseStructureDefinitions(context, support);
     if (!Strings.isNullOrEmpty(structureDefinitionsPath)) {
-      Map<String, String> customResourceProfileMap =
-          loadCustomStructureDefinitions(context, support, structureDefinitionsPath, isClasspath);
-      // Overwrite the profiles for the resources with the custom profiles
-      baseResourcePofileMap.putAll(customResourceProfileMap);
+      loadCustomStructureDefinitions(
+          context, support, structureDefinitionsPath, resourceProfileMap);
     }
     context.setValidationSupport(support);
-    return baseResourcePofileMap;
+    return resourceProfileMap;
   }
 
-  private Map<String, String> loadBaseStructureDefinitions(
+  private Map<String, List<String>> loadBaseStructureDefinitions(
       FhirContext context, PrePopulatedValidationSupport support) {
-    Map<String, String> resourceProfileMap = new HashMap<>();
+    Map<String, List<String>> resourceProfileMap = new HashMap<>();
     List<IBaseResource> defaultDefinitions =
         context.getValidationSupport().fetchAllStructureDefinitions();
     for (IBaseResource definition : defaultDefinitions) {
@@ -112,7 +102,7 @@ class ProfileMappingProvider {
         RuntimeResourceDefinition resourceDefinition = context.getResourceDefinition(definition);
         String type = fetchProperty("type", resourceDefinition, definition);
         String url = fetchProperty("url", resourceDefinition, definition);
-        resourceProfileMap.put(type, url);
+        resourceProfileMap.computeIfAbsent(type, list -> new ArrayList<>()).add(url);
       }
     }
     context.setValidationSupport(support);
@@ -121,21 +111,23 @@ class ProfileMappingProvider {
 
   /**
    * This method loads the custom structure definitions defined in the path
-   * structureDefinitionsPath. It fails if any duplicate profile is defined for the same resource
-   * type.
+   * structureDefinitionsPath.
    */
-  private Map<String, String> loadCustomStructureDefinitions(
+  private void loadCustomStructureDefinitions(
       FhirContext context,
       PrePopulatedValidationSupport support,
       String structureDefinitionsPath,
-      boolean isClasspath)
-      throws ProfileMapperException {
-    Map<String, String> resourceProfileMap = new HashMap<>();
+      Map<String, List<String>> resourceProfileMap)
+      throws ProfileException {
     IParser jsonParser = context.newJsonParser();
+    String classPathStructureDefinitions =
+        structureDefinitionsPath == null || !structureDefinitionsPath.startsWith(CLASSPATH_PREFIX)
+            ? null
+            : structureDefinitionsPath.substring(CLASSPATH_PREFIX.length());
     try {
       List<IBaseResource> resources =
-          isClasspath
-              ? getResourcesFromClasspath(jsonParser, structureDefinitionsPath)
+          classPathStructureDefinitions != null
+              ? getResourcesFromClasspath(jsonParser, classPathStructureDefinitions)
               : getResourcesFromPath(jsonParser, structureDefinitionsPath);
 
       for (IBaseResource baseResource : resources) {
@@ -144,22 +136,23 @@ class ProfileMappingProvider {
     } catch (IOException | URISyntaxException e) {
       String errorMsg =
           String.format(
-              "Cannot get the list of files at the directory=%s, classpath=%s, error=%s",
-              structureDefinitionsPath, isClasspath, e.getMessage());
+              "Cannot get the list of files from %s %s, error=%s",
+              classPathStructureDefinitions != null ? "classpath" : "directory",
+              structureDefinitionsPath,
+              e.getMessage());
       log.error(errorMsg, e);
-      throw new ProfileMapperException(errorMsg);
+      throw new ProfileException(errorMsg);
     }
-    return resourceProfileMap;
   }
 
   private List<IBaseResource> getResourcesFromClasspath(IParser parser, String classpath)
-      throws ProfileMapperException, URISyntaxException, IOException {
+      throws ProfileException, URISyntaxException, IOException {
 
     URL resourceURL = getClass().getResource(classpath);
     if (resourceURL == null) {
       String errorMsg = String.format("the classpath url=%s does not exist", classpath);
       log.error(errorMsg);
-      throw new ProfileMapperException(errorMsg);
+      throw new ProfileException(errorMsg);
     }
 
     URI uri = resourceURL.toURI();
@@ -212,7 +205,7 @@ class ProfileMappingProvider {
       FhirContext context,
       IBaseResource baseResource,
       PrePopulatedValidationSupport support,
-      Map<String, String> resourceProfileMap) {
+      Map<String, List<String>> resourceProfileMap) {
     RuntimeResourceDefinition resourceDefinition = context.getResourceDefinition(baseResource);
     String resourceName = resourceDefinition.getName();
     if (resourceName.equals(STRUCTURE_DEFINITION)
@@ -222,12 +215,7 @@ class ProfileMappingProvider {
 
       Preconditions.checkNotNull(url, "The url must not be null");
       if (context.getResourceTypes().contains(type)) {
-        // Add or replace the url for the resource type with a lexicographically smaller one. This
-        // makes sure that for a given set of profiles, it always chooses the same profile.
-        if (resourceProfileMap.get(type) == null
-            || resourceProfileMap.get(type).compareTo(url) > 0) {
-          resourceProfileMap.put(type, url);
-        }
+        resourceProfileMap.computeIfAbsent(type, string -> new ArrayList<>()).add(url);
       }
       support.addStructureDefinition(baseResource);
     }

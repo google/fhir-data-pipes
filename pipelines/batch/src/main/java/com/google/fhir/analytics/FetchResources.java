@@ -16,7 +16,7 @@
 package com.google.fhir.analytics;
 
 import ca.uhn.fhir.rest.api.SummaryEnum;
-import com.cerner.bunsen.exception.ProfileMapperException;
+import com.cerner.bunsen.exception.ProfileException;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.Maps;
 import com.google.fhir.analytics.view.ViewApplicationException;
@@ -63,6 +63,8 @@ public class FetchResources
   @VisibleForTesting
   static String getSubjectPatientIdOrNull(Resource resource) {
     String patientId = null;
+    // TODO: Instead of hard-coding `subject` here, use Patient Compartment:
+    //  https://hl7.org/fhir/compartmentdefinition-patient.html
     Property subject = resource.getNamedProperty("subject");
     if (subject != null) {
       List<Base> values = subject.getValues();
@@ -119,18 +121,19 @@ public class FetchResources
       patientCount.put(patientId, current + 1);
     }
 
-    @FinishBundle
+    @Override
     public void finishBundle(FinishBundleContext context) {
       for (Map.Entry<String, Integer> entry : patientCount.entrySet()) {
         context.output(
             KV.of(entry.getKey(), entry.getValue()), Instant.now(), GlobalWindow.INSTANCE);
       }
+      super.finishBundle(context);
     }
 
     @ProcessElement
     public void processElement(
         @Element SearchSegmentDescriptor segment, OutputReceiver<KV<String, Integer>> out)
-        throws IOException, SQLException, ViewApplicationException, ProfileMapperException {
+        throws IOException, SQLException, ViewApplicationException, ProfileException {
       String searchUrl = segment.searchUrl();
       log.info(
           String.format(

@@ -1,0 +1,273 @@
+<!doctype html>
+<html>
+<head>
+
+  <title>
+    FHIR Analytics Pipelines Control Panel
+  </title>
+
+  <link rel="stylesheet" type="text/css" href="../static/style.css"
+        th:href="@{/style.css}">
+  <!-- Bootstrap core CSS -->
+  <!-- TODO: Consider switching to a standard CDN version. -->
+  <link href="../static/bootstrap-5.0.2-dist/css/bootstrap.min.css"
+        th:href="@{/bootstrap-5.0.2-dist/css/bootstrap.min.css}" rel="stylesheet">
+  <script src="../static/bootstrap-5.0.2-dist/js/bootstrap.min.js"
+          th:src="@{/bootstrap-5.0.2-dist/js/bootstrap.min.js}"></script>
+
+  <link href="https://cdn.jsdelivr.net/npm/jsoneditor@10/dist/jsoneditor.min.css" rel="stylesheet"
+        type="text/css">
+  <script src="https://cdn.jsdelivr.net/npm/jsoneditor@10/dist/jsoneditor.min.js"></script>
+
+  <script>
+    function changeVisibility(elemId, makeVisible) {
+      var elem = document.getElementById(elemId);
+      if (makeVisible) {
+        elem.style.display = 'block';
+      } else {
+        elem.style.display = 'none';
+      }
+    }
+
+    function submitView() {
+      console.log('Submitting the view ...');
+      changeVisibility('viewError', false);
+      var xhr = new XMLHttpRequest();
+      xhr.open("POST", '/test-view', true);
+      xhr.onreadystatechange = function() {
+        changeVisibility('viewWait', false);
+        if (this.readyState === XMLHttpRequest.DONE && this.status === 200) {
+          console.log('View generation succeeded.');
+          document.getElementById('viewOutput').innerHTML = this.response;
+        }
+        // Handle errors.
+        if (this.readyState === XMLHttpRequest.DONE && this.status != 200) {
+          console.log('View generation failed: ' + this.response);
+          document.getElementById('viewError').innerHTML = this.response;
+          changeVisibility('viewError', true);
+        }
+      }
+      formData = new FormData();
+      formData.append('viewDef', JSON.stringify(viewEditor.get(), null, 2));
+      formData.append('resource', JSON.stringify(resourceEditor.get(), null, 2));
+      changeVisibility('viewWait', true);
+      xhr.send(formData);
+    }
+
+    // This is based on https://github.com/josdejong/jsoneditor/blob/master/docs/usage.md
+    function makeEditor() {
+      var options = {
+        mode: 'code'
+      };
+      var viewContainer = document.getElementById('jsoneditorView');
+      var resourceContainer = document.getElementById('jsoneditorResource');
+      // We want the editors variables to be global.
+      viewEditor = new JSONEditor(viewContainer, options);
+      resourceEditor = new JSONEditor(resourceContainer, options);
+      const initialView = {
+        "resourceType": "http://hl7.org/fhir/uv/sql-on-fhir/StructureDefinition/ViewDefinition",
+        "text": "This is the SQL-on-FHIR-v2 version of Patient_flat.sql",
+        "name": "patient_flat",
+        "status": "draft",
+        "resource": "Patient",
+        "select": [
+          {
+            "column": [
+              {
+                "path": "getResourceKey()",
+                "name": "id"
+              },
+              {
+                "path": "active",
+                "name": "active",
+                "type": "boolean"
+              },
+              {
+                "path": "gender",
+                "name": "gender"
+              },
+              {
+                "path": "deceased",
+                "name": "deceased",
+                "type": "boolean"
+              },
+              {
+                "path": "managingOrganization.getReferenceKey(Organization)",
+                "name": "organization_id"
+              }
+            ]
+          },
+          {
+            "column": [
+              {
+                "path": "getReferenceKey(Practitioner)",
+                "name": "practitioner_id"
+              }
+            ],
+            "forEachOrNull": "generalPractitioner"
+          },
+          {
+            "column": [
+              {
+                "path": "family",
+                "name": "family"
+              }
+            ],
+            "select": [
+              {
+                "column": [
+                  {
+                    "path": "$this",
+                    "name": "given"
+                  }
+                ],
+                "forEach": "given"
+              }
+            ],
+            "forEach": "name"
+          }
+        ]
+      };
+      const initialResource = {
+        "resourceType": "Patient",
+        "id": "my-patient-id",
+        "identifier": [
+          {
+            "id": "8a463d39-0594-4471-85a0-97ebf25a46ba",
+            "use": "official",
+            "type": {
+              "text": "Hospital ID"
+            },
+            "value": "10000X"
+          }
+        ],
+        "active": true,
+        "name": [
+          {
+            "id": "a614032b-b271-4dd6-99bc-edcd1c16292e",
+            "family": "Family1",
+            "given": [
+              "Given1"
+            ]
+          },
+          {
+            "id": "a614032b-b271-4dd6-99bc-edcd1c16292e",
+            "family": "Family2",
+            "given": [
+              "Given2",
+              "Given3"
+            ]
+          }
+        ],
+        "gender": "male",
+        "birthDate": "1979-01-21",
+        "deceasedBoolean": false,
+        "managingOrganization": {
+          "reference": "Organization/manOrg"
+        },
+        "generalPractitioner": [
+          {
+            "reference": "Practitioner/prac1"
+          },
+          {
+            "reference": "Organization/org1"
+          }
+        ],
+        "address": [
+          {
+            "id": "3e501410-28c3-4701-84ff-fbe8b260f416",
+            "use": "home",
+            "city": "Waterloo",
+            "state": "ON",
+            "postalCode": "N2L3G1",
+            "country": "Canada"
+          }
+        ]
+      };
+      viewEditor.set(initialView);
+      resourceEditor.set(initialResource);
+    }
+  </script>
+</head>
+
+<body onload="makeEditor()">
+
+<div class="container-fluid" style="width:95%; margin-top:30px;">
+  <p class="h1">ViewDefinition Editor</p>
+  Here you can edit and test ViewDefinition resources. Enter your
+  ViewDefinition resource in the left editor and a sample resource on the right.
+  Then press the "Submit/Run" button to calculate the flat rows generated by
+  applying the ViewDefinition on the given resource. The JSON editors are
+  based on the <a href="https://github.com/josdejong/jsoneditor">JSON Editor repo</a>.
+  For sample ViewDefinitions see <a
+    href="https://github.com/google/fhir-data-pipes/tree/master/docker/config/views">fhir-data-pipes</a>
+  repo; the preloaded ViewDefinition below is from <a
+    href="https://github.com/google/fhir-data-pipes/blob/master/docker/config/views/patient_flat_view.json">patient_flat_view.json</a>
+  example.
+
+  <div class="row m-4">
+    <div class="col text-center">
+      <button
+          data-bs-toggle="tooltip"
+          data-bs-placement="top"
+          data-bs-trigger="hover"
+          title="Use Submit to apply the ViewDefinition on the FHIR resource."
+          type="submit"
+          onclick="submitView()"
+          class="btn btn-primary">Submit/Run
+      </button>
+    </div>
+  </div>
+  <div class="row">
+    <div class="alert alert-info alert-dismissible fade show" id="viewWait" style="display:none">
+      <!-- Spinner -->
+      <div class="lds-default">
+        <div></div><div></div><div></div><div></div>
+        <div></div><div></div><div></div><div></div>
+        <div></div><div></div><div></div><div></div>
+      </div>
+      The view is being generated ...
+    </div>
+    <div class="alert alert-danger alert-dismissible fade show" id="viewError"
+         style="display:none; color:red">
+      Error in generating the view!
+      <!-- button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button -->
+    </div>
+  </div>
+  <div class="row mb-4">
+    <!-- Note each row is divided into 12 cells, so a col-2 spans two cells, ess:
+      https://getbootstrap.com/docs/5.0/layout/grid/ -->
+    <div class="col-12">
+      <div id="outputHelp" class="form-text">
+        The generated view will be displayed here.
+      </div>
+      <table class="table table-striped table-bordered" id="viewOutput"
+             aria-describedby="outputHelp">
+      </table>
+    </div>
+  </div>
+  <div class="row">
+    <div class="col">
+      <label for="jsoneditorView" class="form-label fw-bold">Input ViewDefinition</label>
+    </div>
+    <div class="col">
+      <label for="jsoneditorResource" class="form-label fw-bold">Input Resource</label>
+    </div>
+  </div>
+  <div class="row">
+    <div class="col">
+      <div id="viewHelp" class="form-text">
+        Enter a ViewDefinition to be applied on the given FHIR resource on the right.
+      </div>
+      <div id="jsoneditorView" style="height: 1200px;"></div>
+    </div>
+    <div class="col">
+      <div id="resourceHelp" class="form-text">
+        Enter a valid FHIR resource.
+      </div>
+      <div id="jsoneditorResource" style="height: 1200px;"></div>
+    </div>
+  </div>
+</div>
+</body>
+</html>

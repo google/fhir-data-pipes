@@ -7,8 +7,12 @@ import com.cerner.bunsen.avro.converters.DefinitionToAvroVisitor;
 import com.cerner.bunsen.definitions.HapiConverter;
 import com.cerner.bunsen.definitions.HapiConverter.HapiObjectConverter;
 import com.cerner.bunsen.definitions.StructureDefinitions;
+import com.cerner.bunsen.exception.ProfileException;
+import com.google.common.base.Preconditions;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -16,6 +20,7 @@ import java.util.stream.Collectors;
 import org.apache.avro.Schema;
 import org.apache.avro.Schema.Field;
 import org.apache.avro.generic.IndexedRecord;
+import org.apache.commons.collections.CollectionUtils;
 import org.hl7.fhir.instance.model.api.IBaseResource;
 
 /** Converter to change HAPI objects into Avro structures and vice versa. */
@@ -27,7 +32,6 @@ public class AvroConverter {
 
   private AvroConverter(
       HapiConverter<Schema> hapiToAvroConverter, RuntimeResourceDefinition... resources) {
-
     this.hapiToAvroConverter = hapiToAvroConverter;
     this.avroToHapiConverter = (HapiObjectConverter) hapiToAvroConverter.toHapiConverter(resources);
   }
@@ -37,7 +41,8 @@ public class AvroConverter {
       StructureDefinitions structureDefinitions,
       String resourceTypeUrl,
       List<String> containedResourceTypeUrls,
-      Map<String, HapiConverter<Schema>> compositeConverters) {
+      Map<String, HapiConverter<Schema>> compositeConverters,
+      int recursiveDepth) {
 
     FhirVersionEnum fhirVersion = context.getVersion().getVersion();
 
@@ -58,7 +63,10 @@ public class AvroConverter {
 
     DefinitionToAvroVisitor visitor =
         new DefinitionToAvroVisitor(
-            structureDefinitions.conversionSupport(), basePackage, compositeConverters);
+            structureDefinitions.conversionSupport(),
+            basePackage,
+            compositeConverters,
+            recursiveDepth);
 
     HapiConverter<Schema> converter =
         structureDefinitions.transform(visitor, resourceTypeUrl, containedResourceTypeUrls);
@@ -97,7 +105,7 @@ public class AvroConverter {
    * @return a list of Avro schemas
    */
   public static List<Schema> generateSchemas(
-      FhirContext context, Map<String, List<String>> resourceTypeUrls) {
+      FhirContext context, Map<String, List<String>> resourceTypeUrls, int recursiveDepth) {
 
     StructureDefinitions structureDefinitions = StructureDefinitions.create(context);
 
@@ -110,7 +118,8 @@ public class AvroConverter {
           structureDefinitions,
           resourceTypeUrlEntry.getKey(),
           resourceTypeUrlEntry.getValue(),
-          converters);
+          converters,
+          recursiveDepth);
     }
 
     return converters.values().stream()
@@ -126,11 +135,40 @@ public class AvroConverter {
    *
    * @param context the FHIR context
    * @param resourceTypeUrl the URL of the resource type
+   * @param recursiveDepth the maximum recursive depth to stop when converting a FHIR
+   *     StructureDefinition to an Avro schema.
    * @return an Avro converter instance.
    */
-  public static AvroConverter forResource(FhirContext context, String resourceTypeUrl) {
+  public static AvroConverter forResource(
+      FhirContext context, String resourceTypeUrl, int recursiveDepth) {
 
-    return forResource(context, resourceTypeUrl, Collections.emptyList());
+    return forResource(context, resourceTypeUrl, Collections.emptyList(), recursiveDepth);
+  }
+
+  /**
+   * Similar to {@link #forResource(FhirContext, String, int)} this method returns an Avro
+   * converter, but the returned Avro converter is a union of all the converters for the given
+   * resourceTypeUrls, the union is formed by merging all the fields in each converter.
+   *
+   * @param context the FHIR context
+   * @param resourceTypeUrls the list of resource type profile urls. The resourceTypeUrl can either
+   *     be a relative URL for a base resource (e.g., "Condition" or "Observation"), or a URL
+   *     identifying the structure definition for a given profile, such as
+   *     "http://hl7.org/fhir/us/core/StructureDefinition/us-core-patient".
+   * @param recursiveDepth the maximum recursive depth to stop when converting a FHIR
+   *     StructureDefinition to an Avro schema.
+   * @return the merged Avro converter
+   */
+  public static AvroConverter forResources(
+      FhirContext context, List<String> resourceTypeUrls, int recursiveDepth)
+      throws ProfileException {
+    List<AvroConverter> avroConverters = new ArrayList<>();
+    for (String resourceTypeUrl : resourceTypeUrls) {
+      AvroConverter avroConverter =
+          forResource(context, resourceTypeUrl, Collections.emptyList(), recursiveDepth);
+      avroConverters.add(avroConverter);
+    }
+    return mergeAvroConverters(avroConverters, context);
   }
 
   /**
@@ -145,15 +183,25 @@ public class AvroConverter {
    * @param context the FHIR context
    * @param resourceTypeUrl the URL of the resource type
    * @param containedResourceTypeUrls the list of URLs of contained resource types
+   * @param recursiveDepth the maximum recursive depth to stop when converting a FHIR
+   *     StructureDefinition to an Avro schema.
    * @return an Avro converter instance.
    */
   public static AvroConverter forResource(
-      FhirContext context, String resourceTypeUrl, List<String> containedResourceTypeUrls) {
+      FhirContext context,
+      String resourceTypeUrl,
+      List<String> containedResourceTypeUrls,
+      int recursiveDepth) {
 
     StructureDefinitions structureDefinitions = StructureDefinitions.create(context);
 
     return visitResource(
-        context, structureDefinitions, resourceTypeUrl, containedResourceTypeUrls, new HashMap<>());
+        context,
+        structureDefinitions,
+        resourceTypeUrl,
+        containedResourceTypeUrls,
+        new HashMap<>(),
+        recursiveDepth);
   }
 
   /**
@@ -195,5 +243,30 @@ public class AvroConverter {
    */
   public String getResourceType() {
     return hapiToAvroConverter.getElementType();
+  }
+
+  /**
+   * Merges all the given list of avroConverters to create a single AvroConverter which is a union
+   * of all the fields in the list of avroConverters
+   */
+  private static AvroConverter mergeAvroConverters(
+      List<AvroConverter> avroConverters, FhirContext context) throws ProfileException {
+    Preconditions.checkArgument(
+        !CollectionUtils.isEmpty(avroConverters), "AvroConverter list cannot be empty for merging");
+    Iterator<AvroConverter> iterator = avroConverters.iterator();
+    AvroConverter mergedConverter = iterator.next();
+    while (iterator.hasNext()) {
+      mergedConverter = mergeAvroConverters(mergedConverter, iterator.next(), context);
+    }
+    return mergedConverter;
+  }
+
+  private static AvroConverter mergeAvroConverters(
+      AvroConverter left, AvroConverter right, FhirContext context) throws ProfileException {
+    HapiConverter<Schema> mergedConverter =
+        left.hapiToAvroConverter.merge(right.hapiToAvroConverter);
+    RuntimeResourceDefinition[] resources = new RuntimeResourceDefinition[1];
+    resources[0] = context.getResourceDefinition(mergedConverter.getElementType());
+    return new AvroConverter(mergedConverter, resources);
   }
 }
