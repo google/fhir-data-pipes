@@ -158,6 +158,10 @@ public abstract class StructureDefinitions {
     String profileUrl = element.getFirstTypeProfile();
     if (profileUrl != null) {
       definition = getStructureDefinition(profileUrl);
+      if (definition == null) {
+        throw new IllegalArgumentException(
+            String.format("Unable to find definition for %s", profileUrl));
+      }
     }
 
     List<StructureField<T>> extensions;
@@ -314,6 +318,10 @@ public abstract class StructureDefinitions {
           choiceTypes.put(typeCode, child);
         } else {
           IStructureDefinition structureDefinition = getStructureDefinition(typeCode);
+          if (structureDefinition == null) {
+            throw new IllegalArgumentException(
+                String.format("Unable to find definition for %s", typeCode));
+          }
 
           // TODO document why we are resetting the stack here; it is not clear
           //  why this cannot lead to infinite recursion for choice types. If
@@ -545,12 +553,24 @@ public abstract class StructureDefinitions {
       List<String> referenceProfiles = parentElement.getReferenceTargetProfiles();
       List<String> referenceTypes =
           referenceProfiles.stream()
-              .map(profile -> getStructureDefinition(profile).getType())
+              .map(
+                  profile -> {
+                    IStructureDefinition structureDefinition = getStructureDefinition(profile);
+                    if (structureDefinition == null) {
+                      throw new IllegalArgumentException(
+                          String.format("Unable to find definition for %s", profile));
+                    }
+                    return structureDefinition.getType();
+                  })
               .sorted()
               // Retrieve only the unique reference types
               .distinct()
               .collect(Collectors.toList());
-      return visitor.visitReference(parentElement.toString(), referenceTypes, childElements);
+
+      String elementName = DefinitionVisitorsUtil.elementName(parentElement.getPath());
+      String elementFullPath = DefinitionVisitorsUtil.pathFromStack(elementName, stack);
+      return visitor.visitReference(
+          DefinitionVisitorsUtil.recordNameFor(elementFullPath), referenceTypes, childElements);
     } else {
       String rootName = DefinitionVisitorsUtil.elementName(root.getPath());
 
