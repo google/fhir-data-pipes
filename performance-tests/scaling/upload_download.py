@@ -19,6 +19,7 @@ PROJECT_ID = os.environ["PROJECT_ID"]
 POSTGRES_DB_INSTANCE = os.environ["POSTGRES_DB_INSTANCE"]
 JDBC_MODE = os.environ["JDBC_MODE"] == 'true'
 FHIR_ETL_RUNNER = os.environ["FHIR_ETL_RUNNER"]
+NUM_WORKERS = os.environ["NUM_WORKERS"]
 
 def main():
     shell(f"mkdir -p {TMP_DIR}")
@@ -47,7 +48,7 @@ def run_fhir_etl(parquet_dir):
         f"--outputParquetPath={parquet_dir}",
         # Dataflow runner:
         f"--region={SQL_ZONE}",
-        "--numWorkers=30",
+        f"--numWorkers={NUM_WORKERS}",
         "--gcpTempLocation=gs://fhir-analytics-test/dataflow_temp"
     ]
 
