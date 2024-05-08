@@ -9,14 +9,15 @@ set -o nounset
 
 case "$DB_TYPE" in
   "alloy")
-    if [ "$RUNNING_ON_HAPI_VM" = false ]; then
-      ALLOY_INSTANCE="projects/fhir-analytics-test/locations/us-central1/clusters/pipeline-scaling-alloydb-1/instances/pipeline-scaling-alloydb-largest"
-      nohup ~/Downloads/alloydb-auth-proxy $ALLOY_INSTANCE &
-    fi
+    ALLOY_INSTANCE="projects/fhir-analytics-test/locations/us-central1/clusters/pipeline-scaling-alloydb-1/instances/pipeline-scaling-alloydb-largest"
+    nohup ~/Downloads/alloydb-auth-proxy $ALLOY_INSTANCE &
     if [[ "$ENABLE_UPLOAD" = true ]]; then
       for cmd in "DROP DATABASE IF EXISTS" "CREATE DATABASE"; do
-        PGPASSWORD="$DB_PASSWORD" psql -h 127.0.0.1 -p 5432 -U postgres -c "$cmd $DB_PATIENTS"
+        PGPASSWORD="$DB_PASSWORD" psql -h 127.0.0.1 -p 5432 -U "$DB_USERNAME" -c "$cmd $DB_PATIENTS"
       done
+    else
+      # Check DB connection.
+      PGPASSWORD="$DB_PASSWORD" psql -h 127.0.0.1 -p 5432 -U "$DB_USERNAME" -c "SELECT 1"
     fi
     DB_CONNECTION="jdbc:postgresql:///${DB_PATIENTS}?127.0.0.1:5432"
     ;;
@@ -37,6 +38,7 @@ APPLICATION_YAML="~/gits/hapi-fhir-jpaserver-starter/src/main/resources/applicat
 
 # Update the DB connection config.
 "${RUN_ON_HAPI_STANZA[@]}" "sed -i '/.*url: jdbc:postgresql:.*/c\\    url: ${DB_CONNECTION}' $APPLICATION_YAML"
+"${RUN_ON_HAPI_STANZA[@]}" "sed -i '/    username: .*/c\\    username: ${DB_USERNAME}' $APPLICATION_YAML"
 # Start the HAPI server.
 # shellcheck disable=SC2088
 nohup "${RUN_ON_HAPI_STANZA[@]}" "~/gits/fhir-data-pipes/performance-tests/scaling/start_hapi_server.sh" >> ~/nohup-hapi.out 2>&1 &
