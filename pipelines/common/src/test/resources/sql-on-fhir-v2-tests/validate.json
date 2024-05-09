@@ -1,11 +1,7 @@
 {
   "title": "validate",
   "description": "TBD",
-  "fhirVersion": [
-    "5.0.0",
-    "4.0.1",
-    "3.0.2"
-  ],
+  "fhirVersion": ["5.0.0", "4.0.1", "3.0.2"],
   "resources": [
     {
       "resourceType": "Patient",
