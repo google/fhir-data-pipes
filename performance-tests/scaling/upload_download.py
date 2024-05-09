@@ -45,15 +45,22 @@ def download():
 
 def run_fhir_etl(parquet_dir):
     common_etl_args = [
-        "--fasterCopy=true",
         f"--runner={FHIR_ETL_RUNNER}",
         f"--resourceList=Patient,Encounter,Observation",
-        f"--outputParquetPath={parquet_dir}",
-        # Dataflow runner:
-        f"--region={SQL_ZONE}",
-        f"--numWorkers={NUM_WORKERS}",
-        "--gcpTempLocation=gs://fhir-analytics-test/dataflow_temp"
+        f"--outputParquetPath={parquet_dir}"
     ]
+    if FHIR_ETL_RUNNER == "DataflowRunner":
+        common_etl_args.extend([
+            f"--region={SQL_ZONE}",
+            f"--numWorkers={NUM_WORKERS}",
+            "--gcpTempLocation=gs://fhir-analytics-test/dataflow_temp",
+        ])
+    if FHIR_ETL_RUNNER == "FlinkRunner":
+        common_etl_args.extend([
+            "--parallelism=100",
+            "--maxParallelism=100",
+            "--fasterCopy=true",
+        ])
 
     if not JDBC_MODE:
         # Test HAPI server readiness.

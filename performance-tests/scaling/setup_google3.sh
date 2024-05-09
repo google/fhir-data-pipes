@@ -10,6 +10,7 @@ set -o nounset
 case "$DB_TYPE" in
   "alloy")
     ALLOY_INSTANCE="projects/fhir-analytics-test/locations/us-central1/clusters/pipeline-scaling-alloydb-1/instances/pipeline-scaling-alloydb-largest"
+    sudo killall alloydb-auth-proxy || true
     nohup ~/Downloads/alloydb-auth-proxy $ALLOY_INSTANCE &
     if [[ "$ENABLE_UPLOAD" = true ]]; then
       for cmd in "DROP DATABASE IF EXISTS" "CREATE DATABASE"; do
@@ -17,6 +18,7 @@ case "$DB_TYPE" in
       done
     else
       # Check DB connection.
+      sleep 1
       PGPASSWORD="$DB_PASSWORD" psql -h 127.0.0.1 -p 5432 -U "$DB_USERNAME" -c "SELECT 1"
     fi
     DB_CONNECTION="jdbc:postgresql:///${DB_PATIENTS}?127.0.0.1:5432"
