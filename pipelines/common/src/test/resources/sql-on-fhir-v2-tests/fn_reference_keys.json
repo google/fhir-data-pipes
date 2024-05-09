@@ -1,11 +1,7 @@
 {
   "title": "fn_reference_keys",
   "description": "TBD",
-  "fhirVersion": [
-    "5.0",
-    "4.0",
-    "3.0"
-  ],
+  "fhirVersion": ["5.0.0", "4.0.1", "3.0.2"],
   "resources": [
     {
       "resourceType": "Patient",
