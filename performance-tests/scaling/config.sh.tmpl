@@ -13,4 +13,7 @@ export FHIR_ETL_RUNNER=DataflowRunner
 # pipeline-scaling-1, pipeline-scaling-2, pipeline-scaling-belgium
 export POSTGRES_DB_INSTANCE="pipeline-scaling-2"
 export PROJECT_ID="fhir-analytics-test"
-export NUM_WORKERS=100
+# DataflowRunner workers
+export DATAFLOW_WORKERS=65
+# FlinkRunner parallelization
+export FLINK_PARALLELISM=150

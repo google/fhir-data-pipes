@@ -19,7 +19,8 @@ PROJECT_ID = os.environ["PROJECT_ID"]
 POSTGRES_DB_INSTANCE = os.environ["POSTGRES_DB_INSTANCE"]
 JDBC_MODE = os.environ["JDBC_MODE"] == 'true'
 FHIR_ETL_RUNNER = os.environ["FHIR_ETL_RUNNER"]
-NUM_WORKERS = os.environ["NUM_WORKERS"]
+DATAFLOW_WORKERS = os.environ["DATAFLOW_WORKERS"]
+FLINK_PARALLEL = os.environ["FLINK_PARALLEL"]
 
 def main():
     shell(f"mkdir -p {TMP_DIR}")
@@ -47,18 +48,17 @@ def run_fhir_etl(parquet_dir):
     common_etl_args = [
         f"--runner={FHIR_ETL_RUNNER}",
         f"--resourceList=Patient,Encounter,Observation",
-        f"--outputParquetPath={parquet_dir}"
+        f"--outputParquetPath={parquet_dir}",
     ]
     if FHIR_ETL_RUNNER == "DataflowRunner":
         common_etl_args.extend([
             f"--region={SQL_ZONE}",
-            f"--numWorkers={NUM_WORKERS}",
+            f"--numWorkers={DATAFLOW_WORKERS}",
             "--gcpTempLocation=gs://fhir-analytics-test/dataflow_temp",
         ])
     if FHIR_ETL_RUNNER == "FlinkRunner":
         common_etl_args.extend([
-            "--parallelism=100",
-            "--maxParallelism=100",
+            f"--parallelism={FLINK_PARALLEL}",
             "--fasterCopy=true",
         ])
 
