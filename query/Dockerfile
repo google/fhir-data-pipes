@@ -24,6 +24,7 @@ RUN apt-get update -y && apt-get install -y libpq-dev
 USER ${NB_UID}
 COPY --chown=jovyan:users queries_and_views.ipynb .
 COPY --chown=jovyan:users queries_large.ipynb .
+COPY --chown=jovyan:users test_duckdb.ipynb .
 COPY --chown=jovyan:users requirements.txt .
 
 RUN pip install -r requirements.txt
