@@ -16,6 +16,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
+import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
 /** Abstract base class to visit FHIR structure definitions. */
@@ -158,10 +159,6 @@ public abstract class StructureDefinitions {
     String profileUrl = element.getFirstTypeProfile();
     if (profileUrl != null) {
       definition = getStructureDefinition(profileUrl);
-      if (definition == null) {
-        throw new IllegalArgumentException(
-            String.format("Unable to find definition for %s", profileUrl));
-      }
     }
 
     List<StructureField<T>> extensions;
@@ -318,10 +315,6 @@ public abstract class StructureDefinitions {
           choiceTypes.put(typeCode, child);
         } else {
           IStructureDefinition structureDefinition = getStructureDefinition(typeCode);
-          if (structureDefinition == null) {
-            throw new IllegalArgumentException(
-                String.format("Unable to find definition for %s", typeCode));
-          }
 
           // TODO document why we are resetting the stack here; it is not clear
           //  why this cannot lead to infinite recursion for choice types. If
@@ -502,24 +495,9 @@ public abstract class StructureDefinitions {
 
     IStructureDefinition definition = getStructureDefinition(resourceTypeUrl);
 
-    if (definition == null) {
-      throw new IllegalArgumentException("Unable to find definition for " + resourceTypeUrl);
-    }
-
     List<IStructureDefinition> containedDefinitions =
         containedResourceTypeUrls.stream()
-            .map(
-                containedResourceTypeUrl -> {
-                  IStructureDefinition containedDefinition =
-                      getStructureDefinition(containedResourceTypeUrl);
-
-                  if (containedDefinition == null) {
-                    throw new IllegalArgumentException(
-                        "Unable to find definition for " + containedResourceTypeUrl);
-                  }
-
-                  return containedDefinition;
-                })
+            .map(containedResourceTypeUrl -> getStructureDefinition(containedResourceTypeUrl))
             .collect(Collectors.toList());
 
     return transformRoot(visitor, definition, containedDefinitions);
@@ -553,15 +531,7 @@ public abstract class StructureDefinitions {
       List<String> referenceProfiles = parentElement.getReferenceTargetProfiles();
       List<String> referenceTypes =
           referenceProfiles.stream()
-              .map(
-                  profile -> {
-                    IStructureDefinition structureDefinition = getStructureDefinition(profile);
-                    if (structureDefinition == null) {
-                      throw new IllegalArgumentException(
-                          String.format("Unable to find definition for %s", profile));
-                    }
-                    return structureDefinition.getType();
-                  })
+              .map(profile -> getStructureDefinition(profile).getType())
               .sorted()
               // Retrieve only the unique reference types
               .distinct()
@@ -620,12 +590,16 @@ public abstract class StructureDefinitions {
   }
 
   /**
-   * Returns the structure definition interface corresponding to the given URL.
+   * Returns the structure definition interface corresponding to the given resourceUrl.
    *
    * @param resourceUrl it can be a resource type like `Patient` or a profile URL.
-   * @return the {@link IStructureDefinition} corresponding to the `resourceUrl`.
+   * @return the {@link IStructureDefinition} corresponding to the `resourceUrl`
+   * @throws IllegalArgumentException if the structure definition cannot be found for the given
+   *     resourceUrl.
    */
-  protected abstract IStructureDefinition getStructureDefinition(String resourceUrl);
+  @Nonnull
+  protected abstract IStructureDefinition getStructureDefinition(String resourceUrl)
+      throws IllegalArgumentException;
 
   /**
    * Returns the structure definition interface corresponding to the given element.

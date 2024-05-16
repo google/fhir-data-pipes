@@ -8,6 +8,7 @@ import com.cerner.bunsen.definitions.StructureDefinitions;
 import java.util.Collection;
 import java.util.List;
 import java.util.stream.Collectors;
+import javax.annotation.Nonnull;
 import org.hl7.fhir.instance.model.api.IBaseResource;
 import org.hl7.fhir.r4.model.CanonicalType;
 import org.hl7.fhir.r4.model.ElementDefinition;
@@ -38,12 +39,16 @@ public class R4StructureDefinitions extends StructureDefinitions {
   }
 
   @Override
-  protected IStructureDefinition getStructureDefinition(String resourceUrl) {
+  @Nonnull
+  protected IStructureDefinition getStructureDefinition(String resourceUrl)
+      throws IllegalArgumentException {
     IBaseResource baseResource =
         context.getValidationSupport().fetchStructureDefinition(resourceUrl);
-    return baseResource == null
-        ? null
-        : new StructureDefinitionWrapper((StructureDefinition) baseResource);
+    if (baseResource == null) {
+      throw new IllegalArgumentException(
+          String.format("Unable to find definition for %s", resourceUrl));
+    }
+    return new StructureDefinitionWrapper((StructureDefinition) baseResource);
   }
 
   // FHIR version specific interface implementations
