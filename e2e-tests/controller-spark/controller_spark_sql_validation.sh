@@ -182,11 +182,12 @@ function check_parquet() {
     # check whether output directory has started receiving parquet files.
     if [[ "$(ls -A $output)" ]]
     then
-      local total_patients=$(java -jar ./parquet-tools-1.11.1.jar rowcount "${output}/*/Patient/" | awk '{print $3}')
-      local total_encounters=$(java -jar ./parquet-tools-1.11.1.jar rowcount "${output}/*/Encounter/" \
-       | awk '{print $3}')
-      local total_observations=$(java -jar ./parquet-tools-1.11.1.jar rowcount "${output}/*/Observation/" \
-       | awk '{print $3}')
+      local total_patients=$(java -Xms16g -Xmx16g -jar ./parquet-tools-1.11.1.jar rowcount \
+      "${output}/*/Patient/" | awk '{print $3}')
+      local total_encounters=$(java -Xms16g -Xmx16g -jar ./parquet-tools-1.11.1.jar rowcount \
+      "${output}/*/Encounter/" | awk '{print $3}')
+      local total_observations=$(java -Xms16g -Xmx16g -jar ./parquet-tools-1.11.1.jar rowcount \
+      "${output}/*/Observation/" | awk '{print $3}')
 
       print_message "Total patients: $total_patients"
       print_message "Total encounters: $total_encounters"
@@ -355,7 +356,9 @@ clear
 
 add_resource
 update_resource
-sleep 10
+# Provide enough buffer time before triggering the incremental run so that the previous full run
+# completes fully (including creation of hive tables)
+sleep 60
 # Incremental run.
 run_pipeline "INCREMENTAL"
 check_parquet true

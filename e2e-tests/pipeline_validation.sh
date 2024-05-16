@@ -196,16 +196,18 @@ function fhir_source_query() {
 #################################################
 function test_parquet_sink() {
   print_message "Counting number of patients, encounters and obs sinked to parquet files"
-  local total_patients_streamed=$(java -jar ./controller-spark/parquet-tools-1.11.1.jar rowcount \
-  "${HOME_PATH}/${PARQUET_SUBDIR}/Patient/" | awk '{print $3}')
+  local total_patients_streamed=$(java -Xms16g -Xmx16g -jar \
+  ./controller-spark/parquet-tools-1.11.1.jar rowcount "${HOME_PATH}/${PARQUET_SUBDIR}/Patient/" | \
+  awk '{print $3}')
   print_message "Total patients synced to parquet ---> ${total_patients_streamed}"
 
-  local total_encounters_streamed=$(java -jar ./controller-spark/parquet-tools-1.11.1.jar rowcount \
-  "${HOME_PATH}/${PARQUET_SUBDIR}/Encounter/" | awk '{print $3}')
+  local total_encounters_streamed=$(java -Xms16g -Xmx16g -jar \
+  ./controller-spark/parquet-tools-1.11.1.jar rowcount "${HOME_PATH}/${PARQUET_SUBDIR}/Encounter/" \
+  | awk '{print $3}')
   print_message "Total encounters synced to parquet ---> ${total_encounters_streamed}"
 
-  local total_obs_streamed=$(java -jar ./controller-spark/parquet-tools-1.11.1.jar rowcount \
-  "${HOME_PATH}/${PARQUET_SUBDIR}/Observation/" | awk '{print $3}')
+  local total_obs_streamed=$(java -Xms16g -Xmx16g -jar ./controller-spark/parquet-tools-1.11.1.jar \
+  rowcount "${HOME_PATH}/${PARQUET_SUBDIR}/Observation/" | awk '{print $3}')
   print_message "Total obs synced to parquet ---> ${total_obs_streamed}"
 
   if [[ "${total_patients_streamed}" == "${TOTAL_TEST_PATIENTS}" && "${total_encounters_streamed}" \
