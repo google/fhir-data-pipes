@@ -100,6 +100,39 @@ function setup() {
   fi
 }
 
+#######################################################################
+# Function queries fhir server and write results to json file
+# Globals:
+#   HOME_PATH
+#   PARQUET_SUBDIR
+# Arguments:
+#  server_url: flag to differentiate behavior between incremental and batch runs.
+#  patient_json_file : file to write Patient results
+#  encounter_json_file : file to write Encounter results
+#  obs_json_file : file to write Observation results
+#######################################################################
+function query_fhir_server(){
+  local query_param="?_summary=count"
+  local server_url=$1
+  local patient_json_file=$2
+  local encounter_json_file=$3
+  local obs_json_file=$4
+
+  print_message "Finding number of patients, encounters and obs in FHIR server"
+
+  curl -L -X GET -u hapi:hapi --connect-timeout 5 --max-time 20 \
+  "${server_url}/fhir/Patient${query_param}" 2>/dev/null \
+  >"${HOME_PATH}/${PARQUET_SUBDIR}/${patient_json_file}"
+
+  curl -L -X GET -u hapi:hapi --connect-timeout 5 --max-time 20 \
+  "${server_url}/fhir/Encounter${query_param}" 2>/dev/null \
+  >"${HOME_PATH}/${PARQUET_SUBDIR}/${encounter_json_file}"
+
+  curl -L -X GET -u hapi:hapi --connect-timeout 5 --max-time 20 \
+  "${server_url}/fhir/Observation${query_param}" 2>/dev/null\
+  >"${HOME_PATH}/${PARQUET_SUBDIR}/${obs_json_file}"
+}
+
 #################################################
 # Function to count resources in source fhir server
 # Globals:
@@ -111,26 +144,14 @@ function setup() {
 #   TOTAL_TEST_OBS
 #################################################
 function fhir_source_query() {
-  local query_param="?_summary=count"
-  local fhir_username="hapi"
-  local fhir_password="hapi"
-  local fhir_url_extension="/fhir"
 
-  curl -L -X GET -u $fhir_username:$fhir_password --connect-timeout 5 --max-time 20 \
-  "${SOURCE_FHIR_SERVER_URL}${fhir_url_extension}/Patient${query_param}" 2>/dev/null \
-  >"${HOME_PATH}/${PARQUET_SUBDIR}/patients.json"
+  query_fhir_server "${SOURCE_FHIR_SERVER_URL}"  "patients.json" "encounters.json" "obs.json"
   TOTAL_TEST_PATIENTS=$(jq '.total' "${HOME_PATH}/${PARQUET_SUBDIR}/patients.json")
   print_message "Total FHIR source test patients ---> ${TOTAL_TEST_PATIENTS}"
 
-  curl -L -X GET -u $fhir_username:$fhir_password --connect-timeout 5 --max-time 20 \
-    "${SOURCE_FHIR_SERVER_URL}${fhir_url_extension}/Encounter${query_param}" \
-    2>/dev/null >"${HOME_PATH}/${PARQUET_SUBDIR}/encounters.json"
   TOTAL_TEST_ENCOUNTERS=$(jq '.total' "${HOME_PATH}/${PARQUET_SUBDIR}/encounters.json")
   print_message "Total FHIR source test encounters ---> ${TOTAL_TEST_ENCOUNTERS}"
 
-  curl -L -X GET -u $fhir_username:$fhir_password --connect-timeout 5 --max-time 20 \
-    "${SOURCE_FHIR_SERVER_URL}${fhir_url_extension}/Observation${query_param}" \
-    2>/dev/null >"${HOME_PATH}/${PARQUET_SUBDIR}/obs.json"
   TOTAL_TEST_OBS=$(jq '.total' "${HOME_PATH}/${PARQUET_SUBDIR}/obs.json")
   print_message "Total FHIR source test obs ---> ${TOTAL_TEST_OBS}"
 }
@@ -361,22 +382,8 @@ function validate_updated_resource() {
 #################################################
 function test_fhir_sink(){
   local runMode=$1
-  local patient_query_param="?_summary=count"
-  local enc_obs_query_param="?_summary=count"
 
-  print_message "Finding number of patients, encounters and obs in FHIR server"
-
-  curl -L -X GET -u hapi:hapi --connect-timeout 5 --max-time 20 \
-  "${SINK_FHIR_SERVER_URL}/fhir/Patient${patient_query_param}" 2>/dev/null \
-  >"${HOME_PATH}/${PARQUET_SUBDIR}/patients-sink.json"
-
-  curl -L -X GET -u hapi:hapi --connect-timeout 5 --max-time 20 \
-  "${SINK_FHIR_SERVER_URL}/fhir/Encounter${enc_obs_query_param}" 2>/dev/null \
-  >"${HOME_PATH}/${PARQUET_SUBDIR}/encounters-sink.json"
-
-  curl -L -X GET -u hapi:hapi --connect-timeout 5 --max-time 20 \
-  "${SINK_FHIR_SERVER_URL}/fhir/Observation${enc_obs_query_param}" 2>/dev/null\
-  >"${HOME_PATH}/${PARQUET_SUBDIR}/obs-sink.json"
+  query_fhir_server "${SINK_FHIR_SERVER_URL}"  "patients-sink.json" "encounters-sink.json" "obs-sink.json"
 
   print_message "Counting number of patients, encounters and obs sinked to fhir files"
 
