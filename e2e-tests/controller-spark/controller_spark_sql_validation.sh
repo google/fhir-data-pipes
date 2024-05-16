@@ -356,7 +356,9 @@ clear
 
 add_resource
 update_resource
-sleep 10
+# Provide enough buffer time before triggering the incremental run so that the previous full run
+# completes fully (including creation of hive tables)
+sleep 60
 # Incremental run.
 run_pipeline "INCREMENTAL"
 check_parquet true
