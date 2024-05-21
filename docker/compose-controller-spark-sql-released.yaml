@@ -54,7 +54,7 @@ version: '2.4'
 
 services:
   pipeline-controller:
-    image: us-docker.pkg.dev/cloud-build-fhir/fhir-analytics/main:latest
+    image: itechuw/fhir-data-pipes:develop
     container_name: pipeline-controller
     volumes:
       - ${PIPELINE_CONFIG}:/app/config:ro

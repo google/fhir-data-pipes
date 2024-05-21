@@ -167,6 +167,13 @@ fhirdata:
   # empty string disables this feature.
   sinkDbConfigPath: "config/hapi-postgres-config_local_views.json"
 
+  # The base URL of the FHIR Store/Sink server 
+  fhirSinkPath: "http://172.17.0.1:8098/fhir"
+  # The following user-name/password should be set if the FHIR store supports Basic Auth.
+  #sinkUserName: "hapi"
+  #sinkPassword: "hapi123"
+
+
   # The maximum depth for traversing StructureDefinitions in Parquet schema
   # generation (if it is non-positive, the default 1 will be used). Note in most
   # cases, the default 1 is sufficient and increasing that can result in

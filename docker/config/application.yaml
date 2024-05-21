@@ -43,6 +43,9 @@ fhirdata:
   rowGroupSizeForParquetFiles: 33554432   # 32mb
   viewDefinitionsDir: "config/views"
   sinkDbConfigPath: "config/hapi-postgres-config_local_views.json"
+  fhirSinkPath: "http://sink-server:8080/fhir"
+  #sinkUserName: "hapi"
+  #sinkPassword: "hapi123"
   recursiveDepth: 1
 
 # Enable spring boot actuator end points, use "*" to expose all endpoints, or a comma-separated

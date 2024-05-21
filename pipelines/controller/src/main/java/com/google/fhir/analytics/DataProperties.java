@@ -104,6 +104,12 @@ public class DataProperties {
 
   private String fhirServerOAuthClientSecret;
 
+  private String fhirSinkPath;
+
+  public String sinkUserName;
+
+  public String sinkPassword;
+
   private String structureDefinitionsPath;
 
   private int rowGroupSizeForParquetFiles;
@@ -196,6 +202,12 @@ public class DataProperties {
       options.setRowGroupSizeForParquetFiles(rowGroupSizeForParquetFiles);
     }
 
+    if (!Strings.isNullOrEmpty(fhirSinkPath)) {
+      options.setFhirSinkPath(fhirSinkPath);
+      options.setSinkUserName(Strings.nullToEmpty(sinkUserName));
+      options.setSinkPassword(Strings.nullToEmpty(sinkPassword));
+    }
+
     // Using underscore for suffix as hyphens are discouraged in hive table names.
     String timestampSuffix =
         Instant.now().toString().replace(":", "-").replace("-", "_").replace(".", "_");
@@ -230,6 +242,9 @@ public class DataProperties {
         new ConfigFields("fhirdata.dbConfig", dbConfig, "", ""),
         new ConfigFields("fhirdata.viewDefinitionsDir", viewDefinitionsDir, "", ""),
         new ConfigFields("fhirdata.sinkDbConfigPath", sinkDbConfigPath, "", ""),
+        new ConfigFields("fhirdata.fhirSinkPath", fhirSinkPath, "", ""),
+        new ConfigFields("fhirdata.sinkUserName", sinkUserName, "", ""),
+        new ConfigFields("fhirdata.sinkPassword", sinkPassword, "", ""),
         new ConfigFields("fhirdata.structureDefinitionsPath", structureDefinitionsPath, "", ""),
         new ConfigFields("fhirdata.fhirVersion", fhirVersion.name(), "", ""),
         new ConfigFields(

@@ -75,6 +75,7 @@ function print_message() {
 #   HOME_PATH
 #   PARQUET_SUBDIR
 #   SOURCE_FHIR_SERVER_URL
+#   SINK_FHIR_SERVER_URL
 #   PIPELINE_CONTROLLER_URL
 #   THRIFTSERVER_URL
 # Arguments:
@@ -88,13 +89,48 @@ function setup() {
   HOME_PATH=$1
   PARQUET_SUBDIR=$2
   SOURCE_FHIR_SERVER_URL='http://localhost:8091'
+  SINK_FHIR_SERVER_URL='http://localhost:8098'
   PIPELINE_CONTROLLER_URL='http://localhost:8090'
   THRIFTSERVER_URL='localhost:10001'
   if [[ $3 = "--use_docker_network" ]]; then
     SOURCE_FHIR_SERVER_URL='http://hapi-server:8080'
+    SINK_FHIR_SERVER_URL='http://sink-server:8080'
     PIPELINE_CONTROLLER_URL='http://pipeline-controller:8080'
     THRIFTSERVER_URL='spark:10000'
   fi
+}
+
+#######################################################################
+# Function queries fhir server and write results to json file
+# Globals:
+#   HOME_PATH
+#   PARQUET_SUBDIR
+# Arguments:
+#  server_url: flag to differentiate behavior between incremental and batch runs.
+#  patient_json_file : file to write Patient results
+#  encounter_json_file : file to write Encounter results
+#  obs_json_file : file to write Observation results
+#######################################################################
+function query_fhir_server(){
+  local query_param="?_summary=count"
+  local server_url=$1
+  local patient_json_file=$2
+  local encounter_json_file=$3
+  local obs_json_file=$4
+
+  print_message "Finding number of patients, encounters and obs in FHIR server"
+
+  curl -L -X GET -u hapi:hapi --connect-timeout 5 --max-time 20 \
+  "${server_url}/fhir/Patient${query_param}" 2>/dev/null \
+  >"${HOME_PATH}/${PARQUET_SUBDIR}/${patient_json_file}"
+
+  curl -L -X GET -u hapi:hapi --connect-timeout 5 --max-time 20 \
+  "${server_url}/fhir/Encounter${query_param}" 2>/dev/null \
+  >"${HOME_PATH}/${PARQUET_SUBDIR}/${encounter_json_file}"
+
+  curl -L -X GET -u hapi:hapi --connect-timeout 5 --max-time 20 \
+  "${server_url}/fhir/Observation${query_param}" 2>/dev/null\
+  >"${HOME_PATH}/${PARQUET_SUBDIR}/${obs_json_file}"
 }
 
 #################################################
@@ -108,26 +144,14 @@ function setup() {
 #   TOTAL_TEST_OBS
 #################################################
 function fhir_source_query() {
-  local query_param="?_summary=count"
-  local fhir_username="hapi"
-  local fhir_password="hapi"
-  local fhir_url_extension="/fhir"
 
-  curl -L -X GET -u $fhir_username:$fhir_password --connect-timeout 5 --max-time 20 \
-  "${SOURCE_FHIR_SERVER_URL}${fhir_url_extension}/Patient${query_param}" 2>/dev/null \
-  >"${HOME_PATH}/${PARQUET_SUBDIR}/patients.json"
+  query_fhir_server "${SOURCE_FHIR_SERVER_URL}"  "patients.json" "encounters.json" "obs.json"
   TOTAL_TEST_PATIENTS=$(jq '.total' "${HOME_PATH}/${PARQUET_SUBDIR}/patients.json")
   print_message "Total FHIR source test patients ---> ${TOTAL_TEST_PATIENTS}"
 
-  curl -L -X GET -u $fhir_username:$fhir_password --connect-timeout 5 --max-time 20 \
-    "${SOURCE_FHIR_SERVER_URL}${fhir_url_extension}/Encounter${query_param}" \
-    2>/dev/null >"${HOME_PATH}/${PARQUET_SUBDIR}/encounters.json"
   TOTAL_TEST_ENCOUNTERS=$(jq '.total' "${HOME_PATH}/${PARQUET_SUBDIR}/encounters.json")
   print_message "Total FHIR source test encounters ---> ${TOTAL_TEST_ENCOUNTERS}"
 
-  curl -L -X GET -u $fhir_username:$fhir_password --connect-timeout 5 --max-time 20 \
-    "${SOURCE_FHIR_SERVER_URL}${fhir_url_extension}/Observation${query_param}" \
-    2>/dev/null >"${HOME_PATH}/${PARQUET_SUBDIR}/obs.json"
   TOTAL_TEST_OBS=$(jq '.total' "${HOME_PATH}/${PARQUET_SUBDIR}/obs.json")
   print_message "Total FHIR source test obs ---> ${TOTAL_TEST_OBS}"
 }
@@ -163,7 +187,7 @@ function run_pipeline() {
 #######################################################################
 function check_parquet() {
   local isIncremental=$1
-  local runtime="5 minute"
+  local runtime="15 minute"
   local end_time=$(date -ud "$runtime" +%s)
   local output="${HOME_PATH}/${PARQUET_SUBDIR}"
   local timeout=true
@@ -200,7 +224,7 @@ function check_parquet() {
           timeout=false
           break
       else
-          sleep 10
+          sleep 20
       fi
     fi
   done
@@ -345,23 +369,65 @@ function validate_updated_resource() {
   fi
 }
 
+
+#################################################
+# Function that counts resources in  FHIR server and compares output to what is 
+#  in the source FHIR server
+# Globals:
+#   HOME_PATH
+#   PARQUET_SUBDIR
+#   SINK_FHIR_SERVER_URL
+#   TOTAL_TEST_PATIENTS
+#   TOTAL_TEST_ENCOUNTERS
+#   TOTAL_TEST_OBS
+#################################################
+function test_fhir_sink(){
+  local runMode=$1
+
+  query_fhir_server "${SINK_FHIR_SERVER_URL}"  "patients-sink.json" "encounters-sink.json" "obs-sink.json"
+
+  print_message "Counting number of patients, encounters and obs sinked to fhir files"
+
+  local total_patients_sinked_fhir=$(jq '.total' "${HOME_PATH}/${PARQUET_SUBDIR}/patients-sink.json")
+  print_message "Total patients sinked to fhir ---> ${total_patients_sinked_fhir}"
+
+  local total_encounters_sinked_fhir=$(jq '.total' "${HOME_PATH}/${PARQUET_SUBDIR}/encounters-sink.json")
+  print_message "Total encounters sinked to fhir ---> ${total_encounters_sinked_fhir}"
+
+  local total_obs_sinked_fhir=$(jq '.total' "${HOME_PATH}/${PARQUET_SUBDIR}/obs-sink.json")
+  print_message "Total observations sinked to fhir ---> ${total_obs_sinked_fhir}"
+
+  if [[ "${total_patients_sinked_fhir}" == "${TOTAL_TEST_PATIENTS}" && "${total_encounters_sinked_fhir}" \
+      == "${TOTAL_TEST_ENCOUNTERS}" && "${total_obs_sinked_fhir}" == "${TOTAL_TEST_OBS}" ]] \
+  ; then
+  print_message "FHIR SERVER SINK EXECUTED SUCCESSFULLY USING ${runMode} MODE"
+  else
+  print_message "FHIR SERVER SINK TEST FAILED USING ${runMode} MODE"
+  exit 1
+  fi
+}
+
 validate_args  "$@"
 setup "$@"
 fhir_source_query
 sleep 50
 run_pipeline "FULL"
 check_parquet false
+test_fhir_sink "FULL"
 
 clear
 
 add_resource
 update_resource
+
 # Provide enough buffer time before triggering the incremental run so that the previous full run
 # completes fully (including creation of hive tables)
 sleep 60
 # Incremental run.
 run_pipeline "INCREMENTAL"
 check_parquet true
+fhir_source_query
+test_fhir_sink "INCREMENTAL"
 
 validate_resource_tables
 validate_resource_tables_data
