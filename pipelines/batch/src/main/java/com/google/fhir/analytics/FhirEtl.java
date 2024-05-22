@@ -448,7 +448,8 @@ public class FhirEtl {
   }
 
   public static void main(String[] args)
-      throws IOException, SQLException, ViewDefinitionException, ProfileException {
+      throws IOException, SQLException, ViewDefinitionException, ProfileException,
+          InterruptedException {
 
     AvroConversionUtil.initializeAvroConverters();
 
@@ -465,7 +466,10 @@ public class FhirEtl {
     List<Pipeline> pipelines = setupAndBuildPipelines(options, avroConversionUtil);
     EtlUtils.runMultiplePipelinesWithTimestamp(
         pipelines, options, avroConversionUtil.getFhirContext());
-
+    // TODO this is a terrible method to force closure of Parquet files; this is
+    //  done for demonstration only and should be removed before merge!
+    System.gc();
+    Thread.sleep(10000);
     log.info("DONE!");
   }
 }

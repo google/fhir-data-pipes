@@ -226,6 +226,7 @@ abstract class FetchSearchPageFn<T> extends DoFn<T, KV<String, Integer>> {
    */
   @FinishBundle
   public void finishBundle(FinishBundleContext context) {
+    /*
     try {
       if (parquetUtil != null) {
         parquetUtil.flushAll();
@@ -235,6 +236,7 @@ abstract class FetchSearchPageFn<T> extends DoFn<T, KV<String, Integer>> {
       log.error("At finishBundle caught exception ", e);
       throw new IllegalStateException(e);
     }
+     */
   }
 
   @Teardown
@@ -243,7 +245,7 @@ abstract class FetchSearchPageFn<T> extends DoFn<T, KV<String, Integer>> {
     // stopped, the runner may choose not to call teardown. Only keep closing/cleanups here. See:
     // https://beam.apache.org/releases/javadoc/current/org/apache/beam/sdk/transforms/DoFn.Teardown.html
     if (parquetUtil != null) {
-      parquetUtil.closeAllWriters();
+      // parquetUtil.closeAllWriters();
     }
   }
 
