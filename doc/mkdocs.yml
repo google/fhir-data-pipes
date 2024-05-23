@@ -1,0 +1,71 @@
+site_name: FHIR Data Pipes Docs
+theme:
+  name: material
+theme:
+  name: material
+  features:
+    - navigation.tabs
+    - navigation.sections
+    - toc.integrate
+    - navigation.top
+    - search.suggest
+    - search.highlight
+    - content.tabs.link
+    - content.code.annotation
+    - content.code.copy
+    - navigation.footer
+  language: en
+  palette:
+    - scheme: default
+      toggle:
+        icon: material/toggle-switch-off-outline 
+        name: Switch to dark mode
+      primary: indigo
+      accent: purple 
+    - scheme: slate 
+      toggle:
+        icon: material/toggle-switch
+        name: Switch to light mode    
+      primary: indigo
+      accent: lime
+font:
+    text: inter
+
+plugins:
+  - search
+
+site_url: https://example.com/foo/
+
+nav:
+  - Home: 'index.md'
+  - Getting Started: 'getting_started.md'
+  - Advanced Guides: 'advanced_guides.md'
+  - Tutorials:
+    - 'Single Machine Deployment': 'tutorial_single_machine.md'
+    - 'Visualize Parquet DWH with Apache Superset': 'tutorial_add_dashboard.md'
+    - 'RDBMS DWH using FHIR ViewDefinitions': 'tutorial_lossy_example.md'
+  - Community:
+    - 'Support' : 'support.md'
+    - 'Contributing': 'contributing.md'
+    - 'Release process': 'release_process.md'
+
+markdown_extensions:
+  - pymdownx.highlight:
+      anchor_linenums: true
+  - pymdownx.inlinehilite
+  - pymdownx.snippets
+  - admonition
+  - pymdownx.arithmatex:
+      generic: true
+  - footnotes
+  - pymdownx.details
+  - pymdownx.superfences
+  - pymdownx.mark
+  - attr_list
+  - pymdownx.emoji:
+      emoji_index: !!python/name:materialx.emoji.twemoji
+      emoji_generator: !!python/name:materialx.emoji.to_svg
+
+copyright: |
+  &copy; 2024 Google Health Open Health Stack
+
