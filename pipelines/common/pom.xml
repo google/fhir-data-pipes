@@ -29,6 +29,7 @@
 
   <properties>
     <c3p0.version>0.10.1</c3p0.version>
+    <guava.version>33.2.0-jre</guava.version>
   </properties>
 
   <dependencies>
@@ -226,6 +227,12 @@
       <groupId>commons-io</groupId>
       <artifactId>commons-io</artifactId>
       <version>2.16.1</version>
+    </dependency>
+
+    <dependency>
+      <groupId>com.google.guava</groupId>
+      <artifactId>guava</artifactId>
+      <version>${guava.version}</version>
     </dependency>
 
     <dependency>
