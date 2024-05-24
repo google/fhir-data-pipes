@@ -21,7 +21,6 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import java.io.IOException;
 import java.io.OutputStream;
-import java.lang.ref.Cleaner;
 import java.nio.channels.Channels;
 import java.nio.channels.WritableByteChannel;
 import java.util.HashMap;
@@ -55,38 +54,6 @@ public class ParquetUtil {
   private final Random random;
   private final String namePrefix;
   private boolean flushedInCurrentPeriod;
-  private static final Cleaner cleaner;
-
-  static {
-    cleaner = Cleaner.create();
-  }
-
-  // TODO this is a terrible method to force closure of Parquet files; this is
-  //  done for demonstration only and should be removed before merge! The same
-  //  can be achieved by using `finalize()` which is deprecated since Java 9.
-  private static class CleaningAction implements Runnable {
-    private Map<String, ParquetWriter<GenericRecord>> writerMap;
-    private Timer timer;
-
-    CleaningAction(Map<String, ParquetWriter<GenericRecord>> writerMap, Timer timer) {
-      // We cannot keep references to the ParquetUtil itself see:
-      // https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/ref/Cleaner.html
-      this.writerMap = writerMap;
-      this.timer = timer;
-    }
-
-    @Override
-    public void run() {
-      try {
-        log.info("******* DEBUG in run() BEFORE ********");
-        ParquetUtil.closeAllWriters(writerMap, timer);
-        log.info("******* DEBUG in run() AFTER ********");
-      } catch (IOException e) {
-        // There is not much else we can do at this stage.
-        log.error("IOException during cleaning: ", e);
-      }
-    }
-  }
 
   private synchronized void setFlushedInCurrentPeriod(boolean value) {
     flushedInCurrentPeriod = value;
@@ -130,8 +97,6 @@ public class ParquetUtil {
     this.rowGroupSize = rowGroupSize;
     this.namePrefix = namePrefix;
     setFlushedInCurrentPeriod(false);
-    // TODO remove timer and secondsToFlush option if using the `cleaner` is desired; note this
-    //  holds pointers to the enclosing ParqeutUtil instance hence the `clean` is never called!
     if (secondsToFlush > 0) {
       TimerTask task =
           new TimerTask() {
@@ -158,7 +123,6 @@ public class ParquetUtil {
       timer = null;
     }
     this.random = new Random(System.currentTimeMillis());
-    cleaner.register(this, new CleaningAction(writerMap, timer));
   }
 
   @VisibleForTesting
@@ -230,25 +194,14 @@ public class ParquetUtil {
     setFlushedInCurrentPeriod(true);
   }
 
-  private static void closeAllWriters(
-      Map<String, ParquetWriter<GenericRecord>> writerMap, Timer timer) throws IOException {
+  public synchronized void closeAllWriters() throws IOException {
     if (timer != null) {
-      synchronized (timer) {
-        timer.cancel();
-      }
+      timer.cancel();
     }
-    if (writerMap != null) {
-      synchronized (writerMap) {
-        for (Map.Entry<String, ParquetWriter<GenericRecord>> entry : writerMap.entrySet()) {
-          entry.getValue().close();
-          writerMap.put(entry.getKey(), null);
-        }
-      }
+    for (Map.Entry<String, ParquetWriter<GenericRecord>> entry : writerMap.entrySet()) {
+      entry.getValue().close();
+      writerMap.put(entry.getKey(), null);
     }
-  }
-
-  public void closeAllWriters() throws IOException {
-    closeAllWriters(writerMap, timer);
   }
 
   public void writeRecords(Bundle bundle, Set<String> resourceTypes)
