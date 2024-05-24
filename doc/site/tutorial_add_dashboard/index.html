@@ -1,0 +1,1128 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+      
+      
+        <link rel="canonical" href="https://example.com/foo/tutorial_add_dashboard/">
+      
+      
+        <link rel="prev" href="../tutorial_single_machine/">
+      
+      
+        <link rel="next" href="../tutorial_lossy_example/">
+      
+      
+      <link rel="icon" href="../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.0, mkdocs-material-9.5.23">
+    
+    
+      
+        <title>Visualize Parquet DWH with Apache Superset - FHIR Data Pipes Docs</title>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/stylesheets/main.6543a935.min.css">
+      
+        
+        <link rel="stylesheet" href="../assets/stylesheets/palette.06af60db.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce((e,_)=>(e<<5)-e+_.charCodeAt(0),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="purple">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#visualize-parquet-dwh-with-apache-superset" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href=".." title="FHIR Data Pipes Docs" class="md-header__button md-logo" aria-label="FHIR Data Pipes Docs" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54Z"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3V6m0 5h18v2H3v-2m0 5h18v2H3v-2Z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            FHIR Data Pipes Docs
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Visualize Parquet DWH with Apache Superset
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="purple"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M17 6H7c-3.31 0-6 2.69-6 6s2.69 6 6 6h10c3.31 0 6-2.69 6-6s-2.69-6-6-6zm0 10H7c-2.21 0-4-1.79-4-4s1.79-4 4-4h10c2.21 0 4 1.79 4 4s-1.79 4-4 4zM7 9c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="slate" data-md-color-primary="indigo" data-md-color-accent="lime"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M17 7H7a5 5 0 0 0-5 5 5 5 0 0 0 5 5h10a5 5 0 0 0 5-5 5 5 0 0 0-5-5m0 8a3 3 0 0 1-3-3 3 3 0 0 1 3-3 3 3 0 0 1 3 3 3 3 0 0 1-3 3Z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var media,input,key,value,palette=__md_get("__palette");if(palette&&palette.color){"(prefers-color-scheme)"===palette.color.media&&(media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']"),palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent"));for([key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      <label class="md-header__button md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.516 6.516 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5Z"/></svg>
+      </label>
+      <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.516 6.516 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5Z"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12Z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12 19 6.41Z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+    
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+            
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href=".." class="md-tabs__link">
+        
+  
+    
+  
+  Home
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../getting_started/" class="md-tabs__link">
+        
+  
+    
+  
+  Getting Started
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../advanced_guides/" class="md-tabs__link">
+        
+  
+    
+  
+  Advanced Guides
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+    
+  
+  
+    
+    
+      <li class="md-tabs__item md-tabs__item--active">
+        <a href="../tutorial_single_machine/" class="md-tabs__link">
+          
+  
+  Tutorials
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../support/" class="md-tabs__link">
+          
+  
+  Community
+
+        </a>
+      </li>
+    
+  
+
+      
+    </ul>
+  </div>
+</nav>
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+  
+
+<nav class="md-nav md-nav--primary md-nav--lifted md-nav--integrated" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href=".." title="FHIR Data Pipes Docs" class="md-nav__button md-logo" aria-label="FHIR Data Pipes Docs" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54Z"/></svg>
+
+    </a>
+    FHIR Data Pipes Docs
+  </label>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href=".." class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Home
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../getting_started/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Getting Started
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../advanced_guides/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Advanced Guides
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+    
+      
+        
+        
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="">
+            
+  
+  <span class="md-ellipsis">
+    Tutorials
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            Tutorials
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../tutorial_single_machine/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Single Machine Deployment
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  <span class="md-ellipsis">
+    Visualize Parquet DWH with Apache Superset
+  </span>
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  <span class="md-ellipsis">
+    Visualize Parquet DWH with Apache Superset
+  </span>
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#prerequisites" class="md-nav__link">
+    <span class="md-ellipsis">
+      Prerequisites
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#install-apache-superset" class="md-nav__link">
+    <span class="md-ellipsis">
+      Install Apache Superset
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#connect-to-the-apache-spark-sql-data-source" class="md-nav__link">
+    <span class="md-ellipsis">
+      Connect to the Apache Spark SQL data source
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#create-the-connection-for-spark-sql" class="md-nav__link">
+    <span class="md-ellipsis">
+      Create the connection for Spark SQL
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#create-a-dashboard" class="md-nav__link">
+    <span class="md-ellipsis">
+      Create a dashboard
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#query-the-database-and-generate-charts" class="md-nav__link">
+    <span class="md-ellipsis">
+      Query the database and generate Charts
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Query the database and generate Charts">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#add-a-big-number" class="md-nav__link">
+    <span class="md-ellipsis">
+      Add a Big Number
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#add-a-pie-chart" class="md-nav__link">
+    <span class="md-ellipsis">
+      Add a pie chart
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#add-a-complex-bar-chart" class="md-nav__link">
+    <span class="md-ellipsis">
+      Add a complex bar chart
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#edit-the-dashboard" class="md-nav__link">
+    <span class="md-ellipsis">
+      Edit the Dashboard
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#update-the-dashboard" class="md-nav__link">
+    <span class="md-ellipsis">
+      Update the dashboard
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#learn-more" class="md-nav__link">
+    <span class="md-ellipsis">
+      Learn more
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../tutorial_lossy_example/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    RDBMS DWH using FHIR ViewDefinitions
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Community
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            Community
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../support/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Support
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../contributing/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Contributing
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../release_process/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Release process
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+<h1 id="visualize-parquet-dwh-with-apache-superset">Visualize Parquet DWH with Apache Superset</h1>
+<p>Generating dashboards is a common task for many digital health projects. </p>
+<p>This tutorial shows you how to use the popular open source <a href="https://superset.apache.org/">Apache Superset</a> package to build a dashboard on top of the "lossless" parquet DWH created via the FHIR Data Pipes <a href="../tutorial_single_machine">Single Machine Deployment Tutorial</a>.</p>
+<p>The principles here will apply to <strong>any</strong> visualization or BI tool that has a hive connector.</p>
+<h2 id="prerequisites">Prerequisites</h2>
+<ul>
+<li>A FHIR Data Pipes single machine deployment using [local test
+    servers] as the data source</li>
+<li>Run the full pipeline at least once before following this guide.</li>
+</ul>
+<h2 id="install-apache-superset">Install Apache Superset</h2>
+<p>There are <a href="https://superset.apache.org/">several ways to install Superset</a>. A simple option is to <a href="https://superset.apache.org/docs/installation/docker-compose/#installing-superset-locally-using-docker-compose">install Superset locally using docker-compose</a>. Once it is set-up, log in by visiting http://localhost:8088/ and using the default credentials username: <code>admin</code>
+password: <code>admin</code>.</p>
+<h2 id="connect-to-the-apache-spark-sql-data-source">Connect to the Apache Spark SQL data source</h2>
+<ol>
+<li>In the upper-right corner, select <strong>Settings &gt; Database Connections</strong>.</li>
+<li>In the upper-right corner, select <strong>+ Database</strong>.</li>
+</ol>
+<h2 id="create-the-connection-for-spark-sql">Create the connection for Spark SQL</h2>
+<ol>
+<li>Under <strong>Supported Databases</strong>, select <strong>Apache Spark SQL</strong>.</li>
+<li>Under <strong>Display Name</strong>, enter "Single Machine Test Data" or another name
+    your choice.</li>
+<li>
+<p>Under <strong>SQLAlchemy URI</strong>, enter the following:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>hive://hive@&lt;IP_address_of_docker_network_gateway&gt;:10001
+</code></pre></div>
+<p>To find the IP address, run:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>docker<span class="w"> </span>network<span class="w"> </span>inspect<span class="w"> </span>bridge<span class="w"> </span>--format<span class="o">=</span><span class="s1">&#39;{{json .IPAM.Config}}&#39;</span>
+</code></pre></div>
+</li>
+<li>
+<p>Select <strong>Test Connection</strong>. You should see a pop-up in the bottom-right
+    corner that says "Connection looks good!"</p>
+<ul>
+<li>If you get an error, double-check the IP address is correct. You may
+    also need to <a href="https://superset.apache.org/docs/databases/installing-database-drivers">install the Apache Spark SQL database drivers</a>.</li>
+</ul>
+</li>
+<li>Select <strong>Connect</strong>. Although you see an error: "An error occurred while
+    creating databases: Fatal error" the connection is still created.</li>
+<li>Close the <strong>Connect a database</strong> window by clicking outside of it and
+    refresh the <strong>Databases</strong> page. The database you just created should appear.</li>
+</ol>
+<h2 id="create-a-dashboard">Create a dashboard</h2>
+<p>Create an empty dashboard so you can add charts to it as they are created.</p>
+<ol>
+<li>At the top of the Superset page select the <strong>Dashboard</strong> tab, then click <strong>+
+    Dashboard</strong>.</li>
+<li>Select the title area which reads <strong>[ untitled dashboard ]</strong> and give the
+    dashboard a name. The examples below use "Sample Dashboard".</li>
+<li>In the upper-right corner, select <strong>Save</strong>.</li>
+</ol>
+<h2 id="query-the-database-and-generate-charts">Query the database and generate Charts</h2>
+<ol>
+<li>From the top tabs, select <strong>SQL &gt; SQL Lab</strong>.</li>
+<li>If this is your first time using SQL Lab, you should be in a blank, empty
+    tab. If not, click <strong>New tab</strong> or press <code>Control+T</code> to create one.</li>
+<li>On the left side under <strong>Database</strong>, select the database you created
+    earlier, for example <strong>Single Machine Test Data</strong>.</li>
+</ol>
+<h3 id="add-a-big-number">Add a Big Number</h3>
+<p>This first chart shows the total number of patients as a "Big Number".</p>
+<ol>
+<li>
+<p>Replace the placeholder query <code>SELECT ...</code> with the following:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="k">SELECT</span><span class="w"> </span><span class="k">COUNT</span><span class="p">(</span><span class="o">*</span><span class="p">)</span><span class="w"> </span><span class="k">FROM</span><span class="w"> </span><span class="n">Patient</span><span class="p">;</span>
+</code></pre></div>
+</li>
+<li>
+<p>Click <strong>Run</strong>. After a moment, the results of the query should appear.</p>
+</li>
+<li>In the <strong>Results</strong> section, click <strong>Create Chart</strong>. This brings you to a new
+    chart page.</li>
+<li>Under the <strong>Chart Source</strong> pane, click <strong>Create a dataset</strong> and name it
+    "Patient Count Dataset".</li>
+<li>Under the <strong>Data</strong> tab, switch to the <strong>4k (Big Number)</strong> chart type.</li>
+<li>In the <strong>Query</strong> section, click the <strong>Metric</strong> section and set the following
+    values:<ol>
+<li>Column: <code>count(1)</code></li>
+<li>Aggregate: <code>MAX</code></li>
+</ol>
+</li>
+<li>Click <strong>Update Chart</strong> at the bottom of the pane.</li>
+</ol>
+<p>The chart updates to show a single large number of the count of patients.</p>
+<ol>
+<li>Click <strong>Save</strong> to bring up the <strong>Save chart</strong> dialog. Name the chart
+    "Patient Count" and under <strong>Add to Dashboard</strong> select the dashboard you
+    created previously.</li>
+</ol>
+<h3 id="add-a-pie-chart">Add a pie chart</h3>
+<p>The next chart shows the split of patients by gender as a pie chart.</p>
+<ol>
+<li>Navigate back to SQL Lab. You should see the previous patient count query.<ul>
+<li>If you'd like to keep the patient count query, make a new tab and set
+    the database to "Single Machine Test Data" or the name you chose.</li>
+</ul>
+</li>
+<li>
+<p>Enter the following as the query:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="k">SELECT</span><span class="w"> </span><span class="o">`</span><span class="n">gender</span><span class="o">`</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="o">`</span><span class="n">gender</span><span class="o">`</span><span class="p">,</span>
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="w">       </span><span class="k">count</span><span class="p">(</span><span class="o">`</span><span class="n">gender</span><span class="o">`</span><span class="p">)</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="o">`</span><span class="k">COUNT</span><span class="p">(</span><span class="n">gender</span><span class="p">)</span><span class="o">`</span>
+<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a><span class="k">FROM</span><span class="w"> </span><span class="n">Patient</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="n">P</span>
+<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a><span class="k">GROUP</span><span class="w"> </span><span class="k">BY</span><span class="w"> </span><span class="o">`</span><span class="n">gender</span><span class="o">`</span>
+<a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a><span class="k">ORDER</span><span class="w"> </span><span class="k">BY</span><span class="w"> </span><span class="o">`</span><span class="k">COUNT</span><span class="p">(</span><span class="n">gender</span><span class="p">)</span><span class="o">`</span><span class="w"> </span><span class="k">DESC</span><span class="p">;</span>
+</code></pre></div>
+</li>
+<li>
+<p>Click <strong>Run</strong>. After a moment, the results of the query should appear.</p>
+</li>
+<li>In the <strong>Results</strong> section, click <strong>Create Chart</strong>. This brings you to a new
+    chart page.</li>
+<li>Under the <strong>Chart Source</strong> pane, click <strong>Create a dataset</strong> and name it
+    "Gender Split Dataset".</li>
+<li>Under the <strong>Data</strong> tab, switch to the <strong>Pie Chart</strong> chart type.</li>
+<li>In the <strong>Query</strong> section, set the following values:<ul>
+<li>Dimensions:<ol>
+<li>Column: <code>gender</code></li>
+</ol>
+</li>
+<li>Metric:<ol>
+<li>Column: <code>COUNT(gender)</code></li>
+<li>Aggregate: <code>MAX</code></li>
+</ol>
+</li>
+</ul>
+</li>
+<li>Click <strong>Update Chart</strong> at the bottom of the pane. The chart updates to show
+    a pie chart of patients by gender.</li>
+<li>Click <strong>Save</strong> to bring up the <strong>Save chart</strong> dialog. Name the chart "Gender
+    Split" and under <strong>Add to Dashboard</strong> select the dashboard you created
+    previously.</li>
+</ol>
+<h3 id="add-a-complex-bar-chart">Add a complex bar chart</h3>
+<p>The next chart shows number of patients on HIV treatment by year and display
+that as a bar chart over time. The query is provided below.</p>
+<ul>
+<li>The codes 1255% and 1266% refer to HIV_Tx codes in the dataset.</li>
+</ul>
+<p><a href="https://github.com/google/fhir-data-pipes/wiki/Analytics-on-a-single-machine-using-Docker#best-practices-for-querying-exported-parquet-files">Learn more about querying data in SQL-on-FHIR</a>.</p>
+<ol>
+<li>Navigate back to SQL Lab. You should see the previous patient count query.<ul>
+<li>If you'd like to keep the patient count query, make a new tab and set
+    the database to "Single Machine Test Data" or the name you chose.</li>
+</ul>
+</li>
+<li>
+<p>Enter the following as the query:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="k">SELECT</span><span class="w"> </span><span class="k">COUNT</span><span class="p">(</span><span class="o">*</span><span class="p">),</span><span class="w"> </span><span class="k">YEAR</span><span class="p">(</span><span class="n">O</span><span class="p">.</span><span class="n">effective</span><span class="p">.</span><span class="n">dateTime</span><span class="p">)</span>
+<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="k">FROM</span><span class="w"> </span><span class="n">Observation</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="n">O</span><span class="w"> </span><span class="k">LATERAL</span><span class="w"> </span><span class="k">VIEW</span><span class="w"> </span><span class="n">EXPLODE</span><span class="p">(</span><span class="n">code</span><span class="p">.</span><span class="n">coding</span><span class="p">)</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="n">OCC</span><span class="w"> </span><span class="k">LATERAL</span><span class="w"> </span><span class="k">VIEW</span><span class="w"> </span><span class="n">EXPLODE</span><span class="p">(</span><span class="n">O</span><span class="p">.</span><span class="n">value</span><span class="p">.</span><span class="n">codeableConcept</span><span class="p">.</span><span class="n">coding</span><span class="p">)</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="n">OVCC</span>
+<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a><span class="k">WHERE</span><span class="w"> </span><span class="n">OCC</span><span class="p">.</span><span class="n">code</span><span class="w"> </span><span class="k">LIKE</span><span class="w"> </span><span class="s1">&#39;1255%&#39;</span>
+<a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a><span class="w">  </span><span class="k">AND</span><span class="w"> </span><span class="n">OVCC</span><span class="p">.</span><span class="n">code</span><span class="w"> </span><span class="k">LIKE</span><span class="w"> </span><span class="ss">&quot;1256%&quot;</span>
+<a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a><span class="w">  </span><span class="k">AND</span><span class="w"> </span><span class="k">YEAR</span><span class="p">(</span><span class="n">O</span><span class="p">.</span><span class="n">effective</span><span class="p">.</span><span class="n">dateTime</span><span class="p">)</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="mi">2023</span>
+<a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a><span class="k">GROUP</span><span class="w"> </span><span class="k">BY</span><span class="w"> </span><span class="k">YEAR</span><span class="p">(</span><span class="n">O</span><span class="p">.</span><span class="n">effective</span><span class="p">.</span><span class="n">dateTime</span><span class="p">)</span>
+<a id="__codelineno-4-7" name="__codelineno-4-7" href="#__codelineno-4-7"></a><span class="k">ORDER</span><span class="w"> </span><span class="k">BY</span><span class="w"> </span><span class="k">YEAR</span><span class="p">(</span><span class="n">O</span><span class="p">.</span><span class="n">effective</span><span class="p">.</span><span class="n">dateTime</span><span class="p">)</span><span class="w"> </span><span class="k">ASC</span>
+</code></pre></div>
+</li>
+</ol>
+<p><strong>NOTE:</strong> Using the modifiable pre-defined <a href="https://github.com/google/fhir-data-pipes/blob/master/query/queries_and_views.ipynb">flat views</a>
+), the same query can be simplified to the following:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="k">SELECT</span><span class="w"> </span><span class="k">COUNT</span><span class="p">(</span><span class="o">*</span><span class="p">),</span><span class="w"> </span><span class="k">YEAR</span><span class="p">(</span><span class="n">o</span><span class="p">.</span><span class="n">obs_date</span><span class="p">)</span>
+<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a><span class="k">FROM</span><span class="w"> </span><span class="n">observation_flat</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="n">o</span>
+<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a><span class="k">WHERE</span><span class="w"> </span><span class="n">o</span><span class="p">.</span><span class="n">code</span><span class="w"> </span><span class="k">LIKE</span><span class="w"> </span><span class="s1">&#39;1255%&#39;</span>
+<a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a><span class="w">  </span><span class="k">AND</span><span class="w"> </span><span class="n">o</span><span class="p">.</span><span class="n">val_code</span><span class="w"> </span><span class="k">LIKE</span><span class="w"> </span><span class="ss">&quot;1256%&quot;</span>
+<a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a><span class="w">  </span><span class="k">AND</span><span class="w"> </span><span class="k">YEAR</span><span class="p">(</span><span class="n">o</span><span class="p">.</span><span class="n">obs_date</span><span class="p">)</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="mi">2023</span>
+<a id="__codelineno-5-6" name="__codelineno-5-6" href="#__codelineno-5-6"></a><span class="k">GROUP</span><span class="w"> </span><span class="k">BY</span><span class="w"> </span><span class="k">YEAR</span><span class="p">(</span><span class="n">o</span><span class="p">.</span><span class="n">obs_date</span><span class="p">)</span>
+<a id="__codelineno-5-7" name="__codelineno-5-7" href="#__codelineno-5-7"></a><span class="k">ORDER</span><span class="w"> </span><span class="k">BY</span><span class="w"> </span><span class="k">YEAR</span><span class="p">(</span><span class="n">o</span><span class="p">.</span><span class="n">obs_date</span><span class="p">)</span><span class="w"> </span><span class="k">ASC</span><span class="w"> </span>
+</code></pre></div>
+<ol>
+<li>Click <strong>Run</strong>. After a moment, the results of the query should appear.</li>
+<li>In the <strong>Results</strong> section, click <strong>Create Chart</strong>. This brings you to a new
+    chart page.</li>
+<li>Under the <strong>Chart Source</strong> pane, click <strong>Create a dataset</strong> and name it "HIV
+    Treatment Dataset".</li>
+<li>Under the <strong>Data</strong> tab, switch to the <strong>Bar Chart</strong> chart type.</li>
+<li>In the <strong>Query</strong> section, set the following values:<ol>
+<li>X-Axis:<ol>
+<li>Custom SQL: <code>YEAR(date\_time)</code></li>
+</ol>
+</li>
+<li>Metric:<ol>
+<li>Column: <code>patient\_id</code></li>
+<li>Aggregate: <code>COUNT</code></li>
+</ol>
+</li>
+</ol>
+</li>
+<li>Click <strong>Update Chart</strong> at the bottom of the pane. The chart updates to show
+    a bar chart of patients undergoing HIV treatment per year.</li>
+<li>Click <strong>Save</strong> to bring up the <strong>Save chart</strong> dialog. Name the chart "HIV
+    Treatment" and under <strong>Add to Dashboard</strong> select the dashboard you created
+    previously.</li>
+</ol>
+<h2 id="edit-the-dashboard">Edit the Dashboard</h2>
+<p>Navigate to the <strong>Dashboards</strong> section and select the Sample Dashboard you
+created. You should see something like this with the charts you created.</p>
+<p><img alt="Initial dashboard" src="https://github.com/google/fhir-data-pipes/assets/7772901/eba8cbfb-6c5e-431f-8bcb-a9290d95f157" /></p>
+<p>Create a dashboard with 2 rows and a header. First click <strong>Edit Dashboard</strong>
+then:</p>
+<ol>
+<li>In the right pane select the <strong>Layout Elements</strong> tab.</li>
+<li>Add a second row by dragging a <strong>Row</strong> element onto the canvas below the
+    existing row.</li>
+<li>Arrange the charts to have the Patient Count and Gender Split in the top
+    row, and HIV Treatment in the bottom row.</li>
+<li>Resize the top charts to use half of the width by dragging the edge of the
+    chart.</li>
+<li>Resize the HIV Treatment chart to take up the whole width of the row.</li>
+<li>Add a header element at the top and enter "Key Program Metrics".</li>
+</ol>
+<p>Your dashboard now looks something like this:</p>
+<p><img alt="Finished dashboard" src="https://github.com/google/fhir-data-pipes/assets/7772901/90e8649a-6b78-46d0-8a17-69979f7353af" /></p>
+<h2 id="update-the-dashboard">Update the dashboard</h2>
+<p>To check that the dashboard is working properly, add a new patient to the FHIR
+Store and run the incremental pipeline.</p>
+<ol>
+<li>
+<p>Add a new patient to the server:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a>curl -X POST -H &quot;Content-Type: application/fhir+json; charset=utf-8&quot; \
+<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a>     &#39;http://localhost:8091/fhir/Patient/&#39; -d &#39;{&quot;resourceType&quot;: &quot;Patient&quot;}&#39;
+</code></pre></div>
+</li>
+<li>
+<p>Alternatively, use the HAPI FHIR server tester; go to <a href="http://localhost:8091/resource?serverId=home&amp;pretty=false&amp;\_summary=&amp;resource=Patient&amp;resource=Patient">the Patient resource
+    tester</a>, click the <strong>CRUD Operations</strong> tab, paste the following resource
+    into the <strong>Contents</strong> field of the <strong>Create</strong> section, then click
+    <strong>Create</strong>.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a>{&quot;resourceType&quot;: &quot;Patient&quot;}
+</code></pre></div>
+</li>
+<li>
+<p>Open the Pipeline Controller at http://localhost:8090 and run the
+    incremental pipeline.</p>
+</li>
+<li>Once the pipeline has finished, go to Superset and open your dashboard.
+    Click the <strong>...</strong> button next to <strong>Edit Dashboard</strong> and then click <strong>Refresh
+    dashboard</strong>. You should see the patient count increase by 1.</li>
+</ol>
+<h2 id="learn-more">Learn more</h2>
+<p>For more information about Superset, go to the <a href="https://superset.apache.org/docs/intro">Superset documentation</a>.</p>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+  <script>var tabs=__md_get("__tabs");if(Array.isArray(tabs))e:for(var set of document.querySelectorAll(".tabbed-set")){var tab,labels=set.querySelector(".tabbed-labels");for(tab of tabs)for(var label of labels.getElementsByTagName("label"))if(label.innerText.trim()===tab){var input=document.getElementById(label.htmlFor);input.checked=!0;continue e}}</script>
+
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8v12Z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+    
+      
+      <nav class="md-footer__inner md-grid" aria-label="Footer" >
+        
+          
+          <a href="../tutorial_single_machine/" class="md-footer__link md-footer__link--prev" aria-label="Previous: Single Machine Deployment">
+            <div class="md-footer__button md-icon">
+              
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12Z"/></svg>
+            </div>
+            <div class="md-footer__title">
+              <span class="md-footer__direction">
+                Previous
+              </span>
+              <div class="md-ellipsis">
+                Single Machine Deployment
+              </div>
+            </div>
+          </a>
+        
+        
+          
+          <a href="../tutorial_lossy_example/" class="md-footer__link md-footer__link--next" aria-label="Next: RDBMS DWH using FHIR ViewDefinitions">
+            <div class="md-footer__title">
+              <span class="md-footer__direction">
+                Next
+              </span>
+              <div class="md-ellipsis">
+                RDBMS DWH using FHIR ViewDefinitions
+              </div>
+            </div>
+            <div class="md-footer__button md-icon">
+              
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M4 11v2h12l-5.5 5.5 1.42 1.42L19.84 12l-7.92-7.92L10.5 5.5 16 11H4Z"/></svg>
+            </div>
+          </a>
+        
+      </nav>
+    
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+    <div class="md-copyright__highlight">
+      &copy; 2024 Google Health Open Health Stack
+
+    </div>
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    <script id="__config" type="application/json">{"base": "..", "features": ["navigation.tabs", "navigation.sections", "toc.integrate", "navigation.top", "search.suggest", "search.highlight", "content.tabs.link", "content.code.annotation", "content.code.copy", "navigation.footer"], "search": "../assets/javascripts/workers/search.b8dbb3d2.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}}</script>
+    
+    
+      <script src="../assets/javascripts/bundle.ebd0bdb7.min.js"></script>
+      
+    
+  </body>
+</html>

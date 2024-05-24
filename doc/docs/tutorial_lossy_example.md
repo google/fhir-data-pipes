@@ -1,7 +1,7 @@
 # Relational DWH using custom "lossy" schema 
 
 ## Overview
-In this tutorial you will learn how to configure and deploy OHS FHIR Data Pipes to transform FHIR data into a Postgres Relational SQL data-warehouse using FHIR ViewDefinition Resources to define the "lossy" schema.
+In this tutorial you will learn how to configure and deploy FHIR Data Pipes to transform FHIR data into a Postgre Relational SQL data-warehouse using FHIR ViewDefinition Resources to define the custom _"lossy"_ schema.
 
 ## Requirements
 
@@ -28,9 +28,11 @@ Note: All file paths are relative to the root of the FHIR Data Pipes repository.
    * Edit the values in this file to match the database for the FHIR server you are connecting to.
 
 ## Set the sinkDbConfigPath
+The sinkDb refers to the target database that will become the data warehouse.
+
 With the default config, you will create both Parquet files (under `dwhRootPrefix`) and flattened views in the database configured by `sinkDbConfigPath` [here](https://github.com/google/fhir-data-pipes/blob/27d691e91d0fe6ef4c9624acba4e68bca145c973/docker/config/application.yaml#L42). 
 
-Make sure to create the DB referenced in the connection config file (default is a postgreSQL db named 'views'). You can do this with the following SQL query:
+Make sure to create the database referenced in the connection config file (default is a postgreSQL db named 'views'). You can do this with the following SQL query:
 
 ```sql
 CREATE DATABASE views;
@@ -111,33 +113,36 @@ To list the tables: `\d`
 ## Querying the database
 
 Let's do some basic quality checks to make sure the data is uploaded properly (note
-table names are case insensitive):
+table names are case insensitive).
+
+NOTES:
+
+*   This assumes that the data loaded is from [this synthetic data set](https://github.com/google/fhir-data-pipes/synthea-hiv/sample_data)
+*   You will see that the number of patients and observations is higher than the count in the FHIR Server. This is due to the flattening
 
 ```sql
-SELECT COUNT(0) FROM Patient;
+SELECT COUNT(0) FROM patient_flat;
 ```
-We should have exactly 79 patients:
+We should have exactly 114 patients:
 ```
 +-----------+
-| count(0)  |
+| count     |
 +-----------+
-| 79        |
+| 114       |
 +-----------+
 ```
 
 Doing the same for observations:
 ```sql
-SELECT COUNT(0) FROM Observation;
+SELECT COUNT(0) FROM observation_flat;
 ```
 ```
 +-----------+
-| count(0)  |
+| count  |
 +-----------+
-| 17279     |
+| 18343     |
 +-----------+
 ```
 
 ## What's next
-
-*   Querying exported parquet files using SQL
-*   Building a dashboard with Apache SuperSet and FHIR Data Pipes
+Now that you have

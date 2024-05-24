@@ -29,6 +29,14 @@ Apache Beam supports a range of different runners depending on the deployment ar
 *   How to configure via the pipeline
 *   Important config options e.g. setting memory etc
 
+## Deployment patterns**
+
+| Approach | Scenarios | Considerations |
+| -------- | ----------| -------------- |
+| RDBMS using "lossy" schema (defined as ViewDefinition Resources) | Using a relational database to power dashboards or reporting | By design this will provide a constrained set of variables in the views |
+| Distributed "lossless" parquet based DWH and distributed query engine | Need for a horizontally scalable architecture | Will need to manage both distributed storage (Parquet) and a distributed query engine |
+| Non-distributed "lossless" parquet based DWH | Want to leverage parquet with a non-distributed OLAP database engine (such as duckdb) | xxx |
+
 ## Web Control Panel
 The web control panel is a basic spring application provided to make interacting with the pipeline controller easier. It is not designed to be a full production ready “web admin” panel.
 
@@ -39,17 +47,6 @@ It has the following features:
 *   Recreate view tables
 *   View configuration settings
 *   Access sample jupyter notebooks and ViewDefinition editor
-
-## Deployment patterns
-
-| Approach | Scenarios | Considerations |
-| -------- | ----------| -------------- |
-| RDBMS using "lossy" schema (defined as ViewDefinition Resources) | Using a relational database to power dashboards or reporting | By design this will provide a constrained set of variables in the views |
-| Distributed "lossless" parquet based DWH and distributed query engine | Need for a horizontally scalable architecture | Will need to manage both distributed storage (Parquet) and a distributed query engine |
-| Non-distributed "lossless" parquet based DWH | Want to leverage parquet with a non-distributed OLAP database engine (such as duckdb) | xxx |
-
-## Provided Docker images
-The repository includes a number of different docker compose configurations for a “Single Machine” Deployment. 
 
 ## Querying exported Parquet files
 
