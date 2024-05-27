@@ -221,16 +221,16 @@ abstract class FetchSearchPageFn<T> extends DoFn<T, KV<String, Integer>> {
   }
 
   /**
-   * Note this is a hacky solution to address a DataflowRunner specific issue where @Teardown
-   * method is not guaranteed to be called. Closing/flushing Parquet files in @FinishBundle is
-   * not a good idea in general because it makes the size of those files a function of how Beam
-   * divides the work into Bundles. That's why we only do this on DataflowRunner which tend to
-   * have very large Bundles.
+   * Note this is a hacky solution to address a DataflowRunner specific issue where @Teardown method
+   * is not guaranteed to be called. Closing/flushing Parquet files in @FinishBundle is not a good
+   * idea in general because it makes the size of those files a function of how Beam divides the
+   * work into Bundles. That's why we only do this on DataflowRunner which tend to have very large
+   * Bundles.
    *
-   * This should be overridden by all subclasses because the `context` type is not fully specified
-   * at this parent class (because of the T type argument). All subclass implementations should call
-   * `super.finishBundle` though. TODO: implement a way to enforce this at compile time; this is
-   * currently caught at run time.
+   * <p>This should be overridden by all subclasses because the `context` type is not fully
+   * specified at this parent class (because of the T type argument). All subclass implementations
+   * should call `super.finishBundle` though. TODO: implement a way to enforce this at compile time;
+   * this is currently caught at run time.
    */
   @FinishBundle
   public void finishBundle(FinishBundleContext context) {
@@ -276,6 +276,9 @@ abstract class FetchSearchPageFn<T> extends DoFn<T, KV<String, Integer>> {
         // TODO: The right way for writing Parquet records is to cache them and wait
         //  until processing a Beam Bundle is done, i.e., write in @FinishBundle.
         //  Otherwise, if a Beam Bundle fails in the middle, we will get duplicate records.
+        //  This may also apply to when we write into a sink DB or another FHIR-server (below),
+        //  unless if we take care of duplicate writes (which is for example the case when we
+        //  apply ViewDefinition to a resource and delete rows with the same `id` first).
         parquetUtil.writeRecords(bundle, resourceTypes);
         totalGenerateTimeMillis.inc(System.currentTimeMillis() - startTime);
       }
