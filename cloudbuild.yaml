@@ -118,6 +118,7 @@ steps:
   args: [ '-U', 'admin', '-d', 'postgres', '-h', 'hapi-fhir-db', '-p', '5432',
           '-c', 'CREATE DATABASE views;']
 
+# Resetting FHIR sink server
 - name: 'docker/compose'
   id: 'Turn down FHIR Sink Server'
   args: [ '-f', './docker/sink-compose.yml', 'down' ,'-v']

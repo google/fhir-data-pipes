@@ -15,8 +15,6 @@
 version: '2.4'
 services:
   sink-server:
-    # Using an older version as the latest image broke our build.
-    # image: "hapiproject/hapi:latest"
     image: "hapiproject/hapi:latest"
     container_name: sink-server
     environment:

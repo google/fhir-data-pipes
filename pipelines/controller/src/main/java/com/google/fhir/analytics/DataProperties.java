@@ -104,7 +104,7 @@ public class DataProperties {
 
   private String fhirServerOAuthClientSecret;
 
-  private String fhirSinkPath;
+  private String sinkFhirServerUrl;
 
   public String sinkUserName;
 
@@ -202,8 +202,8 @@ public class DataProperties {
       options.setRowGroupSizeForParquetFiles(rowGroupSizeForParquetFiles);
     }
 
-    if (!Strings.isNullOrEmpty(fhirSinkPath)) {
-      options.setFhirSinkPath(fhirSinkPath);
+    if (!Strings.isNullOrEmpty(sinkFhirServerUrl)) {
+      options.setFhirSinkPath(sinkFhirServerUrl);
       options.setSinkUserName(Strings.nullToEmpty(sinkUserName));
       options.setSinkPassword(Strings.nullToEmpty(sinkPassword));
     }
@@ -242,7 +242,7 @@ public class DataProperties {
         new ConfigFields("fhirdata.dbConfig", dbConfig, "", ""),
         new ConfigFields("fhirdata.viewDefinitionsDir", viewDefinitionsDir, "", ""),
         new ConfigFields("fhirdata.sinkDbConfigPath", sinkDbConfigPath, "", ""),
-        new ConfigFields("fhirdata.fhirSinkPath", fhirSinkPath, "", ""),
+        new ConfigFields("fhirdata.fhirSinkPath", sinkFhirServerUrl, "", ""),
         new ConfigFields("fhirdata.sinkUserName", sinkUserName, "", ""),
         new ConfigFields("fhirdata.sinkPassword", sinkPassword, "", ""),
         new ConfigFields("fhirdata.structureDefinitionsPath", structureDefinitionsPath, "", ""),

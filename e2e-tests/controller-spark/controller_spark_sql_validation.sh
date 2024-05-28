@@ -101,12 +101,12 @@ function setup() {
 }
 
 #######################################################################
-# Function queries fhir server and write results to json file
+# This function queries fhir server and writes results to json files.
 # Globals:
 #   HOME_PATH
 #   PARQUET_SUBDIR
 # Arguments:
-#  server_url: flag to differentiate behavior between incremental and batch runs.
+#  server_url: url of the source fhir server.
 #  patient_json_file : file to write Patient results
 #  encounter_json_file : file to write Encounter results
 #  obs_json_file : file to write Observation results

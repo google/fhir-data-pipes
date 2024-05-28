@@ -168,8 +168,8 @@ fhirdata:
   sinkDbConfigPath: "config/hapi-postgres-config_local_views.json"
 
   # The base URL of the FHIR Store/Sink server 
-  fhirSinkPath: "http://172.17.0.1:8098/fhir"
-  # The following user-name/password should be set if the FHIR store supports Basic Auth.
+  sinkFhirServerUrl: "http://172.17.0.1:8098/fhir"
+  # The following user-name/password should be set if the sink FHIR server supports Basic Auth.
   #sinkUserName: "hapi"
   #sinkPassword: "hapi123"
 
