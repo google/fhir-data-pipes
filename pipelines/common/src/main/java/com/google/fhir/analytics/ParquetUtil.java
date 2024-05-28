@@ -41,6 +41,9 @@ import org.hl7.fhir.r4.model.Resource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+// Implementing AutoCloseable does not help much in the usage pattern we have with DoFns. This is
+// because we cannot wrap single resource writes into a "try-with-resources" block, otherwise each
+// Parquet row-group will include only one record.
 public class ParquetUtil {
 
   private static final Logger log = LoggerFactory.getLogger(ParquetUtil.class);
