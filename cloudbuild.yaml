@@ -118,15 +118,6 @@ steps:
   args: [ '-U', 'admin', '-d', 'postgres', '-h', 'hapi-fhir-db', '-p', '5432',
           '-c', 'CREATE DATABASE views;']
 
-# Resetting FHIR sink server
-- name: 'docker/compose'
-  id: 'Turn down FHIR Sink Server'
-  args: [ '-f', './docker/sink-compose.yml', 'down' ,'-v']
-
-- name: 'docker/compose'
-  id: 'Launch HAPI FHIR Sink Server'
-  args: [ '-f', './docker/sink-compose.yml', 'up','--force-recreate', '-d' ]  
-
 - name: 'docker/compose'
   id: 'Bring up controller and Spark containers'
   env:
@@ -149,8 +140,35 @@ steps:
 #   - docker logs pipeline-controller
 
 - name: 'docker/compose'
+  id: 'Bring down controller and Spark containers for FHIR server to FHIR server sync'
+  args: [ '-f', './docker/compose-controller-spark-sql-single.yaml', 'down' ,'-v']
+
+# Resetting Sink FHIR server
+- name: 'docker/compose'
+  id: 'Turn down HAPI Sink FHIR Server for FHIR server to FHIR server sync'
+  args: [ '-f', './docker/sink-compose.yml', 'down' ,'-v']
+
+- name: 'docker/compose'
+  id: 'Launch Sink FHIR Server for FHIR server to FHIR server sync'
+  args: ['-f', './docker/sink-compose.yml', 'up', '--force-recreate', '-d']
+
+# Spinning up only the pipeline controller for FHIR server to FHIR server sync
+- name: 'docker/compose'
+  id: 'Bring up only the pipeline controller for FHIR server to FHIR server sync'
+  env:
+    - PIPELINE_CONFIG=/workspace/docker/config_fhir_sink
+    - DWH_ROOT=/workspace/e2e-tests/controller-spark/dwh
+  args: [ '-f', './docker/compose-controller-spark-sql-single.yaml', 'up',
+          '--force-recreate', '--no-deps' , '-d' ,'pipeline-controller' ]
+
+- name: '${_REPOSITORY}/e2e-tests/controller-spark:${_TAG}'
+  id: 'Run E2E Test for Dockerized Controller for FHIR server to FHIR server sync'   
+  env:
+    - DWH_TYPE="FHIR"  
+
+- name: 'docker/compose'
   id: 'Bring down controller and Spark containers'
-  args: [ '-f', './docker/compose-controller-spark-sql-single.yaml', 'down' ]
+  args: [ '-f', './docker/compose-controller-spark-sql-single.yaml', 'down' ,'-v']    
 
 - name: 'docker/compose'
   id: 'Turn down HAPI Source and Sink Servers'

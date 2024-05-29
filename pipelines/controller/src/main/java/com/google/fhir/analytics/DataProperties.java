@@ -118,6 +118,8 @@ public class DataProperties {
 
   private int recursiveDepth;
 
+  private boolean createParquetDwh;
+
   @PostConstruct
   void validateProperties() {
     CronExpression.parse(incrementalSchedule);
@@ -126,6 +128,9 @@ public class DataProperties {
         !Strings.isNullOrEmpty(fhirServerUrl) || !Strings.isNullOrEmpty(dbConfig),
         "At least one of fhirServerUrl or dbConfig should be set!");
     Preconditions.checkState(fhirVersion != null, "FhirVersion cannot be empty");
+
+    Preconditions.checkArgument(
+        !Strings.isNullOrEmpty(dwhRootPrefix), "dwhRootPrefix is required!");
 
     if (!Strings.isNullOrEmpty(dbConfig)) {
       if (!Strings.isNullOrEmpty(fhirServerUrl)) {
@@ -138,6 +143,7 @@ public class DataProperties {
       logger.info("Using FHIR-search mode since dbConfig is not set.");
     }
     Preconditions.checkState(!createHiveResourceTables || !thriftserverHiveConfig.isEmpty());
+    Preconditions.checkState(!createHiveResourceTables || createParquetDwh);
   }
 
   private PipelineConfig.PipelineConfigBuilder addFlinkOptions(FhirEtlOptions options) {
@@ -213,6 +219,8 @@ public class DataProperties {
         Instant.now().toString().replace(":", "-").replace("-", "_").replace(".", "_");
     options.setOutputParquetPath(dwhRootPrefix + TIMESTAMP_PREFIX + timestampSuffix);
 
+    options.setCreateParquetDwh(createParquetDwh);
+
     PipelineConfig.PipelineConfigBuilder pipelineConfigBuilder = addFlinkOptions(options);
 
     // Get hold of thrift server parquet directory from dwhRootPrefix config.
@@ -230,6 +238,7 @@ public class DataProperties {
     return List.of(
         new ConfigFields("fhirdata.fhirServerUrl", fhirServerUrl, "", ""),
         new ConfigFields("fhirdata.dwhRootPrefix", dwhRootPrefix, "", ""),
+        new ConfigFields("fhirdata.createParquetDwh", String.valueOf(createParquetDwh), "", ""),
         new ConfigFields("fhirdata.incrementalSchedule", incrementalSchedule, "", ""),
         new ConfigFields("fhirdata.purgeSchedule", purgeSchedule, "", ""),
         new ConfigFields(
