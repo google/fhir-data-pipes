@@ -167,7 +167,8 @@ fhirdata:
   # empty string disables this feature.
   sinkDbConfigPath: "config/hapi-postgres-config_local_views.json"
 
-  # The base URL of the sink FHIR  server .if not set ,only a parquet DWH is created
+  # The base URL of the sink FHIR server. If not set, the feature for sending
+  # resources to a sink FHIR server is disabled.
   sinkFhirServerUrl: "http://172.17.0.1:8098/fhir"
   # The following user-name/password should be set if the sink FHIR server supports Basic Auth.
   #sinkUserName: "hapi"
