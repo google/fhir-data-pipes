@@ -169,7 +169,7 @@ fhirdata:
 
   # The base URL of the sink FHIR server. If not set, the feature for sending
   # resources to a sink FHIR server is disabled.
-  sinkFhirServerUrl: "http://172.17.0.1:8098/fhir"
+  #sinkFhirServerUrl: "http://172.17.0.1:8098/fhir"
   # The following user-name/password should be set if the sink FHIR server supports Basic Auth.
   #sinkUserName: "hapi"
   #sinkPassword: "hapi123"
