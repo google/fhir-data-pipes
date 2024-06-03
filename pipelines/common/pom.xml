@@ -29,7 +29,7 @@
 
   <properties>
     <c3p0.version>0.10.1</c3p0.version>
-    <guava.version>33.2.0-jre</guava.version>
+    <guava.version>33.2.1-jre</guava.version>
   </properties>
 
   <dependencies>
