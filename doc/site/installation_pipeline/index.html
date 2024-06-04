@@ -8,13 +8,9 @@
       
       
       
-        <link rel="canonical" href="https://example.com/foo/getting_started/">
+        <link rel="canonical" href="https://example.com/foo/installation_pipeline/">
       
       
-        <link rel="prev" href="..">
-      
-      
-        <link rel="next" href="../advanced_guides/">
       
       
       <link rel="icon" href="../assets/images/favicon.png">
@@ -22,7 +18,7 @@
     
     
       
-        <title>Getting Started - FHIR Data Pipes Docs</title>
+        <title>FHIR Data Pipes Pipelines - FHIR Data Pipes Docs</title>
       
     
     
@@ -74,7 +70,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#getting-started" class="md-skip">
+        <a href="#fhir-data-pipes-pipelines" class="md-skip">
           Skip to content
         </a>
       
@@ -108,7 +104,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Getting Started
+              FHIR Data Pipes Pipelines
             
           </span>
         </div>
@@ -220,11 +216,9 @@
         
   
   
-    
   
-  
-    <li class="md-tabs__item md-tabs__item--active">
-      <a href="./" class="md-tabs__link">
+    <li class="md-tabs__item">
+      <a href="../getting_started/" class="md-tabs__link">
         
   
     
@@ -348,30 +342,10 @@
       
   
   
-    
   
   
-  
-    <li class="md-nav__item md-nav__item--active">
-      
-      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
-      
-      
-        
-      
-      
-        <label class="md-nav__link md-nav__link--active" for="__toc">
-          
-  
-  <span class="md-ellipsis">
-    Getting Started
-  </span>
-  
-
-          <span class="md-nav__icon md-icon"></span>
-        </label>
-      
-      <a href="./" class="md-nav__link md-nav__link--active">
+    <li class="md-nav__item">
+      <a href="../getting_started/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -380,44 +354,6 @@
   
 
       </a>
-      
-        
-
-<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
-  
-  
-  
-    
-  
-  
-    <label class="md-nav__title" for="__toc">
-      <span class="md-nav__icon md-icon"></span>
-      Table of contents
-    </label>
-    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#fhir-data-pipes-concepts" class="md-nav__link">
-    <span class="md-ellipsis">
-      FHIR Data Pipes concepts
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#install-fhir-data-pipes" class="md-nav__link">
-    <span class="md-ellipsis">
-      Install FHIR Data Pipes
-    </span>
-  </a>
-  
-</li>
-      
-    </ul>
-  
-</nav>
-      
     </li>
   
 
@@ -677,20 +613,178 @@
                   
 
 
-<h1 id="getting-started">Getting Started</h1>
-<p>In this section we will run through concepts related to FHIR Data Pipes and instructions for getting started quickly.</p>
-<h2 id="fhir-data-pipes-concepts">FHIR Data Pipes concepts</h2>
-<p>FHIR Data Pipes provides pipelines for transforming data from a FHIR server into a Parquet format that you can use for data analysis and visualization. It can also be used to move data from one FHIR server to another. </p>
-<p>FHIR Data Pipes is built on technology <strong>designed for horizontal scalability</strong> and has multiple deployment options depending on your use case and requirements.</p>
-<h2 id="install-fhir-data-pipes">Install FHIR Data Pipes</h2>
-<p>There are a number of ways to FHIR Data Pipes can be installed and deployed on a number of different platforms and using different architectural patterns depending on the environment, amount of data and requirements for horizontal scalability.</p>
-<p>You can find additional information and instructions in the following sections:</p>
+<h1 id="fhir-data-pipes-pipelines">FHIR Data Pipes Pipelines</h1>
+<p>The <a href="https://github.com/google/fhir-data-pipes/tree/master/pipelines/batch">batch</a> directory contains code for a Java JAR which
+transforms data from a FHIR server to either
+<a href="https://parquet.apache.org">Apache Parquet files</a> for analysis or another FHIR
+store for data integration.</p>
+<p>There are two options for reading the source FHIR server (input):</p>
 <ul>
-<li>Configuring the FHIR Data Pipes Pipeline and Controller</li>
-<li>FHIR Data Pipes docker containers</li>
-<li>Single machine deployment (for quick set-up)</li>
+<li><em>FHIR-Search</em>: This mode uses FHIR Search APIs to select resources to copy,
+  retrieves them as FHIR resources, and transfers the data via FHIR APIs or
+  Parquet files. This mode should work with most FHIR servers and has been
+  tested with HAPI FHIR server and GCP FHIR store.</li>
+<li><em>JDBC</em>: This mode uses the
+  <a href="https://docs.oracle.com/javase/8/docs/technotes/guides/jdbc/">Java Database Connectivity (JDBC) API</a>
+  to read FHIR resources directly from the database of a FHIR server. It's
+  tested with
+  <a href="https://github.com/hapifhir/hapi-fhir-jpaserver-starter#postgresql-configuration">HAPI FHIR server using PostgreSQL database</a>
+  or an <a href="https://openmrs.org/">OpenMRS</a> instance using MySQL. Note: JDBC support
+  beyond HAPI FHIR and OpenMRS is not currently planned. Our long-term approach
+  for a generic high-throughput alternative is to use the
+  <a href="https://build.fhir.org/ig/HL7/bulk-data/export.html">FHIR Bulk Export API</a>.</li>
 </ul>
-<p>Once you have set-up and deployed the FHIR Data Pipes Pipelines, you can explore different <a href="../tutorials.md">tutorials</a> for working with FHIR Data Pipes.</p>
+<p>There are two options for transforming the data (output):</p>
+<ul>
+<li><em>Parquet</em>: Outputs the FHIR resources as Parquet files, using the
+  <a href="https://github.com/FHIR/sql-on-fhir/blob/master/sql-on-fhir.md">SQL-on-FHIR schema</a>.</li>
+<li><em>FHIR</em>: Copies the FHIR resources to another FHIR server using FHIR APIs.</li>
+</ul>
+<h2 id="setup">Setup</h2>
+<ol>
+<li><a href="https://docs.github.com/en/github/creating-cloning-and-archiving-repositories/cloning-a-repository">Clone</a>
+    the <a href="https://github.com/google/fhir-data-pipes">FHIR Data Pipes</a> project to
+    your machine.</li>
+<li>Set the <code>utils</code> directory to world-readable: <code>chmod -R 755 ./utils</code>.</li>
+<li>Build binaries by running <code>mvn clean install</code> from the root directory of the
+    repository.</li>
+</ol>
+<h2 id="run-the-pipeline">Run the pipeline</h2>
+<p>Run the pipeline directly using the <code>java</code> command:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>java -jar ./pipelines/batch/target/batch-bundled.jar \
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>    com.google.fhir.analytics.FhirEtl \
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>    --fhirServerUrl=http://example.org/fhir \
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>    --outputParquetPath=/tmp/parquet/
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>    --[see additional parameters below]
+</code></pre></div>
+<p>Add the necessary parameters depending on your use case. The methods used for
+reading the source FHIR server and outputting the data depend on the parameters
+used. You can output to both Parquet files and a FHIR server by including the
+required parameters for both.</p>
+<h2 id="parameters">Parameters</h2>
+<p>This section documents the parameters used by the various pipelines. For more
+information on parameters, see
+<a href="https://github.com/google/fhir-data-pipes/blob/master/pipelines/batch/src/main/java/com/google/fhir/analytics/FhirEtlOptions.java"><code>FhirEtlOptions</code></a>
+or run the pipeline with the <code>help</code> option:
+<code>java -jar ./batch/target/batch-bundled.jar --help=FhirEtlOptions</code>.</p>
+<h3 id="common-parameters">Common parameters</h3>
+<p>These parameters are used regardless of other pipeline options.</p>
+<ul>
+<li><code>resourceList</code> - A comma-separated list of
+  <a href="https://www.hl7.org/fhir/resourcelist.html">FHIR resources</a> to include in the
+  pipeline. Default: <code>Patient,Encounter,Observation</code></li>
+<li><code>runner</code> -
+  <a href="https://beam.apache.org/documentation/runners/capability-matrix/">The Apache Beam Runner</a>
+  to use. Pipelines supports <code>DirectRunner</code> and <code>FlinkRunner</code> by default; other
+  runners can be enabled by Maven profiles, e.g.,
+  <a href="https://github.com/google/fhir-data-pipes/blob/16fcc255cef4d2708b9941a854e6c638b2533d45/pipelines/batch/pom.xml#L257">DataflowRunner</a>.
+  See also
+  <a href="pipelines/batch/README.md#a-note-about-beam-runners">A note about Beam runners</a>.
+  Default: <code>DirectRunner</code></li>
+</ul>
+<h3 id="fhir-search-input-parameters">FHIR-Search input parameters</h3>
+<p>The pipeline will use FHIR-Search to fetch data as long as <code>jdbcModeEnabled</code> and
+<code>jdbcModeHapi</code> are unset or false.</p>
+<ul>
+<li><code>fhirServerUrl</code> - The base URL of the source FHIR server. Required.</li>
+<li><code>fhirServerUserName</code> - The HTTP Basic Auth username to access the FHIR server
+  APIs. Default: <code>admin</code></li>
+<li><code>fhirServerPassword</code> - The HTTP Basic Auth password to access the FHIR server
+  APIs. Default: <code>Admin123</code></li>
+<li><code>batchSize</code> - The number of resources to fetch in each API call. Default:
+  <code>100</code></li>
+</ul>
+<h3 id="jdbc-input-parameters">JDBC input parameters</h3>
+<p>JDBC mode is used if a JDBC flag is <code>true</code>.</p>
+<p>To use JDBC mode:</p>
+<p>1: Create a copy of
+<a href="https://github.com/google/fhir-data-pipes/blob/master/utils/hapi-postgres-config.json">hapi-postgres-config.json</a>
+and edit the values to match your database server.</p>
+<p>2: Enable JDBC mode for your source server:</p>
+<ul>
+<li>OpenMRS</li>
+<li><code>jdbcModeEnabled=true</code></li>
+<li>HAPI FHIR server</li>
+<li><code>jdbcModeHapi=true</code></li>
+</ul>
+<p>3: Specify the path to your config file.</p>
+<ul>
+<li><code>fhirDatabaseConfigPath=./path/to/config.json</code></li>
+</ul>
+<p>All JDBC parameters:</p>
+<ul>
+<li><code>jdbcModeHapi</code> - If true, uses JDBC mode for HAPI FHIR server. Default:
+  <code>false</code></li>
+<li><code>jdbcModeEnabled</code> - If true, uses JDBC mode for OpenMRS. Default: <code>false</code></li>
+<li><code>fhirDatabaseConfigPath</code> - Path to the FHIR database config for JDBC mode.
+  Default: <code>../utils/hapi-postgres-config.json</code></li>
+<li><code>jdbcFetchSize</code> - The fetch size of each JDBC database query. Default: <code>10000</code></li>
+<li><code>jdbcMaxPoolSize</code> - The maximum number of database connections. Default: <code>50</code></li>
+</ul>
+<h3 id="parquet-output-parameters">Parquet output parameters</h3>
+<p>Parquet files are output when <code>outputParquetPath</code> is set.</p>
+<ul>
+<li><code>outputParquetPath</code> - The file path to write Parquet files to, e.g.,
+  <code>./tmp/parquet/</code>. Default: empty string, which does not output Parquet files.</li>
+<li><code>secondsToFlushParquetFiles</code> - The number of seconds to wait before flushing
+  all Parquet writers with non-empty content to files. Use <code>0</code> to disable.
+  Default: <code>3600</code>.</li>
+<li><code>rowGroupSizeForParquetFiles</code> - The approximate size in bytes of the
+  row-groups in Parquet files. When this size is reached, the content is flushed
+  to disk. This is not used if there are less than 100 records. Use <code>0</code> to use
+  the default Parquet row-group size. Default: <code>0</code>.</li>
+</ul>
+<h3 id="fhir-output-parameters">FHIR output parameters</h3>
+<p>Resources will be copied to the FHIR server specified in <code>fhirSinkPath</code> if that
+field is set.</p>
+<ul>
+<li><code>fhirSinkPath</code> - A base URL to a target FHIR server, or the relative path of a
+  GCP FHIR store, e.g. <code>http://localhost:8091/fhir</code> for a FHIR server or
+  <code>projects/PROJECT/locations/LOCATION/datasets/DATASET/fhirStores/FHIR-STORE-NAME</code>
+  for a GCP FHIR store. If using a GCP FHIR store,
+  <a href="https://github.com/google/fhir-data-pipes/wiki/Create-a-Google-Cloud-FHIR-Store-and-BigQuery-Dataset">see here for setup information</a>.
+  default: none, resources are not copied</li>
+<li><code>sinkUserName</code> - The HTTP Basic Auth username to access the FHIR sink. Not
+  used for GCP FHIR stores.</li>
+<li><code>sinkPassword</code> - The HTTP Basic Auth password to access the FHIR sink. Not
+  used for GCP FHIR stores.</li>
+</ul>
+<h3 id="a-note-about-beam-runners">A note about Beam runners</h3>
+<p>If the pipeline is run on a single machine (i.e., not on a distributed cluster),
+for large datasets consider using a production grade runner like
+<a href="https://beam.apache.org/documentation/runners/flink/">Flink</a>. This can be done
+by adding the parameter <code>--runner=FlinkRunner</code> (use <code>--maxParallelism</code> and
+<code>--parallelism</code> to control parallelism). This may avoid some of the memory
+issues of <code>DirectRunner</code>.</p>
+<h2 id="example-configurations">Example configurations</h2>
+<p>These examples are set up to work with
+<a href="https://github.com/google/fhir-data-pipes/wiki/Try-the-pipelines-using-local-test-servers">local test servers</a>.</p>
+<h3 id="fhir-search-to-parquet-files">FHIR Search to Parquet files</h3>
+<p>Example run:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>java<span class="w"> </span>-cp<span class="w"> </span>./pipelines/batch/target/batch-bundled.jar<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="w">    </span>com.google.fhir.analytics.FhirEtl<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="w">    </span>--fhirServerUrl<span class="o">=</span>http://localhost:8091/fhir<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span class="w">    </span>--outputParquetPath<span class="o">=</span>/tmp/TEST/<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a><span class="w">    </span>--resourceList<span class="o">=</span>Patient,Encounter,Observation
+</code></pre></div>
+<h3 id="hapi-fhir-jdbc-to-a-fhir-server">HAPI FHIR JDBC to a FHIR server</h3>
+<p>Example run:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>java<span class="w"> </span>-cp<span class="w"> </span>./pipelines/batch/target/batch-bundled.jar<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="w">    </span>com.google.fhir.analytics.FhirEtl<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a><span class="w">    </span>--fhirServerUrl<span class="o">=</span>http://localhost:8091/fhir<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a><span class="w">    </span>--resourceList<span class="o">=</span>Patient,Encounter,Observation<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a><span class="w">    </span>--fhirDatabaseConfigPath<span class="o">=</span>./utils/hapi-postgres-config.json<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a><span class="w">    </span>--jdbcModeEnabled<span class="o">=</span><span class="nb">true</span><span class="w"> </span>--jdbcModeHapi<span class="o">=</span><span class="nb">true</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a><span class="w">    </span>--jdbcMaxPoolSize<span class="o">=</span><span class="m">50</span><span class="w"> </span>--jdbcFetchSize<span class="o">=</span><span class="m">1000</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-2-8" name="__codelineno-2-8" href="#__codelineno-2-8"></a><span class="w">    </span>--jdbcDriverClass<span class="o">=</span>org.postgresql.Driver<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-2-9" name="__codelineno-2-9" href="#__codelineno-2-9"></a><span class="w">    </span>--fhirSinkPath<span class="o">=</span>http://localhost:8099/fhir<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-2-10" name="__codelineno-2-10" href="#__codelineno-2-10"></a><span class="w">    </span>--sinkUserName<span class="o">=</span>hapi<span class="w"> </span>--sinkPassword<span class="o">=</span>hapi
+</code></pre></div>
+<h2 id="how-to-query-the-data-warehouse">How to query the data warehouse</h2>
+<p>To query Parquet files, load them into a compatible data engine such as Apache
+Spark. The
+<a href="https://github.com/google/fhir-data-pipes/wiki/Analytics-on-a-single-machine-using-Docker">single machine Docker Compose configuration</a>
+runs the pipeline and loads data into an Apache Spark Thrift server for you.</p>
 
 
 
@@ -723,44 +817,6 @@
       
         <footer class="md-footer">
   
-    
-      
-      <nav class="md-footer__inner md-grid" aria-label="Footer" >
-        
-          
-          <a href=".." class="md-footer__link md-footer__link--prev" aria-label="Previous: Home">
-            <div class="md-footer__button md-icon">
-              
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12Z"/></svg>
-            </div>
-            <div class="md-footer__title">
-              <span class="md-footer__direction">
-                Previous
-              </span>
-              <div class="md-ellipsis">
-                Home
-              </div>
-            </div>
-          </a>
-        
-        
-          
-          <a href="../advanced_guides/" class="md-footer__link md-footer__link--next" aria-label="Next: Advanced Guides">
-            <div class="md-footer__title">
-              <span class="md-footer__direction">
-                Next
-              </span>
-              <div class="md-ellipsis">
-                Advanced Guides
-              </div>
-            </div>
-            <div class="md-footer__button md-icon">
-              
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M4 11v2h12l-5.5 5.5 1.42 1.42L19.84 12l-7.92-7.92L10.5 5.5 16 11H4Z"/></svg>
-            </div>
-          </a>
-        
-      </nav>
     
   
   <div class="md-footer-meta md-typeset">

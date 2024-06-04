@@ -384,9 +384,9 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#transformation-to-lossless-schema" class="md-nav__link">
+  <a href="#transformation-to-near-lossless-schema-as-parquet-files" class="md-nav__link">
     <span class="md-ellipsis">
-      Transformation to "Lossless" schema
+      Transformation to near "lossless" schema as Parquet files
     </span>
   </a>
   
@@ -729,47 +729,54 @@
 <h1 id="introduction">Introduction</h1>
 <p>The Open Health Stack's <a href="https://https://github.com/google/fhir-data-pipes">FHIR Data Pipes</a> provides a collection of tools to transform complex FHIR (Fast Healthcare Interoperability Resources) data into formats for running <em>analytics</em> workloads and building services. </p>
 <p>Using OHS, developers can use familiar languages (such as python or ANSI SQL), packages and tools to build analytics solutions for different use cases: from generating reports and powering dashboards to exploratory data science and machine learning.</p>
-<p><img alt="FHIR Data Pipes Image" src="images/FHIR_Data_Pipes.png" /></p>
+<p><img alt="FHIR Data Pipes Image" src="images/v2_FHIR_Data_Pipes.png" /></p>
 <p><em>Caption: FHIR Data Pipes Graphic</em> </p>
 <p><strong>Key features</strong></p>
 <ul>
 <li>
-<p>Transform FHIR JSON Resources (STU3 and R4) to a (near) <em>"lossless"</em> Parquet representations based on the SQL-on-FHIR-v1 schema</p>
+<p>Transform FHIR JSON Resources (STU3 and R4) to (near) <em>"lossless"</em> Parquet on FHIR representation based on the <a href="https://github.com/FHIR/sql-on-fhir/blob/master/sql-on-fhir.md*">SQL-on-FHIR-v1 schema</a></p>
 </li>
 <li>
-<p>Horizontally scalable Apache Beam based ETL pipeline to continuously transform FHIR data. Support for local, on-prem or cloud deployment options</p>
+<p><strong>Horizontally scalable</strong> Apache Beam based ETL pipeline to continuously transform FHIR data for use in downstream applications. Support for local, on-prem or cloud runners and deployment options</p>
 </li>
 <li>
-<p>Seamless support for different Data Warehouses from traditional RDBMS (such as <a href="https://www.postgresql.org/">PostgreSQL</a>), OLAP Database Engines (such as <a href="https://duckdb.org/">duckdb</a>) to Distributed query engines (such as <a href="https://spark.apache.org/sql/">SparkSQL</a>)</p>
+<p>Seamless support for different Data Warehouses from traditional RDBMS (such as <a href="https://www.postgresql.org/">PostgreSQL</a>), OLAP Database Engines (such as <a href="https://duckdb.org/">duckdb</a>) to <strong>Distributed query engines</strong> (such as <a href="https://spark.apache.org/sql/">SparkSQL</a>, <a href="https://trino.io/">Trino</a> or <a href="https://prestodb.io/">PrestoDB</a>)</p>
 </li>
 <li>
 <p>Define views in ANSI SQL or as ViewDefinition Resources to create flattened tables to power different analytics solutions</p>
 </li>
 </ul>
-<p><strong>Usage FHIR Data Pipes</strong>
-The <em>primary use case</em> for FHIR Data Pipes is to enable continuous transformation of FHIR Data into analytics friendly representations.</p>
-<p>A secondary use case is for piping FHIR data from different sources into a central FHIR repository (early stage).</p>
+<p><strong>Usage FHIR Data Pipes</strong></p>
+<ul>
+<li>
+<p>The <strong>primary use case</strong> for FHIR Data Pipes is to enable continuous transformation of FHIR Data into analytics friendly representations.</p>
+</li>
+<li>
+<p>A <em>secondary use case</em> is for piping FHIR data from different sources into a central FHIR repository (early stage).</p>
+</li>
+</ul>
 <h2 id="horizontally-scalable-etl-pipeline">Horizontally scalable ETL Pipeline</h2>
 <p>The ETL Pipeline is implemented in Apache Beam and can utilize different runners depending on the environment (local, on-prem or cloud).
 Extraction:</p>
 <p>FHIR Data Pipes is designed to work with any FHIR source data. </p>
 <ul>
-<li>Valid FHIR Server API (e.g. HAPI FHIR)</li>
-<li>FHIR Facade (e.g. OpenMRSv3)</li>
-<li>Bulk Export API data (as ndjson)</li>
-<li>ndjson representation</li>
+<li>FHIR Server API (e.g. HAPI FHIR)</li>
+<li>FHIR Facade (e.g. OpenMRS with the FHIR2 omod)</li>
+<li>FHIR ndjson (e.g from bulk export API) </li>
 </ul>
-<h2 id="transformation-to-lossless-schema">Transformation to "Lossless" schema</h2>
-<p>Uses bunsen to transform from FHIR (STU3, R4) to the SQL-on-FHIR-v1 schema 
-Configurable support for FHIR profiles and extensions on a per Resource basis</p>
+<h2 id="transformation-to-near-lossless-schema-as-parquet-files">Transformation to near "lossless" schema as Parquet files</h2>
+<ul>
+<li>Uses bunsen to transform from FHIR Resources (STU3, R4) to the SQL-on-FHIR-v1 schema on a per Resource basis</li>
+<li>Near "lossless" transformation; with the exception of limits based on setting recursive depth (e.g. for nested QuestionnaireResponses) </li>
+<li>Configurable support for FHIR profiles and extensions on a per Resource basis</li>
+</ul>
 <h2 id="loading-into-dwh">Loading into DWH</h2>
 <p>FHIR Data Pipes supports different SQL Data Warehouse options depending on the needs of the project. These include:</p>
 <ul>
 <li>Loading Parquet into an OLAP data warehouse such as SparkSQL, duckdb or others </li>
-<li>Distributed query engine such as SparkSQL (example provided)</li>
-<li>Traditional RDBMS such as Postgres (when using the "lossy" FHIR ViewDefinitions Resources)</li>
+<li>Distributed query engine such as SparkSQL (example provided), Trino or PrestoDB</li>
+<li>Traditional RDBMS such as Postgres or MySQL (when applying FHIR ViewDefinitions)</li>
 </ul>
-<p>To learn about the Pipelines Controller see here (link to pipelines controller in the advanced guides)</p>
 <h2 id="querying-data">Querying Data</h2>
 <p>When working with the SQL-on-FHIR-v1 schema, one major challenge is handling the many nested or repeated fields (such as condeable concepts). </p>
 <p>This depends on the different nuances of SQL dialects. For example:</p>

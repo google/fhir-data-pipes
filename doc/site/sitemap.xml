@@ -26,6 +26,21 @@
          <changefreq>daily</changefreq>
     </url>
     <url>
+         <loc>https://example.com/foo/installation_controller/</loc>
+         <lastmod>2024-05-24</lastmod>
+         <changefreq>daily</changefreq>
+    </url>
+    <url>
+         <loc>https://example.com/foo/installation_docker/</loc>
+         <lastmod>2024-05-24</lastmod>
+         <changefreq>daily</changefreq>
+    </url>
+    <url>
+         <loc>https://example.com/foo/installation_pipeline/</loc>
+         <lastmod>2024-05-24</lastmod>
+         <changefreq>daily</changefreq>
+    </url>
+    <url>
          <loc>https://example.com/foo/release_process/</loc>
          <lastmod>2024-05-24</lastmod>
          <changefreq>daily</changefreq>
