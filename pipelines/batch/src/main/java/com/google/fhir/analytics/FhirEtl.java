@@ -22,11 +22,14 @@ import com.google.common.base.Strings;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
+import com.google.fhir.analytics.exception.BulkExportException;
 import com.google.fhir.analytics.metrics.PipelineMetrics;
 import com.google.fhir.analytics.metrics.PipelineMetricsProvider;
 import com.google.fhir.analytics.model.DatabaseConfiguration;
+import com.google.fhir.analytics.model.FhirFetchMode;
 import com.google.fhir.analytics.view.ViewDefinitionException;
 import java.io.IOException;
+import java.nio.file.Path;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -35,6 +38,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
 import javax.sql.DataSource;
 import org.apache.avro.generic.GenericRecord;
@@ -245,6 +249,38 @@ public class FhirEtl {
   }
 
   static void validateOptions(FhirEtlOptions options) {
+    Preconditions.checkNotNull(options.getFhirFetchMode(), "--fhirFetchMode cannot be empty");
+    switch (options.getFhirFetchMode()) {
+      case FHIR_SEARCH -> Preconditions.checkState(
+          !Strings.isNullOrEmpty(options.getFhirServerUrl()),
+          "--fhirServerUrl cannot be empty for FHIR_SEARCH mode");
+      case PARQUET -> {
+        Preconditions.checkState(
+            !Strings.isNullOrEmpty(options.getParquetInputDwhRoot()),
+            "--parquetInputDwhRoot cannot be empty for PARQUET mode");
+        // This constraint is to make the PipelineManager logic simpler and because there is
+        // currently no use-case for both reading from Parquet files and also writing into Parquet.
+        Preconditions.checkState(
+            Strings.isNullOrEmpty(options.getOutputParquetPath()),
+            "--parquetInputDwhRoot and --outputParquetPath cannot be used together!");
+      }
+      case JSON -> Preconditions.checkState(
+          !Strings.isNullOrEmpty(options.getSourceJsonFilePatternList()),
+          "--sourceJsonFilePattern cannot be empty for JSON mode");
+      case NDJSON -> Preconditions.checkState(
+          !Strings.isNullOrEmpty(options.getSourceNDJsonFilePatternList()),
+          "--sourceNDJsonFilePattern cannot be empty for NDJSON mode");
+      case BULK_EXPORT -> Preconditions.checkState(
+          !Strings.isNullOrEmpty(options.getFhirServerUrl()),
+          "--fhirServerUrl cannot be empty for BULK_EXPORT mode");
+      case HAPI_JDBC -> Preconditions.checkState(
+          !Strings.isNullOrEmpty(options.getFhirDatabaseConfigPath()),
+          "--fhirDatabaseConfigPath cannot be empty for HAPI_JDBC mode");
+      case OPENMRS_JDBC -> Preconditions.checkState(
+          !Strings.isNullOrEmpty(options.getFhirDatabaseConfigPath())
+              && !Strings.isNullOrEmpty(options.getFhirServerUrl()),
+          "--fhirDatabaseConfigPath and -fhirServerUrl cannot be empty for OPENMRS_JDBC mode");
+    }
     if (!options.getActivePeriod().isEmpty()) {
       Set<String> resourceSet = Sets.newHashSet(options.getResourceList().split(","));
       if (resourceSet.contains("Patient")) {
@@ -258,53 +294,6 @@ public class FhirEtl {
                 + options.getResourceList());
       }
     }
-
-    if (!options.getParquetInputDwhRoot().isEmpty()
-        || !options.getSourceJsonFilePattern().isEmpty()
-        || !options.getSourceNDJsonFilePattern().isEmpty()) {
-
-      if (!checkOnlyOneNonEmptyString(
-          options.getParquetInputDwhRoot(),
-          options.getSourceJsonFilePattern(),
-          options.getSourceNDJsonFilePattern())) {
-        throw new IllegalArgumentException(
-            "Only one of the parameters --parquetInputDwhRoot, --sourceJsonFilePattern or"
-                + " --sourceNDJsonFilePattern can be set at a time");
-      }
-      if (!options.getParquetInputDwhRoot().isEmpty()
-          && !options.getOutputParquetPath().isEmpty()) {
-        // This constraint is to make the PipelineManager logic simpler and because there is
-        // currently no use-case for both reading from Parquet files and also writing into Parquet.
-        throw new IllegalArgumentException(
-            "--parquetInputDwhRoot and --outputParquetPath cannot be used together!");
-      }
-      if (!options.getFhirServerUrl().isEmpty()) {
-        throw new IllegalArgumentException(
-            "When reading from input files, --fhirServerUrl should not be set!");
-      }
-      if (options.isJdbcModeEnabled()) {
-        throw new IllegalArgumentException(
-            "When reading from input files, --jdbcModeEnabled should not be set!");
-      }
-      if (!options.getActivePeriod().isEmpty()) {
-        throw new IllegalArgumentException(
-            "Enabling --activePeriod is not supported when reading from input files");
-      }
-    } else { // sourceJsonFilePattern and parquetInputDwh are not set.
-      if (options.getFhirServerUrl().isEmpty() && !options.isJdbcModeHapi()) {
-        throw new IllegalArgumentException(
-            "One of --fhirServerUrl --jdbcModeHapi --parquetInputDwhRoot --sourceJsonFilePattern"
-                + " --sourceNDJsonFilePattern should be set!");
-      }
-    }
-  }
-
-  private static boolean checkOnlyOneNonEmptyString(String... strings) {
-    List<String> nonEmptyList =
-        Arrays.stream(strings)
-            .filter(string -> !Strings.isNullOrEmpty(string))
-            .collect(Collectors.toList());
-    return nonEmptyList.size() == 1;
   }
 
   // TODO: Implement active period feature for JDBC mode with a HAPI source server (issue #278).
@@ -391,21 +380,49 @@ public class FhirEtl {
     return pipelineList;
   }
 
-  private static List<Pipeline> buildJsonReadPipeline(
-      FhirEtlOptions options, String filePattern, boolean isFileNDJson) {
-    Preconditions.checkArgument(!filePattern.isEmpty());
-    Preconditions.checkArgument(Strings.isNullOrEmpty(options.getSince()));
-    Preconditions.checkArgument(!options.isJdbcModeEnabled());
-    Preconditions.checkArgument(options.getActivePeriod().isEmpty());
+  private static List<Pipeline> buildMultiJsonReadPipeline(
+      FhirEtlOptions options, boolean isFileNDJson) {
+    String multiFilePattern =
+        isFileNDJson
+            ? options.getSourceNDJsonFilePatternList()
+            : options.getSourceJsonFilePatternList();
+    Preconditions.checkArgument(!multiFilePattern.isEmpty());
 
     Pipeline pipeline = Pipeline.create(options);
     pipeline
-        .apply(FileIO.match().filepattern(filePattern))
+        .apply(Create.of(Arrays.asList(options.getSourceNDJsonFilePatternList().split(","))))
+        .apply(FileIO.matchAll())
         .apply(FileIO.readMatches())
-        .apply(
-            isFileNDJson ? "Read NDJson Files" : "Read JSON Files",
-            ParDo.of(new ReadJsonFilesFn(options, isFileNDJson)));
+        .apply("Read Multi NDJson Files", ParDo.of(new ReadJsonFilesFn(options, true)));
     return Arrays.asList(pipeline);
+  }
+
+  private static List<Pipeline> buildBulkExportReadPipeline(
+      FhirEtlOptions options, AvroConversionUtil avroConversionUtil)
+      throws BulkExportException, IOException {
+    FhirSearchUtil fhirSearchUtil =
+        createFhirSearchUtil(options, avroConversionUtil.getFhirContext());
+    List<String> resourceTypes =
+        Arrays.asList(options.getResourceList().split(",")).stream()
+            .distinct()
+            .collect(Collectors.toList());
+    List<Path> ndJsonDirectoryPaths =
+        BulkExportUtil.triggerBulkExportAndDownloadFiles(
+            resourceTypes, options.getFhirVersion(), fhirSearchUtil);
+    if (ndJsonDirectoryPaths != null && !ndJsonDirectoryPaths.isEmpty()) {
+      List<String> ndJsonFilePatternList =
+          ndJsonDirectoryPaths.stream()
+              .map(filePath -> filePath.resolve("*").toString())
+              .collect(Collectors.toList());
+      Pipeline pipeline = Pipeline.create(options);
+      pipeline
+          .apply(Create.of(ndJsonFilePatternList))
+          .apply(FileIO.matchAll())
+          .apply(FileIO.readMatches())
+          .apply("Read Multi NDJson Files", ParDo.of(new ReadJsonFilesFn(options, true)));
+      return Arrays.asList(pipeline);
+    }
+    return null;
   }
 
   /**
@@ -428,27 +445,27 @@ public class FhirEtl {
    */
   static List<Pipeline> setupAndBuildPipelines(
       FhirEtlOptions options, AvroConversionUtil avroConversionUtil)
-      throws IOException, SQLException, ViewDefinitionException, ProfileException {
+      throws IOException, SQLException, ViewDefinitionException, ProfileException,
+          BulkExportException {
+
     if (!options.getSinkDbConfigPath().isEmpty()) {
       JdbcResourceWriter.createTables(options);
     }
-    if (options.isJdbcModeHapi()) {
-      return buildHapiJdbcPipeline(options);
-    } else if (options.isJdbcModeEnabled()) {
-      return buildOpenmrsJdbcPipeline(options, avroConversionUtil);
-    } else if (!options.getParquetInputDwhRoot().isEmpty()) {
-      return buildParquetReadPipeline(options, avroConversionUtil);
-    } else if (!options.getSourceJsonFilePattern().isEmpty()) {
-      return buildJsonReadPipeline(options, options.getSourceJsonFilePattern(), false);
-    } else if (!options.getSourceNDJsonFilePattern().isEmpty()) {
-      return buildJsonReadPipeline(options, options.getSourceNDJsonFilePattern(), true);
-    } else {
-      return buildFhirSearchPipeline(options, avroConversionUtil);
-    }
+    FhirFetchMode fhirFetchMode = options.getFhirFetchMode();
+    return switch (fhirFetchMode) {
+      case HAPI_JDBC -> buildHapiJdbcPipeline(options);
+      case OPENMRS_JDBC -> buildOpenmrsJdbcPipeline(options, avroConversionUtil);
+      case PARQUET -> buildParquetReadPipeline(options, avroConversionUtil);
+      case JSON -> buildMultiJsonReadPipeline(options, false);
+      case NDJSON -> buildMultiJsonReadPipeline(options, true);
+      case FHIR_SEARCH -> buildFhirSearchPipeline(options, avroConversionUtil);
+      case BULK_EXPORT -> buildBulkExportReadPipeline(options, avroConversionUtil);
+    };
   }
 
   public static void main(String[] args)
-      throws IOException, SQLException, ViewDefinitionException, ProfileException {
+      throws IOException, SQLException, ViewDefinitionException, ProfileException,
+          ExecutionException, InterruptedException, BulkExportException {
 
     AvroConversionUtil.initializeAvroConverters();
 
