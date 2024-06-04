@@ -1,4 +1,4 @@
-# FHIR Data Pipes Pipelines
+# Deploy FHIR Data Pipes "Pipelines"
 
 The [batch](https://github.com/google/fhir-data-pipes/tree/master/pipelines/batch) directory contains code for a Java JAR which
 transforms data from a FHIR server to either

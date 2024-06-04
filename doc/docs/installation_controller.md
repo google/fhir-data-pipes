@@ -1,4 +1,4 @@
-# FHIR Pipelines Controller
+# Deploy FHIR Data Pipes "Controller"
 
 The FHIR Pipelines Controller helps you schedule and manage the continuous
 transformation of data from a [HAPI FHIR server](https://hapifhir.io/) to a

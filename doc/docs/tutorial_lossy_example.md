@@ -1,7 +1,7 @@
-# Relational DWH using custom "lossy" schema 
+# Relational DWH using custom schema 
 
 ## Overview
-In this tutorial you will learn how to configure and deploy FHIR Data Pipes to transform FHIR data into a Postgre Relational SQL data-warehouse using FHIR ViewDefinition Resources to define the custom _"lossy"_ schema.
+In this tutorial you will learn how to configure and deploy FHIR Data Pipes to transform FHIR data into a PostgreSQL data-warehouse using FHIR ViewDefinition resources to define the custom schema.
 
 ## Requirements
 
@@ -143,6 +143,3 @@ SELECT COUNT(0) FROM observation_flat;
 | 18343     |
 +-----------+
 ```
-
-## What's next
-Now that you have

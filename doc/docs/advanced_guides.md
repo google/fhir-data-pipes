@@ -1,63 +1,69 @@
 # Advanced guides
 
-## Transformation to parquet using SQL-on-FHIR schema
+* Pre-defined views
+* Configuration settings
+* Querying SQL-on-FHIR Data
 
-*   Document the SQL-on-FHIR schema:
-    *   Recursive depth
-    *   Contained resources
-    *   Explain the FHIR to AvroConverter and Bunsen
-    *   FHIR version support (and future plans)
-    *   Support for extensions
-    *   How to use StructureDefinitions → link to tutorial
+## Pre-defined views
+A set of SQL queries (_&lt;Resource_Name&gt;_flat.**sql**_) and ViewDefinition (_&lt;Resource_Name&gt;_flat.**json**_) resources has been provided for defining flat views for common FHIR resources.
 
-## Parquet representation
-*   Note about this
-*   Horizontal scalability
-*   Managing parquet files
+The currently supported list (as at 1st June, 2024), which can be found in the `docker/config/views' directory are:
 
-## Pipelines Controller
-https://github.com/google/fhir-data-pipes/wiki/Try-out-the-FHIR-Pipelines-Controller
+1. Condition
+* DiagnosticReport
+* Encounter
+* Immunization
+* Location
+* Medicationrequest
+* Observation
+* Organization
+* Patient
+* Practitioner
+* PractitionerRole
+* Procedure
 
-## Performance
-Highlight the performance numbers especially for scaling and across single versus multiple machines
+### SQL virtual views
+These are samples of more complex SQL-on-FHIR queries for defining flat views for common FHIR Resources. These virtual views are applied outside of the pipelines in the downstream SQL query engine. 
 
-## Apache Beam runners
+The queries, which have .sql suffix can be found here: /docker/config/views (e.g Patient_flat.sql)
 
-Apache Beam supports a range of different runners depending on the deployment architecture. 
+An example of a flat view for the Observation Resource is below
 
-*   Describe the different beam runners
-*   How to configure via the pipeline
-*   Important config options e.g. setting memory etc
+```sql
+CREATE OR REPLACE VIEW flat_observation AS
+SELECT O.id AS obs_id, O.subject.PatientId AS patient_id,
+        OCC.`system` AS code_sys, OCC.code,
+        O.value.quantity.value AS val_quantity,
+        OVCC.code AS val_code, OVCC.`system` AS val_sys,
+        O.effective.dateTime AS obs_date
+      FROM Observation AS O LATERAL VIEW OUTER explode(code.coding) AS OCC
+        LATERAL VIEW OUTER explode(O.value.codeableConcept.coding) AS OVCC
+```
 
-## Deployment patterns**
+Learn more:
 
-| Approach | Scenarios | Considerations |
-| -------- | ----------| -------------- |
-| RDBMS using "lossy" schema (defined as ViewDefinition Resources) | Using a relational database to power dashboards or reporting | By design this will provide a constrained set of variables in the views |
-| Distributed "lossless" parquet based DWH and distributed query engine | Need for a horizontally scalable architecture | Will need to manage both distributed storage (Parquet) and a distributed query engine |
-| Non-distributed "lossless" parquet based DWH | Want to leverage parquet with a non-distributed OLAP database engine (such as duckdb) | xxx |
+[Examples of SQL-on-FHIR-v1 queries for defining views](https://github.com/google/fhir-data-pipes/blob/27d691e91d0fe6ef4c9624acba4e68bca145c973/query/queries_and_views.ipynb) 
 
-## Web Control Panel
-The web control panel is a basic spring application provided to make interacting with the pipeline controller easier. It is not designed to be a full production ready “web admin” panel.
+### ViewDefinition resource
+The [SQL-on-FHIR-v2 specification](https://build.fhir.org/ig/FHIR/sql-on-fhir-v2/) defines a standards based pattern for defining Views as FHIRPath expressions in a logical structure to specify the column names and values (as unnested items).
 
-It has the following features:
+A system (pipeline or library) that implements the “View Layer” of the specification provides a View Runner that is able to process these FHIR ViewDefinition Resources over the “Data Layer” (lossless representation of the FHIR data). The output of this are a set of portable, tabular views that can be consumed by the “Analytics Layer” which is any number of tools that can be used to work with the resulting tabular data.
+ 
+FHIR Data Pipes is a reference implementation of the SQL-on-FHIR-v2 specification:
 
-*   Initiate full and incremental pipeline runs
-*   Monitor errors when running pipelines
-*   Recreate view tables
-*   View configuration settings
-*   Access sample jupyter notebooks and ViewDefinition editor
+*   The "View Runner" is by default part of the ETL Pipelines and uses the transformed Parquet files as the “Data Layer”. _This can be extracted to be a stand-alone component if required_
 
-## Querying exported Parquet files
+*   When enabled as part of the Pipeline configuration, it will apply the ViewDefinition Resources from the /config/views folder and materialize the resulting tables to the PostgresSQL database.
 
-Assumes that you have completed ....
+*   A set of pre-defined ViewDefinitions for common FHIR Resources is provided as part of the default package. These can be adapted, replaced and extended
 
-### Handle nested fields
+*   The FHIR Data Pipes provides a simple ViewDefinition Editor which can be used to explore FHIR ViewDefinitions and apply these to individual FHIR Resources
+
+## Querying SQL-on-FHIR Data
 
 One major challenge when querying exported data is that FHIR resources have many nested fields. One approach is to use `LATERAL VIEW` with `EXPLODE` to flatten repeated fields and then filter for specific values of interest.
 
-
-#### Example queries
+### Example queries
 
 The following queries explore the [sample data](https://github.com/google/fhir-data-pipes/tree/master/synthea-hiv/sample_data) loaded when using a [local test server](https://github.com/google/fhir-data-pipes/wiki/Try-the-pipelines-using-local-test-servers). They leverage `LATERAL VIEW` with `EXPLODE` to flatten the Observation.code.coding repeated field and filter for specific observation codes.
 
@@ -83,7 +89,7 @@ Note that the synthetic sample data simulates HIV patients. Observations for HIV
 ]
 ```
 
-##### Flattening a resource table based on a field
+### Flattening a resource table based on a field
 
 Let's say we are interested only in certain observation codes. For working with repeated fields
 like `Observation.code.coding` sometime it is easier to first "flatten" the table on that field.
@@ -111,7 +117,7 @@ Sample output:
 
 ```
 
-##### Find patients with an observed viral load higher than a threshold
+#### Find patients with an observed viral load higher than a threshold
 Now, let's say we are interested only in cases with high viral load; and for each patient
 we need some demographic information too. We can use the flat table we created above and
 join it with the Patient resource table:
@@ -141,7 +147,7 @@ Sample output:
 +--------+-----------------------------------+---------+---------+-------------------+---------------------------------------+---------+-----------+
 ```
 
-##### Count all viral-load observations
+#### Count all viral-load observations
 
 ```hiveql
 SELECT COUNT(0)

@@ -38,12 +38,17 @@ site_url: https://example.com/foo/
 
 nav:
   - Home: 'index.md'
-  - Getting Started: 'getting_started.md'
+  - Components: 'components.md'
+  - Getting Started: 
+    - 'Install options' : 'getting_started.md'
+    - 'Docker containers' : 'installation_docker.md'
+    - 'Deploy Data Pipes "Pipelines"' : 'installation_pipeline.md'
+    - 'Deploy Data Pipes "Controller"' : 'installation_controller.md'
   - Advanced Guides: 'advanced_guides.md'
   - Tutorials:
     - 'Single Machine Deployment': 'tutorial_single_machine.md'
     - 'Visualize Parquet DWH with Apache Superset': 'tutorial_add_dashboard.md'
-    - 'RDBMS DWH using FHIR ViewDefinitions': 'tutorial_lossy_example.md'
+    - 'Postgres DWH using custom schema': 'tutorial_lossy_example.md'
   - Community:
     - 'Support' : 'support.md'
     - 'Contributing': 'contributing.md'
