@@ -11,7 +11,7 @@
         <link rel="canonical" href="https://example.com/foo/advanced_guides/">
       
       
-        <link rel="prev" href="../getting_started/">
+        <link rel="prev" href="../installation_controller/">
       
       
         <link rel="next" href="../tutorial_single_machine/">
@@ -222,15 +222,33 @@
   
   
     <li class="md-tabs__item">
-      <a href="../getting_started/" class="md-tabs__link">
+      <a href="../components/" class="md-tabs__link">
         
   
     
   
-  Getting Started
+  Components
 
       </a>
     </li>
+  
+
+      
+        
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../getting_started/" class="md-tabs__link">
+          
+  
+  Getting Started
+
+        </a>
+      </li>
+    
   
 
       
@@ -351,15 +369,146 @@
   
   
     <li class="md-nav__item">
-      <a href="../getting_started/" class="md-nav__link">
+      <a href="../components/" class="md-nav__link">
         
+  
+  <span class="md-ellipsis">
+    Components
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+            
   
   <span class="md-ellipsis">
     Getting Started
   </span>
   
 
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            Getting Started
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../getting_started/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Install options
+  </span>
+  
+
       </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../installation_docker/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Docker containers
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../installation_pipeline/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Deploy Data Pipes "Pipelines"
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../installation_controller/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Deploy Data Pipes "Controller"
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
     </li>
   
 
@@ -417,86 +566,46 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#transformation-to-parquet-using-sql-on-fhir-schema" class="md-nav__link">
+  <a href="#pre-defined-views" class="md-nav__link">
     <span class="md-ellipsis">
-      Transformation to parquet using SQL-on-FHIR schema
+      Pre-defined views
     </span>
   </a>
   
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#parquet-representation" class="md-nav__link">
-    <span class="md-ellipsis">
-      Parquet representation
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#pipelines-controller" class="md-nav__link">
-    <span class="md-ellipsis">
-      Pipelines Controller
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#performance" class="md-nav__link">
-    <span class="md-ellipsis">
-      Performance
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#apache-beam-runners" class="md-nav__link">
-    <span class="md-ellipsis">
-      Apache Beam runners
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#deployment-patterns" class="md-nav__link">
-    <span class="md-ellipsis">
-      Deployment patterns**
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#web-control-panel" class="md-nav__link">
-    <span class="md-ellipsis">
-      Web Control Panel
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#querying-exported-parquet-files" class="md-nav__link">
-    <span class="md-ellipsis">
-      Querying exported Parquet files
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Querying exported Parquet files">
+    <nav class="md-nav" aria-label="Pre-defined views">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#handle-nested-fields" class="md-nav__link">
+  <a href="#sql-virtual-views" class="md-nav__link">
     <span class="md-ellipsis">
-      Handle nested fields
+      SQL virtual views
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="Handle nested fields">
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#viewdefinition-resource" class="md-nav__link">
+    <span class="md-ellipsis">
+      ViewDefinition resource
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#querying-sql-on-fhir-data" class="md-nav__link">
+    <span class="md-ellipsis">
+      Querying SQL-on-FHIR Data
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Querying SQL-on-FHIR Data">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
@@ -506,8 +615,7 @@
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="Example queries">
-      <ul class="md-nav__list">
+</li>
         
           <li class="md-nav__item">
   <a href="#flattening-a-resource-table-based-on-a-field" class="md-nav__link">
@@ -516,7 +624,8 @@
     </span>
   </a>
   
-</li>
+    <nav class="md-nav" aria-label="Flattening a resource table based on a field">
+      <ul class="md-nav__list">
         
           <li class="md-nav__item">
   <a href="#find-patients-with-an-observed-viral-load-higher-than-a-threshold" class="md-nav__link">
@@ -533,11 +642,6 @@
       Count all viral-load observations
     </span>
   </a>
-  
-</li>
-        
-      </ul>
-    </nav>
   
 </li>
         
@@ -629,10 +733,10 @@
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" >
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" >
         
           
-          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="0">
+          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="0">
             
   
   <span class="md-ellipsis">
@@ -643,8 +747,8 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_4">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5">
             <span class="md-nav__icon md-icon"></span>
             Tutorials
           </label>
@@ -703,7 +807,7 @@
         
   
   <span class="md-ellipsis">
-    RDBMS DWH using FHIR ViewDefinitions
+    Postgres DWH using custom schema
   </span>
   
 
@@ -739,10 +843,10 @@
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" >
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6" >
         
           
-          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="0">
+          <label class="md-nav__link" for="__nav_6" id="__nav_6_label" tabindex="0">
             
   
   <span class="md-ellipsis">
@@ -753,8 +857,8 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_5">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_6_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6">
             <span class="md-nav__icon md-icon"></span>
             Community
           </label>
@@ -846,215 +950,202 @@
 
 
 <h1 id="advanced-guides">Advanced guides</h1>
-<h2 id="transformation-to-parquet-using-sql-on-fhir-schema">Transformation to parquet using SQL-on-FHIR schema</h2>
 <ul>
-<li>Document the SQL-on-FHIR schema:<ul>
-<li>Recursive depth</li>
-<li>Contained resources</li>
-<li>Explain the FHIR to AvroConverter and Bunsen</li>
-<li>FHIR version support (and future plans)</li>
-<li>Support for extensions</li>
-<li>How to use StructureDefinitions → link to tutorial</li>
+<li>Pre-defined views</li>
+<li>Configuration settings</li>
+<li>Querying SQL-on-FHIR Data</li>
 </ul>
+<h2 id="pre-defined-views">Pre-defined views</h2>
+<p>A set of SQL queries (<em>&lt;Resource_Name&gt;_flat.<strong>sql</strong></em>) and ViewDefinition (<em>&lt;Resource_Name&gt;_flat.<strong>json</strong></em>) resources has been provided for defining flat views for common FHIR resources.</p>
+<p>The currently supported list (as at 1st June, 2024), which can be found in the `docker/config/views' directory are:</p>
+<ol>
+<li>Condition</li>
+<li>DiagnosticReport</li>
+<li>Encounter</li>
+<li>Immunization</li>
+<li>Location</li>
+<li>Medicationrequest</li>
+<li>Observation</li>
+<li>Organization</li>
+<li>Patient</li>
+<li>Practitioner</li>
+<li>PractitionerRole</li>
+<li>Procedure</li>
+</ol>
+<h3 id="sql-virtual-views">SQL virtual views</h3>
+<p>These are samples of more complex SQL-on-FHIR queries for defining flat views for common FHIR Resources. These virtual views are applied outside of the pipelines in the downstream SQL query engine. </p>
+<p>The queries, which have .sql suffix can be found here: /docker/config/views (e.g Patient_flat.sql)</p>
+<p>An example of a flat view for the Observation Resource is below</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="k">CREATE</span><span class="w"> </span><span class="k">OR</span><span class="w"> </span><span class="k">REPLACE</span><span class="w"> </span><span class="k">VIEW</span><span class="w"> </span><span class="n">flat_observation</span><span class="w"> </span><span class="k">AS</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="k">SELECT</span><span class="w"> </span><span class="n">O</span><span class="p">.</span><span class="n">id</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="n">obs_id</span><span class="p">,</span><span class="w"> </span><span class="n">O</span><span class="p">.</span><span class="n">subject</span><span class="p">.</span><span class="n">PatientId</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="n">patient_id</span><span class="p">,</span>
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="w">        </span><span class="n">OCC</span><span class="p">.</span><span class="o">`</span><span class="k">system</span><span class="o">`</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="n">code_sys</span><span class="p">,</span><span class="w"> </span><span class="n">OCC</span><span class="p">.</span><span class="n">code</span><span class="p">,</span>
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="w">        </span><span class="n">O</span><span class="p">.</span><span class="n">value</span><span class="p">.</span><span class="n">quantity</span><span class="p">.</span><span class="n">value</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="n">val_quantity</span><span class="p">,</span>
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="w">        </span><span class="n">OVCC</span><span class="p">.</span><span class="n">code</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="n">val_code</span><span class="p">,</span><span class="w"> </span><span class="n">OVCC</span><span class="p">.</span><span class="o">`</span><span class="k">system</span><span class="o">`</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="n">val_sys</span><span class="p">,</span>
+<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a><span class="w">        </span><span class="n">O</span><span class="p">.</span><span class="n">effective</span><span class="p">.</span><span class="n">dateTime</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="n">obs_date</span>
+<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a><span class="w">      </span><span class="k">FROM</span><span class="w"> </span><span class="n">Observation</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="n">O</span><span class="w"> </span><span class="k">LATERAL</span><span class="w"> </span><span class="k">VIEW</span><span class="w"> </span><span class="k">OUTER</span><span class="w"> </span><span class="n">explode</span><span class="p">(</span><span class="n">code</span><span class="p">.</span><span class="n">coding</span><span class="p">)</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="n">OCC</span>
+<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a><span class="w">        </span><span class="k">LATERAL</span><span class="w"> </span><span class="k">VIEW</span><span class="w"> </span><span class="k">OUTER</span><span class="w"> </span><span class="n">explode</span><span class="p">(</span><span class="n">O</span><span class="p">.</span><span class="n">value</span><span class="p">.</span><span class="n">codeableConcept</span><span class="p">.</span><span class="n">coding</span><span class="p">)</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="n">OVCC</span>
+</code></pre></div>
+<p>Learn more:</p>
+<p><a href="https://github.com/google/fhir-data-pipes/blob/27d691e91d0fe6ef4c9624acba4e68bca145c973/query/queries_and_views.ipynb">Examples of SQL-on-FHIR-v1 queries for defining views</a> </p>
+<h3 id="viewdefinition-resource">ViewDefinition resource</h3>
+<p>The <a href="https://build.fhir.org/ig/FHIR/sql-on-fhir-v2/">SQL-on-FHIR-v2 specification</a> defines a standards based pattern for defining Views as FHIRPath expressions in a logical structure to specify the column names and values (as unnested items).</p>
+<p>A system (pipeline or library) that implements the “View Layer” of the specification provides a View Runner that is able to process these FHIR ViewDefinition Resources over the “Data Layer” (lossless representation of the FHIR data). The output of this are a set of portable, tabular views that can be consumed by the “Analytics Layer” which is any number of tools that can be used to work with the resulting tabular data.</p>
+<p>FHIR Data Pipes is a reference implementation of the SQL-on-FHIR-v2 specification:</p>
+<ul>
+<li>
+<p>The "View Runner" is by default part of the ETL Pipelines and uses the transformed Parquet files as the “Data Layer”. <em>This can be extracted to be a stand-alone component if required</em></p>
+</li>
+<li>
+<p>When enabled as part of the Pipeline configuration, it will apply the ViewDefinition Resources from the /config/views folder and materialize the resulting tables to the PostgresSQL database.</p>
+</li>
+<li>
+<p>A set of pre-defined ViewDefinitions for common FHIR Resources is provided as part of the default package. These can be adapted, replaced and extended</p>
+</li>
+<li>
+<p>The FHIR Data Pipes provides a simple ViewDefinition Editor which can be used to explore FHIR ViewDefinitions and apply these to individual FHIR Resources</p>
 </li>
 </ul>
-<h2 id="parquet-representation">Parquet representation</h2>
-<ul>
-<li>Note about this</li>
-<li>Horizontal scalability</li>
-<li>Managing parquet files</li>
-</ul>
-<h2 id="pipelines-controller">Pipelines Controller</h2>
-<p>https://github.com/google/fhir-data-pipes/wiki/Try-out-the-FHIR-Pipelines-Controller</p>
-<h2 id="performance">Performance</h2>
-<p>Highlight the performance numbers especially for scaling and across single versus multiple machines</p>
-<h2 id="apache-beam-runners">Apache Beam runners</h2>
-<p>Apache Beam supports a range of different runners depending on the deployment architecture. </p>
-<ul>
-<li>Describe the different beam runners</li>
-<li>How to configure via the pipeline</li>
-<li>Important config options e.g. setting memory etc</li>
-</ul>
-<h2 id="deployment-patterns">Deployment patterns**</h2>
-<table>
-<thead>
-<tr>
-<th>Approach</th>
-<th>Scenarios</th>
-<th>Considerations</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>RDBMS using "lossy" schema (defined as ViewDefinition Resources)</td>
-<td>Using a relational database to power dashboards or reporting</td>
-<td>By design this will provide a constrained set of variables in the views</td>
-</tr>
-<tr>
-<td>Distributed "lossless" parquet based DWH and distributed query engine</td>
-<td>Need for a horizontally scalable architecture</td>
-<td>Will need to manage both distributed storage (Parquet) and a distributed query engine</td>
-</tr>
-<tr>
-<td>Non-distributed "lossless" parquet based DWH</td>
-<td>Want to leverage parquet with a non-distributed OLAP database engine (such as duckdb)</td>
-<td>xxx</td>
-</tr>
-</tbody>
-</table>
-<h2 id="web-control-panel">Web Control Panel</h2>
-<p>The web control panel is a basic spring application provided to make interacting with the pipeline controller easier. It is not designed to be a full production ready “web admin” panel.</p>
-<p>It has the following features:</p>
-<ul>
-<li>Initiate full and incremental pipeline runs</li>
-<li>Monitor errors when running pipelines</li>
-<li>Recreate view tables</li>
-<li>View configuration settings</li>
-<li>Access sample jupyter notebooks and ViewDefinition editor</li>
-</ul>
-<h2 id="querying-exported-parquet-files">Querying exported Parquet files</h2>
-<p>Assumes that you have completed ....</p>
-<h3 id="handle-nested-fields">Handle nested fields</h3>
+<h2 id="querying-sql-on-fhir-data">Querying SQL-on-FHIR Data</h2>
 <p>One major challenge when querying exported data is that FHIR resources have many nested fields. One approach is to use <code>LATERAL VIEW</code> with <code>EXPLODE</code> to flatten repeated fields and then filter for specific values of interest.</p>
-<h4 id="example-queries">Example queries</h4>
+<h3 id="example-queries">Example queries</h3>
 <p>The following queries explore the <a href="https://github.com/google/fhir-data-pipes/tree/master/synthea-hiv/sample_data">sample data</a> loaded when using a <a href="https://github.com/google/fhir-data-pipes/wiki/Try-the-pipelines-using-local-test-servers">local test server</a>. They leverage <code>LATERAL VIEW</code> with <code>EXPLODE</code> to flatten the Observation.code.coding repeated field and filter for specific observation codes.</p>
 <p>Note that the synthetic sample data simulates HIV patients. Observations for HIV viral load use the following code, which is not the actual LOINC code:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="p">[</span>
-<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="w">   </span><span class="p">{</span>
-<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="w">      </span><span class="nt">&quot;id&quot;</span><span class="p">:</span><span class="kc">null</span><span class="p">,</span>
-<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="w">      </span><span class="nt">&quot;coding&quot;</span><span class="p">:[</span>
-<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="w">         </span><span class="p">{</span>
-<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a><span class="w">            </span><span class="nt">&quot;id&quot;</span><span class="p">:</span><span class="kc">null</span><span class="p">,</span>
-<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a><span class="w">            </span><span class="nt">&quot;system&quot;</span><span class="p">:</span><span class="s2">&quot;http://loinc.org&quot;</span><span class="p">,</span>
-<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a><span class="w">            </span><span class="nt">&quot;version&quot;</span><span class="p">:</span><span class="kc">null</span><span class="p">,</span>
-<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a><span class="w">            </span><span class="nt">&quot;code&quot;</span><span class="p">:</span><span class="s2">&quot;856AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA&quot;</span><span class="p">,</span>
-<a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a><span class="w">            </span><span class="nt">&quot;display&quot;</span><span class="p">:</span><span class="s2">&quot;HIV viral load&quot;</span><span class="p">,</span>
-<a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a><span class="w">            </span><span class="nt">&quot;userSelected&quot;</span><span class="p">:</span><span class="kc">null</span>
-<a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a><span class="w">         </span><span class="p">}</span>
-<a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a><span class="w">      </span><span class="p">],</span>
-<a id="__codelineno-0-14" name="__codelineno-0-14" href="#__codelineno-0-14"></a><span class="w">      </span><span class="nt">&quot;text&quot;</span><span class="p">:</span><span class="s2">&quot;HIV viral load&quot;</span>
-<a id="__codelineno-0-15" name="__codelineno-0-15" href="#__codelineno-0-15"></a><span class="w">   </span><span class="p">}</span>
-<a id="__codelineno-0-16" name="__codelineno-0-16" href="#__codelineno-0-16"></a><span class="p">]</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="p">[</span>
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="w">   </span><span class="p">{</span>
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="w">      </span><span class="nt">&quot;id&quot;</span><span class="p">:</span><span class="kc">null</span><span class="p">,</span>
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span class="w">      </span><span class="nt">&quot;coding&quot;</span><span class="p">:[</span>
+<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a><span class="w">         </span><span class="p">{</span>
+<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a><span class="w">            </span><span class="nt">&quot;id&quot;</span><span class="p">:</span><span class="kc">null</span><span class="p">,</span>
+<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a><span class="w">            </span><span class="nt">&quot;system&quot;</span><span class="p">:</span><span class="s2">&quot;http://loinc.org&quot;</span><span class="p">,</span>
+<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a><span class="w">            </span><span class="nt">&quot;version&quot;</span><span class="p">:</span><span class="kc">null</span><span class="p">,</span>
+<a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a><span class="w">            </span><span class="nt">&quot;code&quot;</span><span class="p">:</span><span class="s2">&quot;856AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA&quot;</span><span class="p">,</span>
+<a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a><span class="w">            </span><span class="nt">&quot;display&quot;</span><span class="p">:</span><span class="s2">&quot;HIV viral load&quot;</span><span class="p">,</span>
+<a id="__codelineno-1-11" name="__codelineno-1-11" href="#__codelineno-1-11"></a><span class="w">            </span><span class="nt">&quot;userSelected&quot;</span><span class="p">:</span><span class="kc">null</span>
+<a id="__codelineno-1-12" name="__codelineno-1-12" href="#__codelineno-1-12"></a><span class="w">         </span><span class="p">}</span>
+<a id="__codelineno-1-13" name="__codelineno-1-13" href="#__codelineno-1-13"></a><span class="w">      </span><span class="p">],</span>
+<a id="__codelineno-1-14" name="__codelineno-1-14" href="#__codelineno-1-14"></a><span class="w">      </span><span class="nt">&quot;text&quot;</span><span class="p">:</span><span class="s2">&quot;HIV viral load&quot;</span>
+<a id="__codelineno-1-15" name="__codelineno-1-15" href="#__codelineno-1-15"></a><span class="w">   </span><span class="p">}</span>
+<a id="__codelineno-1-16" name="__codelineno-1-16" href="#__codelineno-1-16"></a><span class="p">]</span>
 </code></pre></div>
-<h5 id="flattening-a-resource-table-based-on-a-field">Flattening a resource table based on a field</h5>
+<h3 id="flattening-a-resource-table-based-on-a-field">Flattening a resource table based on a field</h3>
 <p>Let's say we are interested only in certain observation codes. For working with repeated fields
 like <code>Observation.code.coding</code> sometime it is easier to first "flatten" the table on that field.
 Conceptually this means that an Observation row with say 4 codes will be repeated 4 times
 where each row has exactly one of those 4 values. Here is a query that does that selecting only
 rows with "viral load" observations (code 856): </p>
-<p><div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>SELECT O.id AS obs_id, OCC.`system`, OCC.code, O.status AS status, O.value.quantity.value AS value
-<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>FROM Observation AS O LATERAL VIEW explode(code.coding) AS OCC 
-<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>WHERE OCC.`system` = &#39;http://loinc.org&#39;
-<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>  AND OCC.code LIKE &#39;856A%&#39;
-<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>LIMIT 4;
+<p><div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>SELECT O.id AS obs_id, OCC.`system`, OCC.code, O.status AS status, O.value.quantity.value AS value
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>FROM Observation AS O LATERAL VIEW explode(code.coding) AS OCC 
+<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>WHERE OCC.`system` = &#39;http://loinc.org&#39;
+<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a>  AND OCC.code LIKE &#39;856A%&#39;
+<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a>LIMIT 4;
 </code></pre></div>
 Sample output:
-<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>+---------+-------------------+---------------------------------------+---------+-----------+
-<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>| obs_id  |      system       |                 code                  | status  |   value   |
-<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>+---------+-------------------+---------------------------------------+---------+-----------+
-<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a>| 10393   | http://loinc.org  | 856AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA  | final   | 224650.0  |
-<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a>| 12446   | http://loinc.org  | 856AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA  | final   | 823010.0  |
-<a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a>| 14456   | http://loinc.org  | 856AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA  | final   | 166100.0  |
-<a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a>| 15991   | http://loinc.org  | 856AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA  | final   | 64630.0   |
-<a id="__codelineno-2-8" name="__codelineno-2-8" href="#__codelineno-2-8"></a>+---------+-------------------+---------------------------------------+---------+-----------+
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>+---------+-------------------+---------------------------------------+---------+-----------+
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>| obs_id  |      system       |                 code                  | status  |   value   |
+<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a>+---------+-------------------+---------------------------------------+---------+-----------+
+<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a>| 10393   | http://loinc.org  | 856AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA  | final   | 224650.0  |
+<a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a>| 12446   | http://loinc.org  | 856AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA  | final   | 823010.0  |
+<a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a>| 14456   | http://loinc.org  | 856AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA  | final   | 166100.0  |
+<a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a>| 15991   | http://loinc.org  | 856AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA  | final   | 64630.0   |
+<a id="__codelineno-3-8" name="__codelineno-3-8" href="#__codelineno-3-8"></a>+---------+-------------------+---------------------------------------+---------+-----------+
 </code></pre></div></p>
-<h5 id="find-patients-with-an-observed-viral-load-higher-than-a-threshold">Find patients with an observed viral load higher than a threshold</h5>
+<h4 id="find-patients-with-an-observed-viral-load-higher-than-a-threshold">Find patients with an observed viral load higher than a threshold</h4>
 <p>Now, let's say we are interested only in cases with high viral load; and for each patient
 we need some demographic information too. We can use the flat table we created above and
 join it with the Patient resource table:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>SELECT P.id AS pid, P.name.family AS family, P.gender AS gender, O.id AS obs_id, OCC.`system`,
-<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>  OCC.code, O.status AS status, O.value.quantity.value AS value
-<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a>FROM Patient AS P, Observation AS O LATERAL VIEW explode(code.coding) AS OCC 
-<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a>WHERE P.id = O.subject.PatientId
-<a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a>  AND OCC.`system` = &#39;http://loinc.org&#39;
-<a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a>  AND OCC.code LIKE &#39;856A%&#39;
-<a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a>  AND O.value.quantity.value &gt; 10000
-<a id="__codelineno-3-8" name="__codelineno-3-8" href="#__codelineno-3-8"></a>LIMIT 4;
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>SELECT P.id AS pid, P.name.family AS family, P.gender AS gender, O.id AS obs_id, OCC.`system`,
+<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>  OCC.code, O.status AS status, O.value.quantity.value AS value
+<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a>FROM Patient AS P, Observation AS O LATERAL VIEW explode(code.coding) AS OCC 
+<a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a>WHERE P.id = O.subject.PatientId
+<a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a>  AND OCC.`system` = &#39;http://loinc.org&#39;
+<a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a>  AND OCC.code LIKE &#39;856A%&#39;
+<a id="__codelineno-4-7" name="__codelineno-4-7" href="#__codelineno-4-7"></a>  AND O.value.quantity.value &gt; 10000
+<a id="__codelineno-4-8" name="__codelineno-4-8" href="#__codelineno-4-8"></a>LIMIT 4;
 </code></pre></div>
 <p>Sample output:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>+--------+-----------------------------------+---------+---------+-------------------+---------------------------------------+---------+-----------+
-<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>|  pid   |              family               | gender  | obs_id  |      system       |                 code                  | status  |   value   |
-<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a>+--------+-----------------------------------+---------+---------+-------------------+---------------------------------------+---------+-----------+
-<a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a>| 10091  | [&quot;Fritsch593&quot;]                    | male    | 10393   | http://loinc.org  | 856AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA  | final   | 224650.0  |
-<a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a>| 11689  | [&quot;Dickinson688&quot;]                  | male    | 12446   | http://loinc.org  | 856AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA  | final   | 823010.0  |
-<a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a>| 13230  | [&quot;Jerde200&quot;,&quot;Ruecker817&quot;]         | female  | 14456   | http://loinc.org  | 856AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA  | final   | 166100.0  |
-<a id="__codelineno-4-7" name="__codelineno-4-7" href="#__codelineno-4-7"></a>| 15315  | [&quot;Pfeffer420&quot;,&quot;Pfannerstill264&quot;]  | female  | 15991   | http://loinc.org  | 856AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA  | final   | 64630.0   |
-<a id="__codelineno-4-8" name="__codelineno-4-8" href="#__codelineno-4-8"></a>+--------+-----------------------------------+---------+---------+-------------------+---------------------------------------+---------+-----------+
+<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>+--------+-----------------------------------+---------+---------+-------------------+---------------------------------------+---------+-----------+
+<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a>|  pid   |              family               | gender  | obs_id  |      system       |                 code                  | status  |   value   |
+<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a>+--------+-----------------------------------+---------+---------+-------------------+---------------------------------------+---------+-----------+
+<a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a>| 10091  | [&quot;Fritsch593&quot;]                    | male    | 10393   | http://loinc.org  | 856AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA  | final   | 224650.0  |
+<a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a>| 11689  | [&quot;Dickinson688&quot;]                  | male    | 12446   | http://loinc.org  | 856AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA  | final   | 823010.0  |
+<a id="__codelineno-5-6" name="__codelineno-5-6" href="#__codelineno-5-6"></a>| 13230  | [&quot;Jerde200&quot;,&quot;Ruecker817&quot;]         | female  | 14456   | http://loinc.org  | 856AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA  | final   | 166100.0  |
+<a id="__codelineno-5-7" name="__codelineno-5-7" href="#__codelineno-5-7"></a>| 15315  | [&quot;Pfeffer420&quot;,&quot;Pfannerstill264&quot;]  | female  | 15991   | http://loinc.org  | 856AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA  | final   | 64630.0   |
+<a id="__codelineno-5-8" name="__codelineno-5-8" href="#__codelineno-5-8"></a>+--------+-----------------------------------+---------+---------+-------------------+---------------------------------------+---------+-----------+
 </code></pre></div>
-<h5 id="count-all-viral-load-observations">Count all viral-load observations</h5>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>SELECT COUNT(0)
-<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a>FROM (
-<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a>  SELECT P.id AS pid, P.name.family AS family, P.gender AS gender, O.id AS obs_id, OCC.`system`,
-<a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a>    OCC.code, O.status AS status, O.value.quantity.value
-<a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a>  FROM Patient AS P, Observation AS O LATERAL VIEW explode(code.coding) AS OCC 
-<a id="__codelineno-5-6" name="__codelineno-5-6" href="#__codelineno-5-6"></a>  WHERE P.id = O.subject.PatientId
-<a id="__codelineno-5-7" name="__codelineno-5-7" href="#__codelineno-5-7"></a>    AND OCC.`system` = &#39;http://loinc.org&#39;
-<a id="__codelineno-5-8" name="__codelineno-5-8" href="#__codelineno-5-8"></a>    AND OCC.code LIKE &#39;856A%&#39;
-<a id="__codelineno-5-9" name="__codelineno-5-9" href="#__codelineno-5-9"></a>);
+<h4 id="count-all-viral-load-observations">Count all viral-load observations</h4>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a>SELECT COUNT(0)
+<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a>FROM (
+<a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a>  SELECT P.id AS pid, P.name.family AS family, P.gender AS gender, O.id AS obs_id, OCC.`system`,
+<a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a>    OCC.code, O.status AS status, O.value.quantity.value
+<a id="__codelineno-6-5" name="__codelineno-6-5" href="#__codelineno-6-5"></a>  FROM Patient AS P, Observation AS O LATERAL VIEW explode(code.coding) AS OCC 
+<a id="__codelineno-6-6" name="__codelineno-6-6" href="#__codelineno-6-6"></a>  WHERE P.id = O.subject.PatientId
+<a id="__codelineno-6-7" name="__codelineno-6-7" href="#__codelineno-6-7"></a>    AND OCC.`system` = &#39;http://loinc.org&#39;
+<a id="__codelineno-6-8" name="__codelineno-6-8" href="#__codelineno-6-8"></a>    AND OCC.code LIKE &#39;856A%&#39;
+<a id="__codelineno-6-9" name="__codelineno-6-9" href="#__codelineno-6-9"></a>);
 </code></pre></div>
 <p>Sample output:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a>+-----------+
-<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a>| count(0)  |
-<a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a>+-----------+
-<a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a>| 265       |
-<a id="__codelineno-6-5" name="__codelineno-6-5" href="#__codelineno-6-5"></a>+-----------+
+<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a>+-----------+
+<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a>| count(0)  |
+<a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a>+-----------+
+<a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a>| 265       |
+<a id="__codelineno-7-5" name="__codelineno-7-5" href="#__codelineno-7-5"></a>+-----------+
 </code></pre></div>
 <h3 id="use-views-to-reduce-complexity">Use Views to reduce complexity</h3>
 <p>Once you have a query that filters to the data you're interested in, create a view with a simpler schema to work with in the future. This is a good way to create building blocks to combine with other data and create more complex queries.</p>
 <h5 id="observations-of-patients-starting-an-anti-retroviral-plan-in-2010">Observations of patients starting an Anti-retroviral plan in 2010</h5>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a>SELECT
-<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a>  O.id AS obs_id, OCC.`system`, OCC.code, O.status AS status,
-<a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a>  OVCC.code AS value_code, O.subject.PatientId AS patient_id
-<a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a>FROM Observation AS O LATERAL VIEW explode(code.coding) AS OCC
-<a id="__codelineno-7-5" name="__codelineno-7-5" href="#__codelineno-7-5"></a>  LATERAL VIEW explode(O.value.codeableConcept.coding) AS OVCC
-<a id="__codelineno-7-6" name="__codelineno-7-6" href="#__codelineno-7-6"></a>WHERE OCC.code LIKE &#39;1255%&#39;
-<a id="__codelineno-7-7" name="__codelineno-7-7" href="#__codelineno-7-7"></a>  AND OVCC.code LIKE &quot;1256%&quot;
-<a id="__codelineno-7-8" name="__codelineno-7-8" href="#__codelineno-7-8"></a>  AND YEAR(O.effective.dateTime) = 2010
-<a id="__codelineno-7-9" name="__codelineno-7-9" href="#__codelineno-7-9"></a>LIMIT 1;
+<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a>SELECT
+<a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a>  O.id AS obs_id, OCC.`system`, OCC.code, O.status AS status,
+<a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a>  OVCC.code AS value_code, O.subject.PatientId AS patient_id
+<a id="__codelineno-8-4" name="__codelineno-8-4" href="#__codelineno-8-4"></a>FROM Observation AS O LATERAL VIEW explode(code.coding) AS OCC
+<a id="__codelineno-8-5" name="__codelineno-8-5" href="#__codelineno-8-5"></a>  LATERAL VIEW explode(O.value.codeableConcept.coding) AS OVCC
+<a id="__codelineno-8-6" name="__codelineno-8-6" href="#__codelineno-8-6"></a>WHERE OCC.code LIKE &#39;1255%&#39;
+<a id="__codelineno-8-7" name="__codelineno-8-7" href="#__codelineno-8-7"></a>  AND OVCC.code LIKE &quot;1256%&quot;
+<a id="__codelineno-8-8" name="__codelineno-8-8" href="#__codelineno-8-8"></a>  AND YEAR(O.effective.dateTime) = 2010
+<a id="__codelineno-8-9" name="__codelineno-8-9" href="#__codelineno-8-9"></a>LIMIT 1;
 </code></pre></div>
 <p>Sample output:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a>+---------+-------------------+---------------------------------------+---------+---------------------------------------+-------------+
-<a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a>| obs_id  |      system       |                 code                  | status  |              value_code               | patient_id  |
-<a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a>+---------+-------------------+---------------------------------------+---------+---------------------------------------+-------------+
-<a id="__codelineno-8-4" name="__codelineno-8-4" href="#__codelineno-8-4"></a>| 33553   | http://loinc.org  | 1255AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA  | final   | 1256AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA  | 32003       |
-<a id="__codelineno-8-5" name="__codelineno-8-5" href="#__codelineno-8-5"></a>+---------+-------------------+---------------------------------------+---------+---------------------------------------+-------------+
+<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a>+---------+-------------------+---------------------------------------+---------+---------------------------------------+-------------+
+<a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a>| obs_id  |      system       |                 code                  | status  |              value_code               | patient_id  |
+<a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a>+---------+-------------------+---------------------------------------+---------+---------------------------------------+-------------+
+<a id="__codelineno-9-4" name="__codelineno-9-4" href="#__codelineno-9-4"></a>| 33553   | http://loinc.org  | 1255AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA  | final   | 1256AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA  | 32003       |
+<a id="__codelineno-9-5" name="__codelineno-9-5" href="#__codelineno-9-5"></a>+---------+-------------------+---------------------------------------+---------+---------------------------------------+-------------+
 </code></pre></div>
 <h5 id="create-a-corresponding-view">Create a corresponding view</h5>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a>CREATE VIEW obs_arv_plan AS
-<a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a>SELECT
-<a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a>  O.id AS obs_id, OCC.`system`, OCC.code, O.status AS status,
-<a id="__codelineno-9-4" name="__codelineno-9-4" href="#__codelineno-9-4"></a>  OVCC.code AS value_code, O.subject.PatientId AS patient_id
-<a id="__codelineno-9-5" name="__codelineno-9-5" href="#__codelineno-9-5"></a>FROM Observation AS O LATERAL VIEW explode(code.coding) AS OCC
-<a id="__codelineno-9-6" name="__codelineno-9-6" href="#__codelineno-9-6"></a>  LATERAL VIEW explode(O.value.codeableConcept.coding) AS OVCC
-<a id="__codelineno-9-7" name="__codelineno-9-7" href="#__codelineno-9-7"></a>WHERE OCC.code LIKE &#39;1255%&#39;
-<a id="__codelineno-9-8" name="__codelineno-9-8" href="#__codelineno-9-8"></a>  AND OVCC.code LIKE &quot;1256%&quot;
-<a id="__codelineno-9-9" name="__codelineno-9-9" href="#__codelineno-9-9"></a>  AND YEAR(O.effective.dateTime) = 2010;
+<div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a>CREATE VIEW obs_arv_plan AS
+<a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a>SELECT
+<a id="__codelineno-10-3" name="__codelineno-10-3" href="#__codelineno-10-3"></a>  O.id AS obs_id, OCC.`system`, OCC.code, O.status AS status,
+<a id="__codelineno-10-4" name="__codelineno-10-4" href="#__codelineno-10-4"></a>  OVCC.code AS value_code, O.subject.PatientId AS patient_id
+<a id="__codelineno-10-5" name="__codelineno-10-5" href="#__codelineno-10-5"></a>FROM Observation AS O LATERAL VIEW explode(code.coding) AS OCC
+<a id="__codelineno-10-6" name="__codelineno-10-6" href="#__codelineno-10-6"></a>  LATERAL VIEW explode(O.value.codeableConcept.coding) AS OVCC
+<a id="__codelineno-10-7" name="__codelineno-10-7" href="#__codelineno-10-7"></a>WHERE OCC.code LIKE &#39;1255%&#39;
+<a id="__codelineno-10-8" name="__codelineno-10-8" href="#__codelineno-10-8"></a>  AND OVCC.code LIKE &quot;1256%&quot;
+<a id="__codelineno-10-9" name="__codelineno-10-9" href="#__codelineno-10-9"></a>  AND YEAR(O.effective.dateTime) = 2010;
 </code></pre></div>
 <h5 id="count-cases-of-anti-retroviral-plans-started-in-2010">Count cases of Anti-retroviral plans started in 2010</h5>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a>SELECT COUNT(0) FROM obs_arv_plan ;
+<div class="highlight"><pre><span></span><code><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a>SELECT COUNT(0) FROM obs_arv_plan ;
 </code></pre></div>
 <p>Sample output:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a>+-----------+
-<a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a>| count(0)  |
-<a id="__codelineno-11-3" name="__codelineno-11-3" href="#__codelineno-11-3"></a>+-----------+
-<a id="__codelineno-11-4" name="__codelineno-11-4" href="#__codelineno-11-4"></a>| 2         |
-<a id="__codelineno-11-5" name="__codelineno-11-5" href="#__codelineno-11-5"></a>+-----------+
+<div class="highlight"><pre><span></span><code><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a>+-----------+
+<a id="__codelineno-12-2" name="__codelineno-12-2" href="#__codelineno-12-2"></a>| count(0)  |
+<a id="__codelineno-12-3" name="__codelineno-12-3" href="#__codelineno-12-3"></a>+-----------+
+<a id="__codelineno-12-4" name="__codelineno-12-4" href="#__codelineno-12-4"></a>| 2         |
+<a id="__codelineno-12-5" name="__codelineno-12-5" href="#__codelineno-12-5"></a>+-----------+
 </code></pre></div>
 <h5 id="compare-patient-data-with-view-based-on-observations">Compare Patient data with view based on observations</h5>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a>SELECT P.id AS pid, P.name.family AS family, P.gender AS gender, COUNT(0) AS num_start
-<a id="__codelineno-12-2" name="__codelineno-12-2" href="#__codelineno-12-2"></a>FROM Patient P, obs_arv_plan
-<a id="__codelineno-12-3" name="__codelineno-12-3" href="#__codelineno-12-3"></a>WHERE P.id = obs_arv_plan.patient_id
-<a id="__codelineno-12-4" name="__codelineno-12-4" href="#__codelineno-12-4"></a>GROUP BY P.id, P.name.family, P.gender
-<a id="__codelineno-12-5" name="__codelineno-12-5" href="#__codelineno-12-5"></a>ORDER BY num_start DESC
-<a id="__codelineno-12-6" name="__codelineno-12-6" href="#__codelineno-12-6"></a>LIMIT 10;
+<div class="highlight"><pre><span></span><code><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a>SELECT P.id AS pid, P.name.family AS family, P.gender AS gender, COUNT(0) AS num_start
+<a id="__codelineno-13-2" name="__codelineno-13-2" href="#__codelineno-13-2"></a>FROM Patient P, obs_arv_plan
+<a id="__codelineno-13-3" name="__codelineno-13-3" href="#__codelineno-13-3"></a>WHERE P.id = obs_arv_plan.patient_id
+<a id="__codelineno-13-4" name="__codelineno-13-4" href="#__codelineno-13-4"></a>GROUP BY P.id, P.name.family, P.gender
+<a id="__codelineno-13-5" name="__codelineno-13-5" href="#__codelineno-13-5"></a>ORDER BY num_start DESC
+<a id="__codelineno-13-6" name="__codelineno-13-6" href="#__codelineno-13-6"></a>LIMIT 10;
 </code></pre></div>
 <p>Sample output:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a>+--------+-------------------+---------+------------+
-<a id="__codelineno-13-2" name="__codelineno-13-2" href="#__codelineno-13-2"></a>|  pid   |      family       | gender  | num_start  |
-<a id="__codelineno-13-3" name="__codelineno-13-3" href="#__codelineno-13-3"></a>+--------+-------------------+---------+------------+
-<a id="__codelineno-13-4" name="__codelineno-13-4" href="#__codelineno-13-4"></a>| 20375  | [&quot;VonRueden376&quot;]  | male    | 1          |
-<a id="__codelineno-13-5" name="__codelineno-13-5" href="#__codelineno-13-5"></a>| 32003  | [&quot;Terry864&quot;]      | male    | 1          |
-<a id="__codelineno-13-6" name="__codelineno-13-6" href="#__codelineno-13-6"></a>+--------+-------------------+---------+------------+
+<div class="highlight"><pre><span></span><code><a id="__codelineno-14-1" name="__codelineno-14-1" href="#__codelineno-14-1"></a>+--------+-------------------+---------+------------+
+<a id="__codelineno-14-2" name="__codelineno-14-2" href="#__codelineno-14-2"></a>|  pid   |      family       | gender  | num_start  |
+<a id="__codelineno-14-3" name="__codelineno-14-3" href="#__codelineno-14-3"></a>+--------+-------------------+---------+------------+
+<a id="__codelineno-14-4" name="__codelineno-14-4" href="#__codelineno-14-4"></a>| 20375  | [&quot;VonRueden376&quot;]  | male    | 1          |
+<a id="__codelineno-14-5" name="__codelineno-14-5" href="#__codelineno-14-5"></a>| 32003  | [&quot;Terry864&quot;]      | male    | 1          |
+<a id="__codelineno-14-6" name="__codelineno-14-6" href="#__codelineno-14-6"></a>+--------+-------------------+---------+------------+
 </code></pre></div>
 
 
@@ -1093,7 +1184,7 @@ join it with the Patient resource table:</p>
       <nav class="md-footer__inner md-grid" aria-label="Footer" >
         
           
-          <a href="../getting_started/" class="md-footer__link md-footer__link--prev" aria-label="Previous: Getting Started">
+          <a href="../installation_controller/" class="md-footer__link md-footer__link--prev" aria-label="Previous: Deploy Data Pipes &#34;Controller&#34;">
             <div class="md-footer__button md-icon">
               
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12Z"/></svg>
@@ -1103,7 +1194,7 @@ join it with the Patient resource table:</p>
                 Previous
               </span>
               <div class="md-ellipsis">
-                Getting Started
+                Deploy Data Pipes "Controller"
               </div>
             </div>
           </a>
