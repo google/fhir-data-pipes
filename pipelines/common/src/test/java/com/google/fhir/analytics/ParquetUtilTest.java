@@ -33,6 +33,7 @@ import java.util.stream.Stream;
 import org.apache.beam.sdk.io.fs.ResourceId;
 import org.hl7.fhir.r4.model.Bundle;
 import org.hl7.fhir.r4.model.Observation;
+import org.hl7.fhir.r4.model.QuestionnaireResponse;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -234,5 +235,33 @@ public class ParquetUtilTest {
     parquetUtil.writeRecords(bundle2, null);
 
     parquetUtil.closeAllWriters();
+  }
+
+  @Test
+  public void writeQuestionnaireResponse() throws IOException, ProfileException {
+    rootPath = Files.createTempDirectory("PARQUET_TEST");
+    AvroConversionUtil.deRegisterMappingsFor(FhirVersionEnum.R4);
+    avroConversionUtil =
+        AvroConversionUtil.getInstance(FhirVersionEnum.R4, "classpath:/r4-us-core-definitions", 1);
+    parquetUtil =
+        new ParquetUtil(
+            FhirVersionEnum.R4,
+            "classpath:/r4-us-core-definitions",
+            rootPath.toString(),
+            0,
+            0,
+            "",
+            1);
+
+    String questionnaireResponseStr =
+        Resources.toString(
+            Resources.getResource("questionnaire_response.json"), StandardCharsets.UTF_8);
+    IParser parser = avroConversionUtil.getFhirContext().newJsonParser();
+    QuestionnaireResponse questionnaireResponse =
+        parser.parseResource(QuestionnaireResponse.class, questionnaireResponseStr);
+    parquetUtil.write(questionnaireResponse);
+
+    parquetUtil.closeAllWriters();
+    AvroConversionUtil.deRegisterMappingsFor(FhirVersionEnum.R4);
   }
 }

@@ -16,6 +16,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
+import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
 /** Abstract base class to visit FHIR structure definitions. */
@@ -494,24 +495,9 @@ public abstract class StructureDefinitions {
 
     IStructureDefinition definition = getStructureDefinition(resourceTypeUrl);
 
-    if (definition == null) {
-      throw new IllegalArgumentException("Unable to find definition for " + resourceTypeUrl);
-    }
-
     List<IStructureDefinition> containedDefinitions =
         containedResourceTypeUrls.stream()
-            .map(
-                containedResourceTypeUrl -> {
-                  IStructureDefinition containedDefinition =
-                      getStructureDefinition(containedResourceTypeUrl);
-
-                  if (containedDefinition == null) {
-                    throw new IllegalArgumentException(
-                        "Unable to find definition for " + containedResourceTypeUrl);
-                  }
-
-                  return containedDefinition;
-                })
+            .map(containedResourceTypeUrl -> getStructureDefinition(containedResourceTypeUrl))
             .collect(Collectors.toList());
 
     return transformRoot(visitor, definition, containedDefinitions);
@@ -550,7 +536,11 @@ public abstract class StructureDefinitions {
               // Retrieve only the unique reference types
               .distinct()
               .collect(Collectors.toList());
-      return visitor.visitReference(parentElement.toString(), referenceTypes, childElements);
+
+      String elementName = DefinitionVisitorsUtil.elementName(parentElement.getPath());
+      String elementFullPath = DefinitionVisitorsUtil.pathFromStack(elementName, stack);
+      return visitor.visitReference(
+          DefinitionVisitorsUtil.recordNameFor(elementFullPath), referenceTypes, childElements);
     } else {
       String rootName = DefinitionVisitorsUtil.elementName(root.getPath());
 
@@ -600,12 +590,16 @@ public abstract class StructureDefinitions {
   }
 
   /**
-   * Returns the structure definition interface corresponding to the given URL.
+   * Returns the structure definition interface corresponding to the given resourceUrl.
    *
    * @param resourceUrl it can be a resource type like `Patient` or a profile URL.
-   * @return the {@link IStructureDefinition} corresponding to the `resourceUrl`.
+   * @return the {@link IStructureDefinition} corresponding to the `resourceUrl`
+   * @throws IllegalArgumentException if the structure definition cannot be found for the given
+   *     resourceUrl.
    */
-  protected abstract IStructureDefinition getStructureDefinition(String resourceUrl);
+  @Nonnull
+  protected abstract IStructureDefinition getStructureDefinition(String resourceUrl)
+      throws IllegalArgumentException;
 
   /**
    * Returns the structure definition interface corresponding to the given element.

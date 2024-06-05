@@ -37,6 +37,7 @@ import org.hl7.fhir.r4.model.Observation;
 import org.hl7.fhir.r4.model.Patient;
 import org.hl7.fhir.r4.model.Provenance;
 import org.hl7.fhir.r4.model.Quantity;
+import org.hl7.fhir.r4.model.QuestionnaireResponse;
 import org.hl7.fhir.r4.model.Task;
 import org.junit.Assert;
 import org.junit.BeforeClass;
@@ -100,6 +101,13 @@ public class R4AvroConverterUsCoreTest {
   private static Record avroEncounter;
 
   private static Encounter testEncounterDecoded;
+
+  private static QuestionnaireResponse testQuestionnaireResponse =
+      TestData.newQuestionnaireResponse();
+
+  private static Record avroQuestionnaireResponse;
+
+  private static QuestionnaireResponse testQuestionnaireResponseDecoded;
 
   private static FhirContext fhirContext;
 
@@ -175,6 +183,15 @@ public class R4AvroConverterUsCoreTest {
         AvroConverter.forResources(fhirContext, R4UsCoreProfileData.US_CORE_ENCOUNTER_PROFILES, 1);
     avroEncounter = (Record) encounterConverter.resourceToAvro(testEncounter);
     testEncounterDecoded = (Encounter) encounterConverter.avroToResource(avroEncounter);
+
+    AvroConverter questionnaireResponseConverter =
+        AvroConverter.forResources(
+            fhirContext, R4UsCoreProfileData.US_CORE_QUESTIONNAIRE_RESPONSE_PROFILES, 1);
+    avroQuestionnaireResponse =
+        (Record) questionnaireResponseConverter.resourceToAvro(testQuestionnaireResponse);
+    testQuestionnaireResponseDecoded =
+        (QuestionnaireResponse)
+            questionnaireResponseConverter.avroToResource(avroQuestionnaireResponse);
   }
 
   @Test
@@ -587,5 +604,10 @@ public class R4AvroConverterUsCoreTest {
     Assert.assertEquals(testEncounter.getId(), testEncounterDecoded.getId());
     Assert.assertEquals(
         testEncounter.getParticipant().size(), testEncounterDecoded.getParticipant().size());
+  }
+
+  @Test
+  public void setTestQuestionnaireResponseConversions() {
+    Assert.assertTrue(testQuestionnaireResponse.equalsDeep(testQuestionnaireResponseDecoded));
   }
 }

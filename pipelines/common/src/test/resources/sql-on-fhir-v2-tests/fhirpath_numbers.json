@@ -1,10 +1,7 @@
 {
   "title": "fhirpath_numbers",
   "description": "fhirpath features",
-  "fhirVersion": [
-    "5.0",
-    "4.0"
-  ],
+  "fhirVersion": ["5.0.0", "4.0.1"],
   "resources": [
     {
       "resourceType": "Observation",
@@ -40,17 +37,17 @@
               {
                 "name": "add",
                 "path": "value.ofType(Range).low.value + value.ofType(Range).high.value",
-                "type": "integer"
+                "type": "decimal"
               },
               {
                 "name": "sub",
                 "path": "value.ofType(Range).high.value - value.ofType(Range).low.value",
-                "type": "integer"
+                "type": "decimal"
               },
               {
                 "name": "mul",
                 "path": "value.ofType(Range).low.value * value.ofType(Range).high.value",
-                "type": "integer"
+                "type": "decimal"
               },
               {
                 "name": "div",

@@ -50,4 +50,9 @@ public class R4UsCoreProfileData {
       Arrays.asList(
           "http://hl7.org/fhir/StructureDefinition/Medication",
           "http://hl7.org/fhir/us/core/StructureDefinition/us-core-medication");
+
+  public static final List<String> US_CORE_QUESTIONNAIRE_RESPONSE_PROFILES =
+      Arrays.asList(
+          "http://hl7.org/fhir/StructureDefinition/QuestionnaireResponse",
+          "http://hl7.org/fhir/us/core/StructureDefinition/us-core-questionnaireresponse");
 }

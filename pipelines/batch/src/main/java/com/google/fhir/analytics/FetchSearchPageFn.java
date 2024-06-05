@@ -56,6 +56,8 @@ abstract class FetchSearchPageFn<T> extends DoFn<T, KV<String, Integer>> {
 
   private static final Logger log = LoggerFactory.getLogger(FetchSearchPageFn.class);
 
+  private static final String DATAFLOW_RUNNER = "DataflowRunner";
+
   private final Counter numFetchedResources;
 
   private final Counter totalFetchTimeMillis;
@@ -219,28 +221,37 @@ abstract class FetchSearchPageFn<T> extends DoFn<T, KV<String, Integer>> {
   }
 
   /**
-   * This should be overridden by all subclasses because the `context` type is not fully specified
-   * at this parent class (because of the T type argument). All subclass implementations should call
-   * `super.finishBundle` though. TODO: implement a way to enforce this at compile time; this is
-   * currently caught at run time.
+   * Note this is a hacky solution to address a DataflowRunner specific issue where @Teardown method
+   * is not guaranteed to be called. Closing/flushing Parquet files in @FinishBundle is not a good
+   * idea in general because it makes the size of those files a function of how Beam divides the
+   * work into Bundles. That's why we only do this on DataflowRunner which tend to have very large
+   * Bundles.
+   *
+   * <p>This should be overridden by all subclasses because the `context` type is not fully
+   * specified at this parent class (because of the T type argument). All subclass implementations
+   * should call `super.finishBundle` though. TODO: implement a way to enforce this at compile time;
+   * this is currently caught at run time.
    */
   @FinishBundle
   public void finishBundle(FinishBundleContext context) {
-    try {
-      if (parquetUtil != null) {
-        parquetUtil.flushAll();
+    if (DATAFLOW_RUNNER.equals(context.getPipelineOptions().getRunner().getSimpleName())) {
+      try {
+        if (parquetUtil != null) {
+          parquetUtil.flushAll();
+        }
+      } catch (IOException | ProfileException e) {
+        // There is not much that we can do at finishBundle so just throw a RuntimeException
+        log.error("At finishBundle caught exception ", e);
+        throw new IllegalStateException(e);
       }
-    } catch (IOException | ProfileException e) {
-      // There is not much that we can do at finishBundle so just throw a RuntimeException
-      log.error("At finishBundle caught exception ", e);
-      throw new IllegalStateException(e);
     }
   }
 
   @Teardown
   public void teardown() throws IOException {
     // Note this is _not_ guaranteed to be called; for example when the worker process is being
-    // stopped, the runner may choose not to call teardown. Only keep closing/cleanups here. See:
+    // stopped, the runner may choose not to call teardown; currently this only happens for
+    // DataflowRunner and that's why we have the finishBundle method above:
     // https://beam.apache.org/releases/javadoc/current/org/apache/beam/sdk/transforms/DoFn.Teardown.html
     if (parquetUtil != null) {
       parquetUtil.closeAllWriters();
@@ -263,6 +274,12 @@ abstract class FetchSearchPageFn<T> extends DoFn<T, KV<String, Integer>> {
       log.warn("processBundle 2 size " + bundle.getEntry().size());
       if (parquetUtil != null) {
         long startTime = System.currentTimeMillis();
+        // TODO: The right way for writing Parquet records is to cache them and wait
+        //  until processing a Beam Bundle is done, i.e., write in @FinishBundle.
+        //  Otherwise, if a Beam Bundle fails in the middle, we will get duplicate records.
+        //  This may also apply to when we write into a sink DB or another FHIR-server (below),
+        //  unless if we take care of duplicate writes (which is for example the case when we
+        //  apply ViewDefinition to a resource and delete rows with the same `id` first).
         parquetUtil.writeRecords(bundle, resourceTypes);
         totalGenerateTimeMillis.inc(System.currentTimeMillis() - startTime);
         log.warn("processBundle 3 writeRecords");

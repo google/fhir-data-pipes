@@ -35,7 +35,7 @@
 
   <properties>
     <hamcrest.version>2.2</hamcrest.version>
-    <jackson.version>2.17.0</jackson.version>
+    <jackson.version>2.17.1</jackson.version>
     <pubsub.version>v1-rev20220904-2.0.0</pubsub.version>
     <spark.version>2.4.8</spark.version>
     <maven-surefire-plugin.version>3.2.5</maven-surefire-plugin.version>
@@ -106,6 +106,13 @@
     <dependency>
       <groupId>org.apache.beam</groupId>
       <artifactId>beam-sdks-java-io-google-cloud-platform</artifactId>
+      <version>${beam.version}</version>
+    </dependency>
+
+    <!-- Same as above for AWS -->
+    <dependency>
+      <groupId>org.apache.beam</groupId>
+      <artifactId>beam-sdks-java-io-amazon-web-services2</artifactId>
       <version>${beam.version}</version>
     </dependency>
 
@@ -267,7 +274,7 @@
       <dependencies>
         <dependency>
           <groupId>org.apache.beam</groupId>
-          <artifactId>beam-runners-spark</artifactId>
+          <artifactId>beam-runners-spark-3</artifactId>
           <version>${beam.version}</version>
           <scope>runtime</scope>
         </dependency>

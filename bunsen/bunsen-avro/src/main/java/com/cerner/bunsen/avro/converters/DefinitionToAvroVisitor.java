@@ -102,7 +102,7 @@ public class DefinitionToAvroVisitor implements DefinitionVisitor<HapiConverter<
   // FHIR (Double and BigDecimal are not assignable to each other hence explicit conversions).
   // Note with this approach we are loosing some precision!
   private static final HapiConverter<Schema> DOUBLE_CONVERTER =
-      new PrimitiveConverter<Schema>("Double") {
+      new PrimitiveConverter<Schema>("Decimal") {
         @Override
         public void toHapi(Object input, IPrimitiveType primitive) {
           Preconditions.checkArgument((input instanceof BigDecimal) || (input instanceof Double));
