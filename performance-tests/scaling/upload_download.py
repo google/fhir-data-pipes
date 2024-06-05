@@ -125,8 +125,14 @@ def upload():
 
 def log(description, start):
     end = time.time()
-    full_log = f"{start}\t{description}\t{end - start}"
+    start_datetime = timestamp2human(start)
+    end_datetime = timestamp2human(end)
+    full_log = f"{start_datetime}\t{end_datetime}\t{description}\t{end - start}"
     shell(f"""echo "{full_log}" >> {TMP_DIR}/upload_download_log.tsv""")
+
+
+def timestamp2human(timestamp):
+    return datetime.datetime.fromtimestamp(timestamp).strftime('%Y-%m-%d %H:%M:%S')
 
 
 def shell_measure(description, command):
