@@ -6,19 +6,22 @@ set -o nounset
 
 # Kill the current HAPI server to allow to delete and set the database.
 "${RUN_ON_HAPI_STANZA[@]}" "sudo killall /usr/bin/java || true"
+"${RUN_ON_HAPI_STANZA[@]}" "sudo killall python || true"
+"${RUN_ON_HAPI_STANZA[@]}" "sudo killall python3 || true"
+"${RUN_ON_HAPI_STANZA[@]}" "sudo killall sh || true"
 
 case "$DB_TYPE" in
   "alloy")
     ALLOY_INSTANCE="projects/fhir-analytics-test/locations/us-central1/clusters/pipeline-scaling-alloydb-1/instances/pipeline-scaling-alloydb-largest"
     sudo killall alloydb-auth-proxy || true
     nohup ~/Downloads/alloydb-auth-proxy $ALLOY_INSTANCE &
+    sleep 1
     if [[ "$ENABLE_UPLOAD" = true ]]; then
       for cmd in "DROP DATABASE IF EXISTS" "CREATE DATABASE"; do
         PGPASSWORD="$DB_PASSWORD" psql -h 127.0.0.1 -p 5432 -U "$DB_USERNAME" -c "$cmd $DB_PATIENTS"
       done
     else
       # Check DB connection.
-      sleep 1
       PGPASSWORD="$DB_PASSWORD" psql -h 127.0.0.1 -p 5432 -U "$DB_USERNAME" -c "SELECT 1"
     fi
     DB_CONNECTION="jdbc:postgresql:///${DB_PATIENTS}?127.0.0.1:5432"
