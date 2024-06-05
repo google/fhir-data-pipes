@@ -137,7 +137,11 @@ def timestamp2human(timestamp):
 
 def shell_measure(description, command):
     start = time.time()
-    shell(command)
+    try:
+        shell(command)
+    except:
+        log(description + "; FAILED; " + command.replace('\n', ' '), start)
+        raise
     log(description + "; " + command.replace('\n', ' '), start)
 
 
