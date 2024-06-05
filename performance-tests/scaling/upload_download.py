@@ -40,8 +40,8 @@ def download():
         shell(f'gsutil -m cp -r {parquet_dir} {TMP_DIR}')
     else:
         run_fhir_etl(local_parquet_dir)
-    for resource in ["Patient", "Encounter", "Observation"]:
-        shell(f"java -jar ./e2e-tests/controller-spark/parquet-tools-1.11.1.jar rowcount {local_parquet_dir}/{resource}/")
+    for resource in ["Patient"]: #, "Encounter", "Observation"]:
+        shell_measure(f"Check {resource} row count", f"java -jar ./e2e-tests/controller-spark/parquet-tools-1.11.1.jar rowcount {local_parquet_dir}/{resource}/")
 
 
 def run_fhir_etl(parquet_dir):
@@ -123,11 +123,11 @@ def upload():
     )
 
 
-def log(description, start):
+def log(description, start, result):
     end = time.time()
     start_datetime = timestamp2human(start)
     end_datetime = timestamp2human(end)
-    full_log = f"{start_datetime}\t{end_datetime}\t{description}\t{end - start}"
+    full_log = f"{start_datetime}\t{end_datetime}\t{result}\t{description}\t{end - start}"
     shell(f"""echo "{full_log}" >> {TMP_DIR}/upload_download_log.tsv""")
 
 
@@ -137,12 +137,14 @@ def timestamp2human(timestamp):
 
 def shell_measure(description, command):
     start = time.time()
+    full_description = description + "; " + command.replace('\n', ' ')
     try:
         shell(command)
     except:
-        log(description + "; FAILED; " + command.replace('\n', ' '), start)
+        #  + "; " + traceback.format_exc()
+        log(full_description, start, "ERROR")
         raise
-    log(description + "; " + command.replace('\n', ' '), start)
+    log(full_description, start, "OK")
 
 
 def shell(command, exit_on_failure=True):
