@@ -52,4 +52,4 @@ if [ "$RUNNING_ON_HAPI_VM" = false ]; then
   (sleep 15; "$DIR_WITH_THIS_SCRIPT/hapi_port_forward.sh") &
 fi
 
-tail -F ~/nohup-hapi.out
+# tail -F ~/nohup-hapi.out

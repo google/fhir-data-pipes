@@ -19,10 +19,6 @@ set -e # Fail on errors.
 set -x # Show each command.
 set -o nounset
 
-#export PATIENTS=79 768 7885
-#export JDBC_MODE=true false
-#export FHIR_ETL_RUNNER=FlinkRunner DataflowRunner
-
 for p in $MULTIPLE_PATIENTS; do
   for j in $MULTIPLE_JDBC_MODE; do
     for f in $MULTIPLE_FHIR_ETL_RUNNER; do
