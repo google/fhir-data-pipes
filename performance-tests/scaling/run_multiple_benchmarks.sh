@@ -1,19 +1,17 @@
 source config.sh
 
 if [[ -n "$PATIENTS" ]]; then
-  echo "ERROR: Comment out PATIENTS in config.sh"
+  echo "ERROR: Comment out PATIENTS in config.sh if running multiple"
   exit 1
 fi
 if [[ -n "$JDBC_MODE" ]]; then
-  echo "ERROR: Comment out JDBC_MODE in config.sh"
+  echo "ERROR: Comment out JDBC_MODE in config.sh if running multiple"
   exit 1
 fi
 if [[ -n "$FHIR_ETL_RUNNER" ]]; then
-  echo "ERROR: Comment out FHIR_ETL_RUNNER in config.sh"
+  echo "ERROR: Comment out FHIR_ETL_RUNNER in config.sh if running multiple"
   exit 1
 fi
-
-source config_multiple.sh
 
 set -e # Fail on errors.
 set -x # Show each command.
