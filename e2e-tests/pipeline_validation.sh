@@ -238,8 +238,8 @@ function test_fhir_sink() {
   local enc_obs_query_param="?_summary=count"
 
   if [[ -n ${STREAMING} ]]; then 
-      patient_query_param="?given=Alberta625"
-      enc_obs_query_param="?subject.given=Alberta625"
+      patient_query_param="?given=Alberta625&_summary=count"
+      enc_obs_query_param="?subject.given=Alberta625&_summary=count"
   fi
   print_message "Finding number of patients, encounters and obs in FHIR server"
 
