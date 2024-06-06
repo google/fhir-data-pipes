@@ -108,6 +108,13 @@
       <version>${beam.version}</version>
     </dependency>
 
+    <!-- Same as above for AWS -->
+    <dependency>
+      <groupId>org.apache.beam</groupId>
+      <artifactId>beam-sdks-java-io-amazon-web-services2</artifactId>
+      <version>${beam.version}</version>
+    </dependency>
+
     <!-- Hamcrest and JUnit are required dependencies of PAssert,
          which is used in the main code of DebuggingWordCount example. -->
     <dependency>
@@ -266,7 +273,7 @@
       <dependencies>
         <dependency>
           <groupId>org.apache.beam</groupId>
-          <artifactId>beam-runners-spark</artifactId>
+          <artifactId>beam-runners-spark-3</artifactId>
           <version>${beam.version}</version>
           <scope>runtime</scope>
         </dependency>

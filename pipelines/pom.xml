@@ -50,8 +50,8 @@
     <mockito.version>5.2.0</mockito.version>
     <jcommander.version>1.82</jcommander.version>
     <license-maven-plugin.version>4.5</license-maven-plugin.version>
-    <beam.version>2.49.0</beam.version>
-    <auto-value.version>1.10.4</auto-value.version>
+    <beam.version>2.56.0</beam.version>
+    <auto-value.version>1.11.0</auto-value.version>
   </properties>
 
   <dependencyManagement>
@@ -257,7 +257,7 @@
          -->
         <plugin>
           <artifactId>maven-shade-plugin</artifactId>
-          <version>3.5.3</version>
+          <version>3.6.0</version>
         </plugin>
         <plugin>
           <artifactId>maven-jar-plugin</artifactId>
@@ -341,7 +341,7 @@
         <plugin>
           <groupId>org.codehaus.mojo</groupId>
           <artifactId>exec-maven-plugin</artifactId>
-          <version>3.2.0</version>
+          <version>3.3.0</version>
         </plugin>
       </plugins>
     </pluginManagement>
