@@ -8,28 +8,28 @@
       
       
       
-        <link rel="canonical" href="https://example.com/foo/tutorial_add_dashboard/">
+        <link rel="canonical" href="https://example.com/analytics/tutorials/add_dashboard/">
       
       
-        <link rel="prev" href="../tutorial_single_machine/">
+        <link rel="prev" href="../single_machine/">
       
       
-        <link rel="next" href="../tutorial_lossy_example/">
+        <link rel="next" href="../postgres_example/">
       
       
-      <link rel="icon" href="../assets/images/favicon.png">
+      <link rel="icon" href="../../assets/images/favicon.png">
       <meta name="generator" content="mkdocs-1.6.0, mkdocs-material-9.5.23">
     
     
       
-        <title>Visualize Parquet DWH with Apache Superset - FHIR Data Pipes Docs</title>
+        <title>Visualize Parquet DWH with Apache Superset - OHS Analytics Documentation</title>
       
     
     
-      <link rel="stylesheet" href="../assets/stylesheets/main.6543a935.min.css">
+      <link rel="stylesheet" href="../../assets/stylesheets/main.6543a935.min.css">
       
         
-        <link rel="stylesheet" href="../assets/stylesheets/palette.06af60db.min.css">
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.06af60db.min.css">
       
       
 
@@ -48,7 +48,7 @@
       
     
     
-    <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce((e,_)=>(e<<5)-e+_.charCodeAt(0),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce((e,_)=>(e<<5)-e+_.charCodeAt(0),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
     
       
 
@@ -86,9 +86,11 @@
     
       
 
-<header class="md-header" data-md-component="header">
+  
+
+<header class="md-header md-header--shadow md-header--lifted" data-md-component="header">
   <nav class="md-header__inner md-grid" aria-label="Header">
-    <a href=".." title="FHIR Data Pipes Docs" class="md-header__button md-logo" aria-label="FHIR Data Pipes Docs" data-md-component="logo">
+    <a href="../.." title="OHS Analytics Documentation" class="md-header__button md-logo" aria-label="OHS Analytics Documentation" data-md-component="logo">
       
   
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54Z"/></svg>
@@ -102,7 +104,7 @@
       <div class="md-header__ellipsis">
         <div class="md-header__topic">
           <span class="md-ellipsis">
-            FHIR Data Pipes Docs
+            OHS Analytics Documentation
           </span>
         </div>
         <div class="md-header__topic" data-md-component="header-topic">
@@ -186,16 +188,22 @@
 </div>
     
     
+      <div class="md-header__source">
+        <a href="https://github.com/google/fhir-data-pipes" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 496 512"><!--! Font Awesome Free 6.5.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2024 Fonticons, Inc.--><path d="M165.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6zm-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3zm44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9zM244.8 8C106.1 8 0 113.3 0 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C428.2 457.8 496 362.9 496 252 496 113.3 383.5 8 244.8 8zM97.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1zm-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7zm32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1zm-11.4-14.7c-1.6 1-1.6 3.6 0 5.9 1.6 2.3 4.3 3.3 5.6 2.3 1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2z"/></svg>
+  </div>
+  <div class="md-source__repository">
+    FHIR Data Pipes
+  </div>
+</a>
+      </div>
+    
   </nav>
   
-</header>
     
-    <div class="md-container" data-md-component="container">
       
-      
-        
-          
-            
 <nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
   <div class="md-grid">
     <ul class="md-tabs__list">
@@ -205,7 +213,7 @@
   
   
     <li class="md-tabs__item">
-      <a href=".." class="md-tabs__link">
+      <a href="../.." class="md-tabs__link">
         
   
     
@@ -222,12 +230,12 @@
   
   
     <li class="md-tabs__item">
-      <a href="../components/" class="md-tabs__link">
+      <a href="../../concepts/" class="md-tabs__link">
         
   
     
   
-  Components
+  Concepts
 
       </a>
     </li>
@@ -241,7 +249,7 @@
     
     
       <li class="md-tabs__item">
-        <a href="../getting_started/" class="md-tabs__link">
+        <a href="../../getting_started/" class="md-tabs__link">
           
   
   Getting Started
@@ -255,30 +263,13 @@
         
   
   
-  
-    <li class="md-tabs__item">
-      <a href="../advanced_guides/" class="md-tabs__link">
-        
-  
-    
-  
-  Advanced Guides
-
-      </a>
-    </li>
-  
-
-      
-        
-  
-  
     
   
   
     
     
       <li class="md-tabs__item md-tabs__item--active">
-        <a href="../tutorial_single_machine/" class="md-tabs__link">
+        <a href="../" class="md-tabs__link">
           
   
   Tutorials
@@ -293,10 +284,27 @@
   
   
   
+    <li class="md-tabs__item">
+      <a href="../../additional/" class="md-tabs__link">
+        
+  
+    
+  
+  Additional Topics
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
     
     
       <li class="md-tabs__item">
-        <a href="../support/" class="md-tabs__link">
+        <a href="../../support/" class="md-tabs__link">
           
   
   Community
@@ -310,7 +318,13 @@
     </ul>
   </div>
 </nav>
-          
+    
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
         
       
       <main class="md-main" data-md-component="main">
@@ -331,14 +345,26 @@
 
 <nav class="md-nav md-nav--primary md-nav--lifted md-nav--integrated" aria-label="Navigation" data-md-level="0">
   <label class="md-nav__title" for="__drawer">
-    <a href=".." title="FHIR Data Pipes Docs" class="md-nav__button md-logo" aria-label="FHIR Data Pipes Docs" data-md-component="logo">
+    <a href="../.." title="OHS Analytics Documentation" class="md-nav__button md-logo" aria-label="OHS Analytics Documentation" data-md-component="logo">
       
   
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54Z"/></svg>
 
     </a>
-    FHIR Data Pipes Docs
+    OHS Analytics Documentation
   </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/google/fhir-data-pipes" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 496 512"><!--! Font Awesome Free 6.5.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2024 Fonticons, Inc.--><path d="M165.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6zm-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3zm44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9zM244.8 8C106.1 8 0 113.3 0 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C428.2 457.8 496 362.9 496 252 496 113.3 383.5 8 244.8 8zM97.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1zm-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7zm32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1zm-11.4-14.7c-1.6 1-1.6 3.6 0 5.9 1.6 2.3 4.3 3.3 5.6 2.3 1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2z"/></svg>
+  </div>
+  <div class="md-source__repository">
+    FHIR Data Pipes
+  </div>
+</a>
+    </div>
   
   <ul class="md-nav__list" data-md-scrollfix>
     
@@ -349,7 +375,7 @@
   
   
     <li class="md-nav__item">
-      <a href=".." class="md-nav__link">
+      <a href="../.." class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -369,11 +395,11 @@
   
   
     <li class="md-nav__item">
-      <a href="../components/" class="md-nav__link">
+      <a href="../../concepts/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
-    Components
+    Concepts
   </span>
   
 
@@ -392,8 +418,6 @@
     
     
       
-      
-        
       
     
     
@@ -429,11 +453,11 @@
   
   
     <li class="md-nav__item">
-      <a href="../getting_started/" class="md-nav__link">
+      <a href="../../getting_started/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
-    Install options
+    Start Here
   </span>
   
 
@@ -450,7 +474,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../installation_docker/" class="md-nav__link">
+      <a href="../../installation_docker/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -471,11 +495,11 @@
   
   
     <li class="md-nav__item">
-      <a href="../installation_pipeline/" class="md-nav__link">
+      <a href="../../installation_pipeline/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
-    Deploy Data Pipes "Pipelines"
+    Deploy the "Pipelines"
   </span>
   
 
@@ -492,11 +516,11 @@
   
   
     <li class="md-nav__item">
-      <a href="../installation_controller/" class="md-nav__link">
+      <a href="../../installation_controller/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
-    Deploy Data Pipes "Controller"
+    Deploy the "Pipelines Controller"
   </span>
   
 
@@ -517,26 +541,6 @@
       
   
   
-  
-  
-    <li class="md-nav__item">
-      <a href="../advanced_guides/" class="md-nav__link">
-        
-  
-  <span class="md-ellipsis">
-    Advanced Guides
-  </span>
-  
-
-      </a>
-    </li>
-  
-
-    
-      
-      
-  
-  
     
   
   
@@ -548,8 +552,6 @@
         
         
       
-      
-        
       
     
     
@@ -557,10 +559,10 @@
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" checked>
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" checked>
         
           
-          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="">
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="">
             
   
   <span class="md-ellipsis">
@@ -571,8 +573,8 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="true">
-          <label class="md-nav__title" for="__nav_5">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_4">
             <span class="md-nav__icon md-icon"></span>
             Tutorials
           </label>
@@ -585,7 +587,49 @@
   
   
     <li class="md-nav__item">
-      <a href="../tutorial_single_machine/" class="md-nav__link">
+      <a href="../" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Tutorials
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../test_servers/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Set up local test servers
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../single_machine/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -781,11 +825,11 @@
   
   
     <li class="md-nav__item">
-      <a href="../tutorial_lossy_example/" class="md-nav__link">
+      <a href="../postgres_example/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
-    Postgres DWH using custom schema
+    PostgresSQL with custom schema as DWH
   </span>
   
 
@@ -808,12 +852,30 @@
   
   
   
-    
-    
-    
-      
-      
+    <li class="md-nav__item">
+      <a href="../../additional/" class="md-nav__link">
         
+  
+  <span class="md-ellipsis">
+    Additional Topics
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+      
       
     
     
@@ -849,7 +911,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../support/" class="md-nav__link">
+      <a href="../../support/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -870,7 +932,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../contributing/" class="md-nav__link">
+      <a href="../../contributing/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -891,7 +953,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../release_process/" class="md-nav__link">
+      <a href="../../release_process/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -925,6 +987,9 @@
               <article class="md-content__inner md-typeset">
                 
                   
+
+  
+  
 
 
 <h1 id="visualize-parquet-dwh-with-apache-superset">Visualize Parquet DWH with Apache Superset</h1>
@@ -1065,17 +1130,14 @@ password: <code>admin</code>.</p>
 <p>The next chart shows number of patients on HIV treatment by year and display
 that as a bar chart over time. The query is provided below.</p>
 <ul>
-<li>The codes 1255% and 1266% refer to HIV_Tx codes in the dataset.</li>
+<li>Navigate back to SQL Lab. </li>
+<li>You should see the previous patient count query. </li>
+<li>If you'd like to keep the patient count query, make a new tab and set the database to "Single Machine Test Data" or the name you chose.</li>
 </ul>
-<p><a href="https://github.com/google/fhir-data-pipes/wiki/Analytics-on-a-single-machine-using-Docker#best-practices-for-querying-exported-parquet-files">Learn more about querying data in SQL-on-FHIR</a>.</p>
-<ol>
-<li>Navigate back to SQL Lab. You should see the previous patient count query.<ul>
-<li>If you'd like to keep the patient count query, make a new tab and set
-    the database to "Single Machine Test Data" or the name you chose.</li>
-</ul>
-</li>
-<li>
-<p>Enter the following as the query:</p>
+<p>Enter the following as the query (as either SQL-on-FHIR or using the pre-defined observation_flat views):</p>
+<div class="tabbed-set tabbed-alternate" data-tabs="1:2"><input checked="checked" id="__tabbed_1_1" name="__tabbed_1" type="radio" /><input id="__tabbed_1_2" name="__tabbed_1" type="radio" /><div class="tabbed-labels"><label for="__tabbed_1_1">Using SQL-on-FHIR Query</label><label for="__tabbed_1_2">With pre-defined flat views</label></div>
+<div class="tabbed-content">
+<div class="tabbed-block">
 <div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="k">SELECT</span><span class="w"> </span><span class="k">COUNT</span><span class="p">(</span><span class="o">*</span><span class="p">),</span><span class="w"> </span><span class="k">YEAR</span><span class="p">(</span><span class="n">O</span><span class="p">.</span><span class="n">effective</span><span class="p">.</span><span class="n">dateTime</span><span class="p">)</span>
 <a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="k">FROM</span><span class="w"> </span><span class="n">Observation</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="n">O</span><span class="w"> </span><span class="k">LATERAL</span><span class="w"> </span><span class="k">VIEW</span><span class="w"> </span><span class="n">EXPLODE</span><span class="p">(</span><span class="n">code</span><span class="p">.</span><span class="n">coding</span><span class="p">)</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="n">OCC</span><span class="w"> </span><span class="k">LATERAL</span><span class="w"> </span><span class="k">VIEW</span><span class="w"> </span><span class="n">EXPLODE</span><span class="p">(</span><span class="n">O</span><span class="p">.</span><span class="n">value</span><span class="p">.</span><span class="n">codeableConcept</span><span class="p">.</span><span class="n">coding</span><span class="p">)</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="n">OVCC</span>
 <a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a><span class="k">WHERE</span><span class="w"> </span><span class="n">OCC</span><span class="p">.</span><span class="n">code</span><span class="w"> </span><span class="k">LIKE</span><span class="w"> </span><span class="s1">&#39;1255%&#39;</span>
@@ -1084,10 +1146,10 @@ that as a bar chart over time. The query is provided below.</p>
 <a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a><span class="k">GROUP</span><span class="w"> </span><span class="k">BY</span><span class="w"> </span><span class="k">YEAR</span><span class="p">(</span><span class="n">O</span><span class="p">.</span><span class="n">effective</span><span class="p">.</span><span class="n">dateTime</span><span class="p">)</span>
 <a id="__codelineno-4-7" name="__codelineno-4-7" href="#__codelineno-4-7"></a><span class="k">ORDER</span><span class="w"> </span><span class="k">BY</span><span class="w"> </span><span class="k">YEAR</span><span class="p">(</span><span class="n">O</span><span class="p">.</span><span class="n">effective</span><span class="p">.</span><span class="n">dateTime</span><span class="p">)</span><span class="w"> </span><span class="k">ASC</span>
 </code></pre></div>
-</li>
-</ol>
-<p><strong>NOTE:</strong> Using the modifiable pre-defined <a href="https://github.com/google/fhir-data-pipes/blob/master/query/queries_and_views.ipynb">flat views</a>
-), the same query can be simplified to the following:</p>
+</div>
+<div class="tabbed-block"></div>
+</div>
+</div>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="k">SELECT</span><span class="w"> </span><span class="k">COUNT</span><span class="p">(</span><span class="o">*</span><span class="p">),</span><span class="w"> </span><span class="k">YEAR</span><span class="p">(</span><span class="n">o</span><span class="p">.</span><span class="n">obs_date</span><span class="p">)</span>
 <a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a><span class="k">FROM</span><span class="w"> </span><span class="n">observation_flat</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="n">o</span>
 <a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a><span class="k">WHERE</span><span class="w"> </span><span class="n">o</span><span class="p">.</span><span class="n">code</span><span class="w"> </span><span class="k">LIKE</span><span class="w"> </span><span class="s1">&#39;1255%&#39;</span>
@@ -1096,31 +1158,27 @@ that as a bar chart over time. The query is provided below.</p>
 <a id="__codelineno-5-6" name="__codelineno-5-6" href="#__codelineno-5-6"></a><span class="k">GROUP</span><span class="w"> </span><span class="k">BY</span><span class="w"> </span><span class="k">YEAR</span><span class="p">(</span><span class="n">o</span><span class="p">.</span><span class="n">obs_date</span><span class="p">)</span>
 <a id="__codelineno-5-7" name="__codelineno-5-7" href="#__codelineno-5-7"></a><span class="k">ORDER</span><span class="w"> </span><span class="k">BY</span><span class="w"> </span><span class="k">YEAR</span><span class="p">(</span><span class="n">o</span><span class="p">.</span><span class="n">obs_date</span><span class="p">)</span><span class="w"> </span><span class="k">ASC</span><span class="w"> </span>
 </code></pre></div>
-<ol>
+<p><code>The codes 1255% and 1266% refer to HIV\_Tx codes in the dataset</code></p>
+<ul>
 <li>Click <strong>Run</strong>. After a moment, the results of the query should appear.</li>
 <li>In the <strong>Results</strong> section, click <strong>Create Chart</strong>. This brings you to a new
     chart page.</li>
 <li>Under the <strong>Chart Source</strong> pane, click <strong>Create a dataset</strong> and name it "HIV
     Treatment Dataset".</li>
 <li>Under the <strong>Data</strong> tab, switch to the <strong>Bar Chart</strong> chart type.</li>
-<li>In the <strong>Query</strong> section, set the following values:<ol>
-<li>X-Axis:<ol>
-<li>Custom SQL: <code>YEAR(date\_time)</code></li>
-</ol>
+<li>
+<p>In the <strong>Query</strong> section, set the following values:</p>
+<p>X-Axis: Custom SQL: <code>YEAR(date\_time)</code></p>
+<p>Metric: Column: <code>patient\_id</code>, Aggregate: <code>COUNT</code></p>
 </li>
-<li>Metric:<ol>
-<li>Column: <code>patient\_id</code></li>
-<li>Aggregate: <code>COUNT</code></li>
-</ol>
+<li>
+<p>Click <strong>Update Chart</strong> at the bottom of the pane. The chart updates to show
+    a bar chart of patients undergoing HIV treatment per year.</p>
 </li>
-</ol>
-</li>
-<li>Click <strong>Update Chart</strong> at the bottom of the pane. The chart updates to show
-    a bar chart of patients undergoing HIV treatment per year.</li>
 <li>Click <strong>Save</strong> to bring up the <strong>Save chart</strong> dialog. Name the chart "HIV
     Treatment" and under <strong>Add to Dashboard</strong> select the dashboard you created
     previously.</li>
-</ol>
+</ul>
 <h2 id="edit-the-dashboard">Edit the Dashboard</h2>
 <p>Navigate to the <strong>Dashboards</strong> section and select the Sample Dashboard you
 created. You should see something like this with the charts you created.</p>
@@ -1205,7 +1263,7 @@ Store and run the incremental pipeline.</p>
       <nav class="md-footer__inner md-grid" aria-label="Footer" >
         
           
-          <a href="../tutorial_single_machine/" class="md-footer__link md-footer__link--prev" aria-label="Previous: Single Machine Deployment">
+          <a href="../single_machine/" class="md-footer__link md-footer__link--prev" aria-label="Previous: Single Machine Deployment">
             <div class="md-footer__button md-icon">
               
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12Z"/></svg>
@@ -1222,13 +1280,13 @@ Store and run the incremental pipeline.</p>
         
         
           
-          <a href="../tutorial_lossy_example/" class="md-footer__link md-footer__link--next" aria-label="Next: Postgres DWH using custom schema">
+          <a href="../postgres_example/" class="md-footer__link md-footer__link--next" aria-label="Next: PostgresSQL with custom schema as DWH">
             <div class="md-footer__title">
               <span class="md-footer__direction">
                 Next
               </span>
               <div class="md-ellipsis">
-                Postgres DWH using custom schema
+                PostgresSQL with custom schema as DWH
               </div>
             </div>
             <div class="md-footer__button md-icon">
@@ -1267,10 +1325,10 @@ Store and run the incremental pipeline.</p>
     </div>
     
     
-    <script id="__config" type="application/json">{"base": "..", "features": ["navigation.tabs", "navigation.sections", "toc.integrate", "navigation.top", "search.suggest", "search.highlight", "content.tabs.link", "content.code.annotation", "content.code.copy", "navigation.footer"], "search": "../assets/javascripts/workers/search.b8dbb3d2.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}}</script>
+    <script id="__config" type="application/json">{"base": "../..", "features": ["navigation.tabs", "navigation.tabs.sticky", "toc.follow", "toc.integrate", "navigation.top", "navigation.path", "search.suggest", "search.highlight", "content.tabs.link", "content.code.annotation", "content.code.copy", "navigation.footer"], "search": "../../assets/javascripts/workers/search.b8dbb3d2.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}}</script>
     
     
-      <script src="../assets/javascripts/bundle.ebd0bdb7.min.js"></script>
+      <script src="../../assets/javascripts/bundle.ebd0bdb7.min.js"></script>
       
     
   </body>

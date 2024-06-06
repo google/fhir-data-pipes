@@ -54,6 +54,18 @@ FHIR Data Pipes transforms FHIR resources to _"near lossless"_ 'Parquet on FHIR'
 ## Monitoring pipelines
 The pipelines controller exposes a number of management end-points that can help with monitoring the health of pipelines. 
 
+* The application has been integrated with the Spring Boot Actuator of Spring and has exposed Rest API end points for monitoring, health checks, metrics etc. 
+* The end points can be customised in the configuration file.
+* It can easily be integrated with tools like Prometheus for monitoring metrics.
+
+**Via the Web Control Panel**
+The Web Control panel provides provides a quick glimpse about the latest state of the application including:
+* Controls for triggering pipeline run on-demand
+* A readable view of the application configuration
+* Location and time of the latest snapshot created by the pipeline run
+* Metrics of the most recent pipeline
+* Error logs of the last pipeline if any
+
 These are found in the `application.yaml` config file in the `management:` section. 
 
 [See Config properties](#config-properties) 

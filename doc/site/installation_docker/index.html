@@ -8,7 +8,7 @@
       
       
       
-        <link rel="canonical" href="https://example.com/foo/installation_docker/">
+        <link rel="canonical" href="https://example.com/analytics/installation_docker/">
       
       
         <link rel="prev" href="../getting_started/">
@@ -22,7 +22,7 @@
     
     
       
-        <title>Docker containers - FHIR Data Pipes Docs</title>
+        <title>Docker containers - OHS Analytics Documentation</title>
       
     
     
@@ -74,7 +74,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#running-fhir-data-pipes-in-a-docker-container" class="md-skip">
+        <a href="#fhir-data-pipes-docker-image" class="md-skip">
           Skip to content
         </a>
       
@@ -86,9 +86,11 @@
     
       
 
-<header class="md-header" data-md-component="header">
+  
+
+<header class="md-header md-header--shadow md-header--lifted" data-md-component="header">
   <nav class="md-header__inner md-grid" aria-label="Header">
-    <a href=".." title="FHIR Data Pipes Docs" class="md-header__button md-logo" aria-label="FHIR Data Pipes Docs" data-md-component="logo">
+    <a href=".." title="OHS Analytics Documentation" class="md-header__button md-logo" aria-label="OHS Analytics Documentation" data-md-component="logo">
       
   
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54Z"/></svg>
@@ -102,7 +104,7 @@
       <div class="md-header__ellipsis">
         <div class="md-header__topic">
           <span class="md-ellipsis">
-            FHIR Data Pipes Docs
+            OHS Analytics Documentation
           </span>
         </div>
         <div class="md-header__topic" data-md-component="header-topic">
@@ -186,16 +188,22 @@
 </div>
     
     
+      <div class="md-header__source">
+        <a href="https://github.com/google/fhir-data-pipes" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 496 512"><!--! Font Awesome Free 6.5.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2024 Fonticons, Inc.--><path d="M165.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6zm-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3zm44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9zM244.8 8C106.1 8 0 113.3 0 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C428.2 457.8 496 362.9 496 252 496 113.3 383.5 8 244.8 8zM97.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1zm-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7zm32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1zm-11.4-14.7c-1.6 1-1.6 3.6 0 5.9 1.6 2.3 4.3 3.3 5.6 2.3 1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2z"/></svg>
+  </div>
+  <div class="md-source__repository">
+    FHIR Data Pipes
+  </div>
+</a>
+      </div>
+    
   </nav>
   
-</header>
     
-    <div class="md-container" data-md-component="container">
       
-      
-        
-          
-            
 <nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
   <div class="md-grid">
     <ul class="md-tabs__list">
@@ -222,12 +230,12 @@
   
   
     <li class="md-tabs__item">
-      <a href="../components/" class="md-tabs__link">
+      <a href="../concepts/" class="md-tabs__link">
         
   
     
   
-  Components
+  Concepts
 
       </a>
     </li>
@@ -258,27 +266,10 @@
   
   
   
-    <li class="md-tabs__item">
-      <a href="../advanced_guides/" class="md-tabs__link">
-        
-  
-    
-  
-  Advanced Guides
-
-      </a>
-    </li>
-  
-
-      
-        
-  
-  
-  
     
     
       <li class="md-tabs__item">
-        <a href="../tutorial_single_machine/" class="md-tabs__link">
+        <a href="../tutorials/" class="md-tabs__link">
           
   
   Tutorials
@@ -286,6 +277,23 @@
         </a>
       </li>
     
+  
+
+      
+        
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../additional/" class="md-tabs__link">
+        
+  
+    
+  
+  Additional Topics
+
+      </a>
+    </li>
   
 
       
@@ -310,7 +318,13 @@
     </ul>
   </div>
 </nav>
-          
+    
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
         
       
       <main class="md-main" data-md-component="main">
@@ -331,14 +345,26 @@
 
 <nav class="md-nav md-nav--primary md-nav--lifted md-nav--integrated" aria-label="Navigation" data-md-level="0">
   <label class="md-nav__title" for="__drawer">
-    <a href=".." title="FHIR Data Pipes Docs" class="md-nav__button md-logo" aria-label="FHIR Data Pipes Docs" data-md-component="logo">
+    <a href=".." title="OHS Analytics Documentation" class="md-nav__button md-logo" aria-label="OHS Analytics Documentation" data-md-component="logo">
       
   
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54Z"/></svg>
 
     </a>
-    FHIR Data Pipes Docs
+    OHS Analytics Documentation
   </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/google/fhir-data-pipes" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 496 512"><!--! Font Awesome Free 6.5.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2024 Fonticons, Inc.--><path d="M165.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6zm-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3zm44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9zM244.8 8C106.1 8 0 113.3 0 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C428.2 457.8 496 362.9 496 252 496 113.3 383.5 8 244.8 8zM97.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1zm-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7zm32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1zm-11.4-14.7c-1.6 1-1.6 3.6 0 5.9 1.6 2.3 4.3 3.3 5.6 2.3 1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2z"/></svg>
+  </div>
+  <div class="md-source__repository">
+    FHIR Data Pipes
+  </div>
+</a>
+    </div>
   
   <ul class="md-nav__list" data-md-scrollfix>
     
@@ -369,11 +395,11 @@
   
   
     <li class="md-nav__item">
-      <a href="../components/" class="md-nav__link">
+      <a href="../concepts/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
-    Components
+    Concepts
   </span>
   
 
@@ -397,8 +423,6 @@
         
         
       
-      
-        
       
     
     
@@ -438,7 +462,7 @@
         
   
   <span class="md-ellipsis">
-    Install options
+    Start Here
   </span>
   
 
@@ -501,9 +525,9 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#single-machine-deployment-docker-compose" class="md-nav__link">
+  <a href="#sample-docker-configurations" class="md-nav__link">
     <span class="md-ellipsis">
-      Single Machine Deployment Docker Compose
+      Sample Docker Configurations
     </span>
   </a>
   
@@ -529,7 +553,7 @@
         
   
   <span class="md-ellipsis">
-    Deploy Data Pipes "Pipelines"
+    Deploy the "Pipelines"
   </span>
   
 
@@ -550,7 +574,7 @@
         
   
   <span class="md-ellipsis">
-    Deploy Data Pipes "Controller"
+    Deploy the "Pipelines Controller"
   </span>
   
 
@@ -573,32 +597,10 @@
   
   
   
-    <li class="md-nav__item">
-      <a href="../advanced_guides/" class="md-nav__link">
-        
-  
-  <span class="md-ellipsis">
-    Advanced Guides
-  </span>
-  
-
-      </a>
-    </li>
-  
-
-    
-      
-      
-  
-  
-  
-  
     
     
     
       
-      
-        
       
     
     
@@ -606,10 +608,10 @@
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" >
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" >
         
           
-          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="0">
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="0">
             
   
   <span class="md-ellipsis">
@@ -620,8 +622,8 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_5">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4">
             <span class="md-nav__icon md-icon"></span>
             Tutorials
           </label>
@@ -634,7 +636,49 @@
   
   
     <li class="md-nav__item">
-      <a href="../tutorial_single_machine/" class="md-nav__link">
+      <a href="../tutorials/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Tutorials
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../tutorials/test_servers/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Set up local test servers
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../tutorials/single_machine/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -655,7 +699,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../tutorial_add_dashboard/" class="md-nav__link">
+      <a href="../tutorials/add_dashboard/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -676,11 +720,11 @@
   
   
     <li class="md-nav__item">
-      <a href="../tutorial_lossy_example/" class="md-nav__link">
+      <a href="../tutorials/postgres_example/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
-    Postgres DWH using custom schema
+    PostgresSQL with custom schema as DWH
   </span>
   
 
@@ -703,12 +747,30 @@
   
   
   
-    
-    
-    
-      
-      
+    <li class="md-nav__item">
+      <a href="../additional/" class="md-nav__link">
         
+  
+  <span class="md-ellipsis">
+    Additional Topics
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+      
       
     
     
@@ -821,10 +883,30 @@
                 
                   
 
+  
+  
 
-<h1 id="running-fhir-data-pipes-in-a-docker-container">Running FHIR Data Pipes in a Docker Container</h1>
-<p>The repository includes a number of different docker compose configurations for a “Single Machine” Deployment. </p>
-<p>NOTE: These are examples to help you to get up and running quickly. The details of how one creates a distributed environment is beyond the scope of this document.</p>
+
+<h1 id="fhir-data-pipes-docker-image">FHIR Data Pipes Docker Image</h1>
+<p>A “Single Machine” with Released Image <a href="https://github.com/google/fhir-data-pipes/blob/master/docker/compose-controller-spark-sql-released.yaml">Docker Compose Configuration </a> is maintained.</p>
+<p>This docker-compose configuration is for bringing up a pipeline controller along with a single-process Spark environment with a JDBC endpoint. This is particularly useful for quick evaluation and demo environments.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>* If local paths are used, they should start with `./ `or `../`. 
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>* The mounted files should be readable by containers, e.g., world-readable
+</code></pre></div>
+<p>Using the "Single Machine" configuration you will be able to quickly and easily:</p>
+<ul>
+<li>Bring up the FHIR Pipelines Controller plus a Spark Thrift Server</li>
+<li>Start the Web Control Panel for interacting with the Controller for running full and incremental Pipelines and registering new views</li>
+<li>Generate Parquet files for each FHIR Resource in the /docker/dwh directory </li>
+<li>Run the SQL-on-FHIR queries defined in /config/views/*.sql and register these via the Thrift Server</li>
+<li>Generate flattened views (defined in /config/views/*.json) in the database configured by sinkDbConfigPath (you will need to ensure the database is created)</li>
+</ul>
+<div class="admonition tip">
+<p class="admonition-title">Tip</p>
+<p>The easiest way to get up and running quickly is to follow the <a href="../tutorials/single_machine/">Single Machine Deployment tutorial</a>.</p>
+</div>
+<h2 id="sample-docker-configurations">Sample Docker Configurations</h2>
+<p>The repository includes a number of other sample "Single Machine" docker compose configurations. These provide samples of different deployment configurations.</p>
 <table>
 <thead>
 <tr>
@@ -840,29 +922,12 @@
 <td>Good for getting familiar with the controller and pipelines. Will build the image from source if it does not exist</td>
 </tr>
 <tr>
-<td>“Single Machine” with the Released Image <a href="https://github.com/google/fhir-data-pipes/blob/master/docker/compose-controller-spark-sql-released.yaml">Docker Compose Configuration </a></td>
-<td>This is the same as compose-controller-spark-sql-single.yaml that it uses the released version of pipeline-controller docker image instead of building it from source. Useful for quick evaluation and demo environments</td>
-<td>Note if local paths are used, they should start with <code>./</code>or <code>../</code>. Also the mounted files should be readable by containers, e.g., world-readable</td>
-</tr>
-<tr>
 <td>Single Machine "Local Cluster" <a href="https://github.com/google/fhir-data-pipes/blob/master/docker/compose-controller-spark-sql.yaml">Docker Compose Configuration</a></td>
 <td>While all Spark pieces are brought up on the same machine, this config can serve as an example of how to deploy Spark on a cluster environment as it uses different containers for the master, a worker and Thrift server</td>
 <td>More complete configuration which shows different pieces that are needed for a cluster environment. See the readme for more details</td>
 </tr>
 </tbody>
 </table>
-<h2 id="single-machine-deployment-docker-compose">Single Machine Deployment Docker Compose</h2>
-<p>The easiest way to get started is to set up a "Single machine deployment" using a docker image provided in the repository.</p>
-<p>Using the <a href="https://github.com/google/fhir-data-pipes/blob/master/docker/compose-controller-spark-sql-
-single.yaml">Basic Single Machine docker compose</a> configuration this will:</p>
-<ul>
-<li>Bring up the FHIR Pipelines Controller plus a Spark Thrift Server</li>
-<li>Start the Web Control Panel for interacting with the Controller for running full and incremental Pipelines and registering new views</li>
-<li>Generate Parquet files for each FHIR Resource in the /docker/dwh directory </li>
-<li>Run the SQL-on-FHIR queries defined in /config/views/*.sql and register these via the Thrift Server</li>
-<li>Generate flattened views (defined in /config/views/*.json) in the database configured by sinkDbConfigPath (you will need to ensure the database is created)</li>
-</ul>
-<p>Follow the <a href="tutorial_single_machine/">Single Machine Deployment tutorial</a></p>
 
 
 
@@ -900,7 +965,7 @@ single.yaml">Basic Single Machine docker compose</a> configuration this will:</p
       <nav class="md-footer__inner md-grid" aria-label="Footer" >
         
           
-          <a href="../getting_started/" class="md-footer__link md-footer__link--prev" aria-label="Previous: Install options">
+          <a href="../getting_started/" class="md-footer__link md-footer__link--prev" aria-label="Previous: Start Here">
             <div class="md-footer__button md-icon">
               
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12Z"/></svg>
@@ -910,20 +975,20 @@ single.yaml">Basic Single Machine docker compose</a> configuration this will:</p
                 Previous
               </span>
               <div class="md-ellipsis">
-                Install options
+                Start Here
               </div>
             </div>
           </a>
         
         
           
-          <a href="../installation_pipeline/" class="md-footer__link md-footer__link--next" aria-label="Next: Deploy Data Pipes &#34;Pipelines&#34;">
+          <a href="../installation_pipeline/" class="md-footer__link md-footer__link--next" aria-label="Next: Deploy the &#34;Pipelines&#34;">
             <div class="md-footer__title">
               <span class="md-footer__direction">
                 Next
               </span>
               <div class="md-ellipsis">
-                Deploy Data Pipes "Pipelines"
+                Deploy the "Pipelines"
               </div>
             </div>
             <div class="md-footer__button md-icon">
@@ -962,7 +1027,7 @@ single.yaml">Basic Single Machine docker compose</a> configuration this will:</p
     </div>
     
     
-    <script id="__config" type="application/json">{"base": "..", "features": ["navigation.tabs", "navigation.sections", "toc.integrate", "navigation.top", "search.suggest", "search.highlight", "content.tabs.link", "content.code.annotation", "content.code.copy", "navigation.footer"], "search": "../assets/javascripts/workers/search.b8dbb3d2.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}}</script>
+    <script id="__config" type="application/json">{"base": "..", "features": ["navigation.tabs", "navigation.tabs.sticky", "toc.follow", "toc.integrate", "navigation.top", "navigation.path", "search.suggest", "search.highlight", "content.tabs.link", "content.code.annotation", "content.code.copy", "navigation.footer"], "search": "../assets/javascripts/workers/search.b8dbb3d2.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}}</script>
     
     
       <script src="../assets/javascripts/bundle.ebd0bdb7.min.js"></script>

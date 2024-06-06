@@ -138,7 +138,7 @@ that as a bar chart over time. The query is provided below.
 * You should see the previous patient count query. 
 * If you'd like to keep the patient count query, make a new tab and set the database to "Single Machine Test Data" or the name you chose.
 
-Enter the following as the query (as either SQL-on-FHIR or using the pre-defined observation_flat views):
+Enter the following as the query as either a raw SQL-on-FHIR query or using the [pre-defined](../../concepts/#sql-virtual-views) observation_flat views:
 
 === "Using SQL-on-FHIR Query"
 
@@ -146,22 +146,22 @@ Enter the following as the query (as either SQL-on-FHIR or using the pre-defined
     SELECT COUNT(*), YEAR(O.effective.dateTime)
     FROM Observation AS O LATERAL VIEW EXPLODE(code.coding) AS OCC LATERAL VIEW EXPLODE(O.value.codeableConcept.coding) AS OVCC
     WHERE OCC.code LIKE '1255%'
-      AND OVCC.code LIKE "1256%"
-      AND YEAR(O.effective.dateTime) < 2023
+    AND OVCC.code LIKE "1256%"
+    AND YEAR(O.effective.dateTime) < 2023
     GROUP BY YEAR(O.effective.dateTime)
     ORDER BY YEAR(O.effective.dateTime) ASC
     ```
 === "With pre-defined flat views"
 
-   ```sql
-   SELECT COUNT(*), YEAR(o.obs_date)
-   FROM observation_flat as o
-   WHERE o.code LIKE '1255%'
-     AND o.val_code LIKE "1256%"
-     AND YEAR(o.obs_date) < 2023
-   GROUP BY YEAR(o.obs_date)
-   ORDER BY YEAR(o.obs_date) ASC 
-   ```
+    ```sql
+    SELECT COUNT(*), YEAR(o.obs_date)
+    FROM observation_flat as o
+    WHERE o.code LIKE '1255%'
+        AND o.val_code LIKE "1256%"
+        AND YEAR(o.obs_date) < 2023
+    GROUP BY YEAR(o.obs_date)
+    ORDER BY YEAR(o.obs_date) ASC 
+    ```
 
 `The codes 1255% and 1266% refer to HIV\_Tx codes in the dataset`
 

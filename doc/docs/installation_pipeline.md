@@ -5,23 +5,22 @@ transforms data from a FHIR server to either
 [Apache Parquet files](https://parquet.apache.org) for analysis or another FHIR
 store for data integration.
 
-There are two options for reading the source FHIR server (input):
+**Input or source options:** There are three options for reading the source FHIR data (input):
 
 - _FHIR-Search_: This mode uses FHIR Search APIs to select resources to copy,
   retrieves them as FHIR resources, and transfers the data via FHIR APIs or
   Parquet files. This mode should work with most FHIR servers and has been
   tested with HAPI FHIR server and GCP FHIR store.
 - _JDBC_: This mode uses the
-  [Java Database Connectivity (JDBC) API](https://docs.oracle.com/javase/8/docs/technotes/guides/jdbc/)
-  to read FHIR resources directly from the database of a FHIR server. It's
-  tested with
-  [HAPI FHIR server using PostgreSQL database](https://github.com/hapifhir/hapi-fhir-jpaserver-starter#postgresql-configuration)
-  or an [OpenMRS](https://openmrs.org/) instance using MySQL. Note: JDBC support
-  beyond HAPI FHIR and OpenMRS is not currently planned. Our long-term approach
-  for a generic high-throughput alternative is to use the
+  [Java Database Connectivity (JDBC) API](https://docs.oracle.com/javase/8/docs/technotes/guides/jdbc/) to read FHIR resources directly from the database of a FHIR server. It's
+  tested with [HAPI FHIR server using PostgreSQL database](https://github.com/hapifhir/hapi-fhir-jpaserver-starter#postgresql-configuration)
+  or an [OpenMRS](https://openmrs.org/) instance using MySQL.
+  _ndjson_: To do 
+  
+  **Note**: JDBC support beyond HAPI FHIR and OpenMRS is not currently planned. Our long-term approach for a generic high-throughput alternative is to use the
   [FHIR Bulk Export API](https://build.fhir.org/ig/HL7/bulk-data/export.html).
 
-There are two options for transforming the data (output):
+**Output options:** There are two options for transforming the data (output):
 
 - _Parquet_: Outputs the FHIR resources as Parquet files, using the
   [SQL-on-FHIR schema](https://github.com/FHIR/sql-on-fhir/blob/master/sql-on-fhir.md).
@@ -59,6 +58,7 @@ This section documents the parameters used by the various pipelines. For more
 information on parameters, see
 [`FhirEtlOptions`](https://github.com/google/fhir-data-pipes/blob/master/pipelines/batch/src/main/java/com/google/fhir/analytics/FhirEtlOptions.java)
 or run the pipeline with the `help` option:
+
 `java -jar ./batch/target/batch-bundled.jar --help=FhirEtlOptions`.
 
 ### Common parameters
@@ -80,7 +80,7 @@ These parameters are used regardless of other pipeline options.
 ### FHIR-Search input parameters
 
 The pipeline will use FHIR-Search to fetch data as long as `jdbcModeEnabled` and
-`jdbcModeHapi` are unset or false.
+`jdbcModeHapi` are false OR unset.
 
 - `fhirServerUrl` - The base URL of the source FHIR server. Required.
 - `fhirServerUserName` - The HTTP Basic Auth username to access the FHIR server
@@ -165,34 +165,30 @@ issues of `DirectRunner`.
 These examples are set up to work with
 [local test servers](tutorials/test_servers.md).
 
-### FHIR Search to Parquet files
+=== "FHIR Search to Parquet files"
 
-Example run:
+    ```shell
+    java -cp ./pipelines/batch/target/batch-bundled.jar \
+        com.google.fhir.analytics.FhirEtl \
+        --fhirServerUrl=http://localhost:8091/fhir \
+        --outputParquetPath=/tmp/TEST/ \
+        --resourceList=Patient,Encounter,Observation
+    ```
 
-```shell
-java -cp ./pipelines/batch/target/batch-bundled.jar \
-    com.google.fhir.analytics.FhirEtl \
-    --fhirServerUrl=http://localhost:8091/fhir \
-    --outputParquetPath=/tmp/TEST/ \
-    --resourceList=Patient,Encounter,Observation
-```
+=== "HAPI FHIR JDBC to a FHIR server"
 
-### HAPI FHIR JDBC to a FHIR server
-
-Example run:
-
-```shell
-java -cp ./pipelines/batch/target/batch-bundled.jar \
-    com.google.fhir.analytics.FhirEtl \
-    --fhirServerUrl=http://localhost:8091/fhir \
-    --resourceList=Patient,Encounter,Observation \
-    --fhirDatabaseConfigPath=./utils/hapi-postgres-config.json \
-    --jdbcModeEnabled=true --jdbcModeHapi=true \
-    --jdbcMaxPoolSize=50 --jdbcFetchSize=1000 \
-    --jdbcDriverClass=org.postgresql.Driver \
-    --fhirSinkPath=http://localhost:8099/fhir \
-    --sinkUserName=hapi --sinkPassword=hapi
-```
+    ```shell
+    java -cp ./pipelines/batch/target/batch-bundled.jar \
+        com.google.fhir.analytics.FhirEtl \
+        --fhirServerUrl=http://localhost:8091/fhir \
+        --resourceList=Patient,Encounter,Observation \
+        --fhirDatabaseConfigPath=./utils/hapi-postgres-config.json \
+        --jdbcModeEnabled=true --jdbcModeHapi=true \
+        --jdbcMaxPoolSize=50 --jdbcFetchSize=1000 \
+        --jdbcDriverClass=org.postgresql.Driver \
+        --fhirSinkPath=http://localhost:8099/fhir \
+        --sinkUserName=hapi --sinkPassword=hapi
+    ```
 
 ## How to query the data warehouse
 

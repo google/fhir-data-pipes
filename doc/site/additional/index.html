@@ -8,13 +8,13 @@
       
       
       
-        <link rel="canonical" href="https://example.com/foo/tutorial_single_machine/">
+        <link rel="canonical" href="https://example.com/analytics/additional/">
       
       
-        <link rel="prev" href="../advanced_guides/">
+        <link rel="prev" href="../tutorials/postgres_example/">
       
       
-        <link rel="next" href="../tutorial_add_dashboard/">
+        <link rel="next" href="../support/">
       
       
       <link rel="icon" href="../assets/images/favicon.png">
@@ -22,7 +22,7 @@
     
     
       
-        <title>Single Machine Deployment - FHIR Data Pipes Docs</title>
+        <title>Additional Topics - OHS Analytics Documentation</title>
       
     
     
@@ -74,7 +74,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#single-machine-deployment-tutorial" class="md-skip">
+        <a href="#additional-topics" class="md-skip">
           Skip to content
         </a>
       
@@ -86,9 +86,11 @@
     
       
 
-<header class="md-header" data-md-component="header">
+  
+
+<header class="md-header md-header--shadow md-header--lifted" data-md-component="header">
   <nav class="md-header__inner md-grid" aria-label="Header">
-    <a href=".." title="FHIR Data Pipes Docs" class="md-header__button md-logo" aria-label="FHIR Data Pipes Docs" data-md-component="logo">
+    <a href=".." title="OHS Analytics Documentation" class="md-header__button md-logo" aria-label="OHS Analytics Documentation" data-md-component="logo">
       
   
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54Z"/></svg>
@@ -102,13 +104,13 @@
       <div class="md-header__ellipsis">
         <div class="md-header__topic">
           <span class="md-ellipsis">
-            FHIR Data Pipes Docs
+            OHS Analytics Documentation
           </span>
         </div>
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Single Machine Deployment
+              Additional Topics
             
           </span>
         </div>
@@ -186,16 +188,22 @@
 </div>
     
     
+      <div class="md-header__source">
+        <a href="https://github.com/google/fhir-data-pipes" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 496 512"><!--! Font Awesome Free 6.5.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2024 Fonticons, Inc.--><path d="M165.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6zm-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3zm44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9zM244.8 8C106.1 8 0 113.3 0 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C428.2 457.8 496 362.9 496 252 496 113.3 383.5 8 244.8 8zM97.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1zm-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7zm32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1zm-11.4-14.7c-1.6 1-1.6 3.6 0 5.9 1.6 2.3 4.3 3.3 5.6 2.3 1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2z"/></svg>
+  </div>
+  <div class="md-source__repository">
+    FHIR Data Pipes
+  </div>
+</a>
+      </div>
+    
   </nav>
   
-</header>
     
-    <div class="md-container" data-md-component="container">
       
-      
-        
-          
-            
 <nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
   <div class="md-grid">
     <ul class="md-tabs__list">
@@ -222,12 +230,12 @@
   
   
     <li class="md-tabs__item">
-      <a href="../components/" class="md-tabs__link">
+      <a href="../concepts/" class="md-tabs__link">
         
   
     
   
-  Components
+  Concepts
 
       </a>
     </li>
@@ -256,16 +264,17 @@
   
   
   
-    <li class="md-tabs__item">
-      <a href="../advanced_guides/" class="md-tabs__link">
-        
-  
     
+    
+      <li class="md-tabs__item">
+        <a href="../tutorials/" class="md-tabs__link">
+          
   
-  Advanced Guides
+  Tutorials
 
-      </a>
-    </li>
+        </a>
+      </li>
+    
   
 
       
@@ -275,17 +284,16 @@
     
   
   
-    
-    
-      <li class="md-tabs__item md-tabs__item--active">
-        <a href="./" class="md-tabs__link">
-          
+    <li class="md-tabs__item md-tabs__item--active">
+      <a href="./" class="md-tabs__link">
+        
   
-  Tutorials
-
-        </a>
-      </li>
     
+  
+  Additional Topics
+
+      </a>
+    </li>
   
 
       
@@ -310,7 +318,13 @@
     </ul>
   </div>
 </nav>
-          
+    
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
         
       
       <main class="md-main" data-md-component="main">
@@ -331,14 +345,26 @@
 
 <nav class="md-nav md-nav--primary md-nav--lifted md-nav--integrated" aria-label="Navigation" data-md-level="0">
   <label class="md-nav__title" for="__drawer">
-    <a href=".." title="FHIR Data Pipes Docs" class="md-nav__button md-logo" aria-label="FHIR Data Pipes Docs" data-md-component="logo">
+    <a href=".." title="OHS Analytics Documentation" class="md-nav__button md-logo" aria-label="OHS Analytics Documentation" data-md-component="logo">
       
   
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54Z"/></svg>
 
     </a>
-    FHIR Data Pipes Docs
+    OHS Analytics Documentation
   </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/google/fhir-data-pipes" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 496 512"><!--! Font Awesome Free 6.5.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2024 Fonticons, Inc.--><path d="M165.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6zm-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3zm44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9zM244.8 8C106.1 8 0 113.3 0 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C428.2 457.8 496 362.9 496 252 496 113.3 383.5 8 244.8 8zM97.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1zm-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7zm32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1zm-11.4-14.7c-1.6 1-1.6 3.6 0 5.9 1.6 2.3 4.3 3.3 5.6 2.3 1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2z"/></svg>
+  </div>
+  <div class="md-source__repository">
+    FHIR Data Pipes
+  </div>
+</a>
+    </div>
   
   <ul class="md-nav__list" data-md-scrollfix>
     
@@ -369,11 +395,11 @@
   
   
     <li class="md-nav__item">
-      <a href="../components/" class="md-nav__link">
+      <a href="../concepts/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
-    Components
+    Concepts
   </span>
   
 
@@ -392,8 +418,6 @@
     
     
       
-      
-        
       
     
     
@@ -433,7 +457,7 @@
         
   
   <span class="md-ellipsis">
-    Install options
+    Start Here
   </span>
   
 
@@ -475,7 +499,7 @@
         
   
   <span class="md-ellipsis">
-    Deploy Data Pipes "Pipelines"
+    Deploy the "Pipelines"
   </span>
   
 
@@ -496,7 +520,7 @@
         
   
   <span class="md-ellipsis">
-    Deploy Data Pipes "Controller"
+    Deploy the "Pipelines Controller"
   </span>
   
 
@@ -519,48 +543,21 @@
   
   
   
-    <li class="md-nav__item">
-      <a href="../advanced_guides/" class="md-nav__link">
-        
-  
-  <span class="md-ellipsis">
-    Advanced Guides
-  </span>
-  
-
-      </a>
-    </li>
-  
-
+    
+    
     
       
       
-  
-  
-    
-  
-  
-  
     
     
-    
+    <li class="md-nav__item md-nav__item--nested">
       
         
         
-      
-      
-        
-      
-    
-    
-    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
-      
-        
-        
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" checked>
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" >
         
           
-          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="">
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="0">
             
   
   <span class="md-ellipsis">
@@ -571,8 +568,8 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="true">
-          <label class="md-nav__title" for="__nav_5">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4">
             <span class="md-nav__icon md-icon"></span>
             Tutorials
           </label>
@@ -580,6 +577,118 @@
             
               
                 
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../tutorials/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Tutorials
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../tutorials/test_servers/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Set up local test servers
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../tutorials/single_machine/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Single Machine Deployment
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../tutorials/add_dashboard/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Visualize Parquet DWH with Apache Superset
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../tutorials/postgres_example/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    PostgresSQL with custom schema as DWH
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
   
   
     
@@ -598,7 +707,7 @@
           
   
   <span class="md-ellipsis">
-    Single Machine Deployment
+    Additional Topics
   </span>
   
 
@@ -609,7 +718,7 @@
         
   
   <span class="md-ellipsis">
-    Single Machine Deployment
+    Additional Topics
   </span>
   
 
@@ -631,60 +740,45 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#requirements" class="md-nav__link">
+  <a href="#authentication" class="md-nav__link">
     <span class="md-ellipsis">
-      Requirements
+      Authentication
     </span>
   </a>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#configure-the-fhir-pipelines-controller" class="md-nav__link">
+  <a href="#config-properties" class="md-nav__link">
     <span class="md-ellipsis">
-      Configure the FHIR Pipelines Controller
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Configure the FHIR Pipelines Controller">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#flattened-views" class="md-nav__link">
-    <span class="md-ellipsis">
-      Flattened views
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#run-the-single-machine-configuration" class="md-nav__link">
-    <span class="md-ellipsis">
-      Run the Single Machine configuration
+      Config properties
     </span>
   </a>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#view-and-analyze-the-data-using-spark-thrift-server" class="md-nav__link">
+  <a href="#parquet-on-fhir-schema" class="md-nav__link">
     <span class="md-ellipsis">
-      View and analyze the data using Spark Thrift server
+      Parquet on FHIR schema
     </span>
   </a>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#whats-next" class="md-nav__link">
+  <a href="#monitoring-pipelines" class="md-nav__link">
     <span class="md-ellipsis">
-      What's next
+      Monitoring pipelines
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#web-control-panel" class="md-nav__link">
+    <span class="md-ellipsis">
+      Web Control Panel
     </span>
   </a>
   
@@ -697,56 +791,6 @@
     </li>
   
 
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../tutorial_add_dashboard/" class="md-nav__link">
-        
-  
-  <span class="md-ellipsis">
-    Visualize Parquet DWH with Apache Superset
-  </span>
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../tutorial_lossy_example/" class="md-nav__link">
-        
-  
-  <span class="md-ellipsis">
-    Postgres DWH using custom schema
-  </span>
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-          </ul>
-        </nav>
-      
-    </li>
-  
-
     
       
       
@@ -758,8 +802,6 @@
     
     
       
-      
-        
       
     
     
@@ -872,98 +914,80 @@
                 
                   
 
+  
+  
 
-<h1 id="single-machine-deployment-tutorial">Single machine deployment tutorial</h1>
-<p>The repository includes a "Single Machine" <a href="https://github.com/google/fhir-data-pipes/blob/master/docker/compose-controller-spark-sql.yaml">Docker Compose</a> configuration which brings up the FHIR Pipelines Controller plus a Spark Thrift server, letting you more easily run Spark SQL queries on the Parquet files output by the Pipelines Controller.</p>
-<p>To learn how the Pipelines Controller works on its own, <a href="https://github.com/google/fhir-data-pipes/wiki/Try-out-the-FHIR-Pipelines-Controller">Try out the FHIR Pipelines Controller</a>.</p>
-<h2 id="requirements">Requirements</h2>
+
+<h1 id="additional-topics">Additional topics</h1>
+<h2 id="authentication">Authentication</h2>
+<p>Any openIDConnect provider can be used to supply oAuth credentials.</p>
+<p>The required set of parameters are:</p>
 <ul>
-<li>A source <a href="https://hapifhir.io/">HAPI FHIR server</a> configured to <a href="https://github.com/hapifhir/hapi-fhir-jpaserver-starter#postgresql-configuration">use Postgres as its database</a><ul>
-<li>If you don't have a server, use a <a href="https://github.com/google/fhir-data-pipes/wiki/Try-the-pipelines-using-local-test-servers">local test server</a> by following the instructions to bring up a source HAPI FHIR server with Postgres</li>
+<li>oidConnectUrl</li>
+<li>clientId</li>
+<li>clientSecret</li>
+<li>oAuthUsername</li>
+<li>oAuthPassword</li>
 </ul>
-</li>
-<li><a href="https://www.docker.com/">Docker</a><ul>
-<li>If you are using Linux, Docker must be in <a href="https://docs.docker.com/engine/install/linux-postinstall/">sudoless mode</a></li>
-</ul>
-</li>
-<li><a href="https://docs.docker.com/compose/">Docker Compose</a> - this guide assumes you are using the latest version </li>
-<li>The FHIR Data Pipes repository, cloned onto the host machine</li>
-</ul>
-<h2 id="configure-the-fhir-pipelines-controller">Configure the FHIR Pipelines Controller</h2>
-<p>Note: All file paths are relative to the root of the FHIR Data Pipes repository.</p>
-<p><strong>NOTE: You need to configure only one of the following options:</strong></p>
-<ol>
-<li>For FHIR Search API (works for any FHIR server): </li>
-<li>Open <a href="https://github.com/google/fhir-data-pipes/blob/master/docker/config/application.yaml"><code>docker/config/application.yaml</code></a> and edit the value of <code>fhirServerUrl</code> to match the FHIR server you are connecting to. </li>
-<li>
-<p>Comment out the <code>dbConfig</code> in this case.</p>
-</li>
-<li>
-<p>For direct DB access (specific to HAPI FHIR servers):</p>
-</li>
-<li>Comment out <code>fhirServerUrl</code></li>
-<li>Set <code>dbConfig</code> to the DB connection config file, e.g., <a href="https://github.com/google/fhir-data-pipes/blob/master/docker/config/hapi-postgres-config_local.json"><code>docker/config/hapi-postgres-config_local.json</code></a>; </li>
-<li>Edit the values in this file to match the database for the FHIR server you are connecting to.</li>
-</ol>
-<h3 id="flattened-views">Flattened views</h3>
-<p>With the default config, you will create both Parquet files (under <code>dwhRootPrefix</code>) and flattened views in the database configured by <code>sinkDbConfigPath</code> <a href="https://github.com/google/fhir-data-pipes/blob/27d691e91d0fe6ef4c9624acba4e68bca145c973/docker/config/application.yaml#L42">here</a>. 
-* If you don't need flattened views you can comment out that setting. 
-* If you do need them, make sure you create the DB referenced in the connection config file, e.g., with the following SQL query:</p>
-<p><div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="k">CREATE</span><span class="w"> </span><span class="k">DATABASE</span><span class="w"> </span><span class="n">views</span><span class="p">;</span>
+<p>You can add oAuth authentication to the pipeline by providing the required set of parameters via the command line or in the <code>/pipelines/controller/config/application.yaml</code> file.</p>
+<div class="tabbed-set tabbed-alternate" data-tabs="1:2"><input checked="checked" id="__tabbed_1_1" name="__tabbed_1" type="radio" /><input id="__tabbed_1_2" name="__tabbed_1" type="radio" /><div class="tabbed-labels"><label for="__tabbed_1_1">Cmd line</label><label for="__tabbed_1_2">application.yaml</label></div>
+<div class="tabbed-content">
+<div class="tabbed-block">
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="n">$</span><span class="w"> </span><span class="n">java</span><span class="w"> </span><span class="o">-</span><span class="n">cp</span><span class="w"> </span><span class="p">.</span><span class="o">/</span><span class="n">pipelines</span><span class="o">/</span><span class="n">batch</span><span class="o">/</span><span class="n">target</span><span class="o">/</span><span class="n">batch</span><span class="o">-</span><span class="n">bundled</span><span class="o">-</span><span class="mf">0.1.0</span><span class="o">-</span><span class="n">SNAPSHOT</span><span class="p">.</span><span class="na">jar</span><span class="w"> </span><span class="n">org</span><span class="p">.</span><span class="na">openmrs</span><span class="p">.</span><span class="na">analytics</span><span class="p">.</span><span class="na">FhirEtl</span><span class="w"> </span><span class="err">\</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="w">    </span><span class="o">--</span><span class="n">fhirServerUrl</span><span class="o">=[</span><span class="n">FHIR_SERVER_URL</span><span class="o">]</span><span class="w"> </span><span class="o">--</span><span class="n">outputParquetPath</span><span class="o">=[</span><span class="n">PATH</span><span class="o">]</span><span class="w"> </span><span class="err">\</span>
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="w">    </span><span class="o">--</span><span class="n">resourceList</span><span class="o">=</span><span class="n">Patient</span><span class="p">,</span><span class="n">Encounter</span><span class="p">,</span><span class="n">Observation</span><span class="w"> </span><span class="o">--</span><span class="n">batchSize</span><span class="o">=</span><span class="mi">200</span><span class="w"> </span><span class="err">\</span>
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="w">    </span><span class="o">--</span><span class="n">clientId</span><span class="o">=[</span><span class="n">CLIENT_ID</span><span class="o">]</span><span class="w"> </span><span class="o">--</span><span class="n">clientSecret</span><span class="o">=[</span><span class="n">CLIENT_SECRET</span><span class="o">]</span><span class="w"> </span><span class="err">\</span>
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="w">    </span><span class="o">--</span><span class="n">OAuthUsername</span><span class="o">=[</span><span class="n">USERNAME</span><span class="o">]</span><span class="w"> </span><span class="o">--</span><span class="n">OAuthPassword</span><span class="o">=[</span><span class="n">PASSSWORD</span><span class="o">]</span><span class="w"> </span><span class="err">\</span>
+<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a><span class="w">    </span><span class="o">--</span><span class="n">oidConnectUrl</span><span class="o">=</span><span class="w"> </span><span class="o">[</span><span class="n">OPENID_CONNECT_URL</span><span class="o">]</span><span class="w"> </span><span class="err">\</span>
 </code></pre></div>
-which you can run in Postgres like this:
-<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="nv">PGPASSWORD</span><span class="o">=</span>admin<span class="w"> </span>psql<span class="w"> </span>-h<span class="w"> </span><span class="m">127</span>.0.0.1<span class="w"> </span>-p<span class="w"> </span><span class="m">5432</span><span class="w"> </span>-U<span class="w"> </span>admin<span class="w"> </span>postgres<span class="w"> </span>-c<span class="w"> </span><span class="s2">&quot;CREATE DATABASE views&quot;</span>
-</code></pre></div></p>
-<p>For documentation of all config parameters, see <a href="https://github.com/google/fhir-data-pipes/blob/master/pipelines/controller/config/application.yaml">here</a>.</p>
-<p>If you are using the <a href="https://github.com/google/fhir-data-pipes/wiki/Try-the-pipelines-using-local-test-servers">local test servers</a>, things should work with the default values. If not, use the IP address of the Docker default bridge network. To find it, run the following command and use the "Gateway" value:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>docker network inspect bridge | grep Gateway
+</div>
+<div class="tabbed-block">
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>fhirdata:
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>.....
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>    # The following client credentials should be set if the FHIR server accepts
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>    # OAuth access tokens. Note the client credentials, e.g., the secret, are
+<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>    # sensitive, and it is probably a better practice to set these through
+<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>    # command-line arguments.
+<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a>    fhirServerOAuthTokenEndpoint: &quot;https://path_to_endpoint_for_token&quot;
+<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a>    fhirServerOAuthClientId: &quot;THE_CLIENT_ID&quot;
+<a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a>    fhirServerOAuthClientSecret: &quot;THE_CLIENT_SECRET&quot;
 </code></pre></div>
-<p>The Single Machine docker configuration uses two environment variables, <code>DWH_ROOT</code> and <code>PIPELINE_CONFIG</code>, whose default values are defined in the <a href="https://github.com/google/fhir-data-pipes/blob/master/docker/.env">.env</a> file. <em>To override them</em>, set the variable before running the <code>docker-compose</code> command. For example, to override the <code>DWH_ROOT</code> environment variable, run the following:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>DWH_ROOT=&quot;$(pwd)/&lt;path_to_dwh_directory&gt;&quot; docker compose -f docker/compose-controller-spark-sql-single.yaml up --force-recreate 
-</code></pre></div>
-<h2 id="run-the-single-machine-configuration">Run the Single Machine configuration</h2>
-<p>To bring up the <a href="https://github.com/google/fhir-data-pipes/blob/master/docker/compose-controller-spark-sql-single.yaml"><code>docker/compose-controller-spark-sql-single.yaml</code></a> configuration for the first time or if you have run this container in the past and want to include new changes pulled into the repo, run:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>docker compose -f docker/compose-controller-spark-sql-single.yaml up --force-recreate --build
-</code></pre></div>
-<p>Alternatively, to run without rebuilding use:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>docker compose -f docker/compose-controller-spark-sql-single.yaml up --force-recreate
-</code></pre></div>
-<p>Alternatively, <a href="https://github.com/google/fhir-data-pipes/blob/master/docker/compose-controller-spark-sql.yaml"><code>docker/compose-controller-spark-sql.yaml</code></a> serves as a very simple example on how to integrate the Parquet output of Pipelines in a Spark cluster environment.</p>
-<p>Once started, the Pipelines Controller is available at <code>http://localhost:8090</code> and the Spark Thrift server is at <code>http://localhost:10001</code>.</p>
-<p>The first time you run the Pipelines Controller, you must manually start a Full Pipeline run. In a browser go to <code>http://localhost:8090</code> and click the <strong>Run Full</strong> button. </p>
-<p>After running the Full Pipeline, use the Incremental Pipeline to update the Parquet files and tables. By default it is scheduled to run every hour, or you can manually trigger it.</p>
-<p>If the Incremental Pipeline does not work, or you see errors like:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a>ERROR o.openmrs.analytics.PipelineManager o.openmrs.analytics.PipelineManager$PipelineThread.run:343 - exception while running pipeline: 
-<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a>pipeline-controller    | java.sql.SQLException: org.apache.hive.service.cli.HiveSQLException: Error running query: org.apache.spark.sql.AnalysisException: Unable to infer schema for Parquet. It must be specified manually.
-</code></pre></div>
-<p>try running <code>sudo chmod -R 755</code> on the Parquet file directory, by default located at <code>docker/dwh</code>.</p>
-<h2 id="view-and-analyze-the-data-using-spark-thrift-server">View and analyze the data using Spark Thrift server</h2>
-<p>Connect to the Spark Thrift server using a client that supports Apache Hive. For example, if using the JDBC driver, the URL should be <code>jdbc:hive2://localhost:10001</code>. The pipeline will automatically create <code>Patient</code>, <code>Encounter</code>, and <code>Observation</code> tables when run.</p>
-<p>Let's do some basic quality checks to make sure the data is uploaded properly (note
-table names are case insensitive):</p>
-<p><div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a>SELECT COUNT(0) FROM Patient;
-</code></pre></div>
-We should have exactly 79 patients:
-<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a>+-----------+
-<a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a>| count(0)  |
-<a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a>+-----------+
-<a id="__codelineno-8-4" name="__codelineno-8-4" href="#__codelineno-8-4"></a>| 79        |
-<a id="__codelineno-8-5" name="__codelineno-8-5" href="#__codelineno-8-5"></a>+-----------+
-</code></pre></div></p>
-<p>Doing the same for observations:
-<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a>SELECT COUNT(0) FROM Observation;
-</code></pre></div>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a>+-----------+
-<a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a>| count(0)  |
-<a id="__codelineno-10-3" name="__codelineno-10-3" href="#__codelineno-10-3"></a>+-----------+
-<a id="__codelineno-10-4" name="__codelineno-10-4" href="#__codelineno-10-4"></a>| 17279     |
-<a id="__codelineno-10-5" name="__codelineno-10-5" href="#__codelineno-10-5"></a>+-----------+
-</code></pre></div></p>
-<h2 id="whats-next">What's next</h2>
+</div>
+</div>
+</div>
+<h2 id="config-properties">Config properties</h2>
+<p>The main configuration for the FHIR Data Pipes Pipeline and Controller is the <code>/pipelines/controller/config/application.yaml</code> file which is well documented.</p>
+<p>When using the provided docker images, this will be found in <code>/docker/config.application.yaml</code></p>
+<h2 id="parquet-on-fhir-schema">Parquet on FHIR schema</h2>
+<p>Apache Parquet is a horizontally scalable columnar format that is optimized for performance.</p>
+<p>FHIR Data Pipes transforms FHIR resources to <em>"near lossless"</em> 'Parquet on FHIR' representation based on the <a href="https://github.com/FHIR/sql-on-fhir/blob/master/sql-on-fhir.md">"Simplified SQL Projection of FHIR Resources"</a> (<em>'SQL-on-FHIR-v1'</em>) schema</p>
 <ul>
-<li>Querying exported parquet files using SQL</li>
-<li>Building a dashboard with Apache SuperSet and FHIR Data Pipes</li>
+<li>
+<p>The conversion is done using a forked version of <a href="https://github.com/google/fhir-data-pipes/tree/master/bunsen">Bunsen library</a> to transform from FHIR (<em>current support for STU3, R4</em>) to the SQL-on-FHIR-v1 schema</p>
+</li>
+<li>
+<p>The conversion is done by going from StructureDefinition --&gt; AvroConverter --&gt; Parquet</p>
+</li>
+<li>
+<p>Configurable support for FHIR versions, profiles and extensions is provided</p>
+</li>
 </ul>
+<h2 id="monitoring-pipelines">Monitoring pipelines</h2>
+<p>The pipelines controller exposes a number of management end-points that can help with monitoring the health of pipelines. </p>
+<p>These are found in the <code>application.yaml</code> config file in the <code>management:</code> section. </p>
+<p><a href="#config-properties">See Config properties</a> </p>
+<h2 id="web-control-panel">Web Control Panel</h2>
+<p>The web control panel is a basic spring application provided to make interacting with the pipeline controller easier. </p>
+<p><em>It <strong>is not</strong> designed to be a full production ready “web admin” panel</em>.</p>
+<p>The web control panel has the following features:</p>
+<ul>
+<li>Initiate full and incremental pipeline runs</li>
+<li>Monitor errors when running pipelines</li>
+<li>Recreate view tables</li>
+<li>View configuration settings</li>
+<li>Access sample jupyter notebooks and ViewDefinition editor</li>
+</ul>
+<p><img alt="Web Control Panel" src="../images/pipelines_control_panel.png" /></p>
 
 
 
@@ -1001,7 +1025,7 @@ We should have exactly 79 patients:
       <nav class="md-footer__inner md-grid" aria-label="Footer" >
         
           
-          <a href="../advanced_guides/" class="md-footer__link md-footer__link--prev" aria-label="Previous: Advanced Guides">
+          <a href="../tutorials/postgres_example/" class="md-footer__link md-footer__link--prev" aria-label="Previous: PostgresSQL with custom schema as DWH">
             <div class="md-footer__button md-icon">
               
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12Z"/></svg>
@@ -1011,20 +1035,20 @@ We should have exactly 79 patients:
                 Previous
               </span>
               <div class="md-ellipsis">
-                Advanced Guides
+                PostgresSQL with custom schema as DWH
               </div>
             </div>
           </a>
         
         
           
-          <a href="../tutorial_add_dashboard/" class="md-footer__link md-footer__link--next" aria-label="Next: Visualize Parquet DWH with Apache Superset">
+          <a href="../support/" class="md-footer__link md-footer__link--next" aria-label="Next: Support">
             <div class="md-footer__title">
               <span class="md-footer__direction">
                 Next
               </span>
               <div class="md-ellipsis">
-                Visualize Parquet DWH with Apache Superset
+                Support
               </div>
             </div>
             <div class="md-footer__button md-icon">
@@ -1063,7 +1087,7 @@ We should have exactly 79 patients:
     </div>
     
     
-    <script id="__config" type="application/json">{"base": "..", "features": ["navigation.tabs", "navigation.sections", "toc.integrate", "navigation.top", "search.suggest", "search.highlight", "content.tabs.link", "content.code.annotation", "content.code.copy", "navigation.footer"], "search": "../assets/javascripts/workers/search.b8dbb3d2.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}}</script>
+    <script id="__config" type="application/json">{"base": "..", "features": ["navigation.tabs", "navigation.tabs.sticky", "toc.follow", "toc.integrate", "navigation.top", "navigation.path", "search.suggest", "search.highlight", "content.tabs.link", "content.code.annotation", "content.code.copy", "navigation.footer"], "search": "../assets/javascripts/workers/search.b8dbb3d2.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}}</script>
     
     
       <script src="../assets/javascripts/bundle.ebd0bdb7.min.js"></script>
