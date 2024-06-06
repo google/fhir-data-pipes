@@ -26,7 +26,7 @@ the generator.
 
 ## Uploader
 
-To upload to  a GCP FHIR Store, run the following commands in your terminal
+To upload to a GCP FHIR Store, run the following commands in your terminal
 (Python3 is needed):
 
 ```bash

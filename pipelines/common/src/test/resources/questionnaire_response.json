@@ -1,0 +1,60 @@
+{
+  "resourceType": "QuestionnaireResponse",
+  "id": "glascow-coma-score",
+  "meta": {
+    "profile": [
+      "http://hl7.org/fhir/us/core/StructureDefinition/us-core-questionnaireresponse"
+    ]
+  },
+  "text": {
+    "status": "generated",
+    "div": "<div></div>"
+  },
+  "_questionnaire": {
+    "extension": [
+      {
+        "url": "http://hl7.org/fhir/us/core/StructureDefinition/us-core-extension-questionnaire-uri",
+        "valueUri": "https://www.cdc.gov/masstrauma/resources/gcs.pdf"
+      }
+    ]
+  },
+  "status": "completed",
+  "subject": {
+    "reference": "Patient/example",
+    "display": "Amy V. Shaw"
+  },
+  "authored": "2014-12-11T04:44:16Z",
+  "author": {
+    "reference": "Practitioner/practitioner-1",
+    "display": "Ronald Bone"
+  },
+  "item": [
+    {
+      "linkId": "1",
+      "text": "Eye Opening Response",
+      "answer": [
+        {
+          "valueDecimal": 4
+        }
+      ]
+    },
+    {
+      "linkId": "2",
+      "text": "Verbal Response",
+      "answer": [
+        {
+          "valueDecimal": 4
+        }
+      ]
+    },
+    {
+      "linkId": "3",
+      "text": "Motor Response",
+      "answer": [
+        {
+          "valueDecimal": 4
+        }
+      ]
+    }
+  ]
+}

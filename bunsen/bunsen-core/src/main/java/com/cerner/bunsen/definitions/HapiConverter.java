@@ -76,7 +76,7 @@ public abstract class HapiConverter<T> {
 
   /**
    * The FHIR type of the element to be converted, or null if there is no FHIR type, such as within
-   * a FHIR backbone element.
+   * a FHIR backbone element. The return value should be a valid FHIR type.
    *
    * @return FHIR type of the element to be converted.
    */

@@ -32,6 +32,10 @@ import org.hl7.fhir.r4.model.Patient;
 import org.hl7.fhir.r4.model.Period;
 import org.hl7.fhir.r4.model.Provenance;
 import org.hl7.fhir.r4.model.Quantity;
+import org.hl7.fhir.r4.model.QuestionnaireResponse;
+import org.hl7.fhir.r4.model.QuestionnaireResponse.QuestionnaireResponseItemAnswerComponent;
+import org.hl7.fhir.r4.model.QuestionnaireResponse.QuestionnaireResponseItemComponent;
+import org.hl7.fhir.r4.model.QuestionnaireResponse.QuestionnaireResponseStatus;
 import org.hl7.fhir.r4.model.Reference;
 import org.hl7.fhir.r4.model.StringType;
 import org.hl7.fhir.r4.model.Task;
@@ -436,6 +440,26 @@ public class TestData {
     provenance.setId("test-provenance");
 
     return provenance;
+  }
+
+  /**
+   * Returns a new QuestionnaireResponse for testing.
+   *
+   * @return a FHIR QuestionnaireResponse for testing.
+   */
+  public static QuestionnaireResponse newQuestionnaireResponse() {
+    QuestionnaireResponse response = new QuestionnaireResponse();
+    response.setId("test-questionnaire-response-id");
+    response.setStatus(QuestionnaireResponseStatus.COMPLETED);
+    response.setSubject(new Reference("Patient/12345").setDisplay("Here is a display for you."));
+    QuestionnaireResponseItemComponent component = new QuestionnaireResponseItemComponent();
+    component.setText("What is your Gender?");
+    QuestionnaireResponseItemAnswerComponent answerComponent =
+        new QuestionnaireResponseItemAnswerComponent();
+    answerComponent.setValue(new StringType("Male"));
+    component.addAnswer(answerComponent);
+    response.addItem(component);
+    return response;
   }
 
   /**
