@@ -1,13 +1,13 @@
-site_name: FHIR Data Pipes Docs
-theme:
-  name: material
+site_name: OHS Analytics Documentation
 theme:
   name: material
   features:
     - navigation.tabs
-    - navigation.sections
+    - navigation.tabs.sticky
+    - toc.follow
     - toc.integrate
     - navigation.top
+    - navigation.path
     - search.suggest
     - search.highlight
     - content.tabs.link
@@ -28,27 +28,37 @@ theme:
         name: Switch to light mode    
       primary: indigo
       accent: lime
+  icon:
+    repo: fontawesome/brands/github
+
 font:
     text: inter
+
 
 plugins:
   - search
 
-site_url: https://example.com/foo/
+site_url: https://example.com/analytics/
+
+repo_url: https://github.com/google/fhir-data-pipes
+
+repo_name: FHIR Data Pipes  
 
 nav:
   - Home: 'index.md'
-  - Components: 'components.md'
+  - Concepts: 'concepts.md'
   - Getting Started: 
-    - 'Install options' : 'getting_started.md'
+    - getting_started.md
     - 'Docker containers' : 'installation_docker.md'
-    - 'Deploy Data Pipes "Pipelines"' : 'installation_pipeline.md'
-    - 'Deploy Data Pipes "Controller"' : 'installation_controller.md'
-  - Advanced Guides: 'advanced_guides.md'
+    - 'Deploy the "Pipelines"' : 'installation_pipeline.md'
+    - 'Deploy the "Pipelines Controller"' : 'installation_controller.md'
   - Tutorials:
-    - 'Single Machine Deployment': 'tutorial_single_machine.md'
-    - 'Visualize Parquet DWH with Apache Superset': 'tutorial_add_dashboard.md'
-    - 'Postgres DWH using custom schema': 'tutorial_lossy_example.md'
+    - tutorials/index.md
+    - Set up local test servers : tutorials/test_servers.md
+    - Single Machine Deployment:  tutorials/single_machine.md
+    - Visualize Parquet DWH with Apache Superset: tutorials/add_dashboard.md
+    - PostgresSQL with custom schema as DWH: tutorials/postgres_example.md
+  - Additional Topics: 'additional.md'
   - Community:
     - 'Support' : 'support.md'
     - 'Contributing': 'contributing.md'
@@ -65,6 +75,8 @@ markdown_extensions:
   - footnotes
   - pymdownx.details
   - pymdownx.superfences
+  - pymdownx.tabbed:
+      alternate_style: true
   - pymdownx.mark
   - attr_list
   - pymdownx.emoji:

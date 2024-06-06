@@ -3,14 +3,13 @@
 ## Overview
 In this tutorial you will learn how to configure and deploy FHIR Data Pipes to transform FHIR data into a PostgreSQL data-warehouse using FHIR ViewDefinition resources to define the custom schema.
 
-## Requirements
-
-*   A source [HAPI FHIR server](https://hapifhir.io/) configured to [use Postgres as its database](https://github.com/hapifhir/hapi-fhir-jpaserver-starter#postgresql-configuration)
-    *   If you don't have a server, use a [local test server](https://github.com/google/fhir-data-pipes/wiki/Try-the-pipelines-using-local-test-servers) by following the instructions to bring up a source HAPI FHIR server with Postgres
-*   [Docker](https://www.docker.com/)
-    *   If you are using Linux, Docker must be in [sudoless mode](https://docs.docker.com/engine/install/linux-postinstall/)
-*   [Docker Compose](https://docs.docker.com/compose/) - this guide assumes you are using the latest version 
-*   The FHIR Data Pipes repository, cloned onto the host machine
+!!! tip "Requirements"
+   
+    *   A source [HAPI FHIR server](https://hapifhir.io/) configured to [use Postgres as its database](https://github.com/hapifhir/hapi-fhir-jpaserver-starter#postgresql-configuration).
+    * If you don't have a server, use a [local test server](https://github.com/google/fhir-data-pipes/wiki/Try-the-pipelines-using-local-test-servers) by following the instructions to bring up a source HAPI FHIR server with Postgres
+    *   [Docker](https://www.docker.com/): If you are using Linux, Docker must be in [sudoless mode](https://docs.docker.com/engine/install/linux-postinstall/)
+    *   [Docker Compose](https://docs.docker.com/compose/). This guide assumes you are using the latest version 
+    *   The [FHIR Data Pipes repository](github.com/google/fhir-data-pipes), cloned onto the host machine
 
 ## Configure the FHIR Pipelines Controller
 
@@ -44,7 +43,7 @@ PGPASSWORD=admin psql -h 127.0.0.1 -p 5432 -U admin postgres -c "CREATE DATABASE
 
 For documentation of all config parameters, see [here](https://github.com/google/fhir-data-pipes/blob/master/pipelines/controller/config/application.yaml).
 
-If you are using the [local test servers](https://github.com/google/fhir-data-pipes/wiki/Try-the-pipelines-using-local-test-servers), things should work with the default values. If not, use the IP address of the Docker default bridge network. To find it, run the following command and use the "Gateway" value:
+If you are using the [local test servers](../tutorials/test_servers), things should work with the default values. If not, use the IP address of the Docker default bridge network. To find it, run the following command and use the "Gateway" value:
 
 ```
 docker network inspect bridge | grep Gateway
@@ -94,7 +93,7 @@ If using the default container (hapi-fhir-db) run: `docker exec -it hapi_fhir_db
 
 Using psql connect to the 'views'  database: `psql -U admin -d views`
 
-To list the tables: `\d`
+To list the tables: `\d`. It should look something like this:
 
 | Schema |          Name           | Type  | Owner| 
  ---     | ----                    |---    | ---
@@ -115,10 +114,7 @@ To list the tables: `\d`
 Let's do some basic quality checks to make sure the data is uploaded properly (note
 table names are case insensitive).
 
-NOTES:
-
-*   This assumes that the data loaded is from [this synthetic data set](https://github.com/google/fhir-data-pipes/synthea-hiv/sample_data)
-*   You will see that the number of patients and observations is higher than the count in the FHIR Server. This is due to the flattening
+**Note:** You will see that the number of patients and observations is higher than the count in the FHIR Server. This is due to the flattening
 
 ```sql
 SELECT COUNT(0) FROM patient_flat;

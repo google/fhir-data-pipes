@@ -5,18 +5,22 @@ On this page we've listed some ways you can get technical support and Open Healt
 Before participating please read our [code of conduct](https://opensource.google/conduct) that we expect all community members to adhere too.
 
 ## Developer calls
-There are weekly Open Health Stack developer calls that you are welcome to join. These *alternate* between Android FHIR SDK and OHS server side (FHIR Data Pipes and Info Gateway). 
+There are weekly Open Health Stack developer calls that you are welcome to join. 
 
-The schedule is below:
+* Calls are on Thursdays and *Alternate* between Android FHIR SDK and OHS server side (FHIR Data Pipes and Info Gateway)
+* See the schedule below for more details
+* To be added to the calls, please please email: hello-ohs[at]google.com
 
-* Android FHIR SDK: Thursdays
-* OHS Server Side: Thursday
+**Developer call schedule**
 
-To sign-up, please email: hello-ohs[at]google.com
+| OHS Developers Call | GMT | East Africa | India |
+| :------------ | :-: | :---------: | :---: | 
+| Android FHIR SDK | 10:00 UK | 12:00 Nairobi | 14:30 Delhi |
+| Analytics and Info Gateway | 13:00 UK | 15:00 Nairobi | 17:30 Delhi |
 
 ## Discussion forums
 
-We are in the process of setting up a dedicated discussion forum for Open Health Stack. In the meantime, you can reach out to <email address>
+We are in the process of setting up a dedicated discussion forum for Open Health Stack. In the meantime, you can reach out to hello-ohs[at]google.com
 
 ## Stack Overflow
 Stack Overflow is a popular forum to ask code-level questions or if you're stuck with a specific error. Read through the existing questions tagged with open-health-stack or fhir-data-pipes or ask your own!
@@ -26,4 +30,4 @@ Before submitting a bug or filing a feature reqeust, please review the open issu
 
 If your issue is there, please add a comment. Otherwise, create a new issue to file a bug or submit a new feature request.
 
-Please review the "contributing" section.
+Please review the [contributing section](contributing.md).

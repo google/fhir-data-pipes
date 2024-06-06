@@ -144,7 +144,7 @@ field is set.
   GCP FHIR store, e.g. `http://localhost:8091/fhir` for a FHIR server or
   `projects/PROJECT/locations/LOCATION/datasets/DATASET/fhirStores/FHIR-STORE-NAME`
   for a GCP FHIR store. If using a GCP FHIR store,
-  [see here for setup information](https://github.com/google/fhir-data-pipes/wiki/Create-a-Google-Cloud-FHIR-Store-and-BigQuery-Dataset).
+  [see this tutorial](tutorials/gcp_fhirstore.md) for setup information.
   default: none, resources are not copied
 - `sinkUserName` - The HTTP Basic Auth username to access the FHIR sink. Not
   used for GCP FHIR stores.
@@ -163,7 +163,7 @@ issues of `DirectRunner`.
 ## Example configurations
 
 These examples are set up to work with
-[local test servers](https://github.com/google/fhir-data-pipes/wiki/Try-the-pipelines-using-local-test-servers).
+[local test servers](tutorials/test_servers.md).
 
 ### FHIR Search to Parquet files
 
@@ -197,6 +197,7 @@ java -cp ./pipelines/batch/target/batch-bundled.jar \
 ## How to query the data warehouse
 
 To query Parquet files, load them into a compatible data engine such as Apache
-Spark. The
-[single machine Docker Compose configuration](https://github.com/google/fhir-data-pipes/wiki/Analytics-on-a-single-machine-using-Docker)
+Spark. 
+
+The [single machine Docker Compose configuration](tutorials/single_machine.md)
 runs the pipeline and loads data into an Apache Spark Thrift server for you.

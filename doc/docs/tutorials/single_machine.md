@@ -118,6 +118,4 @@ SELECT COUNT(0) FROM Observation;
 ```
 
 ## What's next
-
-*   Querying exported parquet files using SQL
-*   Building a dashboard with Apache SuperSet and FHIR Data Pipes
+Now that the data is available in an SQL queryable format, you can start to explore it using SQL or jupyter notebooks or build dashboards using common open source tools like Apache SuperSet.

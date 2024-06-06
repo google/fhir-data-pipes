@@ -1,4 +1,4 @@
-# Local Test Servers
+# Set-up Local Test Servers
 
 This guide shows how to use provided Docker images to bring up test servers (and optionally load with synthetic data) to easily get started the FHIR Data Pipes pipelines. 
 

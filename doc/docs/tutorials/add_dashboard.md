@@ -134,14 +134,13 @@ The next chart shows the split of patients by gender as a pie chart.
 The next chart shows number of patients on HIV treatment by year and display
 that as a bar chart over time. The query is provided below.
 
-*   The codes 1255% and 1266% refer to HIV\_Tx codes in the dataset.
+* Navigate back to SQL Lab. 
+* You should see the previous patient count query. 
+* If you'd like to keep the patient count query, make a new tab and set the database to "Single Machine Test Data" or the name you chose.
 
-[Learn more about querying data in SQL-on-FHIR][7].
+Enter the following as the query (as either SQL-on-FHIR or using the pre-defined observation_flat views):
 
-1.  Navigate back to SQL Lab. You should see the previous patient count query.
-    *   If you'd like to keep the patient count query, make a new tab and set
-        the database to "Single Machine Test Data" or the name you chose.
-2.  Enter the following as the query:
+=== "Using SQL-on-FHIR Query"
 
     ```sql
     SELECT COUNT(*), YEAR(O.effective.dateTime)
@@ -152,11 +151,9 @@ that as a bar chart over time. The query is provided below.
     GROUP BY YEAR(O.effective.dateTime)
     ORDER BY YEAR(O.effective.dateTime) ASC
     ```
+=== "With pre-defined flat views"
 
-**NOTE:** Using the modifiable pre-defined [flat views](https://github.com/google/fhir-data-pipes/blob/master/query/queries_and_views.ipynb)
-), the same query can be simplified to the following:
-
-   ```sql 
+   ```sql
    SELECT COUNT(*), YEAR(o.obs_date)
    FROM observation_flat as o
    WHERE o.code LIKE '1255%'
@@ -166,21 +163,23 @@ that as a bar chart over time. The query is provided below.
    ORDER BY YEAR(o.obs_date) ASC 
    ```
 
-3.  Click **Run**. After a moment, the results of the query should appear.
-4.  In the **Results** section, click **Create Chart**. This brings you to a new
+`The codes 1255% and 1266% refer to HIV\_Tx codes in the dataset`
+
+* Click **Run**. After a moment, the results of the query should appear.
+* In the **Results** section, click **Create Chart**. This brings you to a new
     chart page.
-5.  Under the **Chart Source** pane, click **Create a dataset** and name it "HIV
+* Under the **Chart Source** pane, click **Create a dataset** and name it "HIV
     Treatment Dataset".
-6.  Under the **Data** tab, switch to the **Bar Chart** chart type.
-7.  In the **Query** section, set the following values:
-    2.  X-Axis:
-        1.  Custom SQL: `YEAR(date\_time)`
-    3.  Metric:
-        2.  Column: `patient\_id`
-        3.  Aggregate: `COUNT`
-8.  Click **Update Chart** at the bottom of the pane. The chart updates to show
+* Under the **Data** tab, switch to the **Bar Chart** chart type.
+* In the **Query** section, set the following values:
+    
+    X-Axis: Custom SQL: `YEAR(date\_time)`
+    
+    Metric: Column: `patient\_id`, Aggregate: `COUNT`
+    
+* Click **Update Chart** at the bottom of the pane. The chart updates to show
     a bar chart of patients undergoing HIV treatment per year.
-9.  Click **Save** to bring up the **Save chart** dialog. Name the chart "HIV
+* Click **Save** to bring up the **Save chart** dialog. Name the chart "HIV
     Treatment" and under **Add to Dashboard** select the dashboard you created
     previously.
 
