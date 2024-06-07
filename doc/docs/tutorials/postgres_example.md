@@ -1,4 +1,4 @@
-# Postgres DWH using custom schema 
+# PostgreSQL DWH using custom schema 
 
 ## Overview
 In this tutorial you will learn how to configure and deploy FHIR Data Pipes to transform FHIR data into a PostgreSQL data-warehouse using FHIR ViewDefinition resources to define the custom schema.

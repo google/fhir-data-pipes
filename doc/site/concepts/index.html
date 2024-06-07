@@ -441,13 +441,22 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#fhir-data-pipes-pipelines" class="md-nav__link">
+  <a href="#fhir-data-pipes" class="md-nav__link">
     <span class="md-ellipsis">
-      FHIR Data Pipes Pipelines
+      FHIR Data Pipes
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="FHIR Data Pipes Pipelines">
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#etl-pipelines" class="md-nav__link">
+    <span class="md-ellipsis">
+      ETL Pipelines
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="ETL Pipelines">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
@@ -483,9 +492,9 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#pipelines-controller" class="md-nav__link">
+  <a href="#pipeline-controller-module" class="md-nav__link">
     <span class="md-ellipsis">
-      Pipelines Controller
+      Pipeline Controller Module
     </span>
   </a>
   
@@ -501,13 +510,13 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#pre-defined-views-for-flattening-fhir-data" class="md-nav__link">
+  <a href="#simplify-querying-with-pre-defined-views" class="md-nav__link">
     <span class="md-ellipsis">
-      Pre-defined views for flattening FHIR data
+      Simplify querying with Pre-defined views
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="Pre-defined views for flattening FHIR data">
+    <nav class="md-nav" aria-label="Simplify querying with Pre-defined views">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
@@ -978,15 +987,16 @@
 <h1 id="ohs-analytics-concepts">OHS Analytics Concepts</h1>
 <p>The key concepts that underpin the OHS Analytics components are:</p>
 <ol>
-<li><strong>Transform:</strong> Easy to deploy ETL pipelines that transform data into an sql queryable Parquet formats</li>
-<li><strong>Flexible and scalable deployment approaches</strong>: Can be deployed on a single machine or multi-worker distributed environments</li>
-<li><strong>Flatten:</strong> Approaches to flattening FHIR resources to make it easier to query data</li>
+<li><strong>ETL Pipelines:</strong> Easy to deploy ETL Pipeline and Controller to continuously transform data into an analytics friendly FHIR-in-Parquet format</li>
+<li><strong>Flexible and scalable deployment approaches</strong>: Deploy on a single machine or multi-worker distributed environments</li>
+<li><strong>Simplify querying:</strong> Multiple approaches to flatten FHIR resources to make developing analytics solutions easier</li>
 </ol>
-<h2 id="fhir-data-pipes-pipelines">FHIR Data Pipes Pipelines</h2>
-<p>FHIR Data Pipes is built on technology <strong>designed for ease of scalability</strong> and has multiple deployment options from <em>local, on-prem to cloud</em>.</p>
-<p><img alt="FHIR Data Pipes Transform Step Image" src="../images/FHIR_to_Parquet.png" /></p>
-<p>FHIR Data Pipes is made up of the <strong>ETL Pipeline</strong> and <strong>Controller</strong> modules that work together to provide continuous transformation of FHIR data to Apache Parquet files for data analysis or another FHIR server for data integration. </p>
-<p>Pipelines is built using <a href="https://beam.apache.org/">Apache Beam</a> and can run on a single machine or cluster.</p>
+<h2 id="fhir-data-pipes">FHIR Data Pipes</h2>
+<p>FHIR Data Pipes is built on <a href="https://beam.apache.org/">Apache Beam</a> technology <strong>designed for ease of scalability</strong> and has multiple deployment options from <em>local, on-prem to cloud</em>.</p>
+<p>FHIR Data Pipes is made up of the <strong>ETL Pipeline</strong> and <strong>Controller</strong> modules <strong>that are designed to work together</strong> to provide continuous transformation of FHIR data to Apache Parquet files for data analysis or another FHIR server for data integration. </p>
+<p><img alt="FHIR Data Pipes Transform Step Image" src="../images/ETL_FHIR_to_Parquet.png" /></p>
+<h2 id="etl-pipelines">ETL Pipelines</h2>
+<p>Java JAR to <strong>Extract</strong>, <strong>Transform</strong> and <strong>Load</strong> FHIR data from a FHIR input to FHIR-in-Parquet output.</p>
 <h3 id="extraction">Extraction</h3>
 <p>FHIR Data Pipes is designed to work with FHIR source data in various forms: </p>
 <ul>
@@ -1008,7 +1018,7 @@
 <li>Loading Parquet into an OLAP data warehouse such as SparkSQL (which can be deployed on a single machine or as a distributed query engine) or DuckDB (single machine in-process)</li>
 <li>Traditional Relational data warehouse such as PostgreSQL (when using the FHIR ViewDefinitions resources to generate materialized views)</li>
 </ul>
-<h2 id="pipelines-controller">Pipelines Controller</h2>
+<h2 id="pipeline-controller-module">Pipeline Controller Module</h2>
 <p>A user-interface wrapper for the FHIR Data Pipes Pipelines, integrating "full", "incremental", and "merger" pipelines together. </p>
 <ul>
 <li>The Pipelines Controller is built on top of pipelines and shares many of the same settings</li>
@@ -1053,7 +1063,7 @@
 </tr>
 </tbody>
 </table>
-<h2 id="pre-defined-views-for-flattening-fhir-data">Pre-defined views for flattening FHIR data</h2>
+<h2 id="simplify-querying-with-pre-defined-views">Simplify querying with Pre-defined views</h2>
 <p>The heavily nested nature of FHIR resources requires complex SQL queries that can make it difficult to work with for analytics use cases. A common approach to address this is to flatten the data into a set of views (virtual or materialized) which can then be queried using simpler SQL statements. </p>
 <p>FHIR Data Pipes provides two approaches for flattening the FHIR Resources into virtual or materialized views</p>
 <ol>

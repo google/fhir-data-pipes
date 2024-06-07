@@ -57,7 +57,7 @@ nav:
     - Set up local test servers : tutorials/test_servers.md
     - Single Machine Deployment:  tutorials/single_machine.md
     - Visualize Parquet DWH with Apache Superset: tutorials/add_dashboard.md
-    - PostgresSQL with custom schema as DWH: tutorials/postgres_example.md
+    - PostgreSQL DWH using custom schema: tutorials/postgres_example.md
   - Additional Topics: 'additional.md'
   - Community:
     - 'Support' : 'support.md'
