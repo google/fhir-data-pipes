@@ -43,7 +43,7 @@ environment and requirements.
   - Settings used to connect to a Spark server when `createHiveResourceTables`
     is set to `true`. Edit the values to match your Spark server if necessary.
 
-### Run the FHIR Pipelines Controller
+## Run the FHIR Pipelines Controller
 
 There are 2 ways to run the FHIR Pipelines Controller.
 
@@ -79,16 +79,16 @@ pipeline:
 After running the pipeline, look for the Parquet files created in the directory
 specified by `dwhRootPrefix` in the `[application.yaml]((https://github.com/google/fhir-data-pipes/tree/master/pipelines/controller/config/application.yaml)` file.
 
-### Explore the configuration settings
+## Explore the configuration settings
 
 The bottom area of the control panel shows the options being used by the FHIR
 Pipelines Controller.
 
-#### Main configuration parameters
+### Main configuration parameters
 
 This section corresponds to the settings in the `[application.yaml]((https://github.com/google/fhir-data-pipes/tree/master/pipelines/controller/config/application.yaml)` file.
 
-#### Batch pipeline non-default configurations
+### Batch pipeline non-default configurations
 
 This section calls out FHIR Data Pipes batch pipeline settings that are
 different from their default values. These are also mostly derived from
