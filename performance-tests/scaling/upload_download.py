@@ -3,7 +3,7 @@ import os
 import time
 import datetime
 
-FHIR_SERVER_URL = "http://localhost:8080/fhir"
+FHIR_SERVER_URL = os.environ['FHIR_SERVER_URL']
 ENABLE_UPLOAD = os.environ['ENABLE_UPLOAD'] == 'true'
 ENABLE_DOWNLOAD = os.environ['ENABLE_DOWNLOAD'] == 'true'
 TMP_DIR = "/tmp/scaling"

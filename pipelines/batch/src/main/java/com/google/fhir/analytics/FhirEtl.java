@@ -328,7 +328,7 @@ public class FhirEtl {
       foundResource = true;
 
       DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyyMMddHHmmssSSS");
-      options.setJobName(resourceType + System.currentTimeMillis());
+      options.setJobName(resourceType + LocalDateTime.now().format(formatter));
       Pipeline pipeline = Pipeline.create(options);
       PCollection<QueryParameterDescriptor> queryParameters =
           pipeline.apply(
