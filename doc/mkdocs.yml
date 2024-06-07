@@ -2,10 +2,11 @@ site_name: OHS Analytics Documentation
 theme:
   name: material
   features:
-    - navigation.tabs
-    - navigation.tabs.sticky
+#    - navigation.tabs
+    - navigation.tabs.sticky  
+    - navigation.section
     - toc.follow
-    - toc.integrate
+#    - toc.integrate
     - navigation.top
     - navigation.path
     - search.suggest
