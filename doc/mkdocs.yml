@@ -52,7 +52,7 @@ nav:
     - getting_started.md
     - 'Docker containers' : 'installation_docker.md'
     - 'Deploy the "Pipelines"' : 'installation_pipeline.md'
-    - 'Deploy the "Pipelines Controller"' : 'installation_controller.md'
+    - 'Deploy the "Controller Module"' : 'installation_controller.md'
   - Tutorials:
     - tutorials/index.md
     - Set up local test servers : tutorials/test_servers.md

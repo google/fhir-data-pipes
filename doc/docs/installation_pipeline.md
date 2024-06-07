@@ -1,4 +1,4 @@
-# Deploy FHIR Data Pipes "Pipelines"
+# Deploy FHIR Data Pipes ETL Pipelines
 
 !!! tip "Guide Overview"
 
