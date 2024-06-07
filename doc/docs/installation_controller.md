@@ -6,13 +6,13 @@
     * This module is designed to work with the FHIR Data Pipes ETL Pipelines
     * For ease of deployment a set of example docker compose configurations that include the Pipeline and Controller has been provided. See the Docker section
 
+## Usage
+
 The FHIR Pipelines Controller helps you schedule and manage the running of the FHIR Data Pipes Pipeline. Using the Controller module you can configure the Pipeline to run either full or incremental transformations and it can be used to monitor the pipelines.
 
 Once deployed, the Controller can be managed via the cmd-line or [Web Control Panel](./additional#web-control-panel).
 
-## Usage
-
-### Setup
+## Setup
 
 1.  Clone the
     [fhir-data-pipes GitHub repository](https://github.com/google/fhir-data-pipes),
