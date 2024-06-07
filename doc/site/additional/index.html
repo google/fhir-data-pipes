@@ -974,6 +974,18 @@
 </ul>
 <h2 id="monitoring-pipelines">Monitoring pipelines</h2>
 <p>The pipelines controller exposes a number of management end-points that can help with monitoring the health of pipelines. </p>
+<ul>
+<li>The application has been integrated with the Spring Boot Actuator of Spring and has exposed Rest API end points for monitoring, health checks, metrics etc. </li>
+<li>The end points can be customised in the configuration file.</li>
+<li>It can easily be integrated with tools like Prometheus for monitoring metrics.</li>
+</ul>
+<p><strong>Via the Web Control Panel</strong>
+The Web Control panel provides provides a quick glimpse about the latest state of the application including:
+* Controls for triggering pipeline run on-demand
+* A readable view of the application configuration
+* Location and time of the latest snapshot created by the pipeline run
+* Metrics of the most recent pipeline
+* Error logs of the last pipeline if any</p>
 <p>These are found in the <code>application.yaml</code> config file in the <code>management:</code> section. </p>
 <p><a href="#config-properties">See Config properties</a> </p>
 <h2 id="web-control-panel">Web Control Panel</h2>

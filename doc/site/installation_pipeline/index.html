@@ -639,30 +639,6 @@
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="Example configurations">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#fhir-search-to-parquet-files" class="md-nav__link">
-    <span class="md-ellipsis">
-      FHIR Search to Parquet files
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#hapi-fhir-jdbc-to-a-fhir-server" class="md-nav__link">
-    <span class="md-ellipsis">
-      HAPI FHIR JDBC to a FHIR server
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
 </li>
       
         <li class="md-nav__item">
@@ -1012,23 +988,21 @@
 transforms data from a FHIR server to either
 <a href="https://parquet.apache.org">Apache Parquet files</a> for analysis or another FHIR
 store for data integration.</p>
-<p>There are two options for reading the source FHIR server (input):</p>
+<p><strong>Input or source options:</strong> There are three options for reading the source FHIR data (input):</p>
 <ul>
 <li><em>FHIR-Search</em>: This mode uses FHIR Search APIs to select resources to copy,
   retrieves them as FHIR resources, and transfers the data via FHIR APIs or
   Parquet files. This mode should work with most FHIR servers and has been
   tested with HAPI FHIR server and GCP FHIR store.</li>
 <li><em>JDBC</em>: This mode uses the
-  <a href="https://docs.oracle.com/javase/8/docs/technotes/guides/jdbc/">Java Database Connectivity (JDBC) API</a>
-  to read FHIR resources directly from the database of a FHIR server. It's
-  tested with
-  <a href="https://github.com/hapifhir/hapi-fhir-jpaserver-starter#postgresql-configuration">HAPI FHIR server using PostgreSQL database</a>
-  or an <a href="https://openmrs.org/">OpenMRS</a> instance using MySQL. Note: JDBC support
-  beyond HAPI FHIR and OpenMRS is not currently planned. Our long-term approach
-  for a generic high-throughput alternative is to use the
-  <a href="https://build.fhir.org/ig/HL7/bulk-data/export.html">FHIR Bulk Export API</a>.</li>
+  <a href="https://docs.oracle.com/javase/8/docs/technotes/guides/jdbc/">Java Database Connectivity (JDBC) API</a> to read FHIR resources directly from the database of a FHIR server. It's
+  tested with <a href="https://github.com/hapifhir/hapi-fhir-jpaserver-starter#postgresql-configuration">HAPI FHIR server using PostgreSQL database</a>
+  or an <a href="https://openmrs.org/">OpenMRS</a> instance using MySQL.
+  <em>ndjson</em>: To do </li>
 </ul>
-<p>There are two options for transforming the data (output):</p>
+<p><strong>Note</strong>: JDBC support beyond HAPI FHIR and OpenMRS is not currently planned. Our long-term approach for a generic high-throughput alternative is to use the
+  <a href="https://build.fhir.org/ig/HL7/bulk-data/export.html">FHIR Bulk Export API</a>.</p>
+<p><strong>Output options:</strong> There are two options for transforming the data (output):</p>
 <ul>
 <li><em>Parquet</em>: Outputs the FHIR resources as Parquet files, using the
   <a href="https://github.com/FHIR/sql-on-fhir/blob/master/sql-on-fhir.md">SQL-on-FHIR schema</a>.</li>
@@ -1059,8 +1033,8 @@ required parameters for both.</p>
 <p>This section documents the parameters used by the various pipelines. For more
 information on parameters, see
 <a href="https://github.com/google/fhir-data-pipes/blob/master/pipelines/batch/src/main/java/com/google/fhir/analytics/FhirEtlOptions.java"><code>FhirEtlOptions</code></a>
-or run the pipeline with the <code>help</code> option:
-<code>java -jar ./batch/target/batch-bundled.jar --help=FhirEtlOptions</code>.</p>
+or run the pipeline with the <code>help</code> option:</p>
+<p><code>java -jar ./batch/target/batch-bundled.jar --help=FhirEtlOptions</code>.</p>
 <h3 id="common-parameters">Common parameters</h3>
 <p>These parameters are used regardless of other pipeline options.</p>
 <ul>
@@ -1078,7 +1052,7 @@ or run the pipeline with the <code>help</code> option:
 </ul>
 <h3 id="fhir-search-input-parameters">FHIR-Search input parameters</h3>
 <p>The pipeline will use FHIR-Search to fetch data as long as <code>jdbcModeEnabled</code> and
-<code>jdbcModeHapi</code> are unset or false.</p>
+<code>jdbcModeHapi</code> are false OR unset.</p>
 <ul>
 <li><code>fhirServerUrl</code> - The base URL of the source FHIR server. Required.</li>
 <li><code>fhirServerUserName</code> - The HTTP Basic Auth username to access the FHIR server
@@ -1153,16 +1127,17 @@ issues of <code>DirectRunner</code>.</p>
 <h2 id="example-configurations">Example configurations</h2>
 <p>These examples are set up to work with
 <a href="../tutorials/test_servers/">local test servers</a>.</p>
-<h3 id="fhir-search-to-parquet-files">FHIR Search to Parquet files</h3>
-<p>Example run:</p>
+<div class="tabbed-set tabbed-alternate" data-tabs="1:2"><input checked="checked" id="__tabbed_1_1" name="__tabbed_1" type="radio" /><input id="__tabbed_1_2" name="__tabbed_1" type="radio" /><div class="tabbed-labels"><label for="__tabbed_1_1">FHIR Search to Parquet files</label><label for="__tabbed_1_2">HAPI FHIR JDBC to a FHIR server</label></div>
+<div class="tabbed-content">
+<div class="tabbed-block">
 <div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>java<span class="w"> </span>-cp<span class="w"> </span>./pipelines/batch/target/batch-bundled.jar<span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="w">    </span>com.google.fhir.analytics.FhirEtl<span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="w">    </span>--fhirServerUrl<span class="o">=</span>http://localhost:8091/fhir<span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span class="w">    </span>--outputParquetPath<span class="o">=</span>/tmp/TEST/<span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a><span class="w">    </span>--resourceList<span class="o">=</span>Patient,Encounter,Observation
 </code></pre></div>
-<h3 id="hapi-fhir-jdbc-to-a-fhir-server">HAPI FHIR JDBC to a FHIR server</h3>
-<p>Example run:</p>
+</div>
+<div class="tabbed-block">
 <div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>java<span class="w"> </span>-cp<span class="w"> </span>./pipelines/batch/target/batch-bundled.jar<span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="w">    </span>com.google.fhir.analytics.FhirEtl<span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a><span class="w">    </span>--fhirServerUrl<span class="o">=</span>http://localhost:8091/fhir<span class="w"> </span><span class="se">\</span>
@@ -1174,6 +1149,9 @@ issues of <code>DirectRunner</code>.</p>
 <a id="__codelineno-2-9" name="__codelineno-2-9" href="#__codelineno-2-9"></a><span class="w">    </span>--fhirSinkPath<span class="o">=</span>http://localhost:8099/fhir<span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-2-10" name="__codelineno-2-10" href="#__codelineno-2-10"></a><span class="w">    </span>--sinkUserName<span class="o">=</span>hapi<span class="w"> </span>--sinkPassword<span class="o">=</span>hapi
 </code></pre></div>
+</div>
+</div>
+</div>
 <h2 id="how-to-query-the-data-warehouse">How to query the data warehouse</h2>
 <p>To query Parquet files, load them into a compatible data engine such as Apache
 Spark. </p>

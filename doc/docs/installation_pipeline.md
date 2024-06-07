@@ -5,7 +5,7 @@ transforms data from a FHIR server to either
 [Apache Parquet files](https://parquet.apache.org) for analysis or another FHIR
 store for data integration.
 
-**Input or source options:** There are three options for reading the source FHIR data (input):
+**Input or source options:** There are three options for reading the source FHIR data:
 
 - _FHIR-Search_: This mode uses FHIR Search APIs to select resources to copy,
   retrieves them as FHIR resources, and transfers the data via FHIR APIs or
@@ -15,12 +15,12 @@ store for data integration.
   [Java Database Connectivity (JDBC) API](https://docs.oracle.com/javase/8/docs/technotes/guides/jdbc/) to read FHIR resources directly from the database of a FHIR server. It's
   tested with [HAPI FHIR server using PostgreSQL database](https://github.com/hapifhir/hapi-fhir-jpaserver-starter#postgresql-configuration)
   or an [OpenMRS](https://openmrs.org/) instance using MySQL.
-  _ndjson_: To do 
+-  _ndjson_: To do 
   
   **Note**: JDBC support beyond HAPI FHIR and OpenMRS is not currently planned. Our long-term approach for a generic high-throughput alternative is to use the
   [FHIR Bulk Export API](https://build.fhir.org/ig/HL7/bulk-data/export.html).
 
-**Output options:** There are two options for transforming the data (output):
+**Output options:** There are two options for transforming the data:
 
 - _Parquet_: Outputs the FHIR resources as Parquet files, using the
   [SQL-on-FHIR schema](https://github.com/FHIR/sql-on-fhir/blob/master/sql-on-fhir.md).
