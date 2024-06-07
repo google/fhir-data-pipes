@@ -190,10 +190,14 @@ These examples are set up to work with
         --sinkUserName=hapi --sinkPassword=hapi
     ```
 
+## Managing and scheduling the Pipeline
+
+The ETL Pipeline is designed as a stand-alone Apache Beam service. The Pipeline Controller module provides capabilities to help manage the Pipeline including: scheduling full versus incremental runs. It also provides some [monitoring capabilities](./additional#managing-pipelines). 
+
 ## How to query the data warehouse
 
 To query Parquet files, load them into a compatible data engine such as Apache
-Spark. 
+Spark or use python in a jupyter notebook.
 
 The [single machine Docker Compose configuration](tutorials/single_machine.md)
 runs the pipeline and loads data into an Apache Spark Thrift server for you.

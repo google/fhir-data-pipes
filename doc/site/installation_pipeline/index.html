@@ -988,7 +988,7 @@
 transforms data from a FHIR server to either
 <a href="https://parquet.apache.org">Apache Parquet files</a> for analysis or another FHIR
 store for data integration.</p>
-<p><strong>Input or source options:</strong> There are three options for reading the source FHIR data (input):</p>
+<p><strong>Input or source options:</strong> There are three options for reading the source FHIR data:</p>
 <ul>
 <li><em>FHIR-Search</em>: This mode uses FHIR Search APIs to select resources to copy,
   retrieves them as FHIR resources, and transfers the data via FHIR APIs or
@@ -997,12 +997,12 @@ store for data integration.</p>
 <li><em>JDBC</em>: This mode uses the
   <a href="https://docs.oracle.com/javase/8/docs/technotes/guides/jdbc/">Java Database Connectivity (JDBC) API</a> to read FHIR resources directly from the database of a FHIR server. It's
   tested with <a href="https://github.com/hapifhir/hapi-fhir-jpaserver-starter#postgresql-configuration">HAPI FHIR server using PostgreSQL database</a>
-  or an <a href="https://openmrs.org/">OpenMRS</a> instance using MySQL.
-  <em>ndjson</em>: To do </li>
+  or an <a href="https://openmrs.org/">OpenMRS</a> instance using MySQL.</li>
+<li><em>ndjson</em>: To do </li>
 </ul>
 <p><strong>Note</strong>: JDBC support beyond HAPI FHIR and OpenMRS is not currently planned. Our long-term approach for a generic high-throughput alternative is to use the
   <a href="https://build.fhir.org/ig/HL7/bulk-data/export.html">FHIR Bulk Export API</a>.</p>
-<p><strong>Output options:</strong> There are two options for transforming the data (output):</p>
+<p><strong>Output options:</strong> There are two options for transforming the data:</p>
 <ul>
 <li><em>Parquet</em>: Outputs the FHIR resources as Parquet files, using the
   <a href="https://github.com/FHIR/sql-on-fhir/blob/master/sql-on-fhir.md">SQL-on-FHIR schema</a>.</li>
