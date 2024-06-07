@@ -1,9 +1,14 @@
 # Deploy FHIR Data Pipes "Pipelines"
 
-The [batch](https://github.com/google/fhir-data-pipes/tree/master/pipelines/batch) directory contains code for a Java JAR which
-transforms data from a FHIR server to either
-[Apache Parquet files](https://parquet.apache.org) for analysis or another FHIR
-store for data integration.
+!!! tip "Guide Overview"
+
+    * This guide will walk you through how to deploy and run the ETL Pipelines Java JAR
+    * To help with scheduling and managing the ETL Pipeline, a separate Pipeline Controller module is provided (see next guide)
+    * For ease of deployment a set of example docker compose configurations that include the Pipeline and Controller has been provided. See the Docker section
+      
+## Intro to the ETL Pipeline
+The ETL Pipelines is a Java JAR - designed to run on an [Apache Beam](https://beam.apache.org/) - that transforms data from a FHIR source (via FHIR API, JDBC or ndjson) to either
+[Apache Parquet files](https://parquet.apache.org) for analysis or another FHIR store for data integration. The source code is available in the [`pipelines/batch`](https://github.com/google/fhir-data-pipes/tree/master/pipelines/batch) directory.
 
 **Input or source options:** There are three options for reading the source FHIR data:
 

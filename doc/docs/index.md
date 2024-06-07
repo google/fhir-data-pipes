@@ -1,21 +1,21 @@
 # Introduction
 The Open Health Stack's Analytics components provide a scalable and flexible collection of tools to transform complex [HL7 FHIR](https://www.hl7.org/fhir/overview.html) data into formats for running _analytics_ workloads and building downstream applications. 
 
-Using OHS, developers can use familiar languages, packages and tools to build analytics solutions for different use cases: from generating reports and powering dashboards to exploratory data science and machine learning.
+Using OHS, developers can use familiar languages and tools to build analytics solutions for different use cases: from generating reports and powering dashboards to exploratory data science and machine learning.
 
-![FHIR Data Pipes Image](images/v3_FHIR_Data_Pipes.png)
+![FHIR Data Pipes Image](images/DataPipes_End_To_End.png)
 
 ## Key features
 
-*	Transform FHIR resources to _"near lossless"_ Parquet on FHIR representation based on the ["Simplified SQL Projection of FHIR Resources"](https://github.com/FHIR/sql-on-fhir/blob/master/sql-on-fhir.md) schema
+*	[Apache Beam](https://beam.apache.org) based ETL pipeline to transform FHIR resources to _"near lossless"_ 'FHIR-in-Parquet' representation based on the ["Simplified SQL Projection of FHIR Resources"](https://github.com/FHIR/sql-on-fhir/blob/master/sql-on-fhir.md) schema
 
-* 	Apache Beam based ETL pipeline to continuously transform FHIR data for use in downstream applications. With support for local, on-prem or cloud based runners 
+*   Pipelines Controller module provides pipeline management and scheduling capabilities.
 
-* Flexible deployment modes to meet the needs of different projects and teams from simple single machine to multi-worker horizontally scalable distributed environments. 
+*   Flexible deployment modes to meet the needs of different projects and teams from simple single machine to multi-worker horizontally scalable distributed environments. With support for local, on-prem or cloud based runners
 
 * 	Seamless support for different target databases including traditional RDBMS (such as [PostgreSQL](https://www.postgresql.org/)) or OLAP Database Engines that can load Parquet files (such as [SparkSQL](https://spark.apache.org/sql/) or [DuckDB](https://duckdb.org/)) 
 
-*	Define views in SQL or as [ViewDefinition](https://build.fhir.org/ig/FHIR/sql-on-fhir-v2/StructureDefinition-ViewDefinition.html) resources to create flattened tables to make it easier to query data using common languages like SQL or python
+*	Simplify querying data by defining views in SQL or as [ViewDefinition](https://build.fhir.org/ig/FHIR/sql-on-fhir-v2/StructureDefinition-ViewDefinition.html) resources to create flattened tables. Easily build analytics applications with common languages (e.g. SQL, python) and BI or data visualizations tools (e.g. [Apache Superset](https://superset.apache.org/))
 
 ## Use cases
 

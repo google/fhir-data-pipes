@@ -642,6 +642,15 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#managing-and-scheduling-the-pipeline" class="md-nav__link">
+    <span class="md-ellipsis">
+      Managing and scheduling the Pipeline
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#how-to-query-the-data-warehouse" class="md-nav__link">
     <span class="md-ellipsis">
       How to query the data warehouse
@@ -1152,9 +1161,11 @@ issues of <code>DirectRunner</code>.</p>
 </div>
 </div>
 </div>
+<h2 id="managing-and-scheduling-the-pipeline">Managing and scheduling the Pipeline</h2>
+<p>The ETL Pipeline is designed as a stand-alone Apache Beam service. The Pipeline Controller module provides capabilities to help manage the Pipeline including: scheduling full versus incremental runs. It also provides some <a href="./additional#managing-pipelines">monitoring capabilities</a>. </p>
 <h2 id="how-to-query-the-data-warehouse">How to query the data warehouse</h2>
 <p>To query Parquet files, load them into a compatible data engine such as Apache
-Spark. </p>
+Spark or use python in a jupyter notebook.</p>
 <p>The <a href="../tutorials/single_machine/">single machine Docker Compose configuration</a>
 runs the pipeline and loads data into an Apache Spark Thrift server for you.</p>
 

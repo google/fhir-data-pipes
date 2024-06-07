@@ -2,18 +2,19 @@
 
 The key concepts that underpin the OHS Analytics components are:
 
-1. **Transform:** Easy to deploy ETL pipelines that transform data into an sql queryable Parquet formats
-2. **Flexible and scalable deployment approaches**: Can be deployed on a single machine or multi-worker distributed environments
-3. **Flatten:** Approaches to flattening FHIR resources to make it easier to query data
+1. **ETL Pipelines:** Easy to deploy ETL Pipeline and Controller to continuously transform data into an analytics friendly FHIR-in-Parquet format
+2. **Flexible and scalable deployment approaches**: Deploy on a single machine or multi-worker distributed environments
+3. **Simplify querying:** Multiple approaches to flatten FHIR resources to make developing analytics solutions easier
 
-## FHIR Data Pipes Pipelines
-FHIR Data Pipes is built on technology **designed for ease of scalability** and has multiple deployment options from _local, on-prem to cloud_.
+## FHIR Data Pipes
+FHIR Data Pipes is built on [Apache Beam](https://beam.apache.org/) technology **designed for ease of scalability** and has multiple deployment options from _local, on-prem to cloud_.
 
-![FHIR Data Pipes Transform Step Image](images/FHIR_to_Parquet.png)
+FHIR Data Pipes is made up of the **ETL Pipeline** and **Controller** modules **that are designed to work together** to provide continuous transformation of FHIR data to Apache Parquet files for data analysis or another FHIR server for data integration. 
 
-FHIR Data Pipes is made up of the **ETL Pipeline** and **Controller** modules that work together to provide continuous transformation of FHIR data to Apache Parquet files for data analysis or another FHIR server for data integration. 
+![FHIR Data Pipes Transform Step Image](images/ETL_FHIR_to_Parquet.png)
 
-Pipelines is built using [Apache Beam](https://beam.apache.org/) and can run on a single machine or cluster.
+## ETL Pipelines
+Java JAR to **Extract**, **Transform** and **Load** FHIR data from a FHIR input to FHIR-in-Parquet output.
 
 ### Extraction
 
@@ -39,7 +40,7 @@ FHIR Data Pipes supports different SQL Data Warehouse options depending on the n
 * Loading Parquet into an OLAP data warehouse such as SparkSQL (which can be deployed on a single machine or as a distributed query engine) or DuckDB (single machine in-process)
 * Traditional Relational data warehouse such as PostgreSQL (when using the FHIR ViewDefinitions resources to generate materialized views)
 
-## Pipelines Controller
+## Pipeline Controller Module
 A user-interface wrapper for the FHIR Data Pipes Pipelines, integrating "full", "incremental", and "merger" pipelines together. 
 
 * The Pipelines Controller is built on top of pipelines and shares many of the same settings
@@ -59,7 +60,7 @@ Choosing the right approach, comes down to evaluation of a number of factors inc
 | Exploratory data science or ML use cases | Use the generated Parquet files which as _"near lossless"_ for enhanced data science workflows | Can either use the Parquet or custom schema to power dashboards or reports |
 | Push FHIR data to a central FHIR Data Store for a Shared Health Record or single repository for analytics workloads | Use the Pipelines Controller to push from a FHIR source to a FHIR sink | Management of the intermediate Parquet files created as part of the pipelines | 
 
-## Pre-defined views for flattening FHIR data
+## Simplify querying with Pre-defined views
 The heavily nested nature of FHIR resources requires complex SQL queries that can make it difficult to work with for analytics use cases. A common approach to address this is to flatten the data into a set of views (virtual or materialized) which can then be queried using simpler SQL statements. 
 
 FHIR Data Pipes provides two approaches for flattening the FHIR Resources into virtual or materialized views
