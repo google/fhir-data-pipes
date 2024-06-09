@@ -31,10 +31,10 @@ To see the intermediate Avro schema for this resource, see
 type to a Parquet schema. As mentioned above, this involves the intermediate
 Avro types which are covered as well. In all cases, the _real_ Avro type
 is a [union](https://avro.apache.org/docs/1.11.1/specification/#unions) because
-all fields are _nullable_. So when we say the FHIR `code` type is mapped to
-Avro `string`, it is really the `["null", "string"]` union type. This is not
-reiterated below but that is also the reason all Parquet fields are `optional`.
-This is even true for fields whose cardinality is exactly one like
+all fields are _nullable_. So, for example, when we say the FHIR `code` type is
+mapped to Avro `string`, it is really the `["null", "string"]` union type. This
+is not reiterated below but that is also the reason all Parquet fields are
+`optional`. This is even true for fields whose cardinality is exactly one like
 [`Observation.status`](https://hl7.org/fhir/observation-definitions.html#Observation.status).
 
 ### Primitive types
@@ -188,3 +188,48 @@ in the Patient Parquet schema:
 ```
 optional binary birthsex (STRING);
 ```
+
+The above example is a "simple" extension. For
+["complex" extensions](https://hl7.org/fhir/extensibility.html#extension), i.e.,
+extensions that have nested extensions (and have no `value`), the same structure
+is repeated in the generated schema as well. For example, the US-Core Patient
+profile has a complex
+[race extension](https://hl7.org/fhir/us/core/STU7/StructureDefinition-us-core-race.html)
+which has a list of `ombCategory` values, a list of `detailed` values, and a
+`text`. Therefor the corresponding Parquet schema is:
+
+```
+optional group race {
+  optional group ombCategory (LIST) {
+    repeated group array {
+      optional binary system (STRING);
+      optional binary version (STRING);
+      optional binary code (STRING);
+      optional binary display (STRING);
+      optional boolean userSelected;
+    }
+  }
+  optional group detailed (LIST) {
+    repeated group array {
+      optional binary system (STRING);
+      optional binary version (STRING);
+      optional binary code (STRING);
+      optional binary display (STRING);
+      optional boolean userSelected;
+    }
+  }
+  optional binary text (STRING);
+}
+```
+
+As mentioned above, this `race` would be a top-level field,
+i.e., `Patient.race`.
+
+#### Resource types with multiple extensions
+
+In a profile, it is possible that a single resource type, may have multiple
+extension files, each having a `StructureDefinition`. As long as these
+extensions are compatible (which is expected in a single profile), all of them
+are merged into a single schema. For example, if one extension adds a new
+field `X` on resource type `R` and another extension adds `Y`, the generated
+Parquet schema of `R` has both fields `X` and `Y`.
