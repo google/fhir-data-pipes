@@ -24,6 +24,7 @@ To make changes to these documentations you can follow
 * Create a Python virtual env.
   ```shell
   virtualenv -p python3 venv
+  source ./venv/bin/activate
   ```
 * Install the requirements:
   ```shell
