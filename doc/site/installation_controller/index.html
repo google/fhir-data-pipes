@@ -18,11 +18,11 @@
       
       
       <link rel="icon" href="../assets/images/favicon.png">
-      <meta name="generator" content="mkdocs-1.6.0, mkdocs-material-9.5.23">
+      <meta name="generator" content="mkdocs-1.6.0, mkdocs-material-9.5.27">
     
     
       
-        <title>Deploy the "Pipelines Controller" - OHS Analytics Documentation</title>
+        <title>Deploy the "Controller Module" - OHS Analytics Documentation</title>
       
     
     
@@ -74,7 +74,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#deploy-fhir-data-pipes-controller" class="md-skip">
+        <a href="#deploy-the-controller-module" class="md-skip">
           Skip to content
         </a>
       
@@ -110,7 +110,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Deploy the "Pipelines Controller"
+              Deploy the "Controller Module"
             
           </span>
         </div>
@@ -175,7 +175,7 @@
       
     </form>
     <div class="md-search__output">
-      <div class="md-search__scrollwrap" data-md-scrollfix>
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
         <div class="md-search-result" data-md-component="search-result">
           <div class="md-search-result__meta">
             Initializing search
@@ -408,7 +408,7 @@
           
   
   <span class="md-ellipsis">
-    Deploy the "Pipelines Controller"
+    Deploy the "Controller Module"
   </span>
   
 
@@ -419,7 +419,7 @@
         
   
   <span class="md-ellipsis">
-    Deploy the "Pipelines Controller"
+    Deploy the "Controller Module"
   </span>
   
 
@@ -892,7 +892,7 @@
   
 
 
-<h1 id="deploy-fhir-data-pipes-controller">Deploy FHIR Data Pipes "Controller"</h1>
+<h1 id="deploy-the-controller-module">Deploy the Controller Module</h1>
 <div class="admonition tip">
 <p class="admonition-title">Guide Overview</p>
 <ul>
@@ -902,13 +902,17 @@
 </ul>
 </div>
 <h2 id="usage">Usage</h2>
-<p>The FHIR Pipelines Controller helps you schedule and manage the running of the FHIR Data Pipes Pipeline. Using the Controller module you can configure the Pipeline to run either full or incremental transformations and it can be used to monitor the pipelines.</p>
-<p>Once deployed, the Controller can be managed via the cmd-line or <a href="./additional#web-control-panel">Web Control Panel</a>.</p>
+<p>The FHIR Pipelines Controller helps you schedule and manage the running of the
+FHIR Data Pipes Pipeline. Using the Controller module you can configure the
+Pipeline to run either full or incremental transformations, and it can be used
+to monitor the pipelines.</p>
+<p>Once deployed, the Controller can be managed via the cmd-line
+or <a href="./additional#web-control-panel">Web Control Panel</a>.</p>
 <h2 id="setup">Setup</h2>
 <ol>
 <li>Clone the
-    <a href="https://github.com/google/fhir-data-pipes">fhir-data-pipes GitHub repository</a>,
-    open a terminal window.</li>
+   <a href="https://github.com/google/fhir-data-pipes">fhir-data-pipes GitHub repository</a>,
+   open a terminal window.</li>
 <li><code>cd</code> to the directory where you cloned it.</li>
 <li>Change to the <code>controller</code> directory: <code>cd pipelines/controller/</code>.</li>
 </ol>
@@ -918,21 +922,23 @@ directory.</p>
 relies on several configuration files to run. Edit them to match your
 environment and requirements.</p>
 <ul>
-<li><a href="https://github.com/google/fhir-data-pipes/tree/master/pipelines/controller/config/application.yaml"><code>pipelines/controller/config/application.yaml</code></a></li>
-<li>The main settings for the FHIR Pipelines Controller. Edit the values to
-    match your HAPI FHIR server and use case.</li>
-<li>[<code>pipelines/controller/config/hapi-postgres-config.json</code>]((https://github.com/google/fhir-data-pipes/tree/master/pipelines/controller/config/hapi-postgres-config.json)</li>
-<li>JDBC settings. Edit the values to match the Postgres database of your HAPI
-    FHIR server.</li>
-<li>[<code>pipelines/controller/config/flink-conf.yaml</code>]((https://github.com/google/fhir-data-pipes/tree/master/pipelines/controller/config/flink-conf.yaml)</li>
-<li>Customized FlinkRunner settings. To use this file, set the
-    <a href="https://nightlies.apache.org/flink/flink-docs-master/docs/deployment/config/"><code>FLINK_CONF_DIR</code> environmental variable</a>:
-    <code>export FLINK_CONF_DIR=[PATH]/flink-conf.yaml</code>. Changing
-    <code>taskmanager.memory.network.max</code> is necessary to avoid memory errors for
-    large datasets or when running on machines with limited memory.</li>
-<li>[<code>pipelines/controller/config/thriftserver-hive-config.json</code>]((https://github.com/google/fhir-data-pipes/tree/master/pipelines/controller/config/thriftserver-hive-config.json)</li>
-<li>Settings used to connect to a Spark server when <code>createHiveResourceTables</code>
-    is set to <code>true</code>. Edit the values to match your Spark server if necessary.</li>
+<li><strong>Main settings for Pipeline Controller
+  </strong>: <a href="https://github.com/google/fhir-data-pipes/tree/master/pipelines/controller/config/application.yaml"><code>pipelines/controller/config/application.yaml</code></a>.
+  Edit the values to match your HAPI FHIR server and use case.</li>
+<li><strong>JDBC settings
+  </strong>: <a href="https://github.com/google/fhir-data-pipes/tree/master/pipelines/controller/config/hapi-postgres-config.json"><code>pipelines/controller/config/hapi-postgres-config.json</code></a>.
+  Edit the values to match the Postgres database of your HAPI FHIR server.</li>
+<li><strong>Customized FlinkRunner settings
+  </strong>: <a href="https://github.com/google/fhir-data-pipes/tree/master/pipelines/controller/config/flink-conf.yaml"><code>pipelines/controller/config/flink-conf.yaml</code></a>.
+  To use this file, set
+  the <a href="https://nightlies.apache.org/flink/flink-docs-master/docs/deployment/config/"><code>FLINK_CONF_DIR</code> environmental variable</a>:
+  <code>export FLINK_CONF_DIR=[PATH]/flink-conf.yaml</code>. Changing
+  <code>taskmanager.memory.network.max</code> is necessary to avoid memory errors for
+  large datasets or when running on machines with limited memory.</li>
+<li>**Spark Server settings:
+  ** <a href="https://github.com/google/fhir-data-pipes/tree/master/pipelines/controller/config/thriftserver-hive-config.json"><code>pipelines/controller/config/thriftserver-hive-config.json</code></a>.
+  Used to connect to a Spark server when <code>createHiveResourceTables</code> is set
+  to <code>true</code>. Edit the values to match your Spark server if necessary.</li>
 </ul>
 <h2 id="run-the-fhir-pipelines-controller">Run the FHIR Pipelines Controller</h2>
 <p>There are 2 ways to run the FHIR Pipelines Controller.</p>
@@ -949,26 +955,33 @@ see the <a href="./additional#web-control-panel">FHIR Pipelines Control Panel</a
 pipeline:</p>
 <ul>
 <li>Manually trigger the <strong>Run Full</strong> option by clicking the button. This
-  transforms all of the selected FHIR resource types to Parquet files. You are
+  transforms all the selected FHIR resource types to Parquet files. You are
   required to use the <strong>Run Full</strong> option once before using any of the following
   incremental options.</li>
 <li>Manually trigger the <strong>Run Incremental</strong> option by clicking the button. This
   only outputs resources that are new or changed since the last run.</li>
 <li>Automatically scheduled incremental runs, as specified by
-  <code>incrementalSchedule</code> in the <code>[application.yaml]((https://github.com/google/fhir-data-pipes/tree/master/pipelines/controller/config/application.yaml)</code> file. You can see when the
+  <code>incrementalSchedule</code> in
+  the <code>[application.yaml]((https://github.com/google/fhir-data-pipes/tree/master/pipelines/controller/config/application.yaml)</code>
+  file. You can see when the
   next scheduled run is near the top of the control panel.</li>
 </ul>
 <p>After running the pipeline, look for the Parquet files created in the directory
-specified by <code>dwhRootPrefix</code> in the <code>[application.yaml]((https://github.com/google/fhir-data-pipes/tree/master/pipelines/controller/config/application.yaml)</code> file.</p>
+specified by <code>dwhRootPrefix</code> in
+the <code>[application.yaml]((https://github.com/google/fhir-data-pipes/tree/master/pipelines/controller/config/application.yaml)</code>
+file.</p>
 <h2 id="explore-the-configuration-settings">Explore the configuration settings</h2>
 <p>The bottom area of the control panel shows the options being used by the FHIR
 Pipelines Controller.</p>
 <h3 id="main-configuration-parameters">Main configuration parameters</h3>
-<p>This section corresponds to the settings in the <code>[application.yaml]((https://github.com/google/fhir-data-pipes/tree/master/pipelines/controller/config/application.yaml)</code> file.</p>
+<p>This section corresponds to the settings in
+the <code>[application.yaml]((https://github.com/google/fhir-data-pipes/tree/master/pipelines/controller/config/application.yaml)</code>
+file.</p>
 <h3 id="batch-pipeline-non-default-configurations">Batch pipeline non-default configurations</h3>
 <p>This section calls out FHIR Data Pipes batch pipeline settings that are
 different from their default values. These are also mostly derived from
-<code>[application.yaml]((https://github.com/google/fhir-data-pipes/tree/master/pipelines/controller/config/application.yaml)</code>. Use these settings if you want to run the batch pipeline
+<code>[application.yaml]((https://github.com/google/fhir-data-pipes/tree/master/pipelines/controller/config/application.yaml)</code>.
+Use these settings if you want to run the batch pipeline
 manually.</p>
 
 
@@ -1072,7 +1085,7 @@ manually.</p>
     <script id="__config" type="application/json">{"base": "..", "features": ["navigation.tabs.sticky", "navigation.section", "toc.follow", "navigation.top", "navigation.path", "search.suggest", "search.highlight", "content.tabs.link", "content.code.annotation", "content.code.copy", "navigation.footer"], "search": "../assets/javascripts/workers/search.b8dbb3d2.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}}</script>
     
     
-      <script src="../assets/javascripts/bundle.ebd0bdb7.min.js"></script>
+      <script src="../assets/javascripts/bundle.ad660dcc.min.js"></script>
       
     
   </body>

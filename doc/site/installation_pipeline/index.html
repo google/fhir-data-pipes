@@ -18,7 +18,7 @@
       
       
       <link rel="icon" href="../assets/images/favicon.png">
-      <meta name="generator" content="mkdocs-1.6.0, mkdocs-material-9.5.23">
+      <meta name="generator" content="mkdocs-1.6.0, mkdocs-material-9.5.27">
     
     
       
@@ -74,7 +74,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#deploy-fhir-data-pipes-pipelines" class="md-skip">
+        <a href="#deploy-fhir-data-pipes-etl-pipelines" class="md-skip">
           Skip to content
         </a>
       
@@ -175,7 +175,7 @@
       
     </form>
     <div class="md-search__output">
-      <div class="md-search__scrollwrap" data-md-scrollfix>
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
         <div class="md-search-result" data-md-component="search-result">
           <div class="md-search-result__meta">
             Initializing search
@@ -562,7 +562,7 @@
         
   
   <span class="md-ellipsis">
-    Deploy the "Pipelines Controller"
+    Deploy the "Controller Module"
   </span>
   
 
@@ -1018,7 +1018,7 @@
   
 
 
-<h1 id="deploy-fhir-data-pipes-pipelines">Deploy FHIR Data Pipes "Pipelines"</h1>
+<h1 id="deploy-fhir-data-pipes-etl-pipelines">Deploy FHIR Data Pipes ETL Pipelines</h1>
 <div class="admonition tip">
 <p class="admonition-title">Guide Overview</p>
 <ul>
@@ -1028,22 +1028,31 @@
 </ul>
 </div>
 <h2 id="intro-to-the-etl-pipeline">Intro to the ETL Pipeline</h2>
-<p>The ETL Pipelines is a Java JAR - designed to run on an <a href="https://beam.apache.org/">Apache Beam</a> - that transforms data from a FHIR source (via FHIR API, JDBC or ndjson) to either
-<a href="https://parquet.apache.org">Apache Parquet files</a> for analysis or another FHIR store for data integration. The source code is available in the <a href="https://github.com/google/fhir-data-pipes/tree/master/pipelines/batch"><code>pipelines/batch</code></a> directory.</p>
-<p><strong>Input or source options:</strong> There are three options for reading the source FHIR data:</p>
+<p>The ETL Pipelines is a Java JAR - designed to run on
+an <a href="https://beam.apache.org/">Apache Beam</a> - that transforms data from a FHIR
+source (via FHIR API, JDBC or ndjson) to either
+<a href="https://parquet.apache.org">Apache Parquet files</a> for analysis or another FHIR
+store for data integration. The source code is available in
+the <a href="https://github.com/google/fhir-data-pipes/tree/master/pipelines/batch"><code>pipelines/batch</code></a>
+directory.</p>
+<p><strong>Input or source options:</strong> There are three options for reading the source FHIR
+data:</p>
 <ul>
 <li><em>FHIR-Search</em>: This mode uses FHIR Search APIs to select resources to copy,
   retrieves them as FHIR resources, and transfers the data via FHIR APIs or
   Parquet files. This mode should work with most FHIR servers and has been
   tested with HAPI FHIR server and GCP FHIR store.</li>
 <li><em>JDBC</em>: This mode uses the
-  <a href="https://docs.oracle.com/javase/8/docs/technotes/guides/jdbc/">Java Database Connectivity (JDBC) API</a> to read FHIR resources directly from the database of a FHIR server. It's
-  tested with <a href="https://github.com/hapifhir/hapi-fhir-jpaserver-starter#postgresql-configuration">HAPI FHIR server using PostgreSQL database</a>
+  <a href="https://docs.oracle.com/javase/8/docs/technotes/guides/jdbc/">Java Database Connectivity (JDBC) API</a>
+  to read FHIR resources directly from the database of a FHIR server. It's
+  tested
+  with <a href="https://github.com/hapifhir/hapi-fhir-jpaserver-starter#postgresql-configuration">HAPI FHIR server using PostgreSQL database</a>
   or an <a href="https://openmrs.org/">OpenMRS</a> instance using MySQL.</li>
-<li><em>ndjson</em>: To do </li>
+<li><em>ndjson</em>: To do</li>
 </ul>
-<p><strong>Note</strong>: JDBC support beyond HAPI FHIR and OpenMRS is not currently planned. Our long-term approach for a generic high-throughput alternative is to use the
-  <a href="https://build.fhir.org/ig/HL7/bulk-data/export.html">FHIR Bulk Export API</a>.</p>
+<p><strong>Note</strong>: JDBC support beyond HAPI FHIR and OpenMRS is not currently planned.
+Our long-term approach for a generic high-throughput alternative is to use the
+<a href="https://build.fhir.org/ig/HL7/bulk-data/export.html">FHIR Bulk Export API</a>.</p>
 <p><strong>Output options:</strong> There are two options for transforming the data:</p>
 <ul>
 <li><em>Parquet</em>: Outputs the FHIR resources as Parquet files, using the
@@ -1053,11 +1062,11 @@
 <h2 id="setup">Setup</h2>
 <ol>
 <li><a href="https://docs.github.com/en/github/creating-cloning-and-archiving-repositories/cloning-a-repository">Clone</a>
-    the <a href="https://github.com/google/fhir-data-pipes">FHIR Data Pipes</a> project to
-    your machine.</li>
+   the <a href="https://github.com/google/fhir-data-pipes">FHIR Data Pipes</a> project to
+   your machine.</li>
 <li>Set the <code>utils</code> directory to world-readable: <code>chmod -R 755 ./utils</code>.</li>
 <li>Build binaries by running <code>mvn clean install</code> from the root directory of the
-    repository.</li>
+   repository.</li>
 </ol>
 <h2 id="run-the-pipeline">Run the pipeline</h2>
 <p>Run the pipeline directly using the <code>java</code> command:</p>
@@ -1112,10 +1121,14 @@ or run the pipeline with the <code>help</code> option:</p>
 and edit the values to match your database server.</p>
 <p>2: Enable JDBC mode for your source server:</p>
 <ul>
-<li>OpenMRS</li>
+<li>OpenMRS<ul>
 <li><code>jdbcModeEnabled=true</code></li>
-<li>HAPI FHIR server</li>
+</ul>
+</li>
+<li>HAPI FHIR server<ul>
 <li><code>jdbcModeHapi=true</code></li>
+</ul>
+</li>
 </ul>
 <p>3: Specify the path to your config file.</p>
 <ul>
@@ -1195,7 +1208,10 @@ issues of <code>DirectRunner</code>.</p>
 </div>
 </div>
 <h2 id="managing-and-scheduling-the-pipeline">Managing and scheduling the Pipeline</h2>
-<p>The ETL Pipeline is designed as a stand-alone Apache Beam service. The Pipeline Controller module provides capabilities to help manage the Pipeline including: scheduling full versus incremental runs. It also provides some <a href="./additional#managing-pipelines">monitoring capabilities</a>. </p>
+<p>The ETL Pipeline is designed as a stand-alone Apache Beam service. The Pipeline
+Controller module provides capabilities to help manage the Pipeline including:
+scheduling full versus incremental runs. It also provides
+some <a href="./additional#managing-pipelines">monitoring capabilities</a>.</p>
 <h2 id="how-to-query-the-data-warehouse">How to query the data warehouse</h2>
 <p>To query Parquet files, load them into a compatible data engine such as Apache
 Spark or use python in a jupyter notebook.</p>
@@ -1255,13 +1271,13 @@ runs the pipeline and loads data into an Apache Spark Thrift server for you.</p>
         
         
           
-          <a href="../installation_controller/" class="md-footer__link md-footer__link--next" aria-label="Next: Deploy the &#34;Pipelines Controller&#34;">
+          <a href="../installation_controller/" class="md-footer__link md-footer__link--next" aria-label="Next: Deploy the &#34;Controller Module&#34;">
             <div class="md-footer__title">
               <span class="md-footer__direction">
                 Next
               </span>
               <div class="md-ellipsis">
-                Deploy the "Pipelines Controller"
+                Deploy the "Controller Module"
               </div>
             </div>
             <div class="md-footer__button md-icon">
@@ -1303,7 +1319,7 @@ runs the pipeline and loads data into an Apache Spark Thrift server for you.</p>
     <script id="__config" type="application/json">{"base": "..", "features": ["navigation.tabs.sticky", "navigation.section", "toc.follow", "navigation.top", "navigation.path", "search.suggest", "search.highlight", "content.tabs.link", "content.code.annotation", "content.code.copy", "navigation.footer"], "search": "../assets/javascripts/workers/search.b8dbb3d2.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}}</script>
     
     
-      <script src="../assets/javascripts/bundle.ebd0bdb7.min.js"></script>
+      <script src="../assets/javascripts/bundle.ad660dcc.min.js"></script>
       
     
   </body>

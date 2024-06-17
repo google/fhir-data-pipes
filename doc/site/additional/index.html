@@ -18,7 +18,7 @@
       
       
       <link rel="icon" href="../assets/images/favicon.png">
-      <meta name="generator" content="mkdocs-1.6.0, mkdocs-material-9.5.23">
+      <meta name="generator" content="mkdocs-1.6.0, mkdocs-material-9.5.27">
     
     
       
@@ -175,7 +175,7 @@
       
     </form>
     <div class="md-search__output">
-      <div class="md-search__scrollwrap" data-md-scrollfix>
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
         <div class="md-search-result" data-md-component="search-result">
           <div class="md-search-result__meta">
             Initializing search
@@ -397,7 +397,7 @@
         
   
   <span class="md-ellipsis">
-    Deploy the "Pipelines Controller"
+    Deploy the "Controller Module"
   </span>
   
 
@@ -871,7 +871,9 @@
 <li>oAuthUsername</li>
 <li>oAuthPassword</li>
 </ul>
-<p>You can add oAuth authentication to the pipeline by providing the required set of parameters via the command line or in the <code>/pipelines/controller/config/application.yaml</code> file.</p>
+<p>You can add oAuth authentication to the pipeline by providing the required set
+of parameters via the command line or in
+the <code>/pipelines/controller/config/application.yaml</code> file.</p>
 <div class="tabbed-set tabbed-alternate" data-tabs="1:2"><input checked="checked" id="__tabbed_1_1" name="__tabbed_1" type="radio" /><input id="__tabbed_1_2" name="__tabbed_1" type="radio" /><div class="tabbed-labels"><label for="__tabbed_1_1">Cmd line</label><label for="__tabbed_1_2">application.yaml</label></div>
 <div class="tabbed-content">
 <div class="tabbed-block">
@@ -898,40 +900,59 @@
 </div>
 </div>
 <h2 id="config-properties">Config properties</h2>
-<p>The main configuration for the FHIR Data Pipes Pipeline and Controller is the <code>/pipelines/controller/config/application.yaml</code> file which is well documented.</p>
-<p>When using the provided docker images, this will be found in <code>/docker/config.application.yaml</code></p>
+<p>The main configuration for the FHIR Data Pipes Pipeline and Controller is
+the <code>/pipelines/controller/config/application.yaml</code> file which is well
+documented.</p>
+<p>When using the provided docker images, this will be found
+in <code>/docker/config.application.yaml</code></p>
 <h2 id="parquet-on-fhir-schema">Parquet on FHIR schema</h2>
-<p>Apache Parquet is a horizontally scalable columnar format that is optimized for performance.</p>
-<p>FHIR Data Pipes transforms FHIR resources to <em>"near lossless"</em> 'Parquet on FHIR' representation based on the <a href="https://github.com/FHIR/sql-on-fhir/blob/master/sql-on-fhir.md">"Simplified SQL Projection of FHIR Resources"</a> (<em>'SQL-on-FHIR-v1'</em>) schema</p>
+<p>Apache Parquet is a horizontally scalable columnar format that is optimized for
+performance.</p>
+<p>FHIR Data Pipes transforms FHIR resources to <em>"near lossless"</em> 'Parquet on FHIR'
+representation based on
+the <a href="https://github.com/FHIR/sql-on-fhir/blob/master/sql-on-fhir.md">"Simplified SQL Projection of FHIR Resources"</a> (
+<em>'SQL-on-FHIR-v1'</em>) schema</p>
 <ul>
 <li>
-<p>The conversion is done using a forked version of <a href="https://github.com/google/fhir-data-pipes/tree/master/bunsen">Bunsen library</a> to transform from FHIR (<em>current support for STU3, R4</em>) to the SQL-on-FHIR-v1 schema</p>
+<p>The conversion is done using a forked version
+  of <a href="https://github.com/google/fhir-data-pipes/tree/master/bunsen">Bunsen library</a>
+  to transform from FHIR (<em>current support for STU3, R4</em>) to the SQL-on-FHIR-v1
+  schema</p>
 </li>
 <li>
-<p>The conversion is done by going from StructureDefinition --&gt; AvroConverter --&gt; Parquet</p>
+<p>The conversion is done by going from StructureDefinition --&gt; AvroConverter --&gt;
+  Parquet</p>
 </li>
 <li>
 <p>Configurable support for FHIR versions, profiles and extensions is provided</p>
 </li>
 </ul>
 <h2 id="monitoring-pipelines">Monitoring pipelines</h2>
-<p>The pipelines controller exposes a number of management end-points that can help with monitoring the health of pipelines. </p>
+<p>The pipelines controller exposes a number of management end-points that can help
+with monitoring the health of pipelines.</p>
 <ul>
-<li>The application has been integrated with the Spring Boot Actuator of Spring and has exposed Rest API end points for monitoring, health checks, metrics etc. </li>
+<li>The application has been integrated with the Spring Boot Actuator of Spring
+  and has exposed Rest API end points for monitoring, health checks, metrics
+  etc.</li>
 <li>The end points can be customised in the configuration file.</li>
 <li>It can easily be integrated with tools like Prometheus for monitoring metrics.</li>
 </ul>
 <p><strong>Via the Web Control Panel</strong>
-The Web Control panel provides provides a quick glimpse about the latest state of the application including:
-* Controls for triggering pipeline run on-demand
-* A readable view of the application configuration
-* Location and time of the latest snapshot created by the pipeline run
-* Metrics of the most recent pipeline
-* Error logs of the last pipeline if any</p>
-<p>These are found in the <code>application.yaml</code> config file in the <code>management:</code> section. </p>
-<p><a href="#config-properties">See Config properties</a> </p>
+The Web Control panel provides a quick glimpse about the latest state
+of the application including:</p>
+<ul>
+<li>Controls for triggering pipeline run on-demand</li>
+<li>A readable view of the application configuration</li>
+<li>Location and time of the latest snapshot created by the pipeline run</li>
+<li>Metrics of the most recent pipeline</li>
+<li>Error logs of the last pipeline if any</li>
+</ul>
+<p>These are found in the <code>application.yaml</code> config file in the <code>management:</code>
+section.</p>
+<p><a href="#config-properties">See Config properties</a></p>
 <h2 id="web-control-panel">Web Control Panel</h2>
-<p>The web control panel is a basic spring application provided to make interacting with the pipeline controller easier. </p>
+<p>The web control panel is a basic spring application provided to make interacting
+with the pipeline controller easier.</p>
 <p><em>It <strong>is not</strong> designed to be a full production ready “web admin” panel</em>.</p>
 <p>The web control panel has the following features:</p>
 <ul>
@@ -1044,7 +1065,7 @@ The Web Control panel provides provides a quick glimpse about the latest state o
     <script id="__config" type="application/json">{"base": "..", "features": ["navigation.tabs.sticky", "navigation.section", "toc.follow", "navigation.top", "navigation.path", "search.suggest", "search.highlight", "content.tabs.link", "content.code.annotation", "content.code.copy", "navigation.footer"], "search": "../assets/javascripts/workers/search.b8dbb3d2.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}}</script>
     
     
-      <script src="../assets/javascripts/bundle.ebd0bdb7.min.js"></script>
+      <script src="../assets/javascripts/bundle.ad660dcc.min.js"></script>
       
     
   </body>
