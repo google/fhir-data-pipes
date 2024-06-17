@@ -1,0 +1,89 @@
+site_name: OHS Analytics Documentation
+theme:
+  name: material
+  features:
+#    - navigation.tabs
+    - navigation.tabs.sticky  
+    - navigation.section
+    - toc.follow
+#    - toc.integrate
+    - navigation.top
+    - navigation.path
+    - search.suggest
+    - search.highlight
+    - content.tabs.link
+    - content.code.annotation
+    - content.code.copy
+    - navigation.footer
+  language: en
+  palette:
+    - scheme: default
+      toggle:
+        icon: material/toggle-switch-off-outline 
+        name: Switch to dark mode
+      primary: indigo
+      accent: purple 
+    - scheme: slate 
+      toggle:
+        icon: material/toggle-switch
+        name: Switch to light mode    
+      primary: indigo
+      accent: lime
+  icon:
+    repo: fontawesome/brands/github
+
+font:
+    text: inter
+
+
+plugins:
+  - search
+
+site_url: https://example.com/analytics/
+
+repo_url: https://github.com/google/fhir-data-pipes
+
+repo_name: FHIR Data Pipes  
+
+nav:
+  - Home: 'index.md'
+  - Concepts: 'concepts.md'
+  - Getting Started: 
+    - getting_started.md
+    - 'Docker containers' : 'installation_docker.md'
+    - 'Deploy the "Pipelines"' : 'installation_pipeline.md'
+    - 'Deploy the "Controller Module"' : 'installation_controller.md'
+  - Tutorials:
+    - tutorials/index.md
+    - Set up local test servers : tutorials/test_servers.md
+    - Single Machine Deployment:  tutorials/single_machine.md
+    - Visualize Parquet DWH with Apache Superset: tutorials/add_dashboard.md
+    - PostgreSQL DWH using custom schema: tutorials/postgres_example.md
+  - Additional Topics: 'additional.md'
+  - Community:
+    - 'Support' : 'support.md'
+    - 'Contributing': 'contributing.md'
+    - 'Release process': 'release_process.md'
+
+markdown_extensions:
+  - pymdownx.highlight:
+      anchor_linenums: true
+  - pymdownx.inlinehilite
+  - pymdownx.snippets
+  - admonition
+  - pymdownx.arithmatex:
+      generic: true
+  - footnotes
+  - pymdownx.details
+  - pymdownx.superfences
+  - pymdownx.tabbed:
+      alternate_style: true
+  - pymdownx.mark
+  - attr_list
+  - pymdownx.emoji:
+      emoji_index: !!python/name:materialx.emoji.twemoji
+      emoji_generator: !!python/name:materialx.emoji.to_svg
+
+copyright: |
+  &copy; 2024 Google Health Open Health Stack
+
