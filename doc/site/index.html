@@ -16,7 +16,7 @@
       
       
       <link rel="icon" href="assets/images/favicon.png">
-      <meta name="generator" content="mkdocs-1.6.0, mkdocs-material-9.5.23">
+      <meta name="generator" content="mkdocs-1.6.0, mkdocs-material-9.5.27">
     
     
       
@@ -173,7 +173,7 @@
       
     </form>
     <div class="md-search__output">
-      <div class="md-search__scrollwrap" data-md-scrollfix>
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
         <div class="md-search-result" data-md-component="search-result">
           <div class="md-search-result__meta">
             Initializing search
@@ -453,7 +453,7 @@
         
   
   <span class="md-ellipsis">
-    Deploy the "Pipelines Controller"
+    Deploy the "Controller Module"
   </span>
   
 
@@ -811,28 +811,31 @@
 <h2 id="key-features">Key features</h2>
 <ul>
 <li>
-<p><a href="https://beam.apache.org">Apache Beam</a> based ETL pipeline to transform FHIR resources to <em>"near lossless"</em> 'FHIR-in-Parquet' representation based on the <a href="https://github.com/FHIR/sql-on-fhir/blob/master/sql-on-fhir.md">"Simplified SQL Projection of FHIR Resources"</a> schema</p>
+<p><a href="https://beam.apache.org">Apache Beam</a> based ETL pipelines to continuously transform FHIR
+resources to <em>"near lossless"</em> 'FHIR-in-Parquet' representation based on a
+<a href="https://github.com/FHIR/sql-on-fhir/blob/master/sql-on-fhir.md">natural schema</a> for
+projecting FHIR resource to Parquet.</p>
 </li>
 <li>
 <p>Pipelines Controller module provides pipeline management and scheduling capabilities.</p>
 </li>
 <li>
-<p>Flexible deployment modes to meet the needs of different projects and teams from simple single machine to multi-worker horizontally scalable distributed environments. With support for local, on-prem or cloud based runners</p>
+<p>Flexible deployment modes to meet the needs of different projects and teams from simple single machine to multi-worker horizontally scalable distributed environments. With support for local, on-prem or cloud based runners.</p>
 </li>
 <li>
-<p>Seamless support for different target databases including traditional RDBMS (such as <a href="https://www.postgresql.org/">PostgreSQL</a>) or OLAP Database Engines that can load Parquet files (such as <a href="https://spark.apache.org/sql/">SparkSQL</a> or <a href="https://duckdb.org/">DuckDB</a>) </p>
+<p>Support for different target databases including traditional RDBMS (such as <a href="https://www.postgresql.org/">PostgreSQL</a>) or any OLAP engines that can load Parquet files (such as <a href="https://spark.apache.org/sql/">SparkSQL</a> or <a href="https://duckdb.org/">DuckDB</a>). </p>
 </li>
 <li>
-<p>Simplify querying data by defining views in SQL or as <a href="https://build.fhir.org/ig/FHIR/sql-on-fhir-v2/StructureDefinition-ViewDefinition.html">ViewDefinition</a> resources to create flattened tables. Easily build analytics applications with common languages (e.g. SQL, python) and BI or data visualizations tools (e.g. <a href="https://superset.apache.org/">Apache Superset</a>)</p>
+<p>Simplify querying data by defining views in SQL or as <a href="https://build.fhir.org/ig/FHIR/sql-on-fhir-v2/StructureDefinition-ViewDefinition.html">ViewDefinition</a> resources to create flattened tables. Easily build analytics applications with common languages (e.g. SQL, python) and BI or data visualizations tools (e.g. <a href="https://superset.apache.org/">Apache Superset</a>).</p>
 </li>
 </ul>
 <h2 id="use-cases">Use cases</h2>
 <ul>
 <li>
-<p>The <strong>primary use case</strong> for FHIR Data Pipes is to enable continuous transformation of FHIR Data into analytics friendly representations to make it easier for developers to: build dashboards, generate reports, do data science and machine learning</p>
+<p>The <strong>primary use case</strong> for FHIR Data Pipes is to enable continuous transformation of FHIR data into analytics friendly representations to make it easier for developers to: build dashboards, generate reports, perform data science task, and create features for machine learning models.</p>
 </li>
 <li>
-<p>A <strong>secondary use case</strong> is for piping FHIR data from a FHIR sources to another FHIR server e.g. for integration into a central FHIR repository</p>
+<p>A <strong>secondary use case</strong> is for piping FHIR data from a FHIR source to another FHIR server e.g. for integration into a central FHIR repository.</p>
 </li>
 </ul>
 
@@ -921,7 +924,7 @@
     <script id="__config" type="application/json">{"base": ".", "features": ["navigation.tabs.sticky", "navigation.section", "toc.follow", "navigation.top", "navigation.path", "search.suggest", "search.highlight", "content.tabs.link", "content.code.annotation", "content.code.copy", "navigation.footer"], "search": "assets/javascripts/workers/search.b8dbb3d2.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}}</script>
     
     
-      <script src="assets/javascripts/bundle.ebd0bdb7.min.js"></script>
+      <script src="assets/javascripts/bundle.ad660dcc.min.js"></script>
       
     
   </body>
