@@ -21,7 +21,10 @@ steps:
 
 - name: 'docker/compose'
   id: 'Launch HAPI Source and Sink Servers'
-  args: ['-f', './docker/hapi-compose.yml', '-f', './docker/sink-compose.yml', 'up', '--force-recreate', '--remove-orphan', '-d']
+  entrypoint: /bin/bash
+  args:
+    - -c
+    - ./docker/hapi-compose.yml up --force-recreate --remove-orphan -d;  ./docker/sink-compose.yml --force-recreate --remove-orphan -d; sleep 120
 
 # Note license checking will fail on Cloud Build because of .git dependencies
 # and there is not much point updating license headers at this stage anyway.
