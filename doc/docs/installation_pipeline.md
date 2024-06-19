@@ -5,25 +5,35 @@
     * This guide will walk you through how to deploy and run the ETL Pipelines Java JAR
     * To help with scheduling and managing the ETL Pipeline, a separate Pipeline Controller module is provided (see next guide)
     * For ease of deployment a set of example docker compose configurations that include the Pipeline and Controller has been provided. See the Docker section
-      
-## Intro to the ETL Pipeline
-The ETL Pipelines is a Java JAR - designed to run on an [Apache Beam](https://beam.apache.org/) - that transforms data from a FHIR source (via FHIR API, JDBC or ndjson) to either
-[Apache Parquet files](https://parquet.apache.org) for analysis or another FHIR store for data integration. The source code is available in the [`pipelines/batch`](https://github.com/google/fhir-data-pipes/tree/master/pipelines/batch) directory.
 
-**Input or source options:** There are three options for reading the source FHIR data:
+## Intro to the ETL Pipeline
+
+The ETL Pipelines is a Java JAR - designed to run on
+an [Apache Beam](https://beam.apache.org/) - that transforms data from a FHIR
+source (via FHIR API, JDBC or ndjson) to either
+[Apache Parquet files](https://parquet.apache.org) for analysis or another FHIR
+store for data integration. The source code is available in
+the [`pipelines/batch`](https://github.com/google/fhir-data-pipes/tree/master/pipelines/batch)
+directory.
+
+**Input or source options:** There are three options for reading the source FHIR
+data:
 
 - _FHIR-Search_: This mode uses FHIR Search APIs to select resources to copy,
   retrieves them as FHIR resources, and transfers the data via FHIR APIs or
   Parquet files. This mode should work with most FHIR servers and has been
   tested with HAPI FHIR server and GCP FHIR store.
 - _JDBC_: This mode uses the
-  [Java Database Connectivity (JDBC) API](https://docs.oracle.com/javase/8/docs/technotes/guides/jdbc/) to read FHIR resources directly from the database of a FHIR server. It's
-  tested with [HAPI FHIR server using PostgreSQL database](https://github.com/hapifhir/hapi-fhir-jpaserver-starter#postgresql-configuration)
+  [Java Database Connectivity (JDBC) API](https://docs.oracle.com/javase/8/docs/technotes/guides/jdbc/)
+  to read FHIR resources directly from the database of a FHIR server. It's
+  tested
+  with [HAPI FHIR server using PostgreSQL database](https://github.com/hapifhir/hapi-fhir-jpaserver-starter#postgresql-configuration)
   or an [OpenMRS](https://openmrs.org/) instance using MySQL.
--  _ndjson_: To do 
-  
-  **Note**: JDBC support beyond HAPI FHIR and OpenMRS is not currently planned. Our long-term approach for a generic high-throughput alternative is to use the
-  [FHIR Bulk Export API](https://build.fhir.org/ig/HL7/bulk-data/export.html).
+- _ndjson_: To do
+
+**Note**: JDBC support beyond HAPI FHIR and OpenMRS is not currently planned.
+Our long-term approach for a generic high-throughput alternative is to use the
+[FHIR Bulk Export API](https://build.fhir.org/ig/HL7/bulk-data/export.html).
 
 **Output options:** There are two options for transforming the data:
 
@@ -33,12 +43,12 @@ The ETL Pipelines is a Java JAR - designed to run on an [Apache Beam](https://be
 
 ## Setup
 
-1.  [Clone](https://docs.github.com/en/github/creating-cloning-and-archiving-repositories/cloning-a-repository)
-    the [FHIR Data Pipes](https://github.com/google/fhir-data-pipes) project to
-    your machine.
-1.  Set the `utils` directory to world-readable: `chmod -R 755 ./utils`.
-1.  Build binaries by running `mvn clean install` from the root directory of the
-    repository.
+1. [Clone](https://docs.github.com/en/github/creating-cloning-and-archiving-repositories/cloning-a-repository)
+   the [FHIR Data Pipes](https://github.com/google/fhir-data-pipes) project to
+   your machine.
+1. Set the `utils` directory to world-readable: `chmod -R 755 ./utils`.
+1. Build binaries by running `mvn clean install` from the root directory of the
+   repository.
 
 ## Run the pipeline
 
@@ -108,9 +118,9 @@ and edit the values to match your database server.
 2: Enable JDBC mode for your source server:
 
 - OpenMRS
-  - `jdbcModeEnabled=true`
+    - `jdbcModeEnabled=true`
 - HAPI FHIR server
-  - `jdbcModeHapi=true`
+    - `jdbcModeHapi=true`
 
 3: Specify the path to your config file.
 
@@ -197,7 +207,10 @@ These examples are set up to work with
 
 ## Managing and scheduling the Pipeline
 
-The ETL Pipeline is designed as a stand-alone Apache Beam service. The Pipeline Controller module provides capabilities to help manage the Pipeline including: scheduling full versus incremental runs. It also provides some [monitoring capabilities](./additional#managing-pipelines). 
+The ETL Pipeline is designed as a stand-alone Apache Beam service. The Pipeline
+Controller module provides capabilities to help manage the Pipeline including:
+scheduling full versus incremental runs. It also provides
+some [monitoring capabilities](./additional#managing-pipelines).
 
 ## How to query the data warehouse
 
