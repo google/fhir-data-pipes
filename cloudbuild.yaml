@@ -21,10 +21,7 @@ steps:
 
 - name: 'docker/compose'
   id: 'Launch HAPI Source and Sink Servers'
-  entrypoint: /bin/bash
-  args:
-    - -c
-    - ./docker/hapi-compose.yml up --force-recreate --remove-orphan -d;  ./docker/sink-compose.yml --force-recreate --remove-orphan -d; sleep 120
+  args: ['-f', './docker/hapi-compose.yml', '-f', './docker/sink-compose.yml', 'up', '--force-recreate', '--remove-orphan', '-d']
 
 # Note license checking will fail on Cloud Build because of .git dependencies
 # and there is not much point updating license headers at this stage anyway.
@@ -63,6 +60,10 @@ steps:
     docker build -t ${_REPOSITORY}/e2e-tests/controller-spark:${_TAG} ./controller-spark/.;
   waitFor: ['-']
 
+- name: 'ubuntu'
+  args: ['sleep', '120']
+  waitFor: ['Launch HAPI Source and Sink Servers', 'Run Uploader Unit Tests']
+
 - name: '${_REPOSITORY}/synthea-uploader:${_TAG}'
   id: 'Upload to HAPI'
   env:
@@ -70,7 +71,7 @@ steps:
     - SINK_TYPE=HAPI
     - FHIR_ENDPOINT=http://hapi-server:8080/fhir
     - CORES=--cores 8
-  waitFor: ['Launch HAPI Source and Sink Servers', 'Run Uploader Unit Tests']
+  waitFor: ['ubuntu']
 
 - name: 'gcr.io/cloud-builders/docker'
   id: 'Build Pipeline Images'
