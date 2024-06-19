@@ -120,9 +120,13 @@ function query_fhir_server(){
 
   print_message "Finding number of patients, encounters and obs in FHIR server ${server_url}"
 
+  curl -L -X GET -u hapi:hapi --connect-timeout 5 --max-time 20 "${server_url}/fhir/Patient${query_param}"
+
   curl -L -X GET -u hapi:hapi --connect-timeout 5 --max-time 20 \
   "${server_url}/fhir/Patient${query_param}" 2>/dev/null \
   >"${HOME_PATH}/${PARQUET_SUBDIR}/${patient_json_file}"
+
+  print_message "Write Patients into File"
 
   curl -L -X GET -u hapi:hapi --connect-timeout 5 --max-time 20 \
   "${server_url}/fhir/Encounter${query_param}" 2>/dev/null \
@@ -131,6 +135,8 @@ function query_fhir_server(){
   curl -L -X GET -u hapi:hapi --connect-timeout 5 --max-time 20 \
   "${server_url}/fhir/Observation${query_param}" 2>/dev/null\
   >"${HOME_PATH}/${PARQUET_SUBDIR}/${obs_json_file}"
+
+  print_message "Write Observation into File"
 }
 
 #################################################
@@ -146,6 +152,7 @@ function query_fhir_server(){
 function fhir_source_query() {
 
   query_fhir_server "${SOURCE_FHIR_SERVER_URL}"  "patients.json" "encounters.json" "obs.json"
+  print_message "Before count"
   TOTAL_TEST_PATIENTS=$(jq '.total' "${HOME_PATH}/${PARQUET_SUBDIR}/patients.json")
   print_message "Total FHIR source test patients ---> ${TOTAL_TEST_PATIENTS}"
 
