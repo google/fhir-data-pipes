@@ -94,7 +94,7 @@ function setup() {
   THRIFTSERVER_URL='localhost:10001'
   if [[ $3 = "--use_docker_network" ]]; then
     SOURCE_FHIR_SERVER_URL='http://hapi-server:8080'
-    SINK_FHIR_SERVER_URL='http://sink-server:8080'
+    SINK_FHIR_SERVER_URL='http://sink-server1:8080'
     PIPELINE_CONTROLLER_URL='http://pipeline-controller:8080'
     THRIFTSERVER_URL='spark:10000'
   fi

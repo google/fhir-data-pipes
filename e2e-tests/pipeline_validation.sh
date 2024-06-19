@@ -49,7 +49,7 @@ function usage() {
 # Makes sure args passed are correct
 #################################################
 function validate_args() {
-  if [[ $# -lt 2 || $# -gt 5  ]]; then
+  if [[ $# -lt 2 || $# -gt 6  ]]; then
     echo "Invalid number of args passed."
     usage
     exit 1
@@ -104,28 +104,29 @@ function print_message() {
 function setup() {
   HOME_PATH=$1
   PARQUET_SUBDIR=$2
+  SINK_FHIR_SERVER_URL=$3
   rm -rf "${HOME_PATH}/fhir"
   rm -rf "${HOME_PATH}/${PARQUET_SUBDIR}/*.json"
   find "${HOME_PATH}/${PARQUET_SUBDIR}" -size 0 -delete
   SOURCE_FHIR_SERVER_URL='http://localhost:8091'
-  SINK_FHIR_SERVER_URL='http://localhost:8098'
   STREAMING=""
   OPENMRS=""
 
   # TODO: We should refactor this code to parse the arguments by going through
   # each one and checking which ones are turned on.
-  if [[ $3 = "--openmrs" ]] || [[ $4 = "--openmrs" ]] || [[ $5 = "--openmrs" ]]; then
+  if [[ $4 = "--openmrs" ]] || [[ $5 = "--openmrs" ]] || [[ $6 = "--openmrs" ]]; then
     OPENMRS="on"
     SOURCE_FHIR_SERVER_URL='http://localhost:8099/openmrs/ws/fhir2/R4'
   fi
 
-  if [[ $3 = "--use_docker_network" ]] || [[ $4 = "--use_docker_network" ]] || [[ $5 = "--use_docker_network" ]]; then
+  if [[ $4 = "--use_docker_network" ]] || [[ $5 = "--use_docker_network" ]] || [[ $6 = "--use_docker_network" ]]; then
     if [[ -n ${OPENMRS} ]]; then
         SOURCE_FHIR_SERVER_URL='http://openmrs:8080/openmrs/ws/fhir2/R4'
     else
         SOURCE_FHIR_SERVER_URL='http://hapi-server:8080'
     fi
-    SINK_FHIR_SERVER_URL='http://sink-server:8080'
+  else
+    SINK_FHIR_SERVER_URL='http://localhost:8098'
   fi
 
   if [[ $3 = "--streaming" ]] || [[ $4 = "--streaming" ]] || [[ $5 = "--streaming" ]]; then

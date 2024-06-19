@@ -100,6 +100,7 @@ steps:
   env:
   - PARQUET_SUBDIR=FHIR_SEARCH_HAPI
   - DOCKER_NETWORK=--use_docker_network
+  - SINK_SERVER=http://sink-server1:8080/fhir
   waitFor: ['Run Batch Pipeline in FHIR-search mode with HAPI source']
 
 - name: '${_REPOSITORY}/batch-pipeline:${_TAG}'
@@ -121,6 +122,7 @@ steps:
   env:
     - PARQUET_SUBDIR=JDBC_HAPI
     - DOCKER_NETWORK=--use_docker_network
+    - - SINK_SERVER=http://sink-server2:8080/fhir
   waitFor: ['Run Batch Pipeline for JDBC mode with HAPI source']
 
 # Resetting FHIR sink server
@@ -197,6 +199,7 @@ steps:
   env:
     - PARQUET_SUBDIR=STREAMING
     - DOCKER_NETWORK=--use_docker_network
+    - SINK_SERVER=http://sink-server2:8080/fhir
     - STREAMING_TEST=--streaming
     - OPENMRS_TEST=--openmrs
 
@@ -221,6 +224,7 @@ steps:
   env:
     - PARQUET_SUBDIR=FHIR_SEARCH_OPENMRS
     - DOCKER_NETWORK=--use_docker_network
+    - SINK_SERVER=http://sink-server2:8080/fhir
     - OPENMRS_TEST=--openmrs
 
 - name: '${_REPOSITORY}/batch-pipeline:${_TAG}'
@@ -238,6 +242,7 @@ steps:
   env:
     - PARQUET_SUBDIR=JDBC_OPENMRS
     - DOCKER_NETWORK=--use_docker_network
+    - SINK_SERVER=http://sink-server2:8080/fhir
     - OPENMRS_TEST=--openmrs
 
 - name: '${_REPOSITORY}/e2e-tests:${_TAG}'
