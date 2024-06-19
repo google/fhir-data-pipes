@@ -40,6 +40,7 @@ steps:
   args:
   - -c
   - cd synthea-hiv/uploader; docker build -t ${_REPOSITORY}/synthea-uploader:${_TAG} .
+  waitFor: ['-']
 
 - name: '${_REPOSITORY}/synthea-uploader:${_TAG}'
   id: 'Run Uploader Unit Tests'
@@ -47,6 +48,7 @@ steps:
   args:
   - -c
   - cd /uploader; python -m unittest discover  -p '*_test.py'
+  waitFor: ['Build Uploader Image']
 
 - name: 'gcr.io/cloud-builders/docker'
   id: 'Build E2E Image'
@@ -56,6 +58,7 @@ steps:
   - cd e2e-tests;
     docker build -t ${_REPOSITORY}/e2e-tests:${_TAG} .;
     docker build -t ${_REPOSITORY}/e2e-tests/controller-spark:${_TAG} ./controller-spark/.;
+  waitFor: ['-']
 
 - name: '${_REPOSITORY}/synthea-uploader:${_TAG}'
   id: 'Upload to HAPI'
@@ -64,6 +67,7 @@ steps:
     - SINK_TYPE=HAPI
     - FHIR_ENDPOINT=http://hapi-server:8080/fhir
     - CORES=--cores 8
+  waitFor: ['Launch HAPI Source and Sink Servers', 'Run Uploader Unit Tests']
 
 - name: 'gcr.io/cloud-builders/docker'
   id: 'Build Pipeline Images'
@@ -74,6 +78,7 @@ steps:
     docker build -t ${_REPOSITORY}/batch-pipeline:${_TAG} .;
     cd ../streaming-binlog;
     docker build -t ${_REPOSITORY}/streaming-pipeline:${_TAG} .;
+  waitFor: ['Compile Bunsen and Pipeline']
 
 - name: '${_REPOSITORY}/batch-pipeline:${_TAG}'
   id: 'Run Batch Pipeline in FHIR-search mode with HAPI source'
@@ -83,12 +88,14 @@ steps:
   - SINK_PATH=http://sink-server:8080/fhir
   - SINK_USERNAME=hapi
   - SINK_PASSWORD=hapi
+  waitFor: ['Build Pipeline Images', 'Upload to HAPI']
 
 - name: '${_REPOSITORY}/e2e-tests:${_TAG}'
   id: 'Run E2E Test for FHIR-search mode with HAPI source'
   env:
   - PARQUET_SUBDIR=FHIR_SEARCH_HAPI
   - DOCKER_NETWORK=--use_docker_network
+  waitFor: ['Run Batch Pipeline in FHIR-search mode with HAPI source']
 
 - name: '${_REPOSITORY}/batch-pipeline:${_TAG}'
   id: 'Run Batch Pipeline for JDBC mode with HAPI source'
@@ -102,26 +109,29 @@ steps:
     - FHIR_DATABASE_CONFIG_PATH=/workspace/utils/hapi-postgres-config.json
     - PARQUET_PATH=/workspace/e2e-tests/JDBC_HAPI
     - JDBC_FETCH_SIZE=1000
+  waitFor: ['Build Pipeline Images', 'Upload to HAPI']
 
 - name: '${_REPOSITORY}/e2e-tests:${_TAG}'
   id: 'Run E2E Test for JDBC mode with HAPI source'
   env:
     - PARQUET_SUBDIR=JDBC_HAPI
     - DOCKER_NETWORK=--use_docker_network
-
-# The `views` database is used for creating flat views from ViewDefinitions.
-- name: 'postgres'
-  id: 'Create views database'
-  entrypoint: psql
-  env:
-  - PGPASSWORD=admin
-  args: [ '-U', 'admin', '-d', 'postgres', '-h', 'hapi-fhir-db', '-p', '5432',
-          '-c', 'CREATE DATABASE views;']
+  waitFor: ['Run Batch Pipeline for JDBC mode with HAPI source']
 
 # Resetting FHIR sink server
 - name: 'docker/compose'
   id: 'Turn down FHIR Sink Server'
   args: [ '-f', './docker/sink-compose.yml', 'down' ,'-v']
+  waitFor: ['Run E2E Test for FHIR-search mode with HAPI source', 'Run E2E Test for JDBC mode with HAPI source']
+
+  # The `views` database is used for creating flat views from ViewDefinitions.
+- name: 'postgres'
+  id: 'Create views database'
+  entrypoint: psql
+  env:
+    - PGPASSWORD=admin
+  args: [ '-U', 'admin', '-d', 'postgres', '-h', 'hapi-fhir-db', '-p', '5432',
+          '-c', 'CREATE DATABASE views;']
 
 - name: 'docker/compose'
   id: 'Launch HAPI FHIR Sink Server'
