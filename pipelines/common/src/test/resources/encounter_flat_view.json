@@ -22,11 +22,11 @@
         },
         {
           "path": "period.start",
-          "name": "start"
+          "name": "period_start"
         },
         {
           "path": "period.end",
-          "name": "end"
+          "name": "period_end"
         },
         {
           "path": "episodeOfCare.getReferenceKey(EpisodeOfCare)",
