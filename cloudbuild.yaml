@@ -122,7 +122,7 @@ steps:
   env:
     - PARQUET_SUBDIR=JDBC_HAPI
     - DOCKER_NETWORK=--use_docker_network
-    - - SINK_SERVER=http://sink-server2:8080/fhir
+    - SINK_SERVER=http://sink-server2:8080/fhir
   waitFor: ['Run Batch Pipeline for JDBC mode with HAPI source']
 
 # Resetting FHIR sink server
