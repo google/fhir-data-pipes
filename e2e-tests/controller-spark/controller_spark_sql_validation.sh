@@ -118,7 +118,7 @@ function query_fhir_server(){
   local encounter_json_file=$3
   local obs_json_file=$4
 
-  print_message "Finding number of patients, encounters and obs in FHIR server"
+  print_message "Finding number of patients, encounters and obs in FHIR server ${server_url}"
 
   curl -L -X GET -u hapi:hapi --connect-timeout 5 --max-time 20 \
   "${server_url}/fhir/Patient${query_param}" 2>/dev/null \
@@ -167,6 +167,13 @@ function fhir_source_query() {
 function run_pipeline() {
   local runMode=$1
   curl --location --request POST "${PIPELINE_CONTROLLER_URL}/run?runMode=${runMode}" \
+  --connect-timeout 5 \
+  --header 'Content-Type: application/json' \
+  --header 'Accept: */*' -v
+}
+
+function wait_for_completion() {
+  curl --location --request GET "${PIPELINE_CONTROLLER_URL}/status?" \
   --connect-timeout 5 \
   --header 'Content-Type: application/json' \
   --header 'Accept: */*' -v
@@ -412,6 +419,7 @@ setup "$@"
 fhir_source_query
 sleep 50
 run_pipeline "FULL"
+wait_for_completion
 check_parquet false
 test_fhir_sink "FULL"
 
