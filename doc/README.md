@@ -18,7 +18,7 @@ and are described below.
 ## Documentation site
 
 The [docs/](docs) directory contains the content for building our documentation
-site at []().
+site at [google.github.io/fhir-data-pipes](https://google.github.io/fhir-data-pipes/).
 To make changes to these documentations you can follow
 [MkDocs](https://www.mkdocs.org/getting-started/) steps, namely:
 * Create a Python virtual env.
@@ -44,5 +44,5 @@ To make changes to these documentations you can follow
   mkdocs gh-deploy
   ```
 * Do _not_ commit the generated `sites/` directory to the `master` branch. The
-  docs website at []() is generated from the `gh-pages` branch; so `sites/`
-  updates only go to this branch.
+  docs website at [google.github.io/fhir-data-pipes](https://google.github.io/fhir-data-pipes/)
+  is generated from the `gh-pages` branch; so `sites/` updates only go to this branch.
