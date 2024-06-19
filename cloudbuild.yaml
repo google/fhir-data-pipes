@@ -61,6 +61,7 @@ steps:
   waitFor: ['-']
 
 - name: 'ubuntu'
+  id: 'Sleep step'
   args: ['sleep', '120']
   waitFor: ['Launch HAPI Source and Sink Servers', 'Run Uploader Unit Tests']
 
@@ -71,7 +72,7 @@ steps:
     - SINK_TYPE=HAPI
     - FHIR_ENDPOINT=http://hapi-server:8080/fhir
     - CORES=--cores 8
-  waitFor: ['ubuntu']
+  waitFor: ['Sleep step']
 
 - name: 'gcr.io/cloud-builders/docker'
   id: 'Build Pipeline Images'
