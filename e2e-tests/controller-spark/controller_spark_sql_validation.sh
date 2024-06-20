@@ -434,6 +434,7 @@ fhir_source_query
 sleep 50
 run_pipeline "FULL"
 wait_for_completion
+sleep 30
 check_parquet false
 test_fhir_sink "FULL"
 
