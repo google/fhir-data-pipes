@@ -213,9 +213,56 @@ function wait_for_completion() {
 # Arguments:
 #   isIncremental: flag to differentiate behavior between incremental and batch runs.
 #######################################################################
+#function check_parquet() {
+#  local isIncremental=$1
+#  local output="${HOME_PATH}/${PARQUET_SUBDIR}"
+#
+#  if [[ "${isIncremental}" == "true" ]]
+#  then
+#    # In case of incremental run, we will have two directories
+#    # assuming batch run was executed before this.
+#    TOTAL_TEST_PATIENTS=$((2*TOTAL_TEST_PATIENTS + 1))
+#    TOTAL_TEST_ENCOUNTERS=$((2*TOTAL_TEST_ENCOUNTERS))
+#    TOTAL_TEST_OBS=$((2*TOTAL_TEST_OBS))
+#  fi
+#
+#  # check whether output directory has received parquet files.
+#  if [[ "$(ls -A $output)" ]]
+#  then
+#    local total_patients=$(java -Xms16g -Xmx16g -jar ./parquet-tools-1.11.1.jar rowcount \
+#    "${output}/*/Patient/" | awk '{print $3}')
+#    local total_encounters=$(java -Xms16g -Xmx16g -jar ./parquet-tools-1.11.1.jar rowcount \
+#    "${output}/*/Encounter/" | awk '{print $3}')
+#    local total_observations=$(java -Xms16g -Xmx16g -jar ./parquet-tools-1.11.1.jar rowcount \
+#    "${output}/*/Observation/" | awk '{print $3}')
+#
+#    print_message "Total patients: $total_patients"
+#    print_message "Total encounters: $total_encounters"
+#    print_message "Total observations: $total_observations"
+#
+#    if [[ "${total_patients}" == "${TOTAL_TEST_PATIENTS}" && "${total_encounters}" \
+#            == "${TOTAL_TEST_ENCOUNTERS}" && "${total_observations}" == "${TOTAL_TEST_OBS}" ]] \
+#        ; then
+#        print_message "Pipeline transformation successfully completed."
+#    else
+#        print_message "Mismatch in count of records, actual records are as shown below"
+#        print_message "Actual total patients: $total_patients, expected total: $TOTAL_TEST_PATIENTS"
+#        print_message "Actual total encounters: $total_encounters, expected total: $TOTAL_TEST_ENCOUNTERS"
+#        print_message "Total observations: $total_observations, expected total: $TOTAL_TEST_OBS"
+#        exit 2
+#    fi
+#  else
+#    print_message "No parquet files available."
+#    exit 2
+#  fi
+#}
+
 function check_parquet() {
   local isIncremental=$1
+  local runtime="15 minute"
+  local end_time=$(date -ud "$runtime" +%s)
   local output="${HOME_PATH}/${PARQUET_SUBDIR}"
+  local timeout=true
 
   if [[ "${isIncremental}" == "true" ]]
   then
@@ -226,33 +273,37 @@ function check_parquet() {
     TOTAL_TEST_OBS=$((2*TOTAL_TEST_OBS))
   fi
 
-  # check whether output directory has received parquet files.
-  if [[ "$(ls -A $output)" ]]
-  then
-    local total_patients=$(java -Xms16g -Xmx16g -jar ./parquet-tools-1.11.1.jar rowcount \
-    "${output}/*/Patient/" | awk '{print $3}')
-    local total_encounters=$(java -Xms16g -Xmx16g -jar ./parquet-tools-1.11.1.jar rowcount \
-    "${output}/*/Encounter/" | awk '{print $3}')
-    local total_observations=$(java -Xms16g -Xmx16g -jar ./parquet-tools-1.11.1.jar rowcount \
-    "${output}/*/Observation/" | awk '{print $3}')
+  while [[ $(date -u +%s) -le $end_time ]]
+  do
+    # check whether output directory has started receiving parquet files.
+    if [[ "$(ls -A $output)" ]]
+    then
+      local total_patients=$(java -Xms16g -Xmx16g -jar ./parquet-tools-1.11.1.jar rowcount \
+      "${output}/*/Patient/" | awk '{print $3}')
+      local total_encounters=$(java -Xms16g -Xmx16g -jar ./parquet-tools-1.11.1.jar rowcount \
+      "${output}/*/Encounter/" | awk '{print $3}')
+      local total_observations=$(java -Xms16g -Xmx16g -jar ./parquet-tools-1.11.1.jar rowcount \
+      "${output}/*/Observation/" | awk '{print $3}')
 
-    print_message "Total patients: $total_patients"
-    print_message "Total encounters: $total_encounters"
-    print_message "Total observations: $total_observations"
+      print_message "Total patients: $total_patients"
+      print_message "Total encounters: $total_encounters"
+      print_message "Total observations: $total_observations"
 
-    if [[ "${total_patients}" == "${TOTAL_TEST_PATIENTS}" && "${total_encounters}" \
-            == "${TOTAL_TEST_ENCOUNTERS}" && "${total_observations}" == "${TOTAL_TEST_OBS}" ]] \
-        ; then
-        print_message "Pipeline transformation successfully completed."
-    else
-        print_message "Mismatch in count of records, actual records are as shown below"
-        print_message "Actual total patients: $total_patients, expected total: $TOTAL_TEST_PATIENTS"
-        print_message "Actual total encounters: $total_encounters, expected total: $TOTAL_TEST_ENCOUNTERS"
-        print_message "Total observations: $total_observations, expected total: $TOTAL_TEST_OBS"
-        exit 2
+      if [[ "${total_patients}" == "${TOTAL_TEST_PATIENTS}" && "${total_encounters}" \
+              == "${TOTAL_TEST_ENCOUNTERS}" && "${total_observations}" == "${TOTAL_TEST_OBS}" ]] \
+          ; then
+          print_message "Pipeline transformation successfully completed."
+          timeout=false
+          break
+      else
+          sleep 20
+      fi
     fi
-  else
-    print_message "No parquet files available."
+  done
+
+  if [[ "${timeout}" == "true" ]]
+  then
+    print_message "Could not validate parquet files."
     exit 2
   fi
 }
@@ -433,8 +484,6 @@ setup "$@"
 fhir_source_query
 sleep 50
 run_pipeline "FULL"
-wait_for_completion
-sleep 30
 check_parquet false
 test_fhir_sink "FULL"
 
@@ -442,10 +491,13 @@ clear
 
 add_resource
 update_resource
+
+
+# Provide enough buffer time before triggering the incremental run so that the previous full run
+# completes fully (including creation of hive tables)
+sleep 60
 # Incremental run.
 run_pipeline "INCREMENTAL"
-wait_for_completion
-sleep 30
 check_parquet true
 fhir_source_query
 test_fhir_sink "INCREMENTAL"
