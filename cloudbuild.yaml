@@ -271,7 +271,7 @@ steps:
   args:
   - -c
   - 'cd dwh; ./validate_indicators.sh'
-  waitFor: ['Run E2E Test for JDBC mode with OpenMRS source']
+  waitFor: ['Run E2E Test for JDBC mode with OpenMRS source', 'Turn down HAPI Source and Sink Servers']
 
 - name: 'docker/compose'
   id: 'Turn down Webserver and HAPI Server'
