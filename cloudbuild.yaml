@@ -161,7 +161,7 @@ steps:
   entrypoint: /bin/bash
   args:
   - -c
-  - docker logs pipeline-controller
+  - docker logs -f --tail 10 pipeline-controller
   waitFor: ['Bring up controller and Spark containers']
 
 - name: '${_REPOSITORY}/e2e-tests/controller-spark:${_TAG}'
