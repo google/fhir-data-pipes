@@ -177,7 +177,7 @@ steps:
 
 - name: 'docker/compose'
   id: 'Launch OpenMRS Server and HAPI FHIR Sink Server'
-  args: [ '-f', './docker/openmrs-compose.yaml', '-f', './docker/sink-compose2.yml', 'up',
+  args: [ '-f', './docker/openmrs-compose.yaml', '-f', './docker/sink-compose2.yml', '-p', 'openmrs-project', 'up',
           '--force-recreate', '--remove-orphan', '-d' ]
   waitFor: ['Turn down FHIR Sink Servers']
 
