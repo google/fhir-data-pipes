@@ -40,13 +40,10 @@ esac
 
 case "$ZONE" in
   "belgium")
-    export VM_INSTANCE="pipeline-scaling-20240318-20240413-193428"
     export VM_ZONE="europe-west1-b"
     export SQL_ZONE="europe-west1"
     ;;
   "us-central")
-    export VM_INSTANCE=pipeline-scaling-20240508
-    # export VM_INSTANCE="pipeline-scaling-20240318-090525"
     export VM_ZONE="us-central1-a"
     export SQL_ZONE="us-central1"
     ;;
