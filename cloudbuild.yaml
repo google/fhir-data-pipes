@@ -153,8 +153,20 @@ steps:
   args: [ '-f', './docker/compose-controller-spark-sql-single.yaml', 'up',
           '--force-recreate', '-d' ]
 
+  # The controller logs don't appear in Cloud Build output because we run it in
+  # the detached mode. For debugging controller failures we can use something like
+  #  the following (and forcing the previous step to have 0 exit code).
+- name: 'gcr.io/cloud-builders/docker'
+  id: 'PRINT CONTROLLER LOGS'
+  entrypoint: /bin/bash
+  args:
+  - -c
+  - docker logs pipeline-controller
+  waitFor: ['Bring up controller and Spark containers']
+
 - name: '${_REPOSITORY}/e2e-tests/controller-spark:${_TAG}'
   id: 'Run E2E Test for Dockerized Controller and Spark Thriftserver'
+  waitFor: ['Bring up controller and Spark containers']
 
 # The controller logs don't appear in Cloud Build output because we run it in
 # the detached mode. For debugging controller failures we can use something like
