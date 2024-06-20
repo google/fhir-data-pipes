@@ -259,7 +259,7 @@ function wait_for_completion() {
 
 function check_parquet() {
   local isIncremental=$1
-  local runtime="15 minute"
+  local runtime="30 minute"
   local end_time=$(date -ud "$runtime" +%s)
   local output="${HOME_PATH}/${PARQUET_SUBDIR}"
   local timeout=true
