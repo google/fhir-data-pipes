@@ -180,10 +180,24 @@ function run_pipeline() {
 }
 
 function wait_for_completion() {
-  curl --location --request GET "${PIPELINE_CONTROLLER_URL}/status?" \
-  --connect-timeout 5 \
-  --header 'Content-Type: application/json' \
-  --header 'Accept: */*' -v
+  local runtime="15 minute"
+  local end_time=$(date -ud "$runtime" +%s)
+
+  while [[ $(date -u +%s) -le $end_time ]]
+  do
+    local pipeline_status=$(curl --location --request GET "${PIPELINE_CONTROLLER_URL}/status?" \
+    --connect-timeout 5 \
+    --header 'Content-Type: application/json' \
+    --header 'Accept: */*' -v \
+    | jq -r '.pipelineStatus')
+
+    if [[ "${pipeline_status}" == "RUNNING" ]]
+    then
+      sleep 5
+    else
+      break
+    fi
+  done
 }
 
 #######################################################################
@@ -201,10 +215,7 @@ function wait_for_completion() {
 #######################################################################
 function check_parquet() {
   local isIncremental=$1
-  local runtime="15 minute"
-  local end_time=$(date -ud "$runtime" +%s)
   local output="${HOME_PATH}/${PARQUET_SUBDIR}"
-  local timeout=true
 
   if [[ "${isIncremental}" == "true" ]]
   then
@@ -215,37 +226,33 @@ function check_parquet() {
     TOTAL_TEST_OBS=$((2*TOTAL_TEST_OBS))
   fi
 
-  while [[ $(date -u +%s) -le $end_time ]]
-  do
-    # check whether output directory has started receiving parquet files.
-    if [[ "$(ls -A $output)" ]]
-    then
-      local total_patients=$(java -Xms16g -Xmx16g -jar ./parquet-tools-1.11.1.jar rowcount \
-      "${output}/*/Patient/" | awk '{print $3}')
-      local total_encounters=$(java -Xms16g -Xmx16g -jar ./parquet-tools-1.11.1.jar rowcount \
-      "${output}/*/Encounter/" | awk '{print $3}')
-      local total_observations=$(java -Xms16g -Xmx16g -jar ./parquet-tools-1.11.1.jar rowcount \
-      "${output}/*/Observation/" | awk '{print $3}')
-
-      print_message "Total patients: $total_patients"
-      print_message "Total encounters: $total_encounters"
-      print_message "Total observations: $total_observations"
-
-      if [[ "${total_patients}" == "${TOTAL_TEST_PATIENTS}" && "${total_encounters}" \
-              == "${TOTAL_TEST_ENCOUNTERS}" && "${total_observations}" == "${TOTAL_TEST_OBS}" ]] \
-          ; then
-          print_message "Pipeline transformation successfully completed."
-          timeout=false
-          break
-      else
-          sleep 20
-      fi
-    fi
-  done
-
-  if [[ "${timeout}" == "true" ]]
+  # check whether output directory has received parquet files.
+  if [[ "$(ls -A $output)" ]]
   then
-    print_message "Could not validate parquet files."
+    local total_patients=$(java -Xms16g -Xmx16g -jar ./parquet-tools-1.11.1.jar rowcount \
+    "${output}/*/Patient/" | awk '{print $3}')
+    local total_encounters=$(java -Xms16g -Xmx16g -jar ./parquet-tools-1.11.1.jar rowcount \
+    "${output}/*/Encounter/" | awk '{print $3}')
+    local total_observations=$(java -Xms16g -Xmx16g -jar ./parquet-tools-1.11.1.jar rowcount \
+    "${output}/*/Observation/" | awk '{print $3}')
+
+    print_message "Total patients: $total_patients"
+    print_message "Total encounters: $total_encounters"
+    print_message "Total observations: $total_observations"
+
+    if [[ "${total_patients}" == "${TOTAL_TEST_PATIENTS}" && "${total_encounters}" \
+            == "${TOTAL_TEST_ENCOUNTERS}" && "${total_observations}" == "${TOTAL_TEST_OBS}" ]] \
+        ; then
+        print_message "Pipeline transformation successfully completed."
+    else
+        print_message "Mismatch in count of records, actual records are as shown below"
+        print_message "Actual total patients: $total_patients, expected total: $TOTAL_TEST_PATIENTS"
+        print_message "Actual total encounters: $total_encounters, expected total: $TOTAL_TEST_ENCOUNTERS"
+        print_message "Total observations: $total_observations, expected total: $TOTAL_TEST_OBS"
+        exit 2
+    fi
+  else
+    print_message "No parquet files available."
     exit 2
   fi
 }
@@ -434,12 +441,9 @@ clear
 
 add_resource
 update_resource
-
-# Provide enough buffer time before triggering the incremental run so that the previous full run
-# completes fully (including creation of hive tables)
-sleep 60
 # Incremental run.
 run_pipeline "INCREMENTAL"
+wait_for_completion
 check_parquet true
 fhir_source_query
 test_fhir_sink "INCREMENTAL"

@@ -159,13 +159,12 @@ steps:
 # The controller logs don't appear in Cloud Build output because we run it in
 # the detached mode. For debugging controller failures we can use something like
 #  the following (and forcing the previous step to have 0 exit code).
-- name: 'gcr.io/cloud-builders/docker'
-  id: 'PRINT CONTROLLER LOGS'
-  entrypoint: /bin/bash
-  args:
-  - -c
-  - docker logs e2e-tests-controller-spark
-  waitFor: ['Bring up controller and Spark containers']
+# - name: 'gcr.io/cloud-builders/docker'
+#   id: 'PRINT CONTROLLER LOGS'
+#   entrypoint: /bin/bash
+#   args:
+#   - -c
+#   - docker logs pipeline-controller
 
 - name: 'docker/compose'
   id: 'Bring down controller and Spark containers'
