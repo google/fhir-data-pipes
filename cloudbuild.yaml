@@ -31,7 +31,7 @@ steps:
   entrypoint: /bin/bash
   args:
   - -c
-  - mvn --no-transfer-progress -e install -Dlicense.skip=true -Dspotless.apply.skip=true
+  - mvn --no-transfer-progress -e -T 1C install -Dlicense.skip=true -Dspotless.apply.skip=true
   waitFor: ['-']
 
 - name: 'gcr.io/cloud-builders/docker'
@@ -186,6 +186,7 @@ steps:
   args:
   - -c
   - e2e-tests/wait_for_start.sh --use_docker_network
+  waitFor: ['Launch OpenMRS Server and HAPI FHIR Sink Server']
 
 - name: '${_REPOSITORY}/e2e-tests:${_TAG}'
   id: 'Launch Streaming Pipeline'
@@ -193,6 +194,7 @@ steps:
   args:
     - -c
     -  e2e-tests/wait_for_streaming.sh --use_docker_network
+  waitFor: ['Wait for Servers Start']
 
 - name: '${_REPOSITORY}/e2e-tests:${_TAG}'
   id: 'Run E2E Test for STREAMING, using OpenMRS Source'
@@ -202,6 +204,7 @@ steps:
     - SINK_SERVER=http://sink-server2:8080
     - STREAMING_TEST=--streaming
     - OPENMRS_TEST=--openmrs
+  waitFor: ['Launch Streaming Pipeline']
 
 - name: '${_REPOSITORY}/synthea-uploader:${_TAG}'
   id: 'Upload to OpenMRS'
@@ -210,6 +213,7 @@ steps:
     - INPUT_DIR=/workspace/synthea-hiv/sample_data
     - SINK_TYPE=OpenMRS
     - FHIR_ENDPOINT=http://openmrs:8080/openmrs/ws/fhir2/R4
+  waitFor: ['Run E2E Test for STREAMING, using OpenMRS Source']
 
 - name: '${_REPOSITORY}/batch-pipeline:${_TAG}'
   id: 'Run Batch Pipeline FHIR-search mode with OpenMRS source'
@@ -218,6 +222,7 @@ steps:
     - SINK_PATH=http://sink-server2:8080/fhir
     - SINK_USERNAME=hapi
     - SINK_PASSWORD=hapi
+  waitFor: ['Upload to OpenMRS']
 
 - name: '${_REPOSITORY}/e2e-tests:${_TAG}'
   id: 'Run E2E Test for FHIR-search mode with OpenMRS source'
@@ -226,6 +231,7 @@ steps:
     - DOCKER_NETWORK=--use_docker_network
     - SINK_SERVER=http://sink-server2:8080
     - OPENMRS_TEST=--openmrs
+  waitFor: ['Run Batch Pipeline FHIR-search mode with OpenMRS source']
 
 - name: '${_REPOSITORY}/batch-pipeline:${_TAG}'
   id: 'Run Batch Pipeline for JDBC mode with OpenMRS source'
@@ -236,6 +242,7 @@ steps:
     - SINK_USERNAME=hapi
     - SINK_PASSWORD=hapi
     - FHIR_DATABASE_CONFIG_PATH=/workspace/utils/dbz_event_to_fhir_config.json
+  waitFor: ['Run E2E Test for FHIR-search mode with OpenMRS source']
 
 - name: '${_REPOSITORY}/e2e-tests:${_TAG}'
   id: 'Run E2E Test for JDBC mode with OpenMRS source'
@@ -244,6 +251,7 @@ steps:
     - DOCKER_NETWORK=--use_docker_network
     - SINK_SERVER=http://sink-server2:8080
     - OPENMRS_TEST=--openmrs
+  waitFor: ['Run Batch Pipeline for JDBC mode with OpenMRS source']
 
 - name: '${_REPOSITORY}/e2e-tests:${_TAG}'
   id: 'Test Indicators'
@@ -251,10 +259,12 @@ steps:
   args:
   - -c
   - 'cd dwh; ./validate_indicators.sh'
+  waitFor: ['Run E2E Test for JDBC mode with OpenMRS source']
 
 - name: 'docker/compose'
   id: 'Turn down Webserver and HAPI Server'
   args: ['-f', './docker/openmrs-compose.yaml', '-f', './docker/sink-compose2.yml', 'down']
+  waitFor: ['Test Indicators']
 
 substitutions:
   # To use substitutions in your local build, use the flag --substitutions 
