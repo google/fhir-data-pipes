@@ -176,8 +176,8 @@ steps:
   args: [ '-f', './docker/hapi-compose.yml', '-f', './docker/sink-compose1.yml', 'down' ]
 
 - name: 'docker/compose'
-  id: 'Launch OpenMRS Server and HAPI FHIR Sink Server'
-  args: [ '-f', './docker/openmrs-compose.yaml', '-f', './docker/sink-compose2.yml', '-p', 'openmrs-project', 'up',
+  id: 'Launch OpenMRS Server and HAPI FHIR Sink Servers'
+  args: [ '-f', './docker/openmrs-compose.yaml', '-f', './docker/sink-compose2.yml', '-f', './docker/sink-compose3.yml', '-p', 'openmrs-project', 'up',
           '--force-recreate', '--remove-orphan', '-d' ]
   waitFor: ['Turn down FHIR Sink Servers']
 
@@ -239,18 +239,18 @@ steps:
   env:
     - JDBC_MODE_ENABLED=true
     - PARQUET_PATH=/workspace/e2e-tests/JDBC_OPENMRS
-    - SINK_PATH=http://sink-server2:8080/fhir
+    - SINK_PATH=http://sink-server3:8080/fhir
     - SINK_USERNAME=hapi
     - SINK_PASSWORD=hapi
     - FHIR_DATABASE_CONFIG_PATH=/workspace/utils/dbz_event_to_fhir_config.json
-  waitFor: ['Run E2E Test for FHIR-search mode with OpenMRS source']
+  waitFor: ['Upload to OpenMRS']
 
 - name: '${_REPOSITORY}/e2e-tests:${_TAG}'
   id: 'Run E2E Test for JDBC mode with OpenMRS source'
   env:
     - PARQUET_SUBDIR=JDBC_OPENMRS
     - DOCKER_NETWORK=--use_docker_network
-    - SINK_SERVER=http://sink-server2:8080
+    - SINK_SERVER=http://sink-server3:8080
     - OPENMRS_TEST=--openmrs
   waitFor: ['Run Batch Pipeline for JDBC mode with OpenMRS source']
 
@@ -260,11 +260,11 @@ steps:
   args:
   - -c
   - 'cd dwh; ./validate_indicators.sh'
-  waitFor: ['Run E2E Test for JDBC mode with OpenMRS source', 'Turn down HAPI Source and Sink Servers']
+  waitFor: ['Run E2E Test for FHIR-search mode with OpenMRS source', 'Run E2E Test for JDBC mode with OpenMRS source', 'Turn down HAPI Source and Sink Servers']
 
 - name: 'docker/compose'
   id: 'Turn down Webserver and HAPI Server'
-  args: ['-f', './docker/openmrs-compose.yaml', '-f', './docker/sink-compose2.yml', 'down']
+  args: ['-f', './docker/openmrs-compose.yaml', '-f', './docker/sink-compose2.yml', '-f', './docker/sink-compose3.yml', 'down']
   waitFor: ['Test Indicators']
 
 substitutions:
