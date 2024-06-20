@@ -187,7 +187,7 @@ steps:
   args:
   - -c
   - e2e-tests/wait_for_start.sh --use_docker_network
-  waitFor: ['Launch OpenMRS Server and HAPI FHIR Sink Server']
+  waitFor: ['Launch OpenMRS Server and HAPI FHIR Sink Servers']
 
 - name: '${_REPOSITORY}/e2e-tests:${_TAG}'
   id: 'Launch Streaming Pipeline'
