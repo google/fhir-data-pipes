@@ -296,6 +296,12 @@ function check_parquet() {
           timeout=false
           break
       else
+          print_message "Print error logs if any"
+          if [[ "$(ls -A $output/*/error.log)" ]]
+          then
+            cat ${output}/*/error.log
+            exit 2
+          fi
           sleep 20
       fi
     fi
