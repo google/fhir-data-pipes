@@ -48,14 +48,14 @@ function setup() {
 
     if [[ $1 = "--use_docker_network" ]] || [[ $2 = "--use_docker_network" ]]; then
       FHIR_SERVER_URL='http://hapi-server:8080'
-      SINK_SERVER='http://sink-server:8080'
+      SINK_SERVER='http://sink-server1:8080'
     fi
 
     hapi_server_check $FHIR_SERVER_URL
   else
     if [[ $1 = "--use_docker_network" ]] || [[ $2 = "--use_docker_network" ]]; then
       FHIR_SERVER_URL='http://openmrs:8080/openmrs/ws/fhir2/R4'
-      SINK_SERVER='http://sink-server:8080'
+      SINK_SERVER='http://sink-server2:8080'
     fi
 
     openmrs_server_check $FHIR_SERVER_URL
