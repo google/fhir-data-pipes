@@ -275,6 +275,12 @@ function check_parquet() {
 
   while [[ $(date -u +%s) -le $end_time ]]
   do
+    print_message "Print error logs if any"
+    if [[ "$(ls -A $output/*/error.log)" ]]
+    then
+      cat ${output}/*/error.log
+      exit 2
+    fi
     # check whether output directory has started receiving parquet files.
     if [[ "$(ls -A $output)" ]]
     then
@@ -296,12 +302,6 @@ function check_parquet() {
           timeout=false
           break
       else
-          print_message "Print error logs if any"
-          if [[ "$(ls -A $output/*/error.log)" ]]
-          then
-            cat ${output}/*/error.log
-            exit 2
-          fi
           sleep 20
       fi
     fi
