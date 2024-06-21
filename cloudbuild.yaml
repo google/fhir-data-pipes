@@ -144,6 +144,14 @@ steps:
   id: 'Launch HAPI FHIR Sink Server'
   args: [ '-f', './docker/sink-compose1.yml', 'up','--force-recreate', '-d' ]
 
+- name: 'gcr.io/cloud-builders/docker'
+  id: 'PRINT Sink Server LOGS'
+  entrypoint: /bin/bash
+  args:
+    - -c
+    - docker logs -f --tail 10 sink-server1
+  waitFor: ['Launch HAPI FHIR Sink Server']
+
 - name: 'docker/compose'
   id: 'Bring up controller and Spark containers'
   env:
@@ -152,6 +160,7 @@ steps:
     - FHIRDATA_SINKFHIRSERVERURL=http://sink-server1:8080/fhir
   args: [ '-f', './docker/compose-controller-spark-sql-single.yaml', 'up',
           '--force-recreate', '-d' ]
+  waitFor: ['Launch HAPI FHIR Sink Server']
 
 - name: 'gcr.io/cloud-builders/docker'
   id: 'PRINT CONTROLLER LOGS'
@@ -251,7 +260,7 @@ steps:
     - SINK_USERNAME=hapi
     - SINK_PASSWORD=hapi
     - FHIR_DATABASE_CONFIG_PATH=/workspace/utils/dbz_event_to_fhir_config.json
-  waitFor: ['Run Batch Pipeline for JDBC mode with OpenMRS source']
+  waitFor: ['Run E2E Test for FHIR-search mode with OpenMRS source']
 
 - name: '${_REPOSITORY}/e2e-tests:${_TAG}'
   id: 'Run E2E Test for JDBC mode with OpenMRS source'
