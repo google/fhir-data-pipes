@@ -150,9 +150,18 @@ steps:
     - PIPELINE_CONFIG=/workspace/docker/config
     - DWH_ROOT=/workspace/e2e-tests/controller-spark/dwh
     - FHIRDATA_SINKFHIRSERVERURL=http://sink-server1:8080/fhir
+    - FHIRDATA_RESOURCELIST=Patient,Encounter,Observation
   args: [ '-f', './docker/compose-controller-spark-sql-single.yaml', 'up',
           '--force-recreate', '-d' ]
   waitFor: ['Launch HAPI FHIR Sink Server']
+
+- name: 'gcr.io/cloud-builders/docker'
+  id: 'PRINT CONTROLLER LOGS'
+  entrypoint: /bin/bash
+  args:
+  - -c
+  - docker logs -f --tail 10 pipeline-controller
+  waitFor: ['Bring up controller and Spark containers']
 
 - name: '${_REPOSITORY}/e2e-tests/controller-spark:${_TAG}'
   id: 'Run E2E Test for Dockerized Controller and Spark Thriftserver'
