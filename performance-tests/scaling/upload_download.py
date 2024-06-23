@@ -21,6 +21,7 @@ JDBC_MODE = os.environ["JDBC_MODE"] == 'true'
 FHIR_ETL_RUNNER = os.environ["FHIR_ETL_RUNNER"]
 DATAFLOW_WORKERS = os.environ["DATAFLOW_WORKERS"]
 FLINK_PARALLEL = os.environ["FLINK_PARALLEL"]
+BATCH_SIZE = os.environ["BATCH_SIZE"]
 
 def main():
     shell(f"mkdir -p {TMP_DIR}")
@@ -49,6 +50,7 @@ def run_fhir_etl(parquet_dir):
         f"--runner={FHIR_ETL_RUNNER}",
         f"--resourceList=Patient,Encounter,Observation",
         f"--outputParquetPath={parquet_dir}",
+        f"--batchSize={BATCH_SIZE}",
     ]
     if FHIR_ETL_RUNNER == "DataflowRunner":
         common_etl_args.extend([

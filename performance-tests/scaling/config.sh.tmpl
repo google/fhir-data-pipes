@@ -22,6 +22,8 @@ export PROJECT_ID="fhir-analytics-test"
 export DATAFLOW_WORKERS=65
 # FlinkRunner parallelization
 export FLINK_PARALLEL=150
+# The number of resources to fetch in each API call.
+export BATCH_SIZE=1000
 
 export FHIR_SERVER_URL = "http://localhost:8080/fhir"
 export VM_INSTANCE="Name of your FHIR VM instance"
