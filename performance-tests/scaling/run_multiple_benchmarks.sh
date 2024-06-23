@@ -23,8 +23,8 @@ set -o nounset
 
 for p in $MULTIPLE_PATIENTS; do
   for j in $MULTIPLE_JDBC_MODE; do
-    for f in $MULTIPLE_FHIR_ETL_RUNNER; do
-      for server in $MUTLIPLE_FHIR_SERVER_URL; do
+    for server in $MUTLIPLE_FHIR_SERVER_URL; do
+      for f in $MULTIPLE_FHIR_ETL_RUNNER; do
         export PATIENTS=$p
         export JDBC_MODE=$j
         export FHIR_ETL_RUNNER=$f
