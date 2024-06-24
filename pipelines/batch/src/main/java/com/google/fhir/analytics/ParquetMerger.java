@@ -15,9 +15,7 @@
  */
 package com.google.fhir.analytics;
 
-import ca.uhn.fhir.context.FhirContext;
-import ca.uhn.fhir.context.FhirVersionEnum;
-import com.cerner.bunsen.FhirContexts;
+import com.cerner.bunsen.exception.ProfileException;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Sets;
 import java.io.IOException;
@@ -29,7 +27,7 @@ import java.util.List;
 import java.util.Set;
 import org.apache.avro.generic.GenericRecord;
 import org.apache.beam.sdk.Pipeline;
-import org.apache.beam.sdk.coders.AvroCoder;
+import org.apache.beam.sdk.extensions.avro.coders.AvroCoder;
 import org.apache.beam.sdk.io.FileIO;
 import org.apache.beam.sdk.io.FileIO.ReadableFile;
 import org.apache.beam.sdk.io.parquet.ParquetIO;
@@ -70,7 +68,11 @@ public class ParquetMerger {
    * {@code resourceType}. It then groups the records by ID key and returns the grouped PCollection.
    */
   private static PCollection<KV<String, Iterable<GenericRecord>>> readAndGroupById(
-      Pipeline pipeline, List<DwhFiles> dwhFilesList, String resourceType) {
+      Pipeline pipeline,
+      List<DwhFiles> dwhFilesList,
+      String resourceType,
+      AvroConversionUtil avroConversionUtil)
+      throws ProfileException {
 
     // Reading all parquet files at once instead of one set at a time, reduces the number of Flink
     // reshuffle operations by one.
@@ -80,12 +82,13 @@ public class ParquetMerger {
             .apply(FileIO.matchAll())
             .apply(FileIO.readMatches());
 
-    // TODO make the FHIR version configurable: https://github.com/google/fhir-data-pipes/issues/400
+    // The assumption here is that the schema of the old parquet files is same as the current
+    // schema, otherwise reading of the older records fail even if the new Schema is just an
+    // extension. In general, if the schema changes due to addition of new extensions, then the
+    // merging process fail. It is recommended to recreate the entire parquet files using the new
+    // schema again using the batch run.
     PCollection<GenericRecord> records =
-        inputFiles.apply(
-            ParquetIO.readFiles(
-                AvroConversionUtil.getInstance()
-                    .getResourceSchema(resourceType, FhirVersionEnum.R4)));
+        inputFiles.apply(ParquetIO.readFiles(avroConversionUtil.getResourceSchema(resourceType)));
 
     return records
         .apply(
@@ -172,8 +175,9 @@ public class ParquetMerger {
     return lastRecord;
   }
 
-  static List<Pipeline> createMergerPipelines(ParquetMergerOptions options, FhirContext fhirContext)
-      throws IOException {
+  static List<Pipeline> createMergerPipelines(
+      ParquetMergerOptions options, AvroConversionUtil avroConversionUtil)
+      throws IOException, ProfileException {
     Preconditions.checkArgument(!options.getDwh1().isEmpty());
     Preconditions.checkArgument(!options.getDwh2().isEmpty());
     Preconditions.checkArgument(!options.getMergedDwh().isEmpty());
@@ -186,9 +190,9 @@ public class ParquetMerger {
     String dwh1 = options.getDwh1();
     String dwh2 = options.getDwh2();
     String mergedDwh = options.getMergedDwh();
-    DwhFiles dwhFiles1 = DwhFiles.forRoot(dwh1);
-    DwhFiles dwhFiles2 = DwhFiles.forRoot(dwh2);
-    DwhFiles mergedDwhFiles = DwhFiles.forRoot(mergedDwh);
+    DwhFiles dwhFiles1 = DwhFiles.forRoot(dwh1, avroConversionUtil.getFhirContext());
+    DwhFiles dwhFiles2 = DwhFiles.forRoot(dwh2, avroConversionUtil.getFhirContext());
+    DwhFiles mergedDwhFiles = DwhFiles.forRoot(mergedDwh, avroConversionUtil.getFhirContext());
 
     Set<String> resourceTypes1 = dwhFiles1.findNonEmptyFhirResourceTypes();
     Set<String> resourceTypes2 = dwhFiles2.findNonEmptyFhirResourceTypes();
@@ -208,7 +212,7 @@ public class ParquetMerger {
       pipelines.add(pipeline);
       log.info("Merging resource type {}", type);
       PCollection<KV<String, Iterable<GenericRecord>>> groupedRecords =
-          readAndGroupById(pipeline, Arrays.asList(dwhFiles1, dwhFiles2), type);
+          readAndGroupById(pipeline, Arrays.asList(dwhFiles1, dwhFiles2), type, avroConversionUtil);
       PCollection<GenericRecord> merged =
           groupedRecords
               .apply(
@@ -224,12 +228,10 @@ public class ParquetMerger {
                           }
                         }
                       }))
-              .setCoder(
-                  AvroCoder.of(
-                      AvroConversionUtil.getInstance().getResourceSchema(type, fhirContext)));
+              .setCoder(AvroCoder.of(avroConversionUtil.getResourceSchema(type)));
 
       Sink parquetSink =
-          ParquetIO.sink(AvroConversionUtil.getInstance().getResourceSchema(type, fhirContext))
+          ParquetIO.sink(avroConversionUtil.getResourceSchema(type))
               .withCompressionCodec(CompressionCodecName.SNAPPY);
       if (options.getRowGroupSizeForParquetFiles() > 0) {
         parquetSink = parquetSink.withRowGroupSize(options.getRowGroupSizeForParquetFiles());
@@ -247,22 +249,27 @@ public class ParquetMerger {
     return pipelines;
   }
 
-  public static void main(String[] args) throws IOException {
+  public static void main(String[] args) throws IOException, ProfileException {
 
     AvroConversionUtil.initializeAvroConverters();
     PipelineOptionsFactory.register(ParquetMergerOptions.class);
     ParquetMergerOptions options =
         PipelineOptionsFactory.fromArgs(args).withValidation().as(ParquetMergerOptions.class);
     log.info("Flags: " + options);
-    FhirContext fhirContext = FhirContexts.forR4();
+    AvroConversionUtil avroConversionUtil =
+        AvroConversionUtil.getInstance(
+            options.getFhirVersion(),
+            options.getStructureDefinitionsPath(),
+            options.getRecursiveDepth());
     if (options.getDwh1().isEmpty()
         || options.getDwh2().isEmpty()
         || options.getMergedDwh().isEmpty()) {
       throw new IllegalArgumentException("All of --dwh1, --dwh2, and --mergedDwh should be set!");
     }
 
-    List<Pipeline> pipelines = createMergerPipelines(options, fhirContext);
-    EtlUtils.runMultipleMergerPipelinesWithTimestamp(pipelines, options);
+    List<Pipeline> pipelines = createMergerPipelines(options, avroConversionUtil);
+    EtlUtils.runMultipleMergerPipelinesWithTimestamp(
+        pipelines, options, avroConversionUtil.getFhirContext());
     log.info("DONE!");
   }
 }

@@ -16,15 +16,15 @@
 package com.google.fhir.analytics;
 
 import ca.uhn.fhir.context.FhirContext;
+import ca.uhn.fhir.context.FhirVersionEnum;
 import ca.uhn.fhir.context.ParserOptions;
 import ca.uhn.fhir.parser.IParser;
-import com.cerner.bunsen.FhirContexts;
+import com.cerner.bunsen.exception.ProfileException;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Strings;
 import com.google.fhir.analytics.JdbcConnectionPools.DataSourceConfig;
 import com.google.fhir.analytics.model.DatabaseConfiguration;
 import com.google.fhir.analytics.view.ViewApplicationException;
-import java.beans.PropertyVetoException;
 import java.io.IOException;
 import java.sql.SQLException;
 import java.util.Set;
@@ -45,13 +45,18 @@ import org.slf4j.LoggerFactory;
  * to Avro and JSON records. The non-abstract sub-classes should implement `ProcessElement` using
  * `processBundle` auxiliary method. Note the code reuse pattern that we really need here is
  * composition (not inheritance) but because of Beam complexities (e.g., certain work need to be
- * done during `setup()` where PipelienOptions not available) we use inheritance.
+ * done during `setup()` where PipelienOptions not available) we use inheritance. A better approach
+ * is to create the utility instances (e.g., `fetchUtil`) once at the beginning of ParDo or
+ * StartBundle method using a synchronized method. Those functions have acccess to PipelienOptions.
+ * That way we can get rid of many instance variables that mirror PipelienOptions fields.
  *
  * @param <T> The type of the elements of the input PCollection.
  */
 abstract class FetchSearchPageFn<T> extends DoFn<T, KV<String, Integer>> {
 
   private static final Logger log = LoggerFactory.getLogger(FetchSearchPageFn.class);
+
+  private static final String DATAFLOW_RUNNER = "DataflowRunner";
 
   private final Counter numFetchedResources;
 
@@ -87,11 +92,11 @@ abstract class FetchSearchPageFn<T> extends DoFn<T, KV<String, Integer>> {
 
   private final int rowGroupSize;
 
+  private final int recursiveDepth;
+
   protected final DataSourceConfig sinkDbConfig;
 
   protected final String viewDefinitionsDir;
-
-  private final int initialPoolSize;
 
   private final int maxPoolSize;
 
@@ -107,7 +112,11 @@ abstract class FetchSearchPageFn<T> extends DoFn<T, KV<String, Integer>> {
 
   protected IParser parser;
 
-  protected FhirContext fhirContext;
+  private final FhirVersionEnum fhirVersionEnum;
+
+  private final String structureDefinitionsPath;
+
+  protected AvroConversionUtil avroConversionUtil;
 
   FetchSearchPageFn(FhirEtlOptions options, String stageIdentifier) {
     this.sinkPath = options.getFhirSinkPath();
@@ -124,6 +133,9 @@ abstract class FetchSearchPageFn<T> extends DoFn<T, KV<String, Integer>> {
     this.secondsToFlush = options.getSecondsToFlushParquetFiles();
     this.rowGroupSize = options.getRowGroupSizeForParquetFiles();
     this.viewDefinitionsDir = options.getViewDefinitionsDir();
+    this.structureDefinitionsPath = options.getStructureDefinitionsPath();
+    this.fhirVersionEnum = options.getFhirVersion();
+    this.recursiveDepth = options.getRecursiveDepth();
     if (options.getSinkDbConfigPath().isEmpty()) {
       this.sinkDbConfig = null;
     } else {
@@ -137,7 +149,6 @@ abstract class FetchSearchPageFn<T> extends DoFn<T, KV<String, Integer>> {
         throw new IllegalArgumentException(error);
       }
     }
-    this.initialPoolSize = options.getJdbcInitialPoolSize();
     this.maxPoolSize = options.getJdbcMaxPoolSize();
     this.numFetchedResources =
         Metrics.counter(
@@ -158,11 +169,11 @@ abstract class FetchSearchPageFn<T> extends DoFn<T, KV<String, Integer>> {
   }
 
   @Setup
-  public void setup() throws SQLException, PropertyVetoException {
+  public void setup() throws SQLException, ProfileException {
     log.debug("Starting setup for stage " + stageIdentifier);
-    // TODO make this configurable
-    //   https://github.com/GoogleCloudPlatform/openmrs-fhir-analytics/issues/400
-    fhirContext = FhirContexts.forR4();
+    avroConversionUtil =
+        AvroConversionUtil.getInstance(fhirVersionEnum, structureDefinitionsPath, recursiveDepth);
+    FhirContext fhirContext = avroConversionUtil.getFhirContext();
     // The documentation for `FhirContext` claims that it is thread-safe but looking at the code,
     // it is not obvious if it is. This might be an issue when we write to it, like the next line.
     fhirContext.setParserOptions(
@@ -193,23 +204,55 @@ abstract class FetchSearchPageFn<T> extends DoFn<T, KV<String, Integer>> {
       parquetUtil =
           new ParquetUtil(
               fhirContext.getVersion().getVersion(),
+              structureDefinitionsPath,
               parquetFile,
               secondsToFlush,
               rowGroupSize,
-              stageIdentifier + "_");
+              stageIdentifier + "_",
+              recursiveDepth);
     }
     if (sinkDbConfig != null) {
       DataSource jdbcSink =
-          JdbcConnectionPools.getInstance()
-              .getPooledDataSource(sinkDbConfig, initialPoolSize, maxPoolSize);
+          JdbcConnectionPools.getInstance().getPooledDataSource(sinkDbConfig, maxPoolSize);
       // TODO separate view generation from writing; TBD in a more generic version of:
       //  https://github.com/google/fhir-data-pipes/issues/288
       jdbcWriter = new JdbcResourceWriter(jdbcSink, viewDefinitionsDir, fhirContext);
     }
   }
 
+  /**
+   * Note this is a hacky solution to address a DataflowRunner specific issue where @Teardown method
+   * is not guaranteed to be called. Closing/flushing Parquet files in @FinishBundle is not a good
+   * idea in general because it makes the size of those files a function of how Beam divides the
+   * work into Bundles. That's why we only do this on DataflowRunner which tend to have very large
+   * Bundles.
+   *
+   * <p>This should be overridden by all subclasses because the `context` type is not fully
+   * specified at this parent class (because of the T type argument). All subclass implementations
+   * should call `super.finishBundle` though. TODO: implement a way to enforce this at compile time;
+   * this is currently caught at run time.
+   */
+  @FinishBundle
+  public void finishBundle(FinishBundleContext context) {
+    if (DATAFLOW_RUNNER.equals(context.getPipelineOptions().getRunner().getSimpleName())) {
+      try {
+        if (parquetUtil != null) {
+          parquetUtil.flushAll();
+        }
+      } catch (IOException | ProfileException e) {
+        // There is not much that we can do at finishBundle so just throw a RuntimeException
+        log.error("At finishBundle caught exception ", e);
+        throw new IllegalStateException(e);
+      }
+    }
+  }
+
   @Teardown
   public void teardown() throws IOException {
+    // Note this is _not_ guaranteed to be called; for example when the worker process is being
+    // stopped, the runner may choose not to call teardown; currently this only happens for
+    // DataflowRunner and that's why we have the finishBundle method above:
+    // https://beam.apache.org/releases/javadoc/current/org/apache/beam/sdk/transforms/DoFn.Teardown.html
     if (parquetUtil != null) {
       parquetUtil.closeAllWriters();
     }
@@ -220,16 +263,22 @@ abstract class FetchSearchPageFn<T> extends DoFn<T, KV<String, Integer>> {
   }
 
   protected void processBundle(Bundle bundle)
-      throws IOException, SQLException, ViewApplicationException {
+      throws IOException, SQLException, ViewApplicationException, ProfileException {
     this.processBundle(bundle, null);
   }
 
   protected void processBundle(Bundle bundle, @Nullable Set<String> resourceTypes)
-      throws IOException, SQLException, ViewApplicationException {
+      throws IOException, SQLException, ViewApplicationException, ProfileException {
     if (bundle != null && bundle.getEntry() != null) {
       numFetchedResources.inc(bundle.getEntry().size());
       if (parquetUtil != null) {
         long startTime = System.currentTimeMillis();
+        // TODO: The right way for writing Parquet records is to cache them and wait
+        //  until processing a Beam Bundle is done, i.e., write in @FinishBundle.
+        //  Otherwise, if a Beam Bundle fails in the middle, we will get duplicate records.
+        //  This may also apply to when we write into a sink DB or another FHIR-server (below),
+        //  unless if we take care of duplicate writes (which is for example the case when we
+        //  apply ViewDefinition to a resource and delete rows with the same `id` first).
         parquetUtil.writeRecords(bundle, resourceTypes);
         totalGenerateTimeMillis.inc(System.currentTimeMillis() - startTime);
       }

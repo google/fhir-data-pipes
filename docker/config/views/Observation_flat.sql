@@ -1,5 +1,5 @@
 CREATE OR REPLACE VIEW Observation_flat AS
-SELECT O.id AS obs_id, O.subject.patientId AS patient_id,
+SELECT O.id AS id, O.subject.patientId AS patient_id,
   O.encounter.encounterId as encounter_id,
   O.status, OCC.code, OCC.`system` AS code_sys,
   O.value.quantity.value AS val_quantity,

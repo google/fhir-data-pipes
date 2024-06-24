@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2023 Google LLC
+ * Copyright 2020-2024 Google LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 package com.google.fhir.analytics;
 
 import ca.uhn.fhir.rest.api.SummaryEnum;
+import com.cerner.bunsen.exception.ProfileException;
 import com.google.fhir.analytics.view.ViewApplicationException;
 import java.io.IOException;
 import java.sql.SQLException;
@@ -52,10 +53,14 @@ public class FetchPatientHistory extends PTransform<PCollection<KV<String, Integ
 
     fetchSearchPageFn =
         new FetchSearchPageFn<KV<String, Integer>>(options, stageId) {
+          @Override
+          public void finishBundle(FinishBundleContext context) {
+            super.finishBundle(context);
+          }
 
           @ProcessElement
           public void ProcessElement(@Element KV<String, Integer> patientIdCount)
-              throws IOException, SQLException, ViewApplicationException {
+              throws IOException, SQLException, ViewApplicationException, ProfileException {
             if (startDate.isEmpty()) {
               return;
             }

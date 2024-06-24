@@ -1,0 +1,3681 @@
+{
+  "type": "record",
+  "name": "Patient",
+  "namespace": "com.cerner.bunsen.stu3.avro",
+  "doc": "Structure for FHIR type Patient",
+  "fields": [
+    {
+      "name": "id",
+      "type": [
+        "null",
+        "string"
+      ],
+      "doc": "Field for FHIR property id",
+      "default": null
+    },
+    {
+      "name": "meta",
+      "type": [
+        "null",
+        {
+          "type": "record",
+          "name": "PatientMeta",
+          "doc": "Structure for FHIR type Meta",
+          "fields": [
+            {
+              "name": "versionId",
+              "type": [
+                "null",
+                "string"
+              ],
+              "doc": "Field for FHIR property versionId",
+              "default": null
+            },
+            {
+              "name": "lastUpdated",
+              "type": [
+                "null",
+                "string"
+              ],
+              "doc": "Field for FHIR property lastUpdated",
+              "default": null
+            },
+            {
+              "name": "profile",
+              "type": [
+                "null",
+                {
+                  "type": "array",
+                  "items": "string"
+                }
+              ],
+              "doc": "Field for FHIR property profile",
+              "default": null
+            },
+            {
+              "name": "security",
+              "type": [
+                "null",
+                {
+                  "type": "array",
+                  "items": {
+                    "type": "record",
+                    "name": "PatientMetaCoding",
+                    "doc": "Structure for FHIR type Coding",
+                    "fields": [
+                      {
+                        "name": "system",
+                        "type": [
+                          "null",
+                          "string"
+                        ],
+                        "doc": "Field for FHIR property system",
+                        "default": null
+                      },
+                      {
+                        "name": "version",
+                        "type": [
+                          "null",
+                          "string"
+                        ],
+                        "doc": "Field for FHIR property version",
+                        "default": null
+                      },
+                      {
+                        "name": "code",
+                        "type": [
+                          "null",
+                          "string"
+                        ],
+                        "doc": "Field for FHIR property code",
+                        "default": null
+                      },
+                      {
+                        "name": "display",
+                        "type": [
+                          "null",
+                          "string"
+                        ],
+                        "doc": "Field for FHIR property display",
+                        "default": null
+                      },
+                      {
+                        "name": "userSelected",
+                        "type": [
+                          "null",
+                          "boolean"
+                        ],
+                        "doc": "Field for FHIR property userSelected",
+                        "default": null
+                      }
+                    ]
+                  }
+                }
+              ],
+              "doc": "Field for FHIR property security",
+              "default": null
+            },
+            {
+              "name": "tag",
+              "type": [
+                "null",
+                {
+                  "type": "array",
+                  "items": "PatientMetaCoding"
+                }
+              ],
+              "doc": "Field for FHIR property tag",
+              "default": null
+            }
+          ]
+        }
+      ],
+      "doc": "Field for FHIR property meta",
+      "default": null
+    },
+    {
+      "name": "implicitRules",
+      "type": [
+        "null",
+        "string"
+      ],
+      "doc": "Field for FHIR property implicitRules",
+      "default": null
+    },
+    {
+      "name": "language",
+      "type": [
+        "null",
+        "string"
+      ],
+      "doc": "Field for FHIR property language",
+      "default": null
+    },
+    {
+      "name": "text",
+      "type": [
+        "null",
+        {
+          "type": "record",
+          "name": "PatientNarrative",
+          "doc": "Structure for FHIR type Narrative",
+          "fields": [
+            {
+              "name": "status",
+              "type": [
+                "null",
+                "string"
+              ],
+              "doc": "Field for FHIR property status",
+              "default": null
+            },
+            {
+              "name": "div",
+              "type": [
+                "null",
+                "string"
+              ],
+              "doc": "Field for FHIR property div",
+              "default": null
+            }
+          ]
+        }
+      ],
+      "doc": "Field for FHIR property text",
+      "default": null
+    },
+    {
+      "name": "contained",
+      "type": [
+        "null",
+        {
+          "type": "array",
+          "items": {
+            "type": "record",
+            "name": "PatientResource",
+            "doc": "Structure for FHIR type Resource",
+            "fields": [
+              {
+                "name": "meta",
+                "type": [
+                  "null",
+                  {
+                    "type": "record",
+                    "name": "PatientResourceMeta",
+                    "doc": "Structure for FHIR type Meta",
+                    "fields": [
+                      {
+                        "name": "versionId",
+                        "type": [
+                          "null",
+                          "string"
+                        ],
+                        "doc": "Field for FHIR property versionId",
+                        "default": null
+                      },
+                      {
+                        "name": "lastUpdated",
+                        "type": [
+                          "null",
+                          "string"
+                        ],
+                        "doc": "Field for FHIR property lastUpdated",
+                        "default": null
+                      },
+                      {
+                        "name": "profile",
+                        "type": [
+                          "null",
+                          {
+                            "type": "array",
+                            "items": "string"
+                          }
+                        ],
+                        "doc": "Field for FHIR property profile",
+                        "default": null
+                      },
+                      {
+                        "name": "security",
+                        "type": [
+                          "null",
+                          {
+                            "type": "array",
+                            "items": {
+                              "type": "record",
+                              "name": "PatientResourceMetaCoding",
+                              "doc": "Structure for FHIR type Coding",
+                              "fields": [
+                                {
+                                  "name": "system",
+                                  "type": [
+                                    "null",
+                                    "string"
+                                  ],
+                                  "doc": "Field for FHIR property system",
+                                  "default": null
+                                },
+                                {
+                                  "name": "version",
+                                  "type": [
+                                    "null",
+                                    "string"
+                                  ],
+                                  "doc": "Field for FHIR property version",
+                                  "default": null
+                                },
+                                {
+                                  "name": "code",
+                                  "type": [
+                                    "null",
+                                    "string"
+                                  ],
+                                  "doc": "Field for FHIR property code",
+                                  "default": null
+                                },
+                                {
+                                  "name": "display",
+                                  "type": [
+                                    "null",
+                                    "string"
+                                  ],
+                                  "doc": "Field for FHIR property display",
+                                  "default": null
+                                },
+                                {
+                                  "name": "userSelected",
+                                  "type": [
+                                    "null",
+                                    "boolean"
+                                  ],
+                                  "doc": "Field for FHIR property userSelected",
+                                  "default": null
+                                }
+                              ]
+                            }
+                          }
+                        ],
+                        "doc": "Field for FHIR property security",
+                        "default": null
+                      },
+                      {
+                        "name": "tag",
+                        "type": [
+                          "null",
+                          {
+                            "type": "array",
+                            "items": "PatientResourceMetaCoding"
+                          }
+                        ],
+                        "doc": "Field for FHIR property tag",
+                        "default": null
+                      }
+                    ]
+                  }
+                ],
+                "doc": "Field for FHIR property meta",
+                "default": null
+              },
+              {
+                "name": "implicitRules",
+                "type": [
+                  "null",
+                  "string"
+                ],
+                "doc": "Field for FHIR property implicitRules",
+                "default": null
+              },
+              {
+                "name": "language",
+                "type": [
+                  "null",
+                  "string"
+                ],
+                "doc": "Field for FHIR property language",
+                "default": null
+              }
+            ]
+          }
+        }
+      ],
+      "doc": "Field for FHIR property contained",
+      "default": null
+    },
+    {
+      "name": "identifier",
+      "type": [
+        "null",
+        {
+          "type": "array",
+          "items": {
+            "type": "record",
+            "name": "PatientIdentifier",
+            "doc": "Structure for FHIR type Identifier",
+            "fields": [
+              {
+                "name": "use",
+                "type": [
+                  "null",
+                  "string"
+                ],
+                "doc": "Field for FHIR property use",
+                "default": null
+              },
+              {
+                "name": "type",
+                "type": [
+                  "null",
+                  {
+                    "type": "record",
+                    "name": "PatientIdentifierCodeableConcept",
+                    "doc": "Structure for FHIR type CodeableConcept",
+                    "fields": [
+                      {
+                        "name": "coding",
+                        "type": [
+                          "null",
+                          {
+                            "type": "array",
+                            "items": {
+                              "type": "record",
+                              "name": "PatientIdentifierCodeableConceptCoding",
+                              "doc": "Structure for FHIR type Coding",
+                              "fields": [
+                                {
+                                  "name": "system",
+                                  "type": [
+                                    "null",
+                                    "string"
+                                  ],
+                                  "doc": "Field for FHIR property system",
+                                  "default": null
+                                },
+                                {
+                                  "name": "version",
+                                  "type": [
+                                    "null",
+                                    "string"
+                                  ],
+                                  "doc": "Field for FHIR property version",
+                                  "default": null
+                                },
+                                {
+                                  "name": "code",
+                                  "type": [
+                                    "null",
+                                    "string"
+                                  ],
+                                  "doc": "Field for FHIR property code",
+                                  "default": null
+                                },
+                                {
+                                  "name": "display",
+                                  "type": [
+                                    "null",
+                                    "string"
+                                  ],
+                                  "doc": "Field for FHIR property display",
+                                  "default": null
+                                },
+                                {
+                                  "name": "userSelected",
+                                  "type": [
+                                    "null",
+                                    "boolean"
+                                  ],
+                                  "doc": "Field for FHIR property userSelected",
+                                  "default": null
+                                }
+                              ]
+                            }
+                          }
+                        ],
+                        "doc": "Field for FHIR property coding",
+                        "default": null
+                      },
+                      {
+                        "name": "text",
+                        "type": [
+                          "null",
+                          "string"
+                        ],
+                        "doc": "Field for FHIR property text",
+                        "default": null
+                      }
+                    ]
+                  }
+                ],
+                "doc": "Field for FHIR property type",
+                "default": null
+              },
+              {
+                "name": "system",
+                "type": [
+                  "null",
+                  "string"
+                ],
+                "doc": "Field for FHIR property system",
+                "default": null
+              },
+              {
+                "name": "value",
+                "type": [
+                  "null",
+                  "string"
+                ],
+                "doc": "Field for FHIR property value",
+                "default": null
+              },
+              {
+                "name": "period",
+                "type": [
+                  "null",
+                  {
+                    "type": "record",
+                    "name": "PatientIdentifierPeriod",
+                    "doc": "Structure for FHIR type Period",
+                    "fields": [
+                      {
+                        "name": "start",
+                        "type": [
+                          "null",
+                          "string"
+                        ],
+                        "doc": "Field for FHIR property start",
+                        "default": null
+                      },
+                      {
+                        "name": "end",
+                        "type": [
+                          "null",
+                          "string"
+                        ],
+                        "doc": "Field for FHIR property end",
+                        "default": null
+                      }
+                    ]
+                  }
+                ],
+                "doc": "Field for FHIR property period",
+                "default": null
+              },
+              {
+                "name": "assigner",
+                "type": [
+                  "null",
+                  {
+                    "type": "record",
+                    "name": "PatientIdentifierAssignerReference",
+                    "doc": "Structure for FHIR type PatientIdentifierAssignerReference",
+                    "fields": [
+                      {
+                        "name": "organizationId",
+                        "type": [
+                          "null",
+                          "string"
+                        ],
+                        "doc": "Reference field",
+                        "default": null
+                      },
+                      {
+                        "name": "id",
+                        "type": [
+                          "null",
+                          "string"
+                        ],
+                        "doc": "Reference field",
+                        "default": null
+                      },
+                      {
+                        "name": "reference",
+                        "type": [
+                          "null",
+                          "string"
+                        ],
+                        "doc": "Reference field",
+                        "default": null
+                      },
+                      {
+                        "name": "identifier",
+                        "type": [
+                          "null",
+                          {
+                            "type": "record",
+                            "name": "PatientIdentifierReferenceIdentifier",
+                            "doc": "Structure for FHIR type Identifier",
+                            "fields": [
+                              {
+                                "name": "use",
+                                "type": [
+                                  "null",
+                                  "string"
+                                ],
+                                "doc": "Field for FHIR property use",
+                                "default": null
+                              },
+                              {
+                                "name": "type",
+                                "type": [
+                                  "null",
+                                  {
+                                    "type": "record",
+                                    "name": "PatientIdentifierReferenceIdentifierCodeableConcept",
+                                    "doc": "Structure for FHIR type CodeableConcept",
+                                    "fields": [
+                                      {
+                                        "name": "coding",
+                                        "type": [
+                                          "null",
+                                          {
+                                            "type": "array",
+                                            "items": {
+                                              "type": "record",
+                                              "name": "PatientIdentifierReferenceIdentifierCodeableConceptCoding",
+                                              "doc": "Structure for FHIR type Coding",
+                                              "fields": [
+                                                {
+                                                  "name": "system",
+                                                  "type": [
+                                                    "null",
+                                                    "string"
+                                                  ],
+                                                  "doc": "Field for FHIR property system",
+                                                  "default": null
+                                                },
+                                                {
+                                                  "name": "version",
+                                                  "type": [
+                                                    "null",
+                                                    "string"
+                                                  ],
+                                                  "doc": "Field for FHIR property version",
+                                                  "default": null
+                                                },
+                                                {
+                                                  "name": "code",
+                                                  "type": [
+                                                    "null",
+                                                    "string"
+                                                  ],
+                                                  "doc": "Field for FHIR property code",
+                                                  "default": null
+                                                },
+                                                {
+                                                  "name": "display",
+                                                  "type": [
+                                                    "null",
+                                                    "string"
+                                                  ],
+                                                  "doc": "Field for FHIR property display",
+                                                  "default": null
+                                                },
+                                                {
+                                                  "name": "userSelected",
+                                                  "type": [
+                                                    "null",
+                                                    "boolean"
+                                                  ],
+                                                  "doc": "Field for FHIR property userSelected",
+                                                  "default": null
+                                                }
+                                              ]
+                                            }
+                                          }
+                                        ],
+                                        "doc": "Field for FHIR property coding",
+                                        "default": null
+                                      },
+                                      {
+                                        "name": "text",
+                                        "type": [
+                                          "null",
+                                          "string"
+                                        ],
+                                        "doc": "Field for FHIR property text",
+                                        "default": null
+                                      }
+                                    ]
+                                  }
+                                ],
+                                "doc": "Field for FHIR property type",
+                                "default": null
+                              },
+                              {
+                                "name": "system",
+                                "type": [
+                                  "null",
+                                  "string"
+                                ],
+                                "doc": "Field for FHIR property system",
+                                "default": null
+                              },
+                              {
+                                "name": "value",
+                                "type": [
+                                  "null",
+                                  "string"
+                                ],
+                                "doc": "Field for FHIR property value",
+                                "default": null
+                              },
+                              {
+                                "name": "period",
+                                "type": [
+                                  "null",
+                                  {
+                                    "type": "record",
+                                    "name": "PatientIdentifierReferenceIdentifierPeriod",
+                                    "doc": "Structure for FHIR type Period",
+                                    "fields": [
+                                      {
+                                        "name": "start",
+                                        "type": [
+                                          "null",
+                                          "string"
+                                        ],
+                                        "doc": "Field for FHIR property start",
+                                        "default": null
+                                      },
+                                      {
+                                        "name": "end",
+                                        "type": [
+                                          "null",
+                                          "string"
+                                        ],
+                                        "doc": "Field for FHIR property end",
+                                        "default": null
+                                      }
+                                    ]
+                                  }
+                                ],
+                                "doc": "Field for FHIR property period",
+                                "default": null
+                              },
+                              {
+                                "name": "assigner",
+                                "type": [
+                                  "null",
+                                  {
+                                    "type": "record",
+                                    "name": "PatientIdentifierReferenceIdentifierAssignerReference",
+                                    "doc": "Structure for FHIR type PatientIdentifierReferenceIdentifierAssignerReference",
+                                    "fields": [
+                                      {
+                                        "name": "organizationId",
+                                        "type": [
+                                          "null",
+                                          "string"
+                                        ],
+                                        "doc": "Reference field",
+                                        "default": null
+                                      },
+                                      {
+                                        "name": "id",
+                                        "type": [
+                                          "null",
+                                          "string"
+                                        ],
+                                        "doc": "Reference field",
+                                        "default": null
+                                      },
+                                      {
+                                        "name": "reference",
+                                        "type": [
+                                          "null",
+                                          "string"
+                                        ],
+                                        "doc": "Reference field",
+                                        "default": null
+                                      },
+                                      {
+                                        "name": "display",
+                                        "type": [
+                                          "null",
+                                          "string"
+                                        ],
+                                        "doc": "Reference field",
+                                        "default": null
+                                      }
+                                    ]
+                                  }
+                                ],
+                                "doc": "Field for FHIR property assigner",
+                                "default": null
+                              }
+                            ]
+                          }
+                        ],
+                        "doc": "Reference field",
+                        "default": null
+                      },
+                      {
+                        "name": "display",
+                        "type": [
+                          "null",
+                          "string"
+                        ],
+                        "doc": "Reference field",
+                        "default": null
+                      }
+                    ]
+                  }
+                ],
+                "doc": "Field for FHIR property assigner",
+                "default": null
+              }
+            ]
+          }
+        }
+      ],
+      "doc": "Field for FHIR property identifier",
+      "default": null
+    },
+    {
+      "name": "active",
+      "type": [
+        "null",
+        "boolean"
+      ],
+      "doc": "Field for FHIR property active",
+      "default": null
+    },
+    {
+      "name": "name",
+      "type": [
+        "null",
+        {
+          "type": "array",
+          "items": {
+            "type": "record",
+            "name": "PatientHumanName",
+            "doc": "Structure for FHIR type HumanName",
+            "fields": [
+              {
+                "name": "use",
+                "type": [
+                  "null",
+                  "string"
+                ],
+                "doc": "Field for FHIR property use",
+                "default": null
+              },
+              {
+                "name": "text",
+                "type": [
+                  "null",
+                  "string"
+                ],
+                "doc": "Field for FHIR property text",
+                "default": null
+              },
+              {
+                "name": "family",
+                "type": [
+                  "null",
+                  "string"
+                ],
+                "doc": "Field for FHIR property family",
+                "default": null
+              },
+              {
+                "name": "given",
+                "type": [
+                  "null",
+                  {
+                    "type": "array",
+                    "items": "string"
+                  }
+                ],
+                "doc": "Field for FHIR property given",
+                "default": null
+              },
+              {
+                "name": "prefix",
+                "type": [
+                  "null",
+                  {
+                    "type": "array",
+                    "items": "string"
+                  }
+                ],
+                "doc": "Field for FHIR property prefix",
+                "default": null
+              },
+              {
+                "name": "suffix",
+                "type": [
+                  "null",
+                  {
+                    "type": "array",
+                    "items": "string"
+                  }
+                ],
+                "doc": "Field for FHIR property suffix",
+                "default": null
+              },
+              {
+                "name": "period",
+                "type": [
+                  "null",
+                  {
+                    "type": "record",
+                    "name": "PatientHumanNamePeriod",
+                    "doc": "Structure for FHIR type Period",
+                    "fields": [
+                      {
+                        "name": "start",
+                        "type": [
+                          "null",
+                          "string"
+                        ],
+                        "doc": "Field for FHIR property start",
+                        "default": null
+                      },
+                      {
+                        "name": "end",
+                        "type": [
+                          "null",
+                          "string"
+                        ],
+                        "doc": "Field for FHIR property end",
+                        "default": null
+                      }
+                    ]
+                  }
+                ],
+                "doc": "Field for FHIR property period",
+                "default": null
+              }
+            ]
+          }
+        }
+      ],
+      "doc": "Field for FHIR property name",
+      "default": null
+    },
+    {
+      "name": "telecom",
+      "type": [
+        "null",
+        {
+          "type": "array",
+          "items": {
+            "type": "record",
+            "name": "PatientContactPoint",
+            "doc": "Structure for FHIR type ContactPoint",
+            "fields": [
+              {
+                "name": "system",
+                "type": [
+                  "null",
+                  "string"
+                ],
+                "doc": "Field for FHIR property system",
+                "default": null
+              },
+              {
+                "name": "value",
+                "type": [
+                  "null",
+                  "string"
+                ],
+                "doc": "Field for FHIR property value",
+                "default": null
+              },
+              {
+                "name": "use",
+                "type": [
+                  "null",
+                  "string"
+                ],
+                "doc": "Field for FHIR property use",
+                "default": null
+              },
+              {
+                "name": "rank",
+                "type": [
+                  "null",
+                  "int"
+                ],
+                "doc": "Field for FHIR property rank",
+                "default": null
+              },
+              {
+                "name": "period",
+                "type": [
+                  "null",
+                  {
+                    "type": "record",
+                    "name": "PatientContactPointPeriod",
+                    "doc": "Structure for FHIR type Period",
+                    "fields": [
+                      {
+                        "name": "start",
+                        "type": [
+                          "null",
+                          "string"
+                        ],
+                        "doc": "Field for FHIR property start",
+                        "default": null
+                      },
+                      {
+                        "name": "end",
+                        "type": [
+                          "null",
+                          "string"
+                        ],
+                        "doc": "Field for FHIR property end",
+                        "default": null
+                      }
+                    ]
+                  }
+                ],
+                "doc": "Field for FHIR property period",
+                "default": null
+              }
+            ]
+          }
+        }
+      ],
+      "doc": "Field for FHIR property telecom",
+      "default": null
+    },
+    {
+      "name": "gender",
+      "type": [
+        "null",
+        "string"
+      ],
+      "doc": "Field for FHIR property gender",
+      "default": null
+    },
+    {
+      "name": "birthDate",
+      "type": [
+        "null",
+        "string"
+      ],
+      "doc": "Field for FHIR property birthDate",
+      "default": null
+    },
+    {
+      "name": "deceased",
+      "type": [
+        "null",
+        {
+          "type": "record",
+          "name": "ChoiceBooleanDateTime",
+          "doc": "Structure for FHIR choice type ",
+          "fields": [
+            {
+              "name": "boolean",
+              "type": [
+                "null",
+                "boolean"
+              ],
+              "doc": "Choice field",
+              "default": null
+            },
+            {
+              "name": "dateTime",
+              "type": [
+                "null",
+                "string"
+              ],
+              "doc": "Choice field",
+              "default": null
+            }
+          ]
+        }
+      ],
+      "doc": "Field for FHIR property deceased",
+      "default": null
+    },
+    {
+      "name": "address",
+      "type": [
+        "null",
+        {
+          "type": "array",
+          "items": {
+            "type": "record",
+            "name": "PatientAddress",
+            "doc": "Structure for FHIR type Address",
+            "fields": [
+              {
+                "name": "use",
+                "type": [
+                  "null",
+                  "string"
+                ],
+                "doc": "Field for FHIR property use",
+                "default": null
+              },
+              {
+                "name": "type",
+                "type": [
+                  "null",
+                  "string"
+                ],
+                "doc": "Field for FHIR property type",
+                "default": null
+              },
+              {
+                "name": "text",
+                "type": [
+                  "null",
+                  "string"
+                ],
+                "doc": "Field for FHIR property text",
+                "default": null
+              },
+              {
+                "name": "line",
+                "type": [
+                  "null",
+                  {
+                    "type": "array",
+                    "items": "string"
+                  }
+                ],
+                "doc": "Field for FHIR property line",
+                "default": null
+              },
+              {
+                "name": "city",
+                "type": [
+                  "null",
+                  "string"
+                ],
+                "doc": "Field for FHIR property city",
+                "default": null
+              },
+              {
+                "name": "district",
+                "type": [
+                  "null",
+                  "string"
+                ],
+                "doc": "Field for FHIR property district",
+                "default": null
+              },
+              {
+                "name": "state",
+                "type": [
+                  "null",
+                  "string"
+                ],
+                "doc": "Field for FHIR property state",
+                "default": null
+              },
+              {
+                "name": "postalCode",
+                "type": [
+                  "null",
+                  "string"
+                ],
+                "doc": "Field for FHIR property postalCode",
+                "default": null
+              },
+              {
+                "name": "country",
+                "type": [
+                  "null",
+                  "string"
+                ],
+                "doc": "Field for FHIR property country",
+                "default": null
+              },
+              {
+                "name": "period",
+                "type": [
+                  "null",
+                  {
+                    "type": "record",
+                    "name": "PatientAddressPeriod",
+                    "doc": "Structure for FHIR type Period",
+                    "fields": [
+                      {
+                        "name": "start",
+                        "type": [
+                          "null",
+                          "string"
+                        ],
+                        "doc": "Field for FHIR property start",
+                        "default": null
+                      },
+                      {
+                        "name": "end",
+                        "type": [
+                          "null",
+                          "string"
+                        ],
+                        "doc": "Field for FHIR property end",
+                        "default": null
+                      }
+                    ]
+                  }
+                ],
+                "doc": "Field for FHIR property period",
+                "default": null
+              }
+            ]
+          }
+        }
+      ],
+      "doc": "Field for FHIR property address",
+      "default": null
+    },
+    {
+      "name": "maritalStatus",
+      "type": [
+        "null",
+        {
+          "type": "record",
+          "name": "PatientCodeableConcept",
+          "doc": "Structure for FHIR type CodeableConcept",
+          "fields": [
+            {
+              "name": "coding",
+              "type": [
+                "null",
+                {
+                  "type": "array",
+                  "items": {
+                    "type": "record",
+                    "name": "PatientCodeableConceptCoding",
+                    "doc": "Structure for FHIR type Coding",
+                    "fields": [
+                      {
+                        "name": "system",
+                        "type": [
+                          "null",
+                          "string"
+                        ],
+                        "doc": "Field for FHIR property system",
+                        "default": null
+                      },
+                      {
+                        "name": "version",
+                        "type": [
+                          "null",
+                          "string"
+                        ],
+                        "doc": "Field for FHIR property version",
+                        "default": null
+                      },
+                      {
+                        "name": "code",
+                        "type": [
+                          "null",
+                          "string"
+                        ],
+                        "doc": "Field for FHIR property code",
+                        "default": null
+                      },
+                      {
+                        "name": "display",
+                        "type": [
+                          "null",
+                          "string"
+                        ],
+                        "doc": "Field for FHIR property display",
+                        "default": null
+                      },
+                      {
+                        "name": "userSelected",
+                        "type": [
+                          "null",
+                          "boolean"
+                        ],
+                        "doc": "Field for FHIR property userSelected",
+                        "default": null
+                      }
+                    ]
+                  }
+                }
+              ],
+              "doc": "Field for FHIR property coding",
+              "default": null
+            },
+            {
+              "name": "text",
+              "type": [
+                "null",
+                "string"
+              ],
+              "doc": "Field for FHIR property text",
+              "default": null
+            }
+          ]
+        }
+      ],
+      "doc": "Field for FHIR property maritalStatus",
+      "default": null
+    },
+    {
+      "name": "multipleBirth",
+      "type": [
+        "null",
+        {
+          "type": "record",
+          "name": "ChoiceBooleanInteger",
+          "doc": "Structure for FHIR choice type ",
+          "fields": [
+            {
+              "name": "boolean",
+              "type": [
+                "null",
+                "boolean"
+              ],
+              "doc": "Choice field",
+              "default": null
+            },
+            {
+              "name": "integer",
+              "type": [
+                "null",
+                "int"
+              ],
+              "doc": "Choice field",
+              "default": null
+            }
+          ]
+        }
+      ],
+      "doc": "Field for FHIR property multipleBirth",
+      "default": null
+    },
+    {
+      "name": "photo",
+      "type": [
+        "null",
+        {
+          "type": "array",
+          "items": {
+            "type": "record",
+            "name": "PatientAttachment",
+            "doc": "Structure for FHIR type Attachment",
+            "fields": [
+              {
+                "name": "contentType",
+                "type": [
+                  "null",
+                  "string"
+                ],
+                "doc": "Field for FHIR property contentType",
+                "default": null
+              },
+              {
+                "name": "language",
+                "type": [
+                  "null",
+                  "string"
+                ],
+                "doc": "Field for FHIR property language",
+                "default": null
+              },
+              {
+                "name": "data",
+                "type": [
+                  "null",
+                  "string"
+                ],
+                "doc": "Field for FHIR property data",
+                "default": null
+              },
+              {
+                "name": "url",
+                "type": [
+                  "null",
+                  "string"
+                ],
+                "doc": "Field for FHIR property url",
+                "default": null
+              },
+              {
+                "name": "size",
+                "type": [
+                  "null",
+                  "int"
+                ],
+                "doc": "Field for FHIR property size",
+                "default": null
+              },
+              {
+                "name": "hash",
+                "type": [
+                  "null",
+                  "string"
+                ],
+                "doc": "Field for FHIR property hash",
+                "default": null
+              },
+              {
+                "name": "title",
+                "type": [
+                  "null",
+                  "string"
+                ],
+                "doc": "Field for FHIR property title",
+                "default": null
+              },
+              {
+                "name": "creation",
+                "type": [
+                  "null",
+                  "string"
+                ],
+                "doc": "Field for FHIR property creation",
+                "default": null
+              }
+            ]
+          }
+        }
+      ],
+      "doc": "Field for FHIR property photo",
+      "default": null
+    },
+    {
+      "name": "contact",
+      "type": [
+        "null",
+        {
+          "type": "array",
+          "items": {
+            "type": "record",
+            "name": "PatientContact",
+            "doc": "Structure for FHIR type contact",
+            "fields": [
+              {
+                "name": "id",
+                "type": [
+                  "null",
+                  "string"
+                ],
+                "doc": "Field for FHIR property id",
+                "default": null
+              },
+              {
+                "name": "relationship",
+                "type": [
+                  "null",
+                  {
+                    "type": "array",
+                    "items": {
+                      "type": "record",
+                      "name": "PatientContactCodeableConcept",
+                      "doc": "Structure for FHIR type CodeableConcept",
+                      "fields": [
+                        {
+                          "name": "coding",
+                          "type": [
+                            "null",
+                            {
+                              "type": "array",
+                              "items": {
+                                "type": "record",
+                                "name": "PatientContactCodeableConceptCoding",
+                                "doc": "Structure for FHIR type Coding",
+                                "fields": [
+                                  {
+                                    "name": "system",
+                                    "type": [
+                                      "null",
+                                      "string"
+                                    ],
+                                    "doc": "Field for FHIR property system",
+                                    "default": null
+                                  },
+                                  {
+                                    "name": "version",
+                                    "type": [
+                                      "null",
+                                      "string"
+                                    ],
+                                    "doc": "Field for FHIR property version",
+                                    "default": null
+                                  },
+                                  {
+                                    "name": "code",
+                                    "type": [
+                                      "null",
+                                      "string"
+                                    ],
+                                    "doc": "Field for FHIR property code",
+                                    "default": null
+                                  },
+                                  {
+                                    "name": "display",
+                                    "type": [
+                                      "null",
+                                      "string"
+                                    ],
+                                    "doc": "Field for FHIR property display",
+                                    "default": null
+                                  },
+                                  {
+                                    "name": "userSelected",
+                                    "type": [
+                                      "null",
+                                      "boolean"
+                                    ],
+                                    "doc": "Field for FHIR property userSelected",
+                                    "default": null
+                                  }
+                                ]
+                              }
+                            }
+                          ],
+                          "doc": "Field for FHIR property coding",
+                          "default": null
+                        },
+                        {
+                          "name": "text",
+                          "type": [
+                            "null",
+                            "string"
+                          ],
+                          "doc": "Field for FHIR property text",
+                          "default": null
+                        }
+                      ]
+                    }
+                  }
+                ],
+                "doc": "Field for FHIR property relationship",
+                "default": null
+              },
+              {
+                "name": "name",
+                "type": [
+                  "null",
+                  {
+                    "type": "record",
+                    "name": "PatientContactHumanName",
+                    "doc": "Structure for FHIR type HumanName",
+                    "fields": [
+                      {
+                        "name": "use",
+                        "type": [
+                          "null",
+                          "string"
+                        ],
+                        "doc": "Field for FHIR property use",
+                        "default": null
+                      },
+                      {
+                        "name": "text",
+                        "type": [
+                          "null",
+                          "string"
+                        ],
+                        "doc": "Field for FHIR property text",
+                        "default": null
+                      },
+                      {
+                        "name": "family",
+                        "type": [
+                          "null",
+                          "string"
+                        ],
+                        "doc": "Field for FHIR property family",
+                        "default": null
+                      },
+                      {
+                        "name": "given",
+                        "type": [
+                          "null",
+                          {
+                            "type": "array",
+                            "items": "string"
+                          }
+                        ],
+                        "doc": "Field for FHIR property given",
+                        "default": null
+                      },
+                      {
+                        "name": "prefix",
+                        "type": [
+                          "null",
+                          {
+                            "type": "array",
+                            "items": "string"
+                          }
+                        ],
+                        "doc": "Field for FHIR property prefix",
+                        "default": null
+                      },
+                      {
+                        "name": "suffix",
+                        "type": [
+                          "null",
+                          {
+                            "type": "array",
+                            "items": "string"
+                          }
+                        ],
+                        "doc": "Field for FHIR property suffix",
+                        "default": null
+                      },
+                      {
+                        "name": "period",
+                        "type": [
+                          "null",
+                          {
+                            "type": "record",
+                            "name": "PatientContactHumanNamePeriod",
+                            "doc": "Structure for FHIR type Period",
+                            "fields": [
+                              {
+                                "name": "start",
+                                "type": [
+                                  "null",
+                                  "string"
+                                ],
+                                "doc": "Field for FHIR property start",
+                                "default": null
+                              },
+                              {
+                                "name": "end",
+                                "type": [
+                                  "null",
+                                  "string"
+                                ],
+                                "doc": "Field for FHIR property end",
+                                "default": null
+                              }
+                            ]
+                          }
+                        ],
+                        "doc": "Field for FHIR property period",
+                        "default": null
+                      }
+                    ]
+                  }
+                ],
+                "doc": "Field for FHIR property name",
+                "default": null
+              },
+              {
+                "name": "telecom",
+                "type": [
+                  "null",
+                  {
+                    "type": "array",
+                    "items": {
+                      "type": "record",
+                      "name": "PatientContactContactPoint",
+                      "doc": "Structure for FHIR type ContactPoint",
+                      "fields": [
+                        {
+                          "name": "system",
+                          "type": [
+                            "null",
+                            "string"
+                          ],
+                          "doc": "Field for FHIR property system",
+                          "default": null
+                        },
+                        {
+                          "name": "value",
+                          "type": [
+                            "null",
+                            "string"
+                          ],
+                          "doc": "Field for FHIR property value",
+                          "default": null
+                        },
+                        {
+                          "name": "use",
+                          "type": [
+                            "null",
+                            "string"
+                          ],
+                          "doc": "Field for FHIR property use",
+                          "default": null
+                        },
+                        {
+                          "name": "rank",
+                          "type": [
+                            "null",
+                            "int"
+                          ],
+                          "doc": "Field for FHIR property rank",
+                          "default": null
+                        },
+                        {
+                          "name": "period",
+                          "type": [
+                            "null",
+                            {
+                              "type": "record",
+                              "name": "PatientContactContactPointPeriod",
+                              "doc": "Structure for FHIR type Period",
+                              "fields": [
+                                {
+                                  "name": "start",
+                                  "type": [
+                                    "null",
+                                    "string"
+                                  ],
+                                  "doc": "Field for FHIR property start",
+                                  "default": null
+                                },
+                                {
+                                  "name": "end",
+                                  "type": [
+                                    "null",
+                                    "string"
+                                  ],
+                                  "doc": "Field for FHIR property end",
+                                  "default": null
+                                }
+                              ]
+                            }
+                          ],
+                          "doc": "Field for FHIR property period",
+                          "default": null
+                        }
+                      ]
+                    }
+                  }
+                ],
+                "doc": "Field for FHIR property telecom",
+                "default": null
+              },
+              {
+                "name": "address",
+                "type": [
+                  "null",
+                  {
+                    "type": "record",
+                    "name": "PatientContactAddress",
+                    "doc": "Structure for FHIR type Address",
+                    "fields": [
+                      {
+                        "name": "use",
+                        "type": [
+                          "null",
+                          "string"
+                        ],
+                        "doc": "Field for FHIR property use",
+                        "default": null
+                      },
+                      {
+                        "name": "type",
+                        "type": [
+                          "null",
+                          "string"
+                        ],
+                        "doc": "Field for FHIR property type",
+                        "default": null
+                      },
+                      {
+                        "name": "text",
+                        "type": [
+                          "null",
+                          "string"
+                        ],
+                        "doc": "Field for FHIR property text",
+                        "default": null
+                      },
+                      {
+                        "name": "line",
+                        "type": [
+                          "null",
+                          {
+                            "type": "array",
+                            "items": "string"
+                          }
+                        ],
+                        "doc": "Field for FHIR property line",
+                        "default": null
+                      },
+                      {
+                        "name": "city",
+                        "type": [
+                          "null",
+                          "string"
+                        ],
+                        "doc": "Field for FHIR property city",
+                        "default": null
+                      },
+                      {
+                        "name": "district",
+                        "type": [
+                          "null",
+                          "string"
+                        ],
+                        "doc": "Field for FHIR property district",
+                        "default": null
+                      },
+                      {
+                        "name": "state",
+                        "type": [
+                          "null",
+                          "string"
+                        ],
+                        "doc": "Field for FHIR property state",
+                        "default": null
+                      },
+                      {
+                        "name": "postalCode",
+                        "type": [
+                          "null",
+                          "string"
+                        ],
+                        "doc": "Field for FHIR property postalCode",
+                        "default": null
+                      },
+                      {
+                        "name": "country",
+                        "type": [
+                          "null",
+                          "string"
+                        ],
+                        "doc": "Field for FHIR property country",
+                        "default": null
+                      },
+                      {
+                        "name": "period",
+                        "type": [
+                          "null",
+                          {
+                            "type": "record",
+                            "name": "PatientContactAddressPeriod",
+                            "doc": "Structure for FHIR type Period",
+                            "fields": [
+                              {
+                                "name": "start",
+                                "type": [
+                                  "null",
+                                  "string"
+                                ],
+                                "doc": "Field for FHIR property start",
+                                "default": null
+                              },
+                              {
+                                "name": "end",
+                                "type": [
+                                  "null",
+                                  "string"
+                                ],
+                                "doc": "Field for FHIR property end",
+                                "default": null
+                              }
+                            ]
+                          }
+                        ],
+                        "doc": "Field for FHIR property period",
+                        "default": null
+                      }
+                    ]
+                  }
+                ],
+                "doc": "Field for FHIR property address",
+                "default": null
+              },
+              {
+                "name": "gender",
+                "type": [
+                  "null",
+                  "string"
+                ],
+                "doc": "Field for FHIR property gender",
+                "default": null
+              },
+              {
+                "name": "organization",
+                "type": [
+                  "null",
+                  {
+                    "type": "record",
+                    "name": "PatientContactOrganizationReference",
+                    "doc": "Structure for FHIR type PatientContactOrganizationReference",
+                    "fields": [
+                      {
+                        "name": "organizationId",
+                        "type": [
+                          "null",
+                          "string"
+                        ],
+                        "doc": "Reference field",
+                        "default": null
+                      },
+                      {
+                        "name": "id",
+                        "type": [
+                          "null",
+                          "string"
+                        ],
+                        "doc": "Reference field",
+                        "default": null
+                      },
+                      {
+                        "name": "reference",
+                        "type": [
+                          "null",
+                          "string"
+                        ],
+                        "doc": "Reference field",
+                        "default": null
+                      },
+                      {
+                        "name": "identifier",
+                        "type": [
+                          "null",
+                          {
+                            "type": "record",
+                            "name": "PatientContactReferenceIdentifier",
+                            "doc": "Structure for FHIR type Identifier",
+                            "fields": [
+                              {
+                                "name": "use",
+                                "type": [
+                                  "null",
+                                  "string"
+                                ],
+                                "doc": "Field for FHIR property use",
+                                "default": null
+                              },
+                              {
+                                "name": "type",
+                                "type": [
+                                  "null",
+                                  {
+                                    "type": "record",
+                                    "name": "PatientContactReferenceIdentifierCodeableConcept",
+                                    "doc": "Structure for FHIR type CodeableConcept",
+                                    "fields": [
+                                      {
+                                        "name": "coding",
+                                        "type": [
+                                          "null",
+                                          {
+                                            "type": "array",
+                                            "items": {
+                                              "type": "record",
+                                              "name": "PatientContactReferenceIdentifierCodeableConceptCoding",
+                                              "doc": "Structure for FHIR type Coding",
+                                              "fields": [
+                                                {
+                                                  "name": "system",
+                                                  "type": [
+                                                    "null",
+                                                    "string"
+                                                  ],
+                                                  "doc": "Field for FHIR property system",
+                                                  "default": null
+                                                },
+                                                {
+                                                  "name": "version",
+                                                  "type": [
+                                                    "null",
+                                                    "string"
+                                                  ],
+                                                  "doc": "Field for FHIR property version",
+                                                  "default": null
+                                                },
+                                                {
+                                                  "name": "code",
+                                                  "type": [
+                                                    "null",
+                                                    "string"
+                                                  ],
+                                                  "doc": "Field for FHIR property code",
+                                                  "default": null
+                                                },
+                                                {
+                                                  "name": "display",
+                                                  "type": [
+                                                    "null",
+                                                    "string"
+                                                  ],
+                                                  "doc": "Field for FHIR property display",
+                                                  "default": null
+                                                },
+                                                {
+                                                  "name": "userSelected",
+                                                  "type": [
+                                                    "null",
+                                                    "boolean"
+                                                  ],
+                                                  "doc": "Field for FHIR property userSelected",
+                                                  "default": null
+                                                }
+                                              ]
+                                            }
+                                          }
+                                        ],
+                                        "doc": "Field for FHIR property coding",
+                                        "default": null
+                                      },
+                                      {
+                                        "name": "text",
+                                        "type": [
+                                          "null",
+                                          "string"
+                                        ],
+                                        "doc": "Field for FHIR property text",
+                                        "default": null
+                                      }
+                                    ]
+                                  }
+                                ],
+                                "doc": "Field for FHIR property type",
+                                "default": null
+                              },
+                              {
+                                "name": "system",
+                                "type": [
+                                  "null",
+                                  "string"
+                                ],
+                                "doc": "Field for FHIR property system",
+                                "default": null
+                              },
+                              {
+                                "name": "value",
+                                "type": [
+                                  "null",
+                                  "string"
+                                ],
+                                "doc": "Field for FHIR property value",
+                                "default": null
+                              },
+                              {
+                                "name": "period",
+                                "type": [
+                                  "null",
+                                  {
+                                    "type": "record",
+                                    "name": "PatientContactReferenceIdentifierPeriod",
+                                    "doc": "Structure for FHIR type Period",
+                                    "fields": [
+                                      {
+                                        "name": "start",
+                                        "type": [
+                                          "null",
+                                          "string"
+                                        ],
+                                        "doc": "Field for FHIR property start",
+                                        "default": null
+                                      },
+                                      {
+                                        "name": "end",
+                                        "type": [
+                                          "null",
+                                          "string"
+                                        ],
+                                        "doc": "Field for FHIR property end",
+                                        "default": null
+                                      }
+                                    ]
+                                  }
+                                ],
+                                "doc": "Field for FHIR property period",
+                                "default": null
+                              },
+                              {
+                                "name": "assigner",
+                                "type": [
+                                  "null",
+                                  {
+                                    "type": "record",
+                                    "name": "PatientContactReferenceIdentifierAssignerReference",
+                                    "doc": "Structure for FHIR type PatientContactReferenceIdentifierAssignerReference",
+                                    "fields": [
+                                      {
+                                        "name": "organizationId",
+                                        "type": [
+                                          "null",
+                                          "string"
+                                        ],
+                                        "doc": "Reference field",
+                                        "default": null
+                                      },
+                                      {
+                                        "name": "id",
+                                        "type": [
+                                          "null",
+                                          "string"
+                                        ],
+                                        "doc": "Reference field",
+                                        "default": null
+                                      },
+                                      {
+                                        "name": "reference",
+                                        "type": [
+                                          "null",
+                                          "string"
+                                        ],
+                                        "doc": "Reference field",
+                                        "default": null
+                                      },
+                                      {
+                                        "name": "identifier",
+                                        "type": [
+                                          "null",
+                                          {
+                                            "type": "record",
+                                            "name": "PatientContactReferenceIdentifierReferenceIdentifier",
+                                            "doc": "Structure for FHIR type Identifier",
+                                            "fields": [
+                                              {
+                                                "name": "use",
+                                                "type": [
+                                                  "null",
+                                                  "string"
+                                                ],
+                                                "doc": "Field for FHIR property use",
+                                                "default": null
+                                              },
+                                              {
+                                                "name": "type",
+                                                "type": [
+                                                  "null",
+                                                  {
+                                                    "type": "record",
+                                                    "name": "PatientContactReferenceIdentifierReferenceIdentifierCodeableConcept",
+                                                    "doc": "Structure for FHIR type CodeableConcept",
+                                                    "fields": [
+                                                      {
+                                                        "name": "coding",
+                                                        "type": [
+                                                          "null",
+                                                          {
+                                                            "type": "array",
+                                                            "items": {
+                                                              "type": "record",
+                                                              "name": "PatientContactReferenceIdentifierReferenceIdentifierCodeableConceptCoding",
+                                                              "doc": "Structure for FHIR type Coding",
+                                                              "fields": [
+                                                                {
+                                                                  "name": "system",
+                                                                  "type": [
+                                                                    "null",
+                                                                    "string"
+                                                                  ],
+                                                                  "doc": "Field for FHIR property system",
+                                                                  "default": null
+                                                                },
+                                                                {
+                                                                  "name": "version",
+                                                                  "type": [
+                                                                    "null",
+                                                                    "string"
+                                                                  ],
+                                                                  "doc": "Field for FHIR property version",
+                                                                  "default": null
+                                                                },
+                                                                {
+                                                                  "name": "code",
+                                                                  "type": [
+                                                                    "null",
+                                                                    "string"
+                                                                  ],
+                                                                  "doc": "Field for FHIR property code",
+                                                                  "default": null
+                                                                },
+                                                                {
+                                                                  "name": "display",
+                                                                  "type": [
+                                                                    "null",
+                                                                    "string"
+                                                                  ],
+                                                                  "doc": "Field for FHIR property display",
+                                                                  "default": null
+                                                                },
+                                                                {
+                                                                  "name": "userSelected",
+                                                                  "type": [
+                                                                    "null",
+                                                                    "boolean"
+                                                                  ],
+                                                                  "doc": "Field for FHIR property userSelected",
+                                                                  "default": null
+                                                                }
+                                                              ]
+                                                            }
+                                                          }
+                                                        ],
+                                                        "doc": "Field for FHIR property coding",
+                                                        "default": null
+                                                      },
+                                                      {
+                                                        "name": "text",
+                                                        "type": [
+                                                          "null",
+                                                          "string"
+                                                        ],
+                                                        "doc": "Field for FHIR property text",
+                                                        "default": null
+                                                      }
+                                                    ]
+                                                  }
+                                                ],
+                                                "doc": "Field for FHIR property type",
+                                                "default": null
+                                              },
+                                              {
+                                                "name": "system",
+                                                "type": [
+                                                  "null",
+                                                  "string"
+                                                ],
+                                                "doc": "Field for FHIR property system",
+                                                "default": null
+                                              },
+                                              {
+                                                "name": "value",
+                                                "type": [
+                                                  "null",
+                                                  "string"
+                                                ],
+                                                "doc": "Field for FHIR property value",
+                                                "default": null
+                                              },
+                                              {
+                                                "name": "period",
+                                                "type": [
+                                                  "null",
+                                                  {
+                                                    "type": "record",
+                                                    "name": "PatientContactReferenceIdentifierReferenceIdentifierPeriod",
+                                                    "doc": "Structure for FHIR type Period",
+                                                    "fields": [
+                                                      {
+                                                        "name": "start",
+                                                        "type": [
+                                                          "null",
+                                                          "string"
+                                                        ],
+                                                        "doc": "Field for FHIR property start",
+                                                        "default": null
+                                                      },
+                                                      {
+                                                        "name": "end",
+                                                        "type": [
+                                                          "null",
+                                                          "string"
+                                                        ],
+                                                        "doc": "Field for FHIR property end",
+                                                        "default": null
+                                                      }
+                                                    ]
+                                                  }
+                                                ],
+                                                "doc": "Field for FHIR property period",
+                                                "default": null
+                                              },
+                                              {
+                                                "name": "assigner",
+                                                "type": [
+                                                  "null",
+                                                  {
+                                                    "type": "record",
+                                                    "name": "PatientContactReferenceIdentifierReferenceIdentifierAssignerReference",
+                                                    "doc": "Structure for FHIR type PatientContactReferenceIdentifierReferenceIdentifierAssignerReference",
+                                                    "fields": [
+                                                      {
+                                                        "name": "organizationId",
+                                                        "type": [
+                                                          "null",
+                                                          "string"
+                                                        ],
+                                                        "doc": "Reference field",
+                                                        "default": null
+                                                      }
+                                                    ]
+                                                  }
+                                                ],
+                                                "doc": "Field for FHIR property assigner",
+                                                "default": null
+                                              }
+                                            ]
+                                          }
+                                        ],
+                                        "doc": "Reference field",
+                                        "default": null
+                                      },
+                                      {
+                                        "name": "display",
+                                        "type": [
+                                          "null",
+                                          "string"
+                                        ],
+                                        "doc": "Reference field",
+                                        "default": null
+                                      }
+                                    ]
+                                  }
+                                ],
+                                "doc": "Field for FHIR property assigner",
+                                "default": null
+                              }
+                            ]
+                          }
+                        ],
+                        "doc": "Reference field",
+                        "default": null
+                      },
+                      {
+                        "name": "display",
+                        "type": [
+                          "null",
+                          "string"
+                        ],
+                        "doc": "Reference field",
+                        "default": null
+                      }
+                    ]
+                  }
+                ],
+                "doc": "Field for FHIR property organization",
+                "default": null
+              },
+              {
+                "name": "period",
+                "type": [
+                  "null",
+                  {
+                    "type": "record",
+                    "name": "PatientContactPeriod",
+                    "doc": "Structure for FHIR type Period",
+                    "fields": [
+                      {
+                        "name": "start",
+                        "type": [
+                          "null",
+                          "string"
+                        ],
+                        "doc": "Field for FHIR property start",
+                        "default": null
+                      },
+                      {
+                        "name": "end",
+                        "type": [
+                          "null",
+                          "string"
+                        ],
+                        "doc": "Field for FHIR property end",
+                        "default": null
+                      }
+                    ]
+                  }
+                ],
+                "doc": "Field for FHIR property period",
+                "default": null
+              }
+            ]
+          }
+        }
+      ],
+      "doc": "Field for FHIR property contact",
+      "default": null
+    },
+    {
+      "name": "animal",
+      "type": [
+        "null",
+        {
+          "type": "record",
+          "name": "PatientAnimal",
+          "doc": "Structure for FHIR type animal",
+          "fields": [
+            {
+              "name": "id",
+              "type": [
+                "null",
+                "string"
+              ],
+              "doc": "Field for FHIR property id",
+              "default": null
+            },
+            {
+              "name": "species",
+              "type": [
+                "null",
+                {
+                  "type": "record",
+                  "name": "PatientAnimalCodeableConcept",
+                  "doc": "Structure for FHIR type CodeableConcept",
+                  "fields": [
+                    {
+                      "name": "coding",
+                      "type": [
+                        "null",
+                        {
+                          "type": "array",
+                          "items": {
+                            "type": "record",
+                            "name": "PatientAnimalCodeableConceptCoding",
+                            "doc": "Structure for FHIR type Coding",
+                            "fields": [
+                              {
+                                "name": "system",
+                                "type": [
+                                  "null",
+                                  "string"
+                                ],
+                                "doc": "Field for FHIR property system",
+                                "default": null
+                              },
+                              {
+                                "name": "version",
+                                "type": [
+                                  "null",
+                                  "string"
+                                ],
+                                "doc": "Field for FHIR property version",
+                                "default": null
+                              },
+                              {
+                                "name": "code",
+                                "type": [
+                                  "null",
+                                  "string"
+                                ],
+                                "doc": "Field for FHIR property code",
+                                "default": null
+                              },
+                              {
+                                "name": "display",
+                                "type": [
+                                  "null",
+                                  "string"
+                                ],
+                                "doc": "Field for FHIR property display",
+                                "default": null
+                              },
+                              {
+                                "name": "userSelected",
+                                "type": [
+                                  "null",
+                                  "boolean"
+                                ],
+                                "doc": "Field for FHIR property userSelected",
+                                "default": null
+                              }
+                            ]
+                          }
+                        }
+                      ],
+                      "doc": "Field for FHIR property coding",
+                      "default": null
+                    },
+                    {
+                      "name": "text",
+                      "type": [
+                        "null",
+                        "string"
+                      ],
+                      "doc": "Field for FHIR property text",
+                      "default": null
+                    }
+                  ]
+                }
+              ],
+              "doc": "Field for FHIR property species",
+              "default": null
+            },
+            {
+              "name": "breed",
+              "type": [
+                "null",
+                "PatientAnimalCodeableConcept"
+              ],
+              "doc": "Field for FHIR property breed",
+              "default": null
+            },
+            {
+              "name": "genderStatus",
+              "type": [
+                "null",
+                "PatientAnimalCodeableConcept"
+              ],
+              "doc": "Field for FHIR property genderStatus",
+              "default": null
+            }
+          ]
+        }
+      ],
+      "doc": "Field for FHIR property animal",
+      "default": null
+    },
+    {
+      "name": "communication",
+      "type": [
+        "null",
+        {
+          "type": "array",
+          "items": {
+            "type": "record",
+            "name": "PatientCommunication",
+            "doc": "Structure for FHIR type communication",
+            "fields": [
+              {
+                "name": "id",
+                "type": [
+                  "null",
+                  "string"
+                ],
+                "doc": "Field for FHIR property id",
+                "default": null
+              },
+              {
+                "name": "language",
+                "type": [
+                  "null",
+                  {
+                    "type": "record",
+                    "name": "PatientCommunicationCodeableConcept",
+                    "doc": "Structure for FHIR type CodeableConcept",
+                    "fields": [
+                      {
+                        "name": "coding",
+                        "type": [
+                          "null",
+                          {
+                            "type": "array",
+                            "items": {
+                              "type": "record",
+                              "name": "PatientCommunicationCodeableConceptCoding",
+                              "doc": "Structure for FHIR type Coding",
+                              "fields": [
+                                {
+                                  "name": "system",
+                                  "type": [
+                                    "null",
+                                    "string"
+                                  ],
+                                  "doc": "Field for FHIR property system",
+                                  "default": null
+                                },
+                                {
+                                  "name": "version",
+                                  "type": [
+                                    "null",
+                                    "string"
+                                  ],
+                                  "doc": "Field for FHIR property version",
+                                  "default": null
+                                },
+                                {
+                                  "name": "code",
+                                  "type": [
+                                    "null",
+                                    "string"
+                                  ],
+                                  "doc": "Field for FHIR property code",
+                                  "default": null
+                                },
+                                {
+                                  "name": "display",
+                                  "type": [
+                                    "null",
+                                    "string"
+                                  ],
+                                  "doc": "Field for FHIR property display",
+                                  "default": null
+                                },
+                                {
+                                  "name": "userSelected",
+                                  "type": [
+                                    "null",
+                                    "boolean"
+                                  ],
+                                  "doc": "Field for FHIR property userSelected",
+                                  "default": null
+                                }
+                              ]
+                            }
+                          }
+                        ],
+                        "doc": "Field for FHIR property coding",
+                        "default": null
+                      },
+                      {
+                        "name": "text",
+                        "type": [
+                          "null",
+                          "string"
+                        ],
+                        "doc": "Field for FHIR property text",
+                        "default": null
+                      }
+                    ]
+                  }
+                ],
+                "doc": "Field for FHIR property language",
+                "default": null
+              },
+              {
+                "name": "preferred",
+                "type": [
+                  "null",
+                  "boolean"
+                ],
+                "doc": "Field for FHIR property preferred",
+                "default": null
+              }
+            ]
+          }
+        }
+      ],
+      "doc": "Field for FHIR property communication",
+      "default": null
+    },
+    {
+      "name": "generalPractitioner",
+      "type": [
+        "null",
+        {
+          "type": "array",
+          "items": {
+            "type": "record",
+            "name": "PatientGeneralPractitionerReference",
+            "doc": "Structure for FHIR type PatientGeneralPractitionerReference",
+            "fields": [
+              {
+                "name": "organizationId",
+                "type": [
+                  "null",
+                  "string"
+                ],
+                "doc": "Reference field",
+                "default": null
+              },
+              {
+                "name": "practitionerId",
+                "type": [
+                  "null",
+                  "string"
+                ],
+                "doc": "Reference field",
+                "default": null
+              },
+              {
+                "name": "id",
+                "type": [
+                  "null",
+                  "string"
+                ],
+                "doc": "Reference field",
+                "default": null
+              },
+              {
+                "name": "reference",
+                "type": [
+                  "null",
+                  "string"
+                ],
+                "doc": "Reference field",
+                "default": null
+              },
+              {
+                "name": "identifier",
+                "type": [
+                  "null",
+                  {
+                    "type": "record",
+                    "name": "PatientReferenceIdentifier",
+                    "doc": "Structure for FHIR type Identifier",
+                    "fields": [
+                      {
+                        "name": "use",
+                        "type": [
+                          "null",
+                          "string"
+                        ],
+                        "doc": "Field for FHIR property use",
+                        "default": null
+                      },
+                      {
+                        "name": "type",
+                        "type": [
+                          "null",
+                          {
+                            "type": "record",
+                            "name": "PatientReferenceIdentifierCodeableConcept",
+                            "doc": "Structure for FHIR type CodeableConcept",
+                            "fields": [
+                              {
+                                "name": "coding",
+                                "type": [
+                                  "null",
+                                  {
+                                    "type": "array",
+                                    "items": {
+                                      "type": "record",
+                                      "name": "PatientReferenceIdentifierCodeableConceptCoding",
+                                      "doc": "Structure for FHIR type Coding",
+                                      "fields": [
+                                        {
+                                          "name": "system",
+                                          "type": [
+                                            "null",
+                                            "string"
+                                          ],
+                                          "doc": "Field for FHIR property system",
+                                          "default": null
+                                        },
+                                        {
+                                          "name": "version",
+                                          "type": [
+                                            "null",
+                                            "string"
+                                          ],
+                                          "doc": "Field for FHIR property version",
+                                          "default": null
+                                        },
+                                        {
+                                          "name": "code",
+                                          "type": [
+                                            "null",
+                                            "string"
+                                          ],
+                                          "doc": "Field for FHIR property code",
+                                          "default": null
+                                        },
+                                        {
+                                          "name": "display",
+                                          "type": [
+                                            "null",
+                                            "string"
+                                          ],
+                                          "doc": "Field for FHIR property display",
+                                          "default": null
+                                        },
+                                        {
+                                          "name": "userSelected",
+                                          "type": [
+                                            "null",
+                                            "boolean"
+                                          ],
+                                          "doc": "Field for FHIR property userSelected",
+                                          "default": null
+                                        }
+                                      ]
+                                    }
+                                  }
+                                ],
+                                "doc": "Field for FHIR property coding",
+                                "default": null
+                              },
+                              {
+                                "name": "text",
+                                "type": [
+                                  "null",
+                                  "string"
+                                ],
+                                "doc": "Field for FHIR property text",
+                                "default": null
+                              }
+                            ]
+                          }
+                        ],
+                        "doc": "Field for FHIR property type",
+                        "default": null
+                      },
+                      {
+                        "name": "system",
+                        "type": [
+                          "null",
+                          "string"
+                        ],
+                        "doc": "Field for FHIR property system",
+                        "default": null
+                      },
+                      {
+                        "name": "value",
+                        "type": [
+                          "null",
+                          "string"
+                        ],
+                        "doc": "Field for FHIR property value",
+                        "default": null
+                      },
+                      {
+                        "name": "period",
+                        "type": [
+                          "null",
+                          {
+                            "type": "record",
+                            "name": "PatientReferenceIdentifierPeriod",
+                            "doc": "Structure for FHIR type Period",
+                            "fields": [
+                              {
+                                "name": "start",
+                                "type": [
+                                  "null",
+                                  "string"
+                                ],
+                                "doc": "Field for FHIR property start",
+                                "default": null
+                              },
+                              {
+                                "name": "end",
+                                "type": [
+                                  "null",
+                                  "string"
+                                ],
+                                "doc": "Field for FHIR property end",
+                                "default": null
+                              }
+                            ]
+                          }
+                        ],
+                        "doc": "Field for FHIR property period",
+                        "default": null
+                      },
+                      {
+                        "name": "assigner",
+                        "type": [
+                          "null",
+                          {
+                            "type": "record",
+                            "name": "PatientReferenceIdentifierAssignerReference",
+                            "doc": "Structure for FHIR type PatientReferenceIdentifierAssignerReference",
+                            "fields": [
+                              {
+                                "name": "organizationId",
+                                "type": [
+                                  "null",
+                                  "string"
+                                ],
+                                "doc": "Reference field",
+                                "default": null
+                              },
+                              {
+                                "name": "id",
+                                "type": [
+                                  "null",
+                                  "string"
+                                ],
+                                "doc": "Reference field",
+                                "default": null
+                              },
+                              {
+                                "name": "reference",
+                                "type": [
+                                  "null",
+                                  "string"
+                                ],
+                                "doc": "Reference field",
+                                "default": null
+                              },
+                              {
+                                "name": "identifier",
+                                "type": [
+                                  "null",
+                                  {
+                                    "type": "record",
+                                    "name": "PatientReferenceIdentifierReferenceIdentifier",
+                                    "doc": "Structure for FHIR type Identifier",
+                                    "fields": [
+                                      {
+                                        "name": "use",
+                                        "type": [
+                                          "null",
+                                          "string"
+                                        ],
+                                        "doc": "Field for FHIR property use",
+                                        "default": null
+                                      },
+                                      {
+                                        "name": "type",
+                                        "type": [
+                                          "null",
+                                          {
+                                            "type": "record",
+                                            "name": "PatientReferenceIdentifierReferenceIdentifierCodeableConcept",
+                                            "doc": "Structure for FHIR type CodeableConcept",
+                                            "fields": [
+                                              {
+                                                "name": "coding",
+                                                "type": [
+                                                  "null",
+                                                  {
+                                                    "type": "array",
+                                                    "items": {
+                                                      "type": "record",
+                                                      "name": "PatientReferenceIdentifierReferenceIdentifierCodeableConceptCoding",
+                                                      "doc": "Structure for FHIR type Coding",
+                                                      "fields": [
+                                                        {
+                                                          "name": "system",
+                                                          "type": [
+                                                            "null",
+                                                            "string"
+                                                          ],
+                                                          "doc": "Field for FHIR property system",
+                                                          "default": null
+                                                        },
+                                                        {
+                                                          "name": "version",
+                                                          "type": [
+                                                            "null",
+                                                            "string"
+                                                          ],
+                                                          "doc": "Field for FHIR property version",
+                                                          "default": null
+                                                        },
+                                                        {
+                                                          "name": "code",
+                                                          "type": [
+                                                            "null",
+                                                            "string"
+                                                          ],
+                                                          "doc": "Field for FHIR property code",
+                                                          "default": null
+                                                        },
+                                                        {
+                                                          "name": "display",
+                                                          "type": [
+                                                            "null",
+                                                            "string"
+                                                          ],
+                                                          "doc": "Field for FHIR property display",
+                                                          "default": null
+                                                        },
+                                                        {
+                                                          "name": "userSelected",
+                                                          "type": [
+                                                            "null",
+                                                            "boolean"
+                                                          ],
+                                                          "doc": "Field for FHIR property userSelected",
+                                                          "default": null
+                                                        }
+                                                      ]
+                                                    }
+                                                  }
+                                                ],
+                                                "doc": "Field for FHIR property coding",
+                                                "default": null
+                                              },
+                                              {
+                                                "name": "text",
+                                                "type": [
+                                                  "null",
+                                                  "string"
+                                                ],
+                                                "doc": "Field for FHIR property text",
+                                                "default": null
+                                              }
+                                            ]
+                                          }
+                                        ],
+                                        "doc": "Field for FHIR property type",
+                                        "default": null
+                                      },
+                                      {
+                                        "name": "system",
+                                        "type": [
+                                          "null",
+                                          "string"
+                                        ],
+                                        "doc": "Field for FHIR property system",
+                                        "default": null
+                                      },
+                                      {
+                                        "name": "value",
+                                        "type": [
+                                          "null",
+                                          "string"
+                                        ],
+                                        "doc": "Field for FHIR property value",
+                                        "default": null
+                                      },
+                                      {
+                                        "name": "period",
+                                        "type": [
+                                          "null",
+                                          {
+                                            "type": "record",
+                                            "name": "PatientReferenceIdentifierReferenceIdentifierPeriod",
+                                            "doc": "Structure for FHIR type Period",
+                                            "fields": [
+                                              {
+                                                "name": "start",
+                                                "type": [
+                                                  "null",
+                                                  "string"
+                                                ],
+                                                "doc": "Field for FHIR property start",
+                                                "default": null
+                                              },
+                                              {
+                                                "name": "end",
+                                                "type": [
+                                                  "null",
+                                                  "string"
+                                                ],
+                                                "doc": "Field for FHIR property end",
+                                                "default": null
+                                              }
+                                            ]
+                                          }
+                                        ],
+                                        "doc": "Field for FHIR property period",
+                                        "default": null
+                                      },
+                                      {
+                                        "name": "assigner",
+                                        "type": [
+                                          "null",
+                                          {
+                                            "type": "record",
+                                            "name": "PatientReferenceIdentifierReferenceIdentifierAssignerReference",
+                                            "doc": "Structure for FHIR type PatientReferenceIdentifierReferenceIdentifierAssignerReference",
+                                            "fields": [
+                                              {
+                                                "name": "organizationId",
+                                                "type": [
+                                                  "null",
+                                                  "string"
+                                                ],
+                                                "doc": "Reference field",
+                                                "default": null
+                                              }
+                                            ]
+                                          }
+                                        ],
+                                        "doc": "Field for FHIR property assigner",
+                                        "default": null
+                                      }
+                                    ]
+                                  }
+                                ],
+                                "doc": "Reference field",
+                                "default": null
+                              },
+                              {
+                                "name": "display",
+                                "type": [
+                                  "null",
+                                  "string"
+                                ],
+                                "doc": "Reference field",
+                                "default": null
+                              }
+                            ]
+                          }
+                        ],
+                        "doc": "Field for FHIR property assigner",
+                        "default": null
+                      }
+                    ]
+                  }
+                ],
+                "doc": "Reference field",
+                "default": null
+              },
+              {
+                "name": "display",
+                "type": [
+                  "null",
+                  "string"
+                ],
+                "doc": "Reference field",
+                "default": null
+              }
+            ]
+          }
+        }
+      ],
+      "doc": "Field for FHIR property generalPractitioner",
+      "default": null
+    },
+    {
+      "name": "managingOrganization",
+      "type": [
+        "null",
+        {
+          "type": "record",
+          "name": "PatientManagingOrganizationReference",
+          "doc": "Structure for FHIR type PatientManagingOrganizationReference",
+          "fields": [
+            {
+              "name": "organizationId",
+              "type": [
+                "null",
+                "string"
+              ],
+              "doc": "Reference field",
+              "default": null
+            },
+            {
+              "name": "id",
+              "type": [
+                "null",
+                "string"
+              ],
+              "doc": "Reference field",
+              "default": null
+            },
+            {
+              "name": "reference",
+              "type": [
+                "null",
+                "string"
+              ],
+              "doc": "Reference field",
+              "default": null
+            },
+            {
+              "name": "identifier",
+              "type": [
+                "null",
+                "PatientReferenceIdentifier"
+              ],
+              "doc": "Reference field",
+              "default": null
+            },
+            {
+              "name": "display",
+              "type": [
+                "null",
+                "string"
+              ],
+              "doc": "Reference field",
+              "default": null
+            }
+          ]
+        }
+      ],
+      "doc": "Field for FHIR property managingOrganization",
+      "default": null
+    },
+    {
+      "name": "link",
+      "type": [
+        "null",
+        {
+          "type": "array",
+          "items": {
+            "type": "record",
+            "name": "PatientLink",
+            "doc": "Structure for FHIR type link",
+            "fields": [
+              {
+                "name": "id",
+                "type": [
+                  "null",
+                  "string"
+                ],
+                "doc": "Field for FHIR property id",
+                "default": null
+              },
+              {
+                "name": "other",
+                "type": [
+                  "null",
+                  {
+                    "type": "record",
+                    "name": "PatientLinkOtherReference",
+                    "doc": "Structure for FHIR type PatientLinkOtherReference",
+                    "fields": [
+                      {
+                        "name": "patientId",
+                        "type": [
+                          "null",
+                          "string"
+                        ],
+                        "doc": "Reference field",
+                        "default": null
+                      },
+                      {
+                        "name": "relatedPersonId",
+                        "type": [
+                          "null",
+                          "string"
+                        ],
+                        "doc": "Reference field",
+                        "default": null
+                      },
+                      {
+                        "name": "id",
+                        "type": [
+                          "null",
+                          "string"
+                        ],
+                        "doc": "Reference field",
+                        "default": null
+                      },
+                      {
+                        "name": "reference",
+                        "type": [
+                          "null",
+                          "string"
+                        ],
+                        "doc": "Reference field",
+                        "default": null
+                      },
+                      {
+                        "name": "identifier",
+                        "type": [
+                          "null",
+                          {
+                            "type": "record",
+                            "name": "PatientLinkReferenceIdentifier",
+                            "doc": "Structure for FHIR type Identifier",
+                            "fields": [
+                              {
+                                "name": "use",
+                                "type": [
+                                  "null",
+                                  "string"
+                                ],
+                                "doc": "Field for FHIR property use",
+                                "default": null
+                              },
+                              {
+                                "name": "type",
+                                "type": [
+                                  "null",
+                                  {
+                                    "type": "record",
+                                    "name": "PatientLinkReferenceIdentifierCodeableConcept",
+                                    "doc": "Structure for FHIR type CodeableConcept",
+                                    "fields": [
+                                      {
+                                        "name": "coding",
+                                        "type": [
+                                          "null",
+                                          {
+                                            "type": "array",
+                                            "items": {
+                                              "type": "record",
+                                              "name": "PatientLinkReferenceIdentifierCodeableConceptCoding",
+                                              "doc": "Structure for FHIR type Coding",
+                                              "fields": [
+                                                {
+                                                  "name": "system",
+                                                  "type": [
+                                                    "null",
+                                                    "string"
+                                                  ],
+                                                  "doc": "Field for FHIR property system",
+                                                  "default": null
+                                                },
+                                                {
+                                                  "name": "version",
+                                                  "type": [
+                                                    "null",
+                                                    "string"
+                                                  ],
+                                                  "doc": "Field for FHIR property version",
+                                                  "default": null
+                                                },
+                                                {
+                                                  "name": "code",
+                                                  "type": [
+                                                    "null",
+                                                    "string"
+                                                  ],
+                                                  "doc": "Field for FHIR property code",
+                                                  "default": null
+                                                },
+                                                {
+                                                  "name": "display",
+                                                  "type": [
+                                                    "null",
+                                                    "string"
+                                                  ],
+                                                  "doc": "Field for FHIR property display",
+                                                  "default": null
+                                                },
+                                                {
+                                                  "name": "userSelected",
+                                                  "type": [
+                                                    "null",
+                                                    "boolean"
+                                                  ],
+                                                  "doc": "Field for FHIR property userSelected",
+                                                  "default": null
+                                                }
+                                              ]
+                                            }
+                                          }
+                                        ],
+                                        "doc": "Field for FHIR property coding",
+                                        "default": null
+                                      },
+                                      {
+                                        "name": "text",
+                                        "type": [
+                                          "null",
+                                          "string"
+                                        ],
+                                        "doc": "Field for FHIR property text",
+                                        "default": null
+                                      }
+                                    ]
+                                  }
+                                ],
+                                "doc": "Field for FHIR property type",
+                                "default": null
+                              },
+                              {
+                                "name": "system",
+                                "type": [
+                                  "null",
+                                  "string"
+                                ],
+                                "doc": "Field for FHIR property system",
+                                "default": null
+                              },
+                              {
+                                "name": "value",
+                                "type": [
+                                  "null",
+                                  "string"
+                                ],
+                                "doc": "Field for FHIR property value",
+                                "default": null
+                              },
+                              {
+                                "name": "period",
+                                "type": [
+                                  "null",
+                                  {
+                                    "type": "record",
+                                    "name": "PatientLinkReferenceIdentifierPeriod",
+                                    "doc": "Structure for FHIR type Period",
+                                    "fields": [
+                                      {
+                                        "name": "start",
+                                        "type": [
+                                          "null",
+                                          "string"
+                                        ],
+                                        "doc": "Field for FHIR property start",
+                                        "default": null
+                                      },
+                                      {
+                                        "name": "end",
+                                        "type": [
+                                          "null",
+                                          "string"
+                                        ],
+                                        "doc": "Field for FHIR property end",
+                                        "default": null
+                                      }
+                                    ]
+                                  }
+                                ],
+                                "doc": "Field for FHIR property period",
+                                "default": null
+                              },
+                              {
+                                "name": "assigner",
+                                "type": [
+                                  "null",
+                                  {
+                                    "type": "record",
+                                    "name": "PatientLinkReferenceIdentifierAssignerReference",
+                                    "doc": "Structure for FHIR type PatientLinkReferenceIdentifierAssignerReference",
+                                    "fields": [
+                                      {
+                                        "name": "organizationId",
+                                        "type": [
+                                          "null",
+                                          "string"
+                                        ],
+                                        "doc": "Reference field",
+                                        "default": null
+                                      },
+                                      {
+                                        "name": "id",
+                                        "type": [
+                                          "null",
+                                          "string"
+                                        ],
+                                        "doc": "Reference field",
+                                        "default": null
+                                      },
+                                      {
+                                        "name": "reference",
+                                        "type": [
+                                          "null",
+                                          "string"
+                                        ],
+                                        "doc": "Reference field",
+                                        "default": null
+                                      },
+                                      {
+                                        "name": "identifier",
+                                        "type": [
+                                          "null",
+                                          {
+                                            "type": "record",
+                                            "name": "PatientLinkReferenceIdentifierReferenceIdentifier",
+                                            "doc": "Structure for FHIR type Identifier",
+                                            "fields": [
+                                              {
+                                                "name": "use",
+                                                "type": [
+                                                  "null",
+                                                  "string"
+                                                ],
+                                                "doc": "Field for FHIR property use",
+                                                "default": null
+                                              },
+                                              {
+                                                "name": "type",
+                                                "type": [
+                                                  "null",
+                                                  {
+                                                    "type": "record",
+                                                    "name": "PatientLinkReferenceIdentifierReferenceIdentifierCodeableConcept",
+                                                    "doc": "Structure for FHIR type CodeableConcept",
+                                                    "fields": [
+                                                      {
+                                                        "name": "coding",
+                                                        "type": [
+                                                          "null",
+                                                          {
+                                                            "type": "array",
+                                                            "items": {
+                                                              "type": "record",
+                                                              "name": "PatientLinkReferenceIdentifierReferenceIdentifierCodeableConceptCoding",
+                                                              "doc": "Structure for FHIR type Coding",
+                                                              "fields": [
+                                                                {
+                                                                  "name": "system",
+                                                                  "type": [
+                                                                    "null",
+                                                                    "string"
+                                                                  ],
+                                                                  "doc": "Field for FHIR property system",
+                                                                  "default": null
+                                                                },
+                                                                {
+                                                                  "name": "version",
+                                                                  "type": [
+                                                                    "null",
+                                                                    "string"
+                                                                  ],
+                                                                  "doc": "Field for FHIR property version",
+                                                                  "default": null
+                                                                },
+                                                                {
+                                                                  "name": "code",
+                                                                  "type": [
+                                                                    "null",
+                                                                    "string"
+                                                                  ],
+                                                                  "doc": "Field for FHIR property code",
+                                                                  "default": null
+                                                                },
+                                                                {
+                                                                  "name": "display",
+                                                                  "type": [
+                                                                    "null",
+                                                                    "string"
+                                                                  ],
+                                                                  "doc": "Field for FHIR property display",
+                                                                  "default": null
+                                                                },
+                                                                {
+                                                                  "name": "userSelected",
+                                                                  "type": [
+                                                                    "null",
+                                                                    "boolean"
+                                                                  ],
+                                                                  "doc": "Field for FHIR property userSelected",
+                                                                  "default": null
+                                                                }
+                                                              ]
+                                                            }
+                                                          }
+                                                        ],
+                                                        "doc": "Field for FHIR property coding",
+                                                        "default": null
+                                                      },
+                                                      {
+                                                        "name": "text",
+                                                        "type": [
+                                                          "null",
+                                                          "string"
+                                                        ],
+                                                        "doc": "Field for FHIR property text",
+                                                        "default": null
+                                                      }
+                                                    ]
+                                                  }
+                                                ],
+                                                "doc": "Field for FHIR property type",
+                                                "default": null
+                                              },
+                                              {
+                                                "name": "system",
+                                                "type": [
+                                                  "null",
+                                                  "string"
+                                                ],
+                                                "doc": "Field for FHIR property system",
+                                                "default": null
+                                              },
+                                              {
+                                                "name": "value",
+                                                "type": [
+                                                  "null",
+                                                  "string"
+                                                ],
+                                                "doc": "Field for FHIR property value",
+                                                "default": null
+                                              },
+                                              {
+                                                "name": "period",
+                                                "type": [
+                                                  "null",
+                                                  {
+                                                    "type": "record",
+                                                    "name": "PatientLinkReferenceIdentifierReferenceIdentifierPeriod",
+                                                    "doc": "Structure for FHIR type Period",
+                                                    "fields": [
+                                                      {
+                                                        "name": "start",
+                                                        "type": [
+                                                          "null",
+                                                          "string"
+                                                        ],
+                                                        "doc": "Field for FHIR property start",
+                                                        "default": null
+                                                      },
+                                                      {
+                                                        "name": "end",
+                                                        "type": [
+                                                          "null",
+                                                          "string"
+                                                        ],
+                                                        "doc": "Field for FHIR property end",
+                                                        "default": null
+                                                      }
+                                                    ]
+                                                  }
+                                                ],
+                                                "doc": "Field for FHIR property period",
+                                                "default": null
+                                              },
+                                              {
+                                                "name": "assigner",
+                                                "type": [
+                                                  "null",
+                                                  {
+                                                    "type": "record",
+                                                    "name": "PatientLinkReferenceIdentifierReferenceIdentifierAssignerReference",
+                                                    "doc": "Structure for FHIR type PatientLinkReferenceIdentifierReferenceIdentifierAssignerReference",
+                                                    "fields": [
+                                                      {
+                                                        "name": "organizationId",
+                                                        "type": [
+                                                          "null",
+                                                          "string"
+                                                        ],
+                                                        "doc": "Reference field",
+                                                        "default": null
+                                                      }
+                                                    ]
+                                                  }
+                                                ],
+                                                "doc": "Field for FHIR property assigner",
+                                                "default": null
+                                              }
+                                            ]
+                                          }
+                                        ],
+                                        "doc": "Reference field",
+                                        "default": null
+                                      },
+                                      {
+                                        "name": "display",
+                                        "type": [
+                                          "null",
+                                          "string"
+                                        ],
+                                        "doc": "Reference field",
+                                        "default": null
+                                      }
+                                    ]
+                                  }
+                                ],
+                                "doc": "Field for FHIR property assigner",
+                                "default": null
+                              }
+                            ]
+                          }
+                        ],
+                        "doc": "Reference field",
+                        "default": null
+                      },
+                      {
+                        "name": "display",
+                        "type": [
+                          "null",
+                          "string"
+                        ],
+                        "doc": "Reference field",
+                        "default": null
+                      }
+                    ]
+                  }
+                ],
+                "doc": "Field for FHIR property other",
+                "default": null
+              },
+              {
+                "name": "type",
+                "type": [
+                  "null",
+                  "string"
+                ],
+                "doc": "Field for FHIR property type",
+                "default": null
+              }
+            ]
+          }
+        }
+      ],
+      "doc": "Field for FHIR property link",
+      "default": null
+    },
+    {
+      "name": "booleanfield",
+      "type": [
+        "null",
+        "boolean"
+      ],
+      "doc": "Extension field for http://hl7.org/fhir/bunsen/test/StructureDefinition/bunsen-test-booleanfield",
+      "default": null
+    },
+    {
+      "name": "integerfield",
+      "type": [
+        "null",
+        "int"
+      ],
+      "doc": "Extension field for http://hl7.org/fhir/bunsen/test/StructureDefinition/bunsen-test-integerfield",
+      "default": null
+    },
+    {
+      "name": "integerArrayField",
+      "type": [
+        "null",
+        {
+          "type": "array",
+          "items": "int"
+        }
+      ],
+      "doc": "Extension field for http://hl7.org/fhir/bunsen/test/StructureDefinition/bunsen-test-integerArrayField",
+      "default": null
+    },
+    {
+      "name": "nestedExt",
+      "type": [
+        "null",
+        {
+          "type": "array",
+          "items": {
+            "type": "record",
+            "name": "BunsenTestNestedExtension",
+            "namespace": "com.cerner.bunsen.stu3.avro.bunsen.test",
+            "doc": "Reference type.",
+            "fields": [
+              {
+                "name": "text",
+                "type": [
+                  "null",
+                  {
+                    "type": "array",
+                    "items": "string"
+                  }
+                ],
+                "doc": "Doc here",
+                "default": null
+              },
+              {
+                "name": "codeableConceptExt",
+                "type": [
+                  "null",
+                  {
+                    "type": "array",
+                    "items": "com.cerner.bunsen.stu3.avro.PatientCodeableConcept"
+                  }
+                ],
+                "doc": "Doc here",
+                "default": null
+              }
+            ]
+          }
+        }
+      ],
+      "doc": "Extension field for http://hl7.org/fhir/bunsen/test/StructureDefinition/bunsen-test-nested-extension",
+      "default": null
+    },
+    {
+      "name": "stringModifierExt",
+      "type": [
+        "null",
+        "string"
+      ],
+      "doc": "Extension field for http://hl7.org/fhir/bunsen/test/StructureDefinition/bunsen-test-string-modifierExtension",
+      "default": null
+    },
+    {
+      "name": "codeableConceptModifierExt",
+      "type": [
+        "null",
+        {
+          "type": "array",
+          "items": "PatientCodeableConcept"
+        }
+      ],
+      "doc": "Extension field for http://hl7.org/fhir/bunsen/test/StructureDefinition/bunsen-test-codeableConcept-modifierExtension",
+      "default": null
+    }
+  ]
+}

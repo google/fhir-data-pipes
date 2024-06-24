@@ -1,0 +1,123 @@
+{
+  "title": "fn_reference_keys",
+  "description": "TBD",
+  "fhirVersion": ["5.0.0", "4.0.1", "3.0.2"],
+  "resources": [
+    {
+      "resourceType": "Patient",
+      "id": "p1",
+      "link": [
+        {
+          "other": {
+            "reference": "Patient/p1"
+          }
+        }
+      ]
+    },
+    {
+      "resourceType": "Patient",
+      "id": "p2",
+      "link": [
+        {
+          "other": {
+            "reference": "Patient/p3"
+          }
+        }
+      ]
+    }
+  ],
+  "tests": [
+    {
+      "title": "getReferenceKey result matches getResourceKey without type specifier",
+      "view": {
+        "resource": "Patient",
+        "select": [
+          {
+            "column": [
+              {
+                "path": "getResourceKey()",
+                "name": "resourceKey"
+              },
+              {
+                "path": "link.other.getReferenceKey()",
+                "name": "referenceKey"
+              }
+            ]
+          }
+        ]
+      },
+      "expect": [
+        {
+          "resourceKey": "p1",
+          "referenceKey": "p1"
+        },
+        {
+          "resourceKey": "p2",
+          "referenceKey": "p3"
+        }
+      ]
+    },
+    {
+      "title": "getReferenceKey result matches getResourceKey with right type specifier",
+      "view": {
+        "resource": "Patient",
+        "select": [
+          {
+            "column": [
+              {
+                "path": "getResourceKey()",
+                "name": "resourceKey"
+              },
+              {
+                "path": "link.other.getReferenceKey(Patient)",
+                "name": "referenceKey"
+              }
+            ]
+          }
+        ]
+      },
+      "expect": [
+        {
+          "resourceKey": "p1",
+          "referenceKey": "p1"
+        },
+        {
+          "resourceKey": "p2",
+          "referenceKey": "p3"
+        }
+      ]
+    },
+    {
+      "title": "getReferenceKey result matches getResourceKey with wrong type specifier",
+      "view": {
+        "resource": "Patient",
+        "select": [
+          {
+            "column": [
+              {
+                "path": "link.other.getReferenceKey(Observation)",
+                "name": "referenceKey",
+                "type": "string"
+              },
+              {
+                "path": "getResourceKey()",
+                "name": "resourceKey",
+                "type": "string"
+              }
+            ]
+          }
+        ]
+      },
+      "expect": [
+        {
+          "referenceKey": null,
+          "resourceKey": "p1"
+        },
+        {
+          "referenceKey": null,
+          "resourceKey": "p2"
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,601 @@
+message com.cerner.bunsen.r4.avro.Patient {
+  optional binary id (STRING);
+  optional group meta {
+    optional binary versionId (STRING);
+    optional binary lastUpdated (STRING);
+    optional binary source (STRING);
+    optional group profile (LIST) {
+      repeated binary array (STRING);
+    }
+    optional group security (LIST) {
+      repeated group array {
+        optional binary system (STRING);
+        optional binary version (STRING);
+        optional binary code (STRING);
+        optional binary display (STRING);
+        optional boolean userSelected;
+      }
+    }
+    optional group tag (LIST) {
+      repeated group array {
+        optional binary system (STRING);
+        optional binary version (STRING);
+        optional binary code (STRING);
+        optional binary display (STRING);
+        optional boolean userSelected;
+      }
+    }
+  }
+  optional binary implicitRules (STRING);
+  optional binary language (STRING);
+  optional group text {
+    optional binary status (STRING);
+    optional binary div (STRING);
+  }
+  optional group contained (LIST) {
+    repeated group array {
+      optional group meta {
+        optional binary versionId (STRING);
+        optional binary lastUpdated (STRING);
+        optional binary source (STRING);
+        optional group profile (LIST) {
+          repeated binary array (STRING);
+        }
+        optional group security (LIST) {
+          repeated group array {
+            optional binary system (STRING);
+            optional binary version (STRING);
+            optional binary code (STRING);
+            optional binary display (STRING);
+            optional boolean userSelected;
+          }
+        }
+        optional group tag (LIST) {
+          repeated group array {
+            optional binary system (STRING);
+            optional binary version (STRING);
+            optional binary code (STRING);
+            optional binary display (STRING);
+            optional boolean userSelected;
+          }
+        }
+      }
+      optional binary implicitRules (STRING);
+      optional binary language (STRING);
+    }
+  }
+  optional group identifier (LIST) {
+    repeated group array {
+      optional binary use (STRING);
+      optional group type {
+        optional group coding (LIST) {
+          repeated group array {
+            optional binary system (STRING);
+            optional binary version (STRING);
+            optional binary code (STRING);
+            optional binary display (STRING);
+            optional boolean userSelected;
+          }
+        }
+        optional binary text (STRING);
+      }
+      optional binary system (STRING);
+      optional binary value (STRING);
+      optional group period {
+        optional binary start (STRING);
+        optional binary end (STRING);
+      }
+      optional group assigner {
+        optional binary organizationId (STRING);
+        optional binary id (STRING);
+        optional binary reference (STRING);
+        optional binary type (STRING);
+        optional group identifier {
+          optional binary use (STRING);
+          optional group type {
+            optional group coding (LIST) {
+              repeated group array {
+                optional binary system (STRING);
+                optional binary version (STRING);
+                optional binary code (STRING);
+                optional binary display (STRING);
+                optional boolean userSelected;
+              }
+            }
+            optional binary text (STRING);
+          }
+          optional binary system (STRING);
+          optional binary value (STRING);
+          optional group period {
+            optional binary start (STRING);
+            optional binary end (STRING);
+          }
+          optional group assigner {
+            optional binary organizationId (STRING);
+            optional binary id (STRING);
+            optional binary reference (STRING);
+            optional binary type (STRING);
+            optional binary display (STRING);
+          }
+        }
+        optional binary display (STRING);
+      }
+    }
+  }
+  optional boolean active;
+  optional group name (LIST) {
+    repeated group array {
+      optional binary use (STRING);
+      optional binary text (STRING);
+      optional binary family (STRING);
+      optional group given (LIST) {
+        repeated binary array (STRING);
+      }
+      optional group prefix (LIST) {
+        repeated binary array (STRING);
+      }
+      optional group suffix (LIST) {
+        repeated binary array (STRING);
+      }
+      optional group period {
+        optional binary start (STRING);
+        optional binary end (STRING);
+      }
+    }
+  }
+  optional group telecom (LIST) {
+    repeated group array {
+      optional binary system (STRING);
+      optional binary value (STRING);
+      optional binary use (STRING);
+      optional int32 rank;
+      optional group period {
+        optional binary start (STRING);
+        optional binary end (STRING);
+      }
+    }
+  }
+  optional binary gender (STRING);
+  optional binary birthDate (STRING);
+  optional group deceased {
+    optional boolean boolean;
+    optional binary dateTime (STRING);
+  }
+  optional group address (LIST) {
+    repeated group array {
+      optional binary use (STRING);
+      optional binary type (STRING);
+      optional binary text (STRING);
+      optional group line (LIST) {
+        repeated binary array (STRING);
+      }
+      optional binary city (STRING);
+      optional binary district (STRING);
+      optional binary state (STRING);
+      optional binary postalCode (STRING);
+      optional binary country (STRING);
+      optional group period {
+        optional binary start (STRING);
+        optional binary end (STRING);
+      }
+    }
+  }
+  optional group maritalStatus {
+    optional group coding (LIST) {
+      repeated group array {
+        optional binary system (STRING);
+        optional binary version (STRING);
+        optional binary code (STRING);
+        optional binary display (STRING);
+        optional boolean userSelected;
+      }
+    }
+    optional binary text (STRING);
+  }
+  optional group multipleBirth {
+    optional boolean boolean;
+    optional int32 integer;
+  }
+  optional group photo (LIST) {
+    repeated group array {
+      optional binary contentType (STRING);
+      optional binary language (STRING);
+      optional binary data (STRING);
+      optional binary url (STRING);
+      optional int32 size;
+      optional binary hash (STRING);
+      optional binary title (STRING);
+      optional binary creation (STRING);
+    }
+  }
+  optional group contact (LIST) {
+    repeated group array {
+      optional binary id (STRING);
+      optional group relationship (LIST) {
+        repeated group array {
+          optional group coding (LIST) {
+            repeated group array {
+              optional binary system (STRING);
+              optional binary version (STRING);
+              optional binary code (STRING);
+              optional binary display (STRING);
+              optional boolean userSelected;
+            }
+          }
+          optional binary text (STRING);
+        }
+      }
+      optional group name {
+        optional binary use (STRING);
+        optional binary text (STRING);
+        optional binary family (STRING);
+        optional group given (LIST) {
+          repeated binary array (STRING);
+        }
+        optional group prefix (LIST) {
+          repeated binary array (STRING);
+        }
+        optional group suffix (LIST) {
+          repeated binary array (STRING);
+        }
+        optional group period {
+          optional binary start (STRING);
+          optional binary end (STRING);
+        }
+      }
+      optional group telecom (LIST) {
+        repeated group array {
+          optional binary system (STRING);
+          optional binary value (STRING);
+          optional binary use (STRING);
+          optional int32 rank;
+          optional group period {
+            optional binary start (STRING);
+            optional binary end (STRING);
+          }
+        }
+      }
+      optional group address {
+        optional binary use (STRING);
+        optional binary type (STRING);
+        optional binary text (STRING);
+        optional group line (LIST) {
+          repeated binary array (STRING);
+        }
+        optional binary city (STRING);
+        optional binary district (STRING);
+        optional binary state (STRING);
+        optional binary postalCode (STRING);
+        optional binary country (STRING);
+        optional group period {
+          optional binary start (STRING);
+          optional binary end (STRING);
+        }
+      }
+      optional binary gender (STRING);
+      optional group organization {
+        optional binary organizationId (STRING);
+        optional binary id (STRING);
+        optional binary reference (STRING);
+        optional binary type (STRING);
+        optional group identifier {
+          optional binary use (STRING);
+          optional group type {
+            optional group coding (LIST) {
+              repeated group array {
+                optional binary system (STRING);
+                optional binary version (STRING);
+                optional binary code (STRING);
+                optional binary display (STRING);
+                optional boolean userSelected;
+              }
+            }
+            optional binary text (STRING);
+          }
+          optional binary system (STRING);
+          optional binary value (STRING);
+          optional group period {
+            optional binary start (STRING);
+            optional binary end (STRING);
+          }
+          optional group assigner {
+            optional binary organizationId (STRING);
+            optional binary id (STRING);
+            optional binary reference (STRING);
+            optional binary type (STRING);
+            optional group identifier {
+              optional binary use (STRING);
+              optional group type {
+                optional group coding (LIST) {
+                  repeated group array {
+                    optional binary system (STRING);
+                    optional binary version (STRING);
+                    optional binary code (STRING);
+                    optional binary display (STRING);
+                    optional boolean userSelected;
+                  }
+                }
+                optional binary text (STRING);
+              }
+              optional binary system (STRING);
+              optional binary value (STRING);
+              optional group period {
+                optional binary start (STRING);
+                optional binary end (STRING);
+              }
+              optional group assigner {
+                optional binary organizationId (STRING);
+              }
+            }
+            optional binary display (STRING);
+          }
+        }
+        optional binary display (STRING);
+      }
+      optional group period {
+        optional binary start (STRING);
+        optional binary end (STRING);
+      }
+    }
+  }
+  optional group communication (LIST) {
+    repeated group array {
+      optional binary id (STRING);
+      optional group language {
+        optional group coding (LIST) {
+          repeated group array {
+            optional binary system (STRING);
+            optional binary version (STRING);
+            optional binary code (STRING);
+            optional binary display (STRING);
+            optional boolean userSelected;
+          }
+        }
+        optional binary text (STRING);
+      }
+      optional boolean preferred;
+    }
+  }
+  optional group generalPractitioner (LIST) {
+    repeated group array {
+      optional binary organizationId (STRING);
+      optional binary practitionerId (STRING);
+      optional binary practitionerRoleId (STRING);
+      optional binary id (STRING);
+      optional binary reference (STRING);
+      optional binary type (STRING);
+      optional group identifier {
+        optional binary use (STRING);
+        optional group type {
+          optional group coding (LIST) {
+            repeated group array {
+              optional binary system (STRING);
+              optional binary version (STRING);
+              optional binary code (STRING);
+              optional binary display (STRING);
+              optional boolean userSelected;
+            }
+          }
+          optional binary text (STRING);
+        }
+        optional binary system (STRING);
+        optional binary value (STRING);
+        optional group period {
+          optional binary start (STRING);
+          optional binary end (STRING);
+        }
+        optional group assigner {
+          optional binary organizationId (STRING);
+          optional binary id (STRING);
+          optional binary reference (STRING);
+          optional binary type (STRING);
+          optional group identifier {
+            optional binary use (STRING);
+            optional group type {
+              optional group coding (LIST) {
+                repeated group array {
+                  optional binary system (STRING);
+                  optional binary version (STRING);
+                  optional binary code (STRING);
+                  optional binary display (STRING);
+                  optional boolean userSelected;
+                }
+              }
+              optional binary text (STRING);
+            }
+            optional binary system (STRING);
+            optional binary value (STRING);
+            optional group period {
+              optional binary start (STRING);
+              optional binary end (STRING);
+            }
+            optional group assigner {
+              optional binary organizationId (STRING);
+            }
+          }
+          optional binary display (STRING);
+        }
+      }
+      optional binary display (STRING);
+    }
+  }
+  optional group managingOrganization {
+    optional binary organizationId (STRING);
+    optional binary id (STRING);
+    optional binary reference (STRING);
+    optional binary type (STRING);
+    optional group identifier {
+      optional binary use (STRING);
+      optional group type {
+        optional group coding (LIST) {
+          repeated group array {
+            optional binary system (STRING);
+            optional binary version (STRING);
+            optional binary code (STRING);
+            optional binary display (STRING);
+            optional boolean userSelected;
+          }
+        }
+        optional binary text (STRING);
+      }
+      optional binary system (STRING);
+      optional binary value (STRING);
+      optional group period {
+        optional binary start (STRING);
+        optional binary end (STRING);
+      }
+      optional group assigner {
+        optional binary organizationId (STRING);
+        optional binary id (STRING);
+        optional binary reference (STRING);
+        optional binary type (STRING);
+        optional group identifier {
+          optional binary use (STRING);
+          optional group type {
+            optional group coding (LIST) {
+              repeated group array {
+                optional binary system (STRING);
+                optional binary version (STRING);
+                optional binary code (STRING);
+                optional binary display (STRING);
+                optional boolean userSelected;
+              }
+            }
+            optional binary text (STRING);
+          }
+          optional binary system (STRING);
+          optional binary value (STRING);
+          optional group period {
+            optional binary start (STRING);
+            optional binary end (STRING);
+          }
+          optional group assigner {
+            optional binary organizationId (STRING);
+          }
+        }
+        optional binary display (STRING);
+      }
+    }
+    optional binary display (STRING);
+  }
+  optional group link (LIST) {
+    repeated group array {
+      optional binary id (STRING);
+      optional group other {
+        optional binary patientId (STRING);
+        optional binary relatedPersonId (STRING);
+        optional binary id (STRING);
+        optional binary reference (STRING);
+        optional binary type (STRING);
+        optional group identifier {
+          optional binary use (STRING);
+          optional group type {
+            optional group coding (LIST) {
+              repeated group array {
+                optional binary system (STRING);
+                optional binary version (STRING);
+                optional binary code (STRING);
+                optional binary display (STRING);
+                optional boolean userSelected;
+              }
+            }
+            optional binary text (STRING);
+          }
+          optional binary system (STRING);
+          optional binary value (STRING);
+          optional group period {
+            optional binary start (STRING);
+            optional binary end (STRING);
+          }
+          optional group assigner {
+            optional binary organizationId (STRING);
+            optional binary id (STRING);
+            optional binary reference (STRING);
+            optional binary type (STRING);
+            optional group identifier {
+              optional binary use (STRING);
+              optional group type {
+                optional group coding (LIST) {
+                  repeated group array {
+                    optional binary system (STRING);
+                    optional binary version (STRING);
+                    optional binary code (STRING);
+                    optional binary display (STRING);
+                    optional boolean userSelected;
+                  }
+                }
+                optional binary text (STRING);
+              }
+              optional binary system (STRING);
+              optional binary value (STRING);
+              optional group period {
+                optional binary start (STRING);
+                optional binary end (STRING);
+              }
+              optional group assigner {
+                optional binary organizationId (STRING);
+              }
+            }
+            optional binary display (STRING);
+          }
+        }
+        optional binary display (STRING);
+      }
+      optional binary type (STRING);
+    }
+  }
+  optional group race {
+    optional group ombCategory (LIST) {
+      repeated group array {
+        optional binary system (STRING);
+        optional binary version (STRING);
+        optional binary code (STRING);
+        optional binary display (STRING);
+        optional boolean userSelected;
+      }
+    }
+    optional group detailed (LIST) {
+      repeated group array {
+        optional binary system (STRING);
+        optional binary version (STRING);
+        optional binary code (STRING);
+        optional binary display (STRING);
+        optional boolean userSelected;
+      }
+    }
+    optional binary text (STRING);
+  }
+  optional group ethnicity {
+    optional group ombCategory {
+      optional binary system (STRING);
+      optional binary version (STRING);
+      optional binary code (STRING);
+      optional binary display (STRING);
+      optional boolean userSelected;
+    }
+    optional group detailed (LIST) {
+      repeated group array {
+        optional binary system (STRING);
+        optional binary version (STRING);
+        optional binary code (STRING);
+        optional binary display (STRING);
+        optional boolean userSelected;
+      }
+    }
+    optional binary text (STRING);
+  }
+  optional binary birthsex (STRING);
+  optional group genderIdentity {
+    optional group coding (LIST) {
+      repeated group array {
+        optional binary system (STRING);
+        optional binary version (STRING);
+        optional binary code (STRING);
+        optional binary display (STRING);
+        optional boolean userSelected;
+      }
+    }
+    optional binary text (STRING);
+  }
+}
+

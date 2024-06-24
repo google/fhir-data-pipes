@@ -27,9 +27,14 @@
   <modules>
     <module>bunsen</module>
     <module>pipelines</module>
+    <!-- This module is only for collecting all coverage data, see:
+      https://github.com/jacoco/jacoco/wiki/MavenMultiModule -->
+    <module>coverage</module>
   </modules>
 
   <properties>
+    <!-- Setting default encoding to prevent related warnings -->
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <!-- Sonar configuration -->
     <sonar.java.coveragePlugin>jacoco</sonar.java.coveragePlugin>
     <sonar.dynamicAnalysis>reuseReports</sonar.dynamicAnalysis>
@@ -50,19 +55,12 @@
           <!-- for code coverage -->
           <groupId>org.jacoco</groupId>
           <artifactId>jacoco-maven-plugin</artifactId>
-          <version>0.8.11</version>
+          <version>0.8.12</version>
           <executions>
             <execution>
               <goals>
                 <goal>prepare-agent</goal>
               </goals>
-            </execution>
-            <execution>
-              <id>report</id>
-              <goals>
-                <goal>report</goal>
-              </goals>
-              <phase>prepare-package</phase>
             </execution>
           </executions>
         </plugin>
@@ -159,5 +157,4 @@
     </plugins>
 
   </build>
-
 </project>

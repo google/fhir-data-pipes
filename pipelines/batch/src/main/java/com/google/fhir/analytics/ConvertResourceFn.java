@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2023 Google LLC
+ * Copyright 2020-2024 Google LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@ package com.google.fhir.analytics;
 
 import ca.uhn.fhir.context.FhirVersionEnum;
 import ca.uhn.fhir.parser.DataFormatException;
+import com.cerner.bunsen.exception.ProfileException;
 import com.google.common.base.Strings;
 import com.google.fhir.analytics.view.ViewApplicationException;
 import java.io.IOException;
@@ -95,7 +96,7 @@ public class ConvertResourceFn extends FetchSearchPageFn<HapiRowDescriptor> {
   }
 
   public void writeResource(HapiRowDescriptor element)
-      throws IOException, ParseException, SQLException, ViewApplicationException {
+      throws IOException, ParseException, SQLException, ViewApplicationException, ProfileException {
     String resourceId = element.resourceId();
     String forcedId = element.forcedId();
     String resourceType = element.resourceType();
@@ -191,9 +192,14 @@ public class ConvertResourceFn extends FetchSearchPageFn<HapiRowDescriptor> {
     }
   }
 
+  @Override
+  public void finishBundle(FinishBundleContext context) {
+    super.finishBundle(context);
+  }
+
   @ProcessElement
   public void processElement(ProcessContext processContext)
-      throws IOException, ParseException, SQLException, ViewApplicationException {
+      throws IOException, ParseException, SQLException, ViewApplicationException, ProfileException {
     HapiRowDescriptor element = processContext.element();
     writeResource(element);
   }

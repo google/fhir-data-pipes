@@ -1,0 +1,199 @@
+{
+  "resourceType" : "Patient",
+  "id" : "123",
+  "meta" : {
+    "profile" : [
+      "http://hl7.org/fhir/us/core/StructureDefinition/us-core-patient|7.0.0-ballot"
+    ]
+  },
+  "text" : {
+    "status" : "generated"
+  },
+  "extension" : [
+    {
+      "extension" : [
+        {
+          "url" : "ombCategory",
+          "valueCoding" : {
+            "system" : "urn:oid:2.16.840.1.113883.6.238",
+            "code" : "2106-3",
+            "display" : "White"
+          }
+        },
+        {
+          "url" : "ombCategory",
+          "valueCoding" : {
+            "system" : "urn:oid:2.16.840.1.113883.6.238",
+            "code" : "1002-5",
+            "display" : "American Indian or Alaska Native"
+          }
+        },
+        {
+          "url" : "ombCategory",
+          "valueCoding" : {
+            "system" : "urn:oid:2.16.840.1.113883.6.238",
+            "code" : "2028-9",
+            "display" : "Asian"
+          }
+        },
+        {
+          "url" : "detailed",
+          "valueCoding" : {
+            "system" : "urn:oid:2.16.840.1.113883.6.238",
+            "code" : "1586-7",
+            "display" : "Shoshone"
+          }
+        },
+        {
+          "url" : "detailed",
+          "valueCoding" : {
+            "system" : "urn:oid:2.16.840.1.113883.6.238",
+            "code" : "2036-2",
+            "display" : "Filipino"
+          }
+        },
+        {
+          "url" : "text",
+          "valueString" : "Mixed"
+        }
+      ],
+      "url" : "http://hl7.org/fhir/us/core/StructureDefinition/us-core-race"
+    },
+    {
+      "extension" : [
+        {
+          "url" : "ombCategory",
+          "valueCoding" : {
+            "system" : "urn:oid:2.16.840.1.113883.6.238",
+            "code" : "2135-2",
+            "display" : "Hispanic or Latino"
+          }
+        },
+        {
+          "url" : "detailed",
+          "valueCoding" : {
+            "system" : "urn:oid:2.16.840.1.113883.6.238",
+            "code" : "2184-0",
+            "display" : "Dominican"
+          }
+        },
+        {
+          "url" : "detailed",
+          "valueCoding" : {
+            "system" : "urn:oid:2.16.840.1.113883.6.238",
+            "code" : "2148-5",
+            "display" : "Mexican"
+          }
+        },
+        {
+          "url" : "text",
+          "valueString" : "Hispanic or Latino"
+        }
+      ],
+      "url" : "http://hl7.org/fhir/us/core/StructureDefinition/us-core-ethnicity"
+    },
+    {
+      "url" : "http://hl7.org/fhir/us/core/StructureDefinition/us-core-birthsex",
+      "valueString" : "F"
+    },
+    {
+      "url" : "http://hl7.org/fhir/us/core/StructureDefinition/us-core-genderIdentity",
+      "valueCodeableConcept" : {
+        "coding" : [
+          {
+            "system" : "http://terminology.hl7.org/CodeSystem/v3-NullFlavor",
+            "code" : "UNK",
+            "display" : "Unknown"
+          }
+        ],
+        "text" : "Unknown"
+      }
+    }
+  ],
+  "identifier" : [
+    {
+      "use" : "usual",
+      "type" : {
+        "coding" : [
+          {
+            "system" : "http://terminology.hl7.org/CodeSystem/v2-0203",
+            "code" : "MR",
+            "display" : "Medical Record Number"
+          }
+        ],
+        "text" : "Medical Record Number"
+      },
+      "system" : "http://hospital.smarthealthit.org",
+      "value" : "1032702"
+    }
+  ],
+  "active" : true,
+  "name" : [
+    {
+      "use" : "old",
+      "family" : "Shaw",
+      "given" : [
+        "Amy",
+        "V."
+      ],
+      "period" : {
+        "start" : "2016-12-06",
+        "end" : "2020-07-22"
+      }
+    },
+    {
+      "family" : "Baxter",
+      "given" : [
+        "Amy",
+        "V."
+      ],
+      "suffix" : [
+        "PharmD"
+      ],
+      "period" : {
+        "start" : "2020-07-22"
+      }
+    }
+  ],
+  "telecom" : [
+    {
+      "system" : "phone",
+      "value" : "555-555-5555",
+      "use" : "home"
+    },
+    {
+      "system" : "email",
+      "value" : "amy.shaw@example.com"
+    }
+  ],
+  "gender" : "female",
+  "birthDate" : "1987-02-20",
+  "address" : [
+    {
+      "use" : "old",
+      "line" : [
+        "49 MEADOW ST"
+      ],
+      "city" : "MOUNDS",
+      "state" : "OK",
+      "postalCode" : "74047",
+      "country" : "US",
+      "period" : {
+        "start" : "2016-12-06",
+        "end" : "2020-07-22"
+      }
+    },
+    {
+      "line" : [
+        "183 MOUNTAIN VIEW ST"
+      ],
+      "city" : "MOUNDS",
+      "state" : "OK",
+      "postalCode" : "74048",
+      "country" : "US",
+      "period" : {
+        "start" : "2020-07-22"
+      }
+    }
+  ]
+}

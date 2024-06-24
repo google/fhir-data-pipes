@@ -16,8 +16,7 @@
 package com.google.fhir.analytics;
 
 import ca.uhn.fhir.context.FhirContext;
-import ca.uhn.fhir.context.FhirVersionEnum;
-import com.cerner.bunsen.FhirContexts;
+import com.cerner.bunsen.exception.ProfileException;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import com.google.common.collect.Lists;
@@ -27,7 +26,6 @@ import com.google.fhir.analytics.metrics.PipelineMetrics;
 import com.google.fhir.analytics.metrics.PipelineMetricsProvider;
 import com.google.fhir.analytics.model.DatabaseConfiguration;
 import com.google.fhir.analytics.view.ViewDefinitionException;
-import java.beans.PropertyVetoException;
 import java.io.IOException;
 import java.sql.SQLException;
 import java.util.ArrayList;
@@ -37,6 +35,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 import javax.sql.DataSource;
 import org.apache.avro.generic.GenericRecord;
 import org.apache.beam.sdk.Pipeline;
@@ -116,7 +115,8 @@ public class FhirEtl {
       List<PCollection<KV<String, Integer>>> allPatientIds,
       Set<String> patientAssociatedResources,
       FhirEtlOptions options,
-      FhirContext fhirContext) {
+      AvroConversionUtil avroConversionUtil)
+      throws ProfileException {
     PCollectionList<KV<String, Integer>> patientIdList =
         PCollectionList.<KV<String, Integer>>empty(pipeline).and(allPatientIds);
     PCollection<KV<String, Integer>> flattenedPatients =
@@ -124,8 +124,7 @@ public class FhirEtl {
     PCollection<KV<String, Integer>> mergedPatients = flattenedPatients.apply(Sum.integersPerKey());
     final String patientType = "Patient";
     FetchPatients fetchPatients =
-        new FetchPatients(
-            options, AvroConversionUtil.getInstance().getResourceSchema(patientType, fhirContext));
+        new FetchPatients(options, avroConversionUtil.getResourceSchema(patientType));
     mergedPatients.apply(fetchPatients);
     for (String resourceType : patientAssociatedResources) {
       FetchPatientHistory fetchPatientHistory = new FetchPatientHistory(options, resourceType);
@@ -134,8 +133,9 @@ public class FhirEtl {
   }
 
   private static List<Pipeline> buildFhirSearchPipeline(
-      FhirEtlOptions options, FhirContext fhirContext) {
-    FhirSearchUtil fhirSearchUtil = createFhirSearchUtil(options, fhirContext);
+      FhirEtlOptions options, AvroConversionUtil avroConversionUtil) throws ProfileException {
+    FhirSearchUtil fhirSearchUtil =
+        createFhirSearchUtil(options, avroConversionUtil.getFhirContext());
     Map<String, List<SearchSegmentDescriptor>> segmentMap = Maps.newHashMap();
     try {
       // TODO in the activePeriod case, among patientAssociatedResources, only fetch Encounter here.
@@ -165,26 +165,28 @@ public class FhirEtl {
       Set<String> patientAssociatedResources =
           fhirSearchUtil.findPatientAssociatedResources(segmentMap.keySet());
       fetchPatientHistory(
-          pipeline, allPatientIds, patientAssociatedResources, options, fhirContext);
+          pipeline, allPatientIds, patientAssociatedResources, options, avroConversionUtil);
     }
     return Arrays.asList(pipeline);
   }
 
   private static DataSource createJdbcPooledDataSource(
-      FhirEtlOptions options, DatabaseConfiguration dbConfig) throws PropertyVetoException {
+      FhirEtlOptions options, DatabaseConfiguration dbConfig) {
+    if (options.getJdbcInitialPoolSize() != JdbcConnectionPools.MIN_CONNECTIONS) {
+      log.warn("Setting jdbcInitialPoolSize has no effect; it is deprecated and will be removed.");
+    }
     return JdbcConnectionPools.getInstance()
         .getPooledDataSource(
-            JdbcConnectionPools.dbConfigToDataSourceConfig(dbConfig),
-            options.getJdbcInitialPoolSize(),
-            options.getJdbcMaxPoolSize());
+            JdbcConnectionPools.dbConfigToDataSourceConfig(dbConfig), options.getJdbcMaxPoolSize());
   }
 
   private static List<Pipeline> buildOpenmrsJdbcPipeline(
-      FhirEtlOptions options, FhirContext fhirContext)
-      throws PropertyVetoException, IOException, SQLException {
+      FhirEtlOptions options, AvroConversionUtil avroConversionUtil)
+      throws IOException, SQLException, ProfileException {
     // TODO add incremental support.
     Preconditions.checkArgument(Strings.isNullOrEmpty(options.getSince()));
-    FhirSearchUtil fhirSearchUtil = createFhirSearchUtil(options, fhirContext);
+    FhirSearchUtil fhirSearchUtil =
+        createFhirSearchUtil(options, avroConversionUtil.getFhirContext());
     List<Pipeline> pipelines = new ArrayList<>();
     Pipeline pipeline = Pipeline.create(options);
     pipelines.add(pipeline);
@@ -237,7 +239,7 @@ public class FhirEtl {
       Set<String> patientAssociatedResources =
           fhirSearchUtil.findPatientAssociatedResources(resourceTypes);
       fetchPatientHistory(
-          pipeline, allPatientIds, patientAssociatedResources, options, fhirContext);
+          pipeline, allPatientIds, patientAssociatedResources, options, avroConversionUtil);
     }
     return pipelines;
   }
@@ -258,11 +260,16 @@ public class FhirEtl {
     }
 
     if (!options.getParquetInputDwhRoot().isEmpty()
-        || !options.getSourceJsonFilePattern().isEmpty()) {
-      if (!options.getParquetInputDwhRoot().isEmpty()
-          && !options.getSourceJsonFilePattern().isEmpty()) {
+        || !options.getSourceJsonFilePattern().isEmpty()
+        || !options.getSourceNDJsonFilePattern().isEmpty()) {
+
+      if (!checkOnlyOneNonEmptyString(
+          options.getParquetInputDwhRoot(),
+          options.getSourceJsonFilePattern(),
+          options.getSourceNDJsonFilePattern())) {
         throw new IllegalArgumentException(
-            "--parquetInputDwhRoot and --sourceJsonFilePattern cannot be used together!");
+            "Only one of the parameters --parquetInputDwhRoot, --sourceJsonFilePattern or"
+                + " --sourceNDJsonFilePattern can be set at a time");
       }
       if (!options.getParquetInputDwhRoot().isEmpty()
           && !options.getOutputParquetPath().isEmpty()) {
@@ -287,14 +294,22 @@ public class FhirEtl {
       if (options.getFhirServerUrl().isEmpty() && !options.isJdbcModeHapi()) {
         throw new IllegalArgumentException(
             "One of --fhirServerUrl --jdbcModeHapi --parquetInputDwhRoot --sourceJsonFilePattern"
-                + " should be set!");
+                + " --sourceNDJsonFilePattern should be set!");
       }
     }
   }
 
+  private static boolean checkOnlyOneNonEmptyString(String... strings) {
+    List<String> nonEmptyList =
+        Arrays.stream(strings)
+            .filter(string -> !Strings.isNullOrEmpty(string))
+            .collect(Collectors.toList());
+    return nonEmptyList.size() == 1;
+  }
+
   // TODO: Implement active period feature for JDBC mode with a HAPI source server (issue #278).
   private static List<Pipeline> buildHapiJdbcPipeline(FhirEtlOptions options)
-      throws PropertyVetoException, SQLException, IOException {
+      throws SQLException, IOException {
     Preconditions.checkArgument(!Strings.isNullOrEmpty(options.getFhirDatabaseConfigPath()));
     DatabaseConfiguration dbConfig =
         DatabaseConfiguration.createConfigFromFile(options.getFhirDatabaseConfigPath());
@@ -348,10 +363,12 @@ public class FhirEtl {
     return null;
   }
 
-  private static List<Pipeline> buildParquetReadPipeline(FhirEtlOptions options)
-      throws IOException {
+  private static List<Pipeline> buildParquetReadPipeline(
+      FhirEtlOptions options, AvroConversionUtil avroConversionUtil)
+      throws IOException, ProfileException {
     Preconditions.checkArgument(!options.getParquetInputDwhRoot().isEmpty());
-    DwhFiles dwhFiles = DwhFiles.forRoot(options.getParquetInputDwhRoot());
+    DwhFiles dwhFiles =
+        DwhFiles.forRoot(options.getParquetInputDwhRoot(), avroConversionUtil.getFhirContext());
     Set<String> resourceTypes = dwhFiles.findNonEmptyFhirResourceTypes();
     log.info("Reading Parquet files for these resource types: {}", resourceTypes);
     List<Pipeline> pipelineList = new ArrayList<>();
@@ -364,10 +381,7 @@ public class FhirEtl {
               .apply(FileIO.readMatches());
 
       PCollection<GenericRecord> records =
-          inputFiles.apply(
-              ParquetIO.readFiles(
-                  AvroConversionUtil.getInstance()
-                      .getResourceSchema(resourceType, FhirVersionEnum.R4)));
+          inputFiles.apply(ParquetIO.readFiles(avroConversionUtil.getResourceSchema(resourceType)));
 
       records.apply(
           "Process Parquet records for " + resourceType,
@@ -377,19 +391,20 @@ public class FhirEtl {
     return pipelineList;
   }
 
-  private static List<Pipeline> buildJsonReadPipeline(FhirEtlOptions options) throws IOException {
+  private static List<Pipeline> buildJsonReadPipeline(
+      FhirEtlOptions options, String filePattern, boolean isFileNDJson) {
+    Preconditions.checkArgument(!filePattern.isEmpty());
     Preconditions.checkArgument(Strings.isNullOrEmpty(options.getSince()));
-    Preconditions.checkArgument(!options.getSourceJsonFilePattern().isEmpty());
     Preconditions.checkArgument(!options.isJdbcModeEnabled());
     Preconditions.checkArgument(options.getActivePeriod().isEmpty());
 
     Pipeline pipeline = Pipeline.create(options);
-    PCollection<FileIO.ReadableFile> files =
-        pipeline
-            .apply(FileIO.match().filepattern(options.getSourceJsonFilePattern()))
-            .apply(FileIO.readMatches());
-    files.apply("Read JSON files", ParDo.of(new ReadJsonFilesFn(options)));
-
+    pipeline
+        .apply(FileIO.match().filepattern(filePattern))
+        .apply(FileIO.readMatches())
+        .apply(
+            isFileNDJson ? "Read NDJson Files" : "Read JSON Files",
+            ParDo.of(new ReadJsonFilesFn(options, isFileNDJson)));
     return Arrays.asList(pipeline);
   }
 
@@ -411,27 +426,29 @@ public class FhirEtl {
    * @param options the pipeline options to be used.
    * @return the created Pipeline instance or null if nothing needs to be done.
    */
-  static List<Pipeline> setupAndBuildPipelines(FhirEtlOptions options)
-      throws PropertyVetoException, IOException, SQLException, ViewDefinitionException {
+  static List<Pipeline> setupAndBuildPipelines(
+      FhirEtlOptions options, AvroConversionUtil avroConversionUtil)
+      throws IOException, SQLException, ViewDefinitionException, ProfileException {
     if (!options.getSinkDbConfigPath().isEmpty()) {
       JdbcResourceWriter.createTables(options);
     }
-    FhirContext fhirContext = FhirContexts.forR4();
     if (options.isJdbcModeHapi()) {
       return buildHapiJdbcPipeline(options);
     } else if (options.isJdbcModeEnabled()) {
-      return buildOpenmrsJdbcPipeline(options, fhirContext);
+      return buildOpenmrsJdbcPipeline(options, avroConversionUtil);
     } else if (!options.getParquetInputDwhRoot().isEmpty()) {
-      return buildParquetReadPipeline(options);
+      return buildParquetReadPipeline(options, avroConversionUtil);
     } else if (!options.getSourceJsonFilePattern().isEmpty()) {
-      return buildJsonReadPipeline(options);
+      return buildJsonReadPipeline(options, options.getSourceJsonFilePattern(), false);
+    } else if (!options.getSourceNDJsonFilePattern().isEmpty()) {
+      return buildJsonReadPipeline(options, options.getSourceNDJsonFilePattern(), true);
     } else {
-      return buildFhirSearchPipeline(options, fhirContext);
+      return buildFhirSearchPipeline(options, avroConversionUtil);
     }
   }
 
   public static void main(String[] args)
-      throws PropertyVetoException, IOException, SQLException, ViewDefinitionException {
+      throws IOException, SQLException, ViewDefinitionException, ProfileException {
 
     AvroConversionUtil.initializeAvroConverters();
 
@@ -440,9 +457,15 @@ public class FhirEtl {
         PipelineOptionsFactory.fromArgs(args).withValidation().as(FhirEtlOptions.class);
     log.info("Flags: " + options);
     validateOptions(options);
+    AvroConversionUtil avroConversionUtil =
+        AvroConversionUtil.getInstance(
+            options.getFhirVersion(),
+            options.getStructureDefinitionsPath(),
+            options.getRecursiveDepth());
+    List<Pipeline> pipelines = setupAndBuildPipelines(options, avroConversionUtil);
+    EtlUtils.runMultiplePipelinesWithTimestamp(
+        pipelines, options, avroConversionUtil.getFhirContext());
 
-    List<Pipeline> pipelines = setupAndBuildPipelines(options);
-    EtlUtils.runMultiplePipelinesWithTimestamp(pipelines, options);
     log.info("DONE!");
   }
 }

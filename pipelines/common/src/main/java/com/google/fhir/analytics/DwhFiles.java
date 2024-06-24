@@ -17,10 +17,10 @@ package com.google.fhir.analytics;
 
 import ca.uhn.fhir.context.FhirContext;
 import ca.uhn.fhir.parser.DataFormatException;
-import com.cerner.bunsen.FhirContexts;
 import com.google.api.client.util.Sets;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
+import com.google.common.collect.Iterables;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
@@ -49,7 +49,6 @@ import org.apache.beam.sdk.io.fs.MatchResult.Status;
 import org.apache.beam.sdk.io.fs.ResolveOptions.StandardResolveOptions;
 import org.apache.beam.sdk.io.fs.ResourceId;
 import org.apache.beam.sdk.util.MimeTypes;
-import org.apache.beam.vendor.guava.v26_0_jre.com.google.common.collect.Iterables;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -75,10 +74,6 @@ public class DwhFiles {
   private final String dwhRoot;
 
   private final FhirContext fhirContext;
-
-  private DwhFiles(String dwhRoot) {
-    this(dwhRoot, FhirContexts.forR4());
-  }
 
   /**
    * In order to interpret the file paths correctly the {@code dwhRoot} has to be represented in one
@@ -113,8 +108,8 @@ public class DwhFiles {
     this.fhirContext = fhirContext;
   }
 
-  static DwhFiles forRoot(String dwhRoot) {
-    return new DwhFiles(dwhRoot);
+  static DwhFiles forRoot(String dwhRoot, FhirContext fhirContext) {
+    return new DwhFiles(dwhRoot, fhirContext);
   }
 
   public String getRoot() {

@@ -15,8 +15,8 @@
  */
 package com.google.fhir.analytics;
 
+import com.cerner.bunsen.exception.ProfileException;
 import com.google.fhir.analytics.view.ViewApplicationException;
-import java.beans.PropertyVetoException;
 import java.io.IOException;
 import java.sql.SQLException;
 import java.util.ArrayList;
@@ -50,7 +50,7 @@ public class ProcessGenericRecords extends FetchSearchPageFn<GenericRecord> {
   }
 
   @Override
-  public void setup() throws SQLException, PropertyVetoException {
+  public void setup() throws SQLException, ProfileException {
     super.setup();
     cachedResources = new ArrayList<>();
     totalAvroConversionTime =
@@ -64,17 +64,17 @@ public class ProcessGenericRecords extends FetchSearchPageFn<GenericRecord> {
   }
 
   @Override
-  public void teardown() throws IOException {
+  public void finishBundle(FinishBundleContext context) {
     if (!cachedResources.isEmpty()) {
       try {
         processBundle(flushCachToBundle());
-      } catch (SQLException | ViewApplicationException e) {
-        // This is not perfect but the parent teardown only has IOException.
-        log.error("Caught exception in teardown: ", e);
-        throw new IOException(e);
+      } catch (SQLException | ViewApplicationException | ProfileException | IOException e) {
+        // We cannot do much at finishBundle!
+        log.error("At finishBundle caught exception ", e);
+        throw new IllegalStateException(e);
       }
     }
-    super.teardown();
+    super.finishBundle(context);
   }
 
   private Bundle flushCachToBundle() {
@@ -88,11 +88,10 @@ public class ProcessGenericRecords extends FetchSearchPageFn<GenericRecord> {
 
   @ProcessElement
   public void processElement(@Element GenericRecord record)
-      throws IOException, SQLException, ViewApplicationException {
+      throws IOException, SQLException, ViewApplicationException, ProfileException {
     try {
       long startTime = System.currentTimeMillis();
-      Resource resource =
-          AvroConversionUtil.getInstance().convertToHapi(record, resourceType, fhirContext);
+      Resource resource = avroConversionUtil.convertToHapi(record, resourceType);
       totalAvroConversionTime.inc(System.currentTimeMillis() - startTime);
       totalAvroConversions.inc();
       cachedResources.add(resource);

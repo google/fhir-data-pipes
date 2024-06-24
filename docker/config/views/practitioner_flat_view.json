@@ -1,0 +1,72 @@
+{
+  "resourceType": "http://hl7.org/fhir/uv/sql-on-fhir/StructureDefinition/ViewDefinition",
+  "text": "This is the SQL-on-FHIR-v2 version of Practitioner_flat.sql",
+  "select": [
+    {
+      "column": [
+        {
+          "path": "getResourceKey()",
+          "name": "id"
+        },
+        {
+          "path": "active",
+          "name": "active",
+          "type": "boolean"
+        },
+        {
+          "path": "gender",
+          "name": "gender"
+        }
+      ]
+    },
+    {
+      "forEachOrNull": "name",
+      "column": [
+        {
+          "path": "family",
+          "name": "family"
+        }
+      ],
+      "select": [
+        {
+          "forEachOrNull": "given",
+          "column": [
+            {
+              "path": "$this",
+              "name": "given"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "forEachOrNull": "address",
+      "column": [
+        {
+          "path": "city",
+          "name": "city"
+        },
+        {
+          "path": "country",
+          "name": "country"
+        }
+      ]
+    },
+    {
+      "forEachOrNull": "qualification.code.coding",
+      "column": [
+        {
+          "path": "system",
+          "name": "qualification_system"
+        },
+        {
+          "path": "code",
+          "name": "qualification_code"
+        }
+      ]
+    }
+  ],
+  "name": "practitioner_flat",
+  "status": "draft",
+  "resource": "Practitioner"
+}

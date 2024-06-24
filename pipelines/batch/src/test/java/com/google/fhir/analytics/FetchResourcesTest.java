@@ -24,9 +24,9 @@ import static org.mockito.Mockito.when;
 import ca.uhn.fhir.context.FhirContext;
 import ca.uhn.fhir.parser.IParser;
 import ca.uhn.fhir.rest.api.SummaryEnum;
+import com.cerner.bunsen.exception.ProfileException;
 import com.google.common.collect.Lists;
 import com.google.common.io.Resources;
-import java.beans.PropertyVetoException;
 import java.io.IOException;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
@@ -109,7 +109,7 @@ public class FetchResourcesTest {
           new SearchFn(options, "TEST_FetchResources") {
 
             @Override
-            public void setup() throws SQLException, PropertyVetoException {
+            public void setup() throws SQLException, ProfileException {
               super.setup();
               this.fhirSearchUtil = Mockito.mock(FhirSearchUtil.class);
               when(fhirSearchUtil.searchByUrl(

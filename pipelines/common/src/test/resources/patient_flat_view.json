@@ -23,7 +23,7 @@
           "type": "boolean"
         },
         {
-          "path": "managingOrganization.organizationId",
+          "path": "managingOrganization.getReferenceKey(Organization)",
           "name": "organization_id"
         }
       ]
@@ -31,7 +31,7 @@
     {
       "column": [
         {
-          "path": "getReferenceKey('Practitioner')",
+          "path": "getReferenceKey(Practitioner)",
           "name": "practitioner_id"
         }
       ],

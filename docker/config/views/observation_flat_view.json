@@ -9,11 +9,11 @@
           "name": "id"
         },
         {
-          "path": "subject.getReferenceKey('Patient')",
+          "path": "subject.getReferenceKey(Patient)",
           "name": "patient_id"
         },
         {
-          "path": "encounter.getReferenceKey('Encounter')",
+          "path": "encounter.getReferenceKey(Encounter)",
           "name": "encounter_id"
         },
         {
@@ -46,7 +46,7 @@
       ]
     },
     {
-      "forEachOrNull": "valueCodeableConcept.coding",
+      "forEachOrNull": "value.ofType(CodeableConcept).coding",
       "column": [
         {
           "path": "code",
@@ -57,12 +57,6 @@
           "name": "val_sys"
         }
       ]
-    }
-  ],
-  "where": [
-    {
-      "path": "subject.exists()",
-      "description": "Drop resources that do not have a subject."
     }
   ],
   "name": "observation_flat",

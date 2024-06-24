@@ -31,15 +31,22 @@ fhirdata:
   # There is no Questionnaire in our test FHIR server, but it is added to
   # prevent regression of https://github.com/google/fhir-data-pipes/issues/785.
   # TODO: add resource table creation to e2e tests.
-  resourceList: "Patient,Encounter,Observation,Questionnaire,Condition,Practitioner,Location,Organization"
+  resourceList: "Patient,Encounter,Observation,Questionnaire,Condition,Practitioner,Location,Organization,DiagnosticReport,Immunization,MedicationRequest,PractitionerRole,Procedure"
   numThreads: -1
   autoGenerateFlinkConfiguration: true
   createHiveResourceTables: true
   thriftserverHiveConfig: "config/thriftserver-hive-config_local.json"
   hiveResourceViewsDir: "config/views"
+  # structureDefinitionsPath: "config/profile-definitions"
+  structureDefinitionsPath: "classpath:/r4-us-core-definitions"
+  fhirVersion: "R4"
   rowGroupSizeForParquetFiles: 33554432   # 32mb
   viewDefinitionsDir: "config/views"
   sinkDbConfigPath: "config/hapi-postgres-config_local_views.json"
+  #sinkFhirServerUrl: "http://sink-server:8080/fhir"
+  #sinkUserName: "hapi"
+  #sinkPassword: "hapi123"
+  recursiveDepth: 1
 
 # Enable spring boot actuator end points, use "*" to expose all endpoints, or a comma-separated
 # list to expose selected ones

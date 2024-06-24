@@ -13,18 +13,24 @@ import com.cerner.bunsen.definitions.HapiConverter;
 import com.cerner.bunsen.definitions.HapiConverter.HapiFieldSetter;
 import com.cerner.bunsen.definitions.HapiConverter.HapiObjectConverter;
 import com.cerner.bunsen.definitions.HapiConverter.MultiValueConverter;
+import com.cerner.bunsen.definitions.HapiConverterUtil;
 import com.cerner.bunsen.definitions.IdConverter;
 import com.cerner.bunsen.definitions.LeafExtensionConverter;
 import com.cerner.bunsen.definitions.PrimitiveConverter;
 import com.cerner.bunsen.definitions.StringConverter;
 import com.cerner.bunsen.definitions.StructureField;
+import com.cerner.bunsen.exception.ProfileException;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
+import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableMap;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.stream.Collectors;
 import org.apache.avro.JsonProperties;
 import org.apache.avro.Schema;
@@ -44,6 +50,8 @@ public class DefinitionToAvroVisitor implements DefinitionVisitor<HapiConverter<
   private final String basePackage;
 
   private final Map<String, HapiConverter<Schema>> visitedConverters;
+
+  private final int recursiveDepth;
 
   private static final HapiConverter<Schema> STRING_CONVERTER =
       new StringConverter<>(Schema.create(Type.STRING));
@@ -94,7 +102,7 @@ public class DefinitionToAvroVisitor implements DefinitionVisitor<HapiConverter<
   // FHIR (Double and BigDecimal are not assignable to each other hence explicit conversions).
   // Note with this approach we are loosing some precision!
   private static final HapiConverter<Schema> DOUBLE_CONVERTER =
-      new PrimitiveConverter<Schema>("Double") {
+      new PrimitiveConverter<Schema>("Decimal") {
         @Override
         public void toHapi(Object input, IPrimitiveType primitive) {
           Preconditions.checkArgument((input instanceof BigDecimal) || (input instanceof Double));
@@ -119,6 +127,7 @@ public class DefinitionToAvroVisitor implements DefinitionVisitor<HapiConverter<
 
   // The key set of this map should be exactly the same as StructureDefinitions.PRIMITIVE_TYPES.
   // TODO refactor/consolidate these two.
+  @VisibleForTesting
   static final Map<String, HapiConverter<Schema>> TYPE_TO_CONVERTER =
       ImmutableMap.<String, HapiConverter<Schema>>builder()
           .put(ID_TYPE, ID_CONVERTER)
@@ -200,6 +209,76 @@ public class DefinitionToAvroVisitor implements DefinitionVisitor<HapiConverter<
 
       return schema.getType().equals(Schema.Type.ARRAY);
     }
+
+    @Override
+    public HapiConverter<Schema> merge(HapiConverter<Schema> other) throws ProfileException {
+      HapiConverterUtil.validateIfImplementationClassesAreSame(this, other);
+      CompositeToAvroConverter otherConverter = (CompositeToAvroConverter) other;
+      // For extensions
+      if (!(Strings.isNullOrEmpty(this.extensionUrl())
+          && Strings.isNullOrEmpty(otherConverter.extensionUrl()))) {
+        if (!Objects.equals(this.extensionUrl(), otherConverter.extensionUrl())) {
+          throw new ProfileException(
+              String.format(
+                  "The extension URL must be the same to merge. currentExtensionUrl=%s,"
+                      + " otherExtensionUrl=%s",
+                  this.extensionUrl(), otherConverter.extensionUrl()));
+        }
+        // Return one of the converter as the extension URLs are same.
+        return this;
+      }
+
+      // For non-extensions
+      List<StructureField<HapiConverter<Schema>>> currentChildren = this.getChildren();
+      List<StructureField<HapiConverter<Schema>>> otherChildren = otherConverter.getChildren();
+
+      List<StructureField<HapiConverter<Schema>>> mergedList = new ArrayList<>();
+      Map<String, StructureField> currentElementsMap =
+          currentChildren.stream().collect(Collectors.toMap(s -> s.fieldName(), s -> s));
+      Map<String, StructureField> otherElementsMap =
+          otherChildren.stream().collect(Collectors.toMap(s -> s.fieldName(), s -> s));
+
+      for (StructureField currentField : currentChildren) {
+        if (!otherElementsMap.containsKey(currentField.fieldName())) {
+          // Add the current element since it's not available in the other converter.
+          mergedList.add(currentField);
+        } else {
+          // Merge the element if the name is same
+          StructureField otherField = otherElementsMap.get(currentField.fieldName());
+
+          HapiConverter currentFieldConverter = (HapiConverter) currentField.result();
+          HapiConverter otherFieldConverter = (HapiConverter) otherField.result();
+
+          HapiConverter<Schema> mergedResult = currentFieldConverter.merge(otherFieldConverter);
+          StructureField structureField =
+              new StructureField(
+                  currentField.propertyName(),
+                  currentField.fieldName(),
+                  currentField.extensionUrl(),
+                  currentField.isModifier(),
+                  currentField.isChoice(),
+                  mergedResult);
+          mergedList.add(structureField);
+        }
+      }
+
+      // Add the remaining elements in the other converter
+      for (StructureField otherField : otherChildren) {
+        if (!currentElementsMap.containsKey(otherField.fieldName())) {
+          mergedList.add(otherField);
+        }
+      }
+
+      Schema schema = this.getDataType();
+      return createCompositeConverter(
+          this.getElementType(),
+          schema.getName(),
+          schema.getDoc(),
+          schema.getNamespace(),
+          mergedList,
+          fhirSupport,
+          this.extensionUrl());
+    }
   }
 
   private static class HapiChoiceToAvroConverter extends HapiChoiceConverter<Schema> {
@@ -231,6 +310,35 @@ public class DefinitionToAvroVisitor implements DefinitionVisitor<HapiConverter<
       }
 
       return record;
+    }
+
+    @Override
+    public HapiConverter<Schema> merge(HapiConverter<Schema> other) throws ProfileException {
+      HapiConverterUtil.validateIfImplementationClassesAreSame(this, other);
+      HapiChoiceToAvroConverter otherConverter = (HapiChoiceToAvroConverter) other;
+      Map<String, HapiConverter<Schema>> currentChoiceTypes = this.getChoiceTypes();
+      Map<String, HapiConverter<Schema>> otherChoiceTypes = otherConverter.getChoiceTypes();
+
+      // Use a linked hash map to preserve the order of the fields in the merged converter
+      Map<String, HapiConverter<Schema>> mergedChoiceTypes = new LinkedHashMap<>();
+      for (String key : currentChoiceTypes.keySet()) {
+        if (!otherChoiceTypes.containsKey(key)) {
+          mergedChoiceTypes.put(key, currentChoiceTypes.get(key));
+        } else {
+          HapiConverter<Schema> mergedResult =
+              currentChoiceTypes.get(key).merge(otherChoiceTypes.get(key));
+          mergedChoiceTypes.put(key, mergedResult);
+        }
+      }
+
+      for (String key : otherChoiceTypes.keySet()) {
+        if (!currentChoiceTypes.containsKey(key)) {
+          mergedChoiceTypes.put(key, otherChoiceTypes.get(key));
+        }
+      }
+
+      return createChoiceConverter(
+          mergedChoiceTypes, this.getDataType().getNamespace(), fhirSupport);
     }
   }
 
@@ -323,6 +431,11 @@ public class DefinitionToAvroVisitor implements DefinitionVisitor<HapiConverter<
 
       return new GenericData.Array<>(getDataType(), containedList);
     }
+
+    @Override
+    public HapiConverter<Schema> merge(HapiConverter<Schema> other) throws ProfileException {
+      throw new ProfileException("Merging of HapiContainedToAvroConverter is not supported");
+    }
   }
 
   private static class MultiValuedToAvroConverter extends HapiConverter<Schema>
@@ -395,6 +508,14 @@ public class DefinitionToAvroVisitor implements DefinitionVisitor<HapiConverter<
 
       return new MultiValuedtoHapiConverter(elementDefinition, rowToHapiConverter);
     }
+
+    @Override
+    public HapiConverter<Schema> merge(HapiConverter<Schema> other) throws ProfileException {
+      HapiConverterUtil.validateIfImplementationClassesAreSame(this, other);
+      HapiConverter<Schema> mergedElementConverter =
+          this.elementConverter.merge(((MultiValuedToAvroConverter) other).getElementConverter());
+      return new MultiValuedToAvroConverter(mergedElementConverter);
+    }
   }
 
   /**
@@ -408,11 +529,12 @@ public class DefinitionToAvroVisitor implements DefinitionVisitor<HapiConverter<
   public DefinitionToAvroVisitor(
       FhirConversionSupport fhirSupport,
       String basePackage,
-      Map<String, HapiConverter<Schema>> visitedConverters) {
-
+      Map<String, HapiConverter<Schema>> visitedConverters,
+      int recursiveDepth) {
     this.fhirSupport = fhirSupport;
     this.basePackage = basePackage;
     this.visitedConverters = visitedConverters;
+    this.recursiveDepth = recursiveDepth;
   }
 
   @Override
@@ -485,30 +607,15 @@ public class DefinitionToAvroVisitor implements DefinitionVisitor<HapiConverter<
     HapiConverter<Schema> converter = visitedConverters.get(fullName);
 
     if (converter == null) {
-
-      List<Field> fields =
-          children.stream()
-              .map(
-                  (StructureField<HapiConverter<Schema>> field) -> {
-                    String doc =
-                        field.extensionUrl() != null
-                            ? "Extension field for " + field.extensionUrl()
-                            : "Field for FHIR property " + field.propertyName();
-
-                    return new Field(
-                        field.fieldName(),
-                        nullable(field.result().getDataType()),
-                        doc,
-                        JsonProperties.NULL_VALUE);
-                  })
-              .collect(Collectors.toList());
-
-      Schema schema =
-          Schema.createRecord(
-              recordName, "Structure for FHIR type " + baseType, recordNamespace, false, fields);
-
-      converter = new CompositeToAvroConverter(baseType, children, schema, fhirSupport);
-
+      converter =
+          createCompositeConverter(
+              baseType,
+              recordName,
+              "Structure for FHIR type " + baseType,
+              recordNamespace,
+              children,
+              fhirSupport,
+              null);
       visitedConverters.put(fullName, converter);
     }
 
@@ -565,6 +672,22 @@ public class DefinitionToAvroVisitor implements DefinitionVisitor<HapiConverter<
       // Returns a field setter that does nothing, since this is for a synthetic type-specific
       // reference field, and the value will be set from the primary field.
       return NOOP_FIELD_SETTER;
+    }
+
+    @Override
+    public HapiConverter<Schema> merge(HapiConverter<Schema> other) throws ProfileException {
+      HapiConverterUtil.validateIfImplementationClassesAreSame(this, other);
+      String leftPrefix = Strings.nullToEmpty(this.prefix);
+      String rightPrefix = Strings.nullToEmpty(((RelativeValueConverter) other).prefix);
+      if (!Objects.equals(leftPrefix, rightPrefix)) {
+        throw new ProfileException(
+            String.format(
+                "RelativeValueConverter prefixes should be equal for merging, leftPrefix=%s,"
+                    + " rightPrefix=%s",
+                leftPrefix, rightPrefix));
+      }
+      // Return the current converter as the prefixes are same.
+      return this;
     }
   }
 
@@ -702,60 +825,13 @@ public class DefinitionToAvroVisitor implements DefinitionVisitor<HapiConverter<
   public HapiConverter<Schema> visitChoice(
       String elementName, Map<String, HapiConverter<Schema>> choiceTypes) {
 
-    List<Field> fields =
-        choiceTypes.entrySet().stream()
-            .map(
-                entry -> {
-
-                  // Ensure first character of the field is lower case.
-                  String fieldName = lowercase(entry.getKey());
-
-                  return new Field(
-                      fieldName,
-                      nullable(entry.getValue().getDataType()),
-                      "Choice field",
-                      JsonProperties.NULL_VALUE);
-                })
-            .collect(Collectors.toList());
-
-    String fieldTypesString =
-        choiceTypes.entrySet().stream()
-            .map(
-                choiceEntry -> {
-
-                  // References need their full record name, which includes the permissible referent
-                  // types
-                  if (choiceEntry.getKey().equals("Reference")) {
-
-                    return choiceEntry.getValue().getDataType().getName();
-                  } else {
-
-                    return choiceEntry.getKey();
-                  }
-                })
-            .sorted()
-            .map(StringUtils::capitalize)
-            .collect(Collectors.joining());
-
-    String fullName = basePackage + "." + "Choice" + fieldTypesString;
-
+    String fieldTypesName = createChoiceFieldTypesName(choiceTypes);
+    String fullName = basePackage + "." + "Choice" + fieldTypesName;
     HapiConverter<Schema> converter = visitedConverters.get(fullName);
-
     if (converter == null) {
-
-      Schema schema =
-          Schema.createRecord(
-              "Choice" + fieldTypesString,
-              "Structure for FHIR choice type ",
-              basePackage,
-              false,
-              fields);
-
-      converter = new HapiChoiceToAvroConverter(choiceTypes, schema, fhirSupport);
-
+      converter = createChoiceConverter(choiceTypes, basePackage, fhirSupport);
       visitedConverters.put(fullName, converter);
     }
-
     return converter;
   }
 
@@ -771,7 +847,89 @@ public class DefinitionToAvroVisitor implements DefinitionVisitor<HapiConverter<
 
   @Override
   public int getMaxDepth(String elementTypeUrl, String path) {
-    // return 2;
-    return 1;
+    return Math.max(1, this.recursiveDepth);
+  }
+
+  private static HapiCompositeConverter createCompositeConverter(
+      String elementType,
+      String recordName,
+      String doc,
+      String namespace,
+      List<StructureField<HapiConverter<Schema>>> children,
+      FhirConversionSupport fhirSupport,
+      String extensionUrl) {
+
+    List<Field> fields =
+        children.stream()
+            .map(
+                (StructureField<HapiConverter<Schema>> field) -> {
+                  String desc =
+                      recordName.endsWith("Reference")
+                          ? "Reference field"
+                          : field.extensionUrl() != null
+                              ? "Extension field for " + field.extensionUrl()
+                              : "Field for FHIR property " + field.propertyName();
+
+                  return new Field(
+                      field.fieldName(),
+                      nullable(field.result().getDataType()),
+                      desc,
+                      JsonProperties.NULL_VALUE);
+                })
+            .collect(Collectors.toList());
+
+    Schema schema = Schema.createRecord(recordName, doc, namespace, false, fields);
+
+    return new CompositeToAvroConverter(elementType, children, schema, fhirSupport, extensionUrl);
+  }
+
+  private static HapiChoiceConverter createChoiceConverter(
+      Map<String, HapiConverter<Schema>> choiceTypes,
+      String namespace,
+      FhirConversionSupport fhirSupport) {
+
+    List<Field> fields = createChoiceFields(choiceTypes);
+    String fieldTypesString = createChoiceFieldTypesName(choiceTypes);
+
+    Schema schema =
+        Schema.createRecord(
+            "Choice" + fieldTypesString,
+            "Structure for FHIR choice type ",
+            namespace,
+            false,
+            fields);
+    return new HapiChoiceToAvroConverter(choiceTypes, schema, fhirSupport);
+  }
+
+  private static List<Field> createChoiceFields(Map<String, HapiConverter<Schema>> choiceTypes) {
+    return choiceTypes.entrySet().stream()
+        .map(
+            entry -> {
+              // Ensure first character of the field is lower case.
+              String fieldName = lowercase(entry.getKey());
+              return new Field(
+                  fieldName,
+                  nullable(entry.getValue().getDataType()),
+                  "Choice field",
+                  JsonProperties.NULL_VALUE);
+            })
+        .collect(Collectors.toList());
+  }
+
+  private static String createChoiceFieldTypesName(Map<String, HapiConverter<Schema>> choiceTypes) {
+    return choiceTypes.entrySet().stream()
+        .map(
+            choiceEntry -> {
+              // References need their full record name, which includes the permissible referent
+              // types
+              if (choiceEntry.getKey().equals("Reference")) {
+                return choiceEntry.getValue().getDataType().getName();
+              } else {
+                return choiceEntry.getKey();
+              }
+            })
+        .sorted()
+        .map(StringUtils::capitalize)
+        .collect(Collectors.joining());
   }
 }

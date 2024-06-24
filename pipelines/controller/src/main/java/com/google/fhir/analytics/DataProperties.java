@@ -15,6 +15,7 @@
  */
 package com.google.fhir.analytics;
 
+import ca.uhn.fhir.context.FhirVersionEnum;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import java.lang.reflect.InvocationTargetException;
@@ -103,7 +104,19 @@ public class DataProperties {
 
   private String fhirServerOAuthClientSecret;
 
+  private String sinkFhirServerUrl;
+
+  public String sinkUserName;
+
+  public String sinkPassword;
+
+  private String structureDefinitionsPath;
+
   private int rowGroupSizeForParquetFiles;
+
+  private FhirVersionEnum fhirVersion;
+
+  private int recursiveDepth;
 
   @PostConstruct
   void validateProperties() {
@@ -112,6 +125,7 @@ public class DataProperties {
     Preconditions.checkArgument(
         !Strings.isNullOrEmpty(fhirServerUrl) || !Strings.isNullOrEmpty(dbConfig),
         "At least one of fhirServerUrl or dbConfig should be set!");
+    Preconditions.checkState(fhirVersion != null, "FhirVersion cannot be empty");
 
     if (!Strings.isNullOrEmpty(dbConfig)) {
       if (!Strings.isNullOrEmpty(fhirServerUrl)) {
@@ -152,6 +166,11 @@ public class DataProperties {
     options.setViewDefinitionsDir(viewDefinitionsDir);
     options.setSinkDbConfigPath(sinkDbConfigPath);
     options.setRecreateSinkTables(true);
+    options.setStructureDefinitionsPath(Strings.nullToEmpty(structureDefinitionsPath));
+    options.setFhirVersion(fhirVersion);
+    if (rowGroupSizeForParquetFiles > 0) {
+      options.setRowGroupSizeForParquetFiles(rowGroupSizeForParquetFiles);
+    }
     return addFlinkOptions(options).build();
   }
 
@@ -176,8 +195,17 @@ public class DataProperties {
     }
     options.setViewDefinitionsDir(Strings.nullToEmpty(viewDefinitionsDir));
     options.setSinkDbConfigPath(Strings.nullToEmpty(sinkDbConfigPath));
+    options.setStructureDefinitionsPath(Strings.nullToEmpty(structureDefinitionsPath));
+    options.setFhirVersion(fhirVersion);
+    options.setRecursiveDepth(recursiveDepth);
     if (rowGroupSizeForParquetFiles > 0) {
       options.setRowGroupSizeForParquetFiles(rowGroupSizeForParquetFiles);
+    }
+
+    if (!Strings.isNullOrEmpty(sinkFhirServerUrl)) {
+      options.setFhirSinkPath(sinkFhirServerUrl);
+      options.setSinkUserName(Strings.nullToEmpty(sinkUserName));
+      options.setSinkPassword(Strings.nullToEmpty(sinkPassword));
     }
 
     // Using underscore for suffix as hyphens are discouraged in hive table names.
@@ -214,11 +242,17 @@ public class DataProperties {
         new ConfigFields("fhirdata.dbConfig", dbConfig, "", ""),
         new ConfigFields("fhirdata.viewDefinitionsDir", viewDefinitionsDir, "", ""),
         new ConfigFields("fhirdata.sinkDbConfigPath", sinkDbConfigPath, "", ""),
+        new ConfigFields("fhirdata.fhirSinkPath", sinkFhirServerUrl, "", ""),
+        new ConfigFields("fhirdata.sinkUserName", sinkUserName, "", ""),
+        new ConfigFields("fhirdata.sinkPassword", sinkPassword, "", ""),
+        new ConfigFields("fhirdata.structureDefinitionsPath", structureDefinitionsPath, "", ""),
+        new ConfigFields("fhirdata.fhirVersion", fhirVersion.name(), "", ""),
         new ConfigFields(
             "fhirdata.rowGroupSizeForParquetFiles",
             String.valueOf(rowGroupSizeForParquetFiles),
             "",
-            ""));
+            ""),
+        new ConfigFields("fhirdata.recursiveDepth", String.valueOf(recursiveDepth), "", ""));
   }
 
   ConfigFields getConfigFields(FhirEtlOptions options, Method getMethod) {

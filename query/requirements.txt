@@ -9,3 +9,6 @@ psycopg2
 # Jupyter extensions
 jupyterlab_execute_time
 jupyterlab-spellchecker
+
+# For DuckDB
+duckdb

@@ -2,6 +2,7 @@ package com.cerner.bunsen.definitions;
 
 import ca.uhn.fhir.context.BaseRuntimeChildDefinition;
 import ca.uhn.fhir.context.BaseRuntimeElementDefinition;
+import com.cerner.bunsen.exception.ProfileException;
 import org.hl7.fhir.instance.model.api.IBase;
 
 /**
@@ -75,7 +76,7 @@ public abstract class HapiConverter<T> {
 
   /**
    * The FHIR type of the element to be converted, or null if there is no FHIR type, such as within
-   * a FHIR backbone element.
+   * a FHIR backbone element. The return value should be a valid FHIR type.
    *
    * @return FHIR type of the element to be converted.
    */
@@ -93,4 +94,14 @@ public abstract class HapiConverter<T> {
    */
   public abstract HapiFieldSetter toHapiConverter(
       BaseRuntimeElementDefinition... elementDefinitions);
+
+  /**
+   * Merges the elements of the other converter with the current converter and returns the merged
+   * converter, merging happens even for the nested child fields.
+   *
+   * @param other the HapiConverter to be merged
+   * @return the merged HapiConverter
+   * @throws ProfileException
+   */
+  public abstract HapiConverter<T> merge(HapiConverter<T> other) throws ProfileException;
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2023 Google LLC
+ * Copyright 2020-2024 Google LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,10 +16,11 @@
 package com.google.fhir.analytics;
 
 import ca.uhn.fhir.context.FhirContext;
+import ca.uhn.fhir.context.FhirVersionEnum;
 import com.beust.jcommander.JCommander;
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.Parameters;
-import com.cerner.bunsen.FhirContexts;
+import com.cerner.bunsen.ProfileMapperFhirContexts;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.fhir.analytics.JdbcConnectionPools.DataSourceConfig;
 import com.google.fhir.analytics.model.DatabaseConfiguration;
@@ -68,7 +69,8 @@ public class DebeziumListener extends RouteBuilder {
 
   @VisibleForTesting
   FhirConverter createFhirConverter(CamelContext camelContext) throws Exception {
-    FhirContext fhirContext = FhirContexts.forR4();
+    FhirContext fhirContext =
+        ProfileMapperFhirContexts.getInstance().contextFor(FhirVersionEnum.R4, null);
     String fhirBaseUrl = params.fhirServerUrl;
     // TODO add OAuth support if we want to continue maintaining the streaming pipeline.
     FetchUtil fetchUtil =
@@ -89,10 +91,12 @@ public class DebeziumListener extends RouteBuilder {
     ParquetUtil parquetUtil =
         new ParquetUtil(
             fhirContext.getVersion().getVersion(),
+            "",
             params.outputParquetPath,
             params.secondsToFlushParquetFiles,
             params.rowGroupSizeForParquetFiles,
-            "streaming_");
+            "streaming_",
+            1);
     DataSource jdbcSource =
         JdbcConnectionPools.getInstance()
             .getPooledDataSource(
@@ -101,7 +105,6 @@ public class DebeziumListener extends RouteBuilder {
                     databaseConfiguration.makeJdbsUrlFromConfig(),
                     databaseConfiguration.getDatabaseUser(),
                     databaseConfiguration.getDatabasePassword()),
-                params.initialPoolSize,
                 params.jdbcMaxPoolSize);
     UuidUtil uuidUtil = new UuidUtil(jdbcSource);
     camelContext.addService(new ParquetService(parquetUtil), true);

@@ -23,7 +23,7 @@
           "type": "boolean"
         },
         {
-          "path": "managingOrganization.organizationId",
+          "path": "managingOrganization.getReferenceKey(Organization)",
           "name": "organization_id"
         }
       ]
@@ -31,14 +31,14 @@
     {
       "column": [
         {
-          "path": "getReferenceKey('Practitioner')",
+          "path": "getReferenceKey(Practitioner)",
           "name": "practitioner_id"
         }
       ],
       "forEachOrNull": "generalPractitioner"
     },
     {
-      "forEach": "name",
+      "forEachOrNull": "name",
       "column": [
         {
           "path": "family",
@@ -47,7 +47,7 @@
       ],
       "select": [
         {
-          "forEach": "given",
+          "forEachOrNull": "given",
           "column": [
             {
               "path": "$this",

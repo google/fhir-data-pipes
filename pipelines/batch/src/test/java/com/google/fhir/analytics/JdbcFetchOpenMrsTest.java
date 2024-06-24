@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2023 Google LLC
+ * Copyright 2020-2024 Google LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@ import static org.mockito.Mockito.withSettings;
 
 import ca.uhn.fhir.context.FhirContext;
 import ca.uhn.fhir.parser.IParser;
+import com.cerner.bunsen.exception.ProfileException;
 import com.google.common.io.Resources;
 import com.google.fhir.analytics.model.DatabaseConfiguration;
 import java.beans.PropertyVetoException;
@@ -70,8 +71,6 @@ public class JdbcFetchOpenMrsTest extends TestCase {
 
   private JdbcFetchOpenMrs jdbcFetchUtil;
 
-  private ParquetUtil parquetUtil;
-
   private String basePath = "/tmp/JUNIT/Parquet/TEST/";
 
   private DataSource mockedDataSource;
@@ -79,7 +78,7 @@ public class JdbcFetchOpenMrsTest extends TestCase {
   private DatabaseConfiguration dbConfig;
 
   @Before
-  public void setup() throws IOException, PropertyVetoException {
+  public void setup() throws IOException, PropertyVetoException, ProfileException {
     URL url = Resources.getResource("encounter.json");
     resourceStr = Resources.toString(url, StandardCharsets.UTF_8);
     this.fhirContext = FhirContext.forR4Cached();
@@ -96,7 +95,6 @@ public class JdbcFetchOpenMrsTest extends TestCase {
 
     mockedDataSource = mock(DataSource.class, withSettings().serializable());
     jdbcFetchUtil = new JdbcFetchOpenMrs(mockedDataSource);
-    parquetUtil = new ParquetUtil(fhirContext.getVersion().getVersion(), basePath);
     // clean up if folder exists
     File file = new File(basePath);
     if (file.exists()) FileUtils.cleanDirectory(file);

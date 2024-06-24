@@ -16,6 +16,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
+import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
 /** Abstract base class to visit FHIR structure definitions. */
@@ -77,20 +78,29 @@ public abstract class StructureDefinitions {
   private List<IElementDefinition> getChildren(
       IElementDefinition parent, List<IElementDefinition> definitions) {
 
-    if (parent.getContentReference() != null) {
-      if (!parent.getContentReference().startsWith("#")) {
-        throw new IllegalStateException("Non-local references are not yet supported");
+    String contentReference = parent.getContentReference();
+    if (contentReference != null) {
+      if (!contentReference.startsWith("#")) {
+        // For Non-local references check if there is any existing local reference, otherwise fail.
+        // This is a temporary fix so that the changes work for US Core Profile, the original issue
+        // where in to support Non-local references is being tracked in the below ticket.
+        // TODO: https://github.com/google/fhir-data-pipes/issues/961
+        parent = null;
+        if (contentReference.indexOf("#") > 0) {
+          String referencedType = contentReference.substring(contentReference.indexOf("#") + 1);
+          parent = getParentDefinition(referencedType, definitions);
+        }
+        if (parent == null) {
+          throw new IllegalStateException("Non-local references are not yet supported");
+        }
+      } else {
+        // Remove the leading hash (#) to get the referenced type.
+        String referencedType = parent.getContentReference().substring(1);
+        parent = getParentDefinition(referencedType, definitions);
+        if (parent == null) {
+          throw new IllegalArgumentException("Expected a reference type");
+        }
       }
-
-      // Remove the leading hash (#) to get the referenced type.
-      String referencedType = parent.getContentReference().substring(1);
-
-      // Find the actual type to use.
-      parent =
-          definitions.stream()
-              .filter(definition -> definition.getPath().equals(referencedType))
-              .findFirst()
-              .orElseThrow(() -> new IllegalArgumentException("Expected a reference type"));
     }
 
     String startsWith = parent.getId() + ".";
@@ -101,6 +111,17 @@ public abstract class StructureDefinitions {
                 definition.getId().startsWith(startsWith)
                     && definition.getId().indexOf('.', startsWith.length()) < 0)
         .collect(Collectors.toList());
+  }
+
+  /**
+   * Find the definition from the definitions list, whose path starts with the given referencedType
+   */
+  private IElementDefinition getParentDefinition(
+      String referencedType, List<IElementDefinition> definitions) {
+    return definitions.stream()
+        .filter(definition -> definition.getPath().equals(referencedType))
+        .findFirst()
+        .orElse(null);
   }
 
   private <T> List<StructureField<T>> singleField(String elementName, T result) {
@@ -260,7 +281,20 @@ public abstract class StructureDefinitions {
     } else if (element.getSliceName() != null) {
       // Drop slices for non-extension fields; otherwise we will end up with duplicated fields.
       return Collections.emptyList();
-    } else if (element.hasSingleType() && PRIMITIVE_TYPES.contains(element.getFirstTypeCode())) {
+    } else if (element.hasSingleType()
+        && PRIMITIVE_TYPES.contains(element.getFirstTypeCode())
+        // The below condition is added so that cases like - elements with multiple choice types in
+        // the base resource, that are restricted to include only one data type in the profiled
+        // version are not matched. One such example is the R4, US Core Profile Observation resource
+        // i.e. in the classpath, the resource
+        // /r4-us-core-definitions/StructureDefinition-us-core-smokingstatus.json has element with
+        // path `Observation.effective[x]` and is restricted to contain only one data type, the
+        // below condition makes sure such fields are not matched here. However, the Extension
+        // fields even though containing single type are defined with paths ending with [x]. Refer
+        // /r4-us-core-definitions/StructureDefinition-us-core-race.json which contains a field
+        // Extension.extension:text.value[x] that has a single type and the below condition
+        // matches this case.
+        && (element.getPath().startsWith("Extension") || !element.getPath().endsWith("[x]"))) {
       T primitiveConverter = visitor.visitPrimitive(elementName, element.getFirstTypeCode());
       if (!element.getMax().equals("1")) {
         return singleField(elementName, visitor.visitMultiValued(elementName, primitiveConverter));
@@ -461,24 +495,9 @@ public abstract class StructureDefinitions {
 
     IStructureDefinition definition = getStructureDefinition(resourceTypeUrl);
 
-    if (definition == null) {
-      throw new IllegalArgumentException("Unable to find definition for " + resourceTypeUrl);
-    }
-
     List<IStructureDefinition> containedDefinitions =
         containedResourceTypeUrls.stream()
-            .map(
-                containedResourceTypeUrl -> {
-                  IStructureDefinition containedDefinition =
-                      getStructureDefinition(containedResourceTypeUrl);
-
-                  if (containedDefinition == null) {
-                    throw new IllegalArgumentException(
-                        "Unable to find definition for " + containedResourceTypeUrl);
-                  }
-
-                  return containedDefinition;
-                })
+            .map(containedResourceTypeUrl -> getStructureDefinition(containedResourceTypeUrl))
             .collect(Collectors.toList());
 
     return transformRoot(visitor, definition, containedDefinitions);
@@ -514,8 +533,14 @@ public abstract class StructureDefinitions {
           referenceProfiles.stream()
               .map(profile -> getStructureDefinition(profile).getType())
               .sorted()
+              // Retrieve only the unique reference types
+              .distinct()
               .collect(Collectors.toList());
-      return visitor.visitReference(parentElement.toString(), referenceTypes, childElements);
+
+      String elementName = DefinitionVisitorsUtil.elementName(parentElement.getPath());
+      String elementFullPath = DefinitionVisitorsUtil.pathFromStack(elementName, stack);
+      return visitor.visitReference(
+          DefinitionVisitorsUtil.recordNameFor(elementFullPath), referenceTypes, childElements);
     } else {
       String rootName = DefinitionVisitorsUtil.elementName(root.getPath());
 
@@ -565,12 +590,16 @@ public abstract class StructureDefinitions {
   }
 
   /**
-   * Returns the structure definition interface corresponding to the given URL.
+   * Returns the structure definition interface corresponding to the given resourceUrl.
    *
    * @param resourceUrl it can be a resource type like `Patient` or a profile URL.
-   * @return the {@link IStructureDefinition} corresponding to the `resourceUrl`.
+   * @return the {@link IStructureDefinition} corresponding to the `resourceUrl`
+   * @throws IllegalArgumentException if the structure definition cannot be found for the given
+   *     resourceUrl.
    */
-  protected abstract IStructureDefinition getStructureDefinition(String resourceUrl);
+  @Nonnull
+  protected abstract IStructureDefinition getStructureDefinition(String resourceUrl)
+      throws IllegalArgumentException;
 
   /**
    * Returns the structure definition interface corresponding to the given element.
