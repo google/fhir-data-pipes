@@ -61,8 +61,8 @@ steps:
   waitFor: ['-']
 
 - name: 'ubuntu'
-  id: 'Sleep step'
-  args: ['sleep', '120']
+  id: 'Sleep for servers to be up'
+  args: ['sleep', '90']
   waitFor: ['Launch HAPI Source and Sink Servers', 'Run Uploader Unit Tests']
 
 - name: '${_REPOSITORY}/synthea-uploader:${_TAG}'
@@ -72,7 +72,7 @@ steps:
     - SINK_TYPE=HAPI
     - FHIR_ENDPOINT=http://hapi-server:8080/fhir
     - CORES=--cores 8
-  waitFor: ['Sleep step']
+  waitFor: ['Sleep for servers to be up']
 
 - name: 'gcr.io/cloud-builders/docker'
   id: 'Build Pipeline Images'
@@ -150,7 +150,6 @@ steps:
     - PIPELINE_CONFIG=/workspace/docker/config
     - DWH_ROOT=/workspace/e2e-tests/controller-spark/dwh
     - FHIRDATA_SINKFHIRSERVERURL=http://sink-server1:8080/fhir
-    - FHIRDATA_RESOURCELIST=Patient,Encounter,Observation
   args: [ '-f', './docker/compose-controller-spark-sql-single.yaml', 'up',
           '--force-recreate', '-d' ]
   waitFor: ['Launch HAPI FHIR Sink Server']
