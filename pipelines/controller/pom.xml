@@ -184,6 +184,13 @@
       <version>4.12.0</version>
       <scope>test</scope>
     </dependency>
+    <!-- This will make sure that the Junit 4 test cases will also be run along with Junit 5 test
+    cases-->
+    <dependency>
+      <groupId>org.junit.vintage</groupId>
+      <artifactId>junit-vintage-engine</artifactId>
+      <scope>test</scope>
+    </dependency>
   </dependencies>
 
   <build>
