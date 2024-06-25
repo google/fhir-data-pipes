@@ -35,8 +35,10 @@ for batch in $MULTIPLE_BATCH_SIZE; do
           export FHIR_ETL_RUNNER=$f
           export FHIR_SERVER_URL=$server
           export BATCH_SIZE=$batch
-          ./setup_google3.sh
-          sleep 15
+          if [ "$ENABLE_SETUP_GOOGLE3" = true ]; then
+            ./setup_google3.sh
+            sleep 15
+          fi
           ./upload_download.sh
         done
       done
