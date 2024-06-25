@@ -117,10 +117,6 @@
       <groupId>ca.uhn.hapi.fhir</groupId>
       <artifactId>hapi-fhir-client</artifactId>
     </dependency>
-    <dependency>
-      <groupId>ca.uhn.hapi.fhir</groupId>
-      <artifactId>hapi-fhir-converter</artifactId>
-    </dependency>
     <!-- This library is used for caching of resources -->
     <dependency>
       <groupId>ca.uhn.hapi.fhir</groupId>

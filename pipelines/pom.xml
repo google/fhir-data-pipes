@@ -118,12 +118,6 @@
 
       <dependency>
         <groupId>ca.uhn.hapi.fhir</groupId>
-        <artifactId>hapi-fhir-converter</artifactId>
-        <version>${hapi.fhir.version}</version>
-      </dependency>
-
-      <dependency>
-        <groupId>ca.uhn.hapi.fhir</groupId>
         <artifactId>hapi-fhir-caching-caffeine</artifactId>
         <version>${hapi.fhir.version}</version>
       </dependency>
