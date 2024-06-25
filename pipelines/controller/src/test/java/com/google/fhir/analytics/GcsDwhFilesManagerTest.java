@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2023 Google LLC
+ * Copyright 2020-2024 Google LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,10 +34,11 @@ import org.apache.beam.sdk.io.FileSystems;
 import org.apache.beam.sdk.io.fs.ResourceId;
 import org.apache.beam.sdk.options.PipelineOptionsFactory;
 import org.checkerframework.checker.nullness.qual.Nullable;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
@@ -45,9 +46,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.TestPropertySource;
-import org.springframework.test.context.junit4.SpringRunner;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
 
-@RunWith(SpringRunner.class)
+@ExtendWith(SpringExtension.class)
 @SpringBootTest(classes = DataProperties.class)
 @TestPropertySource("classpath:application-test.properties")
 @EnableConfigurationProperties(value = DataProperties.class)
@@ -58,7 +59,7 @@ public class GcsDwhFilesManagerTest {
 
   @Autowired private DataProperties dataProperties;
 
-  @Before
+  @BeforeEach
   public void setUp() {
     closeable = MockitoAnnotations.openMocks(this);
     GcsOptions gcsOptions = PipelineOptionsFactory.as(GcsOptions.class);
@@ -66,7 +67,7 @@ public class GcsDwhFilesManagerTest {
     FileSystems.setDefaultPipelineOptions(gcsOptions);
   }
 
-  @After
+  @AfterEach
   public void closeService() throws Exception {
     closeable.close();
   }
@@ -163,10 +164,14 @@ public class GcsDwhFilesManagerTest {
     assertThat(baseDir2, equalTo("gs://test-bucket/baseDir/childDir"));
   }
 
-  @Test(expected = IllegalArgumentException.class)
+  @Test
   public void testBaseDirForInvalidPath() {
-    DwhFilesManager dwhFilesManager = new DwhFilesManager(dataProperties);
-    dwhFilesManager.getBaseDir("gs://test-bucket");
+    Assertions.assertThrows(
+        IllegalArgumentException.class,
+        () -> {
+          DwhFilesManager dwhFilesManager = new DwhFilesManager(dataProperties);
+          dwhFilesManager.getBaseDir("gs://test-bucket");
+        });
   }
 
   @Test
@@ -183,12 +188,16 @@ public class GcsDwhFilesManagerTest {
     assertThat(prefix3, equalTo("prefix"));
   }
 
-  @Test(expected = IllegalArgumentException.class)
+  @Test
   public void testPrefixForInvalidPath() {
-    DwhFilesManager dwhFilesManager = new DwhFilesManager(dataProperties);
-    // GCS Path should end with a non-empty suffix string after the last occurrence of the
-    // character '/'
-    dwhFilesManager.getPrefix("gs://test-bucket/baseDir/");
+    Assertions.assertThrows(
+        IllegalArgumentException.class,
+        () -> {
+          DwhFilesManager dwhFilesManager = new DwhFilesManager(dataProperties);
+          // GCS Path should end with a non-empty suffix string after the last occurrence of the
+          // character '/'
+          dwhFilesManager.getPrefix("gs://test-bucket/baseDir/");
+        });
   }
 
   private StorageObject createStorageObject(String gcsFilename, long fileSize) {
