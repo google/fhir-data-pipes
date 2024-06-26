@@ -284,7 +284,7 @@
         </plugin>
         <plugin>
           <artifactId>maven-project-info-reports-plugin</artifactId>
-          <version>3.5.0</version>
+          <version>3.6.0</version>
         </plugin>
         <!-- this is for finding files at the root ${main.basedir} easier -->
         <plugin>
