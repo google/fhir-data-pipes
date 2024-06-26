@@ -117,10 +117,10 @@
       <groupId>ca.uhn.hapi.fhir</groupId>
       <artifactId>hapi-fhir-client</artifactId>
     </dependency>
+    <!-- This library is used for caching of resources -->
     <dependency>
       <groupId>ca.uhn.hapi.fhir</groupId>
-      <artifactId>hapi-fhir-converter</artifactId>
-      <version>${hapifhirVersion}</version>
+      <artifactId>hapi-fhir-caching-caffeine</artifactId>
     </dependency>
 
     <!-- Added because of a weird dependency issue in HAPI FHIR DSTU3 deps -->
