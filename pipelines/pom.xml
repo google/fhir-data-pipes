@@ -52,6 +52,7 @@
     <license-maven-plugin.version>4.5</license-maven-plugin.version>
     <beam.version>2.56.0</beam.version>
     <auto-value.version>1.11.0</auto-value.version>
+    <parquet.version>1.14.1</parquet.version>
   </properties>
 
   <dependencyManagement>
@@ -159,6 +160,30 @@
         <artifactId>logback-access</artifactId>
         <version>${logback.version}</version>
         <scope>runtime</scope>
+      </dependency>
+
+      <dependency>
+        <groupId>org.apache.parquet</groupId>
+        <artifactId>parquet-avro</artifactId>
+        <version>${parquet.version}</version>
+      </dependency>
+
+      <dependency>
+        <groupId>org.apache.parquet</groupId>
+        <artifactId>parquet-hadoop</artifactId>
+        <version>${parquet.version}</version>
+      </dependency>
+
+      <dependency>
+        <groupId>org.apache.parquet</groupId>
+        <artifactId>parquet-common</artifactId>
+        <version>${parquet.version}</version>
+      </dependency>
+
+      <dependency>
+        <groupId>org.apache.parquet</groupId>
+        <artifactId>parquet-column</artifactId>
+        <version>${parquet.version}</version>
       </dependency>
     </dependencies>
   </dependencyManagement>
