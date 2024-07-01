@@ -41,8 +41,16 @@ def download():
         shell(f'gsutil -m cp -r {parquet_dir} {TMP_DIR}')
     else:
         run_fhir_etl(local_parquet_dir)
-    for resource in ["Patient"]: #, "Encounter", "Observation"]:
-        shell_measure(f"Check {resource} row count", f"java -jar ./e2e-tests/controller-spark/parquet-tools-1.11.1.jar rowcount {local_parquet_dir}/{resource}/")
+    measure_row_counts(local_parquet_dir)
+
+
+def measure_row_counts(local_parquet_dir):
+    start = time.time()
+    row_counts = {}
+    for resource in ["Patient", "Encounter", "Observation"]:
+        row_counts[resource] = "".join(shell_get_output(
+            f"java -jar ./e2e-tests/controller-spark/parquet-tools-1.11.1.jar rowcount {local_parquet_dir}/{resource}/"))
+    log("Row counts", start, row_counts)
 
 
 def run_fhir_etl(parquet_dir):
@@ -148,6 +156,10 @@ def shell_measure(description, command):
         raise
     log(full_description, start, "OK")
 
+
+def shell_get_output(command):
+    print(command)
+    return os.popen(command).read()
 
 def shell(command, exit_on_failure=True):
     print(command)
