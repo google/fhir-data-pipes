@@ -137,7 +137,7 @@ def log(description, start, result):
     end = time.time()
     start_datetime = timestamp2human(start)
     end_datetime = timestamp2human(end)
-    full_log = f"{start_datetime}\t{end_datetime}\t{result}\t{description}\t{end - start}"
+    full_log = f"{start_datetime}\t{end_datetime}\t{result}\t{description}\t{round(end - start)}"
     shell(f"""echo "{full_log}" >> {TMP_DIR}/upload_download_log.tsv""")
 
 
