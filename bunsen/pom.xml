@@ -216,7 +216,7 @@
 
         <plugin>
           <artifactId>maven-release-plugin</artifactId>
-          <version>3.0.1</version>
+          <version>3.1.0</version>
           <configuration>
               <tagNameFormat>@{project.version}</tagNameFormat>
           </configuration>
