@@ -44,6 +44,9 @@ APPLICATION_YAML="~/gits/hapi-fhir-jpaserver-starter/src/main/resources/applicat
 # Update the DB connection config.
 "${RUN_ON_HAPI_STANZA[@]}" "sed -i '/.*url: jdbc:postgresql:.*/c\\    url: ${DB_CONNECTION}' $APPLICATION_YAML"
 "${RUN_ON_HAPI_STANZA[@]}" "sed -i '/    username: .*/c\\    username: ${DB_USERNAME}' $APPLICATION_YAML"
+# Turn off search index because we don't use it and it might conflict between load-balanced HAPI servers.
+# Reference: https://hapifhir.io/hapi-fhir/docs/server_jpa/elastic.html
+"${RUN_ON_HAPI_STANZA[@]}" "sed -i '/    hibernate.search.enabled: true/\\c    hibernate.search.enabled: false' $APPLICATION_YAML"
 # Start the HAPI server.
 # shellcheck disable=SC2088
 nohup "${RUN_ON_HAPI_STANZA[@]}" "~/gits/fhir-data-pipes/performance-tests/scaling/start_hapi_server.sh" >> ~/nohup-hapi.out 2>&1 &
