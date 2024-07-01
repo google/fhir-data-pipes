@@ -329,7 +329,7 @@ if [[ -n ${ENABLE_BATCH} ]]; then
   # TODO: Add --resourceList to script after improving its interaction  with the --activePeriod.
   batch_command="java -cp ${BATCH_JAR} com.google.fhir.analytics.FhirEtl ${common_params} \
     --secondsToFlushParquetFiles=${FLUSH_BATCH} --activePeriod=${PERIOD_START}_${start_time} \
-    --jdbcModeEnabled --resourceList=Encounter,Observation"
+    --jdbcModeEnabled --resourceList=Encounter,Observation --fhirFetchMode=FHIR_SEARCH"
 
   echo "About to run the batch pipeline now:"
   echo ""

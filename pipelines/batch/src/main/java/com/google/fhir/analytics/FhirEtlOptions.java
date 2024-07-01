@@ -15,12 +15,19 @@
  */
 package com.google.fhir.analytics;
 
+import com.google.fhir.analytics.model.FhirFetchMode;
 import org.apache.beam.sdk.options.Default;
 import org.apache.beam.sdk.options.Description;
 import org.apache.beam.sdk.options.Validation.Required;
 
 /** Options supported by {@link FhirEtl}. */
 public interface FhirEtlOptions extends BasePipelineOptions {
+
+  @Description(
+      "Mode through which the FHIR resources have to be fetched from the source FHIR" + " server")
+  FhirFetchMode getFhirFetchMode();
+
+  void setFhirFetchMode(FhirFetchMode fhirFetchMode);
 
   @Description("Fhir source server URL, e.g., http://localhost:8091/fhir, etc.")
   @Required
@@ -246,18 +253,18 @@ public interface FhirEtlOptions extends BasePipelineOptions {
   // void setSinkCsvDir();
 
   @Description(
-      "The pattern for input JSON files, e.g., 'PATH/*'. Each file should be one Bundle resource. "
-          + "[EXPERIMENTAL]")
+      "Comma separated list of file patterns for input JSON files, e.g., 'PATH1/*,PATH2/*'. Each "
+          + "file should be one Bundle resource [EXPERIMENTAL]")
   @Default.String("")
-  String getSourceJsonFilePattern();
+  String getSourceJsonFilePatternList();
 
-  void setSourceJsonFilePattern(String value);
+  void setSourceJsonFilePatternList(String value);
 
   @Description(
-      "The pattern for input NDJSON files, e.g., 'PATH/*'. Each file contain FHIR resources"
-          + " serialized with no whitespace, and separated by a newline pair.")
+      "Comma separated list of input NDJSON files, e.g., 'PATH1/*,PATH2/*'. Each file contain FHIR "
+          + "resources serialized with no whitespace, and separated by a newline pair.")
   @Default.String("")
-  String getSourceNDJsonFilePattern();
+  String getSourceNDJsonFilePatternList();
 
-  void setSourceNDJsonFilePattern(String value);
+  void setSourceNDJsonFilePatternList(String value);
 }

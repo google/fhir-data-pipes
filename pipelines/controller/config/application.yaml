@@ -15,6 +15,10 @@
 #
 
 fhirdata:
+  # The mode that will be used by the application to fetch FHIR resources from the source FHIR
+  # server. Currently supported modes : FHIR_SEARCH, HAPI_JDBC, BULK_EXPORT and OPENMRS_JDBC
+  fhirFetchMode: "FHIR_SEARCH"
+
   # The base URL of the source FHIR server. If `dbConfig` is not set, resources
   # are fetched from this URL through the FHIR Search API.
   # Equivalent to the pipeline `fhirServerUrl` parameter.

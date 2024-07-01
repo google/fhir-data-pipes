@@ -109,6 +109,19 @@ steps:
     - PARQUET_SUBDIR=JDBC_HAPI
     - DOCKER_NETWORK=--use_docker_network
 
+- name: '${_REPOSITORY}/batch-pipeline:${_TAG}'
+  id: 'Run Batch Pipeline for BULK_EXPORT mode with HAPI source'
+  env:
+    - FHIR_FETCH_MODE=BULK_EXPORT
+    - FHIR_SERVER_URL=http://hapi-server:8080/fhir
+    - PARQUET_PATH=/workspace/e2e-tests/BULK_EXPORT
+
+- name: '${_REPOSITORY}/e2e-tests:${_TAG}'
+  id: 'Run E2E Test for BULK_EXPORT mode with HAPI source'
+  env:
+    - PARQUET_SUBDIR=BULK_EXPORT
+    - DOCKER_NETWORK=--use_docker_network
+
 # The `views` database is used for creating flat views from ViewDefinitions.
 - name: 'postgres'
   id: 'Create views database'

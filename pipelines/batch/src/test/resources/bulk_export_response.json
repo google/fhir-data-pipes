@@ -1,0 +1,24 @@
+{
+  "transactionTime": "2021-01-01T00:00:00Z",
+  "request" : "https://example.com/fhir/Patient/$export?_type=Patient,Observation",
+  "requiresAccessToken" : true,
+  "output" : [{
+    "type" : "Patient",
+    "url" : "https://example.com/output/patient_file_1.ndjson"
+  },{
+    "type" : "Patient",
+    "url" : "https://example.com/output/patient_file_2.ndjson"
+  },{
+    "type" : "Observation",
+    "url" : "https://example.com/output/observation_file_1.ndjson"
+  }],
+  "deleted" : [{
+    "type" : "Bundle",
+    "url" : "https://example.com/output/del_file_1.ndjson"
+  }],
+  "error" : [{
+    "type" : "OperationOutcome",
+    "url" : "https://example.com/output/err_file_1.ndjson"
+  }],
+  "extension":{"https://example.com/extra-property": true}
+}
