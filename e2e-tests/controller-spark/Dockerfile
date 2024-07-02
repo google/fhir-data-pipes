@@ -23,5 +23,6 @@ COPY parquet-tools-1.11.1.jar  parquet-tools-1.11.1.jar
 ENV PARQUET_SUBDIR="dwh"
 ENV DOCKER_NETWORK="--use_docker_network"
 ENV HOME_DIR="/workspace/e2e-tests/controller-spark"
+ENV DWH_TYPE="PARQUET"
 
-ENTRYPOINT cd ${HOME_DIR}; ./controller_spark_sql_validation.sh ${HOME_DIR} ${PARQUET_SUBDIR} ${DOCKER_NETWORK}
+ENTRYPOINT cd ${HOME_DIR}; ./controller_spark_sql_validation.sh ${HOME_DIR} ${PARQUET_SUBDIR} ${DOCKER_NETWORK} ${DWH_TYPE}

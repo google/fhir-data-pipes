@@ -260,4 +260,10 @@ public interface FhirEtlOptions extends BasePipelineOptions {
   String getSourceNDJsonFilePattern();
 
   void setSourceNDJsonFilePattern(String value);
+
+  @Description("Flag to switch off/on creation of a  parquet DWH")
+  @Default.Boolean(true)
+  Boolean isCreateParquetDwh();
+
+  void setCreateParquetDwh(Boolean value);
 }
