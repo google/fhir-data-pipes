@@ -21,7 +21,7 @@ steps:
 
 - name: 'docker/compose'
   id: 'Launch HAPI Source and Sink Servers'
-  args: ['-f', './docker/hapi-compose.yml', '-f', './docker/sink-compose.yml', 'up', '--force-recreate', '--remove-orphan', '-d']
+  args: ['-f', './docker/hapi-compose.yml', '-f', './docker/sink-compose1.yml', '-f', './docker/sink-compose2.yml', 'up', '--force-recreate', '--remove-orphan', '-d']
 
 # Note license checking will fail on Cloud Build because of .git dependencies
 # and there is not much point updating license headers at this stage anyway.
@@ -31,7 +31,7 @@ steps:
   entrypoint: /bin/bash
   args:
   - -c
-  - mvn --no-transfer-progress -e install -Dlicense.skip=true -Dspotless.apply.skip=true
+  - mvn --no-transfer-progress -e -T 1C install -Dlicense.skip=true -Dspotless.apply.skip=true
   waitFor: ['-']
 
 - name: 'gcr.io/cloud-builders/docker'
@@ -40,6 +40,7 @@ steps:
   args:
   - -c
   - cd synthea-hiv/uploader; docker build -t ${_REPOSITORY}/synthea-uploader:${_TAG} .
+  waitFor: ['-']
 
 - name: '${_REPOSITORY}/synthea-uploader:${_TAG}'
   id: 'Run Uploader Unit Tests'
@@ -47,6 +48,7 @@ steps:
   args:
   - -c
   - cd /uploader; python -m unittest discover  -p '*_test.py'
+  waitFor: ['Build Uploader Image']
 
 - name: 'gcr.io/cloud-builders/docker'
   id: 'Build E2E Image'
@@ -55,7 +57,13 @@ steps:
   - -c
   - cd e2e-tests;
     docker build -t ${_REPOSITORY}/e2e-tests:${_TAG} .;
-    docker build -t ${_REPOSITORY}/e2e-tests/controller-spark:${_TAG} ./controller-spark/.;
+    docker build -t ${_REPOSITORY}/e2e-tests/controller-spark:${_TAG} -t e2e-tests-controller-spark ./controller-spark/.;
+  waitFor: ['-']
+
+- name: 'ubuntu'
+  id: 'Sleep for servers to be up'
+  args: ['sleep', '90']
+  waitFor: ['Launch HAPI Source and Sink Servers', 'Run Uploader Unit Tests']
 
 - name: '${_REPOSITORY}/synthea-uploader:${_TAG}'
   id: 'Upload to HAPI'
@@ -64,6 +72,7 @@ steps:
     - SINK_TYPE=HAPI
     - FHIR_ENDPOINT=http://hapi-server:8080/fhir
     - CORES=--cores 8
+  waitFor: ['Sleep for servers to be up']
 
 - name: 'gcr.io/cloud-builders/docker'
   id: 'Build Pipeline Images'
@@ -74,21 +83,25 @@ steps:
     docker build -t ${_REPOSITORY}/batch-pipeline:${_TAG} .;
     cd ../streaming-binlog;
     docker build -t ${_REPOSITORY}/streaming-pipeline:${_TAG} .;
+  waitFor: ['Compile Bunsen and Pipeline']
 
 - name: '${_REPOSITORY}/batch-pipeline:${_TAG}'
   id: 'Run Batch Pipeline in FHIR-search mode with HAPI source'
   env:
   - FHIR_SERVER_URL=http://hapi-server:8080/fhir
   - PARQUET_PATH=/workspace/e2e-tests/FHIR_SEARCH_HAPI
-  - SINK_PATH=http://sink-server:8080/fhir
+  - SINK_PATH=http://sink-server1:8080/fhir
   - SINK_USERNAME=hapi
   - SINK_PASSWORD=hapi
+  waitFor: ['Build Pipeline Images', 'Upload to HAPI']
 
 - name: '${_REPOSITORY}/e2e-tests:${_TAG}'
   id: 'Run E2E Test for FHIR-search mode with HAPI source'
   env:
   - PARQUET_SUBDIR=FHIR_SEARCH_HAPI
   - DOCKER_NETWORK=--use_docker_network
+  - SINK_SERVER=http://sink-server1:8080
+  waitFor: ['Run Batch Pipeline in FHIR-search mode with HAPI source']
 
 - name: '${_REPOSITORY}/batch-pipeline:${_TAG}'
   id: 'Run Batch Pipeline for JDBC mode with HAPI source'
@@ -96,48 +109,54 @@ steps:
     - JDBC_MODE_ENABLED=true
     - JDBC_MODE_HAPI=true
     - FHIR_SERVER_URL=http://hapi-server:8080/fhir
-    - SINK_PATH=http://sink-server:8080/fhir
+    - SINK_PATH=http://sink-server2:8080/fhir
     - SINK_USERNAME=hapi
     - SINK_PASSWORD=hapi
     - FHIR_DATABASE_CONFIG_PATH=/workspace/utils/hapi-postgres-config.json
     - PARQUET_PATH=/workspace/e2e-tests/JDBC_HAPI
     - JDBC_FETCH_SIZE=1000
+  waitFor: ['Build Pipeline Images', 'Upload to HAPI']
 
 - name: '${_REPOSITORY}/e2e-tests:${_TAG}'
   id: 'Run E2E Test for JDBC mode with HAPI source'
   env:
     - PARQUET_SUBDIR=JDBC_HAPI
     - DOCKER_NETWORK=--use_docker_network
+    - SINK_SERVER=http://sink-server2:8080
+  waitFor: ['Run Batch Pipeline for JDBC mode with HAPI source']
 
-# The `views` database is used for creating flat views from ViewDefinitions.
+# Resetting FHIR sink server
+- name: 'docker/compose'
+  id: 'Turn down FHIR Sink Servers'
+  args: [ '-f', './docker/sink-compose1.yml', '-f', './docker/sink-compose2.yml', 'down' ,'-v']
+  waitFor: ['Run E2E Test for FHIR-search mode with HAPI source', 'Run E2E Test for JDBC mode with HAPI source']
+
+  # The `views` database is used for creating flat views from ViewDefinitions.
 - name: 'postgres'
   id: 'Create views database'
   entrypoint: psql
   env:
-  - PGPASSWORD=admin
+    - PGPASSWORD=admin
   args: [ '-U', 'admin', '-d', 'postgres', '-h', 'hapi-fhir-db', '-p', '5432',
           '-c', 'CREATE DATABASE views;']
 
-# Resetting FHIR sink server
-- name: 'docker/compose'
-  id: 'Turn down FHIR Sink Server'
-  args: [ '-f', './docker/sink-compose.yml', 'down' ,'-v']
-
 - name: 'docker/compose'
   id: 'Launch HAPI FHIR Sink Server'
-  args: [ '-f', './docker/sink-compose.yml', 'up','--force-recreate', '-d' ]  
+  args: [ '-f', './docker/sink-compose1.yml', 'up','--force-recreate', '-d' ]
 
 - name: 'docker/compose'
   id: 'Bring up controller and Spark containers'
   env:
     - PIPELINE_CONFIG=/workspace/docker/config
     - DWH_ROOT=/workspace/e2e-tests/controller-spark/dwh
-    - FHIRDATA_SINKFHIRSERVERURL=http://sink-server:8080/fhir
+    - FHIRDATA_SINKFHIRSERVERURL=http://sink-server1:8080/fhir
   args: [ '-f', './docker/compose-controller-spark-sql-single.yaml', 'up',
           '--force-recreate', '-d' ]
+  waitFor: ['Launch HAPI FHIR Sink Server']
 
 - name: '${_REPOSITORY}/e2e-tests/controller-spark:${_TAG}'
   id: 'Run E2E Test for Dockerized Controller and Spark Thriftserver'
+  waitFor: ['Bring up controller and Spark containers']
 
 # The controller logs don't appear in Cloud Build output because we run it in
 # the detached mode. For debugging controller failures we can use something like
@@ -155,12 +174,13 @@ steps:
 
 - name: 'docker/compose'
   id: 'Turn down HAPI Source and Sink Servers'
-  args: [ '-f', './docker/hapi-compose.yml', '-f', './docker/sink-compose.yml', 'down' ]
+  args: [ '-f', './docker/hapi-compose.yml', '-f', './docker/sink-compose1.yml', 'down' ]
 
 - name: 'docker/compose'
   id: 'Launch OpenMRS Server and HAPI FHIR Sink Server'
-  args: [ '-f', './docker/openmrs-compose.yaml', '-f', './docker/sink-compose.yml', 'up',
+  args: [ '-f', './docker/openmrs-compose.yaml', '-f', './docker/sink-compose2.yml', '-p', 'openmrs-project', 'up',
           '--force-recreate', '--remove-orphan', '-d' ]
+  waitFor: ['Turn down FHIR Sink Servers']
 
 - name: 'gcr.io/cloud-builders/docker'
   id: 'Wait for Servers Start'
@@ -168,6 +188,7 @@ steps:
   args:
   - -c
   - e2e-tests/wait_for_start.sh --use_docker_network
+  waitFor: ['Launch OpenMRS Server and HAPI FHIR Sink Server']
 
 - name: '${_REPOSITORY}/e2e-tests:${_TAG}'
   id: 'Launch Streaming Pipeline'
@@ -175,14 +196,17 @@ steps:
   args:
     - -c
     -  e2e-tests/wait_for_streaming.sh --use_docker_network
+  waitFor: ['Wait for Servers Start']
 
 - name: '${_REPOSITORY}/e2e-tests:${_TAG}'
   id: 'Run E2E Test for STREAMING, using OpenMRS Source'
   env:
     - PARQUET_SUBDIR=STREAMING
     - DOCKER_NETWORK=--use_docker_network
+    - SINK_SERVER=http://sink-server2:8080
     - STREAMING_TEST=--streaming
     - OPENMRS_TEST=--openmrs
+  waitFor: ['Launch Streaming Pipeline']
 
 - name: '${_REPOSITORY}/synthea-uploader:${_TAG}'
   id: 'Upload to OpenMRS'
@@ -191,38 +215,45 @@ steps:
     - INPUT_DIR=/workspace/synthea-hiv/sample_data
     - SINK_TYPE=OpenMRS
     - FHIR_ENDPOINT=http://openmrs:8080/openmrs/ws/fhir2/R4
+  waitFor: ['Run E2E Test for STREAMING, using OpenMRS Source']
 
 - name: '${_REPOSITORY}/batch-pipeline:${_TAG}'
   id: 'Run Batch Pipeline FHIR-search mode with OpenMRS source'
   env:
     - PARQUET_PATH=/workspace/e2e-tests/FHIR_SEARCH_OPENMRS
-    - SINK_PATH=http://sink-server:8080/fhir
+    - SINK_PATH=http://sink-server2:8080/fhir
     - SINK_USERNAME=hapi
     - SINK_PASSWORD=hapi
+  waitFor: ['Upload to OpenMRS']
 
 - name: '${_REPOSITORY}/e2e-tests:${_TAG}'
   id: 'Run E2E Test for FHIR-search mode with OpenMRS source'
   env:
     - PARQUET_SUBDIR=FHIR_SEARCH_OPENMRS
     - DOCKER_NETWORK=--use_docker_network
+    - SINK_SERVER=http://sink-server2:8080
     - OPENMRS_TEST=--openmrs
+  waitFor: ['Run Batch Pipeline FHIR-search mode with OpenMRS source']
 
 - name: '${_REPOSITORY}/batch-pipeline:${_TAG}'
   id: 'Run Batch Pipeline for JDBC mode with OpenMRS source'
   env:
     - JDBC_MODE_ENABLED=true
     - PARQUET_PATH=/workspace/e2e-tests/JDBC_OPENMRS
-    - SINK_PATH=http://sink-server:8080/fhir
+    - SINK_PATH=http://sink-server2:8080/fhir
     - SINK_USERNAME=hapi
     - SINK_PASSWORD=hapi
     - FHIR_DATABASE_CONFIG_PATH=/workspace/utils/dbz_event_to_fhir_config.json
+  waitFor: ['Run E2E Test for FHIR-search mode with OpenMRS source']
 
 - name: '${_REPOSITORY}/e2e-tests:${_TAG}'
   id: 'Run E2E Test for JDBC mode with OpenMRS source'
   env:
     - PARQUET_SUBDIR=JDBC_OPENMRS
     - DOCKER_NETWORK=--use_docker_network
+    - SINK_SERVER=http://sink-server2:8080
     - OPENMRS_TEST=--openmrs
+  waitFor: ['Run Batch Pipeline for JDBC mode with OpenMRS source']
 
 - name: '${_REPOSITORY}/e2e-tests:${_TAG}'
   id: 'Test Indicators'
@@ -230,10 +261,12 @@ steps:
   args:
   - -c
   - 'cd dwh; ./validate_indicators.sh'
+  waitFor: ['Run E2E Test for JDBC mode with OpenMRS source', 'Turn down HAPI Source and Sink Servers']
 
 - name: 'docker/compose'
   id: 'Turn down Webserver and HAPI Server'
-  args: ['-f', './docker/openmrs-compose.yaml', '-f', './docker/sink-compose.yml', 'down']
+  args: ['-f', './docker/openmrs-compose.yaml', '-f', './docker/sink-compose2.yml', 'down']
+  waitFor: ['Test Indicators']
 
 substitutions:
   # To use substitutions in your local build, use the flag --substitutions 

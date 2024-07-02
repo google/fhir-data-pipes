@@ -32,7 +32,7 @@ function setup() {
 
   if [[ $1 = "--use_docker_network" ]]; then
     FHIR_SERVER_URL='http://openmrs:8080/openmrs/ws/fhir2/R4'
-    SINK_SERVER='http://sink-server:8080'
+    SINK_SERVER='http://sink-server2:8080'
   fi
 }
 
