@@ -25,7 +25,7 @@ else
   pip install -r ./synthea-hiv/uploader/requirements.txt
 fi
 
-python "$DIR_WITH_THIS_SCRIPT/upload_download.py"
+python "$DIR_WITH_THIS_SCRIPT/upload_download.py" | tee ~/"upload-download-$(date +%Y-%m-%d).txt"
 #nohup python "$DIR_WITH_THIS_SCRIPT/upload_download.py" >> $NOHUP_OUT 2>&1 &
 #tail -F $NOHUP_OUT
 
