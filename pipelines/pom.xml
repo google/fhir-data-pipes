@@ -375,6 +375,10 @@
           <compilerArgs>
             <!-- Enable access to the packages at compile time -->
             <arg>--add-exports=java.base/jdk.internal.misc=ALL-UNNAMED</arg>
+            <!-- To retain parameter names for compiled classes, this is needed for latest spring.
+            See https://github.com/spring-projects/spring-framework/wiki/Upgrading-to-Spring-Framework-6.x#parameter-name-retention
+            for the details -->
+            <arg>-parameters</arg>
           </compilerArgs>
         </configuration>
       </plugin>
