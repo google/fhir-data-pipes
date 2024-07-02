@@ -39,6 +39,7 @@ public class DatabaseConfiguration {
   private String databaseUser;
   private String databasePassword;
   private String databaseName;
+  private String jdbcUri;
 
   private LinkedHashMap<String, EventConfiguration> eventConfigurations;
 
@@ -52,6 +53,10 @@ public class DatabaseConfiguration {
    * @return the JDBC URL, e.g., "jdbc:mysql://localhost:3306/openmrs".
    */
   public String makeJdbsUrlFromConfig() {
+    if (getJdbcUri() != null) {
+      return getJdbcUri();
+    }
+
     Preconditions.checkNotNull(getDatabaseHostName());
     Preconditions.checkNotNull(getDatabasePort());
     Preconditions.checkNotNull(getDatabaseName());

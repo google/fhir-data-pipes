@@ -43,6 +43,7 @@
     <flink.artifact.name>beam-runners-flink-1.14</flink.artifact.name>
     <mysql.driver.version>8.0.16</mysql.driver.version>
     <postgresql.version>42.7.3</postgresql.version>
+    <cloudsql-postgres.version>1.17.0</cloudsql-postgres.version>
 
   </properties>
 
@@ -319,6 +320,15 @@
         </dependency>
       </dependencies>
     </profile>
-
+    <profile>
+      <id>cloudsql-postgres</id>
+      <dependencies>
+        <dependency>
+          <groupId>com.google.cloud.sql</groupId>
+          <artifactId>postgres-socket-factory</artifactId>
+          <version>${cloudsql-postgres.version}</version>
+        </dependency>
+      </dependencies>
+    </profile>
   </profiles>
 </project>
