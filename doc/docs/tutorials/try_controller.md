@@ -51,7 +51,7 @@ mvn spring-boot:run
 
 Open a web browser and visit http://localhost:8080. You should see the FHIR Pipelines Control Panel.
 
-![Pipelines Control Panel](images/pipelines_control_panel.png)
+![Pipelines Control Panel](../images/pipelines_control_panel.png)
 
 Before automatic incremental runs can occur, you must manually trigger a full run. Under the **Run Full Pipeline** section, click on **Run Full**. Wait for the run to complete. 
 

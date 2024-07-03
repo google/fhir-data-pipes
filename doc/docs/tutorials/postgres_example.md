@@ -1,7 +1,7 @@
 # PostgreSQL DWH using custom schema 
 
 ## Overview
-In this tutorial you will learn how to configure and deploy FHIR Data Pipes to transform FHIR data into a PostgreSQL data-warehouse using FHIR ViewDefinition resources to define the custom schema.
+In this tutorial you will learn how to configure and deploy FHIR Data Pipes to transform FHIR data into a PostgreSQL data-warehouse using [FHIR View Definition](../concepts/predefined_views.md#viewdefinition-resource) resources to define the custom schema.
 
 !!! tip "Requirements"
    
@@ -17,37 +17,43 @@ Note: All file paths are relative to the root of the FHIR Data Pipes repository.
 
 **NOTE: You need to configure only one of the following options:**
 
-1. For FHIR Search API (works for any FHIR server): 
-   * Open [`docker/config/application.yaml`](https://github.com/google/fhir-data-pipes/blob/master/docker/config/application.yaml) and edit the value of `fhirServerUrl` to match the FHIR server you are connecting to. 
-   * Comment out the `dbConfig` in this case.
+=== "For FHIR Search API (works for any FHIR server):"
 
-2. For direct DB access (specific to HAPI FHIR servers):
-   * Comment out `fhirServerUrl`
-   * Set `dbConfig` to the DB connection config file, e.g., [`docker/config/hapi-postgres-config_local.json`](https://github.com/google/fhir-data-pipes/blob/master/docker/config/hapi-postgres-config_local.json); 
-   * Edit the values in this file to match the database for the FHIR server you are connecting to.
+    1. Open [`docker/config/application.yaml`](https://github.com/google/fhir-data-pipes/blob/master/docker/config/application.yaml) and edit the parameter `fhirServerUrl` to match the FHIR server you are connecting to. 
+    2. Comment out the paramter: `dbConfig`.
 
-## Set the sinkDbConfigPath
-The sinkDb refers to the target database that will become the data warehouse.
+=== "For direct DB access (specific to HAPI FHIR servers):"
+
+    1. Open [`docker/config/application.yaml`](https://github.com/google/fhir-data-pipes/blob/master/docker/config/application.yaml) and comment out the paramter: `fhirServerUrl`
+    2. Set `dbConfig` to the DB connection config file, e.g. [`docker/config/hapi-postgres-config_local.json`](https://github.com/google/fhir-data-pipes/blob/master/docker/config/hapi-postgres-config_local.json).
+    3. Edit the json values in this file to match the database for the FHIR server you are connecting to.
+
+## Configure the Output DWH
+The `sinkDbConfigPath` refers to the target database that will become the data warehouse.
 
 With the default config, you will create both Parquet files (under `dwhRootPrefix`) and flattened views in the database configured by `sinkDbConfigPath` [here](https://github.com/google/fhir-data-pipes/blob/27d691e91d0fe6ef4c9624acba4e68bca145c973/docker/config/application.yaml#L42). 
 
-Make sure to create the database referenced in the connection config file (default is a postgreSQL db named 'views'). You can do this with the following SQL query:
+Make sure to create the database referenced in the connection config file (the default is a PostgreSQL db named 'views'). 
+
+Create the database with the following SQL query:
 
 ```sql
 CREATE DATABASE views;
 ```
-which you can run in Postgres like this:
+Run this query in Postgres:
 ```shell
 PGPASSWORD=admin psql -h 127.0.0.1 -p 5432 -U admin postgres -c "CREATE DATABASE views"
 ```
 
-For documentation of all config parameters, see [here](https://github.com/google/fhir-data-pipes/blob/master/pipelines/controller/config/application.yaml).
+For documentation of all config parameters, see [here](../installation_controller.md#explore-the-configuration-settings).
 
 If you are using the [local test servers](../tutorials/test_servers), things should work with the default values. If not, use the IP address of the Docker default bridge network. To find it, run the following command and use the "Gateway" value:
 
 ```
 docker network inspect bridge | grep Gateway
 ```
+
+<br>
 
 The Single Machine docker configuration uses two environment variables, `DWH_ROOT` and `PIPELINE_CONFIG`, whose default values are defined in the [.env](https://github.com/google/fhir-data-pipes/blob/master/docker/.env) file. _To override them_, set the variable before running the `docker-compose` command. For example, to override the `DWH_ROOT` environment variable, run the following:
 
@@ -74,7 +80,7 @@ Once started, the Pipelines Controller is available at `http://localhost:8090` a
 
 The first time you run the Pipelines Controller, you must manually start a Full Pipeline run. In a browser go to `http://localhost:8090` and click the **Run Full** button. 
 
-After running the Full Pipeline, use the Incremental Pipeline to update the Parquet files and tables. By default it is scheduled to run every hour, or you can manually trigger it.
+After running the Full Pipeline, use the Incremental Pipeline to update the Parquet files and tables. By default, it is scheduled to run every hour, or you can manually trigger it.
 
 If the Incremental Pipeline does not work, or you see errors like:
 
@@ -87,32 +93,32 @@ try running `sudo chmod -R 755` on the Parquet file directory, by default locate
 
 ## Explore the resulting schema in PostgreSQL
 
-Connect to the PostgreSQL RDBMS via docker using the cmd: `docker exec -it <container_name_or_id> bash`
+Connect to the PostgreSQL RDBMS via docker using this cmd: `docker exec -it <container_name_or_id> bash`
 
 If using the default container (hapi-fhir-db) run: `docker exec -it hapi_fhir_db bash`
 
-Using psql connect to the 'views'  database: `psql -U admin -d views`
+Using psql connect to the 'views' database: `psql -U admin -d views`
 
 To list the tables: `\d`. It should look something like this:
 
-| Schema |          Name           | Type  | Owner| 
- ---     | ----                    |---    | ---
-| public | condition_flat          | table | admin|
-| public | diagnostic_report_flat  | table | admin|
-| public | immunization_flat       | table | admin|
-| public | location_flat           | table | admin|
-| public | medication_request_flat | table | admin|
-| public | observation_flat        | table | admin|
-| public | organization_flat       | table | admin|
-| public | practitioner_flat       | table | admin|
-| public | practitioner_role_flat  | table | admin|
-| public | procedure_flat          | table | admin|
+| Schema | Name                                                                                                                            | Type  | Owner | 
+|--------|---------------------------------------------------------------------------------------------------------------------------------|-------|-------|
+| public | [condition_flat](https://github.com/google/fhir-data-pipes/blob/master/docker/config/views/Condition_flat.sql)                  | table | admin |
+| public | [diagnostic_report_flat](https://github.com/google/fhir-data-pipes/blob/master/docker/config/views/DiagnosticReport_flat.sql)   | table | admin |
+| public | [immunization_flat](https://github.com/google/fhir-data-pipes/blob/master/docker/config/views/Immunization_flat.sql)            | table | admin |
+| public | [location_flat](https://github.com/google/fhir-data-pipes/blob/master/docker/config/views/Location_flat.sql)                    | table | admin |
+| public | [medication_request_flat](https://github.com/google/fhir-data-pipes/blob/master/docker/config/views/MedicationRequest_flat.sql) | table | admin |
+| public | [observation_flat](https://github.com/google/fhir-data-pipes/blob/master/docker/config/views/Observation_flat.sql)              | table | admin |
+| public | [organization_flat](https://github.com/google/fhir-data-pipes/blob/master/docker/config/views/Organization_flat.sql)            | table | admin |
+| public | [practitioner_flat](https://github.com/google/fhir-data-pipes/blob/master/docker/config/views/Practitioner_flat.sql)            | table | admin |
+| public | [practitioner_role_flat](https://github.com/google/fhir-data-pipes/blob/master/docker/config/views/PractitionerRole_flat.sql)   | table | admin |
+| public | [procedure_flat](https://github.com/google/fhir-data-pipes/blob/master/docker/config/views/Procedure_flat.sql)                  | table | admin |
 
 
 ## Querying the database
 
 Let's do some basic quality checks to make sure the data is uploaded properly (note
-table names are case insensitive).
+table names are case in-sensitive).
 
 **Note:** You will see that the number of patients and observations is higher than the count in the FHIR Server. This is due to the flattening
 
@@ -128,7 +134,7 @@ We should have exactly 114 patients:
 +-----------+
 ```
 
-Doing the same for observations:
+Let's do the same for observations:
 ```sql
 SELECT COUNT(0) FROM observation_flat;
 ```
