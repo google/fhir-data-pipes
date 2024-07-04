@@ -19,25 +19,29 @@ Note: All file paths are relative to the root of the FHIR Data Pipes repository.
 
 **NOTE: You need to configure only one of the following options:**
 
-1. For FHIR Search API (works for any FHIR server): 
-   * Open [`docker/config/application.yaml`](https://github.com/google/fhir-data-pipes/blob/master/docker/config/application.yaml) and edit the value of `fhirServerUrl` to match the FHIR server you are connecting to. 
-   * Comment out the `dbConfig` in this case.
+=== "For FHIR Search API (works for any FHIR server):"
 
-2. For direct DB access (specific to HAPI FHIR servers):
-   * Comment out `fhirServerUrl`
-   * Set `dbConfig` to the DB connection config file, e.g., [`docker/config/hapi-postgres-config_local.json`](https://github.com/google/fhir-data-pipes/blob/master/docker/config/hapi-postgres-config_local.json); 
-   * Edit the values in this file to match the database for the FHIR server you are connecting to.
+    1. Open [`docker/config/application.yaml`](https://github.com/google/fhir-data-pipes/blob/master/docker/config/application.yaml) and edit the parameter `fhirServerUrl` to match the FHIR server you are connecting to. 
+    2. Comment out the paramter: `dbConfig`.
+
+=== "For direct DB access (specific to HAPI FHIR servers):"
+
+    1. Open [`docker/config/application.yaml`](https://github.com/google/fhir-data-pipes/blob/master/docker/config/application.yaml) and comment out the paramter: `fhirServerUrl`
+    2. Set `dbConfig` to the DB connection config file, e.g. [`docker/config/hapi-postgres-config_local.json`](https://github.com/google/fhir-data-pipes/blob/master/docker/config/hapi-postgres-config_local.json).
+    3. Edit the json values in this file to match the database for the FHIR server you are connecting to.
+
 
 ### Flattened views
 
 With the default config, you will create both Parquet files (under `dwhRootPrefix`) and flattened views in the database configured by `sinkDbConfigPath` [here](https://github.com/google/fhir-data-pipes/blob/27d691e91d0fe6ef4c9624acba4e68bca145c973/docker/config/application.yaml#L42). 
-* If you don't need flattened views you can comment out that setting. 
-* If you do need them, make sure you create the DB referenced in the connection config file, e.g., with the following SQL query:
+**If you don't need flattened views you can comment out that setting.**
+
+If you do need them, make sure you create the DB referenced in the connection config file with the following SQL query:
 
 ```sql
 CREATE DATABASE views;
 ```
-which you can run in Postgres like this:
+Run this query in Postgres:
 ```shell
 PGPASSWORD=admin psql -h 127.0.0.1 -p 5432 -U admin postgres -c "CREATE DATABASE views"
 ```
@@ -75,7 +79,7 @@ Once started, the Pipelines Controller is available at `http://localhost:8090` a
 
 The first time you run the Pipelines Controller, you must manually start a Full Pipeline run. In a browser go to `http://localhost:8090` and click the **Run Full** button. 
 
-After running the Full Pipeline, use the Incremental Pipeline to update the Parquet files and tables. By default it is scheduled to run every hour, or you can manually trigger it.
+After running the Full Pipeline, use the Incremental Pipeline to update the Parquet files and tables. By default, it is scheduled to run every hour, or you can manually trigger it.
 
 If the Incremental Pipeline does not work, or you see errors like:
 
@@ -91,7 +95,7 @@ try running `sudo chmod -R 755` on the Parquet file directory, by default locate
 Connect to the Spark Thrift server using a client that supports Apache Hive. For example, if using the JDBC driver, the URL should be `jdbc:hive2://localhost:10001`. The pipeline will automatically create `Patient`, `Encounter`, and `Observation` tables when run.
 
 Let's do some basic quality checks to make sure the data is uploaded properly (note
-table names are case insensitive):
+table names are case in-sensitive):
 
 ```hiveql
 SELECT COUNT(0) FROM Patient;

@@ -68,7 +68,7 @@ _'SQL-on-FHIR-v1'_) schema
 
 ## Monitoring pipelines
 
-The pipelines controller exposes a number of management end-points that can help
+The pipelines controller exposes management end-points that can help
 with monitoring the health of pipelines.
 
 * The application has been integrated with the Spring Boot Actuator of Spring
