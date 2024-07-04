@@ -18,7 +18,6 @@ package com.google.fhir.analytics;
 import ca.uhn.fhir.context.FhirVersionEnum;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
-import com.google.fhir.analytics.model.FhirFetchMode;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.time.Instant;

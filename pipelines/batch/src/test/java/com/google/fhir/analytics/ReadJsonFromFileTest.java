@@ -23,7 +23,6 @@ import static org.mockito.Mockito.when;
 import com.cerner.bunsen.exception.ProfileException;
 import com.google.common.io.Resources;
 import com.google.fhir.analytics.view.ViewApplicationException;
-import java.beans.PropertyVetoException;
 import java.io.IOException;
 import java.nio.channels.ReadableByteChannel;
 import java.sql.SQLException;
@@ -35,7 +34,6 @@ import org.apache.beam.sdk.io.fs.ResourceId;
 import org.apache.beam.sdk.options.PipelineOptionsFactory;
 import org.hl7.fhir.r4.model.Bundle;
 import org.hl7.fhir.r4.model.Observation;
-import org.hl7.fhir.r4.model.Patient;
 import org.junit.After;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -43,46 +41,44 @@ import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
 @RunWith(MockitoJUnitRunner.class)
-public class ReadJsonFilesTest {
+public class ReadJsonFromFileTest {
 
-  private ReadJsonFilesFn readJsonFilesFn;
+  private ReadJsonFromFileFn readJsonFromFileFn;
 
   @Mock private FileIO.ReadableFile fileMock;
 
   private Bundle capturedBundle;
 
-  public void setUp(boolean isFileNDJson)
-      throws PropertyVetoException, SQLException, ProfileException {
+  public void setUp(boolean isFileNdjson) throws SQLException, ProfileException {
     String[] args = {"--outputParquetPath=SOME_PATH"};
     FhirEtlOptions options =
         PipelineOptionsFactory.fromArgs(args).withValidation().as(FhirEtlOptions.class);
-    readJsonFilesFn =
-        new ReadJsonFilesFn(options, isFileNDJson) {
+    readJsonFromFileFn =
+        new ReadJsonFromFileFn(options, isFileNdjson) {
 
           @Override
           protected void processBundle(Bundle bundle, @Nullable Set<String> resourceTypes) {
             capturedBundle = bundle;
           }
         };
-    readJsonFilesFn.setup();
+    readJsonFromFileFn.setup();
   }
 
   @After
   public void tearDown() throws IOException {
     capturedBundle = null;
-    readJsonFilesFn.teardown();
+    readJsonFromFileFn.teardown();
   }
 
   @Test
   public void testProcessBundleUrnRef()
-      throws IOException, SQLException, ViewApplicationException, ProfileException,
-          PropertyVetoException {
+      throws IOException, SQLException, ViewApplicationException, ProfileException {
     setUp(false);
     ResourceId resourceId =
         FileSystems.matchNewResource(Resources.getResource("bundle_urn_ref.json").getFile(), false);
     ReadableByteChannel readableByteChannel = FileSystems.open(resourceId);
     when(fileMock.open()).thenReturn(readableByteChannel);
-    readJsonFilesFn.processElement(fileMock);
+    readJsonFromFileFn.processElement(fileMock);
 
     // Verify the parsed resource.
     assertThat(capturedBundle, notNullValue());
@@ -100,8 +96,7 @@ public class ReadJsonFilesTest {
 
   @Test
   public void testProcessBundleRelativeRef()
-      throws IOException, SQLException, ViewApplicationException, ProfileException,
-          PropertyVetoException {
+      throws IOException, SQLException, ViewApplicationException, ProfileException {
     setUp(false);
     ResourceId resourceId =
         FileSystems.matchNewResource(
@@ -109,7 +104,7 @@ public class ReadJsonFilesTest {
     ReadableByteChannel readableByteChannel = FileSystems.open(resourceId);
     when(fileMock.open()).thenReturn(readableByteChannel);
 
-    readJsonFilesFn.processElement(fileMock);
+    readJsonFromFileFn.processElement(fileMock);
 
     // Verify the parsed resource.
     assertThat(capturedBundle, notNullValue());
@@ -118,24 +113,5 @@ public class ReadJsonFilesTest {
     assertThat(obs.getIdElement().getIdPart(), equalTo("751002"));
     assertThat(obs.getSubject().getReference(), equalTo("Patient/749605"));
     assertThat(obs.getEncounter().getReference(), equalTo("Encounter/750983"));
-  }
-
-  @Test
-  public void testReadingFromNDJsonFile()
-      throws PropertyVetoException, SQLException, ProfileException, IOException,
-          ViewApplicationException {
-    setUp(true);
-    ResourceId resourceId =
-        FileSystems.matchNewResource(Resources.getResource("patients.ndjson").getFile(), false);
-    ReadableByteChannel readableByteChannel = FileSystems.open(resourceId);
-    when(fileMock.open()).thenReturn(readableByteChannel);
-
-    readJsonFilesFn.processElement(fileMock);
-
-    // Verify the parsed resource.
-    assertThat(capturedBundle, notNullValue());
-    assertThat(capturedBundle.getEntry().size(), equalTo(3));
-    Patient patient = (Patient) capturedBundle.getEntry().get(0).getResource();
-    assertThat(patient.getIdElement().getIdPart(), equalTo("5c41cecf-cf81-434f-9da7-e24e5a99dbc2"));
   }
 }

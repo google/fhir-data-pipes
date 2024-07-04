@@ -15,7 +15,6 @@
  */
 package com.google.fhir.analytics;
 
-import com.google.fhir.analytics.model.FhirFetchMode;
 import org.apache.beam.sdk.options.Default;
 import org.apache.beam.sdk.options.Description;
 import org.apache.beam.sdk.options.Validation.Required;
@@ -24,7 +23,8 @@ import org.apache.beam.sdk.options.Validation.Required;
 public interface FhirEtlOptions extends BasePipelineOptions {
 
   @Description(
-      "Mode through which the FHIR resources have to be fetched from the source FHIR" + " server")
+      "Mode through which the FHIR resources have to be fetched from the source FHIR server")
+  @Default.Enum("FHIR_SEARCH")
   FhirFetchMode getFhirFetchMode();
 
   void setFhirFetchMode(FhirFetchMode fhirFetchMode);
@@ -264,7 +264,7 @@ public interface FhirEtlOptions extends BasePipelineOptions {
       "Comma separated list of input NDJSON files, e.g., 'PATH1/*,PATH2/*'. Each file contain FHIR "
           + "resources serialized with no whitespace, and separated by a newline pair.")
   @Default.String("")
-  String getSourceNDJsonFilePatternList();
+  String getSourceNdjsonFilePatternList();
 
-  void setSourceNDJsonFilePatternList(String value);
+  void setSourceNdjsonFilePatternList(String value);
 }

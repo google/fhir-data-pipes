@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.google.fhir.analytics.model;
+package com.google.fhir.analytics;
 
 /**
  * Class containing the list of different modes via which the application can fetch FHIR resources

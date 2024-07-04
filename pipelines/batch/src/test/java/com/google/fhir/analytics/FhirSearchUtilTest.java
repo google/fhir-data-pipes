@@ -23,43 +23,25 @@ import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.any;
-import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import ca.uhn.fhir.context.FhirContext;
-import ca.uhn.fhir.context.FhirVersionEnum;
 import ca.uhn.fhir.parser.IParser;
-import ca.uhn.fhir.rest.api.MethodOutcome;
 import ca.uhn.fhir.rest.api.SearchTotalModeEnum;
 import ca.uhn.fhir.rest.api.SummaryEnum;
-import ca.uhn.fhir.rest.client.apache.ApacheHttpResponse;
 import ca.uhn.fhir.rest.client.api.IGenericClient;
-import ca.uhn.fhir.rest.client.api.IHttpResponse;
 import ca.uhn.fhir.rest.gclient.IQuery;
 import ca.uhn.fhir.rest.gclient.IUntypedQuery;
 import ca.uhn.fhir.rest.param.DateParam;
 import ca.uhn.fhir.rest.param.DateRangeParam;
-import ca.uhn.fhir.util.StopWatch;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.common.collect.Maps;
 import com.google.common.io.Resources;
-import com.google.fhir.analytics.exception.BulkExportException;
-import com.google.fhir.analytics.model.BulkExportHttpResponse;
-import com.google.fhir.analytics.model.BulkExportResponse;
 import java.io.IOException;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
-import java.util.Arrays;
-import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import org.apache.beam.sdk.options.PipelineOptionsFactory;
-import org.apache.http.HttpResponse;
-import org.apache.http.HttpStatus;
-import org.apache.http.HttpVersion;
-import org.apache.http.entity.StringEntity;
-import org.apache.http.message.BasicHttpResponse;
 import org.hl7.fhir.r4.model.Bundle;
 import org.junit.Before;
 import org.junit.BeforeClass;
@@ -67,7 +49,6 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
-import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnitRunner;
 
 @RunWith(MockitoJUnitRunner.class)
@@ -178,61 +159,5 @@ public class FhirSearchUtilTest {
     assertThat(value, notNullValue());
     assertThat(value.getUpperBound(), nullValue());
     assertThat(value.getLowerBound(), equalTo(new DateParam("ge2020-12-01")));
-  }
-
-  @Test
-  public void testTriggerBulkExportJob() throws BulkExportException {
-    List<String> resourceTypes = Arrays.asList("Patient,Observation,Encounter");
-    String mockLocationUrl =
-        "http://localhost:8080/fhir/$export-poll-status?_jobId=2961c268-027e-49cb-839c-4c1ef76615c6";
-    MethodOutcome methodOutcome = new MethodOutcome();
-    methodOutcome.setResponseStatusCode(HttpStatus.SC_ACCEPTED);
-    Map<String, List<String>> outputHeaders = Maps.newHashMap();
-    outputHeaders.put("content-location", Arrays.asList(mockLocationUrl));
-    methodOutcome.setResponseHeaders(outputHeaders);
-    when(fetchUtil.performServerOperation(any(), any(), any())).thenReturn(methodOutcome);
-
-    String contentLocationUrl =
-        fhirSearchUtil.triggerBulkExportJob(resourceTypes, FhirVersionEnum.R4);
-
-    assertThat(contentLocationUrl, equalTo(mockLocationUrl));
-    Mockito.verify(fetchUtil, times(1)).performServerOperation(any(), any(), any());
-  }
-
-  @Test(expected = BulkExportException.class)
-  public void testTriggerBulkExportJobError() throws BulkExportException {
-    List<String> resourceTypes = Arrays.asList("Patient,Observation,Encounter");
-    MethodOutcome methodOutcome = new MethodOutcome();
-    methodOutcome.setResponseStatusCode(HttpStatus.SC_BAD_REQUEST);
-    when(fetchUtil.performServerOperation(any(), any(), any())).thenReturn(methodOutcome);
-
-    fhirSearchUtil.triggerBulkExportJob(resourceTypes, FhirVersionEnum.R4);
-  }
-
-  @Test
-  public void testFetchBulkExportHttpResponse() throws IOException {
-    StopWatch responseStopWatch = new StopWatch();
-    HttpResponse response = new BasicHttpResponse(HttpVersion.HTTP_1_1, HttpStatus.SC_OK, "OK");
-    response.addHeader("expires", "Mon, 22 Jul 2019 23:59:59 GMT");
-    response.addHeader("retry-after", "120");
-    URL url = Resources.getResource("bulk_export_response.json");
-    String bulkResponseString = Resources.toString(url, StandardCharsets.UTF_8);
-    response.setEntity(new StringEntity(bulkResponseString));
-    IHttpResponse expectedResponse = new ApacheHttpResponse(response, responseStopWatch);
-    String mockLocationUrl =
-        "http://localhost:8080/fhir/$export-poll-status?_jobId=2961c268-027e-49cb-839c-4c1ef76615c6";
-    when(fetchUtil.fetchResponseForUrl(mockLocationUrl)).thenReturn(expectedResponse);
-
-    BulkExportHttpResponse bulkExportHttpResponse =
-        fhirSearchUtil.fetchBulkExportHttpResponse(mockLocationUrl);
-
-    assertThat(bulkExportHttpResponse.getHttpStatus(), equalTo(HttpStatus.SC_OK));
-    assertThat(bulkExportHttpResponse.getRetryAfter(), equalTo(120));
-    assertThat(
-        bulkExportHttpResponse.getExpires(), equalTo(new Date("Mon, 22 Jul 2019 23:59:59 GMT")));
-    ObjectMapper objectMapper = new ObjectMapper();
-    assertThat(
-        bulkExportHttpResponse.getBulkExportResponse(),
-        equalTo(objectMapper.readValue(bulkResponseString, BulkExportResponse.class)));
   }
 }

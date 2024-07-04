@@ -26,10 +26,8 @@ import com.google.fhir.analytics.exception.BulkExportException;
 import com.google.fhir.analytics.metrics.PipelineMetrics;
 import com.google.fhir.analytics.metrics.PipelineMetricsProvider;
 import com.google.fhir.analytics.model.DatabaseConfiguration;
-import com.google.fhir.analytics.model.FhirFetchMode;
 import com.google.fhir.analytics.view.ViewDefinitionException;
 import java.io.IOException;
-import java.nio.file.Path;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -83,6 +81,11 @@ public class FhirEtl {
 
   static FhirSearchUtil createFhirSearchUtil(FhirEtlOptions options, FhirContext fhirContext) {
     return new FhirSearchUtil(createFetchUtil(options, fhirContext));
+  }
+
+  static BulkExportApiClient createBulkExportApiClient(
+      FhirEtlOptions options, FhirContext fhirContext) {
+    return new BulkExportApiClient(createFetchUtil(options, fhirContext));
   }
 
   static FetchUtil createFetchUtil(FhirEtlOptions options, FhirContext fhirContext) {
@@ -253,11 +256,11 @@ public class FhirEtl {
     switch (options.getFhirFetchMode()) {
       case FHIR_SEARCH -> Preconditions.checkState(
           !Strings.isNullOrEmpty(options.getFhirServerUrl()),
-          "--fhirServerUrl cannot be empty for FHIR_SEARCH mode");
+          "--fhirServerUrl cannot be empty for FHIR_SEARCH fetch mode");
       case PARQUET -> {
         Preconditions.checkState(
             !Strings.isNullOrEmpty(options.getParquetInputDwhRoot()),
-            "--parquetInputDwhRoot cannot be empty for PARQUET mode");
+            "--parquetInputDwhRoot cannot be empty for PARQUET fetch mode");
         // This constraint is to make the PipelineManager logic simpler and because there is
         // currently no use-case for both reading from Parquet files and also writing into Parquet.
         Preconditions.checkState(
@@ -266,20 +269,21 @@ public class FhirEtl {
       }
       case JSON -> Preconditions.checkState(
           !Strings.isNullOrEmpty(options.getSourceJsonFilePatternList()),
-          "--sourceJsonFilePattern cannot be empty for JSON mode");
+          "--sourceJsonFilePattern cannot be empty for JSON fetch mode");
       case NDJSON -> Preconditions.checkState(
-          !Strings.isNullOrEmpty(options.getSourceNDJsonFilePatternList()),
-          "--sourceNDJsonFilePattern cannot be empty for NDJSON mode");
+          !Strings.isNullOrEmpty(options.getSourceNdjsonFilePatternList()),
+          "--sourceNdjsonFilePattern cannot be empty for NDJSON fetch mode");
       case BULK_EXPORT -> Preconditions.checkState(
           !Strings.isNullOrEmpty(options.getFhirServerUrl()),
-          "--fhirServerUrl cannot be empty for BULK_EXPORT mode");
+          "--fhirServerUrl cannot be empty for BULK_EXPORT fetch mode");
       case HAPI_JDBC -> Preconditions.checkState(
           !Strings.isNullOrEmpty(options.getFhirDatabaseConfigPath()),
-          "--fhirDatabaseConfigPath cannot be empty for HAPI_JDBC mode");
+          "--fhirDatabaseConfigPath cannot be empty for HAPI_JDBC fetch mode");
       case OPENMRS_JDBC -> Preconditions.checkState(
           !Strings.isNullOrEmpty(options.getFhirDatabaseConfigPath())
               && !Strings.isNullOrEmpty(options.getFhirServerUrl()),
-          "--fhirDatabaseConfigPath and -fhirServerUrl cannot be empty for OPENMRS_JDBC mode");
+          "--fhirDatabaseConfigPath and -fhirServerUrl cannot be empty for OPENMRS_JDBC fetch"
+              + " mode");
     }
     if (!options.getActivePeriod().isEmpty()) {
       Set<String> resourceSet = Sets.newHashSet(options.getResourceList().split(","));
@@ -381,48 +385,47 @@ public class FhirEtl {
   }
 
   private static List<Pipeline> buildMultiJsonReadPipeline(
-      FhirEtlOptions options, boolean isFileNDJson) {
+      FhirEtlOptions options, boolean isFileNdjson) {
     String multiFilePattern =
-        isFileNDJson
-            ? options.getSourceNDJsonFilePatternList()
+        isFileNdjson
+            ? options.getSourceNdjsonFilePatternList()
             : options.getSourceJsonFilePatternList();
     Preconditions.checkArgument(!multiFilePattern.isEmpty());
 
     Pipeline pipeline = Pipeline.create(options);
     pipeline
-        .apply(Create.of(Arrays.asList(options.getSourceNDJsonFilePatternList().split(","))))
+        .apply(Create.of(Arrays.asList(multiFilePattern.split(","))))
         .apply(FileIO.matchAll())
         .apply(FileIO.readMatches())
-        .apply("Read Multi NDJson Files", ParDo.of(new ReadJsonFilesFn(options, true)));
+        .apply(
+            String.format("Read Multi Json Files, isFileNdjson=%s", isFileNdjson),
+            ParDo.of(new ReadJsonFromFileFn(options, isFileNdjson)));
     return Arrays.asList(pipeline);
   }
 
   private static List<Pipeline> buildBulkExportReadPipeline(
       FhirEtlOptions options, AvroConversionUtil avroConversionUtil)
       throws BulkExportException, IOException {
-    FhirSearchUtil fhirSearchUtil =
-        createFhirSearchUtil(options, avroConversionUtil.getFhirContext());
+    BulkExportApiClient bulkExportApiClient =
+        createBulkExportApiClient(options, avroConversionUtil.getFhirContext());
+    BulkExportUtil bulkExportUtil = new BulkExportUtil(bulkExportApiClient);
     List<String> resourceTypes =
         Arrays.asList(options.getResourceList().split(",")).stream()
             .distinct()
             .collect(Collectors.toList());
-    List<Path> ndJsonDirectoryPaths =
-        BulkExportUtil.triggerBulkExportAndDownloadFiles(
-            resourceTypes, options.getFhirVersion(), fhirSearchUtil);
-    if (ndJsonDirectoryPaths != null && !ndJsonDirectoryPaths.isEmpty()) {
-      List<String> ndJsonFilePatternList =
-          ndJsonDirectoryPaths.stream()
-              .map(filePath -> filePath.resolve("*").toString())
-              .collect(Collectors.toList());
-      Pipeline pipeline = Pipeline.create(options);
-      pipeline
-          .apply(Create.of(ndJsonFilePatternList))
-          .apply(FileIO.matchAll())
-          .apply(FileIO.readMatches())
-          .apply("Read Multi NDJson Files", ParDo.of(new ReadJsonFilesFn(options, true)));
-      return Arrays.asList(pipeline);
+    Map<String, List<String>> typeToNdjsonFileMappings =
+        bulkExportUtil.triggerBulkExport(resourceTypes, options.getFhirVersion());
+    List<Pipeline> pipelines = new ArrayList<>();
+    if (typeToNdjsonFileMappings != null && !typeToNdjsonFileMappings.isEmpty()) {
+      for (String type : typeToNdjsonFileMappings.keySet()) {
+        Pipeline pipeline = Pipeline.create(options);
+        pipeline
+            .apply(Create.of(typeToNdjsonFileMappings.get(type)))
+            .apply("Read Multi Ndjson Files", ParDo.of(new ReadJsonFromUrlFn(options, true)));
+        pipelines.add(pipeline);
+      }
     }
-    return null;
+    return pipelines;
   }
 
   /**
