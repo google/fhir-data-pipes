@@ -115,7 +115,6 @@ or the [Web Control Panel](additional#web-control-panel).
 
     Add the necessary parameters depending on your use case. For more information on additional command line parameters, read more [here](installation_pipeline.md#parameters).
 
-
 <br>
  
 After running the pipeline, look for the Parquet files created in the directory
