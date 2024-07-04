@@ -47,7 +47,9 @@ repo_name: FHIR Data Pipes
 
 nav:
   - Home: 'index.md'
-  - Concepts: 'concepts.md'
+  - Concepts:
+    - concepts/concepts.md
+    - 'Pre-Defined Views' : 'concepts/predefined_views.md'
   - Getting Started: 
     - getting_started.md
     - 'Docker containers' : 'installation_docker.md'
@@ -80,6 +82,7 @@ markdown_extensions:
       alternate_style: true
   - pymdownx.mark
   - attr_list
+  - sane_lists
   - pymdownx.emoji:
       emoji_index: !!python/name:materialx.emoji.twemoji
       emoji_generator: !!python/name:materialx.emoji.to_svg

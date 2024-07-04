@@ -1,0 +1,131 @@
+# Pre-Defined Views
+
+## Overview
+
+The heavily nested nature of FHIR resources requires complex SQL queries that
+can make them difficult to work with for analytics use cases. A common approach to
+address this is to flatten the data into a set of views (virtual or
+materialized) which can then be queried using simpler SQL statements.
+
+FHIR Data Pipes provides two approaches for flattening the FHIR resources into
+virtual or materialized views:
+
+1. SQL queries to generate [virtual views](https://github.com/google/fhir-data-pipes/tree/master/docker/config/views) (outside the pipeline)
+2.
+FHIR [ViewDefinition](https://build.fhir.org/ig/FHIR/sql-on-fhir-v2/StructureDefinition-ViewDefinition.html)
+resources to generate materialized views (within the pipeline)
+
+For both of these approaches, a set of [**"predefined views”
+**](https://github.com/google/fhir-data-pipes/tree/master/docker/config/views)
+for common FHIR resources are provided. These can be modified or extended.
+
+The currently supported list (as of July, 2024) are:
+
+```
+Condition
+DiagnosticReport
+Encounter
+Immunization
+Location
+Medicationrequest
+Observation
+Organization
+Patient
+Practitioner
+PractitionerRole
+Procedure
+```
+
+### SQL virtual views
+
+These are samples of more complex SQL-on-FHIR queries for defining flat views
+for common FHIR resources. These virtual views are applied outside the
+pipelines in a downstream SQL query engine.
+
+The queries, which have `.sql` suffix, can be found
+in [/docker/config/views](https://github.com/google/fhir-data-pipes/tree/master/docker/config/views)
+directory (e.g `Patient_flat.sql`).
+
+An example of a flat view for the Observation resource is below:
+
+```sql
+CREATE OR REPLACE VIEW flat_observation AS
+SELECT O.id AS obs_id, O.subject.PatientId AS patient_id,
+        OCC.`system` AS code_sys, OCC.code,
+        O.value.quantity.value AS val_quantity,
+        OVCC.code AS val_code, OVCC.`system` AS val_sys,
+        O.effective.dateTime AS obs_date
+      FROM Observation AS O LATERAL VIEW OUTER explode(code.coding) AS OCC
+        LATERAL VIEW OUTER explode(O.value.codeableConcept.coding) AS OVCC
+```
+
+### ViewDefinition resource
+
+The [SQL-on-FHIR-v2 specification](https://build.fhir.org/ig/FHIR/sql-on-fhir-v2/)
+defines a ViewDefinition resource for defining views. Each column in the view is
+defined using a [FHIRPath expression](https://hl7.org/fhirpath/). 
+There is also an un-nesting construct and
+support for `constant` and `where` clauses too.
+
+!!! info "Note"
+
+    * A singlular View Definition will not join different resources in any way
+    * Each View Definition defines a tabular view of exactly one resource type
+
+
+
+A system (pipeline or library) that implements the “View Layer” of the
+specification provides a View Runner that is able to process these FHIR
+ViewDefinition Resources over the “Data Layer” (lossless representation of the
+FHIR data). The output of this are a set of portable, tabular views that can be
+consumed by the “Analytics Layer” which is any number of tools that can be used
+to work with the resulting tabular data.
+
+FHIR Data Pipes is
+a [reference implementation](https://fhir.github.io/sql-on-fhir-v2/#impls) of
+the SQL-on-FHIR-v2 specification:
+
+* The "View Runner" is, by default, part of the ETL Pipelines and uses the
+  transformed Parquet files as the “Data Layer”. _This can be extracted to be a
+  stand-alone component if required_
+
+* When enabled as part of the Pipeline configuration, thr "View Runner" will apply the
+  ViewDefinition resources from
+  the [views folder](https://github.com/google/fhir-data-pipes/tree/master/docker/config/views)
+  and materialize the resulting tables to the configured database (an
+  instance of PostgresSQL, MySQL, etc.).
+
+* A set of pre-defined ViewDefinitions for common FHIR resources is provided as
+  part of the default package. These can be adapted, replaced and extended.
+
+* The FHIR Data Pipes provides a simple ViewDefinition Editor which can be used
+  to explore FHIR ViewDefinitions and apply these to individual FHIR resources.
+
+Once the FHIR data has been transformed via the ETL Pipelines, the resulting
+schema is available for querying using a JDBC interface.
+
+Visit our [interactive playground](https://fhir.github.io/sql-on-fhir-v2/#pg) to get a hands-on understanding of the Patient ViewDefinition resource, and many more
+
+### ViewDefinition editor
+
+The ViewDefinition editor provides a way to quickly evaluate ViewDefinition
+resources against sample FHIR data. You access it as part of the [Web Control Panel](../additional#web-control-panel), selecting the "Views" navigation item in the top right corner.
+
+Using the ViewDefinition editor you can:
+
+* Provide an input ViewDefinition (left)
+* Apply it to a sample input FHIR resource (right pane)
+* View the results in the generated table (top)
+
+![FHIR Data Pipes Image](../images/view_definition_editor.png)
+
+## Output Data Formats
+
+### Conversion to PostgreSQL
+
+To be continued...
+
+### Conversion to Parquet
+
+To be continued...
+

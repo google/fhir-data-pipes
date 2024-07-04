@@ -4,7 +4,7 @@
 
     * This guide will walk you through how to deploy and run the ETL Pipelines Java JAR
     * To help with scheduling and managing the ETL Pipeline, a separate Pipeline Controller module is provided (see next guide)
-    * For ease of deployment a set of example docker compose configurations that include the Pipeline and Controller has been provided. See the Docker section
+    * For ease of deployment a set of example Docker Compose configurations that include the Pipeline and Controller has been provided. See the Docker section
 
 ## Intro to the ETL Pipeline
 
@@ -29,7 +29,7 @@ data:
   tested
   with [HAPI FHIR server using PostgreSQL database](https://github.com/hapifhir/hapi-fhir-jpaserver-starter#postgresql-configuration)
   or an [OpenMRS](https://openmrs.org/) instance using MySQL.
-- _ndjson_: To do
+- _ndjson_: Newline Delimited JSON, a file format typically created from the FHIR Bulk Export API. Reading FHIR Data in this format is not currently supported. 
 
 **Note**: JDBC support beyond HAPI FHIR and OpenMRS is not currently planned.
 Our long-term approach for a generic high-throughput alternative is to use the
@@ -46,8 +46,8 @@ Our long-term approach for a generic high-throughput alternative is to use the
 1. [Clone](https://docs.github.com/en/github/creating-cloning-and-archiving-repositories/cloning-a-repository)
    the [FHIR Data Pipes](https://github.com/google/fhir-data-pipes) project to
    your machine.
-1. Set the `utils` directory to world-readable: `chmod -R 755 ./utils`.
-1. Build binaries by running `mvn clean install` from the root directory of the
+2. Set the `utils` directory to world-readable: `chmod -R 755 ./utils`.
+3. Build binaries by running `mvn clean install` from the root directory of the
    repository.
 
 ## Run the pipeline
@@ -82,14 +82,14 @@ These parameters are used regardless of other pipeline options.
 
 - `resourceList` - A comma-separated list of
   [FHIR resources](https://www.hl7.org/fhir/resourcelist.html) to include in the
-  pipeline. Default: `Patient,Encounter,Observation`
+  pipeline. Default: `Patient, Encounter, Observation`
 - `runner` -
   [The Apache Beam Runner](https://beam.apache.org/documentation/runners/capability-matrix/)
-  to use. Pipelines supports `DirectRunner` and `FlinkRunner` by default; other
+  to use. Pipelines supports `DirectRunner` and `FlinkRunner` by default. Other
   runners can be enabled by Maven profiles, e.g.,
   [DataflowRunner](https://github.com/google/fhir-data-pipes/blob/16fcc255cef4d2708b9941a854e6c638b2533d45/pipelines/batch/pom.xml#L257).
   See also
-  [A note about Beam runners](pipelines/batch/README.md#a-note-about-beam-runners).
+  [A note about Beam runners](../../pipelines/batch/README.md#a-note-about-beam-runners).
   Default: `DirectRunner`
 
 ### FHIR-Search input parameters
@@ -140,7 +140,7 @@ All JDBC parameters:
 
 Parquet files are output when `outputParquetPath` is set.
 
-- `outputParquetPath` - The file path to write Parquet files to, e.g.,
+- `outputParquetPath` - The file path to write Parquet files to, e.g.
   `./tmp/parquet/`. Default: empty string, which does not output Parquet files.
 - `secondsToFlushParquetFiles` - The number of seconds to wait before flushing
   all Parquet writers with non-empty content to files. Use `0` to disable.
@@ -172,7 +172,7 @@ If the pipeline is run on a single machine (i.e., not on a distributed cluster),
 for large datasets consider using a production grade runner like
 [Flink](https://beam.apache.org/documentation/runners/flink/). This can be done
 by adding the parameter `--runner=FlinkRunner` (use `--maxParallelism` and
-`--parallelism` to control parallelism). This may avoid some of the memory
+`--parallelism` to control parallelism). This may avoid some memory
 issues of `DirectRunner`.
 
 ## Example configurations
@@ -180,7 +180,7 @@ issues of `DirectRunner`.
 These examples are set up to work with
 [local test servers](tutorials/test_servers.md).
 
-=== "FHIR Search to Parquet files"
+=== "FHIR Server to Parquet files"
 
     ```shell
     java -cp ./pipelines/batch/target/batch-bundled.jar \
@@ -210,7 +210,7 @@ These examples are set up to work with
 The ETL Pipeline is designed as a stand-alone Apache Beam service. The Pipeline
 Controller module provides capabilities to help manage the Pipeline including:
 scheduling full versus incremental runs. It also provides
-some [monitoring capabilities](./additional#managing-pipelines).
+some [monitoring capabilities](./additional#monitoring-pipelines).
 
 ## How to query the data warehouse
 
