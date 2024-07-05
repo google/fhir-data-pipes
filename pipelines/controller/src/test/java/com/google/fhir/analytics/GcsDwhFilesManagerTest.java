@@ -162,6 +162,9 @@ public class GcsDwhFilesManagerTest {
 
     String baseDir2 = dwhFilesManager.getBaseDir("gs://test-bucket/baseDir/childDir/prefix");
     assertThat(baseDir2, equalTo("gs://test-bucket/baseDir/childDir"));
+
+    String s3BaseDir = dwhFilesManager.getBaseDir("s3://test-bucket/baseDir/childDir/prefix");
+    assertThat(s3BaseDir, equalTo("s3://test-bucket/baseDir/childDir"));
   }
 
   @Test
@@ -171,6 +174,16 @@ public class GcsDwhFilesManagerTest {
         () -> {
           DwhFilesManager dwhFilesManager = new DwhFilesManager(dataProperties);
           dwhFilesManager.getBaseDir("gs://test-bucket");
+        });
+  }
+
+  @Test
+  public void testBaseDirForInvalidPathS3() {
+    Assertions.assertThrows(
+        IllegalArgumentException.class,
+        () -> {
+          DwhFilesManager dwhFilesManager = new DwhFilesManager(dataProperties);
+          dwhFilesManager.getBaseDir("s3://test-bucket");
         });
   }
 
@@ -186,6 +199,21 @@ public class GcsDwhFilesManagerTest {
 
     String prefix3 = dwhFilesManager.getPrefix("gs://test-bucket/baseDir/childDir/prefix");
     assertThat(prefix3, equalTo("prefix"));
+
+    String s3Prefix = dwhFilesManager.getPrefix("s3://test-bucket/baseDir/childDir/prefix");
+    assertThat(s3Prefix, equalTo("prefix"));
+  }
+
+  @Test
+  public void testPrefixForInvalidPathS3() {
+    Assertions.assertThrows(
+        IllegalArgumentException.class,
+        () -> {
+          DwhFilesManager dwhFilesManager = new DwhFilesManager(dataProperties);
+          // GCS Path should end with a non-empty suffix string after the last occurrence of the
+          // character '/'
+          dwhFilesManager.getPrefix("s3://test-bucket/baseDir/");
+        });
   }
 
   @Test
