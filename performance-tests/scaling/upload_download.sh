@@ -11,7 +11,7 @@ source ./variables.sh
 
 GITS_DIR=~/gits
 VENV=~/venv_fhir
-NOHUP_OUT=~/nohup-up.out
+NOHUP_OUT=$TMP_DIR/nohup-up.out
 
 cd $GITS_DIR/fhir-data-pipes
 
@@ -25,7 +25,7 @@ else
   pip install -r ./synthea-hiv/uploader/requirements.txt
 fi
 
-python "$DIR_WITH_THIS_SCRIPT/upload_download.py" | tee ~/"upload-download-$(date +%Y-%m-%d).txt"
+python "$DIR_WITH_THIS_SCRIPT/upload_download.py" | tee -a "$TMP_DIR/upload-download-$(date +%Y-%m-%d).txt"
 #nohup python "$DIR_WITH_THIS_SCRIPT/upload_download.py" >> $NOHUP_OUT 2>&1 &
 #tail -F $NOHUP_OUT
 

@@ -6,7 +6,8 @@ import datetime
 FHIR_SERVER_URL = os.environ['FHIR_SERVER_URL']
 ENABLE_UPLOAD = os.environ['ENABLE_UPLOAD'] == 'true'
 ENABLE_DOWNLOAD = os.environ['ENABLE_DOWNLOAD'] == 'true'
-TMP_DIR = "/tmp/scaling"
+TMP_DIR = os.environ['TMP_DIR']
+LOG_DIR = "~"
 SOURCE = f"{os.environ['PATIENTS']}_patients"
 FHIR_UPLOADER_CORES = os.environ['FHIR_UPLOADER_CORES']
 DB_TYPE = os.environ['DB_TYPE']
@@ -138,7 +139,7 @@ def log(description, start, result):
     start_datetime = timestamp2human(start)
     end_datetime = timestamp2human(end)
     full_log = f"{start_datetime}\t{end_datetime}\t{result}\t{description}\t{round(end - start)}"
-    shell(f"""echo "{full_log}" >> {TMP_DIR}/upload_download_log.tsv""")
+    shell(f"""echo "{full_log}" >> {LOG_DIR}/upload_download_log.tsv""")
 
 
 def timestamp2human(timestamp):

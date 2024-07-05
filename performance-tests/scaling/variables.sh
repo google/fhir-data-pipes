@@ -2,6 +2,7 @@
 
 source ./config.sh
 
+export TMP_DIR="/tmp/scaling"
 export PATH="/google/data/ro/projects/java-platform/linux-amd64/jdk-17-latest/bin:$PATH"
 export DB_PATIENTS="patients_$PATIENTS"
 export DIR_WITH_THIS_SCRIPT

@@ -49,7 +49,7 @@ APPLICATION_YAML="~/gits/hapi-fhir-jpaserver-starter/src/main/resources/applicat
 "${RUN_ON_HAPI_STANZA[@]}" "sed -i '/    hibernate.search.enabled: true/c\\    hibernate.search.enabled: false' $APPLICATION_YAML"
 # Start the HAPI server.
 # shellcheck disable=SC2088
-nohup "${RUN_ON_HAPI_STANZA[@]}" "~/gits/fhir-data-pipes/performance-tests/scaling/start_hapi_server.sh" >> ~/nohup-hapi-$(date +%Y-%m-%d).out 2>&1 &
+nohup "${RUN_ON_HAPI_STANZA[@]}" "~/gits/fhir-data-pipes/performance-tests/scaling/start_hapi_server.sh" >> "$TMP_DIR/nohup-hapi-$(date +%Y-%m-%d).out" 2>&1 &
 
 if [ "$RUNNING_ON_HAPI_VM" = false ]; then
   (sleep 15; "$DIR_WITH_THIS_SCRIPT/hapi_port_forward.sh") &
