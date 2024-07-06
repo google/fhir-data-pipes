@@ -11,6 +11,8 @@ DIR_WITH_THIS_SCRIPT="$( cd -- "$(dirname "$0")" >/dev/null 2>&1 && pwd -P )"
 export DB_USERNAME="postgres"
 export DB_PASSWORD="C%_/\Rn-=fI5f$}7"
 
+mkdir -p $TMP_DIR
+
 case "$DB_TYPE" in
   "alloy")
     export ZONE=us-central
