@@ -52,7 +52,7 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
 @SpringBootTest(classes = DataProperties.class)
 @TestPropertySource("classpath:application-test.properties")
 @EnableConfigurationProperties(value = DataProperties.class)
-public class GcsDwhFilesManagerTest {
+public class CloudDwhFilesManagerTest {
 
   @Mock private GcsUtil mockGcsUtil;
   private AutoCloseable closeable;
@@ -210,7 +210,7 @@ public class GcsDwhFilesManagerTest {
         IllegalArgumentException.class,
         () -> {
           DwhFilesManager dwhFilesManager = new DwhFilesManager(dataProperties);
-          // GCS Path should end with a non-empty suffix string after the last occurrence of the
+          // S3 Path should end with a non-empty suffix string after the last occurrence of the
           // character '/'
           dwhFilesManager.getPrefix("s3://test-bucket/baseDir/");
         });
