@@ -137,6 +137,9 @@
       <version>1.11.3</version>
     </dependency>
 
+    <!-- Keep the version of the `parquet-avro` artifact consistent with the transitive
+    dependencies i.e. parquet-* dependencies of the artifact
+    `org.apache.beam:beam-sdks-java-io-parquet` in the `batch` module-->
     <dependency>
       <groupId>org.apache.parquet</groupId>
       <artifactId>parquet-avro</artifactId>
