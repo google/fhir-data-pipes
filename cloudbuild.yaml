@@ -199,6 +199,13 @@ steps:
 #   - -c
 #   - docker logs pipeline-controller
 
+- name: 'gcr.io/cloud-builders/docker'
+  id: 'Inspect docker network'
+  entrypoint: /bin/bash
+  args:
+    - -c
+    - docker network inspect docker_default;
+
 - name: 'docker/compose'
   id: 'Bring down controller and Spark containers'
   args: [ '-f', './docker/compose-controller-spark-sql-single.yaml', 'down' ]
