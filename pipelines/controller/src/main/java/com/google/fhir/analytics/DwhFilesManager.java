@@ -15,11 +15,14 @@
  */
 package com.google.fhir.analytics;
 
-import static com.google.fhir.analytics.DwhFiles.DEFAULT_SCHEME;
+import static com.google.fhir.analytics.DwhFiles.GCS_SCHEME;
+import static com.google.fhir.analytics.DwhFiles.LOCAL_SCHEME;
+import static com.google.fhir.analytics.DwhFiles.S3_SCHEME;
 
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import com.google.common.collect.Iterables;
+import com.google.fhir.analytics.DwhFiles.CloudPath;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.DirectoryNotEmptyException;
@@ -33,7 +36,6 @@ import java.util.Set;
 import java.util.TreeSet;
 import java.util.stream.Collectors;
 import javax.annotation.PostConstruct;
-import org.apache.beam.sdk.extensions.gcp.util.gcsfs.GcsPath;
 import org.apache.beam.sdk.io.FileSystems;
 import org.apache.beam.sdk.io.fs.MatchResult;
 import org.apache.beam.sdk.io.fs.MatchResult.Metadata;
@@ -380,16 +382,16 @@ public class DwhFilesManager {
   }
 
   private int getLastIndexOfSlash(String dwhRootPrefix) {
-    String scheme = DwhFiles.parseScheme(dwhRootPrefix);
+    CloudPath cloudPath = DwhFiles.parsePath(dwhRootPrefix);
     int index = -1;
-    switch (scheme) {
-      case DEFAULT_SCHEME:
+    switch (cloudPath.getScheme()) {
+      case LOCAL_SCHEME:
         index = dwhRootPrefix.lastIndexOf(File.separator);
         break;
-      case GcsPath.SCHEME:
+      case GCS_SCHEME:
+      case S3_SCHEME:
         // Fetch the last index position of the character '/' after the bucket name in the gcs path.
-        GcsPath gcsPath = GcsPath.fromUri(dwhRootPrefix);
-        String gcsObject = gcsPath.getObject();
+        String gcsObject = cloudPath.getObject();
         if (Strings.isNullOrEmpty(gcsObject)) {
           break;
         }
@@ -401,7 +403,8 @@ public class DwhFilesManager {
         }
         break;
       default:
-        String errorMessage = String.format("File system scheme=%s is not yet supported", scheme);
+        String errorMessage =
+            String.format("File system scheme=%s is not yet supported", cloudPath.getScheme());
         logger.error(errorMessage);
         throw new IllegalArgumentException(errorMessage);
     }
