@@ -100,6 +100,17 @@ builder is installed, do the following:
     cloud-build-local  --dryrun=false .
     ```
 
+## Parallelization of end-to-end tests
+
+The end-to-end tests have been ordered based on their dependencies of the previous steps, which
+makes certain steps to be run concurrently. The order of the steps executed is shown in the below 
+picture.
+
+![](./cloudbuild_snapshot.png)
+
+The flowchart has been developed using the https://app.diagrams.net/ tool and the 
+editable version of it is available at this [location](./cloudbuild_flowchart.xml)
+
 ## Regenerate JAR File
 
 Parquet tools library is used to inspect parquet files. The jar file has been

@@ -20,8 +20,24 @@
 steps:
 
 - name: 'docker/compose'
-  id: 'Launch HAPI Source and Sink Servers'
-  args: ['-f', './docker/hapi-compose.yml', '-f', './docker/sink-compose1.yml', '-f', './docker/sink-compose2.yml', 'up', '--force-recreate', '--remove-orphan', '-d']
+  id: 'Launch HAPI Source Server'
+  args: ['-f', './docker/hapi-compose.yml', 'up', '--force-recreate', '--remove-orphan', '-d']
+
+- name: 'docker/compose'
+  id: 'Launch Sink Server 1'
+  args: ['-f', './docker/sink-compose.yml', '-p', 'sink-server1', 'up', '--force-recreate', '--remove-orphan', '-d' ]
+  env:
+    - SINK_SERVER_NAME=sink-server1
+    - SINK_SERVER_PORT=9001
+  waitFor: ['-']
+
+- name: 'docker/compose'
+  id: 'Launch Sink Server 2'
+  args: ['-f', './docker/sink-compose.yml', '-p', 'sink-server2', 'up', '--force-recreate', '--remove-orphan', '-d' ]
+  env:
+    - SINK_SERVER_NAME=sink-server2
+    - SINK_SERVER_PORT=9002
+  waitFor: ['-']
 
 # Note license checking will fail on Cloud Build because of .git dependencies
 # and there is not much point updating license headers at this stage anyway.
@@ -57,13 +73,13 @@ steps:
   - -c
   - cd e2e-tests;
     docker build -t ${_REPOSITORY}/e2e-tests:${_TAG} .;
-    docker build -t ${_REPOSITORY}/e2e-tests/controller-spark:${_TAG} -t e2e-tests-controller-spark ./controller-spark/.;
+    docker build -t ${_REPOSITORY}/e2e-tests/controller-spark:${_TAG} ./controller-spark/.;
   waitFor: ['-']
 
 - name: 'ubuntu'
   id: 'Sleep for servers to be up'
   args: ['sleep', '90']
-  waitFor: ['Launch HAPI Source and Sink Servers', 'Run Uploader Unit Tests']
+  waitFor: ['Launch HAPI Source Server', 'Launch Sink Server 1', 'Launch Sink Server 2', 'Run Uploader Unit Tests']
 
 - name: '${_REPOSITORY}/synthea-uploader:${_TAG}'
   id: 'Upload to HAPI'
@@ -101,7 +117,7 @@ steps:
   - PARQUET_SUBDIR=FHIR_SEARCH_HAPI
   - DOCKER_NETWORK=--use_docker_network
   - SINK_SERVER=http://sink-server1:8080
-  waitFor: ['Run Batch Pipeline in FHIR-search mode with HAPI source']
+  waitFor: ['Run Batch Pipeline in FHIR-search mode with HAPI source', 'Build E2E Image']
 
 - name: '${_REPOSITORY}/batch-pipeline:${_TAG}'
   id: 'Run Batch Pipeline for JDBC mode with HAPI source'
@@ -123,13 +139,24 @@ steps:
     - PARQUET_SUBDIR=JDBC_HAPI
     - DOCKER_NETWORK=--use_docker_network
     - SINK_SERVER=http://sink-server2:8080
-  waitFor: ['Run Batch Pipeline for JDBC mode with HAPI source']
+  waitFor: ['Run Batch Pipeline for JDBC mode with HAPI source', 'Build E2E Image']
 
 # Resetting FHIR sink server
 - name: 'docker/compose'
-  id: 'Turn down FHIR Sink Servers'
-  args: [ '-f', './docker/sink-compose1.yml', '-f', './docker/sink-compose2.yml', 'down' ,'-v']
-  waitFor: ['Run E2E Test for FHIR-search mode with HAPI source', 'Run E2E Test for JDBC mode with HAPI source']
+  id: 'Turn down FHIR Sink Server 1'
+  args: [ '-f', './docker/sink-compose.yml', '-p', 'sink-server1', 'down' ,'-v']
+  env:
+    - SINK_SERVER_NAME=sink-server1
+    - SINK_SERVER_PORT=9001
+  waitFor: ['Run E2E Test for FHIR-search mode with HAPI source']
+
+- name: 'docker/compose'
+  id: 'Turn down FHIR Sink Server 2'
+  args: [ '-f', './docker/sink-compose.yml', '-p', 'sink-server2', 'down' ,'-v']
+  env:
+    - SINK_SERVER_NAME=sink-server2
+    - SINK_SERVER_PORT=9002
+  waitFor: ['Run E2E Test for JDBC mode with HAPI source']
 
   # The `views` database is used for creating flat views from ViewDefinitions.
 - name: 'postgres'
@@ -139,10 +166,14 @@ steps:
     - PGPASSWORD=admin
   args: [ '-U', 'admin', '-d', 'postgres', '-h', 'hapi-fhir-db', '-p', '5432',
           '-c', 'CREATE DATABASE views;']
+  waitFor: ['Turn down FHIR Sink Server 1']
 
 - name: 'docker/compose'
-  id: 'Launch HAPI FHIR Sink Server'
-  args: [ '-f', './docker/sink-compose1.yml', 'up','--force-recreate', '-d' ]
+  id: 'Launch HAPI FHIR Sink Server 1'
+  args: [ '-f', './docker/sink-compose.yml', '-p', 'sink-server1', 'up','--force-recreate', '-d' ]
+  env:
+    - SINK_SERVER_NAME=sink-server1
+    - SINK_SERVER_PORT=9001
 
 - name: 'docker/compose'
   id: 'Bring up controller and Spark containers'
@@ -152,7 +183,7 @@ steps:
     - FHIRDATA_SINKFHIRSERVERURL=http://sink-server1:8080/fhir
   args: [ '-f', './docker/compose-controller-spark-sql-single.yaml', 'up',
           '--force-recreate', '-d' ]
-  waitFor: ['Launch HAPI FHIR Sink Server']
+  waitFor: ['Launch HAPI FHIR Sink Server 1']
 
 - name: '${_REPOSITORY}/e2e-tests/controller-spark:${_TAG}'
   id: 'Run E2E Test for Dockerized Controller and Spark Thriftserver'
@@ -173,14 +204,24 @@ steps:
   args: [ '-f', './docker/compose-controller-spark-sql-single.yaml', 'down' ]
 
 - name: 'docker/compose'
-  id: 'Turn down HAPI Source and Sink Servers'
-  args: [ '-f', './docker/hapi-compose.yml', '-f', './docker/sink-compose1.yml', 'down' ]
+  id: 'Turn down HAPI Source Server'
+  args: [ '-f', './docker/hapi-compose.yml', 'down' ]
 
 - name: 'docker/compose'
-  id: 'Launch OpenMRS Server and HAPI FHIR Sink Server'
-  args: [ '-f', './docker/openmrs-compose.yaml', '-f', './docker/sink-compose2.yml', '-p', 'openmrs-project', 'up',
+  id: 'Turn down FHIR Sink Server 1 for e2e tests'
+  args: [ '-f', './docker/sink-compose.yml', '-p', 'sink-server1', 'down' ,'-v']
+  env:
+    - SINK_SERVER_NAME=sink-server1
+    - SINK_SERVER_PORT=9001
+
+- name: 'docker/compose'
+  id: 'Launch OpenMRS Server and HAPI FHIR Sink Server 2'
+  args: [ '-f', './docker/openmrs-compose.yaml', '-f', './docker/sink-compose.yml', '-p', 'openmrs-project', 'up',
           '--force-recreate', '--remove-orphan', '-d' ]
-  waitFor: ['Turn down FHIR Sink Servers']
+  env:
+    - SINK_SERVER_NAME=sink-server2
+    - SINK_SERVER_PORT=9002
+  waitFor: ['Turn down FHIR Sink Server 2']
 
 - name: 'gcr.io/cloud-builders/docker'
   id: 'Wait for Servers Start'
@@ -188,7 +229,7 @@ steps:
   args:
   - -c
   - e2e-tests/wait_for_start.sh --use_docker_network
-  waitFor: ['Launch OpenMRS Server and HAPI FHIR Sink Server']
+  waitFor: ['Launch OpenMRS Server and HAPI FHIR Sink Server 2']
 
 - name: '${_REPOSITORY}/e2e-tests:${_TAG}'
   id: 'Launch Streaming Pipeline'
@@ -261,11 +302,14 @@ steps:
   args:
   - -c
   - 'cd dwh; ./validate_indicators.sh'
-  waitFor: ['Run E2E Test for JDBC mode with OpenMRS source', 'Turn down HAPI Source and Sink Servers']
+  waitFor: ['Run E2E Test for JDBC mode with OpenMRS source', 'Turn down HAPI Source Server', 'Turn down FHIR Sink Server 1 for e2e tests']
 
 - name: 'docker/compose'
   id: 'Turn down Webserver and HAPI Server'
-  args: ['-f', './docker/openmrs-compose.yaml', '-f', './docker/sink-compose2.yml', 'down']
+  args: ['-f', './docker/openmrs-compose.yaml', '-f', './docker/sink-compose.yml', '-p', 'openmrs-project', 'down']
+  env:
+    - SINK_SERVER_NAME=sink-server2
+    - SINK_SERVER_PORT=9002
   waitFor: ['Test Indicators']
 
 substitutions:
