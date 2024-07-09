@@ -65,7 +65,13 @@ function validate_args() {
 #   anything that needs printing
 #################################################
 function print_message() {
-  local print_prefix="E2E TEST FOR CONTROLLER SPARK DEPLOYMENT:"
+  local print_prefix=""
+  if [[ "${DWH_TYPE}" == "PARQUET" ]]
+  then
+    print_prefix="E2E TEST FOR CONTROLLER SPARK DEPLOYMENT:"
+  else
+    print_prefix="E2E TEST FOR CONTROLLER FHIR SERVER TO FHIR SERVER SYNC:"
+  fi
   echo "${print_prefix} $*"
 }
 
@@ -88,6 +94,7 @@ function print_message() {
 function setup() {
   HOME_PATH=$1
   PARQUET_SUBDIR=$2
+  DWH_TYPE=$4
   SOURCE_FHIR_SERVER_URL='http://localhost:8091'
   SINK_FHIR_SERVER_URL='http://localhost:8098'
   PIPELINE_CONTROLLER_URL='http://localhost:8090'
@@ -187,7 +194,7 @@ function run_pipeline() {
 #######################################################################
 function check_parquet() {
   local isIncremental=$1
-  local runtime="15 minute"
+  local runtime="5 minute"
   local end_time=$(date -ud "$runtime" +%s)
   local output="${HOME_PATH}/${PARQUET_SUBDIR}"
   local timeout=true
@@ -224,7 +231,7 @@ function check_parquet() {
           timeout=false
           break
       else
-          sleep 20
+          sleep 10
       fi
     fi
   done
@@ -412,8 +419,14 @@ setup "$@"
 fhir_source_query
 sleep 50
 run_pipeline "FULL"
-check_parquet false
-test_fhir_sink "FULL"
+if [[ "${DWH_TYPE}" == "PARQUET" ]]
+then
+  check_parquet false
+else
+  # Provide enough  Buffer time for FULL pipeline to completely run before testing the sink FHIR server
+  sleep 900
+  test_fhir_sink "FULL"
+fi
 
 clear
 
@@ -425,16 +438,27 @@ update_resource
 sleep 60
 # Incremental run.
 run_pipeline "INCREMENTAL"
-check_parquet true
-fhir_source_query
-test_fhir_sink "INCREMENTAL"
+if [[ "${DWH_TYPE}" == "PARQUET" ]]
+then
+  check_parquet true
+else
+  fhir_source_query
+  # Provide enough Buffer time for FULL pipeline to completely run before testing the sink FHIR server
+  sleep 300
+  test_fhir_sink "INCREMENTAL"
+fi
 
-validate_resource_tables
-validate_resource_tables_data
-validate_updated_resource
+if [[ "${DWH_TYPE}" == "PARQUET" ]]
+then
+  validate_resource_tables
+  validate_resource_tables_data
+  validate_updated_resource
 
-# View recreation run
-# TODO add validation for the views as well
-run_pipeline "VIEWS"
+  # View recreation run
+  # TODO add validation for the views as well
+  run_pipeline "VIEWS"
+
+fi
+
 
 print_message "END!!"
