@@ -41,6 +41,7 @@ import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
+import lombok.Getter;
 import org.apache.beam.sdk.extensions.gcp.util.gcsfs.GcsPath;
 import org.apache.beam.sdk.io.FileSystems;
 import org.apache.beam.sdk.io.fs.MatchResult;
@@ -66,10 +67,13 @@ public class DwhFiles {
 
   private static final String INCREMENTAL_DIR = "incremental_run";
 
-  private static final Pattern FILE_SCHEME_PATTERN =
-      Pattern.compile("(?<scheme>[a-zA-Z][-a-zA-Z0-9+.]*):/.*");
-
-  static final String DEFAULT_SCHEME = "file";
+  // TODO: It is probably better if we build all DWH files related operations using Beam's
+  //  filesystem API such that when a new filesystem is registered, it automatically works
+  //  everywhere in our code. Note that currently we have hardcoded the valid schema in some places,
+  //  hence a newly registered filesystem is not automatically handled everywhere.
+  static final String LOCAL_SCHEME = "file";
+  static final String GCS_SCHEME = "gs";
+  static final String S3_SCHEME = "s3";
 
   private final String dwhRoot;
 
@@ -363,14 +367,16 @@ public class DwhFiles {
    * @return the file separator
    */
   public static String getFileSeparatorForDwhFiles(String dwhRootPrefix) {
-    String scheme = parseScheme(dwhRootPrefix);
-    switch (scheme) {
-      case DEFAULT_SCHEME:
+    CloudPath cloudPath = parsePath(dwhRootPrefix);
+    switch (cloudPath.getScheme()) {
+      case LOCAL_SCHEME:
         return File.separator;
-      case GcsPath.SCHEME:
+      case GCS_SCHEME:
+      case S3_SCHEME:
         return "/";
       default:
-        String errorMessage = String.format("File system scheme=%s is not yet supported", scheme);
+        String errorMessage =
+            String.format("File system scheme=%s is not yet supported", cloudPath.getScheme());
         log.error(errorMessage);
         throw new IllegalArgumentException(errorMessage);
     }
@@ -387,21 +393,41 @@ public class DwhFiles {
    * This method returns the schema of the passed in spec. This is inspired from the parsing logic
    * in the repo <a href="https://github.com/apache/beam">Beam File System</a>
    *
-   * @param spec - the spec from which the schema needs to be parsed
+   * @param path the path for which the schema needs to be parsed, e.g., gs://my-bucket/file or
+   *     basedir/file or /rootbasedir/file
    * @return the schema
    */
-  public static String parseScheme(String spec) {
-    // The spec is almost, but not quite, a URI. In particular,
+  public static CloudPath parsePath(String path) {
+    // The `path` is almost, but not quite, a URI. In particular,
     // the reserved characters '[', ']', and '?' have meanings that differ
     // from their use in the URI spec. ('*' is not reserved).
-    // Here, we just need the scheme, which is so circumscribed as to be
-    // very easy to extract with a regex.
-    Matcher matcher = FILE_SCHEME_PATTERN.matcher(spec);
+    // Here, we just need the scheme, bucket, and the rest of the path.
+    return new CloudPath(path);
+  }
 
-    if (!matcher.matches()) {
-      return DEFAULT_SCHEME;
-    } else {
-      return matcher.group("scheme").toLowerCase();
+  /**
+   * This is based on a minimal part of {@link GcsPath} which is generalized to work for S3 buckets
+   * as well (and other distributed file-systesm in future).
+   */
+  @Getter
+  static class CloudPath {
+    private final String scheme;
+    private final String bucket;
+    private final String object;
+    static final Pattern CLOUD_URI =
+        Pattern.compile("(?<SCHEME>[^:]+)://(?<BUCKET>[^/]+)(/(?<OBJECT>.*))?");
+
+    private CloudPath(String uri) {
+      Matcher m = CLOUD_URI.matcher(uri);
+      if (m.matches()) {
+        scheme = m.group("SCHEME");
+        bucket = m.group("BUCKET");
+        object = m.group("OBJECT");
+      } else {
+        scheme = LOCAL_SCHEME;
+        bucket = "";
+        object = uri;
+      }
     }
   }
 }
