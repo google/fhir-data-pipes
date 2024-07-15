@@ -41,6 +41,7 @@ services:
       - spring.datasource.driverClassName=org.postgresql.Driver
       - spring.jpa.properties.hibernate.dialect=ca.uhn.fhir.jpa.model.dialect.HapiFhirPostgresDialect
       - hapi.fhir.bulk_export_enabled=true
+      - hapi.fhir.enable_index_missing_fields=true
 
     restart: unless-stopped
     ports:

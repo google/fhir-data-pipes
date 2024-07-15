@@ -21,9 +21,12 @@ import com.google.common.collect.Sets;
 import com.google.fhir.analytics.view.ViewApplicationException;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.URL;
+import java.nio.channels.Channels;
 import java.sql.SQLException;
 import java.util.List;
 import java.util.Set;
+import org.apache.beam.sdk.io.FileIO;
 import org.hl7.fhir.instance.model.api.IBaseReference;
 import org.hl7.fhir.instance.model.api.IBaseResource;
 import org.hl7.fhir.r4.model.Bundle;
@@ -118,6 +121,44 @@ abstract class ReadJsonFn<T> extends FetchSearchPageFn<T> {
             ref.setReference(resource.getIdElement().getValue());
           }
         }
+      }
+    }
+  }
+
+  /** Process FHIR resources in json/ndjson format from the given file. */
+  static class FromFile extends ReadJsonFn<FileIO.ReadableFile> {
+
+    private static final Logger log = LoggerFactory.getLogger(FromFile.class);
+
+    FromFile(FhirEtlOptions options, boolean isFileNdjson) {
+      super(options, isFileNdjson);
+    }
+
+    @ProcessElement
+    public void processElement(@Element FileIO.ReadableFile file)
+        throws IOException, SQLException, ViewApplicationException, ProfileException {
+      log.info("Reading file at {}", file.getMetadata());
+      try (InputStream inputStream = Channels.newInputStream(file.open())) {
+        processStream(inputStream);
+      }
+    }
+  }
+
+  /** Process FHIR resources in json/ndjson format from the given url. */
+  static class FromUrl extends ReadJsonFn<String> {
+
+    private static final Logger log = LoggerFactory.getLogger(FromUrl.class);
+
+    FromUrl(FhirEtlOptions options, boolean isFileNdjson) {
+      super(options, isFileNdjson);
+    }
+
+    @ProcessElement
+    public void processElement(@Element String jsonFileUrl)
+        throws IOException, SQLException, ViewApplicationException, ProfileException {
+      log.info("Reading file at " + jsonFileUrl);
+      try (InputStream inputStream = new URL(jsonFileUrl).openStream()) {
+        processStream(inputStream);
       }
     }
   }

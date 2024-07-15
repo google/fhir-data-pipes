@@ -43,7 +43,7 @@ import org.mockito.junit.MockitoJUnitRunner;
 @RunWith(MockitoJUnitRunner.class)
 public class ReadJsonFromFileTest {
 
-  private ReadJsonFromFileFn readJsonFromFileFn;
+  private ReadJsonFn.FromFile readJsonFromFileFn;
 
   @Mock private FileIO.ReadableFile fileMock;
 
@@ -54,7 +54,7 @@ public class ReadJsonFromFileTest {
     FhirEtlOptions options =
         PipelineOptionsFactory.fromArgs(args).withValidation().as(FhirEtlOptions.class);
     readJsonFromFileFn =
-        new ReadJsonFromFileFn(options, isFileNdjson) {
+        new ReadJsonFn.FromFile(options, isFileNdjson) {
 
           @Override
           protected void processBundle(Bundle bundle, @Nullable Set<String> resourceTypes) {

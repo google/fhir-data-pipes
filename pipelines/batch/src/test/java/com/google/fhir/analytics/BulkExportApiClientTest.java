@@ -26,12 +26,11 @@ import ca.uhn.fhir.rest.api.MethodOutcome;
 import ca.uhn.fhir.rest.client.apache.ApacheHttpResponse;
 import ca.uhn.fhir.rest.client.api.IHttpResponse;
 import ca.uhn.fhir.util.StopWatch;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.Maps;
 import com.google.common.io.Resources;
-import com.google.fhir.analytics.exception.BulkExportException;
 import com.google.fhir.analytics.model.BulkExportHttpResponse;
 import com.google.fhir.analytics.model.BulkExportResponse;
+import com.google.gson.Gson;
 import java.io.IOException;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
@@ -64,7 +63,7 @@ public class BulkExportApiClientTest {
   }
 
   @Test
-  public void testTriggerBulkExportJob() throws BulkExportException {
+  public void testTriggerBulkExportJob() {
     List<String> resourceTypes = Arrays.asList("Patient,Observation,Encounter");
     String mockLocationUrl =
         "http://localhost:8080/fhir/$export-poll-status?_jobId=2961c268-027e-49cb-839c-4c1ef76615c6";
@@ -82,8 +81,8 @@ public class BulkExportApiClientTest {
     Mockito.verify(fetchUtil, times(1)).performServerOperation(any(), any(), any());
   }
 
-  @Test(expected = BulkExportException.class)
-  public void testTriggerBulkExportJobError() throws BulkExportException {
+  @Test(expected = RuntimeException.class)
+  public void testTriggerBulkExportJobError() {
     List<String> resourceTypes = Arrays.asList("Patient,Observation,Encounter");
     MethodOutcome methodOutcome = new MethodOutcome();
     methodOutcome.setResponseStatusCode(HttpStatus.SC_BAD_REQUEST);
@@ -113,9 +112,9 @@ public class BulkExportApiClientTest {
     assertThat(bulkExportHttpResponse.getRetryAfter(), equalTo(120));
     assertThat(
         bulkExportHttpResponse.getExpires(), equalTo(new Date("Mon, 22 Jul 2019 23:59:59 GMT")));
-    ObjectMapper objectMapper = new ObjectMapper();
+    Gson gson = new Gson();
     assertThat(
         bulkExportHttpResponse.getBulkExportResponse(),
-        equalTo(objectMapper.readValue(bulkResponseString, BulkExportResponse.class)));
+        equalTo(gson.fromJson(bulkResponseString, BulkExportResponse.class)));
   }
 }

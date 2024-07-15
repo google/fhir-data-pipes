@@ -18,7 +18,6 @@ package com.google.fhir.analytics;
 import ca.uhn.fhir.context.FhirVersionEnum;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Maps;
-import com.google.fhir.analytics.exception.BulkExportException;
 import com.google.fhir.analytics.model.BulkExportHttpResponse;
 import com.google.fhir.analytics.model.BulkExportResponse;
 import com.google.fhir.analytics.model.BulkExportResponse.Output;
@@ -53,12 +52,10 @@ public class BulkExportUtil {
    * @param resourceTypes - the resource types to be downloaded
    * @param fhirVersionEnum - the fhir version of resource types
    * @return the list of directory paths where the ndjson files are downloaded
-   * @throws BulkExportException
    * @throws IOException
    */
   public Map<String, List<String>> triggerBulkExport(
-      List<String> resourceTypes, FhirVersionEnum fhirVersionEnum)
-      throws BulkExportException, IOException {
+      List<String> resourceTypes, FhirVersionEnum fhirVersionEnum) throws IOException {
     Preconditions.checkState(!CollectionUtils.isEmpty(resourceTypes));
     Preconditions.checkNotNull(fhirVersionEnum);
     String contentLocationUrl =
@@ -67,7 +64,7 @@ public class BulkExportUtil {
     BulkExportResponse bulkExportResponse = pollBulkExportJob(contentLocationUrl);
     if (!CollectionUtils.isEmpty(bulkExportResponse.getError())) {
       logger.error("Error occurred during bulk export, error={}", bulkExportResponse.getError());
-      throw new BulkExportException("Error occurred during bulk export, please check logs");
+      throw new RuntimeException("Error occurred during bulk export, please check logs");
     }
 
     if (CollectionUtils.isEmpty(bulkExportResponse.getOutput())
@@ -91,8 +88,7 @@ public class BulkExportUtil {
    * This method keeps polling for the status of bulk export job until it is complete and returns
    * the status once completed.
    */
-  private BulkExportResponse pollBulkExportJob(String bulkExportStatusUrl)
-      throws BulkExportException, IOException {
+  private BulkExportResponse pollBulkExportJob(String bulkExportStatusUrl) throws IOException {
     // TODO : Add timeout here to avoid infinite polling
     while (true) {
       BulkExportHttpResponse bulkExportHttpResponse =
@@ -124,7 +120,7 @@ public class BulkExportUtil {
             "Error while checking the status of the bulk export job, httpStatus={}, response={}",
             bulkExportHttpResponse.getHttpStatus(),
             bulkExportHttpResponse);
-        throw new BulkExportException(
+        throw new RuntimeException(
             "Error while checking the status of the bulk export job, please check logs for more"
                 + " details");
       }

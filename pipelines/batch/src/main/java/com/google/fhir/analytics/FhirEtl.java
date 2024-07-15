@@ -22,7 +22,6 @@ import com.google.common.base.Strings;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
-import com.google.fhir.analytics.exception.BulkExportException;
 import com.google.fhir.analytics.metrics.PipelineMetrics;
 import com.google.fhir.analytics.metrics.PipelineMetricsProvider;
 import com.google.fhir.analytics.model.DatabaseConfiguration;
@@ -83,9 +82,8 @@ public class FhirEtl {
     return new FhirSearchUtil(createFetchUtil(options, fhirContext));
   }
 
-  static BulkExportApiClient createBulkExportApiClient(
-      FhirEtlOptions options, FhirContext fhirContext) {
-    return new BulkExportApiClient(createFetchUtil(options, fhirContext));
+  static BulkExportUtil createBulkExportUtil(FhirEtlOptions options, FhirContext fhirContext) {
+    return new BulkExportUtil(new BulkExportApiClient(createFetchUtil(options, fhirContext)));
   }
 
   static FetchUtil createFetchUtil(FhirEtlOptions options, FhirContext fhirContext) {
@@ -399,16 +397,14 @@ public class FhirEtl {
         .apply(FileIO.readMatches())
         .apply(
             String.format("Read Multi Json Files, isFileNdjson=%s", isFileNdjson),
-            ParDo.of(new ReadJsonFromFileFn(options, isFileNdjson)));
+            ParDo.of(new ReadJsonFn.FromFile(options, isFileNdjson)));
     return Arrays.asList(pipeline);
   }
 
   private static List<Pipeline> buildBulkExportReadPipeline(
-      FhirEtlOptions options, AvroConversionUtil avroConversionUtil)
-      throws BulkExportException, IOException {
-    BulkExportApiClient bulkExportApiClient =
-        createBulkExportApiClient(options, avroConversionUtil.getFhirContext());
-    BulkExportUtil bulkExportUtil = new BulkExportUtil(bulkExportApiClient);
+      FhirEtlOptions options, AvroConversionUtil avroConversionUtil) throws IOException {
+    BulkExportUtil bulkExportUtil =
+        createBulkExportUtil(options, avroConversionUtil.getFhirContext());
     List<String> resourceTypes =
         Arrays.asList(options.getResourceList().split(",")).stream()
             .distinct()
@@ -421,7 +417,7 @@ public class FhirEtl {
         Pipeline pipeline = Pipeline.create(options);
         pipeline
             .apply(Create.of(typeToNdjsonFileMappings.get(type)))
-            .apply("Read Multi Ndjson Files", ParDo.of(new ReadJsonFromUrlFn(options, true)));
+            .apply("Read Multi Ndjson Files", ParDo.of(new ReadJsonFn.FromUrl(options, true)));
         pipelines.add(pipeline);
       }
     }
@@ -448,8 +444,7 @@ public class FhirEtl {
    */
   static List<Pipeline> setupAndBuildPipelines(
       FhirEtlOptions options, AvroConversionUtil avroConversionUtil)
-      throws IOException, SQLException, ViewDefinitionException, ProfileException,
-          BulkExportException {
+      throws IOException, SQLException, ViewDefinitionException, ProfileException {
 
     if (!options.getSinkDbConfigPath().isEmpty()) {
       JdbcResourceWriter.createTables(options);
@@ -468,7 +463,7 @@ public class FhirEtl {
 
   public static void main(String[] args)
       throws IOException, SQLException, ViewDefinitionException, ProfileException,
-          ExecutionException, InterruptedException, BulkExportException {
+          ExecutionException, InterruptedException {
 
     AvroConversionUtil.initializeAvroConverters();
 

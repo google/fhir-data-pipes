@@ -18,12 +18,12 @@ package com.google.fhir.analytics;
 import ca.uhn.fhir.context.FhirVersionEnum;
 import ca.uhn.fhir.rest.api.MethodOutcome;
 import ca.uhn.fhir.rest.client.api.IHttpResponse;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
-import com.google.fhir.analytics.exception.BulkExportException;
 import com.google.fhir.analytics.model.BulkExportHttpResponse;
+import com.google.fhir.analytics.model.BulkExportHttpResponse.BulkExportHttpResponseBuilder;
 import com.google.fhir.analytics.model.BulkExportResponse;
+import com.google.gson.Gson;
 import java.io.IOException;
 import java.io.Reader;
 import java.util.Arrays;
@@ -60,8 +60,7 @@ public class BulkExportApiClient {
    * @param fhirVersionEnum the fhir version of the resources to be exported
    * @return the absolute url via which the status and details of the job can be fetched
    */
-  public String triggerBulkExportJob(List<String> resourceTypes, FhirVersionEnum fhirVersionEnum)
-      throws BulkExportException {
+  public String triggerBulkExportJob(List<String> resourceTypes, FhirVersionEnum fhirVersionEnum) {
     Map<String, List<String>> headers = new HashMap<>();
     headers.put(HttpHeaders.ACCEPT, Arrays.asList("application/fhir+ndjson"));
     headers.put("Prefer", Arrays.asList("respond-async"));
@@ -69,14 +68,14 @@ public class BulkExportApiClient {
         fetchUtil.performServerOperation(
             "export", fetchBulkExportParameters(fhirVersionEnum, resourceTypes), headers);
     if (!isStatusSuccessful(methodOutcome.getResponseStatusCode())) {
-      throw new BulkExportException(
+      throw new RuntimeException(
           String.format(
               "An error occurred while calling the bulk export API, statusCode=%s",
               methodOutcome.getResponseStatusCode()));
     }
     Optional<String> responseLocation = methodOutcome.getFirstResponseHeader("content-location");
     if (responseLocation.isEmpty()) {
-      throw new BulkExportException("The content location for bulk export api is empty");
+      throw new RuntimeException("The content location for bulk export api is empty");
     }
     return responseLocation.get();
   }
@@ -96,20 +95,20 @@ public class BulkExportApiClient {
   public BulkExportHttpResponse fetchBulkExportHttpResponse(String bulkExportStatusUrl)
       throws IOException {
     IHttpResponse httpResponse = fetchUtil.fetchResponseForUrl(bulkExportStatusUrl);
-    BulkExportHttpResponse bulkExportHttpResponse = new BulkExportHttpResponse();
-    bulkExportHttpResponse.setHttpStatus(httpResponse.getStatus());
+    BulkExportHttpResponseBuilder httpResponseBuilder = BulkExportHttpResponse.builder();
+    httpResponseBuilder.httpStatus(httpResponse.getStatus());
     if (httpResponse.getHeaders(EXPIRES) != null && !httpResponse.getHeaders(EXPIRES).isEmpty()) {
       String expiresString = httpResponse.getHeaders(EXPIRES).get(0);
       Date expires = new Date(expiresString);
-      bulkExportHttpResponse.setExpires(expires);
+      httpResponseBuilder.expires(expires);
     }
     if (!CollectionUtils.isEmpty(httpResponse.getHeaders(RETRY_AFTER))) {
       String retryHeaderString = httpResponse.getHeaders(RETRY_AFTER).get(0);
-      bulkExportHttpResponse.setRetryAfter(Integer.valueOf(retryHeaderString));
+      httpResponseBuilder.retryAfter(Integer.valueOf(retryHeaderString));
     }
     if (!CollectionUtils.isEmpty(httpResponse.getHeaders(X_PROGRESS))) {
       String xProgress = httpResponse.getHeaders(X_PROGRESS).get(0);
-      bulkExportHttpResponse.setXProgress(xProgress);
+      httpResponseBuilder.xProgress(xProgress);
     }
 
     String body;
@@ -118,16 +117,15 @@ public class BulkExportApiClient {
     }
 
     if (!Strings.isNullOrEmpty(body)) {
-      ObjectMapper objectMapper = new ObjectMapper();
-      BulkExportResponse bulkExportResponse =
-          objectMapper.readValue(body, BulkExportResponse.class);
-      bulkExportHttpResponse.setBulkExportResponse(bulkExportResponse);
+      Gson gson = new Gson();
+      BulkExportResponse bulkExportResponse = gson.fromJson(body, BulkExportResponse.class);
+      httpResponseBuilder.bulkExportResponse(bulkExportResponse);
     }
-    return bulkExportHttpResponse;
+    return httpResponseBuilder.build();
   }
 
   private IBaseParameters fetchBulkExportParameters(
-      FhirVersionEnum fhirVersionEnum, List<String> resourceTypes) throws BulkExportException {
+      FhirVersionEnum fhirVersionEnum, List<String> resourceTypes) {
     switch (fhirVersionEnum) {
       case R4:
         Parameters r4Parameters = new Parameters();
@@ -143,7 +141,7 @@ public class BulkExportApiClient {
         dstu3Parameters.addParameter(parametersParameterComponent);
         return dstu3Parameters;
       default:
-        throw new BulkExportException(
+        throw new IllegalArgumentException(
             String.format("Fhir Version not supported yet for bulk export : %s", fhirVersionEnum));
     }
   }

@@ -22,10 +22,12 @@ import com.google.fhir.analytics.converter.JsonDateSerializer;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
+import lombok.Builder;
 import lombok.Data;
 
 /** The response body of the bulk export job status */
 @Data
+@Builder
 public class BulkExportResponse {
 
   @JsonSerialize(using = JsonDateSerializer.class)
@@ -45,6 +47,7 @@ public class BulkExportResponse {
   private Map<String, Object> extension;
 
   @Data
+  @Builder
   public static class Output {
 
     private String type;
