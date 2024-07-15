@@ -3,7 +3,7 @@
 The key concepts that underpin the OHS Analytics components are:
 
 1. **ETL Pipelines:** ETL Pipelines and Controller can be configured to
-   continuously transform FHIR data into an analytics friendly FHIR-in-Parquet
+   continuously transform FHIR data into an analytics friendly Parquet on FHIR
    format.
 2. **Deployment approaches**: The pipelines are designed to accommodate various
    deployment approaches in terms of scalability; from a single machine to a
@@ -51,11 +51,12 @@ FHIR Data Pipes is designed to fetch FHIR source data in various forms and APIs:
 FHIR Resources are transformed into a "Parquet on FHIR" format:
 
 * Uses a forked version
-  of [Bunsen library](https://github.com/google/fhir-data-pipes/tree/master/bunsen) (currently supports STU3 and R4 versions of FHIR)
+  of [Bunsen library](https://github.com/google/fhir-data-pipes/tree/master/bunsen) (
+  currently supports STU3 and R4 versions of FHIR)
 * Configurable support for FHIR profiles and extensions
 * (Optional) In-pipeline 'flattening' of FHIR data
   using [ViewDefinition](https://build.fhir.org/ig/FHIR/sql-on-fhir-v2/StructureDefinition-ViewDefinition.html)
-  resources - [read more](predefined_views#viewdefinition-resource)
+  resources - [read more](views#viewdefinition-resource)
 
 ### Loading
 
@@ -77,10 +78,11 @@ full", "incremental", and "merger" pipelines together.
 * The Pipelines Controller is built on top of pipelines and shares many of the
   same settings
 * Using the controller module you can schedule periodic incremental updates or
-  use the [Web Control Panel](../additional#web-control-panel) to start the pipeline
+  use the [Web Control Panel](../additional#web-control-panel) to start the
+  pipeline
   manually
 
-## Deployment approaches
+## Deployment Approaches
 
 There are a number of different deployment approaches - see table below.
 
@@ -96,16 +98,17 @@ requirements, and expertise of the team.
 | Exploratory data science or ML use cases                                         | Use the generated Parquet files which as _"near lossless"_ for enhanced data science workflows           | Can either use the Parquet or custom schema to power dashboards or reports                |
 | Push FHIR data to a central FHIR-store (e.g., for a Shared Health Record system) | Use the Pipelines Controller to push from a FHIR source to a FHIR sink                                   | Management of the intermediate Parquet files created as part of the pipelines             | 
 
-## Query simplification approaches with pre-defined views
-
+## Query Simplification with Flat Views
 
 FHIR Data Pipes provides two approaches for flattening the FHIR resources into
 virtual or materialized views:
 
 1. SQL queries to generate virtual views (outside the pipeline)
+
 2. FHIR [ViewDefinition](https://build.fhir.org/ig/FHIR/sql-on-fhir-v2/StructureDefinition-ViewDefinition.html)
 resources to generate materialized views (within the pipeline)
 
-For more information on both of these approaches, please reference our [Pre-Defined Views](predefined_views.md).
+For more information on both of these approaches, please
+check [Schema and Flat Views](views.md).
 
 

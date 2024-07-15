@@ -2,9 +2,9 @@
 
 !!! tip "Guide Overview"
 
-    * This guide will walk you through how to deploy and run the ETL Pipelines Java JAR
-    * To help with scheduling and managing the ETL Pipeline, a separate Pipeline Controller module is provided (see next guide)
-    * For ease of deployment a set of example Docker Compose configurations that include the Pipeline and Controller has been provided. See the Docker section
+    * This guide will walk you through how to deploy and run the ETL Pipelines Java JAR without the use of the controller
+    * This section is intended for developers and gives an advanced overview of the ETL Pipelines functionality and its configurations
+    * For ease of deployment a set of example Docker Compose configurations that include both the Pipelines and Controller has been provided. See the Docker section
 
 ## Intro to the ETL Pipeline
 
@@ -14,7 +14,7 @@ source (via FHIR API, JDBC or ndjson) to either
 [Apache Parquet files](https://parquet.apache.org) for analysis or another FHIR
 store for data integration. The source code is available in
 the [`pipelines/batch`](https://github.com/google/fhir-data-pipes/tree/master/pipelines/batch)
-directory.
+directory. 
 
 **Input or source options:** There are three options for reading the source FHIR
 data:
@@ -29,7 +29,9 @@ data:
   tested
   with [HAPI FHIR server using PostgreSQL database](https://github.com/hapifhir/hapi-fhir-jpaserver-starter#postgresql-configuration)
   or an [OpenMRS](https://openmrs.org/) instance using MySQL.
-- _ndjson_: Newline Delimited JSON, a file format typically created from the FHIR Bulk Export API. Reading FHIR Data in this format is not currently supported. 
+- _ndjson_: Newline Delimited JSON, a file format typically created from the 
+  FHIR Bulk Export API. Reading FHIR Data in this format is not currently 
+supported. 
 
 **Note**: JDBC support beyond HAPI FHIR and OpenMRS is not currently planned.
 Our long-term approach for a generic high-throughput alternative is to use the
@@ -208,14 +210,16 @@ These examples are set up to work with
 ## Managing and scheduling the Pipeline
 
 The ETL Pipeline is designed as a stand-alone Apache Beam service. The Pipeline
-Controller module provides capabilities to help manage the Pipeline including:
+Controller module provides capabilities to help manage the Pipeline including
 scheduling full versus incremental runs. It also provides
 some [monitoring capabilities](./additional#monitoring-pipelines).
 
 ## How to query the data warehouse
 
 To query Parquet files, load them into a compatible data engine such as Apache
-Spark or use python in a jupyter notebook.
+Spark or use python in a jupyter notebook. 
 
-The [single machine Docker Compose configuration](tutorials/single_machine.md)
-runs the pipeline and loads data into an Apache Spark Thrift server for you.
+The ["Single Machine"](tutorials/single_machine.md) docker compose configuration
+runs the pipeline and loads data into an Apache Spark Thrift Server for you. 
+You can connect to this Thrift Server with a database client of you choice to 
+query the transformed FHIR Data.

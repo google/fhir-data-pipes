@@ -53,7 +53,7 @@ performance.
 
 FHIR Data Pipes transforms FHIR resources to _"near lossless"_ 'Parquet on FHIR'
 representation based on
-the ["Simplified SQL Projection of FHIR Resources"](https://github.com/FHIR/sql-on-fhir/blob/master/sql-on-fhir.md) (
+the ["Simplified SQL Projection of FHIR Resources"](https://github.com/google/fhir-data-pipes/blob/master/doc/schema.md) (
 _'SQL-on-FHIR-v1'_) schema
 
 * The conversion is done using a forked version

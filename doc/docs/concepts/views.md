@@ -1,22 +1,26 @@
-# Pre-Defined Views
+# Schema and Flat Views
 
 ## Overview
 
-The heavily nested nature of FHIR resources requires complex SQL queries that
-can make them difficult to work with for analytics use cases. A common approach to
+The heavily nested nature of FHIR resources and the
+_[Parquet on FHIR schema](https://github.com/google/fhir-data-pipes/blob/master/doc/schema.md)_
+requires complex SQL queries that
+can make them difficult to work with for analytics use cases. A common approach
+to
 address this is to flatten the data into a set of views (virtual or
 materialized) which can then be queried using simpler SQL statements.
 
 FHIR Data Pipes provides two approaches for flattening the FHIR resources into
 virtual or materialized views:
 
-1. SQL queries to generate [virtual views](https://github.com/google/fhir-data-pipes/tree/master/docker/config/views) (outside the pipeline)
-2.
-FHIR [ViewDefinition](https://build.fhir.org/ig/FHIR/sql-on-fhir-v2/StructureDefinition-ViewDefinition.html)
+1. SQL queries to
+   generate [virtual views](https://github.com/google/fhir-data-pipes/tree/master/docker/config/views) (
+   outside the pipeline)
+
+2. FHIR [ViewDefinition](https://build.fhir.org/ig/FHIR/sql-on-fhir-v2/StructureDefinition-ViewDefinition.html)
 resources to generate materialized views (within the pipeline)
 
-For both of these approaches, a set of [**"predefined views”
-**](https://github.com/google/fhir-data-pipes/tree/master/docker/config/views)
+For both of these approaches, a set of [**"predefined views"**](https://github.com/google/fhir-data-pipes/tree/master/docker/config/views)
 for common FHIR resources are provided. These can be modified or extended.
 
 The currently supported list (as of July, 2024) are:
@@ -59,11 +63,62 @@ SELECT O.id AS obs_id, O.subject.PatientId AS patient_id,
         LATERAL VIEW OUTER explode(O.value.codeableConcept.coding) AS OVCC
 ```
 
+## Query Simplification
+
+The following example is taken from a tutorial Jupyter notebook available [here](https://github.com/google/fhir-data-pipes/blob/master/query/queries_large.ipynb).
+
+The following queries count the number of patients that have had an observation 
+with a specific code (HIV viral load), with a value below a certain threshold 
+for the year 2010.
+
+=== "Standalone Query"
+
+    ```sql
+    SELECT COUNT(DISTINCT O.subject.PatientId) AS num_patients
+      FROM Observation AS O LATERAL VIEW explode(code.coding) AS OCC
+      WHERE OCC.code LIKE '856%%'
+        AND OCC.`system` = 'http://loinc.org'
+        AND O.value.quantity.value < 400000
+        AND YEAR(O.effective.dateTime) = 2010;
+    ```
+    The output relation should have a count of 3074 patients:
+    ```
+    +---------------+
+    | num_patients  |
+    +---------------+
+    | 3074          |
+    +---------------+
+    ```
+
+=== "Query with Views"
+    
+    ```sql
+    SELECT COUNT(DISTINCT patient_id) AS num_patients
+      FROM Observation_flat
+      WHERE code LIKE '856%%'
+        AND code_sys = 'http://loinc.org'
+        AND val_quantity < 400000
+        AND YEAR(obs_date) = 2010
+      LIMIT 100;
+    ```
+    The output relation should have a count of 3074 patients:
+    ```
+    +---------------+
+    | num_patients  |
+    +---------------+
+    | 3074          |
+    +---------------+
+    ```
+
+This approach preserves the nested structures and arrays of FHIR resources
+within the `Observation_flat` view. The results of these queries can then be 
+used as arbitrary tables for further data analysis in other tools.
+
 ### ViewDefinition resource
 
 The [SQL-on-FHIR-v2 specification](https://build.fhir.org/ig/FHIR/sql-on-fhir-v2/)
 defines a ViewDefinition resource for defining views. Each column in the view is
-defined using a [FHIRPath expression](https://hl7.org/fhirpath/). 
+defined using a [FHIRPath expression](https://hl7.org/fhirpath/).
 There is also an un-nesting construct and
 support for `constant` and `where` clauses too.
 
@@ -71,8 +126,6 @@ support for `constant` and `where` clauses too.
 
     * A singlular View Definition will not join different resources in any way
     * Each View Definition defines a tabular view of exactly one resource type
-
-
 
 A system (pipeline or library) that implements the “View Layer” of the
 specification provides a View Runner that is able to process these FHIR
@@ -89,7 +142,8 @@ the SQL-on-FHIR-v2 specification:
   transformed Parquet files as the “Data Layer”. _This can be extracted to be a
   stand-alone component if required_
 
-* When enabled as part of the Pipeline configuration, thr "View Runner" will apply the
+* When enabled as part of the Pipeline configuration, thr "View Runner" will
+  apply the
   ViewDefinition resources from
   the [views folder](https://github.com/google/fhir-data-pipes/tree/master/docker/config/views)
   and materialize the resulting tables to the configured database (an
@@ -104,12 +158,16 @@ the SQL-on-FHIR-v2 specification:
 Once the FHIR data has been transformed via the ETL Pipelines, the resulting
 schema is available for querying using a JDBC interface.
 
-Visit our [interactive playground](https://fhir.github.io/sql-on-fhir-v2/#pg) to get a hands-on understanding of the Patient ViewDefinition resource, and many more
+Visit our [interactive playground](https://fhir.github.io/sql-on-fhir-v2/#pg) to
+get a hands-on understanding of the Patient ViewDefinition resource, and many
+more
 
 ### ViewDefinition editor
 
 The ViewDefinition editor provides a way to quickly evaluate ViewDefinition
-resources against sample FHIR data. You access it as part of the [Web Control Panel](../additional#web-control-panel), selecting the "Views" navigation item in the top right corner.
+resources against sample FHIR data. You access it as part of
+the [Web Control Panel](../additional#web-control-panel), selecting the "Views"
+navigation item in the top right corner.
 
 Using the ViewDefinition editor you can:
 
@@ -123,7 +181,8 @@ Using the ViewDefinition editor you can:
 
 ### Conversion to PostgreSQL
 
-To be continued...
+To be continued... 
+
 
 ### Conversion to Parquet
 

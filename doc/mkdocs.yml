@@ -49,18 +49,17 @@ nav:
   - Home: 'index.md'
   - Concepts:
     - concepts/concepts.md
-    - 'Pre-Defined Views' : 'concepts/predefined_views.md'
+    - 'Schema and Flat Views' : 'concepts/views.md'
   - Getting Started: 
     - getting_started.md
-    - 'Docker containers' : 'installation_docker.md'
-    - 'Deploy the "Pipelines"' : 'installation_pipeline.md'
+    - 'Docker Containers' : 'installation_docker.md'
     - 'Deploy the "Controller Module"' : 'installation_controller.md'
+    - 'Deploy the "Pipelines"' : 'installation_pipeline.md'
   - Tutorials:
     - tutorials/index.md
     - Set up local test servers : tutorials/test_servers.md
     - Single Machine Deployment:  tutorials/single_machine.md
     - Visualize Parquet DWH with Apache Superset: tutorials/add_dashboard.md
-    - PostgreSQL DWH using custom schema: tutorials/postgres_example.md
   - Additional Topics: 'additional.md'
   - Community:
     - 'Support' : 'support.md'
