@@ -28,13 +28,9 @@ import com.google.fhir.analytics.model.DatabaseConfiguration;
 import com.google.fhir.analytics.view.ViewDefinitionException;
 import java.io.IOException;
 import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.*;
 import java.util.stream.Collectors;
 import javax.sql.DataSource;
 import org.apache.avro.generic.GenericRecord;
@@ -330,6 +326,9 @@ public class FhirEtl {
 
       totalNumOfResources += numResources;
       foundResource = true;
+
+      DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyyMMddHHmmssSSS");
+      options.setJobName(resourceType + LocalDateTime.now().format(formatter));
       Pipeline pipeline = Pipeline.create(options);
       PCollection<QueryParameterDescriptor> queryParameters =
           pipeline.apply(

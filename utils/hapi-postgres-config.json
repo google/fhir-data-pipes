@@ -1,9 +1,9 @@
 {
   "jdbcDriverClass" : "org.postgresql.Driver",
   "databaseService" : "postgresql",
-  "databaseHostName" : "hapi-fhir-db",
+  "databaseHostName" : "127.0.0.1",
   "databasePort" : "5432",
-  "databaseUser" : "admin",
-  "databasePassword" : "admin",
-  "databaseName" : "hapi"
+  "databaseUser" : "postgres",
+  "databasePassword" : "C%_/\\Rn-=fI5f$}7",
+  "databaseName" : "patients_79370"
 }

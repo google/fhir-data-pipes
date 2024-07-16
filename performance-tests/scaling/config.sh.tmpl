@@ -1,0 +1,31 @@
+# 79,768,7885,79370,791562
+export MULTIPLE_PATIENTS="79 768 7885"
+export MULTIPLE_JDBC_MODE="true false"
+# DirectRunner, FlinkRunner or DataflowRunner
+export MULTIPLE_FHIR_ETL_RUNNER="FlinkRunner DataflowRunner"
+export MUTLIPLE_FHIR_SERVER_URL="http://localhost:8080/fhir"
+# The number of resources to fetch in each API call.
+export MULTIPLE_BATCH_SIZE="100 300 1000 3000 10000"
+# FlinkRunner parallelization
+export MULTIPLE_FLINK_PARALLEL=150
+# DataflowRunner workers
+export MULTIPLE_DATAFLOW_WORKERS=65
+
+#export PATIENTS=7885
+#export JDBC_MODE=false
+#export FHIR_ETL_RUNNER=DataflowRunner
+
+# alloy or postgres
+export DB_TYPE=postgres
+export RUNNING_ON_HAPI_VM=false
+export FHIR_UPLOADER_CORES=8
+export ENABLE_UPLOAD=false
+export ENABLE_DOWNLOAD=true
+export ENABLE_SETUP_GOOGLE3=true
+
+# pipeline-scaling-1, pipeline-scaling-2, pipeline-scaling-belgium
+export POSTGRES_DB_INSTANCE="pipeline-scaling-2"
+export PROJECT_ID="fhir-analytics-test"
+
+export FHIR_SERVER_URL="http://localhost:8080/fhir"
+export VM_INSTANCE="Name of your FHIR VM instance"
