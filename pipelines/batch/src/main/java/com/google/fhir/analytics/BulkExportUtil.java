@@ -62,24 +62,24 @@ public class BulkExportUtil {
         bulkExportApiClient.triggerBulkExportJob(resourceTypes, fhirVersionEnum);
     logger.info("Bulk Export has been started, contentLocationUrl={}", contentLocationUrl);
     BulkExportResponse bulkExportResponse = pollBulkExportJob(contentLocationUrl);
-    if (!CollectionUtils.isEmpty(bulkExportResponse.getError())) {
-      logger.error("Error occurred during bulk export, error={}", bulkExportResponse.getError());
-      throw new RuntimeException("Error occurred during bulk export, please check logs");
+    if (!CollectionUtils.isEmpty(bulkExportResponse.error())) {
+      logger.error("Error occurred during bulk export, error={}", bulkExportResponse.error());
+      throw new IllegalStateException("Error occurred during bulk export, please check logs");
     }
 
-    if (CollectionUtils.isEmpty(bulkExportResponse.getOutput())
-        && CollectionUtils.isEmpty(bulkExportResponse.getDeleted())) {
+    if (CollectionUtils.isEmpty(bulkExportResponse.output())
+        && CollectionUtils.isEmpty(bulkExportResponse.deleted())) {
       logger.warn("No resources found to be exported!");
       return Maps.newHashMap();
     }
-    if (!CollectionUtils.isEmpty(bulkExportResponse.getDeleted())) {
+    if (!CollectionUtils.isEmpty(bulkExportResponse.deleted())) {
       // TODO : Delete the FHIR resources
     }
-    if (!CollectionUtils.isEmpty(bulkExportResponse.getOutput())) {
-      return bulkExportResponse.getOutput().stream()
+    if (!CollectionUtils.isEmpty(bulkExportResponse.output())) {
+      return bulkExportResponse.output().stream()
           .collect(
               Collectors.groupingBy(
-                  Output::getType, Collectors.mapping(Output::getUrl, Collectors.toList())));
+                  Output::type, Collectors.mapping(Output::url, Collectors.toList())));
     }
     return Maps.newHashMap();
   }
@@ -93,14 +93,14 @@ public class BulkExportUtil {
     while (true) {
       BulkExportHttpResponse bulkExportHttpResponse =
           bulkExportApiClient.fetchBulkExportHttpResponse(bulkExportStatusUrl);
-      if (bulkExportHttpResponse.getHttpStatus() == HttpStatus.SC_OK) {
+      if (bulkExportHttpResponse.httpStatus() == HttpStatus.SC_OK) {
         logger.info("Bulk Export job is complete");
-        return bulkExportHttpResponse.getBulkExportResponse();
-      } else if (bulkExportHttpResponse.getHttpStatus() == HttpStatus.SC_ACCEPTED
-          || bulkExportHttpResponse.getHttpStatus() == 429) { // Server is busy
+        return bulkExportHttpResponse.bulkExportResponse();
+      } else if (bulkExportHttpResponse.httpStatus() == HttpStatus.SC_ACCEPTED
+          || bulkExportHttpResponse.httpStatus() == 429) { // Server is busy
         int retryAfterInMillis =
-            bulkExportHttpResponse.getRetryAfter() > 0
-                ? bulkExportHttpResponse.getRetryAfter() * 1000
+            bulkExportHttpResponse.retryAfter() > 0
+                ? bulkExportHttpResponse.retryAfter() * 1000
                 : 60000;
         logger.info(
             "Export job is still in progress, will check again in {} secs",
@@ -118,9 +118,9 @@ public class BulkExportUtil {
       } else {
         logger.error(
             "Error while checking the status of the bulk export job, httpStatus={}, response={}",
-            bulkExportHttpResponse.getHttpStatus(),
+            bulkExportHttpResponse.httpStatus(),
             bulkExportHttpResponse);
-        throw new RuntimeException(
+        throw new IllegalStateException(
             "Error while checking the status of the bulk export job, please check logs for more"
                 + " details");
       }

@@ -17,17 +17,14 @@ package com.google.fhir.analytics.model;
 
 import java.util.Date;
 import lombok.Builder;
-import lombok.Data;
 import org.hl7.fhir.instance.model.api.IBaseOperationOutcome;
 
 /** Model class for holding the details of the bulk export job output */
-@Data
 @Builder
-public class BulkExportHttpResponse {
-  private int httpStatus;
-  private int retryAfter;
-  private String xProgress;
-  private Date expires;
-  private BulkExportResponse bulkExportResponse;
-  private IBaseOperationOutcome operationOutcome;
-}
+public record BulkExportHttpResponse(
+    int httpStatus,
+    int retryAfter,
+    String xProgress,
+    Date expires,
+    BulkExportResponse bulkExportResponse,
+    IBaseOperationOutcome operationOutcome) {}

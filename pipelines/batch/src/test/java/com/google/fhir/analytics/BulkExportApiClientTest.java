@@ -81,7 +81,7 @@ public class BulkExportApiClientTest {
     Mockito.verify(fetchUtil, times(1)).performServerOperation(any(), any(), any());
   }
 
-  @Test(expected = RuntimeException.class)
+  @Test(expected = IllegalStateException.class)
   public void testTriggerBulkExportJobError() {
     List<String> resourceTypes = Arrays.asList("Patient,Observation,Encounter");
     MethodOutcome methodOutcome = new MethodOutcome();
@@ -108,13 +108,13 @@ public class BulkExportApiClientTest {
     BulkExportHttpResponse bulkExportHttpResponse =
         bulkExportApiClient.fetchBulkExportHttpResponse(mockLocationUrl);
 
-    assertThat(bulkExportHttpResponse.getHttpStatus(), equalTo(HttpStatus.SC_OK));
-    assertThat(bulkExportHttpResponse.getRetryAfter(), equalTo(120));
+    assertThat(bulkExportHttpResponse.httpStatus(), equalTo(HttpStatus.SC_OK));
+    assertThat(bulkExportHttpResponse.retryAfter(), equalTo(120));
     assertThat(
-        bulkExportHttpResponse.getExpires(), equalTo(new Date("Mon, 22 Jul 2019 23:59:59 GMT")));
+        bulkExportHttpResponse.expires(), equalTo(new Date("Mon, 22 Jul 2019 23:59:59 GMT")));
     Gson gson = new Gson();
     assertThat(
-        bulkExportHttpResponse.getBulkExportResponse(),
+        bulkExportHttpResponse.bulkExportResponse(),
         equalTo(gson.fromJson(bulkResponseString, BulkExportResponse.class)));
   }
 }

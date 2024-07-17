@@ -15,43 +15,24 @@
  */
 package com.google.fhir.analytics.model;
 
-import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
-import com.fasterxml.jackson.databind.annotation.JsonSerialize;
-import com.google.fhir.analytics.converter.JsonDateDeserializer;
-import com.google.fhir.analytics.converter.JsonDateSerializer;
+import com.google.fhir.analytics.converter.JsonDateCodec;
+import com.google.gson.annotations.JsonAdapter;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import lombok.Builder;
-import lombok.Data;
 
 /** The response body of the bulk export job status */
-@Data
 @Builder
-public class BulkExportResponse {
+public record BulkExportResponse(
+    @JsonAdapter(JsonDateCodec.class) Date transactionTime,
+    String request,
+    boolean requiresAccessToken,
+    List<Output> output,
+    List<Output> deleted,
+    List<Output> error,
+    Map<String, Object> extension) {
 
-  @JsonSerialize(using = JsonDateSerializer.class)
-  @JsonDeserialize(using = JsonDateDeserializer.class)
-  private Date transactionTime;
-
-  private String request;
-
-  private boolean requiresAccessToken;
-
-  private List<Output> output;
-
-  private List<Output> deleted;
-
-  private List<Output> error;
-
-  private Map<String, Object> extension;
-
-  @Data
   @Builder
-  public static class Output {
-
-    private String type;
-
-    private String url;
-  }
+  public record Output(String type, String url) {}
 }

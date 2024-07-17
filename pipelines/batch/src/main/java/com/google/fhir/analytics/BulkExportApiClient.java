@@ -68,14 +68,14 @@ public class BulkExportApiClient {
         fetchUtil.performServerOperation(
             "export", fetchBulkExportParameters(fhirVersionEnum, resourceTypes), headers);
     if (!isStatusSuccessful(methodOutcome.getResponseStatusCode())) {
-      throw new RuntimeException(
+      throw new IllegalStateException(
           String.format(
               "An error occurred while calling the bulk export API, statusCode=%s",
               methodOutcome.getResponseStatusCode()));
     }
     Optional<String> responseLocation = methodOutcome.getFirstResponseHeader("content-location");
     if (responseLocation.isEmpty()) {
-      throw new RuntimeException("The content location for bulk export api is empty");
+      throw new IllegalStateException("The content location for bulk export api is empty");
     }
     return responseLocation.get();
   }
