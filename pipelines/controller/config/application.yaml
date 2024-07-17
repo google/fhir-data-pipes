@@ -51,9 +51,10 @@ fhirdata:
   # ./config/controller_DWH_ORIG_TIMESTAMP_2023-01-27T23-55-39.295824Z
   # Similar to the pipeline `outputParquetPath` parameter.
   #
-  # For GCS buckets, dwhRootPrefix must be of the format
-  # "gs://<bucket>/<baseDirPath>/<prefix>". <baseDirPath> is optional
-  # for GCS buckets and may contain 0 or more directory names.
+  # For GCS and S3 buckets, dwhRootPrefix must be of the format
+  # "scheme://<bucket>/<baseDirPath>/<prefix>" where `scheme` is either `gs`
+  # or `s3`. <baseDirPath> is optional for cloud buckets and may contain 0 or
+  # more directory names.
   #
   # For *nix file systems, dwhRootPrefix must be of the format
   # "/<baseDirPath>/<prefix>" and can be absolute or relative. <baseDirPath>
