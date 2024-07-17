@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2023 Google LLC
+ * Copyright 2020-2024 Google LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,12 +16,20 @@
 package com.google.fhir.analytics;
 
 import ca.uhn.fhir.context.FhirContext;
+import ca.uhn.fhir.rest.api.EncodingEnum;
+import ca.uhn.fhir.rest.api.MethodOutcome;
+import ca.uhn.fhir.rest.api.RequestTypeEnum;
 import ca.uhn.fhir.rest.client.api.IClientInterceptor;
 import ca.uhn.fhir.rest.client.api.IGenericClient;
+import ca.uhn.fhir.rest.client.api.IHttpClient;
 import ca.uhn.fhir.rest.client.api.IHttpRequest;
+import ca.uhn.fhir.rest.client.api.IHttpResponse;
+import ca.uhn.fhir.rest.client.api.UrlSourceEnum;
 import ca.uhn.fhir.rest.client.interceptor.BasicAuthInterceptor;
 import ca.uhn.fhir.rest.client.interceptor.BearerTokenAuthInterceptor;
 import ca.uhn.fhir.rest.client.interceptor.LoggingInterceptor;
+import ca.uhn.fhir.rest.gclient.IOperationUntyped;
+import ca.uhn.fhir.rest.gclient.IOperationUntypedWithInput;
 import com.google.api.client.auth.oauth2.ClientCredentialsTokenRequest;
 import com.google.api.client.auth.oauth2.TokenResponse;
 import com.google.api.client.http.BasicAuthentication;
@@ -32,6 +40,9 @@ import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import java.io.IOException;
 import java.time.Instant;
+import java.util.List;
+import java.util.Map;
+import org.hl7.fhir.instance.model.api.IBaseParameters;
 import org.hl7.fhir.instance.model.api.IBaseResource;
 import org.hl7.fhir.r4.model.Resource;
 import org.slf4j.Logger;
@@ -83,8 +94,8 @@ public class FetchUtil {
       authInterceptor =
           new ClientCredentialsAuthInterceptor(
               oAuthTokenEndpoint, oAuthClientId, oAuthClientSecret);
-    } else if (!sourceUser.isEmpty()) {
-      authInterceptor = new BasicAuthInterceptor(sourceUser, sourcePw);
+    } else if (!this.sourceUser.isEmpty()) {
+      authInterceptor = new BasicAuthInterceptor(this.sourceUser, sourcePw);
     } else {
       authInterceptor = null;
     }
@@ -113,6 +124,77 @@ public class FetchUtil {
     return fetchFhirResource(resourceType, resourceId);
   }
 
+  // Fetch the response for the given FHIR URL
+  public IHttpResponse fetchResponseForUrl(String fhirUrl) throws IOException {
+    IHttpRequest httpRequest =
+        getHttpClient(fhirUrl).createGetRequest(fhirContext, EncodingEnum.JSON);
+    httpRequest.setUri(fhirUrl);
+    httpRequest.setUrlSource(UrlSourceEnum.EXPLICIT);
+    return httpRequest.execute();
+  }
+
+  /**
+   * Executes the given extended operation on the FHIR server
+   *
+   * @param operationName the name of the operation to be performed
+   * @param parameters the parameters to be used as input for the operation
+   * @param headers the headers to be used
+   * @return the outcome of the operation performed
+   */
+  public MethodOutcome performServerOperation(
+      String operationName, IBaseParameters parameters, Map<String, List<String>> headers) {
+    Preconditions.checkState(!Strings.isNullOrEmpty(operationName), "operationName cannot be null");
+    // Create client
+    IGenericClient client = getSourceClient();
+    IOperationUntyped operationUntyped = client.operation().onServer().named(operationName);
+
+    IOperationUntypedWithInput operationUntypedWithInput;
+    if (parameters != null) {
+      Preconditions.checkState(
+          parameters.getStructureFhirVersionEnum().equals(fhirContext.getVersion().getVersion()),
+          "The fhir version for the parameters and the fhirContext should match");
+      operationUntypedWithInput = operationUntyped.withParameters(parameters);
+    } else {
+      operationUntypedWithInput = operationUntyped.withNoParameters(getParameterType());
+    }
+    updateHeaders(operationUntypedWithInput, headers);
+    return (MethodOutcome) operationUntypedWithInput.returnMethodOutcome().execute();
+  }
+
+  private void updateHeaders(
+      IOperationUntypedWithInput operationUntypedWithInput, Map<String, List<String>> headers) {
+    if (headers != null && !headers.isEmpty()) {
+      for (String headerName : headers.keySet()) {
+        List<String> headerValues = headers.get(headerName);
+        if (headerValues != null && !headerValues.isEmpty()) {
+          headerValues.forEach(
+              headerValue -> {
+                operationUntypedWithInput.withAdditionalHeader(headerName, headerValue);
+              });
+        }
+      }
+    }
+  }
+
+  private Class<? extends IBaseParameters> getParameterType() {
+    switch (fhirContext.getVersion().getVersion()) {
+      case DSTU2:
+      case DSTU2_HL7ORG:
+        return org.hl7.fhir.dstu2.model.Parameters.class;
+      case DSTU3:
+        return org.hl7.fhir.dstu3.model.Parameters.class;
+      case R4:
+        return org.hl7.fhir.r4.model.Parameters.class;
+      case R4B:
+        return org.hl7.fhir.r4b.model.Parameters.class;
+      case R5:
+        return org.hl7.fhir.r5.model.Parameters.class;
+      default:
+        throw new IllegalStateException(
+            "Unexpected value: " + fhirContext.getVersion().getVersion());
+    }
+  }
+
   public IGenericClient getSourceClient() {
     return getSourceClient(false);
   }
@@ -134,6 +216,18 @@ public class FetchUtil {
     }
 
     return client;
+  }
+
+  /**
+   * Returns the HTTP client instance to make a GET call for the complete FHIR url
+   *
+   * @param fhirUrl The complete FHIR url to which the http request will be sent
+   * @return the HTTP client instance
+   */
+  public IHttpClient getHttpClient(String fhirUrl) {
+    return fhirContext
+        .getRestfulClientFactory()
+        .getHttpClient(new StringBuilder(fhirUrl), null, null, RequestTypeEnum.GET, null);
   }
 
   public String getSourceFhirUrl() {

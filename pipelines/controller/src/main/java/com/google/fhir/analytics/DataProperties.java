@@ -66,6 +66,8 @@ public class DataProperties {
     Default.String.class, Default.Integer.class, Default.Boolean.class, Default.Long.class
   };
 
+  private FhirFetchMode fhirFetchMode;
+
   private String fhirServerUrl;
 
   private String dbConfig;
@@ -121,22 +123,18 @@ public class DataProperties {
   @PostConstruct
   void validateProperties() {
     CronExpression.parse(incrementalSchedule);
-
+    Preconditions.checkState(
+        FhirFetchMode.FHIR_SEARCH.equals(fhirFetchMode)
+            || FhirFetchMode.BULK_EXPORT.equals(fhirFetchMode)
+            || FhirFetchMode.HAPI_JDBC.equals(fhirFetchMode)
+            || FhirFetchMode.OPENMRS_JDBC.equals(fhirFetchMode),
+        "fhirFetchMode should be one of FHIR_SEARCH || BULK_EXPORT || HAPI_JDBC || OPENMRS_JDBC for"
+            + " the controller application");
     Preconditions.checkArgument(
         !Strings.isNullOrEmpty(fhirServerUrl) || !Strings.isNullOrEmpty(dbConfig),
         "At least one of fhirServerUrl or dbConfig should be set!");
-    Preconditions.checkState(fhirVersion != null, "FhirVersion cannot be empty");
 
-    if (!Strings.isNullOrEmpty(dbConfig)) {
-      if (!Strings.isNullOrEmpty(fhirServerUrl)) {
-        logger.warn("Both fhirServerUrl and dbConfig are set; ignoring fhirServerUrl!");
-      }
-      logger.info("Using JDBC mode since dbConfig is set.");
-    } else {
-      // This should always be true because of the first Precondition.
-      Preconditions.checkArgument(!Strings.isNullOrEmpty(fhirServerUrl));
-      logger.info("Using FHIR-search mode since dbConfig is not set.");
-    }
+    Preconditions.checkState(fhirVersion != null, "FhirVersion cannot be empty");
     Preconditions.checkState(!createHiveResourceTables || !thriftserverHiveConfig.isEmpty());
   }
 
@@ -162,6 +160,7 @@ public class DataProperties {
         viewDefinitionsDir,
         sinkDbConfigPath,
         dwhRoot);
+    options.setFhirFetchMode(FhirFetchMode.PARQUET);
     options.setParquetInputDwhRoot(dwhRoot);
     options.setViewDefinitionsDir(viewDefinitionsDir);
     options.setSinkDbConfigPath(sinkDbConfigPath);
@@ -176,6 +175,7 @@ public class DataProperties {
 
   PipelineConfig createBatchOptions() {
     FhirEtlOptions options = PipelineOptionsFactory.as(FhirEtlOptions.class);
+    options.setFhirFetchMode(fhirFetchMode);
     logger.info("Converting options for fhirServerUrl {} and dbConfig {}", fhirServerUrl, dbConfig);
     if (!Strings.isNullOrEmpty(dbConfig)) {
       // TODO add OpenMRS support too; it should be easy but we want to make it explicit, such that
@@ -228,6 +228,8 @@ public class DataProperties {
   List<ConfigFields> getConfigParams() {
     // TODO automate generation of this list.
     return List.of(
+        new ConfigFields(
+            "fhirdata.fhirFetchMode", fhirFetchMode != null ? fhirFetchMode.name() : "", "", ""),
         new ConfigFields("fhirdata.fhirServerUrl", fhirServerUrl, "", ""),
         new ConfigFields("fhirdata.dwhRootPrefix", dwhRootPrefix, "", ""),
         new ConfigFields("fhirdata.incrementalSchedule", incrementalSchedule, "", ""),
