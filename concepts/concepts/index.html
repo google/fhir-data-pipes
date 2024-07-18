@@ -8,13 +8,13 @@
       
       
       
-        <link rel="canonical" href="https://example.com/analytics/tutorials/postgres_example/">
+        <link rel="canonical" href="https://example.com/analytics/concepts/concepts/">
       
       
-        <link rel="prev" href="../add_dashboard/">
+        <link rel="prev" href="../..">
       
       
-        <link rel="next" href="../../additional/">
+        <link rel="next" href="../views/">
       
       
       <link rel="icon" href="../../assets/images/favicon.png">
@@ -22,7 +22,7 @@
     
     
       
-        <title>PostgreSQL DWH using custom schema - OHS Analytics Documentation</title>
+        <title>OHS Analytics Concepts - OHS Analytics Documentation</title>
       
     
     
@@ -74,7 +74,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#postgresql-dwh-using-custom-schema" class="md-skip">
+        <a href="#ohs-analytics-concepts" class="md-skip">
           Skip to content
         </a>
       
@@ -110,7 +110,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              PostgreSQL DWH using custom schema
+              OHS Analytics Concepts
             
           </span>
         </div>
@@ -272,18 +272,202 @@
       
   
   
+    
   
   
-    <li class="md-nav__item">
-      <a href="../../concepts/" class="md-nav__link">
+  
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+      
         
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
+            
   
   <span class="md-ellipsis">
     Concepts
   </span>
   
 
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            Concepts
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  <span class="md-ellipsis">
+    OHS Analytics Concepts
+  </span>
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  <span class="md-ellipsis">
+    OHS Analytics Concepts
+  </span>
+  
+
       </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#fhir-data-pipes" class="md-nav__link">
+    <span class="md-ellipsis">
+      FHIR Data Pipes
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#etl-pipelines" class="md-nav__link">
+    <span class="md-ellipsis">
+      ETL Pipelines
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="ETL Pipelines">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#extraction" class="md-nav__link">
+    <span class="md-ellipsis">
+      Extraction
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#transformation" class="md-nav__link">
+    <span class="md-ellipsis">
+      Transformation
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#loading" class="md-nav__link">
+    <span class="md-ellipsis">
+      Loading
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#pipeline-controller-module" class="md-nav__link">
+    <span class="md-ellipsis">
+      Pipeline Controller Module
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#deployment-approaches" class="md-nav__link">
+    <span class="md-ellipsis">
+      Deployment Approaches
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#query-simplification-with-flat-views" class="md-nav__link">
+    <span class="md-ellipsis">
+      Query Simplification with Flat Views
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../views/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Schema and Flat Views
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
     </li>
   
 
@@ -355,28 +539,7 @@
         
   
   <span class="md-ellipsis">
-    Docker containers
-  </span>
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../installation_pipeline/" class="md-nav__link">
-        
-  
-  <span class="md-ellipsis">
-    Deploy the "Pipelines"
+    Docker Containers
   </span>
   
 
@@ -407,6 +570,27 @@
 
               
             
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../installation_pipeline/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Deploy the "Pipelines"
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
           </ul>
         </nav>
       
@@ -418,19 +602,17 @@
       
   
   
-    
   
   
-  
     
     
     
     
-    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--nested">
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" checked>
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" >
         
           
           <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="0">
@@ -444,7 +626,7 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="true">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
           <label class="md-nav__title" for="__nav_4">
             <span class="md-nav__icon md-icon"></span>
             Tutorials
@@ -458,7 +640,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../" class="md-nav__link">
+      <a href="../../tutorials/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -479,7 +661,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../test_servers/" class="md-nav__link">
+      <a href="../../tutorials/test_servers/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -500,7 +682,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../single_machine/" class="md-nav__link">
+      <a href="../../tutorials/single_machine/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -521,7 +703,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../add_dashboard/" class="md-nav__link">
+      <a href="../../tutorials/add_dashboard/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -530,121 +712,6 @@
   
 
       </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-    
-  
-  
-  
-    <li class="md-nav__item md-nav__item--active">
-      
-      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
-      
-      
-        
-      
-      
-        <label class="md-nav__link md-nav__link--active" for="__toc">
-          
-  
-  <span class="md-ellipsis">
-    PostgreSQL DWH using custom schema
-  </span>
-  
-
-          <span class="md-nav__icon md-icon"></span>
-        </label>
-      
-      <a href="./" class="md-nav__link md-nav__link--active">
-        
-  
-  <span class="md-ellipsis">
-    PostgreSQL DWH using custom schema
-  </span>
-  
-
-      </a>
-      
-        
-
-<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
-  
-  
-  
-    
-  
-  
-    <label class="md-nav__title" for="__toc">
-      <span class="md-nav__icon md-icon"></span>
-      Table of contents
-    </label>
-    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#overview" class="md-nav__link">
-    <span class="md-ellipsis">
-      Overview
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#configure-the-fhir-pipelines-controller" class="md-nav__link">
-    <span class="md-ellipsis">
-      Configure the FHIR Pipelines Controller
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#set-the-sinkdbconfigpath" class="md-nav__link">
-    <span class="md-ellipsis">
-      Set the sinkDbConfigPath
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#run-the-single-machine-configuration" class="md-nav__link">
-    <span class="md-ellipsis">
-      Run the Single Machine configuration
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#explore-the-resulting-schema-in-postgresql" class="md-nav__link">
-    <span class="md-ellipsis">
-      Explore the resulting schema in PostgreSQL
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#querying-the-database" class="md-nav__link">
-    <span class="md-ellipsis">
-      Querying the database
-    </span>
-  </a>
-  
-</li>
-      
-    </ul>
-  
-</nav>
-      
     </li>
   
 
@@ -809,54 +876,78 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#overview" class="md-nav__link">
+  <a href="#fhir-data-pipes" class="md-nav__link">
     <span class="md-ellipsis">
-      Overview
+      FHIR Data Pipes
     </span>
   </a>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#configure-the-fhir-pipelines-controller" class="md-nav__link">
+  <a href="#etl-pipelines" class="md-nav__link">
     <span class="md-ellipsis">
-      Configure the FHIR Pipelines Controller
+      ETL Pipelines
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="ETL Pipelines">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#extraction" class="md-nav__link">
+    <span class="md-ellipsis">
+      Extraction
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#transformation" class="md-nav__link">
+    <span class="md-ellipsis">
+      Transformation
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#loading" class="md-nav__link">
+    <span class="md-ellipsis">
+      Loading
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#pipeline-controller-module" class="md-nav__link">
+    <span class="md-ellipsis">
+      Pipeline Controller Module
     </span>
   </a>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#set-the-sinkdbconfigpath" class="md-nav__link">
+  <a href="#deployment-approaches" class="md-nav__link">
     <span class="md-ellipsis">
-      Set the sinkDbConfigPath
+      Deployment Approaches
     </span>
   </a>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#run-the-single-machine-configuration" class="md-nav__link">
+  <a href="#query-simplification-with-flat-views" class="md-nav__link">
     <span class="md-ellipsis">
-      Run the Single Machine configuration
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#explore-the-resulting-schema-in-postgresql" class="md-nav__link">
-    <span class="md-ellipsis">
-      Explore the resulting schema in PostgreSQL
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#querying-the-database" class="md-nav__link">
-    <span class="md-ellipsis">
-      Querying the database
+      Query Simplification with Flat Views
     </span>
   </a>
   
@@ -880,166 +971,134 @@
   
 
 
-<h1 id="postgresql-dwh-using-custom-schema">PostgreSQL DWH using custom schema</h1>
-<h2 id="overview">Overview</h2>
-<p>In this tutorial you will learn how to configure and deploy FHIR Data Pipes to transform FHIR data into a PostgreSQL data-warehouse using FHIR ViewDefinition resources to define the custom schema.</p>
-<div class="admonition tip">
-<p class="admonition-title">Requirements</p>
-<ul>
-<li>A source <a href="https://hapifhir.io/">HAPI FHIR server</a> configured to <a href="https://github.com/hapifhir/hapi-fhir-jpaserver-starter#postgresql-configuration">use Postgres as its database</a>.</li>
-<li>If you don't have a server, use a <a href="https://github.com/google/fhir-data-pipes/wiki/Try-the-pipelines-using-local-test-servers">local test server</a> by following the instructions to bring up a source HAPI FHIR server with Postgres</li>
-<li><a href="https://www.docker.com/">Docker</a>: If you are using Linux, Docker must be in <a href="https://docs.docker.com/engine/install/linux-postinstall/">sudoless mode</a></li>
-<li><a href="https://docs.docker.com/compose/">Docker Compose</a>. This guide assumes you are using the latest version </li>
-<li>The <a href="github.com/google/fhir-data-pipes">FHIR Data Pipes repository</a>, cloned onto the host machine</li>
-</ul>
-</div>
-<h2 id="configure-the-fhir-pipelines-controller">Configure the FHIR Pipelines Controller</h2>
-<p>Note: All file paths are relative to the root of the FHIR Data Pipes repository.</p>
-<p><strong>NOTE: You need to configure only one of the following options:</strong></p>
+<h1 id="ohs-analytics-concepts">OHS Analytics Concepts</h1>
+<p>The key concepts that underpin the OHS Analytics components are:</p>
 <ol>
-<li>For FHIR Search API (works for any FHIR server): </li>
-<li>Open <a href="https://github.com/google/fhir-data-pipes/blob/master/docker/config/application.yaml"><code>docker/config/application.yaml</code></a> and edit the value of <code>fhirServerUrl</code> to match the FHIR server you are connecting to. </li>
-<li>
-<p>Comment out the <code>dbConfig</code> in this case.</p>
-</li>
-<li>
-<p>For direct DB access (specific to HAPI FHIR servers):</p>
-</li>
-<li>Comment out <code>fhirServerUrl</code></li>
-<li>Set <code>dbConfig</code> to the DB connection config file, e.g., <a href="https://github.com/google/fhir-data-pipes/blob/master/docker/config/hapi-postgres-config_local.json"><code>docker/config/hapi-postgres-config_local.json</code></a>; </li>
-<li>Edit the values in this file to match the database for the FHIR server you are connecting to.</li>
+<li><strong>ETL Pipelines:</strong> ETL Pipelines and Controller can be configured to
+   continuously transform FHIR data into an analytics friendly Parquet on FHIR
+   format.</li>
+<li><strong>Deployment approaches</strong>: The pipelines are designed to accommodate various
+   deployment approaches in terms of scalability; from a single machine to a
+   distributed cluster environments.</li>
+<li><strong>Query simplification approaches:</strong> Once the data is transformed into an
+   analytics-friendly format, it should be queried. Multiple approaches are
+   provided and/or showcased to flatten FHIR schema to make developing analytics
+   solutions easier.</li>
 </ol>
-<h2 id="set-the-sinkdbconfigpath">Set the sinkDbConfigPath</h2>
-<p>The sinkDb refers to the target database that will become the data warehouse.</p>
-<p>With the default config, you will create both Parquet files (under <code>dwhRootPrefix</code>) and flattened views in the database configured by <code>sinkDbConfigPath</code> <a href="https://github.com/google/fhir-data-pipes/blob/27d691e91d0fe6ef4c9624acba4e68bca145c973/docker/config/application.yaml#L42">here</a>. </p>
-<p>Make sure to create the database referenced in the connection config file (default is a postgreSQL db named 'views'). You can do this with the following SQL query:</p>
-<p><div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="k">CREATE</span><span class="w"> </span><span class="k">DATABASE</span><span class="w"> </span><span class="n">views</span><span class="p">;</span>
-</code></pre></div>
-which you can run in Postgres like this:
-<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="nv">PGPASSWORD</span><span class="o">=</span>admin<span class="w"> </span>psql<span class="w"> </span>-h<span class="w"> </span><span class="m">127</span>.0.0.1<span class="w"> </span>-p<span class="w"> </span><span class="m">5432</span><span class="w"> </span>-U<span class="w"> </span>admin<span class="w"> </span>postgres<span class="w"> </span>-c<span class="w"> </span><span class="s2">&quot;CREATE DATABASE views&quot;</span>
-</code></pre></div></p>
-<p>For documentation of all config parameters, see <a href="https://github.com/google/fhir-data-pipes/blob/master/pipelines/controller/config/application.yaml">here</a>.</p>
-<p>If you are using the <a href="../tutorials/test_servers">local test servers</a>, things should work with the default values. If not, use the IP address of the Docker default bridge network. To find it, run the following command and use the "Gateway" value:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>docker network inspect bridge | grep Gateway
-</code></pre></div>
-<p>The Single Machine docker configuration uses two environment variables, <code>DWH_ROOT</code> and <code>PIPELINE_CONFIG</code>, whose default values are defined in the <a href="https://github.com/google/fhir-data-pipes/blob/master/docker/.env">.env</a> file. <em>To override them</em>, set the variable before running the <code>docker-compose</code> command. For example, to override the <code>DWH_ROOT</code> environment variable, run the following:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>DWH_ROOT=&quot;$(pwd)/&lt;path_to_dwh_directory&gt;&quot; docker compose -f docker/compose-controller-spark-sql-single.yaml up --force-recreate 
-</code></pre></div>
-<h2 id="run-the-single-machine-configuration">Run the Single Machine configuration</h2>
-<p>To bring up the <a href="https://github.com/google/fhir-data-pipes/blob/master/docker/compose-controller-spark-sql-single.yaml"><code>docker/compose-controller-spark-sql-single.yaml</code></a> configuration for the first time or if you have run this container in the past and want to include new changes pulled into the repo, run:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>docker compose -f docker/compose-controller-spark-sql-single.yaml up --force-recreate --build
-</code></pre></div>
-<p>Alternatively, to run without rebuilding use:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>docker compose -f docker/compose-controller-spark-sql-single.yaml up --force-recreate
-</code></pre></div>
-<p>Alternatively, <a href="https://github.com/google/fhir-data-pipes/blob/master/docker/compose-controller-spark-sql.yaml"><code>docker/compose-controller-spark-sql.yaml</code></a> serves as a very simple example on how to integrate the Parquet output of Pipelines in a Spark cluster environment.</p>
-<p>Once started, the Pipelines Controller is available at <code>http://localhost:8090</code> and the Spark Thrift server is at <code>http://localhost:10001</code>.</p>
-<p>The first time you run the Pipelines Controller, you must manually start a Full Pipeline run. In a browser go to <code>http://localhost:8090</code> and click the <strong>Run Full</strong> button. </p>
-<p>After running the Full Pipeline, use the Incremental Pipeline to update the Parquet files and tables. By default it is scheduled to run every hour, or you can manually trigger it.</p>
-<p>If the Incremental Pipeline does not work, or you see errors like:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a>ERROR o.openmrs.analytics.PipelineManager o.openmrs.analytics.PipelineManager$PipelineThread.run:343 - exception while running pipeline: 
-<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a>pipeline-controller    | java.sql.SQLException: org.apache.hive.service.cli.HiveSQLException: Error running query: org.apache.spark.sql.AnalysisException: Unable to infer schema for Parquet. It must be specified manually.
-</code></pre></div>
-<p>try running <code>sudo chmod -R 755</code> on the Parquet file directory, by default located at <code>docker/dwh</code>.</p>
-<h2 id="explore-the-resulting-schema-in-postgresql">Explore the resulting schema in PostgreSQL</h2>
-<p>Connect to the PostgreSQL RDBMS via docker using the cmd: <code>docker exec -it &lt;container_name_or_id&gt; bash</code></p>
-<p>If using the default container (hapi-fhir-db) run: <code>docker exec -it hapi_fhir_db bash</code></p>
-<p>Using psql connect to the 'views'  database: <code>psql -U admin -d views</code></p>
-<p>To list the tables: <code>\d</code>. It should look something like this:</p>
+<h2 id="fhir-data-pipes">FHIR Data Pipes</h2>
+<p>FHIR Data Pipes is built on <a href="https://beam.apache.org/">Apache Beam</a> SDK <strong>for
+ease of scalability</strong> and has multiple deployment options from <em>local, to
+on-prem clusters to public clouds</em>.</p>
+<p>FHIR Data Pipes is made up of the <strong>ETL Pipelines</strong> and <strong>Controller</strong> modules *
+<em>that are designed to work together</em>* to provide continuous transformation of
+FHIR data to Apache Parquet files (for data analysis) or another FHIR server (
+for data integration).</p>
+<p><img alt="FHIR Data Pipes Transform Step Image" src="../../images/ETL_FHIR_to_Parquet.png" /></p>
+<h2 id="etl-pipelines">ETL Pipelines</h2>
+<p>Java binaries to <strong>Extract</strong>, <strong>Transform</strong> and <strong>Load</strong> FHIR data from a FHIR
+source to Parquet format.</p>
+<h3 id="extraction">Extraction</h3>
+<p>FHIR Data Pipes is designed to fetch FHIR source data in various forms and APIs:</p>
+<ul>
+<li><a href="https://www.hl7.org/fhir/search.html">FHIR Search API</a>: This should work with
+  most FHIR
+  servers, including those using FHIR data model like HAPI FHIR or FHIR facades
+  like OpenMRS.</li>
+<li>Direct database access: This is mostly a more efficient approach that works
+  with HAPI FHIR only.</li>
+<li>Bulk Export API: This will gradually become our main fetch API as more FHIR
+  servers implement
+  the <a href="https://build.fhir.org/ig/HL7/bulk-data/export.html">Bulk Export API</a>.</li>
+<li>Files in json and ndjson formats.</li>
+</ul>
+<h3 id="transformation">Transformation</h3>
+<p>FHIR Resources are transformed into a "Parquet on FHIR" format:</p>
+<ul>
+<li>Uses a forked version
+  of <a href="https://github.com/google/fhir-data-pipes/tree/master/bunsen">Bunsen library</a> (
+  currently supports STU3 and R4 versions of FHIR)</li>
+<li>Configurable support for FHIR profiles and extensions</li>
+<li>(Optional) In-pipeline 'flattening' of FHIR data
+  using <a href="https://build.fhir.org/ig/FHIR/sql-on-fhir-v2/StructureDefinition-ViewDefinition.html">ViewDefinition</a>
+  resources - <a href="views#viewdefinition-resource">read more</a></li>
+</ul>
+<h3 id="loading">Loading</h3>
+<p>FHIR Data Pipes supports different SQL Data Warehouse options depending on the
+needs of the project. These include:</p>
+<ul>
+<li>Loading Parquet files into an OLAP query engine such as SparkSQL (which can be
+  deployed on a single machine or a distributed cluster) or DuckDB (single
+  machine in-process) or many other tools that understand Parquet.</li>
+<li>Traditional relational databases such as PostgreSQL (when using
+  FHIR <a href="https://build.fhir.org/ig/FHIR/sql-on-fhir-v2/StructureDefinition-ViewDefinition.html">ViewDefinition</a>
+  resources to generate materialized views)</li>
+</ul>
+<h2 id="pipeline-controller-module">Pipeline Controller Module</h2>
+<p>A user-interface wrapper for the FHIR Data Pipes Pipelines, integrating "
+full", "incremental", and "merger" pipelines together.</p>
+<ul>
+<li>The Pipelines Controller is built on top of pipelines and shares many of the
+  same settings</li>
+<li>Using the controller module you can schedule periodic incremental updates or
+  use the <a href="../additional#web-control-panel">Web Control Panel</a> to start the
+  pipeline
+  manually</li>
+</ul>
+<h2 id="deployment-approaches">Deployment Approaches</h2>
+<p>There are a number of different deployment approaches - see table below.</p>
+<p>Choosing the right approach, comes down to a number of factors including the
+specific use-case, infrastructure constraints of the project, future scalability
+requirements, and expertise of the team.</p>
 <table>
 <thead>
 <tr>
-<th>Schema</th>
-<th>Name</th>
-<th>Type</th>
-<th>Owner</th>
+<th>Scenario</th>
+<th>Approach</th>
+<th>Considerations</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td>public</td>
-<td>condition_flat</td>
-<td>table</td>
-<td>admin</td>
+<td>Simple relational database to power dashboards or reporting</td>
+<td>Custom schema defined as ViewDefinition Resources - <a href="tutorial_lossy_example/">see tutorial</a></td>
+<td>By design, this will provide a subset of FHIR data in flat tables</td>
 </tr>
 <tr>
-<td>public</td>
-<td>diagnostic_report_flat</td>
-<td>table</td>
-<td>admin</td>
+<td>Horizontally scalable query architecture with lossless FHIR data</td>
+<td>Parquet based DWH and distributed query engine (e.g. SparkSQL) - <a href="tutorial_add_dashboard/">see tutorial</a></td>
+<td>This requires a distributed file system for Parquet files and a distributed query engine.</td>
 </tr>
 <tr>
-<td>public</td>
-<td>immunization_flat</td>
-<td>table</td>
-<td>admin</td>
+<td>Lossless FHIR DWH with a single process query engine</td>
+<td>Parquet based DWH with non-distributed query engine set-up (e.g. single-node Spark or DuckDB)</td>
+<td>Scalability and performance (e.g. SparkSQL &gt;&gt; DuckDB)</td>
 </tr>
 <tr>
-<td>public</td>
-<td>location_flat</td>
-<td>table</td>
-<td>admin</td>
+<td>Exploratory data science or ML use cases</td>
+<td>Use the generated Parquet files which as <em>"near lossless"</em> for enhanced data science workflows</td>
+<td>Can either use the Parquet or custom schema to power dashboards or reports</td>
 </tr>
 <tr>
-<td>public</td>
-<td>medication_request_flat</td>
-<td>table</td>
-<td>admin</td>
-</tr>
-<tr>
-<td>public</td>
-<td>observation_flat</td>
-<td>table</td>
-<td>admin</td>
-</tr>
-<tr>
-<td>public</td>
-<td>organization_flat</td>
-<td>table</td>
-<td>admin</td>
-</tr>
-<tr>
-<td>public</td>
-<td>practitioner_flat</td>
-<td>table</td>
-<td>admin</td>
-</tr>
-<tr>
-<td>public</td>
-<td>practitioner_role_flat</td>
-<td>table</td>
-<td>admin</td>
-</tr>
-<tr>
-<td>public</td>
-<td>procedure_flat</td>
-<td>table</td>
-<td>admin</td>
+<td>Push FHIR data to a central FHIR-store (e.g., for a Shared Health Record system)</td>
+<td>Use the Pipelines Controller to push from a FHIR source to a FHIR sink</td>
+<td>Management of the intermediate Parquet files created as part of the pipelines</td>
 </tr>
 </tbody>
 </table>
-<h2 id="querying-the-database">Querying the database</h2>
-<p>Let's do some basic quality checks to make sure the data is uploaded properly (note
-table names are case insensitive).</p>
-<p><strong>Note:</strong> You will see that the number of patients and observations is higher than the count in the FHIR Server. This is due to the flattening</p>
-<p><div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="k">SELECT</span><span class="w"> </span><span class="k">COUNT</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span><span class="w"> </span><span class="k">FROM</span><span class="w"> </span><span class="n">patient_flat</span><span class="p">;</span>
-</code></pre></div>
-We should have exactly 114 patients:
-<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a>+-----------+
-<a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a>| count     |
-<a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a>+-----------+
-<a id="__codelineno-8-4" name="__codelineno-8-4" href="#__codelineno-8-4"></a>| 114       |
-<a id="__codelineno-8-5" name="__codelineno-8-5" href="#__codelineno-8-5"></a>+-----------+
-</code></pre></div></p>
-<p>Doing the same for observations:
-<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a><span class="k">SELECT</span><span class="w"> </span><span class="k">COUNT</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span><span class="w"> </span><span class="k">FROM</span><span class="w"> </span><span class="n">observation_flat</span><span class="p">;</span>
-</code></pre></div>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a>+-----------+
-<a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a>| count  |
-<a id="__codelineno-10-3" name="__codelineno-10-3" href="#__codelineno-10-3"></a>+-----------+
-<a id="__codelineno-10-4" name="__codelineno-10-4" href="#__codelineno-10-4"></a>| 18343     |
-<a id="__codelineno-10-5" name="__codelineno-10-5" href="#__codelineno-10-5"></a>+-----------+
-</code></pre></div></p>
+<h2 id="query-simplification-with-flat-views">Query Simplification with Flat Views</h2>
+<p>FHIR Data Pipes provides two approaches for flattening the FHIR resources into
+virtual or materialized views:</p>
+<ol>
+<li>
+<p>SQL queries to generate virtual views (outside the pipeline)</p>
+</li>
+<li>
+<p>FHIR <a href="https://build.fhir.org/ig/FHIR/sql-on-fhir-v2/StructureDefinition-ViewDefinition.html">ViewDefinition</a>
+resources to generate materialized views (within the pipeline)</p>
+</li>
+</ol>
+<p>For more information on both of these approaches, please
+check <a href="../views/">Schema and Flat Views</a>.</p>
 
 
 
@@ -1077,7 +1136,7 @@ We should have exactly 114 patients:
       <nav class="md-footer__inner md-grid" aria-label="Footer" >
         
           
-          <a href="../add_dashboard/" class="md-footer__link md-footer__link--prev" aria-label="Previous: Visualize Parquet DWH with Apache Superset">
+          <a href="../.." class="md-footer__link md-footer__link--prev" aria-label="Previous: Home">
             <div class="md-footer__button md-icon">
               
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12Z"/></svg>
@@ -1087,20 +1146,20 @@ We should have exactly 114 patients:
                 Previous
               </span>
               <div class="md-ellipsis">
-                Visualize Parquet DWH with Apache Superset
+                Home
               </div>
             </div>
           </a>
         
         
           
-          <a href="../../additional/" class="md-footer__link md-footer__link--next" aria-label="Next: Additional Topics">
+          <a href="../views/" class="md-footer__link md-footer__link--next" aria-label="Next: Schema and Flat Views">
             <div class="md-footer__title">
               <span class="md-footer__direction">
                 Next
               </span>
               <div class="md-ellipsis">
-                Additional Topics
+                Schema and Flat Views
               </div>
             </div>
             <div class="md-footer__button md-icon">

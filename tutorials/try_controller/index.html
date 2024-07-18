@@ -270,16 +270,80 @@
   
   
   
-    <li class="md-nav__item">
-      <a href="../../concepts/" class="md-nav__link">
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
         
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
+            
   
   <span class="md-ellipsis">
     Concepts
   </span>
   
 
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            Concepts
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../concepts/concepts/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    OHS Analytics Concepts
+  </span>
+  
+
       </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../concepts/views/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Schema and Flat Views
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
     </li>
   
 
@@ -351,28 +415,7 @@
         
   
   <span class="md-ellipsis">
-    Docker containers
-  </span>
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../installation_pipeline/" class="md-nav__link">
-        
-  
-  <span class="md-ellipsis">
-    Deploy the "Pipelines"
+    Docker Containers
   </span>
   
 
@@ -394,6 +437,27 @@
   
   <span class="md-ellipsis">
     Deploy the "Controller Module"
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../installation_pipeline/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Deploy the "Pipelines"
   </span>
   
 
@@ -520,27 +584,6 @@
   
   <span class="md-ellipsis">
     Visualize Parquet DWH with Apache Superset
-  </span>
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../postgres_example/" class="md-nav__link">
-        
-  
-  <span class="md-ellipsis">
-    PostgreSQL DWH using custom schema
   </span>
   
 
@@ -805,21 +848,42 @@
 
 
 <h1 id="try-the-pipelines-controller-with-hapi-fhir-store">Try the Pipelines Controller with HAPI FHIR Store</h1>
-<p>The FHIR Pipelines Controller makes it easy to schedule and manage the transformation of data from a <a href="https://hapifhir.io/">HAPI FHIR</a> server to a collection of Apache Parquet files. It uses FHIR Data Pipes JDBC pipeline to run either full or incremental transformations to a Parquet data warehouse. </p>
-<p>The FHIR Pipelines Controller only works with HAPI FHIR servers using Postgres. You can see <a href="https://github.com/hapifhir/hapi-fhir-jpaserver-starter#postgresql-configuration">an example of configuring a HAPI FHIR server to use Postgres here</a>. </p>
-<p>This guide will show you how to set up the FHIR Pipelines Controller with a test HAPI FHIR server. It assumes you are using Linux, but should work with other environments with minor adjustments.</p>
+<p>The FHIR Pipelines Controller makes it easy to schedule and manage the
+transformation of data from a <a href="https://hapifhir.io/">HAPI FHIR</a> server to a
+collection of Apache Parquet files. It uses FHIR Data Pipes JDBC pipeline to run
+either full or incremental transformations to a Parquet data warehouse.</p>
+<p>The FHIR Pipelines Controller only works with HAPI FHIR servers using Postgres.
+You can
+see <a href="https://github.com/hapifhir/hapi-fhir-jpaserver-starter#postgresql-configuration">an example of configuring a HAPI FHIR server to use Postgres here</a>.</p>
+<p>This guide will show you how to set up the FHIR Pipelines Controller with a test
+HAPI FHIR server. It assumes you are using Linux, but should work with other
+environments with minor adjustments.</p>
 <h2 id="clone-the-fhir-data-pipes-repository">Clone the fhir-data-pipes repository</h2>
-<p>Clone the <a href="https://github.com/google/fhir-data-pipes">fhir-data-pipes GitHub repository</a> using your preferred method. After cloned, open a terminal window and <code>cd</code> to the directory where you cloned it. Later terminal commands will assume your working directory is the repository root.</p>
+<p>Clone
+the <a href="https://github.com/google/fhir-data-pipes">fhir-data-pipes GitHub repository</a>
+using your preferred method. After cloned, open a terminal window and <code>cd</code> to
+the directory where you cloned it. Later terminal commands will assume your
+working directory is the repository root.</p>
 <h2 id="set-up-the-test-server">Set up the test server</h2>
-<p>The repository includes a <a href="https://docs.docker.com/compose/">Docker Compose</a> configuration to bring up a HAPI FHIR server configured to use Postgres.</p>
-<p>To set up the test server, <a href="https://github.com/google/fhir-data-pipes/wiki/Try-the-pipelines-using-local-test-servers">follow these instructions</a>. At step two, follow the instructions for "HAPI source server with Postgres".</p>
+<p>The repository includes a <a href="https://docs.docker.com/compose/">Docker Compose</a>
+configuration to bring up a HAPI FHIR server configured to use Postgres.</p>
+<p>To set up the test
+server, <a href="https://github.com/google/fhir-data-pipes/wiki/Try-the-pipelines-using-local-test-servers">follow these instructions</a>.
+At step two, follow the instructions for "HAPI source server with Postgres".</p>
 <h2 id="configure-the-fhir-pipelines-controller">Configure the FHIR Pipelines Controller</h2>
-<p>First, open <a href="https://github.com/google/fhir-data-pipes/blob/master/pipelines/controller/config/application.yaml"><code>pipelines/controller/config/application.yml</code></a> in a text editor.</p>
+<p>First,
+open <a href="https://github.com/google/fhir-data-pipes/blob/master/pipelines/controller/config/application.yaml"><code>pipelines/controller/config/application.yml</code></a>
+in a text editor.</p>
 <p>Change fhirServerUrl to be:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>fhirServerUrl: &quot;http://localhost:8091/fhir&quot;
 </code></pre></div>
-<p>Read through the rest of the file to see other settings. The other lines may remain the same. Note the value of <code>dwhRootPrefix</code>, as it will be where the Parquet files are written. You can also adjust this value if desired. Save and close the file.</p>
-<p>Next, open <a href="https://github.com/google/fhir-data-pipes/blob/master/pipelines/controller/config/hapi-postgres-config.json"><code>pipelines/controller/config/hapi-postgres-config.json</code></a> in a text editor.</p>
+<p>Read through the rest of the file to see other settings. The other lines may
+remain the same. Note the value of <code>dwhRootPrefix</code>, as it will be where the
+Parquet files are written. You can also adjust this value if desired. Save and
+close the file.</p>
+<p>Next,
+open <a href="https://github.com/google/fhir-data-pipes/blob/master/pipelines/controller/config/hapi-postgres-config.json"><code>pipelines/controller/config/hapi-postgres-config.json</code></a>
+in a text editor.</p>
 <p>Change <code>databaseHostName</code> to be:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>&quot;databaseHostName&quot; : &quot;localhost&quot;
 </code></pre></div>
@@ -829,18 +893,27 @@
 <div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="nb">cd</span><span class="w"> </span>pipelines/controller/
 <a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>mvn<span class="w"> </span>spring-boot:run
 </code></pre></div>
-<p>Open a web browser and visit http://localhost:8080. You should see the FHIR Pipelines Control Panel.</p>
-<p><img alt="Pipelines Control Panel" src="images/pipelines_control_panel.png" /></p>
-<p>Before automatic incremental runs can occur, you must manually trigger a full run. Under the <strong>Run Full Pipeline</strong> section, click on <strong>Run Full</strong>. Wait for the run to complete. </p>
+<p>Open a web browser and visit http://localhost:8080. You should see the FHIR
+Pipelines Control Panel.</p>
+<p><img alt="Pipelines Control Panel" src="../../images/pipelines_control_panel.png" /></p>
+<p>Before automatic incremental runs can occur, you must manually trigger a full
+run. Under the <strong>Run Full Pipeline</strong> section, click on <strong>Run Full</strong>. Wait for
+the run to complete.</p>
 <h2 id="explore-the-configuration-settings">Explore the configuration settings</h2>
 <p>The Control Panel shows the options being used by the FHIR Pipelines Controller.</p>
 <h3 id="main-configuration-parameters">Main configuration parameters</h3>
 <p>This section corresponds to the settings in the <code>application.yml</code> file.</p>
 <h3 id="batch-pipeline-non-default-configurations">Batch pipeline non-default configurations</h3>
-<p>This section calls out FHIR Data Pipes batch pipeline settings that are different from their default values. These are also mostly derived from <code>application.yml</code>. Use these settings if you want to run the batch pipeline manually.</p>
+<p>This section calls out FHIR Data Pipes batch pipeline settings that are
+different from their default values. These are also mostly derived
+from <code>application.yml</code>. Use these settings if you want to run the batch pipeline
+manually.</p>
 <h2 id="query-the-dwh">Query the DWH</h2>
-<p>On your machine, look for the Parquet files created in the directory specified by <code>dwhRootPrefix</code> in the application.yml file. You can explore the data using a Jupyter notebook with pyspark and pandas libraries installed</p>
-<p>Alternatively you can load the Parquet into an SQL Query Engine like SparkSQL. See the tutorials section for more.</p>
+<p>On your machine, look for the Parquet files created in the directory specified
+by <code>dwhRootPrefix</code> in the application.yml file. You can explore the data using a
+Jupyter notebook with pyspark and pandas libraries installed</p>
+<p>Alternatively you can load the Parquet into an SQL Query Engine like SparkSQL.
+See the tutorials section for more.</p>
 
 
 
