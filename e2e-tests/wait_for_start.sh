@@ -16,52 +16,52 @@
 
 
 ################################## WAIT FOR START ############################# 
-# Script used in e2e-test that waits for OpenMRS and FHIR server to start.
+# Script used in e2e-test that waits for OpenMRS and FHIR servers to start.
 #
 # Example usage:
-#   ./wait_for_start.sh    
-#   The above example waits for the OpenMRS source server on localhost
-#
-#   ./wait_for_start.sh --use_docker_network
-#   The above example waits for the OpenMRS source server on docker network
-#
-#   ./wait_for_start.sh --use_docker_network --hapi
-#   The above example waits for the HAPI source server on docker network
-
-set -e
+#   ./wait_for_start.sh --HAPI_SERVER_URLS=http://hapi-server1:8080,http://hapi-server2:8080 --OPENMRS_SERVER_URLS=http://openmrs:8080
+#   The above example waits for two hapi servers and one openmrs server to start
 
 #################################################
-# Function that defines the endpoints
+# Set the global variables
 # Globals:
-#   FHIR_SERVER_URL
-#   SINK_SERVER
-# Arguments:
-#   Flag whether to use docker network. By default, host URL is used. 
-#   Flag whether a HAPI server is used as the source. By default, an OpenMRS server is used. 
+#   HAPI_SERVER_URLS
+#   OPENMRS_SERVER_URLS
 #################################################
-function setup() {  
-  FHIR_SERVER_URL='http://localhost:8099/openmrs/ws/fhir2/R4'
-  SINK_SERVER='http://localhost:8098'
+while [ $# -gt 0 ]; do
+  case "$1" in
+    --HAPI_SERVER_URLS=*)
+      HAPI_SERVER_URLS="${1#*=}"
+      ;;
+    --OPENMRS_SERVER_URLS=*)
+      OPENMRS_SERVER_URLS="${1#*=}"
+      ;;
+    *)
+      printf "Error: Invalid argument %s" "$1"
+      exit 1
+  esac
+  shift
+done
 
-  if [[ $1 = "--hapi" ]] || [[ $2 = "--hapi" ]]; then
-    FHIR_SERVER_URL='http://localhost:8091'
-
-    if [[ $1 = "--use_docker_network" ]] || [[ $2 = "--use_docker_network" ]]; then
-      FHIR_SERVER_URL='http://hapi-server:8080'
-      SINK_SERVER='http://sink-server1:8080'
-    fi
-
-    hapi_server_check $FHIR_SERVER_URL
-  else
-    if [[ $1 = "--use_docker_network" ]] || [[ $2 = "--use_docker_network" ]]; then
-      FHIR_SERVER_URL='http://openmrs:8080/openmrs/ws/fhir2/R4'
-      SINK_SERVER='http://sink-server2:8080'
-    fi
-
-    openmrs_server_check $FHIR_SERVER_URL
+#################################################
+# Function that waits for all the Hapi and OpenMRS servers to start
+#################################################
+function wait_for_servers_to_start() {
+  if [ -n "$HAPI_SERVER_URLS" ]; then
+    IFS=',' read -r -a array <<< "$HAPI_SERVER_URLS"
+    for url in "${array[@]}"
+    do
+      hapi_server_check "$url"
+    done
   fi
 
-  hapi_server_check $SINK_SERVER
+  if [ -n "$OPENMRS_SERVER_URLS" ]; then
+    IFS=',' read -r -a array <<< "$OPENMRS_SERVER_URLS"
+    for url in "${array[@]}"
+    do
+     openmrs_server_check "$url/openmrs/ws/fhir2/R4"
+    done
+  fi
 }
 
 #################################################
@@ -84,7 +84,7 @@ function openmrs_server_check() {
       exit 1
     fi
   done
-  echo "OPENMRS SERVER STARTED SUCCESSFULLY"
+  echo "OPENMRS SERVER ${1} STARTED SUCCESSFULLY"
 }
 
 #################################################
@@ -96,18 +96,19 @@ function hapi_server_check() {
   -u hapi:hapi --connect-timeout 5 --max-time 20 \
   ${1}/fhir/Observation 2>/dev/null)
   until [[ ${fhir_server_status_code} -eq 200 ]]; do
-    sleep 1s
+    sleep 30s
     echo "WAITING FOR FHIR SERVER TO START"
     fhir_server_status_code=$(curl -o /dev/null --head -w "%{http_code}" -L -X GET \
       -u hapi:hapi --connect-timeout 5 --max-time 20 \
       ${1}/fhir/Observation 2>/dev/null)
     ((fhir_server_start_wait_time += 1))
-    if [[ fhir_server_start_wait_time == 10 ]]; then
+    echo "$fhir_server_start_wait_time"
+    if [[ $fhir_server_start_wait_time == 20 ]]; then
       echo "TERMINATING AS FHIR SERVER TOOK TOO LONG TO START"
       exit 1
     fi
   done
-  echo "FHIR SERVER STARTED SUCCESSFULLY"
+  echo "FHIR SERVER ${1} STARTED SUCCESSFULLY"
 }
 
-setup $1 $2
+wait_for_servers_to_start

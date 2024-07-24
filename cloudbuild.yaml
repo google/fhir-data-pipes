@@ -24,20 +24,28 @@ steps:
   args: ['-f', './docker/hapi-compose.yml', '-p', 'hapi-compose', 'up', '--force-recreate', '--remove-orphan', '-d']
 
 - name: 'docker/compose'
-  id: 'Launch Sink Server 1'
-  args: ['-f', './docker/sink-compose.yml', '-p', 'sink-server1', 'up', '--force-recreate', '--remove-orphan', '-d' ]
+  id: 'Launch Sink Server Search'
+  args: ['-f', './docker/sink-compose.yml', '-p', 'sink-server-search', 'up', '--force-recreate', '--remove-orphan', '-d' ]
   env:
-    - SINK_SERVER_NAME=sink-server1
+    - SINK_SERVER_NAME=sink-server-search
     - SINK_SERVER_PORT=9001
   waitFor: ['-']
 
 - name: 'docker/compose'
-  id: 'Launch Sink Server 2'
-  args: ['-f', './docker/sink-compose.yml', '-p', 'sink-server2', 'up', '--force-recreate', '--remove-orphan', '-d' ]
+  id: 'Launch Sink Server JDBC'
+  args: ['-f', './docker/sink-compose.yml', '-p', 'sink-server-jdbc', 'up', '--force-recreate', '--remove-orphan', '-d' ]
   env:
-    - SINK_SERVER_NAME=sink-server2
+    - SINK_SERVER_NAME=sink-server-jdbc
     - SINK_SERVER_PORT=9002
   waitFor: ['-']
+
+- name: 'gcr.io/cloud-builders/docker'
+  id: 'Wait for the initial Servers Start'
+  entrypoint: /bin/bash
+  args:
+    - -c
+    - e2e-tests/wait_for_start.sh --HAPI_SERVER_URLS=http://hapi-server:8080,http://sink-server-search:8080,http://sink-server-jdbc:8080
+  waitFor: ['Launch HAPI Source Server', 'Launch Sink Server Search', 'Launch Sink Server JDBC']
 
 # Note license checking will fail on Cloud Build because of .git dependencies
 # and there is not much point updating license headers at this stage anyway.
@@ -76,11 +84,6 @@ steps:
     docker build -t ${_REPOSITORY}/e2e-tests/controller-spark:${_TAG} ./controller-spark/.;
   waitFor: ['-']
 
-- name: 'ubuntu'
-  id: 'Sleep for servers to be up'
-  args: ['sleep', '90']
-  waitFor: ['Launch HAPI Source Server', 'Launch Sink Server 1', 'Launch Sink Server 2', 'Run Uploader Unit Tests']
-
 - name: '${_REPOSITORY}/synthea-uploader:${_TAG}'
   id: 'Upload to HAPI'
   env:
@@ -88,7 +91,7 @@ steps:
     - SINK_TYPE=HAPI
     - FHIR_ENDPOINT=http://hapi-server:8080/fhir
     - CORES=--cores 8
-  waitFor: ['Sleep for servers to be up']
+  waitFor: ['Run Uploader Unit Tests', 'Wait for the initial Servers Start']
 
 - name: 'gcr.io/cloud-builders/docker'
   id: 'Build Pipeline Images'
@@ -106,7 +109,7 @@ steps:
   env:
   - FHIR_SERVER_URL=http://hapi-server:8080/fhir
   - PARQUET_PATH=/workspace/e2e-tests/FHIR_SEARCH_HAPI
-  - SINK_PATH=http://sink-server1:8080/fhir
+  - SINK_PATH=http://sink-server-search:8080/fhir
   - SINK_USERNAME=hapi
   - SINK_PASSWORD=hapi
   waitFor: ['Build Pipeline Images', 'Upload to HAPI']
@@ -116,7 +119,7 @@ steps:
   env:
   - PARQUET_SUBDIR=FHIR_SEARCH_HAPI
   - DOCKER_NETWORK=--use_docker_network
-  - SINK_SERVER=http://sink-server1:8080
+  - SINK_SERVER=http://sink-server-search:8080
   waitFor: ['Run Batch Pipeline in FHIR-search mode with HAPI source', 'Build E2E Image']
 
 - name: '${_REPOSITORY}/batch-pipeline:${_TAG}'
@@ -125,7 +128,7 @@ steps:
     - JDBC_MODE_ENABLED=true
     - JDBC_MODE_HAPI=true
     - FHIR_SERVER_URL=http://hapi-server:8080/fhir
-    - SINK_PATH=http://sink-server2:8080/fhir
+    - SINK_PATH=http://sink-server-jdbc:8080/fhir
     - SINK_USERNAME=hapi
     - SINK_PASSWORD=hapi
     - FHIR_DATABASE_CONFIG_PATH=/workspace/utils/hapi-postgres-config.json
@@ -138,23 +141,23 @@ steps:
   env:
     - PARQUET_SUBDIR=JDBC_HAPI
     - DOCKER_NETWORK=--use_docker_network
-    - SINK_SERVER=http://sink-server2:8080
+    - SINK_SERVER=http://sink-server-jdbc:8080
   waitFor: ['Run Batch Pipeline for JDBC mode with HAPI source', 'Build E2E Image']
 
 # Resetting FHIR sink server
 - name: 'docker/compose'
-  id: 'Turn down FHIR Sink Server 1'
-  args: [ '-f', './docker/sink-compose.yml', '-p', 'sink-server1', 'down' ,'-v']
+  id: 'Turn down FHIR Sink Server Search'
+  args: [ '-f', './docker/sink-compose.yml', '-p', 'sink-server-search', 'down' ,'-v']
   env:
-    - SINK_SERVER_NAME=sink-server1
+    - SINK_SERVER_NAME=sink-server-search
     - SINK_SERVER_PORT=9001
   waitFor: ['Run E2E Test for FHIR-search mode with HAPI source']
 
 - name: 'docker/compose'
-  id: 'Turn down FHIR Sink Server 2'
-  args: [ '-f', './docker/sink-compose.yml', '-p', 'sink-server2', 'down' ,'-v']
+  id: 'Turn down FHIR Sink Server JDBC'
+  args: [ '-f', './docker/sink-compose.yml', '-p', 'sink-server-jdbc', 'down' ,'-v']
   env:
-    - SINK_SERVER_NAME=sink-server2
+    - SINK_SERVER_NAME=sink-server-jdbc
     - SINK_SERVER_PORT=9002
   waitFor: ['Run E2E Test for JDBC mode with HAPI source']
 
@@ -166,13 +169,13 @@ steps:
     - PGPASSWORD=admin
   args: [ '-U', 'admin', '-d', 'postgres', '-h', 'hapi-fhir-db', '-p', '5432',
           '-c', 'CREATE DATABASE views;']
-  waitFor: ['Turn down FHIR Sink Server 1']
+  waitFor: ['Turn down FHIR Sink Server Search']
 
 - name: 'docker/compose'
-  id: 'Launch HAPI FHIR Sink Server 1'
-  args: [ '-f', './docker/sink-compose.yml', '-p', 'sink-server1', 'up','--force-recreate', '-d' ]
+  id: 'Launch HAPI FHIR Sink Server Controller'
+  args: [ '-f', './docker/sink-compose.yml', '-p', 'sink-server-controller', 'up','--force-recreate', '-d' ]
   env:
-    - SINK_SERVER_NAME=sink-server1
+    - SINK_SERVER_NAME=sink-server-controller
     - SINK_SERVER_PORT=9001
 
 - name: 'docker/compose'
@@ -180,10 +183,10 @@ steps:
   env:
     - PIPELINE_CONFIG=/workspace/docker/config
     - DWH_ROOT=/workspace/e2e-tests/controller-spark/dwh
-    - FHIRDATA_SINKFHIRSERVERURL=http://sink-server1:8080/fhir
+    - FHIRDATA_SINKFHIRSERVERURL=http://sink-server-controller:8080/fhir
   args: [ '-f', './docker/compose-controller-spark-sql-single.yaml', 'up',
           '--force-recreate', '-d' ]
-  waitFor: ['Launch HAPI FHIR Sink Server 1']
+  waitFor: ['Launch HAPI FHIR Sink Server Controller']
 
 - name: '${_REPOSITORY}/e2e-tests/controller-spark:${_TAG}'
   id: 'Run E2E Test for Dockerized Controller and Spark Thriftserver'
@@ -208,35 +211,34 @@ steps:
   args: [ '-f', './docker/hapi-compose.yml', 'down' ]
 
 - name: 'docker/compose'
-  id: 'Turn down FHIR Sink Server 1 for e2e tests'
-  args: [ '-f', './docker/sink-compose.yml', '-p', 'sink-server1', 'down' ,'-v']
+  id: 'Turn down FHIR Sink Server Controller for e2e tests'
+  args: [ '-f', './docker/sink-compose.yml', '-p', 'sink-server-controller', 'down' ,'-v']
   env:
-    - SINK_SERVER_NAME=sink-server1
+    - SINK_SERVER_NAME=sink-server-controller
     - SINK_SERVER_PORT=9001
 
 - name: 'docker/compose'
-  id: 'Launch OpenMRS Server and HAPI FHIR Sink Server 2'
+  id: 'Launch OpenMRS Server and HAPI FHIR Sink Server for OpenMRS'
   args: [ '-f', './docker/openmrs-compose.yaml', '-f', './docker/sink-compose.yml', '-p', 'openmrs-project', 'up',
           '--force-recreate', '--remove-orphan', '-d' ]
   env:
-    - SINK_SERVER_NAME=sink-server2
+    - SINK_SERVER_NAME=sink-server-for-openmrs
     - SINK_SERVER_PORT=9002
-  waitFor: ['Turn down FHIR Sink Server 2']
+  waitFor: ['Turn down FHIR Sink Server JDBC']
 
 - name: 'gcr.io/cloud-builders/docker'
   id: 'Wait for Servers Start'
   entrypoint: /bin/bash
   args:
   - -c
-  - e2e-tests/wait_for_start.sh --use_docker_network
-  waitFor: ['Launch OpenMRS Server and HAPI FHIR Sink Server 2']
+  - e2e-tests/wait_for_start.sh --HAPI_SERVER_URLS=http://sink-server-for-openmrs:8080 --OPENMRS_SERVER_URLS=http://openmrs:8080
 
 - name: '${_REPOSITORY}/e2e-tests:${_TAG}'
   id: 'Launch Streaming Pipeline'
   entrypoint: /bin/bash
   args:
     - -c
-    -  e2e-tests/wait_for_streaming.sh --use_docker_network
+    - e2e-tests/wait_for_streaming.sh --FHIR_SERVER_URL=http://openmrs:8080 --SINK_SERVER=http://sink-server-for-openmrs:8080
   waitFor: ['Wait for Servers Start']
 
 - name: '${_REPOSITORY}/e2e-tests:${_TAG}'
@@ -244,7 +246,7 @@ steps:
   env:
     - PARQUET_SUBDIR=STREAMING
     - DOCKER_NETWORK=--use_docker_network
-    - SINK_SERVER=http://sink-server2:8080
+    - SINK_SERVER=http://sink-server-for-openmrs:8080
     - STREAMING_TEST=--streaming
     - OPENMRS_TEST=--openmrs
   waitFor: ['Launch Streaming Pipeline']
@@ -262,7 +264,7 @@ steps:
   id: 'Run Batch Pipeline FHIR-search mode with OpenMRS source'
   env:
     - PARQUET_PATH=/workspace/e2e-tests/FHIR_SEARCH_OPENMRS
-    - SINK_PATH=http://sink-server2:8080/fhir
+    - SINK_PATH=http://sink-server-for-openmrs:8080/fhir
     - SINK_USERNAME=hapi
     - SINK_PASSWORD=hapi
   waitFor: ['Upload to OpenMRS']
@@ -272,7 +274,7 @@ steps:
   env:
     - PARQUET_SUBDIR=FHIR_SEARCH_OPENMRS
     - DOCKER_NETWORK=--use_docker_network
-    - SINK_SERVER=http://sink-server2:8080
+    - SINK_SERVER=http://sink-server-for-openmrs:8080
     - OPENMRS_TEST=--openmrs
   waitFor: ['Run Batch Pipeline FHIR-search mode with OpenMRS source']
 
@@ -281,7 +283,7 @@ steps:
   env:
     - JDBC_MODE_ENABLED=true
     - PARQUET_PATH=/workspace/e2e-tests/JDBC_OPENMRS
-    - SINK_PATH=http://sink-server2:8080/fhir
+    - SINK_PATH=http://sink-server-for-openmrs:8080/fhir
     - SINK_USERNAME=hapi
     - SINK_PASSWORD=hapi
     - FHIR_DATABASE_CONFIG_PATH=/workspace/utils/dbz_event_to_fhir_config.json
@@ -292,7 +294,7 @@ steps:
   env:
     - PARQUET_SUBDIR=JDBC_OPENMRS
     - DOCKER_NETWORK=--use_docker_network
-    - SINK_SERVER=http://sink-server2:8080
+    - SINK_SERVER=http://sink-server-for-openmrs:8080
     - OPENMRS_TEST=--openmrs
   waitFor: ['Run Batch Pipeline for JDBC mode with OpenMRS source']
 
@@ -302,13 +304,13 @@ steps:
   args:
   - -c
   - 'cd dwh; ./validate_indicators.sh'
-  waitFor: ['Run E2E Test for JDBC mode with OpenMRS source', 'Turn down HAPI Source Server', 'Turn down FHIR Sink Server 1 for e2e tests']
+  waitFor: ['Run E2E Test for JDBC mode with OpenMRS source', 'Turn down HAPI Source Server', 'Turn down FHIR Sink Server Controller for e2e tests']
 
 - name: 'docker/compose'
   id: 'Turn down Webserver and HAPI Server'
   args: ['-f', './docker/openmrs-compose.yaml', '-f', './docker/sink-compose.yml', '-p', 'openmrs-project', 'down']
   env:
-    - SINK_SERVER_NAME=sink-server2
+    - SINK_SERVER_NAME=sink-server-for-openmrs
     - SINK_SERVER_PORT=9002
   waitFor: ['Test Indicators']
 

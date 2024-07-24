@@ -106,10 +106,10 @@ The end-to-end tests have been ordered based on their dependencies of the previo
 makes certain steps to be run concurrently. The order of the steps executed is shown in the below 
 picture.
 
-![](./cloudbuild_snapshot.png)
+![](./cloudbuild_flowChart.drawio.png)
 
 The flowchart has been developed using the https://app.diagrams.net/ tool and the 
-editable version of it is available at this [location](./cloudbuild_flowchart.xml)
+editable version of it is available at this [location](./cloudbuild_flowChart.drawio.xml)
 
 ## Regenerate JAR File
 
