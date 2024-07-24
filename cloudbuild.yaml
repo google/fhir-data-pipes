@@ -144,6 +144,19 @@ steps:
     - SINK_SERVER=http://sink-server-jdbc:8080
   waitFor: ['Run Batch Pipeline for JDBC mode with HAPI source', 'Build E2E Image']
 
+- name: '${_REPOSITORY}/batch-pipeline:${_TAG}'
+  id: 'Run Batch Pipeline for BULK_EXPORT mode with HAPI source'
+  env:
+    - FHIR_FETCH_MODE=BULK_EXPORT
+    - FHIR_SERVER_URL=http://hapi-server:8080/fhir
+    - PARQUET_PATH=/workspace/e2e-tests/BULK_EXPORT
+
+- name: '${_REPOSITORY}/e2e-tests:${_TAG}'
+  id: 'Run E2E Test for BULK_EXPORT mode with HAPI source'
+  env:
+    - PARQUET_SUBDIR=BULK_EXPORT
+    - DOCKER_NETWORK=--use_docker_network
+
 # Resetting FHIR sink server
 - name: 'docker/compose'
   id: 'Turn down FHIR Sink Server Search'
@@ -161,7 +174,7 @@ steps:
     - SINK_SERVER_PORT=9002
   waitFor: ['Run E2E Test for JDBC mode with HAPI source']
 
-  # The `views` database is used for creating flat views from ViewDefinitions.
+# The `views` database is used for creating flat views from ViewDefinitions.
 - name: 'postgres'
   id: 'Create views database'
   entrypoint: psql

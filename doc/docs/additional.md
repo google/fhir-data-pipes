@@ -53,7 +53,7 @@ performance.
 
 FHIR Data Pipes transforms FHIR resources to _"near lossless"_ 'Parquet on FHIR'
 representation based on
-the ["Simplified SQL Projection of FHIR Resources"](https://github.com/FHIR/sql-on-fhir/blob/master/sql-on-fhir.md) (
+the ["Simplified SQL Projection of FHIR Resources"](https://github.com/google/fhir-data-pipes/blob/master/doc/schema.md) (
 _'SQL-on-FHIR-v1'_) schema
 
 * The conversion is done using a forked version
@@ -68,7 +68,7 @@ _'SQL-on-FHIR-v1'_) schema
 
 ## Monitoring pipelines
 
-The pipelines controller exposes a number of management end-points that can help
+The pipelines controller exposes management end-points that can help
 with monitoring the health of pipelines.
 
 * The application has been integrated with the Spring Boot Actuator of Spring

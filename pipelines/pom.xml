@@ -255,7 +255,7 @@
         </plugin>
         <plugin>
           <artifactId>maven-surefire-plugin</artifactId>
-          <version>3.3.0</version>
+          <version>3.3.1</version>
         </plugin>
         <!--
            Configures `mvn package` to produce a bundled jar ("fat jar") for runners
@@ -284,7 +284,7 @@
         </plugin>
         <plugin>
           <artifactId>maven-project-info-reports-plugin</artifactId>
-          <version>3.6.1</version>
+          <version>3.6.2</version>
         </plugin>
         <!-- this is for finding files at the root ${main.basedir} easier -->
         <plugin>
