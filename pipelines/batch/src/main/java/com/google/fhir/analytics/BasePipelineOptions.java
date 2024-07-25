@@ -38,6 +38,16 @@ public interface BasePipelineOptions extends PipelineOptions {
   void setRowGroupSizeForParquetFiles(int value);
 
   @Description(
+      "This is an experimental feature which is intended for Dataflow runner only. The purpose is "
+          + "to cache output Parquet records for each Beam bundle such that the DoFn "
+          + "is idempotent, or to be more precise, can be retried for an incomplete "
+          + "bundle (Beam's bundle not FHIR) without corrupting the Parquet output.")
+  @Default.Boolean(false)
+  boolean getCacheBundleForParquetWrites();
+
+  void setCacheBundleForParquetWrites(boolean value);
+
+  @Description(
       "Directory containing the structure definition files for any custom profiles that needs to be"
           + " supported. If it starts with `classpath:` then the classpath is searched; and the"
           + " path should always start with `/`. Do not use this if custom profiles are not needed."

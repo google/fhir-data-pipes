@@ -47,7 +47,7 @@ import org.slf4j.LoggerFactory;
  * composition (not inheritance) but because of Beam complexities (e.g., certain work need to be
  * done during `setup()` where PipelienOptions not available) we use inheritance. A better approach
  * is to create the utility instances (e.g., `fetchUtil`) once at the beginning of ParDo or
- * StartBundle method using a synchronized method. Those functions have acccess to PipelienOptions.
+ * StartBundle method using a synchronized method. Those functions have access to PipelineOptions.
  * That way we can get rid of many instance variables that mirror PipelienOptions fields.
  *
  * @param <T> The type of the elements of the input PCollection.
@@ -92,6 +92,8 @@ abstract class FetchSearchPageFn<T> extends DoFn<T, KV<String, Integer>> {
 
   private final int rowGroupSize;
 
+  private final boolean cacheBundle;
+
   private final int recursiveDepth;
 
   protected final DataSourceConfig sinkDbConfig;
@@ -132,6 +134,11 @@ abstract class FetchSearchPageFn<T> extends DoFn<T, KV<String, Integer>> {
     this.parquetFile = options.getOutputParquetPath();
     this.secondsToFlush = options.getSecondsToFlushParquetFiles();
     this.rowGroupSize = options.getRowGroupSizeForParquetFiles();
+    if (DATAFLOW_RUNNER.equals(options.getRunner().getSimpleName())) {
+      this.cacheBundle = options.getCacheBundleForParquetWrites();
+    } else {
+      this.cacheBundle = false;
+    }
     this.viewDefinitionsDir = options.getViewDefinitionsDir();
     this.structureDefinitionsPath = options.getStructureDefinitionsPath();
     this.fhirVersionEnum = options.getFhirVersion();
@@ -209,7 +216,8 @@ abstract class FetchSearchPageFn<T> extends DoFn<T, KV<String, Integer>> {
               secondsToFlush,
               rowGroupSize,
               stageIdentifier + "_",
-              recursiveDepth);
+              recursiveDepth,
+              cacheBundle);
     }
     if (sinkDbConfig != null) {
       DataSource jdbcSink =
@@ -221,11 +229,12 @@ abstract class FetchSearchPageFn<T> extends DoFn<T, KV<String, Integer>> {
   }
 
   /**
-   * Note this is a hacky solution to address a DataflowRunner specific issue where @Teardown method
-   * is not guaranteed to be called. Closing/flushing Parquet files in @FinishBundle is not a good
-   * idea in general because it makes the size of those files a function of how Beam divides the
-   * work into Bundles. That's why we only do this on DataflowRunner which tend to have very large
-   * Bundles.
+   * There are two purposes for this. First, we need to empty Parquet writers' cache. The other is a
+   * hacky solution to address a DataflowRunner specific issue where @Teardown method is not
+   * guaranteed to be called. Closing/flushing Parquet files in @FinishBundle is not a good idea in
+   * general because it makes the size of those files a function of how Beam divides the work into
+   * Bundles. That's why we only do this on DataflowRunner because of the above Teardown issue; also
+   * the Dataflow bundles tend to be large enough.
    *
    * <p>This should be overridden by all subclasses because the `context` type is not fully
    * specified at this parent class (because of the T type argument). All subclass implementations
@@ -234,16 +243,19 @@ abstract class FetchSearchPageFn<T> extends DoFn<T, KV<String, Integer>> {
    */
   @FinishBundle
   public void finishBundle(FinishBundleContext context) {
-    if (DATAFLOW_RUNNER.equals(context.getPipelineOptions().getRunner().getSimpleName())) {
-      try {
+    try {
+      if (DATAFLOW_RUNNER.equals(context.getPipelineOptions().getRunner().getSimpleName())) {
+        if (cacheBundle) {
+          parquetUtil.emptyCache();
+        }
         if (parquetUtil != null) {
           parquetUtil.flushAll();
         }
-      } catch (IOException | ProfileException e) {
-        // There is not much that we can do at finishBundle so just throw a RuntimeException
-        log.error("At finishBundle caught exception ", e);
-        throw new IllegalStateException(e);
       }
+    } catch (IOException | ProfileException e) {
+      // There is not much that we can do at finishBundle so just throw a RuntimeException
+      log.error("At finishBundle caught exception ", e);
+      throw new IllegalStateException(e);
     }
   }
 
@@ -273,12 +285,6 @@ abstract class FetchSearchPageFn<T> extends DoFn<T, KV<String, Integer>> {
       numFetchedResources.inc(bundle.getEntry().size());
       if (parquetUtil != null) {
         long startTime = System.currentTimeMillis();
-        // TODO: The right way for writing Parquet records is to cache them and wait
-        //  until processing a Beam Bundle is done, i.e., write in @FinishBundle.
-        //  Otherwise, if a Beam Bundle fails in the middle, we will get duplicate records.
-        //  This may also apply to when we write into a sink DB or another FHIR-server (below),
-        //  unless if we take care of duplicate writes (which is for example the case when we
-        //  apply ViewDefinition to a resource and delete rows with the same `id` first).
         parquetUtil.writeRecords(bundle, resourceTypes);
         totalGenerateTimeMillis.inc(System.currentTimeMillis() - startTime);
       }
