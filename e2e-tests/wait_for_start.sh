@@ -102,7 +102,6 @@ function hapi_server_check() {
       -u hapi:hapi --connect-timeout 5 --max-time 20 \
       ${1}/fhir/Observation 2>/dev/null)
     ((fhir_server_start_wait_time += 1))
-    echo "$fhir_server_start_wait_time"
     if [[ $fhir_server_start_wait_time == 20 ]]; then
       echo "TERMINATING AS FHIR SERVER TOOK TOO LONG TO START"
       exit 1

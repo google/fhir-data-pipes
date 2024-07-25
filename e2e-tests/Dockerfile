@@ -21,10 +21,11 @@ RUN pip3 install virtualenv google-auth requests
 COPY pipeline_validation.sh pipeline_validation.sh
 COPY controller-spark/parquet-tools-1.11.1.jar  parquet-tools-1.11.1.jar
 ENV PARQUET_SUBDIR="NON_JDBC"
+ENV FHIR_JSON_SUBDIR="FHIR_JSON"
 ENV DOCKER_NETWORK="--use_docker_network"
 ENV STREAMING_TEST=""
 ENV OPENMRS_TEST=""
 ENV HOME_DIR="/workspace/e2e-tests"
-ENV SINK_SERVER=""
+ENV SINK_SERVER="NONE"
 
-ENTRYPOINT cd ${HOME_DIR}; ./pipeline_validation.sh ${HOME_DIR} ${PARQUET_SUBDIR} ${SINK_SERVER} ${DOCKER_NETWORK} ${STREAMING_TEST} ${OPENMRS_TEST}
+ENTRYPOINT cd ${HOME_DIR}; ./pipeline_validation.sh ${HOME_DIR} ${PARQUET_SUBDIR} ${FHIR_JSON_SUBDIR} ${SINK_SERVER} ${DOCKER_NETWORK} ${STREAMING_TEST} ${OPENMRS_TEST}

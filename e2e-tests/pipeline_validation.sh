@@ -49,7 +49,7 @@ function usage() {
 # Makes sure args passed are correct
 #################################################
 function validate_args() {
-  if [[ $# -lt 2 || $# -gt 6  ]]; then
+  if [[ $# -lt 2 || $# -gt 7  ]]; then
     echo "Invalid number of args passed."
     usage
     exit 1
@@ -104,8 +104,9 @@ function print_message() {
 function setup() {
   HOME_PATH=$1
   PARQUET_SUBDIR=$2
-  SINK_FHIR_SERVER_URL=$3
-  rm -rf "${HOME_PATH}/fhir"
+  FHIR_JSON_SUBDIR=$3
+  SINK_FHIR_SERVER_URL=$4
+  rm -rf "${HOME_PATH}/${FHIR_JSON_SUBDIR}"
   rm -rf "${HOME_PATH}/${PARQUET_SUBDIR}/*.json"
   find "${HOME_PATH}/${PARQUET_SUBDIR}" -size 0 -delete
   SOURCE_FHIR_SERVER_URL='http://localhost:8091'
@@ -114,22 +115,20 @@ function setup() {
 
   # TODO: We should refactor this code to parse the arguments by going through
   # each one and checking which ones are turned on.
-  if [[ $4 = "--openmrs" ]] || [[ $5 = "--openmrs" ]] || [[ $6 = "--openmrs" ]]; then
+  if [[ $5 = "--openmrs" ]] || [[ $6 = "--openmrs" ]] || [[ $7 = "--openmrs" ]]; then
     OPENMRS="on"
     SOURCE_FHIR_SERVER_URL='http://localhost:8099/openmrs/ws/fhir2/R4'
   fi
 
-  if [[ $4 = "--use_docker_network" ]] || [[ $5 = "--use_docker_network" ]] || [[ $6 = "--use_docker_network" ]]; then
+  if [[ $5 = "--use_docker_network" ]] || [[ $6 = "--use_docker_network" ]] || [[ $7 = "--use_docker_network" ]]; then
     if [[ -n ${OPENMRS} ]]; then
         SOURCE_FHIR_SERVER_URL='http://openmrs:8080/openmrs/ws/fhir2/R4'
     else
         SOURCE_FHIR_SERVER_URL='http://hapi-server:8080'
     fi
-  else
-    SINK_FHIR_SERVER_URL='http://localhost:8098'
   fi
 
-  if [[ $3 = "--streaming" ]] || [[ $4 = "--streaming" ]] || [[ $5 = "--streaming" ]]; then
+  if [[ $5 = "--streaming" ]] || [[ $6 = "--streaming" ]] || [[ $7 = "--streaming" ]]; then
     STREAMING="on"
   fi
 }
@@ -235,6 +234,11 @@ function test_parquet_sink() {
 #   OPENMRS
 #################################################
 function test_fhir_sink() {
+  # This skips the test
+  if [ "$SINK_FHIR_SERVER_URL" = "NONE" ]; then
+    return
+  fi
+
   local patient_query_param="?_summary=count"
   local enc_obs_query_param="?_summary=count"
 
@@ -244,25 +248,30 @@ function test_fhir_sink() {
   fi
   print_message "Finding number of patients, encounters and obs in FHIR server"
 
-  mkdir "${HOME_PATH}/fhir"
+  if [ -d "${HOME_PATH}/${FHIR_JSON_SUBDIR}/fhir" ]; then
+      print_message "Directory containing fhir resources already exists ---> ${HOME_PATH}/${FHIR_JSON_SUBDIR}/fhir"
+      exit 1
+  fi
+
+  mkdir -p "${HOME_PATH}/${FHIR_JSON_SUBDIR}/fhir"
   curl -L -X GET -u hapi:hapi --connect-timeout 5 --max-time 20 \
-    "${SINK_FHIR_SERVER_URL}/fhir/Patient${patient_query_param}" 2>/dev/null >>"${HOME_PATH}/fhir/patients.json"
+    "${SINK_FHIR_SERVER_URL}/fhir/Patient${patient_query_param}" 2>/dev/null >>"${HOME_PATH}/${FHIR_JSON_SUBDIR}/fhir/patients.json"
 
   curl -L -X GET -u hapi:hapi --connect-timeout 5 --max-time 20 \
-    "${SINK_FHIR_SERVER_URL}/fhir/Encounter${enc_obs_query_param}" 2>/dev/null >>"${HOME_PATH}/fhir/encounters.json"
+    "${SINK_FHIR_SERVER_URL}/fhir/Encounter${enc_obs_query_param}" 2>/dev/null >>"${HOME_PATH}/${FHIR_JSON_SUBDIR}/fhir/encounters.json"
 
   curl -L -X GET -u hapi:hapi --connect-timeout 5 --max-time 20 \
-    "${SINK_FHIR_SERVER_URL}/fhir/Observation${enc_obs_query_param}" 2>/dev/null >>"${HOME_PATH}/fhir/obs.json"
+    "${SINK_FHIR_SERVER_URL}/fhir/Observation${enc_obs_query_param}" 2>/dev/null >>"${HOME_PATH}/${FHIR_JSON_SUBDIR}/fhir/obs.json"
 
   print_message "Counting number of patients, encounters and obs sinked to fhir files"
 
-  local total_patients_sinked_fhir=$(jq '.total' "${HOME_PATH}/fhir/patients.json")
+  local total_patients_sinked_fhir=$(jq '.total' "${HOME_PATH}/${FHIR_JSON_SUBDIR}/fhir/patients.json")
   print_message "Total patients sinked to fhir ---> ${total_patients_sinked_fhir}"
 
-  local total_encounters_sinked_fhir=$(jq '.total' "${HOME_PATH}/fhir/encounters.json")
+  local total_encounters_sinked_fhir=$(jq '.total' "${HOME_PATH}/${FHIR_JSON_SUBDIR}/fhir/encounters.json")
   print_message "Total encounters sinked to fhir ---> ${total_encounters_sinked_fhir}"
 
-  local total_obs_sinked_fhir=$(jq '.total' "${HOME_PATH}/fhir/obs.json")
+  local total_obs_sinked_fhir=$(jq '.total' "${HOME_PATH}/${FHIR_JSON_SUBDIR}/fhir/obs.json")
   print_message "Total observations sinked to fhir ---> ${total_obs_sinked_fhir}"
 
   if [[ "${total_patients_sinked_fhir}" == "${TOTAL_TEST_PATIENTS}" && "${total_encounters_sinked_fhir}" \
