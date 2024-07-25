@@ -1,0 +1,415 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mxfile host="app.diagrams.net" modified="2024-07-25T07:25:15.342Z" agent="Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/127.0.0.0 Safari/537.36" etag="gG9NO4AlfvgMj1Ie5Q1x" version="24.6.5" type="device">
+  <diagram name="Page-1" id="qN_HFzdki6b9wu7td_7S">
+    <mxGraphModel dx="2357" dy="1065" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1100" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="cXopAXu_6DLuIGrBKaa8-1" value="&lt;div style=&quot;background-color: rgb(255, 255, 255); font-size: 13px; line-height: 60%;&quot;&gt;&lt;pre style=&quot;line-height: 60%;&quot;&gt;&lt;font color=&quot;#080808&quot; style=&quot;font-size: 13px;&quot; face=&quot;Times New Roman&quot;&gt;&lt;font style=&quot;font-size: 13px;&quot;&gt;Launch HAPI &lt;/font&gt;&lt;/font&gt;&lt;/pre&gt;&lt;pre style=&quot;line-height: 60%;&quot;&gt;&lt;font color=&quot;#080808&quot; style=&quot;font-size: 13px;&quot; face=&quot;Times New Roman&quot;&gt;&lt;font style=&quot;font-size: 13px;&quot;&gt;Source Server&lt;/font&gt;&lt;/font&gt;&lt;/pre&gt;&lt;/div&gt;" style="rounded=1;whiteSpace=wrap;html=1;" parent="1" vertex="1">
+          <mxGeometry x="-50" y="200" width="100" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="cXopAXu_6DLuIGrBKaa8-2" value="Compile Bunsen and Pipeline" style="rounded=1;whiteSpace=wrap;html=1;" parent="1" vertex="1">
+          <mxGeometry x="470" y="200" width="135" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="cXopAXu_6DLuIGrBKaa8-3" value="Build Uploader Image" style="rounded=1;whiteSpace=wrap;html=1;" parent="1" vertex="1">
+          <mxGeometry x="320" y="200" width="120" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="cXopAXu_6DLuIGrBKaa8-4" value="Run Uploader Unit Tests" style="rounded=1;whiteSpace=wrap;html=1;" parent="1" vertex="1">
+          <mxGeometry x="300" y="270" width="140" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="cXopAXu_6DLuIGrBKaa8-5" value="" style="endArrow=classic;html=1;rounded=0;exitX=0.425;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;exitPerimeter=0;" parent="1" source="cXopAXu_6DLuIGrBKaa8-3" target="cXopAXu_6DLuIGrBKaa8-4" edge="1">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="400" y="500" as="sourcePoint" />
+            <mxPoint x="450" y="450" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="cXopAXu_6DLuIGrBKaa8-6" value="Build E2E Image" style="rounded=1;whiteSpace=wrap;html=1;" parent="1" vertex="1">
+          <mxGeometry x="650" y="200" width="120" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="cXopAXu_6DLuIGrBKaa8-7" value="Wait for the initial Servers Start" style="rounded=1;whiteSpace=wrap;html=1;" parent="1" vertex="1">
+          <mxGeometry x="115" y="327" width="120" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="cXopAXu_6DLuIGrBKaa8-10" value="Upload to Hapi" style="rounded=1;whiteSpace=wrap;html=1;" parent="1" vertex="1">
+          <mxGeometry x="115" y="397" width="120" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="cXopAXu_6DLuIGrBKaa8-11" value="" style="endArrow=classic;html=1;rounded=0;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" parent="1" source="cXopAXu_6DLuIGrBKaa8-7" target="cXopAXu_6DLuIGrBKaa8-10" edge="1">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="400" y="440" as="sourcePoint" />
+            <mxPoint x="450" y="390" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="cXopAXu_6DLuIGrBKaa8-12" value="Build Pipeline Images" style="rounded=1;whiteSpace=wrap;html=1;" parent="1" vertex="1">
+          <mxGeometry x="485" y="379" width="120" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="cXopAXu_6DLuIGrBKaa8-13" value="" style="endArrow=classic;html=1;rounded=0;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.442;entryY=-0.017;entryDx=0;entryDy=0;entryPerimeter=0;" parent="1" source="cXopAXu_6DLuIGrBKaa8-2" target="cXopAXu_6DLuIGrBKaa8-12" edge="1">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="400" y="440" as="sourcePoint" />
+            <mxPoint x="450" y="390" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="cXopAXu_6DLuIGrBKaa8-14" value="Run Batch Pipeline in FHIR-search mode with HAPI source" style="rounded=1;whiteSpace=wrap;html=1;" parent="1" vertex="1">
+          <mxGeometry x="82.5" y="473" width="185" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="cXopAXu_6DLuIGrBKaa8-15" value="" style="endArrow=classic;html=1;rounded=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;exitX=0.5;exitY=1;exitDx=0;exitDy=0;" parent="1" source="cXopAXu_6DLuIGrBKaa8-10" target="cXopAXu_6DLuIGrBKaa8-14" edge="1">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="400" y="440" as="sourcePoint" />
+            <mxPoint x="450" y="390" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="cXopAXu_6DLuIGrBKaa8-16" value="" style="endArrow=classic;html=1;rounded=0;entryX=0.75;entryY=0;entryDx=0;entryDy=0;exitX=0.25;exitY=1;exitDx=0;exitDy=0;" parent="1" source="cXopAXu_6DLuIGrBKaa8-12" target="cXopAXu_6DLuIGrBKaa8-14" edge="1">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="513.04" y="430" as="sourcePoint" />
+            <mxPoint x="180" y="487" as="targetPoint" />
+            <Array as="points">
+              <mxPoint x="515" y="450" />
+              <mxPoint x="220" y="450" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="cXopAXu_6DLuIGrBKaa8-17" value="Run E2E Test for FHIR-search mode with HAPI source" style="rounded=1;whiteSpace=wrap;html=1;" parent="1" vertex="1">
+          <mxGeometry x="82.5" y="560" width="185" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="cXopAXu_6DLuIGrBKaa8-18" value="" style="endArrow=classic;html=1;rounded=0;exitX=0.5;exitY=1;exitDx=0;exitDy=0;" parent="1" source="cXopAXu_6DLuIGrBKaa8-14" target="cXopAXu_6DLuIGrBKaa8-17" edge="1">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="400" y="730" as="sourcePoint" />
+            <mxPoint x="450" y="680" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="cXopAXu_6DLuIGrBKaa8-19" value="Run Batch Pipeline for JDBC mode with HAPI source" style="rounded=1;whiteSpace=wrap;html=1;" parent="1" vertex="1">
+          <mxGeometry x="390" y="472" width="170" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="cXopAXu_6DLuIGrBKaa8-20" value="Run E2E Test for JDBC mode with HAPI source" style="rounded=1;whiteSpace=wrap;html=1;" parent="1" vertex="1">
+          <mxGeometry x="370" y="560" width="210" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="cXopAXu_6DLuIGrBKaa8-22" value="" style="endArrow=classic;html=1;rounded=0;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" parent="1" source="cXopAXu_6DLuIGrBKaa8-12" target="cXopAXu_6DLuIGrBKaa8-19" edge="1">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="400" y="460" as="sourcePoint" />
+            <mxPoint x="450" y="410" as="targetPoint" />
+            <Array as="points">
+              <mxPoint x="545" y="460" />
+              <mxPoint x="475" y="460" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="cXopAXu_6DLuIGrBKaa8-23" value="" style="endArrow=classic;html=1;rounded=0;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" parent="1" source="cXopAXu_6DLuIGrBKaa8-19" target="cXopAXu_6DLuIGrBKaa8-20" edge="1">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="400" y="460" as="sourcePoint" />
+            <mxPoint x="450" y="410" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="cXopAXu_6DLuIGrBKaa8-24" value="Turn down FHIR Sink Server JDBC" style="rounded=1;whiteSpace=wrap;html=1;" parent="1" vertex="1">
+          <mxGeometry x="339.5" y="692.5" width="130.5" height="35.5" as="geometry" />
+        </mxCell>
+        <mxCell id="cXopAXu_6DLuIGrBKaa8-27" value="Create views database" style="rounded=1;whiteSpace=wrap;html=1;" parent="1" vertex="1">
+          <mxGeometry x="115" y="705" width="120" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="cXopAXu_6DLuIGrBKaa8-29" value="Launch HAPI FHIR Sink Server Controller" style="rounded=1;whiteSpace=wrap;html=1;" parent="1" vertex="1">
+          <mxGeometry x="115" y="782.5" width="120" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="cXopAXu_6DLuIGrBKaa8-31" value="" style="endArrow=classic;html=1;rounded=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;exitX=0.5;exitY=1;exitDx=0;exitDy=0;" parent="1" source="cXopAXu_6DLuIGrBKaa8-27" target="cXopAXu_6DLuIGrBKaa8-29" edge="1">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="325" y="664" as="sourcePoint" />
+            <mxPoint x="375" y="614" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="cXopAXu_6DLuIGrBKaa8-32" value="Bring up controller and Spark containers" style="rounded=1;whiteSpace=wrap;html=1;" parent="1" vertex="1">
+          <mxGeometry x="115" y="853.5" width="120" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="cXopAXu_6DLuIGrBKaa8-33" value="" style="endArrow=classic;html=1;rounded=0;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" parent="1" source="cXopAXu_6DLuIGrBKaa8-29" target="cXopAXu_6DLuIGrBKaa8-32" edge="1">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="325" y="664" as="sourcePoint" />
+            <mxPoint x="375" y="614" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="cXopAXu_6DLuIGrBKaa8-34" value="Run E2E Test for Dockerized Controller and Spark Thriftserver" style="rounded=1;whiteSpace=wrap;html=1;" parent="1" vertex="1">
+          <mxGeometry x="80" y="944" width="190" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="cXopAXu_6DLuIGrBKaa8-35" value="" style="endArrow=classic;html=1;rounded=0;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" parent="1" source="cXopAXu_6DLuIGrBKaa8-32" target="cXopAXu_6DLuIGrBKaa8-34" edge="1">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="325" y="904" as="sourcePoint" />
+            <mxPoint x="375" y="854" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="cXopAXu_6DLuIGrBKaa8-36" value="Bring down controller and Spark containers" style="rounded=1;whiteSpace=wrap;html=1;" parent="1" vertex="1">
+          <mxGeometry x="105" y="1018" width="140" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="cXopAXu_6DLuIGrBKaa8-37" value="" style="endArrow=classic;html=1;rounded=0;exitX=0.5;exitY=1;exitDx=0;exitDy=0;" parent="1" source="cXopAXu_6DLuIGrBKaa8-34" target="cXopAXu_6DLuIGrBKaa8-36" edge="1">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="325" y="904" as="sourcePoint" />
+            <mxPoint x="375" y="854" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="cXopAXu_6DLuIGrBKaa8-38" value="Turn down HAPI Source Server" style="rounded=1;whiteSpace=wrap;html=1;" parent="1" vertex="1">
+          <mxGeometry x="100" y="1091" width="150" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="cXopAXu_6DLuIGrBKaa8-41" value="" style="endArrow=classic;html=1;rounded=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" parent="1" source="cXopAXu_6DLuIGrBKaa8-36" target="cXopAXu_6DLuIGrBKaa8-38" edge="1">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="325" y="930" as="sourcePoint" />
+            <mxPoint x="375" y="880" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="cXopAXu_6DLuIGrBKaa8-42" value="Launch OpenMRS Server and HAPI FHIR Sink Server OpenMRS" style="rounded=1;whiteSpace=wrap;html=1;" parent="1" vertex="1">
+          <mxGeometry x="374.75" y="756" width="198.5" height="38" as="geometry" />
+        </mxCell>
+        <mxCell id="cXopAXu_6DLuIGrBKaa8-68" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" parent="1" source="cXopAXu_6DLuIGrBKaa8-45" target="cXopAXu_6DLuIGrBKaa8-47" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="cXopAXu_6DLuIGrBKaa8-43" value="Wait for Servers Start" style="rounded=1;whiteSpace=wrap;html=1;" parent="1" vertex="1">
+          <mxGeometry x="394" y="810.5" width="160" height="25" as="geometry" />
+        </mxCell>
+        <mxCell id="cXopAXu_6DLuIGrBKaa8-44" value="" style="endArrow=classic;html=1;rounded=0;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" parent="1" source="cXopAXu_6DLuIGrBKaa8-42" target="cXopAXu_6DLuIGrBKaa8-43" edge="1">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="375" y="802" as="sourcePoint" />
+            <mxPoint x="425" y="752" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="cXopAXu_6DLuIGrBKaa8-46" value="" style="endArrow=classic;html=1;rounded=0;exitX=0.5;exitY=1;exitDx=0;exitDy=0;" parent="1" source="cXopAXu_6DLuIGrBKaa8-43" target="cXopAXu_6DLuIGrBKaa8-45" edge="1">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="375" y="802" as="sourcePoint" />
+            <mxPoint x="425" y="752" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="cXopAXu_6DLuIGrBKaa8-47" value="Run E2E Test for STREAMING, using OpenMRS Source" style="rounded=1;whiteSpace=wrap;html=1;" parent="1" vertex="1">
+          <mxGeometry x="373.75" y="899" width="200" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="cXopAXu_6DLuIGrBKaa8-48" value="" style="endArrow=classic;html=1;rounded=0;exitX=0.5;exitY=1;exitDx=0;exitDy=0;" parent="1" source="cXopAXu_6DLuIGrBKaa8-45" target="cXopAXu_6DLuIGrBKaa8-47" edge="1">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="375" y="802" as="sourcePoint" />
+            <mxPoint x="425" y="752" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="cXopAXu_6DLuIGrBKaa8-49" value="Upload to OpenMRS" style="rounded=1;whiteSpace=wrap;html=1;" parent="1" vertex="1">
+          <mxGeometry x="413.75" y="955" width="120" height="25" as="geometry" />
+        </mxCell>
+        <mxCell id="cXopAXu_6DLuIGrBKaa8-50" value="" style="endArrow=classic;html=1;rounded=0;exitX=0.5;exitY=1;exitDx=0;exitDy=0;" parent="1" source="cXopAXu_6DLuIGrBKaa8-47" target="cXopAXu_6DLuIGrBKaa8-49" edge="1">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="375" y="802" as="sourcePoint" />
+            <mxPoint x="425" y="752" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="cXopAXu_6DLuIGrBKaa8-51" value="Run Batch Pipeline FHIR-search mode with OpenMRS source" style="rounded=1;whiteSpace=wrap;html=1;" parent="1" vertex="1">
+          <mxGeometry x="385" y="996" width="180" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="cXopAXu_6DLuIGrBKaa8-52" value="" style="endArrow=classic;html=1;rounded=0;exitX=0.5;exitY=1;exitDx=0;exitDy=0;" parent="1" source="cXopAXu_6DLuIGrBKaa8-49" target="cXopAXu_6DLuIGrBKaa8-51" edge="1">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="375" y="802" as="sourcePoint" />
+            <mxPoint x="425" y="752" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="cXopAXu_6DLuIGrBKaa8-53" value="Run E2E Test for FHIR-search mode with OpenMRS source" style="rounded=1;whiteSpace=wrap;html=1;" parent="1" vertex="1">
+          <mxGeometry x="390" y="1069" width="170" height="35" as="geometry" />
+        </mxCell>
+        <mxCell id="cXopAXu_6DLuIGrBKaa8-54" value="" style="endArrow=classic;html=1;rounded=0;entryX=0.808;entryY=0;entryDx=0;entryDy=0;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryPerimeter=0;" parent="1" source="cXopAXu_6DLuIGrBKaa8-4" target="cXopAXu_6DLuIGrBKaa8-10" edge="1">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="400" y="470" as="sourcePoint" />
+            <mxPoint x="450" y="420" as="targetPoint" />
+            <Array as="points">
+              <mxPoint x="370" y="380" />
+              <mxPoint x="212" y="380" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="cXopAXu_6DLuIGrBKaa8-57" value="" style="endArrow=classic;html=1;rounded=0;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" parent="1" source="cXopAXu_6DLuIGrBKaa8-51" target="cXopAXu_6DLuIGrBKaa8-53" edge="1">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="395" y="1107" as="sourcePoint" />
+            <mxPoint x="445" y="1057" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="cXopAXu_6DLuIGrBKaa8-58" value="Run Batch Pipeline for JDBC mode with OpenMRS source" style="rounded=1;whiteSpace=wrap;html=1;" parent="1" vertex="1">
+          <mxGeometry x="385" y="1122" width="180" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="cXopAXu_6DLuIGrBKaa8-59" value="Run E2E Test for JDBC mode with OpenMRS source" style="rounded=1;whiteSpace=wrap;html=1;" parent="1" vertex="1">
+          <mxGeometry x="390" y="1186.5" width="170" height="35" as="geometry" />
+        </mxCell>
+        <mxCell id="cXopAXu_6DLuIGrBKaa8-61" value="Test Indicators" style="rounded=1;whiteSpace=wrap;html=1;" parent="1" vertex="1">
+          <mxGeometry x="250" y="1260" width="120" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="cXopAXu_6DLuIGrBKaa8-62" value="Turn down Webserver and HAPI Server" style="rounded=1;whiteSpace=wrap;html=1;" parent="1" vertex="1">
+          <mxGeometry x="245" y="1305" width="130" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="cXopAXu_6DLuIGrBKaa8-63" value="" style="endArrow=classic;html=1;rounded=0;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" parent="1" source="cXopAXu_6DLuIGrBKaa8-53" target="cXopAXu_6DLuIGrBKaa8-58" edge="1">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="395" y="1157" as="sourcePoint" />
+            <mxPoint x="445" y="1107" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="cXopAXu_6DLuIGrBKaa8-64" value="" style="endArrow=classic;html=1;rounded=0;exitX=0.5;exitY=1;exitDx=0;exitDy=0;" parent="1" source="cXopAXu_6DLuIGrBKaa8-58" target="cXopAXu_6DLuIGrBKaa8-59" edge="1">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="395" y="1157" as="sourcePoint" />
+            <mxPoint x="445" y="1107" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="cXopAXu_6DLuIGrBKaa8-66" value="" style="endArrow=classic;html=1;rounded=0;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.75;entryY=0;entryDx=0;entryDy=0;" parent="1" source="cXopAXu_6DLuIGrBKaa8-59" target="cXopAXu_6DLuIGrBKaa8-61" edge="1">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="400" y="1180" as="sourcePoint" />
+            <mxPoint x="450" y="1130" as="targetPoint" />
+            <Array as="points">
+              <mxPoint x="475" y="1240" />
+              <mxPoint x="340" y="1240" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="cXopAXu_6DLuIGrBKaa8-67" value="" style="endArrow=classic;html=1;rounded=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;exitX=0.5;exitY=1;exitDx=0;exitDy=0;" parent="1" source="cXopAXu_6DLuIGrBKaa8-61" target="cXopAXu_6DLuIGrBKaa8-62" edge="1">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="400" y="1067" as="sourcePoint" />
+            <mxPoint x="450" y="1017" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="cXopAXu_6DLuIGrBKaa8-45" value="Launch Streaming Pipeline" style="rounded=1;whiteSpace=wrap;html=1;" parent="1" vertex="1">
+          <mxGeometry x="393.5" y="854" width="160" height="25" as="geometry" />
+        </mxCell>
+        <mxCell id="ucA_YC13kaePJjdg0qPd-1" value="" style="endArrow=classic;html=1;rounded=0;exitX=0.25;exitY=1;exitDx=0;exitDy=0;entryX=0.75;entryY=0;entryDx=0;entryDy=0;" parent="1" source="cXopAXu_6DLuIGrBKaa8-6" target="cXopAXu_6DLuIGrBKaa8-17" edge="1">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="520" y="530" as="sourcePoint" />
+            <mxPoint x="570" y="480" as="targetPoint" />
+            <Array as="points">
+              <mxPoint x="680" y="530" />
+              <mxPoint x="221" y="530" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="ucA_YC13kaePJjdg0qPd-3" value="" style="endArrow=classic;html=1;rounded=0;exitX=0.75;exitY=1;exitDx=0;exitDy=0;entryX=0.75;entryY=0;entryDx=0;entryDy=0;" parent="1" source="cXopAXu_6DLuIGrBKaa8-6" target="cXopAXu_6DLuIGrBKaa8-20" edge="1">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="520" y="530" as="sourcePoint" />
+            <mxPoint x="570" y="480" as="targetPoint" />
+            <Array as="points">
+              <mxPoint x="740" y="540" />
+              <mxPoint x="528" y="540" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="ucA_YC13kaePJjdg0qPd-4" value="Launch Sink&amp;nbsp;&lt;div&gt;Server Search&lt;/div&gt;" style="rounded=1;whiteSpace=wrap;html=1;" parent="1" vertex="1">
+          <mxGeometry x="70" y="200" width="100" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="ucA_YC13kaePJjdg0qPd-5" value="Launch Sink&amp;nbsp;&lt;div&gt;Server JDBC&lt;/div&gt;" style="rounded=1;whiteSpace=wrap;html=1;" parent="1" vertex="1">
+          <mxGeometry x="190" y="200" width="100" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="ucA_YC13kaePJjdg0qPd-6" value="" style="endArrow=classic;html=1;rounded=0;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.375;entryY=0;entryDx=0;entryDy=0;entryPerimeter=0;" parent="1" source="ucA_YC13kaePJjdg0qPd-4" target="cXopAXu_6DLuIGrBKaa8-7" edge="1">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="200" y="450" as="sourcePoint" />
+            <mxPoint x="250" y="400" as="targetPoint" />
+            <Array as="points">
+              <mxPoint x="120" y="280" />
+              <mxPoint x="160" y="280" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="ucA_YC13kaePJjdg0qPd-7" value="" style="endArrow=classic;html=1;rounded=0;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.642;entryY=-0.075;entryDx=0;entryDy=0;entryPerimeter=0;" parent="1" source="ucA_YC13kaePJjdg0qPd-5" target="cXopAXu_6DLuIGrBKaa8-7" edge="1">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="200" y="450" as="sourcePoint" />
+            <mxPoint x="250" y="400" as="targetPoint" />
+            <Array as="points">
+              <mxPoint x="192" y="280" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="ucA_YC13kaePJjdg0qPd-73" value="Turn down FHIR Sink Server Search" style="rounded=1;whiteSpace=wrap;html=1;" parent="1" vertex="1">
+          <mxGeometry x="110" y="634" width="140" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="ucA_YC13kaePJjdg0qPd-79" value="Turn down FHIR Sink Server 1 for e2e tests" style="rounded=1;whiteSpace=wrap;html=1;" parent="1" vertex="1">
+          <mxGeometry x="105" y="1172.5" width="140" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="ucA_YC13kaePJjdg0qPd-80" value="" style="endArrow=classic;html=1;rounded=0;exitX=0.5;exitY=1;exitDx=0;exitDy=0;" parent="1" source="cXopAXu_6DLuIGrBKaa8-38" target="ucA_YC13kaePJjdg0qPd-79" edge="1">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="500" y="1011" as="sourcePoint" />
+            <mxPoint x="550" y="961" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="ucA_YC13kaePJjdg0qPd-81" value="" style="endArrow=classic;html=1;rounded=0;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.363;entryY=0.027;entryDx=0;entryDy=0;entryPerimeter=0;" parent="1" source="ucA_YC13kaePJjdg0qPd-79" target="cXopAXu_6DLuIGrBKaa8-61" edge="1">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="500" y="1040" as="sourcePoint" />
+            <mxPoint x="550" y="990" as="targetPoint" />
+            <Array as="points">
+              <mxPoint x="175" y="1240" />
+              <mxPoint x="294" y="1240" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="sbbGI9aaiVEFY5auJiSm-1" value="" style="endArrow=classic;html=1;rounded=0;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.142;entryY=-0.025;entryDx=0;entryDy=0;entryPerimeter=0;" edge="1" parent="1" source="cXopAXu_6DLuIGrBKaa8-1" target="cXopAXu_6DLuIGrBKaa8-7">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="390" y="550" as="sourcePoint" />
+            <mxPoint x="440" y="500" as="targetPoint" />
+            <Array as="points">
+              <mxPoint y="310" />
+              <mxPoint x="132" y="310" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="sbbGI9aaiVEFY5auJiSm-2" value="" style="endArrow=classic;html=1;rounded=0;exitX=0.75;exitY=1;exitDx=0;exitDy=0;entryX=0.25;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="cXopAXu_6DLuIGrBKaa8-10" target="cXopAXu_6DLuIGrBKaa8-19">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="390" y="610" as="sourcePoint" />
+            <mxPoint x="440" y="560" as="targetPoint" />
+            <Array as="points">
+              <mxPoint x="205" y="440" />
+              <mxPoint x="433" y="440" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="sbbGI9aaiVEFY5auJiSm-19" value="" style="endArrow=classic;html=1;rounded=0;exitX=0.464;exitY=1;exitDx=0;exitDy=0;exitPerimeter=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="ucA_YC13kaePJjdg0qPd-73" target="cXopAXu_6DLuIGrBKaa8-27">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="220" y="724" as="sourcePoint" />
+            <mxPoint x="270" y="674" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="sbbGI9aaiVEFY5auJiSm-20" value="Run Batch Pipeline for BULK_EXPORT mode with HAPI source" style="rounded=1;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="470" y="630" width="227.5" height="44" as="geometry" />
+        </mxCell>
+        <mxCell id="sbbGI9aaiVEFY5auJiSm-21" value="Run E2E Test for BULK_EXPORT mode with HAPI source" style="rounded=1;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="497.25" y="690" width="185" height="38" as="geometry" />
+        </mxCell>
+        <mxCell id="sbbGI9aaiVEFY5auJiSm-28" value="" style="endArrow=classic;html=1;rounded=0;exitX=0.484;exitY=1.016;exitDx=0;exitDy=0;exitPerimeter=0;entryX=0.45;entryY=0.02;entryDx=0;entryDy=0;entryPerimeter=0;" edge="1" parent="1" source="sbbGI9aaiVEFY5auJiSm-20" target="sbbGI9aaiVEFY5auJiSm-21">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="320" y="760" as="sourcePoint" />
+            <mxPoint x="370" y="710" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="sbbGI9aaiVEFY5auJiSm-29" value="" style="endArrow=classic;html=1;rounded=0;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.462;entryY=0.018;entryDx=0;entryDy=0;entryPerimeter=0;" edge="1" parent="1" source="cXopAXu_6DLuIGrBKaa8-20" target="sbbGI9aaiVEFY5auJiSm-20">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="320" y="660" as="sourcePoint" />
+            <mxPoint x="370" y="610" as="targetPoint" />
+            <Array as="points">
+              <mxPoint x="475" y="610" />
+              <mxPoint x="575" y="610" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="sbbGI9aaiVEFY5auJiSm-31" value="" style="endArrow=classic;html=1;rounded=0;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.47;entryY=0.005;entryDx=0;entryDy=0;entryPerimeter=0;" edge="1" parent="1" source="cXopAXu_6DLuIGrBKaa8-17" target="ucA_YC13kaePJjdg0qPd-73">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="320" y="710" as="sourcePoint" />
+            <mxPoint x="370" y="660" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="sbbGI9aaiVEFY5auJiSm-32" value="" style="endArrow=classic;html=1;rounded=0;exitX=0.398;exitY=0.985;exitDx=0;exitDy=0;exitPerimeter=0;entryX=0.479;entryY=0.034;entryDx=0;entryDy=0;entryPerimeter=0;" edge="1" parent="1" source="cXopAXu_6DLuIGrBKaa8-20" target="cXopAXu_6DLuIGrBKaa8-24">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="320" y="710" as="sourcePoint" />
+            <mxPoint x="370" y="660" as="targetPoint" />
+            <Array as="points">
+              <mxPoint x="454" y="610" />
+              <mxPoint x="402" y="610" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="sbbGI9aaiVEFY5auJiSm-33" value="" style="endArrow=classic;html=1;rounded=0;" edge="1" parent="1">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="400" y="730" as="sourcePoint" />
+            <mxPoint x="440" y="756" as="targetPoint" />
+            <Array as="points">
+              <mxPoint x="400" y="740" />
+              <mxPoint x="440" y="740" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="sbbGI9aaiVEFY5auJiSm-34" value="" style="endArrow=classic;html=1;rounded=0;exitX=0.463;exitY=0.994;exitDx=0;exitDy=0;exitPerimeter=0;entryX=0.648;entryY=0.053;entryDx=0;entryDy=0;entryPerimeter=0;" edge="1" parent="1" source="sbbGI9aaiVEFY5auJiSm-21" target="cXopAXu_6DLuIGrBKaa8-42">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="320" y="800" as="sourcePoint" />
+            <mxPoint x="370" y="750" as="targetPoint" />
+            <Array as="points">
+              <mxPoint x="583" y="740" />
+              <mxPoint x="503" y="740" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>
