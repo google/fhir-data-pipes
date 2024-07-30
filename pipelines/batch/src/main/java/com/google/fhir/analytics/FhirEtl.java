@@ -296,6 +296,10 @@ public class FhirEtl {
                 + options.getResourceList());
       }
     }
+    if (options.isCreateParquetViews() && Strings.isNullOrEmpty(options.getViewDefinitionsDir())) {
+      throw new IllegalArgumentException(
+          "When using --createParquetViews," + " --viewDefinitionsDir cannot be empty");
+    }
   }
 
   // TODO: Implement active period feature for JDBC mode with a HAPI source server (issue #278).

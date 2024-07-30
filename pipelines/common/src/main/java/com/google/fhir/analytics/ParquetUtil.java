@@ -19,16 +19,28 @@ import ca.uhn.fhir.context.FhirVersionEnum;
 import com.cerner.bunsen.exception.ProfileException;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
+import com.google.common.collect.ImmutableList;
+import com.google.fhir.analytics.view.ViewApplicationException;
+import com.google.fhir.analytics.view.ViewApplicator;
+import com.google.fhir.analytics.view.ViewApplicator.RowList;
+import com.google.fhir.analytics.view.ViewDefinition;
+import com.google.fhir.analytics.view.ViewDefinitionException;
+import com.google.fhir.analytics.view.ViewManager;
+import com.google.fhir.analytics.view.ViewSchema;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.channels.Channels;
 import java.nio.channels.WritableByteChannel;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Random;
 import java.util.Set;
 import java.util.Timer;
 import java.util.TimerTask;
+import javax.annotation.Nullable;
 import org.apache.avro.generic.GenericRecord;
 import org.apache.beam.sdk.io.fs.ResolveOptions.StandardResolveOptions;
 import org.apache.beam.sdk.io.fs.ResourceId;
@@ -50,12 +62,19 @@ public class ParquetUtil {
   public static String PARQUET_EXTENSION = ".parquet";
   private final AvroConversionUtil conversionUtil;
   private final Map<String, ParquetWriter<GenericRecord>> writerMap;
+
+  private final Map<ViewDefinition, ParquetWriter<GenericRecord>> viewMap;
+
   private final int rowGroupSize;
   private final DwhFiles dwhFiles;
   private final Timer timer;
   private final Random random;
   private final String namePrefix;
   private boolean flushedInCurrentPeriod;
+
+  private ViewManager viewManager;
+
+  private final boolean createParquetViews;
 
   private synchronized void setFlushedInCurrentPeriod(boolean value) {
     flushedInCurrentPeriod = value;
@@ -83,10 +102,13 @@ public class ParquetUtil {
       FhirVersionEnum fhirVersionEnum,
       String structureDefinitionsPath,
       String parquetFilePath,
+      String viewDefinitionsDir,
+      List<String> resourceList,
       int secondsToFlush,
       int rowGroupSize,
       String namePrefix,
-      int recursiveDepth)
+      int recursiveDepth,
+      boolean createParquetViews)
       throws ProfileException {
     if (fhirVersionEnum == FhirVersionEnum.DSTU3 || fhirVersionEnum == FhirVersionEnum.R4) {
       this.conversionUtil =
@@ -98,7 +120,29 @@ public class ParquetUtil {
     this.writerMap = new HashMap<>();
     this.rowGroupSize = rowGroupSize;
     this.namePrefix = namePrefix;
+    this.createParquetViews = createParquetViews;
+    this.viewMap = new HashMap<>();
+    this.viewManager = null;
     setFlushedInCurrentPeriod(false);
+    if (createParquetViews) {
+      try {
+        this.viewManager = ViewManager.createForDir(viewDefinitionsDir);
+      } catch (IOException | ViewDefinitionException e) {
+        String errorMsg = String.format("Error while reading views from %s", viewDefinitionsDir);
+        log.error(errorMsg, e);
+        throw new IllegalArgumentException(errorMsg);
+      }
+      List<ViewDefinition> allViewTypes = viewManager.getViewMap();
+      List<String> allViewDefinitionTypes =
+          new ArrayList<>(allViewTypes.stream().map(v -> (String) v.getResource()).toList());
+      allViewDefinitionTypes.retainAll(resourceList);
+      if (allViewDefinitionTypes.isEmpty()) {
+        String errorMsg =
+            String.format("No applicable View Definitions in directory: %s", viewDefinitionsDir);
+        log.error(errorMsg);
+        throw new IllegalArgumentException(errorMsg);
+      }
+    }
     if (secondsToFlush > 0) {
       TimerTask task =
           new TimerTask() {
@@ -130,7 +174,7 @@ public class ParquetUtil {
   @VisibleForTesting
   synchronized ResourceId getUniqueOutputFilePath(String resourceType) throws IOException {
     ResourceId resourceId = dwhFiles.getResourcePath(resourceType);
-    String uniquetFileName =
+    String uniqueFileName =
         String.format(
             "%s%s_output-parquet-th-%d-ts-%d-r-%d%s",
             namePrefix,
@@ -139,11 +183,24 @@ public class ParquetUtil {
             System.currentTimeMillis(),
             random.nextInt(1000000),
             PARQUET_EXTENSION);
-    return resourceId.resolve(uniquetFileName, StandardResolveOptions.RESOLVE_FILE);
+    return resourceId.resolve(uniqueFileName, StandardResolveOptions.RESOLVE_FILE);
+  }
+
+  @VisibleForTesting
+  synchronized ResourceId getUniqueOutputFilePath(ViewDefinition vDef) throws IOException {
+    ResourceId resourceId = dwhFiles.getResourcePath(vDef.getName().toLowerCase(Locale.ENGLISH));
+    String uniqueFileName =
+        String.format(
+            "%s_output-parquet-th-%d-ts-%d-r-%d%s",
+            vDef.getName(),
+            Thread.currentThread().getId(),
+            System.currentTimeMillis(),
+            random.nextInt(1000000),
+            PARQUET_EXTENSION);
+    return resourceId.resolve(uniqueFileName, StandardResolveOptions.RESOLVE_FILE);
   }
 
   private synchronized void createWriter(String resourceType) throws IOException, ProfileException {
-
     ResourceId resourceId = getUniqueOutputFilePath(resourceType);
     WritableByteChannel writableByteChannel =
         org.apache.beam.sdk.io.FileSystems.create(resourceId, MimeTypes.BINARY);
@@ -158,6 +215,23 @@ public class ParquetUtil {
     ParquetWriter<GenericRecord> writer =
         builder.withSchema(conversionUtil.getResourceSchema(resourceType)).build();
     writerMap.put(resourceType, writer);
+  }
+
+  private synchronized void createWriter(ViewDefinition viewDefinition) throws IOException {
+    ResourceId resourceId = getUniqueOutputFilePath(viewDefinition);
+    WritableByteChannel writableByteChannel =
+        org.apache.beam.sdk.io.FileSystems.create(resourceId, MimeTypes.BINARY);
+    OutputStream outputStream = Channels.newOutputStream(writableByteChannel);
+    FhirOutputFile fhirOutputFile = new FhirOutputFile(outputStream);
+
+    AvroParquetWriter.Builder<GenericRecord> builder = AvroParquetWriter.builder(fhirOutputFile);
+    // TODO: Adjust other parquet file parameters for our needs or make them configurable.
+    if (rowGroupSize > 0) {
+      builder.withRowGroupSize(rowGroupSize);
+    }
+    ParquetWriter<GenericRecord> writer =
+        builder.withSchema(ViewSchema.getAvroSchema(viewDefinition)).build();
+    viewMap.put(viewDefinition, writer);
   }
 
   /**
@@ -180,8 +254,34 @@ public class ParquetUtil {
     }
   }
 
-  private synchronized void flush(String resourceType) throws IOException, ProfileException {
-    ParquetWriter<GenericRecord> writer = writerMap.get(resourceType);
+  /**
+   * This is to write a materialized View Definition to a Parquet file. Automatically handles file
+   * creation in a directory named after the respective view (e.g., `patient_flat_view`) with names
+   * following the "output-streaming-ddddd" pattern where `ddddd` is a string with five digits.
+   */
+  public synchronized void write(Resource resource, ViewDefinition vDef)
+      throws IOException, ProfileException, ViewApplicationException {
+    Preconditions.checkNotNull(resource.fhirType());
+    if (!viewMap.containsKey(vDef)) {
+      createWriter(vDef);
+    }
+    final ParquetWriter<GenericRecord> parquetWriter = viewMap.get(vDef);
+    ViewApplicator applicator = new ViewApplicator(vDef);
+    RowList rows = applicator.apply(resource);
+    List<GenericRecord> result = ViewSchema.setValueInRecord(rows, vDef);
+    for (GenericRecord record : result) {
+      parquetWriter.write(record);
+    }
+  }
+
+  private synchronized void flush(String resourceType, @Nullable ViewDefinition vDef)
+      throws IOException, ProfileException {
+    ParquetWriter<GenericRecord> writer;
+    if (vDef != null) {
+      writer = viewMap.get(vDef);
+    } else {
+      writer = writerMap.get(resourceType);
+    }
     if (writer != null && writer.getDataSize() > 0) {
       writer.close();
       createWriter(resourceType);
@@ -190,8 +290,14 @@ public class ParquetUtil {
 
   synchronized void flushAll() throws IOException, ProfileException {
     log.info("Flushing all Parquet writers for thread " + Thread.currentThread().getId());
-    for (String resourceType : writerMap.keySet()) {
-      flush(resourceType);
+    if (createParquetViews) {
+      for (ViewDefinition vDef : viewMap.keySet()) {
+        flush(vDef.getResource(), null);
+      }
+    } else {
+      for (String resourceType : writerMap.keySet()) {
+        flush(resourceType, null);
+      }
     }
     setFlushedInCurrentPeriod(true);
   }
@@ -200,21 +306,37 @@ public class ParquetUtil {
     if (timer != null) {
       timer.cancel();
     }
-    for (Map.Entry<String, ParquetWriter<GenericRecord>> entry : writerMap.entrySet()) {
-      entry.getValue().close();
-      writerMap.put(entry.getKey(), null);
+    if (createParquetViews) {
+      for (Map.Entry<ViewDefinition, ParquetWriter<GenericRecord>> entry : viewMap.entrySet()) {
+        entry.getValue().close();
+        viewMap.put(entry.getKey(), null);
+      }
+    } else {
+      for (Map.Entry<String, ParquetWriter<GenericRecord>> entry : writerMap.entrySet()) {
+        entry.getValue().close();
+        writerMap.put(entry.getKey(), null);
+      }
     }
   }
 
   public void writeRecords(Bundle bundle, Set<String> resourceTypes)
-      throws IOException, ProfileException {
+      throws IOException, ProfileException, ViewApplicationException {
     if (bundle.getEntry() == null) {
       return;
     }
     for (BundleEntryComponent entry : bundle.getEntry()) {
       Resource resource = entry.getResource();
       if (resourceTypes == null || resourceTypes.contains(resource.getResourceType().name())) {
-        write(resource);
+        if (!createParquetViews) {
+          write(resource);
+        } else {
+          ImmutableList<ViewDefinition> views = viewManager.getViewsForType(resource.fhirType());
+          if (views != null) {
+            for (ViewDefinition vDef : views) {
+              write(resource, vDef);
+            }
+          }
+        }
       }
     }
   }

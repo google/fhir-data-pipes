@@ -28,6 +28,7 @@ import java.io.IOException;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.Map;
 import javax.sql.DataSource;
 import org.apache.camel.CamelContext;
@@ -93,10 +94,13 @@ public class DebeziumListener extends RouteBuilder {
             fhirContext.getVersion().getVersion(),
             "",
             params.outputParquetPath,
+            "",
+            new ArrayList<>(),
             params.secondsToFlushParquetFiles,
             params.rowGroupSizeForParquetFiles,
             "streaming_",
-            1);
+            1,
+            false);
     DataSource jdbcSource =
         JdbcConnectionPools.getInstance()
             .getPooledDataSource(
