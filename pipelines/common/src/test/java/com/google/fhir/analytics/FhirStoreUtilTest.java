@@ -31,15 +31,15 @@ import java.util.Collection;
 import org.hamcrest.Matchers;
 import org.hl7.fhir.r4.model.Bundle;
 import org.hl7.fhir.r4.model.Patient;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Answers;
 import org.mockito.ArgumentMatchers;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
 
-@RunWith(MockitoJUnitRunner.class)
+@ExtendWith(MockitoExtension.class)
 public class FhirStoreUtilTest {
 
   @Mock(answer = Answers.RETURNS_DEEP_STUBS)
@@ -58,7 +58,7 @@ public class FhirStoreUtilTest {
 
   private Bundle patientResponseBundle;
 
-  @Before
+  @BeforeEach
   public void setup() throws IOException {
     IParser jsonParser = FhirContext.forR4().newJsonParser();
 
