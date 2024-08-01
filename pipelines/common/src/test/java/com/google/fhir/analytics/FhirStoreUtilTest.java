@@ -78,11 +78,14 @@ public class FhirStoreUtilTest {
 
     patient = (Patient) patientBundle.getEntryFirstRep().getResource();
 
-    when(clientFactory.newGenericClient(sinkUrl)).thenReturn(client);
-    when(client.update().resource(patient).withId(patient.getId()).encodedJson()).thenReturn(iexec);
-    when(client.transaction().withBundle(ArgumentMatchers.any(Bundle.class)).execute())
+    lenient().when(clientFactory.newGenericClient(sinkUrl)).thenReturn(client);
+    lenient()
+        .when(client.update().resource(patient).withId(patient.getId()).encodedJson())
+        .thenReturn(iexec);
+    lenient()
+        .when(client.transaction().withBundle(ArgumentMatchers.any(Bundle.class)).execute())
         .thenReturn(patientResponseBundle);
-    doReturn(outcome).when(iexec).execute();
+    lenient().doReturn(outcome).when(iexec).execute();
 
     fhirStoreUtil = FhirStoreUtil.createFhirStoreUtil(sinkUrl, clientFactory);
   }
