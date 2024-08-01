@@ -17,7 +17,7 @@ package com.google.fhir.analytics;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.lenient;
 
 import ca.uhn.fhir.context.FhirContext;
 import ca.uhn.fhir.parser.IParser;
@@ -32,15 +32,15 @@ import java.util.Collection;
 import org.hamcrest.Matchers;
 import org.hl7.fhir.r4.model.Bundle;
 import org.hl7.fhir.r4.model.Patient;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Answers;
 import org.mockito.ArgumentMatchers;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
 
-@RunWith(MockitoJUnitRunner.class)
+@ExtendWith(MockitoExtension.class)
 public class FhirStoreUtilTest {
 
   @Mock(answer = Answers.RETURNS_DEEP_STUBS)
@@ -61,7 +61,7 @@ public class FhirStoreUtilTest {
 
   private Bundle patientResponseBundle;
 
-  @Before
+  @BeforeEach
   public void setup() throws IOException {
     IParser jsonParser = FhirContext.forR4().newJsonParser();
 
@@ -81,11 +81,14 @@ public class FhirStoreUtilTest {
 
     patient = (Patient) patientBundle.getEntryFirstRep().getResource();
 
-    when(clientFactory.newGenericClient(sinkUrl)).thenReturn(client);
-    when(client.update().resource(patient).withId(patient.getId()).encodedJson()).thenReturn(iexec);
-    when(client.transaction().withBundle(ArgumentMatchers.any(Bundle.class)).execute())
+    lenient().when(clientFactory.newGenericClient(sinkUrl)).thenReturn(client);
+    lenient()
+        .when(client.update().resource(patient).withId(patient.getId()).encodedJson())
+        .thenReturn(iexec);
+    lenient()
+        .when(client.transaction().withBundle(ArgumentMatchers.any(Bundle.class)).execute())
         .thenReturn(patientResponseBundle);
-    doReturn(outcome).when(iexec).execute();
+    lenient().doReturn(outcome).when(iexec).execute();
 
     fhirStoreUtil = FhirStoreUtil.createFhirStoreUtil(sinkUrl, clientFactory);
   }
