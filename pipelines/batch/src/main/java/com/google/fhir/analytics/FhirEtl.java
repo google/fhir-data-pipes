@@ -300,6 +300,11 @@ public class FhirEtl {
       throw new IllegalArgumentException(
           "When using --createParquetViews, --viewDefinitionsDir cannot be empty");
     }
+    if (options.getCacheBundleForParquetWrites()
+        && !"DataflowRunner".equals(options.getRunner().getSimpleName())) {
+      throw new IllegalArgumentException(
+          "--cacheBundleForParquetWrites is intended to be used with Dataflow runner only!");
+    }
   }
 
   // TODO: Implement active period feature for JDBC mode with a HAPI source server (issue #278).

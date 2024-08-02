@@ -62,11 +62,13 @@ public class ParquetUtil {
   private static final Logger log = LoggerFactory.getLogger(ParquetUtil.class);
   public static String PARQUET_EXTENSION = ".parquet";
   private final AvroConversionUtil conversionUtil;
-  private final Map<String, ParquetWriter<GenericRecord>> writerMap;
+  // private final Map<String, ParquetWriter<GenericRecord>> writerMap;
 
   private final Map<String, ParquetWriter<GenericRecord>> viewWriterMap;
+  private final Map<String, WriterWithCache> writerMap;
 
   private final int rowGroupSize;
+  private final boolean cacheBundle;
   private final DwhFiles dwhFiles;
   private final Timer timer;
   private final Random random;
@@ -86,6 +88,7 @@ public class ParquetUtil {
   }
 
   // TODO remove this constructor and only expose a similar one in `DwhFiles` (for testing).
+
   /**
    * @param fhirVersionEnum This should match the resources intended to be converted.
    * @param structureDefinitionsPath Directory path containing the structure definitions for custom
@@ -96,6 +99,10 @@ public class ParquetUtil {
    * @param rowGroupSize The approximate size of row-groups in the Parquet files (0 means use
    *     default).
    * @param namePrefix The prefix directory at which the Parquet files are written
+   * @param recursiveDepth The maximum recursive depth for FHIR resources when converting to Avro.
+   * @param cacheBundle Whether to cache output records or directly send them to the Parquet writer.
+   *     If this is enabled, then it is the responsibility of the user code to call emptyCache. This
+   *     is used when we want to make sure a DoFn is idempotent.
    * @throws ProfileException if any errors are encountered during initialisation of FhirContext
    */
   @VisibleForTesting
@@ -109,7 +116,8 @@ public class ParquetUtil {
       int secondsToFlush,
       int rowGroupSize,
       String namePrefix,
-      int recursiveDepth)
+      int recursiveDepth,
+      boolean cacheBundle)
       throws ProfileException {
     if (fhirVersionEnum == FhirVersionEnum.DSTU3 || fhirVersionEnum == FhirVersionEnum.R4) {
       this.conversionUtil =
@@ -120,6 +128,7 @@ public class ParquetUtil {
     this.dwhFiles = new DwhFiles(parquetFilePath, conversionUtil.getFhirContext());
     this.writerMap = new HashMap<>();
     this.rowGroupSize = rowGroupSize;
+    this.cacheBundle = cacheBundle;
     this.namePrefix = namePrefix;
     this.createParquetViews = createParquetViews;
     this.viewWriterMap = new HashMap<>();
@@ -225,7 +234,7 @@ public class ParquetUtil {
     ParquetWriter<GenericRecord> writer;
     if (flag) {
       writer = builder.withSchema(conversionUtil.getResourceSchema(resourceType)).build();
-      writerMap.put(resourceType, writer);
+      writerMap.put(resourceType, new WriterWithCache(writer, this.cacheBundle));
     } else {
       writer = builder.withSchema(ViewSchema.getAvroSchema(vDef)).build();
       viewWriterMap.put(vDef.getName(), writer);
@@ -244,10 +253,16 @@ public class ParquetUtil {
     if (!writerMap.containsKey(resourceType)) {
       createWriter(resourceType, null);
     }
-    final ParquetWriter<GenericRecord> parquetWriter = writerMap.get(resourceType);
+    final WriterWithCache writer = writerMap.get(resourceType);
     GenericRecord record = conversionUtil.convertToAvro(resource);
     if (record != null) {
-      parquetWriter.write(record);
+      writer.write(record);
+    }
+  }
+
+  public synchronized void emptyCache() throws IOException {
+    for (WriterWithCache writer : writerMap.values()) {
+      writer.flushCache();
     }
   }
 
@@ -271,8 +286,8 @@ public class ParquetUtil {
     }
   }
 
-  private synchronized void flushWriter(String resourceType) throws IOException, ProfileException {
-    ParquetWriter<GenericRecord> writer = writerMap.get(resourceType);
+  private synchronized void flush(String resourceType) throws IOException, ProfileException {
+    WriterWithCache writer = writerMap.get(resourceType);
     if (writer != null && writer.getDataSize() > 0) {
       writer.close();
       writerMap.remove(resourceType);
@@ -293,7 +308,7 @@ public class ParquetUtil {
       flushViewWriter(viewName);
     }
     for (String resourceType : writerMap.keySet()) {
-      flushWriter(resourceType);
+      flush(resourceType);
     }
     setFlushedInCurrentPeriod(true);
   }
@@ -306,7 +321,7 @@ public class ParquetUtil {
       entry.getValue().close();
       viewWriterMap.put(entry.getKey(), null);
     }
-    for (Map.Entry<String, ParquetWriter<GenericRecord>> entry : writerMap.entrySet()) {
+    for (Map.Entry<String, WriterWithCache> entry : writerMap.entrySet()) {
       entry.getValue().close();
       writerMap.put(entry.getKey(), null);
     }
@@ -330,6 +345,46 @@ public class ParquetUtil {
           }
         }
       }
+    }
+  }
+
+  private static class WriterWithCache {
+
+    private final ParquetWriter<GenericRecord> writer;
+    private final List<GenericRecord> cache;
+    private final boolean useCache;
+
+    WriterWithCache(ParquetWriter<GenericRecord> writer, boolean useCache) {
+      this.writer = writer;
+      this.cache = new ArrayList<>();
+      this.useCache = useCache;
+    }
+
+    void flushCache() throws IOException {
+      if (useCache && !cache.isEmpty()) {
+        log.info("Parquet cache size= {}", cache.size());
+        for (GenericRecord record : cache) {
+          writer.write(record);
+        }
+        cache.clear();
+      }
+    }
+
+    void write(GenericRecord record) throws IOException {
+      if (useCache) {
+        cache.add(record);
+      } else {
+        writer.write(record);
+      }
+    }
+
+    void close() throws IOException {
+      flushCache();
+      writer.close();
+    }
+
+    long getDataSize() {
+      return writer.getDataSize();
     }
   }
 }

@@ -89,7 +89,8 @@ public class ParquetUtilTest {
             0,
             0,
             "TEST_",
-            1);
+            1,
+            true);
   }
 
   @Test
@@ -139,7 +140,17 @@ public class ParquetUtilTest {
     rootPath = Files.createTempDirectory("PARQUET_TEST");
     parquetUtil =
         new ParquetUtil(
-            FhirVersionEnum.R4, "", rootPath.toString(), "", false, new ArrayList<>(), 0, 0, "", 1);
+            FhirVersionEnum.R4,
+            "",
+            rootPath.toString(),
+            "",
+            false,
+            new ArrayList<>(),
+            0,
+            0,
+            "",
+            1,
+            false);
     IParser parser = avroConversionUtil.getFhirContext().newJsonParser();
     Bundle bundle = parser.parseResource(Bundle.class, observationBundle);
     for (Bundle.BundleEntryComponent entry : bundle.getEntry()) {
@@ -167,7 +178,17 @@ public class ParquetUtilTest {
     rootPath = Files.createTempDirectory("PARQUET_TEST");
     parquetUtil =
         new ParquetUtil(
-            FhirVersionEnum.R4, "", rootPath.toString(), "", false, new ArrayList<>(), 1, 0, "", 1);
+            FhirVersionEnum.R4,
+            "",
+            rootPath.toString(),
+            "",
+            false,
+            new ArrayList<>(),
+            1,
+            0,
+            "",
+            1,
+            false);
     IParser parser = avroConversionUtil.getFhirContext().newJsonParser();
     Bundle bundle = parser.parseResource(Bundle.class, observationBundle);
     for (Bundle.BundleEntryComponent entry : bundle.getEntry()) {
@@ -195,7 +216,17 @@ public class ParquetUtilTest {
     rootPath = Files.createTempDirectory("PARQUET_TEST");
     parquetUtil =
         new ParquetUtil(
-            FhirVersionEnum.R4, "", rootPath.toString(), "", false, new ArrayList<>(), 0, 1, "", 1);
+            FhirVersionEnum.R4,
+            "",
+            rootPath.toString(),
+            "",
+            false,
+            new ArrayList<>(),
+            0,
+            1,
+            "",
+            1,
+            false);
     IParser parser = avroConversionUtil.getFhirContext().newJsonParser();
     Bundle bundle = parser.parseResource(Bundle.class, observationBundle);
     // There are 7 resources in the bundle so we write 15*7 (>100) resources, such that the page
@@ -240,7 +271,8 @@ public class ParquetUtilTest {
             0,
             1,
             "",
-            1);
+            1,
+            false);
 
     IParser parser = avroConversionUtil.getFhirContext().newJsonParser();
     String viewJson =
@@ -283,7 +315,17 @@ public class ParquetUtilTest {
     rootPath = Files.createTempDirectory("PARQUET_TEST");
     parquetUtil =
         new ParquetUtil(
-            FhirVersionEnum.R4, "", rootPath.toString(), "", false, new ArrayList<>(), 0, 0, "", 1);
+            FhirVersionEnum.R4,
+            "",
+            rootPath.toString(),
+            "",
+            false,
+            new ArrayList<>(),
+            0,
+            0,
+            "",
+            1,
+            false);
     String observationStr =
         Resources.toString(
             Resources.getResource("observation_decimal.json"), StandardCharsets.UTF_8);
@@ -299,7 +341,17 @@ public class ParquetUtilTest {
     rootPath = Files.createTempDirectory("PARQUET_TEST");
     parquetUtil =
         new ParquetUtil(
-            FhirVersionEnum.R4, "", rootPath.toString(), "", false, new ArrayList<>(), 0, 0, "", 1);
+            FhirVersionEnum.R4,
+            "",
+            rootPath.toString(),
+            "",
+            false,
+            new ArrayList<>(),
+            0,
+            0,
+            "",
+            1,
+            false);
     String observationBundleStr =
         Resources.toString(
             Resources.getResource("observation_decimal_bundle.json"), StandardCharsets.UTF_8);
@@ -315,7 +367,17 @@ public class ParquetUtilTest {
     rootPath = Files.createTempDirectory("PARQUET_TEST");
     parquetUtil =
         new ParquetUtil(
-            FhirVersionEnum.R4, "", rootPath.toString(), "", false, new ArrayList<>(), 0, 0, "", 1);
+            FhirVersionEnum.R4,
+            "",
+            rootPath.toString(),
+            "",
+            false,
+            new ArrayList<>(),
+            0,
+            0,
+            "",
+            1,
+            false);
 
     String patientStr =
         Resources.toString(Resources.getResource("patient_bundle.json"), StandardCharsets.UTF_8);
@@ -350,7 +412,8 @@ public class ParquetUtilTest {
             0,
             0,
             "",
-            1);
+            1,
+            false);
 
     String questionnaireResponseStr =
         Resources.toString(
