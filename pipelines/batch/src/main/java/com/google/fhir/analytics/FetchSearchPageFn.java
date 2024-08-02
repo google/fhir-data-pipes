@@ -215,12 +215,12 @@ abstract class FetchSearchPageFn<T> extends DoFn<T, KV<String, Integer>> {
               structureDefinitionsPath,
               parquetFile,
               viewDefinitionsDir,
+              createParquetViews,
               resourceList,
               secondsToFlush,
               rowGroupSize,
               stageIdentifier + "_",
-              recursiveDepth,
-              createParquetViews);
+              recursiveDepth);
     }
     if (sinkDbConfig != null) {
       DataSource jdbcSink =

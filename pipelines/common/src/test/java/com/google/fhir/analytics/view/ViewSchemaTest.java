@@ -45,6 +45,23 @@ public class ViewSchemaTest {
 
   private static final Logger log = LoggerFactory.getLogger(ViewSchemaTest.class);
 
+  private static final String PATIENT_COLLECTION_VIEW =
+      """
+      {
+        "name":  "new_pat",
+        "resource": "Patient",
+        "status": "active",
+        "select": [
+          {
+            "column": [
+              { "name": "id", "path": "id", "type": "id" },
+              { "name": "last_name", "path": "name.family", "type": "string", "collection": true },
+              { "name": "first_name", "path": "name.given", "type": "string", "collection": true }
+            ]
+          }
+        ]
+      }""";
+
   private ViewDefinition loadDefinition(String viewFile) throws IOException {
     String viewJson = Resources.toString(Resources.getResource(viewFile), StandardCharsets.UTF_8);
     ViewDefinition viewDef;
@@ -89,6 +106,22 @@ public class ViewSchemaTest {
     assertThat(schema.getField("practitioner_id").toString(), notNullValue());
     assertThat(schema.getField("family").toString(), notNullValue());
     assertThat(schema.getField("given").toString(), notNullValue());
+  }
+
+  @Test
+  public void schemaConversionPatientWithCollection() throws IOException {
+    ViewDefinition viewDef;
+    try {
+      viewDef = ViewDefinition.createFromString(PATIENT_COLLECTION_VIEW);
+    } catch (ViewDefinitionException e) {
+
+      throw new IllegalArgumentException("Failed to validate the view in ");
+    }
+
+    Schema schema = ViewSchema.getAvroSchema(viewDef);
+    assertThat(schema.getField("id").toString(), notNullValue());
+    assertThat(schema.getField("last_name").toString(), notNullValue());
+    assertThat(schema.getField("first_name").toString(), notNullValue());
   }
 
   @Test
@@ -178,5 +211,43 @@ public class ViewSchemaTest {
     assertThat(record.get(colNames[7]), equalTo(val7));
     assertThat(record.get(colNames[8]), equalTo(val8));
     assertThat(record.get(colNames[9]), equalTo(val9));
+  }
+
+  /**
+   * Tests the setValueInRecord method for a Patient View that handles Collections
+   *
+   * @see com.google.fhir.analytics.view.ViewSchema#setValueInRecord(RowList, ViewDefinition)
+   */
+  @Test
+  public void setValueInRecordCollectionTest() throws IOException, ViewApplicationException {
+
+    ViewDefinition viewDef;
+    try {
+      viewDef = ViewDefinition.createFromString(PATIENT_COLLECTION_VIEW);
+    } catch (ViewDefinitionException e) {
+
+      throw new IllegalArgumentException("Failed to validate the view in ");
+    }
+    String[] colNames = viewDef.getAllColumns().keySet().toArray(String[]::new);
+
+    IBaseResource resource = loadResource("patient_child_us_core_profile.json", Patient.class);
+    ViewApplicator applicator = new ViewApplicator(viewDef);
+    RowList rows = applicator.apply(resource);
+
+    List<GenericRecord> result = ViewSchema.setValueInRecord(rows, viewDef);
+
+    GenericRecord record = result.get(0);
+    FlatRow row = rows.getRows().get(0);
+    List<RowElement> r1 = row.getElements();
+
+    IParser iBaseParser = FhirContext.forR4().newJsonParser();
+
+    String val0 = r1.get(0).getString();
+    String val1 = iBaseParser.encodeToString(r1.get(1).getValues().get(0));
+    String val2 = iBaseParser.encodeToString(r1.get(2).getValues().get(0));
+
+    assertThat(record.get(colNames[0]), equalTo(val0));
+    assertThat(record.get(colNames[1]), equalTo(new String[] {val1}));
+    assertThat(record.get(colNames[2]), equalTo(new String[] {val2}));
   }
 }

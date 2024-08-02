@@ -298,7 +298,7 @@ public class FhirEtl {
     }
     if (options.isCreateParquetViews() && Strings.isNullOrEmpty(options.getViewDefinitionsDir())) {
       throw new IllegalArgumentException(
-          "When using --createParquetViews," + " --viewDefinitionsDir cannot be empty");
+          "When using --createParquetViews, --viewDefinitionsDir cannot be empty");
     }
   }
 

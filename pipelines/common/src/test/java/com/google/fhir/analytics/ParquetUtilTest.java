@@ -24,11 +24,14 @@ import ca.uhn.fhir.parser.IParser;
 import com.cerner.bunsen.exception.ProfileException;
 import com.google.common.io.Resources;
 import com.google.fhir.analytics.view.ViewApplicationException;
+import com.google.fhir.analytics.view.ViewDefinition;
+import com.google.fhir.analytics.view.ViewDefinitionException;
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.*;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.stream.Stream;
@@ -81,12 +84,12 @@ public class ParquetUtilTest {
             "",
             rootPath.toString(),
             "",
+            false,
             new ArrayList<>(),
             0,
             0,
             "TEST_",
-            1,
-            false);
+            1);
   }
 
   @Test
@@ -99,6 +102,20 @@ public class ParquetUtilTest {
     String patternToBeMatched =
         path
             + "TEST_Patient_output-parquet-th-[\\p{Digit}]+-ts-[\\p{Digit}]+-r-[\\p{Digit}]+.parquet";
+    assertThat(bestFile.toString(), matchesPattern(patternToBeMatched));
+  }
+
+  /** Tests the output naming convention for Materialized ViewDefinition Parquet Files */
+  @Test
+  public void bestOutputFile_NoDirView() throws IOException {
+    ResourceId bestFile = parquetUtil.getUniqueOutputFilePathView("patient_flat");
+    String fileSeparator = DwhFiles.getFileSeparatorForDwhFiles(rootPath.toString());
+
+    String path = rootPath.toString() + fileSeparator + "patient_flat" + fileSeparator;
+    path = path.replaceAll(Matcher.quoteReplacement("\\"), Matcher.quoteReplacement("\\\\"));
+    String patternToBeMatched =
+        path
+            + "TEST_patient_flat_output-parquet-th-[\\p{Digit}]+-ts-[\\p{Digit}]+-r-[\\p{Digit}]+.parquet";
     assertThat(bestFile.toString(), matchesPattern(patternToBeMatched));
   }
 
@@ -122,7 +139,7 @@ public class ParquetUtilTest {
     rootPath = Files.createTempDirectory("PARQUET_TEST");
     parquetUtil =
         new ParquetUtil(
-            FhirVersionEnum.R4, "", rootPath.toString(), "", new ArrayList<>(), 0, 0, "", 1, false);
+            FhirVersionEnum.R4, "", rootPath.toString(), "", false, new ArrayList<>(), 0, 0, "", 1);
     IParser parser = avroConversionUtil.getFhirContext().newJsonParser();
     Bundle bundle = parser.parseResource(Bundle.class, observationBundle);
     for (Bundle.BundleEntryComponent entry : bundle.getEntry()) {
@@ -150,7 +167,7 @@ public class ParquetUtilTest {
     rootPath = Files.createTempDirectory("PARQUET_TEST");
     parquetUtil =
         new ParquetUtil(
-            FhirVersionEnum.R4, "", rootPath.toString(), "", new ArrayList<>(), 1, 0, "", 1, false);
+            FhirVersionEnum.R4, "", rootPath.toString(), "", false, new ArrayList<>(), 1, 0, "", 1);
     IParser parser = avroConversionUtil.getFhirContext().newJsonParser();
     Bundle bundle = parser.parseResource(Bundle.class, observationBundle);
     for (Bundle.BundleEntryComponent entry : bundle.getEntry()) {
@@ -170,7 +187,7 @@ public class ParquetUtilTest {
                                 + "Observation"
                                 + fileSeparator
                                 + "Observation_output-"));
-    assertThat(files.count(), equalTo(7L));
+    assertThat(files.count(), equalTo(6L));
   }
 
   @Test
@@ -178,7 +195,7 @@ public class ParquetUtilTest {
     rootPath = Files.createTempDirectory("PARQUET_TEST");
     parquetUtil =
         new ParquetUtil(
-            FhirVersionEnum.R4, "", rootPath.toString(), "", new ArrayList<>(), 0, 1, "", 1, false);
+            FhirVersionEnum.R4, "", rootPath.toString(), "", false, new ArrayList<>(), 0, 1, "", 1);
     IParser parser = avroConversionUtil.getFhirContext().newJsonParser();
     Bundle bundle = parser.parseResource(Bundle.class, observationBundle);
     // There are 7 resources in the bundle so we write 15*7 (>100) resources, such that the page
@@ -204,6 +221,59 @@ public class ParquetUtilTest {
     assertThat(files.count(), equalTo(1L));
   }
 
+  /** Tests the ParquetUtil write method for Materialized ViewDefinitions */
+  @Test
+  public void createOutputWithRowGroupSizeViewToParquet()
+      throws IOException, ProfileException, ViewApplicationException {
+    rootPath = Files.createTempDirectory("PARQUET_TEST");
+    String path = Resources.getResource("observation_flat_view.json").getFile();
+    int index = path.indexOf("pipelines");
+    path = path.substring(0, index) + "docker/config/views";
+    parquetUtil =
+        new ParquetUtil(
+            FhirVersionEnum.R4,
+            "",
+            rootPath.toString(),
+            path,
+            true,
+            new ArrayList<>(Arrays.asList("Observation")),
+            0,
+            1,
+            "",
+            1);
+
+    IParser parser = avroConversionUtil.getFhirContext().newJsonParser();
+    String viewJson =
+        Resources.toString(
+            Resources.getResource("observation_flat_view.json"), StandardCharsets.UTF_8);
+
+    ViewDefinition viewDef;
+    try {
+      viewDef = ViewDefinition.createFromString(viewJson);
+    } catch (ViewDefinitionException v) {
+      throw new IllegalArgumentException("Failed to validate the view in observation_flat_view");
+    }
+
+    Bundle bundle = parser.parseResource(Bundle.class, observationBundle);
+    for (Bundle.BundleEntryComponent entry : bundle.getEntry()) {
+      parquetUtil.write(entry.getResource(), viewDef);
+    }
+    parquetUtil.closeAllWriters();
+    String fileSeparator = DwhFiles.getFileSeparatorForDwhFiles(rootPath.toString());
+    Stream<Path> files =
+        Files.list(rootPath.resolve("observation_flat"))
+            .filter(
+                f ->
+                    f.toString()
+                        .startsWith(
+                            rootPath.toString()
+                                + fileSeparator
+                                + "observation_flat"
+                                + fileSeparator
+                                + "observation_flat_output-"));
+    assertThat(files.count(), equalTo(1L));
+  }
+
   /**
    * This is the test to demonstrate the BigDecimal conversion bug. See:
    * https://github.com/GoogleCloudPlatform/openmrs-fhir-analytics/issues/156
@@ -213,7 +283,7 @@ public class ParquetUtilTest {
     rootPath = Files.createTempDirectory("PARQUET_TEST");
     parquetUtil =
         new ParquetUtil(
-            FhirVersionEnum.R4, "", rootPath.toString(), "", new ArrayList<>(), 0, 0, "", 1, false);
+            FhirVersionEnum.R4, "", rootPath.toString(), "", false, new ArrayList<>(), 0, 0, "", 1);
     String observationStr =
         Resources.toString(
             Resources.getResource("observation_decimal.json"), StandardCharsets.UTF_8);
@@ -229,7 +299,7 @@ public class ParquetUtilTest {
     rootPath = Files.createTempDirectory("PARQUET_TEST");
     parquetUtil =
         new ParquetUtil(
-            FhirVersionEnum.R4, "", rootPath.toString(), "", new ArrayList<>(), 0, 0, "", 1, false);
+            FhirVersionEnum.R4, "", rootPath.toString(), "", false, new ArrayList<>(), 0, 0, "", 1);
     String observationBundleStr =
         Resources.toString(
             Resources.getResource("observation_decimal_bundle.json"), StandardCharsets.UTF_8);
@@ -245,7 +315,7 @@ public class ParquetUtilTest {
     rootPath = Files.createTempDirectory("PARQUET_TEST");
     parquetUtil =
         new ParquetUtil(
-            FhirVersionEnum.R4, "", rootPath.toString(), "", new ArrayList<>(), 0, 0, "", 1, false);
+            FhirVersionEnum.R4, "", rootPath.toString(), "", false, new ArrayList<>(), 0, 0, "", 1);
 
     String patientStr =
         Resources.toString(Resources.getResource("patient_bundle.json"), StandardCharsets.UTF_8);
@@ -275,12 +345,12 @@ public class ParquetUtilTest {
             "classpath:/r4-us-core-definitions",
             rootPath.toString(),
             "",
+            false,
             new ArrayList<>(),
             0,
             0,
             "",
-            1,
-            false);
+            1);
 
     String questionnaireResponseStr =
         Resources.toString(

@@ -190,6 +190,9 @@ public class ViewSchema {
         if (e.getPrimitive() != null) {
           if (ViewApplicator.ID_TYPE.equals(e.getColumnInfo().getInferredType())) {
             currentRecord.put(e.getColumnInfo().getName(), e.getString());
+            // log.warn("Found a id column named: ", e.getColumnInfo().getName());
+            // String res = String.format("Value: %s ", e);
+            // log.warn(res);
           } else {
             String elementType =
                 e.getColumnInfo().getType() == null ? "any" : e.getColumnInfo().getType();
@@ -223,13 +226,17 @@ public class ViewSchema {
             }
           }
         } else {
-          // Currently arrays are not supported; also type inference is not enabled.
           if (e.getColumnInfo().isCollection() || e.getColumnInfo().getType() instanceof String) {
             if (e.getValues() == null || e.getValues().size() < 1) {
               currentRecord.put(e.getColumnInfo().getName(), null);
             } else {
-              String result = String.join(",", Arrays.toString(e.getValues().toArray()));
-              currentRecord.put(e.getColumnInfo().getName(), result);
+              // Handles View Definition Collections and converts them to Avro String Arrays
+              String[] array = new String[e.getValues().size()];
+              for (int i = 0; i < e.getValues().size(); i++) {
+                array[i] = e.getValues().get(i).toString();
+              }
+              System.out.println(Arrays.toString(array));
+              currentRecord.put(e.getName(), array);
             }
           } else {
             // This happens when there is no value for a column with a primitive type.
@@ -244,7 +251,7 @@ public class ViewSchema {
 
   /**
    * Creates an Avro Schema for a given View Definition. Note: This conversion should be consistent
-   * with DefinitionToAvroVisitor
+   * with {@see #com.cerner.bunsen.avro.converters.DefinitionToAvroVisitor}
    *
    * @param view the input View Definition
    * @return Avro Schema
@@ -292,9 +299,19 @@ public class ViewSchema {
               "uuid" -> schemaFields.optionalString(colName);
         }
       } else {
-        // This is to handle non-primitive types or when the type is not specified, we may want to
-        // separate these cases from string in the future.
-        schemaFields.optionalString(colName);
+        if (entry.getValue().isCollection()) {
+          schemaFields
+              .name(colName)
+              .type()
+              .nullable()
+              .array()
+              .items(Schema.create(Schema.Type.STRING))
+              .noDefault();
+        } else {
+          // This is to handle non-primitive types or when the type is not specified, we may want to
+          // separate these cases from string in the future.
+          schemaFields.optionalString(colName);
+        }
       }
     }
     return schemaFields.endRecord();

@@ -73,8 +73,4 @@ public class ViewManager {
     }
     return ImmutableList.copyOf(viewMap.get(resourceType));
   }
-
-  public List<ViewDefinition> getViewMap() {
-    return new ArrayList<>(viewMap.values());
-  }
 }
