@@ -28,7 +28,7 @@
     <hapi.fhir.version>7.2.2</hapi.fhir.version>
     <avro.version>1.11.3</avro.version>
     <junit.version>4.13.2</junit.version>
-    <hamcrest.version>2.2</hamcrest.version>
+    <hamcrest.version>3.0</hamcrest.version>
     <scm.url>http://github.com/cerner/bunsen/tree/master/</scm.url>
     <scm.connection>scm:git:git@github.com/cerner/bunsen.git</scm.connection>
     <python.version>3.5.3</python.version>
