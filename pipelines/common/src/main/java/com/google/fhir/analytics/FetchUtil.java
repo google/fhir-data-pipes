@@ -215,6 +215,14 @@ public class FetchUtil {
       client.registerInterceptor(loggingInterceptor);
     }
 
+    // TODO: Consider adding/tuning the retry logic of the HTTP client too. Two points about this:
+    //  1) `IRestfulClientFactory` doesn't expose retry handler tuning of the underlying Apache HTTP
+    //  client. However, by default, that client should use the `DefaultHttpRequestRetryHandler`
+    //  which retries an idempotent request 3 times, unless there are specific exceptions; see:
+    //
+    // https://hc.apache.org/httpcomponents-client-4.5.x/current/httpclient/apidocs/org/apache/http/impl/client/DefaultHttpRequestRetryHandler.html#DefaultHttpRequestRetryHandler()
+    //  2) The Beam runners should retry failed bundles as well; however, this does not seem to be
+    //  happening by the local `FlinkRunner`!
     return client;
   }
 

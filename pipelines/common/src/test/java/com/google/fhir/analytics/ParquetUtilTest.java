@@ -73,7 +73,8 @@ public class ParquetUtilTest {
             Resources.getResource("observation_bundle.json"), StandardCharsets.UTF_8);
     AvroConversionUtil.deRegisterMappingsFor(FhirVersionEnum.R4);
     avroConversionUtil = AvroConversionUtil.getInstance(FhirVersionEnum.R4, "", 1);
-    parquetUtil = new ParquetUtil(FhirVersionEnum.R4, "", rootPath.toString(), 0, 0, "TEST_", 1);
+    parquetUtil =
+        new ParquetUtil(FhirVersionEnum.R4, "", rootPath.toString(), 0, 0, "TEST_", 1, false);
   }
 
   @Test
@@ -107,7 +108,7 @@ public class ParquetUtilTest {
   @Test
   public void createSingleOutput() throws IOException, ProfileException {
     rootPath = Files.createTempDirectory("PARQUET_TEST");
-    parquetUtil = new ParquetUtil(FhirVersionEnum.R4, "", rootPath.toString(), 0, 0, "", 1);
+    parquetUtil = new ParquetUtil(FhirVersionEnum.R4, "", rootPath.toString(), 0, 0, "", 1, false);
     IParser parser = avroConversionUtil.getFhirContext().newJsonParser();
     Bundle bundle = parser.parseResource(Bundle.class, observationBundle);
     for (Bundle.BundleEntryComponent entry : bundle.getEntry()) {
@@ -133,7 +134,7 @@ public class ParquetUtilTest {
   public void createMultipleOutputByTime()
       throws IOException, InterruptedException, ProfileException {
     rootPath = Files.createTempDirectory("PARQUET_TEST");
-    parquetUtil = new ParquetUtil(FhirVersionEnum.R4, "", rootPath.toString(), 1, 0, "", 1);
+    parquetUtil = new ParquetUtil(FhirVersionEnum.R4, "", rootPath.toString(), 1, 0, "", 1, false);
     IParser parser = avroConversionUtil.getFhirContext().newJsonParser();
     Bundle bundle = parser.parseResource(Bundle.class, observationBundle);
     for (Bundle.BundleEntryComponent entry : bundle.getEntry()) {
@@ -159,7 +160,7 @@ public class ParquetUtilTest {
   @Test
   public void createSingleOutputWithRowGroupSize() throws IOException, ProfileException {
     rootPath = Files.createTempDirectory("PARQUET_TEST");
-    parquetUtil = new ParquetUtil(FhirVersionEnum.R4, "", rootPath.toString(), 0, 1, "", 1);
+    parquetUtil = new ParquetUtil(FhirVersionEnum.R4, "", rootPath.toString(), 0, 1, "", 1, false);
     IParser parser = avroConversionUtil.getFhirContext().newJsonParser();
     Bundle bundle = parser.parseResource(Bundle.class, observationBundle);
     // There are 7 resources in the bundle so we write 15*7 (>100) resources, such that the page
@@ -192,7 +193,7 @@ public class ParquetUtilTest {
   @Test
   public void writeObservationWithBigDecimalValue() throws IOException, ProfileException {
     rootPath = Files.createTempDirectory("PARQUET_TEST");
-    parquetUtil = new ParquetUtil(FhirVersionEnum.R4, "", rootPath.toString(), 0, 0, "", 1);
+    parquetUtil = new ParquetUtil(FhirVersionEnum.R4, "", rootPath.toString(), 0, 0, "", 1, false);
     String observationStr =
         Resources.toString(
             Resources.getResource("observation_decimal.json"), StandardCharsets.UTF_8);
@@ -206,7 +207,7 @@ public class ParquetUtilTest {
   public void writeObservationBundleWithDecimalConversionIssue()
       throws IOException, ProfileException {
     rootPath = Files.createTempDirectory("PARQUET_TEST");
-    parquetUtil = new ParquetUtil(FhirVersionEnum.R4, "", rootPath.toString(), 0, 0, "", 1);
+    parquetUtil = new ParquetUtil(FhirVersionEnum.R4, "", rootPath.toString(), 0, 0, "", 1, false);
     String observationBundleStr =
         Resources.toString(
             Resources.getResource("observation_decimal_bundle.json"), StandardCharsets.UTF_8);
@@ -219,7 +220,7 @@ public class ParquetUtilTest {
   @Test
   public void writeObservationBundleWithMultipleProfiles() throws IOException, ProfileException {
     rootPath = Files.createTempDirectory("PARQUET_TEST");
-    parquetUtil = new ParquetUtil(FhirVersionEnum.R4, "", rootPath.toString(), 0, 0, "", 1);
+    parquetUtil = new ParquetUtil(FhirVersionEnum.R4, "", rootPath.toString(), 0, 0, "", 1, false);
 
     String patientStr =
         Resources.toString(Resources.getResource("patient_bundle.json"), StandardCharsets.UTF_8);
@@ -251,7 +252,8 @@ public class ParquetUtilTest {
             0,
             0,
             "",
-            1);
+            1,
+            false);
 
     String questionnaireResponseStr =
         Resources.toString(
