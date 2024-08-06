@@ -17,6 +17,7 @@ package com.google.fhir.analytics;
 
 import ca.uhn.fhir.parser.DataFormatException;
 import com.google.common.base.Strings;
+import com.google.fhir.analytics.PipelineManager.DwhRunDetails;
 import com.google.fhir.analytics.PipelineManager.RunMode;
 import com.google.fhir.analytics.metrics.CumulativeMetrics;
 import com.google.fhir.analytics.metrics.ProgressStats;
@@ -112,13 +113,22 @@ public class ApiController {
     return Stats.createStats(cumulativeMetrics);
   }
 
+  /** If available, fetches the error log file for the latest pipeline run. */
   @GetMapping(
-      value = "/download",
+      value = "/download-error-log",
       produces = {MediaType.TEXT_PLAIN_VALUE})
-  public ResponseEntity<InputStreamResource> download(@RequestParam(name = "path") String path)
-      throws IOException {
-    ResourceId resourceId = FileSystems.matchNewResource(path, false);
-    ReadableByteChannel channel = FileSystems.open(resourceId);
+  public ResponseEntity<InputStreamResource> downloadErrorLog() throws IOException {
+    DwhRunDetails lastRunDetails = pipelineManager.getLastRunDetails();
+    if (lastRunDetails == null) {
+      throw new IllegalStateException("No pipelines have been run yet");
+    }
+    if (Strings.isNullOrEmpty(lastRunDetails.getErrorLogPath())) {
+      throw new IllegalStateException("No error file exists for the last pipeline run");
+    }
+
+    ResourceId errorResource =
+        FileSystems.matchNewResource(lastRunDetails.getErrorLogPath(), false);
+    ReadableByteChannel channel = FileSystems.open(errorResource);
     InputStream stream = Channels.newInputStream(channel);
     InputStreamResource inputStreamResource = new InputStreamResource(stream);
     MultiValueMap<String, String> headers = new HttpHeaders();

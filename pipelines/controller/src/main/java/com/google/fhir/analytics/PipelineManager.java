@@ -749,7 +749,7 @@ public class PipelineManager implements ApplicationListener<ApplicationReadyEven
         dwhRoot = dwhRoot.endsWith(fileSeparator) ? dwhRoot : dwhRoot + fileSeparator;
         ResourceId errorResource = FileSystems.matchNewResource(dwhRoot + ERROR_FILE_NAME, false);
         if (dwhFilesManager.doesFileExist(errorResource)) {
-          dwhRunDetails.setLogFilePath(dwhRoot + ERROR_FILE_NAME);
+          dwhRunDetails.setErrorLogPath(dwhRoot + ERROR_FILE_NAME);
         }
       }
       dwhRunDetails.setStatus(status);
@@ -772,6 +772,6 @@ public class PipelineManager implements ApplicationListener<ApplicationReadyEven
     private String startTime;
     private String endTime;
     private String status;
-    private String logFilePath;
+    private String errorLogPath;
   }
 }

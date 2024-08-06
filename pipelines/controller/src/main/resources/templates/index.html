@@ -15,8 +15,8 @@
           th:src="@{/bootstrap-5.0.2-dist/js/bootstrap.min.js}"></script>
 
   <script>
-    function openLogs(logPath) {
-      const url = "/download?path="+logPath;
+    function openErrorLog() {
+      const url = "/download-error-log";
       // Encode the special characters in the url
       const encodedURL = encodeURI(url);
       window.open(encodedURL, '_blank').focus();
@@ -232,13 +232,12 @@
         <div class="alert alert-danger alert-dismissible fade show"
              th:if="${lastRunDetails ne null AND lastRunDetails.status == 'FAILURE'}"
              style="color:red">
-          <div th:if="${#strings.isEmpty(lastRunDetails.logFilePath)}">
+          <div th:if="${#strings.isEmpty(lastRunDetails.errorLogPath)}">
             Last run failed and the logs are not available. Please contact the Administrator.
           </div>
-          <div th:unless="${#strings.isEmpty(lastRunDetails.logFilePath)}">
+          <div th:unless="${#strings.isEmpty(lastRunDetails.errorLogPath)}">
             Last run failed! Please find error logs here
-            <button type="submit"
-                    class="button btn btn-primary" th:onclick="openLogs([[${lastRunDetails.logFilePath}]])">
+            <button type="submit" class="button btn btn-primary" th:onclick="openErrorLog()">
               View Raw Logs
             </button>
           </div>
