@@ -255,11 +255,13 @@ public class ParquetUtilTest {
   /** Tests the ParquetUtil write method for Materialized ViewDefinitions */
   @Test
   public void createOutputWithRowGroupSizeViewToParquet()
-      throws IOException, ProfileException, ViewApplicationException {
+      throws IOException, ProfileException, ViewApplicationException, ViewDefinitionException,
+          InterruptedException {
     rootPath = Files.createTempDirectory("PARQUET_TEST");
+    String fileSeparator = DwhFiles.getFileSeparatorForDwhFiles(rootPath.toString());
     String path = Resources.getResource("observation_flat_view.json").getFile();
     int index = path.indexOf("pipelines");
-    path = path.substring(0, index) + "docker/config/views";
+    path = path.substring(0, index) + "docker" + fileSeparator + "config" + fileSeparator + "views";
     parquetUtil =
         new ParquetUtil(
             FhirVersionEnum.R4,
@@ -268,7 +270,7 @@ public class ParquetUtilTest {
             path,
             true,
             new ArrayList<>(Arrays.asList("Observation")),
-            0,
+            1,
             1,
             "",
             1,
@@ -278,20 +280,14 @@ public class ParquetUtilTest {
     String viewJson =
         Resources.toString(
             Resources.getResource("observation_flat_view.json"), StandardCharsets.UTF_8);
-
-    ViewDefinition viewDef;
-    try {
-      viewDef = ViewDefinition.createFromString(viewJson);
-    } catch (ViewDefinitionException v) {
-      throw new IllegalArgumentException("Failed to validate the view in observation_flat_view");
-    }
+    ViewDefinition viewDef = ViewDefinition.createFromString(viewJson);
 
     Bundle bundle = parser.parseResource(Bundle.class, observationBundle);
     for (Bundle.BundleEntryComponent entry : bundle.getEntry()) {
       parquetUtil.write(entry.getResource(), viewDef);
+      TimeUnit.SECONDS.sleep(2); // A better way to test this is to inject a mocked `Timer`.
     }
     parquetUtil.closeAllWriters();
-    String fileSeparator = DwhFiles.getFileSeparatorForDwhFiles(rootPath.toString());
     Stream<Path> files =
         Files.list(rootPath.resolve("observation_flat"))
             .filter(
@@ -303,7 +299,7 @@ public class ParquetUtilTest {
                                 + "observation_flat"
                                 + fileSeparator
                                 + "observation_flat_output-"));
-    assertThat(files.count(), equalTo(1L));
+    assertThat(files.count(), equalTo(6L));
   }
 
   /**

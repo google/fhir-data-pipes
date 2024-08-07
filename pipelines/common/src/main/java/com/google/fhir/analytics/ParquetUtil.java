@@ -32,6 +32,7 @@ import java.io.OutputStream;
 import java.nio.channels.Channels;
 import java.nio.channels.WritableByteChannel;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -62,7 +63,6 @@ public class ParquetUtil {
   private static final Logger log = LoggerFactory.getLogger(ParquetUtil.class);
   public static String PARQUET_EXTENSION = ".parquet";
   private final AvroConversionUtil conversionUtil;
-  // private final Map<String, ParquetWriter<GenericRecord>> writerMap;
 
   private final Map<String, ParquetWriter<GenericRecord>> viewWriterMap;
   private final Map<String, WriterWithCache> writerMap;
@@ -149,10 +149,21 @@ public class ParquetUtil {
           names.addAll(allViewsForType.stream().map(v -> v.getName()).toList());
         }
       }
-      Set<String> viewNames = new HashSet<>(names);
-      if (viewNames.size() != names.size()) {
+      Map<String, Integer> frequencyMap = new HashMap<>();
+      Set<String> dupViews = new HashSet<>();
+      for (String name : names) {
+        frequencyMap.put(name, frequencyMap.getOrDefault(name, 0) + 1);
+      }
+      for (String name : frequencyMap.keySet()) {
+        if (frequencyMap.get(name) > 1) {
+          dupViews.add(name);
+        }
+      }
+      if (!dupViews.isEmpty()) {
         String errorMsg =
-            "Duplicate View Definition names found! Ensure each view has a distinct name!";
+            "Duplicate ViewDefinition names found: "
+                + Arrays.toString(dupViews.toArray())
+                + ". Ensure each view has a distinct name!";
         log.error(errorMsg);
         throw new IllegalArgumentException(errorMsg);
       }
@@ -217,9 +228,11 @@ public class ParquetUtil {
 
   private synchronized void createWriter(String resourceType, @Nullable ViewDefinition vDef)
       throws IOException, ProfileException {
-    boolean flag = vDef == null;
+    boolean noView = vDef == null;
     ResourceId resourceId =
-        flag ? getUniqueOutputFilePath(resourceType) : getUniqueOutputFilePathView(vDef.getName());
+        noView
+            ? getUniqueOutputFilePath(resourceType)
+            : getUniqueOutputFilePathView(vDef.getName());
 
     WritableByteChannel writableByteChannel =
         org.apache.beam.sdk.io.FileSystems.create(resourceId, MimeTypes.BINARY);
@@ -232,7 +245,7 @@ public class ParquetUtil {
       builder.withRowGroupSize(rowGroupSize);
     }
     ParquetWriter<GenericRecord> writer;
-    if (flag) {
+    if (noView) {
       writer = builder.withSchema(conversionUtil.getResourceSchema(resourceType)).build();
       writerMap.put(resourceType, new WriterWithCache(writer, this.cacheBundle));
     } else {
@@ -298,7 +311,7 @@ public class ParquetUtil {
     ParquetWriter<GenericRecord> writer = viewWriterMap.get(viewName);
     if (writer != null && writer.getDataSize() > 0) {
       writer.close();
-      writerMap.remove(viewName);
+      viewWriterMap.remove(viewName);
     }
   }
 

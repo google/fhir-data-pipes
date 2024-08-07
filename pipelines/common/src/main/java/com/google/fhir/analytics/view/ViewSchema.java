@@ -27,7 +27,6 @@ import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 import java.util.Map.Entry;
@@ -190,9 +189,6 @@ public class ViewSchema {
         if (e.getPrimitive() != null) {
           if (ViewApplicator.ID_TYPE.equals(e.getColumnInfo().getInferredType())) {
             currentRecord.put(e.getColumnInfo().getName(), e.getString());
-            // log.warn("Found a id column named: ", e.getColumnInfo().getName());
-            // String res = String.format("Value: %s ", e);
-            // log.warn(res);
           } else {
             String elementType =
                 e.getColumnInfo().getType() == null ? "any" : e.getColumnInfo().getType();
@@ -231,12 +227,11 @@ public class ViewSchema {
               currentRecord.put(e.getColumnInfo().getName(), null);
             } else {
               // Handles View Definition Collections and converts them to Avro String Arrays
-              String[] array = new String[e.getValues().size()];
+              String[] values = new String[e.getValues().size()];
               for (int i = 0; i < e.getValues().size(); i++) {
-                array[i] = e.getValues().get(i).toString();
+                values[i] = e.getValues().get(i).toString();
               }
-              System.out.println(Arrays.toString(array));
-              currentRecord.put(e.getName(), array);
+              currentRecord.put(e.getName(), values);
             }
           } else {
             // This happens when there is no value for a column with a primitive type.
