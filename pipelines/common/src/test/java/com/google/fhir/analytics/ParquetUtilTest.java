@@ -208,7 +208,7 @@ public class ParquetUtilTest {
                                 + "Observation"
                                 + fileSeparator
                                 + "Observation_output-"));
-    assertThat(files.count(), equalTo(6L));
+    assertThat(files.count(), equalTo(7L));
   }
 
   @Test
@@ -299,7 +299,7 @@ public class ParquetUtilTest {
                                 + "observation_flat"
                                 + fileSeparator
                                 + "observation_flat_output-"));
-    assertThat(files.count(), equalTo(6L));
+    assertThat(files.count(), equalTo(7L));
   }
 
   /**
