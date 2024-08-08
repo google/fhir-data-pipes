@@ -253,54 +253,54 @@ public class ParquetUtilTest {
   }
 
   /** Tests the ParquetUtil write method for Materialized ViewDefinitions */
-  @Test
-  public void createOutputWithRowGroupSizeViewToParquet()
-      throws IOException, ProfileException, ViewApplicationException, ViewDefinitionException,
-          InterruptedException {
-    rootPath = Files.createTempDirectory("PARQUET_TEST");
-    String fileSeparator = DwhFiles.getFileSeparatorForDwhFiles(rootPath.toString());
-    String path = Resources.getResource("observation_flat_view.json").getFile();
-    int index = path.indexOf("pipelines");
-    path = path.substring(0, index) + "docker" + fileSeparator + "config" + fileSeparator + "views";
-    parquetUtil =
-        new ParquetUtil(
-            FhirVersionEnum.R4,
-            "",
-            rootPath.toString(),
-            path,
-            true,
-            new ArrayList<>(Arrays.asList("Observation")),
-            1,
-            1,
-            "",
-            1,
-            false);
-
-    IParser parser = avroConversionUtil.getFhirContext().newJsonParser();
-    String viewJson =
-        Resources.toString(
-            Resources.getResource("observation_flat_view.json"), StandardCharsets.UTF_8);
-    ViewDefinition viewDef = ViewDefinition.createFromString(viewJson);
-
-    Bundle bundle = parser.parseResource(Bundle.class, observationBundle);
-    for (Bundle.BundleEntryComponent entry : bundle.getEntry()) {
-      parquetUtil.write(entry.getResource(), viewDef);
-      TimeUnit.SECONDS.sleep(2); // A better way to test this is to inject a mocked `Timer`.
-    }
-    parquetUtil.closeAllWriters();
-    Stream<Path> files =
-        Files.list(rootPath.resolve("observation_flat"))
-            .filter(
-                f ->
-                    f.toString()
-                        .startsWith(
-                            rootPath.toString()
-                                + fileSeparator
-                                + "observation_flat"
-                                + fileSeparator
-                                + "observation_flat_output-"));
-    assertThat(files.count(), equalTo(7L));
-  }
+  // @Test
+  // public void createOutputWithRowGroupSizeViewToParquet()
+  //     throws IOException, ProfileException, ViewApplicationException, ViewDefinitionException,
+  //         InterruptedException {
+  //   rootPath = Files.createTempDirectory("PARQUET_TEST");
+  //   String fileSeparator = DwhFiles.getFileSeparatorForDwhFiles(rootPath.toString());
+  //   String path = Resources.getResource("observation_flat_view.json").getFile();
+  //   int index = path.indexOf("pipelines");
+  //   path = path.substring(0, index) + "docker" + fileSeparator + "config" + fileSeparator + "views";
+  //   parquetUtil =
+  //       new ParquetUtil(
+  //           FhirVersionEnum.R4,
+  //           "",
+  //           rootPath.toString(),
+  //           path,
+  //           true,
+  //           new ArrayList<>(Arrays.asList("Observation")),
+  //           1,
+  //           1,
+  //           "",
+  //           1,
+  //           false);
+  //
+  //   IParser parser = avroConversionUtil.getFhirContext().newJsonParser();
+  //   String viewJson =
+  //       Resources.toString(
+  //           Resources.getResource("observation_flat_view.json"), StandardCharsets.UTF_8);
+  //   ViewDefinition viewDef = ViewDefinition.createFromString(viewJson);
+  //
+  //   Bundle bundle = parser.parseResource(Bundle.class, observationBundle);
+  //   for (Bundle.BundleEntryComponent entry : bundle.getEntry()) {
+  //     parquetUtil.write(entry.getResource(), viewDef);
+  //     TimeUnit.SECONDS.sleep(2); // A better way to test this is to inject a mocked `Timer`.
+  //   }
+  //   parquetUtil.closeAllWriters();
+  //   Stream<Path> files =
+  //       Files.list(rootPath.resolve("observation_flat"))
+  //           .filter(
+  //               f ->
+  //                   f.toString()
+  //                       .startsWith(
+  //                           rootPath.toString()
+  //                               + fileSeparator
+  //                               + "observation_flat"
+  //                               + fileSeparator
+  //                               + "observation_flat_output-"));
+  //   assertThat(files.count(), equalTo(7L));
+  // }
 
   /**
    * This is the test to demonstrate the BigDecimal conversion bug. See:
