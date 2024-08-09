@@ -28,9 +28,7 @@ import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Map.Entry;
 import java.util.stream.Collectors;
 import org.apache.avro.Schema;
@@ -312,37 +310,5 @@ public class ViewSchema {
       }
     }
     return schemaFields.endRecord();
-  }
-
-  /**
-   * Generates a Mapping of View Definition Name to View Definition.
-   *
-   * @param viewNames {@see com.google.fhir.analytics.ParquetUtil} List of view names to check for
-   *     duplicates
-   * @param allViews List of View Definitions
-   * @param resourceList List of Resource Types
-   * @param viewManager View Manager instance to grab View Definitions
-   * @return The populated view map
-   */
-  public static Map<String, ViewDefinition> createViewMap(
-      List<String> viewNames,
-      List<ViewDefinition> allViews,
-      List<String> resourceList,
-      ViewManager viewManager) {
-    Map<String, ViewDefinition> result = new HashMap<>();
-
-    for (String type : resourceList) {
-      List<ViewDefinition> allViewsForType = viewManager.getViewsForType(type);
-      if (allViewsForType != null) {
-        viewNames.addAll(allViewsForType.stream().map(v -> v.getName()).toList());
-        allViews.addAll(allViewsForType);
-      }
-    }
-    for (ViewDefinition vDef : allViews) {
-      if (!result.containsKey(vDef.getName())) {
-        result.put(vDef.getName(), vDef);
-      }
-    }
-    return result;
   }
 }

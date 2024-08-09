@@ -64,7 +64,7 @@ public class ParquetUtil {
   public static String PARQUET_EXTENSION = ".parquet";
   private final AvroConversionUtil conversionUtil;
 
-  private Map<String, ViewDefinition> viewMap;
+  private final Map<String, ViewDefinition> viewMap;
 
   private final Map<String, ParquetWriter<GenericRecord>> viewWriterMap;
   private final Map<String, WriterWithCache> writerMap;
@@ -134,7 +134,7 @@ public class ParquetUtil {
     this.namePrefix = namePrefix;
     this.createParquetViews = createParquetViews;
     this.viewWriterMap = new HashMap<>();
-    this.viewMap = null;
+    this.viewMap = new HashMap<>();
     this.viewManager = null;
     setFlushedInCurrentPeriod(false);
     if (createParquetViews) {
@@ -146,8 +146,19 @@ public class ParquetUtil {
         throw new IllegalArgumentException(errorMsg);
       }
       List<String> names = new ArrayList<>();
-      this.viewMap =
-          ViewSchema.createViewMap(names, new ArrayList<>(), resourceList, this.viewManager);
+      List<ViewDefinition> allViews = new ArrayList<>();
+      for (String type : resourceList) {
+        List<ViewDefinition> allViewsForType = viewManager.getViewsForType(type);
+        if (allViewsForType != null) {
+          names.addAll(allViewsForType.stream().map(v -> v.getName()).toList());
+          allViews.addAll(allViewsForType);
+        }
+      }
+      for (ViewDefinition vDef : allViews) {
+        if (!viewMap.containsKey(vDef.getName())) {
+          viewMap.put(vDef.getName(), vDef);
+        }
+      }
 
       Map<String, Integer> frequencyMap = new HashMap<>();
       Set<String> dupViews = new HashSet<>();
