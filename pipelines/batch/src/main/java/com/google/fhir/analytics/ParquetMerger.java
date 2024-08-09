@@ -32,7 +32,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import javax.annotation.Nullable;
+import org.apache.avro.Schema;
 import org.apache.avro.generic.GenericRecord;
 import org.apache.beam.sdk.Pipeline;
 import org.apache.beam.sdk.extensions.avro.coders.AvroCoder;
@@ -76,12 +76,7 @@ public class ParquetMerger {
    * {@code resourceType}. It then groups the records by ID key and returns the grouped PCollection.
    */
   private static PCollection<KV<String, Iterable<GenericRecord>>> readAndGroupById(
-      Pipeline pipeline,
-      List<DwhFiles> dwhFilesList,
-      String resourceType,
-      AvroConversionUtil avroConversionUtil,
-      @Nullable ViewDefinition viewDefinition)
-      throws ProfileException {
+      Pipeline pipeline, List<DwhFiles> dwhFilesList, String resourceType, Schema schema) {
 
     // Reading all parquet files at once instead of one set at a time, reduces the number of Flink
     // reshuffle operations by one.
@@ -91,18 +86,7 @@ public class ParquetMerger {
             .apply(FileIO.matchAll())
             .apply(FileIO.readMatches());
 
-    PCollection<GenericRecord> records;
-    if (viewDefinition != null) {
-      // The assumption here is that the schema of the old parquet files is same as the current
-      // schema, otherwise reading of the older records fail even if the new Schema is just an
-      // extension. In general, if the schema changes due to addition of new extensions, then the
-      // merging process fail. It is recommended to recreate the entire parquet files using the new
-      // schema again using the batch run.
-      records = inputFiles.apply(ParquetIO.readFiles(ViewSchema.getAvroSchema(viewDefinition)));
-    } else {
-      records =
-          inputFiles.apply(ParquetIO.readFiles(avroConversionUtil.getResourceSchema(resourceType)));
-    }
+    PCollection<GenericRecord> records = inputFiles.apply(ParquetIO.readFiles(schema));
 
     return records
         .apply(
@@ -233,34 +217,13 @@ public class ParquetMerger {
         throw new IllegalArgumentException(errorMsg);
       }
 
-      // Populate View Map
-      List<ViewDefinition> allViews = new ArrayList<>();
-      for (String type : resourceList) {
-        List<ViewDefinition> allViewsForType = viewManager.getViewsForType(type);
-        if (allViewsForType != null) {
-          allViews.addAll(allViewsForType);
-        }
-      }
-      for (ViewDefinition vDef : allViews) {
-        if (!viewMap.containsKey(vDef.getName())) {
-          viewMap.put(vDef.getName(), vDef);
-        }
-      }
-
-      for (String view : Sets.difference(dwhViews1, dwhViews2)) {
-        dwhFiles1.copyResourcesToDwh(view, mergedDwhFiles);
-      }
-      for (String view : Sets.difference(dwhViews2, dwhViews1)) {
-        dwhFiles2.copyResourcesToDwh(view, mergedDwhFiles);
-      }
+      viewMap =
+          ViewSchema.createViewMap(
+              new ArrayList<>(), new ArrayList<>(), resourceList.stream().toList(), viewManager);
+      copyDistinctResources(dwhViews1, dwhViews2, dwhFiles1, dwhFiles2, mergedDwhFiles);
     }
 
-    for (String resourceType : Sets.difference(resourceTypes1, resourceTypes2)) {
-      dwhFiles1.copyResourcesToDwh(resourceType, mergedDwhFiles);
-    }
-    for (String resourceType : Sets.difference(resourceTypes2, resourceTypes1)) {
-      dwhFiles2.copyResourcesToDwh(resourceType, mergedDwhFiles);
-    }
+    copyDistinctResources(resourceTypes1, resourceTypes2, dwhFiles1, dwhFiles2, mergedDwhFiles);
     List<Pipeline> pipelines = new ArrayList<>();
     for (String type : resourceTypes1) {
       if (!resourceTypes2.contains(type)) {
@@ -271,39 +234,19 @@ public class ParquetMerger {
       log.info("Merging resource type {}", type);
       PCollection<KV<String, Iterable<GenericRecord>>> groupedRecords =
           readAndGroupById(
-              pipeline, Arrays.asList(dwhFiles1, dwhFiles2), type, avroConversionUtil, null);
-      PCollection<GenericRecord> merged =
-          groupedRecords
-              .apply(
-                  ParDo.of(
-                      new DoFn<KV<String, Iterable<GenericRecord>>, GenericRecord>() {
-                        @ProcessElement
-                        public void processElement(ProcessContext c) {
-                          KV<String, Iterable<GenericRecord>> e = c.element();
-                          GenericRecord lastRecord = findLastRecord(e.getValue(), numDuplicates);
-                          if (!isRecordDeleted(lastRecord)) {
-                            numOutputRecords.inc();
-                            c.output(lastRecord);
-                          }
-                        }
-                      }))
-              .setCoder(AvroCoder.of(avroConversionUtil.getResourceSchema(type)));
+              pipeline,
+              Arrays.asList(dwhFiles1, dwhFiles2),
+              type,
+              avroConversionUtil.getResourceSchema(type));
 
-      Sink parquetSink =
-          ParquetIO.sink(avroConversionUtil.getResourceSchema(type))
-              .withCompressionCodec(CompressionCodecName.SNAPPY);
-      if (options.getRowGroupSizeForParquetFiles() > 0) {
-        parquetSink = parquetSink.withRowGroupSize(options.getRowGroupSizeForParquetFiles());
-      }
-      merged.apply(
-          FileIO.<GenericRecord>write()
-              .via(parquetSink)
-              .to(mergedDwhFiles.getResourcePath(type).toString())
-              .withSuffix(".parquet")
-              // TODO if we don't set this, DirectRunner works fine but FlinkRunner only writes
-              //   ~10% of the records. This is not specific to Parquet or GenericRecord; it even
-              //   happens for TextIO. We should investigate this further and possibly file a bug.
-              .withNumShards(options.getNumShards()));
+      writeMergedResources(
+          groupedRecords,
+          mergedDwhFiles,
+          avroConversionUtil.getResourceSchema(type),
+          options,
+          type,
+          numDuplicates,
+          numOutputRecords);
     }
     if (!dwhViews1.isEmpty() || !dwhViews2.isEmpty()) {
       for (String viewName : dwhViews1) {
@@ -314,45 +257,76 @@ public class ParquetMerger {
         pipelines.add(pipeline);
         log.info("Merging materialized view {}", viewName);
         ViewDefinition viewDef = viewMap.get(viewName);
+        Schema schema = ViewSchema.getAvroSchema(viewDef);
         PCollection<KV<String, Iterable<GenericRecord>>> groupedRecords =
             readAndGroupById(
                 pipeline,
                 Arrays.asList(dwhFiles1, dwhFiles2),
                 viewName,
-                avroConversionUtil,
-                viewDef);
-        PCollection<GenericRecord> merged =
-            groupedRecords
-                .apply(
-                    ParDo.of(
-                        new DoFn<KV<String, Iterable<GenericRecord>>, GenericRecord>() {
-                          @ProcessElement
-                          public void processElement(ProcessContext c) {
-                            KV<String, Iterable<GenericRecord>> e = c.element();
-                            GenericRecord lastRecord = findLastRecord(e.getValue(), numDuplicates);
-                            if (!isRecordDeleted(lastRecord)) {
-                              numOutputRecords.inc();
-                              c.output(lastRecord);
-                            }
-                          }
-                        }))
-                .setCoder(AvroCoder.of(ViewSchema.getAvroSchema(viewDef)));
+                ViewSchema.getAvroSchema(viewDef));
 
-        Sink parquetSink =
-            ParquetIO.sink(ViewSchema.getAvroSchema(viewDef))
-                .withCompressionCodec(CompressionCodecName.SNAPPY);
-        if (options.getRowGroupSizeForParquetFiles() > 0) {
-          parquetSink = parquetSink.withRowGroupSize(options.getRowGroupSizeForParquetFiles());
-        }
-        merged.apply(
-            FileIO.<GenericRecord>write()
-                .via(parquetSink)
-                .to(mergedDwhFiles.getResourcePath(viewName).toString())
-                .withSuffix(".parquet")
-                .withNumShards(options.getNumShards()));
+        writeMergedResources(
+            groupedRecords,
+            mergedDwhFiles,
+            schema,
+            options,
+            viewName,
+            numDuplicates,
+            numOutputRecords);
       }
     }
     return pipelines;
+  }
+
+  public static void writeMergedResources(
+      PCollection<KV<String, Iterable<GenericRecord>>> groupedRecords,
+      DwhFiles mergedDwhFiles,
+      Schema schema,
+      ParquetMergerOptions options,
+      String type,
+      Counter numDuplicates,
+      Counter numOutputRecords) {
+    PCollection<GenericRecord> merged =
+        groupedRecords
+            .apply(
+                ParDo.of(
+                    new DoFn<KV<String, Iterable<GenericRecord>>, GenericRecord>() {
+                      @ProcessElement
+                      public void processElement(ProcessContext c) {
+                        KV<String, Iterable<GenericRecord>> e = c.element();
+                        GenericRecord lastRecord = findLastRecord(e.getValue(), numDuplicates);
+                        if (!isRecordDeleted(lastRecord)) {
+                          numOutputRecords.inc();
+                          c.output(lastRecord);
+                        }
+                      }
+                    }))
+            .setCoder(AvroCoder.of(schema));
+
+    Sink parquetSink = ParquetIO.sink(schema).withCompressionCodec(CompressionCodecName.SNAPPY);
+    if (options.getRowGroupSizeForParquetFiles() > 0) {
+      parquetSink = parquetSink.withRowGroupSize(options.getRowGroupSizeForParquetFiles());
+    }
+    merged.apply(
+        FileIO.<GenericRecord>write()
+            .via(parquetSink)
+            .to(mergedDwhFiles.getResourcePath(type).toString())
+            .withSuffix(".parquet")
+            // TODO if we don't set this, DirectRunner works fine but FlinkRunner only writes
+            //   ~10% of the records. This is not specific to Parquet or GenericRecord; it even
+            //   happens for TextIO. We should investigate this further and possibly file a bug.
+            .withNumShards(options.getNumShards()));
+  }
+
+  public static void copyDistinctResources(
+      Set<String> types1, Set<String> types2, DwhFiles dwh1, DwhFiles dwh2, DwhFiles mergedDwh)
+      throws IOException {
+    for (String type : Sets.difference(types1, types2)) {
+      dwh1.copyResourcesToDwh(type, mergedDwh);
+    }
+    for (String type : Sets.difference(types2, types1)) {
+      dwh2.copyResourcesToDwh(type, mergedDwh);
+    }
   }
 
   public static void main(String[] args) throws IOException, ProfileException {
