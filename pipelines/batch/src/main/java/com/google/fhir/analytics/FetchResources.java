@@ -131,8 +131,7 @@ public class FetchResources
     }
 
     @ProcessElement
-    public void processElement(
-        @Element SearchSegmentDescriptor segment, OutputReceiver<KV<String, Integer>> out)
+    public void processElement(@Element SearchSegmentDescriptor segment)
         throws IOException, SQLException, ViewApplicationException, ProfileException {
       String searchUrl = segment.searchUrl();
       log.info(
