@@ -227,10 +227,10 @@ function test_parquet_sink() {
   if [[ "${total_patients_streamed}" == "${TOTAL_TEST_PATIENTS}" && "${total_encounters_streamed}" \
         == "${TOTAL_TEST_ENCOUNTERS}" && "${total_obs_streamed}" == "${TOTAL_TEST_OBS}" \
         && "${total_obs_flat}" == "${total_obs_streamed}" && \
-        "${total_patient_flat}" -gt "${total_patients_streamed}" && \
-        "${total_encounter_flat}" == "${total_encounters_streamed}"]] \
-    ; then
-    print_message "PARQUET SINK EXECUTED SUCCESSFULLY USING ${PARQUET_SUBDIR} MODE"
+        "${total_patient_flat}" > "${total_patients_streamed}" && \
+        "${total_encounter_flat}" == "${total_encounters_streamed}" ]] \
+        ; then
+        print_message "PARQUET SINK EXECUTED SUCCESSFULLY USING ${PARQUET_SUBDIR} MODE"
   else
     print_message "PARQUET SINK TEST FAILED USING ${PARQUET_SUBDIR} MODE"
     exit 1
