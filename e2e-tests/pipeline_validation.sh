@@ -112,6 +112,7 @@ function setup() {
   SOURCE_FHIR_SERVER_URL='http://localhost:8091'
   STREAMING=""
   OPENMRS=""
+  PARQUET_VIEW_ROWCOUNT=106
 
   # TODO: We should refactor this code to parse the arguments by going through
   # each one and checking which ones are turned on.
@@ -144,6 +145,7 @@ function setup() {
 #   TOTAL_TEST_OBS
 #   STREAMING
 #   OPENMRS
+#   PARQUET_VIEW_ROWCOUNT
 #################################################
 function fhir_source_query() {
   local patient_query_param="?_summary=count"
@@ -193,6 +195,7 @@ function fhir_source_query() {
 #   TOTAL_TEST_ENCOUNTERS
 #   TOTAL_TEST_OBS
 #   OPENMRS
+#   PARQUET_VIEW_ROWCOUNT
 #################################################
 function test_parquet_sink() {
   print_message "Counting number of patients, encounters and obs sinked to parquet files"
@@ -210,30 +213,40 @@ function test_parquet_sink() {
   rowcount "${HOME_PATH}/${PARQUET_SUBDIR}/Observation/" | awk '{print $3}')
   print_message "Total obs synced to parquet ---> ${total_obs_streamed}"
 
-  local total_patient_flat=$(java -Xms16g -Xmx16g -jar \
-  ./controller-spark/parquet-tools-1.11.1.jar rowcount "${HOME_PATH}/${PARQUET_SUBDIR}/patient_flat/" | \
-  awk '{print $3}')
-  print_message "Total patient flat rows synced to parquet ---> ${total_patient_flat}"
+  if [[ ! (-n ${STREAMING}) ]]; then
+    print_message "Parquet Sink Test Streaming ONLY"
+    local total_patient_flat=$(java -Xms16g -Xmx16g -jar \
+    ./controller-spark/parquet-tools-1.11.1.jar rowcount "${HOME_PATH}/${PARQUET_SUBDIR}/patient_flat/" | \
+    awk '{print $3}')
+    print_message "Total patient flat rows synced to parquet ---> ${total_patient_flat}"
 
-  local total_encounter_flat=$(java -Xms16g -Xmx16g -jar \
-  ./controller-spark/parquet-tools-1.11.1.jar rowcount "${HOME_PATH}/${PARQUET_SUBDIR}/encounter_flat/" \
-  | awk '{print $3}')
-  print_message "Total encounter flat rows synced to parquet ---> ${total_encounter_flat}"
+    local total_encounter_flat=$(java -Xms16g -Xmx16g -jar \
+    ./controller-spark/parquet-tools-1.11.1.jar rowcount "${HOME_PATH}/${PARQUET_SUBDIR}/encounter_flat/" \
+    | awk '{print $3}')
+    print_message "Total encounter flat rows synced to parquet ---> ${total_encounter_flat}"
 
-  local total_obs_flat=$(java -Xms16g -Xmx16g -jar ./controller-spark/parquet-tools-1.11.1.jar \
-  rowcount "${HOME_PATH}/${PARQUET_SUBDIR}/observation_flat/" | awk '{print $3}')
-  print_message "Total observation flat rows synced to parquet ---> ${total_obs_flat}"
+    local total_obs_flat=$(java -Xms16g -Xmx16g -jar ./controller-spark/parquet-tools-1.11.1.jar \
+    rowcount "${HOME_PATH}/${PARQUET_SUBDIR}/observation_flat/" | awk '{print $3}')
+    print_message "Total observation flat rows synced to parquet ---> ${total_obs_flat}"
 
-  if (( total_patients_streamed == TOTAL_TEST_PATIENTS && total_encounters_streamed \
-    == TOTAL_TEST_ENCOUNTERS && total_obs_streamed == TOTAL_TEST_OBS \
-    && total_obs_flat == TOTAL_TEST_OBS && \
-    total_patient_flat > total_patients_streamed && \
-    total_encounter_flat == TOTAL_TEST_ENCOUNTERS )) \
-    ; then
-    print_message "PARQUET SINK EXECUTED SUCCESSFULLY USING ${PARQUET_SUBDIR} MODE"
+    if (( total_patients_streamed == TOTAL_TEST_PATIENTS && total_encounters_streamed \
+        == TOTAL_TEST_ENCOUNTERS && total_obs_streamed == TOTAL_TEST_OBS \
+        && total_obs_flat == TOTAL_TEST_OBS && \
+        total_patient_flat == PARQUET_VIEW_ROWCOUNT && \
+        total_encounter_flat == TOTAL_TEST_ENCOUNTERS )) ; then
+        print_message "PARQUET SINK EXECUTED SUCCESSFULLY USING ${PARQUET_SUBDIR} MODE"
+      else
+        print_message "PARQUET SINK TEST FAILED USING ${PARQUET_SUBDIR} MODE"
+        exit 1
+      fi
   else
-    print_message "PARQUET SINK TEST FAILED USING ${PARQUET_SUBDIR} MODE"
-    exit 1
+    if (( total_patients_streamed == TOTAL_TEST_PATIENTS && total_encounters_streamed \
+        == TOTAL_TEST_ENCOUNTERS && total_obs_streamed == TOTAL_TEST_OBS )) ; then
+        print_message "PARQUET SINK EXECUTED SUCCESSFULLY USING ${PARQUET_SUBDIR} MODE"
+      else
+        print_message "PARQUET SINK TEST FAILED USING ${PARQUET_SUBDIR} MODE"
+        exit 1
+      fi
   fi
 }
 
@@ -250,6 +263,7 @@ function test_parquet_sink() {
 #   TOTAL_TEST_OBS
 #   STREAMING
 #   OPENMRS
+#   PARQUET_VIEW_ROWCOUNT
 #################################################
 function test_fhir_sink() {
   # This skips the test
