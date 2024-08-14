@@ -241,15 +241,13 @@ function test_parquet_sink() {
       else
         print_message "PARQUET SINK TEST FAILED USING ${PARQUET_SUBDIR} MODE"
         exit 1
-      fi
-  else
-    if (( total_patients_streamed == TOTAL_TEST_PATIENTS && total_encounters_streamed \
+    fi
+  elif (( total_patients_streamed == TOTAL_TEST_PATIENTS && total_encounters_streamed \
         == TOTAL_TEST_ENCOUNTERS && total_obs_streamed == TOTAL_TEST_OBS )) ; then
         print_message "PARQUET SINK EXECUTED SUCCESSFULLY USING ${PARQUET_SUBDIR} MODE"
       else
         print_message "PARQUET SINK TEST FAILED USING ${PARQUET_SUBDIR} MODE"
         exit 1
-      fi
   fi
 }
 
