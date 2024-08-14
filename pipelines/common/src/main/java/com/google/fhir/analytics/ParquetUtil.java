@@ -82,8 +82,8 @@ public class ParquetUtil {
    * @param namePrefix The prefix directory at which the Parquet files are written
    * @param recursiveDepth The maximum recursive depth for FHIR resources when converting to Avro.
    * @param cacheBundle Whether to cache output records or directly send them to the Parquet writer.
-   *     If this is enabled, then it is the responsibility of the user code to call emptyCache.
-   *     This is used when we want to make sure a DoFn is idempotent.
+   *     If this is enabled, then it is the responsibility of the user code to call emptyCache. This
+   *     is used when we want to make sure a DoFn is idempotent.
    * @throws ProfileException if any errors are encountered during initialisation of FhirContext
    */
   @VisibleForTesting

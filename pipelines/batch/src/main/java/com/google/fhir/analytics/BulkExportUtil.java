@@ -17,14 +17,11 @@ package com.google.fhir.analytics;
 
 import ca.uhn.fhir.context.FhirVersionEnum;
 import com.google.common.base.Preconditions;
-import com.google.common.collect.Maps;
 import com.google.fhir.analytics.model.BulkExportHttpResponse;
 import com.google.fhir.analytics.model.BulkExportResponse;
-import com.google.fhir.analytics.model.BulkExportResponse.Output;
 import java.io.IOException;
 import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
+import javax.annotation.Nullable;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.http.HttpStatus;
 import org.slf4j.Logger;
@@ -44,49 +41,28 @@ public class BulkExportUtil {
 
   /**
    * This method triggers the Bulk export job in the FHIR server for the given resource types and
-   * fhirVersionEnum. It then waits for the job to complete and then downloads the ndjson files
-   * created by the bulk job into the local file system. The files are downloaded into paths of the
-   * format <TempDir><File_Separator><ResourceType> i.e. all files for the same resource type are
-   * downloaded into the same directory. These unique paths are then returned to the caller.
+   * fhirVersionEnum. It then waits for the job to complete and returns the BulkExportResponse
    *
    * @param resourceTypes - the resource types to be downloaded
+   * @param since - the fhir resources fetched should have updated timestamp greater than this
    * @param fhirVersionEnum - the fhir version of resource types
-   * @return the list of directory paths where the ndjson files are downloaded
+   * @return the BulkExportResponse
    * @throws IOException
    */
-  public Map<String, List<String>> triggerBulkExport(
-      List<String> resourceTypes, FhirVersionEnum fhirVersionEnum) throws IOException {
+  public BulkExportResponse triggerBulkExport(
+      List<String> resourceTypes, @Nullable String since, FhirVersionEnum fhirVersionEnum)
+      throws IOException {
     Preconditions.checkState(!CollectionUtils.isEmpty(resourceTypes));
     Preconditions.checkNotNull(fhirVersionEnum);
     String contentLocationUrl =
-        bulkExportApiClient.triggerBulkExportJob(resourceTypes, fhirVersionEnum);
+        bulkExportApiClient.triggerBulkExportJob(resourceTypes, since, fhirVersionEnum);
     logger.info("Bulk Export has been started, contentLocationUrl={}", contentLocationUrl);
-    BulkExportResponse bulkExportResponse = pollBulkExportJob(contentLocationUrl);
-    if (!CollectionUtils.isEmpty(bulkExportResponse.error())) {
-      logger.error("Error occurred during bulk export, error={}", bulkExportResponse.error());
-      throw new IllegalStateException("Error occurred during bulk export, please check logs");
-    }
-
-    if (CollectionUtils.isEmpty(bulkExportResponse.output())
-        && CollectionUtils.isEmpty(bulkExportResponse.deleted())) {
-      logger.warn("No resources found to be exported!");
-      return Maps.newHashMap();
-    }
-    if (!CollectionUtils.isEmpty(bulkExportResponse.deleted())) {
-      // TODO : Delete the FHIR resources
-    }
-    if (!CollectionUtils.isEmpty(bulkExportResponse.output())) {
-      return bulkExportResponse.output().stream()
-          .collect(
-              Collectors.groupingBy(
-                  Output::type, Collectors.mapping(Output::url, Collectors.toList())));
-    }
-    return Maps.newHashMap();
+    return pollBulkExportJob(contentLocationUrl);
   }
 
   /**
    * This method keeps polling for the status of bulk export job until it is complete and returns
-   * the status once completed.
+   * the BulkExportResponse once completed.
    */
   private BulkExportResponse pollBulkExportJob(String bulkExportStatusUrl) throws IOException {
     // TODO : Add timeout here to avoid infinite polling
