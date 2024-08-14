@@ -92,6 +92,7 @@ function print_message() {
 #   SINK_FHIR_SERVER_URL
 #   STREAMING
 #   OPENMRS
+#   PARQUET_VIEW_ROWCOUNT
 # Arguments:
 #   Path where e2e-tests directory is. Directory contains parquet tools jar as 
 #      well as subdirectory of parquet file output
@@ -112,6 +113,8 @@ function setup() {
   SOURCE_FHIR_SERVER_URL='http://localhost:8091'
   STREAMING=""
   OPENMRS=""
+  # This global variable is hardcoded to validate the Patient View record count
+  # which is greater than the number of Patient Resources due to flattening
   PARQUET_VIEW_ROWCOUNT=106
 
   # TODO: We should refactor this code to parse the arguments by going through
