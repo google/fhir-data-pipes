@@ -210,50 +210,29 @@ function test_parquet_sink() {
   rowcount "${HOME_PATH}/${PARQUET_SUBDIR}/Observation/" | awk '{print $3}')
   print_message "Total obs synced to parquet ---> ${total_obs_streamed}"
 
+  local total_patient_flat=$(java -Xms16g -Xmx16g -jar \
+  ./controller-spark/parquet-tools-1.11.1.jar rowcount "${HOME_PATH}/${PARQUET_SUBDIR}/patient_flat/" | \
+  awk '{print $3}')
+  print_message "Total patient flat rows synced to parquet ---> ${total_patient_flat}"
+
+  local total_encounter_flat=$(java -Xms16g -Xmx16g -jar \
+  ./controller-spark/parquet-tools-1.11.1.jar rowcount "${HOME_PATH}/${PARQUET_SUBDIR}/encounter_flat/" \
+  | awk '{print $3}')
+  print_message "Total encounter flat rows synced to parquet ---> ${total_encounter_flat}"
+
+  local total_obs_flat=$(java -Xms16g -Xmx16g -jar ./controller-spark/parquet-tools-1.11.1.jar \
+  rowcount "${HOME_PATH}/${PARQUET_SUBDIR}/observation_flat/" | awk '{print $3}')
+  print_message "Total observation flat rows synced to parquet ---> ${total_obs_flat}"
+
   if [[ "${total_patients_streamed}" == "${TOTAL_TEST_PATIENTS}" && "${total_encounters_streamed}" \
-        == "${TOTAL_TEST_ENCOUNTERS}" && "${total_obs_streamed}" == "${TOTAL_TEST_OBS}" ]] \
+        == "${TOTAL_TEST_ENCOUNTERS}" && "${total_obs_streamed}" == "${TOTAL_TEST_OBS}" \
+        && "${total_obs_flat}" == "${total_obs_streamed}" && \
+        "${total_patient_flat}" -gt "${total_patients_streamed}" && \
+        "${total_encounter_flat}" == "${total_encounters_streamed}"]] \
     ; then
     print_message "PARQUET SINK EXECUTED SUCCESSFULLY USING ${PARQUET_SUBDIR} MODE"
   else
     print_message "PARQUET SINK TEST FAILED USING ${PARQUET_SUBDIR} MODE"
-    exit 1
-  fi
-}
-
-
-#################################################
-# Function that counts resources in materialized view parquet files and
-# compares output to what is in source FHIR server
-# Globals:
-#   HOME_PATH
-#   PARQUET_SUBDIR
-#   TOTAL_TEST_PATIENTS
-#   TOTAL_TEST_ENCOUNTERS
-#   TOTAL_TEST_OBS
-#   OPENMRS
-#################################################
-function test_parquet_view_sink() {
-  print_message "Counting number of patients, encounters and obs sinked to parquet, for ViewDefinition-to-Parquet functionality"
-  local total_patients_streamed=$(java -Xms16g -Xmx16g -jar \
-  ./controller-spark/parquet-tools-1.11.1.jar rowcount "${HOME_PATH}/${PARQUET_SUBDIR}/patient_flat/" | \
-  awk '{print $3}')
-  print_message "Total patients synced to parquet ---> ${total_patients_streamed}"
-
-  local total_encounters_streamed=$(java -Xms16g -Xmx16g -jar \
-  ./controller-spark/parquet-tools-1.11.1.jar rowcount "${HOME_PATH}/${PARQUET_SUBDIR}/encounter_flat/" \
-  | awk '{print $3}')
-  print_message "Total encounters synced to parquet ---> ${total_encounters_streamed}"
-
-  local total_obs_streamed=$(java -Xms16g -Xmx16g -jar ./controller-spark/parquet-tools-1.11.1.jar \
-  rowcount "${HOME_PATH}/${PARQUET_SUBDIR}/observation_flat/" | awk '{print $3}')
-  print_message "Total obs synced to parquet ---> ${total_obs_streamed}"
-
-  if [[ "${total_patients_streamed}" == "${TOTAL_TEST_PATIENTS}" && "${total_encounters_streamed}" \
-        == "${TOTAL_TEST_ENCOUNTERS}" && "${total_obs_streamed}" == "${TOTAL_TEST_OBS}" ]] \
-    ; then
-    print_message "PARQUET MATERIALIZED VIEW SINK EXECUTED SUCCESSFULLY USING ${PARQUET_SUBDIR} MODE"
-  else
-    print_message "PARQUET MATERIALIZED VIEW SINK TEST FAILED USING ${PARQUET_SUBDIR} MODE"
     exit 1
   fi
 }
