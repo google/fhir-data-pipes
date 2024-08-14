@@ -224,13 +224,13 @@ function test_parquet_sink() {
   rowcount "${HOME_PATH}/${PARQUET_SUBDIR}/observation_flat/" | awk '{print $3}')
   print_message "Total observation flat rows synced to parquet ---> ${total_obs_flat}"
 
-  if [[ "${total_patients_streamed}" == "${TOTAL_TEST_PATIENTS}" && "${total_encounters_streamed}" \
-        == "${TOTAL_TEST_ENCOUNTERS}" && "${total_obs_streamed}" == "${TOTAL_TEST_OBS}" \
-        && "${total_obs_flat}" == "${total_obs_streamed}" && \
-        ${total_patient_flat} > ${total_patients_streamed} && \
-        "${total_encounter_flat}" == "${total_encounters_streamed}" ]] \
-        ; then
-        print_message "PARQUET SINK EXECUTED SUCCESSFULLY USING ${PARQUET_SUBDIR} MODE"
+  if (( total_patients_streamed == TOTAL_TEST_PATIENTS && total_encounters_streamed \
+    == TOTAL_TEST_ENCOUNTERS && total_obs_streamed == TOTAL_TEST_OBS \
+    && total_obs_flat == TOTAL_TEST_OBS && \
+    total_patient_flat > total_patients_streamed && \
+    total_encounter_flat == TOTAL_TEST_ENCOUNTERS )) \
+    ; then
+    print_message "PARQUET SINK EXECUTED SUCCESSFULLY USING ${PARQUET_SUBDIR} MODE"
   else
     print_message "PARQUET SINK TEST FAILED USING ${PARQUET_SUBDIR} MODE"
     exit 1
