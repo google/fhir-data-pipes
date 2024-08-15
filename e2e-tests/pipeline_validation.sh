@@ -115,13 +115,16 @@ function setup() {
   OPENMRS=""
   # This global variable is hardcoded to validate the Patient View record count
   # which is greater than the number of Patient Resources due to flattening
-  PARQUET_VIEW_ROWCOUNT=106
+  PARQUET_VIEW_ROWCOUNT=0
 
   # TODO: We should refactor this code to parse the arguments by going through
   # each one and checking which ones are turned on.
   if [[ $5 = "--openmrs" ]] || [[ $6 = "--openmrs" ]] || [[ $7 = "--openmrs" ]]; then
     OPENMRS="on"
     SOURCE_FHIR_SERVER_URL='http://localhost:8099/openmrs/ws/fhir2/R4'
+    PARQUET_VIEW_ROWCOUNT=110
+  else
+    PARQUET_VIEW_ROWCOUNT=106
   fi
 
   if [[ $5 = "--use_docker_network" ]] || [[ $6 = "--use_docker_network" ]] || [[ $7 = "--use_docker_network" ]]; then
