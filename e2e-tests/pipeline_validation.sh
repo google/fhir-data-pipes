@@ -93,6 +93,7 @@ function print_message() {
 #   STREAMING
 #   OPENMRS
 #   PARQUET_VIEW_ROWCOUNT
+#   OBS_VIEW_ROWCOUNT
 # Arguments:
 #   Path where e2e-tests directory is. Directory contains parquet tools jar as 
 #      well as subdirectory of parquet file output
@@ -113,9 +114,11 @@ function setup() {
   SOURCE_FHIR_SERVER_URL='http://localhost:8091'
   STREAMING=""
   OPENMRS=""
-  # This global variable is hardcoded to validate the Patient View record count
-  # which is greater than the number of Patient Resources due to flattening
+  # This global variable is hardcoded to validate the View record count
+  # which can greater than the number of Resources in the source FHIR
+  # Server due to flattening
   PARQUET_VIEW_ROWCOUNT=0
+  OBS_VIEW_ROWCOUNT=284925
 
   # TODO: We should refactor this code to parse the arguments by going through
   # each one and checking which ones are turned on.
@@ -152,6 +155,7 @@ function setup() {
 #   STREAMING
 #   OPENMRS
 #   PARQUET_VIEW_ROWCOUNT
+#   OBS_VIEW_ROWCOUNT
 #################################################
 function fhir_source_query() {
   local patient_query_param="?_summary=count"
@@ -202,6 +206,7 @@ function fhir_source_query() {
 #   TOTAL_TEST_OBS
 #   OPENMRS
 #   PARQUET_VIEW_ROWCOUNT
+#   OBS_VIEW_ROWCOUNT
 #################################################
 function test_parquet_sink() {
   print_message "Counting number of patients, encounters and obs sinked to parquet files"
@@ -241,6 +246,13 @@ function test_parquet_sink() {
         total_patient_flat == PARQUET_VIEW_ROWCOUNT && \
         total_encounter_flat == TOTAL_TEST_ENCOUNTERS )) ; then
         print_message "PARQUET SINK EXECUTED SUCCESSFULLY USING ${PARQUET_SUBDIR} MODE"
+      elif [[ -n ${OPENMRS} ]] && (( total_patients_streamed == TOTAL_TEST_PATIENTS
+        && total_encounters_streamed \
+        == TOTAL_TEST_ENCOUNTERS && total_obs_streamed == TOTAL_TEST_OBS \
+        && total_obs_flat == OBS_VIEW_ROWCOUNT && \
+        total_patient_flat == PARQUET_VIEW_ROWCOUNT && \
+        total_encounter_flat == TOTAL_TEST_ENCOUNTERS )); then
+        print_message "PARQUET SINK EXECUTED SUCCESSFULLY USING ${PARQUET_SUBDIR} MODE"
       else
         print_message "PARQUET SINK TEST FAILED USING ${PARQUET_SUBDIR} MODE"
         exit 1
@@ -268,6 +280,7 @@ function test_parquet_sink() {
 #   STREAMING
 #   OPENMRS
 #   PARQUET_VIEW_ROWCOUNT
+#   OBS_VIEW_ROWCOUNT
 #################################################
 function test_fhir_sink() {
   # This skips the test
