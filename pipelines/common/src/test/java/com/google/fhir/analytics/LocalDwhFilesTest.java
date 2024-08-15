@@ -96,38 +96,6 @@ public class LocalDwhFilesTest {
   }
 
   @Test
-  public void findNonEmptyViewDirectoriesTest() throws IOException {
-    Path root = Files.createTempDirectory("DWH_FILES_TEST");
-    DwhFiles instance = new DwhFiles(root.toString(), FhirContext.forR4Cached());
-    Path patientPath = Paths.get(root.toString(), "patient_flat");
-    Files.createDirectories(patientPath);
-    Path testPath = Paths.get(root.toString(), "test_dir");
-    Files.createDirectories(testPath);
-    createFile(
-        Paths.get(patientPath.toString(), "patients.txt"),
-        "SAMPLE TEXT".getBytes(StandardCharsets.UTF_8));
-
-    Path observationPath = Paths.get(root.toString(), "Observation");
-    Files.createDirectories(observationPath);
-    createFile(
-        Paths.get(observationPath.toString(), "observationPath.txt"),
-        "SAMPLE TEXT".getBytes(StandardCharsets.UTF_8));
-
-    Set<String> resourceTypes = instance.findNonEmptyViewTypes();
-    assertThat("Could not find Patient", resourceTypes.contains("patient_flat"));
-    assertThat("Could not find Observation", !resourceTypes.contains("Observation"));
-    assertThat("Could not find Test Directory!", !resourceTypes.contains("test_dir"));
-    assertThat(resourceTypes.size(), equalTo(1));
-
-    Files.delete(Paths.get(observationPath.toString(), "observationPath.txt"));
-    Files.delete(observationPath);
-    Files.delete(Paths.get(patientPath.toString(), "patients.txt"));
-    Files.delete(patientPath);
-    Files.delete(testPath);
-    Files.delete(root);
-  }
-
-  @Test
   public void copyResourceTypeTest() throws IOException {
     Path sourcePath = Files.createTempDirectory("DWH_SOURCE_TEST");
     FhirContext fhirContext = FhirContext.forR4Cached();
@@ -153,38 +121,6 @@ public class LocalDwhFilesTest {
 
     Files.delete(Paths.get(destPath.resolve("Patient").toString(), "patients.txt"));
     Files.delete(Paths.get(destPath.resolve("Patient").toString()));
-    Files.delete(Paths.get(patientPath.toString(), "patients.txt"));
-    Files.delete(Paths.get(patientPath.toString()));
-    Files.delete(destPath);
-    Files.delete(sourcePath);
-  }
-
-  @Test
-  public void copyViewTest() throws IOException {
-    Path sourcePath = Files.createTempDirectory("DWH_SOURCE_TEST");
-    FhirContext fhirContext = FhirContext.forR4Cached();
-    DwhFiles instance = new DwhFiles(sourcePath.toString(), fhirContext);
-    Path patientPath = Paths.get(sourcePath.toString(), "patient_flat");
-    Files.createDirectories(patientPath);
-    createFile(
-        Paths.get(patientPath.toString(), "patients.txt"),
-        "SAMPLE TEXT".getBytes(StandardCharsets.UTF_8));
-
-    Path destPath = Files.createTempDirectory("DWH_DEST_TEST");
-    instance.copyResourcesToDwh("patient_flat", DwhFiles.forRoot(destPath.toString(), fhirContext));
-
-    List<Path> destFiles = Files.list(destPath).collect(Collectors.toList());
-    assertThat(destFiles.size(), equalTo(1));
-    assertThat(destFiles.get(0).toString(), equalTo(destPath.resolve("patient_flat").toString()));
-
-    List<Path> destChildFiles = Files.list(destFiles.get(0)).collect(Collectors.toList());
-    assertThat(destChildFiles.size(), equalTo(1));
-    assertThat(
-        destChildFiles.get(0).toString(),
-        equalTo(destFiles.get(0).resolve("patients.txt").toString()));
-
-    Files.delete(Paths.get(destPath.resolve("patient_flat").toString(), "patients.txt"));
-    Files.delete(Paths.get(destPath.resolve("patient_flat").toString()));
     Files.delete(Paths.get(patientPath.toString(), "patients.txt"));
     Files.delete(Paths.get(patientPath.toString()));
     Files.delete(destPath);

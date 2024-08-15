@@ -18,21 +18,13 @@ package com.google.fhir.analytics;
 import com.cerner.bunsen.exception.ProfileException;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Sets;
-import com.google.fhir.analytics.view.ViewDefinition;
-import com.google.fhir.analytics.view.ViewDefinitionException;
-import com.google.fhir.analytics.view.ViewManager;
-import com.google.fhir.analytics.view.ViewSchema;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
-import javax.annotation.Nullable;
 import org.apache.avro.generic.GenericRecord;
 import org.apache.beam.sdk.Pipeline;
 import org.apache.beam.sdk.extensions.avro.coders.AvroCoder;
@@ -79,8 +71,7 @@ public class ParquetMerger {
       Pipeline pipeline,
       List<DwhFiles> dwhFilesList,
       String resourceType,
-      AvroConversionUtil avroConversionUtil,
-      @Nullable ViewDefinition viewDefinition)
+      AvroConversionUtil avroConversionUtil)
       throws ProfileException {
 
     // Reading all parquet files at once instead of one set at a time, reduces the number of Flink
@@ -91,18 +82,13 @@ public class ParquetMerger {
             .apply(FileIO.matchAll())
             .apply(FileIO.readMatches());
 
-    PCollection<GenericRecord> records;
-    if (viewDefinition != null) {
-      // The assumption here is that the schema of the old parquet files is same as the current
-      // schema, otherwise reading of the older records fail even if the new Schema is just an
-      // extension. In general, if the schema changes due to addition of new extensions, then the
-      // merging process fail. It is recommended to recreate the entire parquet files using the new
-      // schema again using the batch run.
-      records = inputFiles.apply(ParquetIO.readFiles(ViewSchema.getAvroSchema(viewDefinition)));
-    } else {
-      records =
-          inputFiles.apply(ParquetIO.readFiles(avroConversionUtil.getResourceSchema(resourceType)));
-    }
+    // The assumption here is that the schema of the old parquet files is same as the current
+    // schema, otherwise reading of the older records fail even if the new Schema is just an
+    // extension. In general, if the schema changes due to addition of new extensions, then the
+    // merging process fail. It is recommended to recreate the entire parquet files using the new
+    // schema again using the batch run.
+    PCollection<GenericRecord> records =
+        inputFiles.apply(ParquetIO.readFiles(avroConversionUtil.getResourceSchema(resourceType)));
 
     return records
         .apply(
@@ -210,50 +196,6 @@ public class ParquetMerger {
 
     Set<String> resourceTypes1 = dwhFiles1.findNonEmptyFhirResourceTypes();
     Set<String> resourceTypes2 = dwhFiles2.findNonEmptyFhirResourceTypes();
-    Set<String> dwhViews1 = new HashSet<>();
-    Set<String> dwhViews2 = new HashSet<>();
-
-    // View Definition Map to generate schema for ParquetIO
-    Map<String, ViewDefinition> viewMap = new HashMap<>();
-
-    if (options.isMergeParquetViews()) {
-      dwhViews1 = dwhFiles1.findNonEmptyViewTypes();
-      dwhViews2 = dwhFiles2.findNonEmptyViewTypes();
-
-      Set<String> resourceList = new HashSet<>(resourceTypes2);
-      resourceList.addAll(resourceTypes1);
-
-      ViewManager viewManager;
-      try {
-        viewManager = ViewManager.createForDir(options.getViewDefinitionsDir());
-      } catch (IOException | ViewDefinitionException e) {
-        String errorMsg =
-            String.format("Error while reading views from %s", options.getViewDefinitionsDir());
-        log.error(errorMsg, e);
-        throw new IllegalArgumentException(errorMsg);
-      }
-
-      // Populate View Map
-      List<ViewDefinition> allViews = new ArrayList<>();
-      for (String type : resourceList) {
-        List<ViewDefinition> allViewsForType = viewManager.getViewsForType(type);
-        if (allViewsForType != null) {
-          allViews.addAll(allViewsForType);
-        }
-      }
-      for (ViewDefinition vDef : allViews) {
-        if (!viewMap.containsKey(vDef.getName())) {
-          viewMap.put(vDef.getName(), vDef);
-        }
-      }
-
-      for (String view : Sets.difference(dwhViews1, dwhViews2)) {
-        dwhFiles1.copyResourcesToDwh(view, mergedDwhFiles);
-      }
-      for (String view : Sets.difference(dwhViews2, dwhViews1)) {
-        dwhFiles2.copyResourcesToDwh(view, mergedDwhFiles);
-      }
-    }
 
     for (String resourceType : Sets.difference(resourceTypes1, resourceTypes2)) {
       dwhFiles1.copyResourcesToDwh(resourceType, mergedDwhFiles);
@@ -270,8 +212,7 @@ public class ParquetMerger {
       pipelines.add(pipeline);
       log.info("Merging resource type {}", type);
       PCollection<KV<String, Iterable<GenericRecord>>> groupedRecords =
-          readAndGroupById(
-              pipeline, Arrays.asList(dwhFiles1, dwhFiles2), type, avroConversionUtil, null);
+          readAndGroupById(pipeline, Arrays.asList(dwhFiles1, dwhFiles2), type, avroConversionUtil);
       PCollection<GenericRecord> merged =
           groupedRecords
               .apply(
@@ -305,53 +246,6 @@ public class ParquetMerger {
               //   happens for TextIO. We should investigate this further and possibly file a bug.
               .withNumShards(options.getNumShards()));
     }
-    if (!dwhViews1.isEmpty() || !dwhViews2.isEmpty()) {
-      for (String viewName : dwhViews1) {
-        if (!dwhViews2.contains(viewName)) {
-          continue;
-        }
-        Pipeline pipeline = Pipeline.create(options);
-        pipelines.add(pipeline);
-        log.info("Merging materialized view {}", viewName);
-        ViewDefinition viewDef = viewMap.get(viewName);
-        PCollection<KV<String, Iterable<GenericRecord>>> groupedRecords =
-            readAndGroupById(
-                pipeline,
-                Arrays.asList(dwhFiles1, dwhFiles2),
-                viewName,
-                avroConversionUtil,
-                viewDef);
-        PCollection<GenericRecord> merged =
-            groupedRecords
-                .apply(
-                    ParDo.of(
-                        new DoFn<KV<String, Iterable<GenericRecord>>, GenericRecord>() {
-                          @ProcessElement
-                          public void processElement(ProcessContext c) {
-                            KV<String, Iterable<GenericRecord>> e = c.element();
-                            GenericRecord lastRecord = findLastRecord(e.getValue(), numDuplicates);
-                            if (!isRecordDeleted(lastRecord)) {
-                              numOutputRecords.inc();
-                              c.output(lastRecord);
-                            }
-                          }
-                        }))
-                .setCoder(AvroCoder.of(ViewSchema.getAvroSchema(viewDef)));
-
-        Sink parquetSink =
-            ParquetIO.sink(ViewSchema.getAvroSchema(viewDef))
-                .withCompressionCodec(CompressionCodecName.SNAPPY);
-        if (options.getRowGroupSizeForParquetFiles() > 0) {
-          parquetSink = parquetSink.withRowGroupSize(options.getRowGroupSizeForParquetFiles());
-        }
-        merged.apply(
-            FileIO.<GenericRecord>write()
-                .via(parquetSink)
-                .to(mergedDwhFiles.getResourcePath(viewName).toString())
-                .withSuffix(".parquet")
-                .withNumShards(options.getNumShards()));
-      }
-    }
     return pipelines;
   }
 
@@ -371,10 +265,6 @@ public class ParquetMerger {
         || options.getDwh2().isEmpty()
         || options.getMergedDwh().isEmpty()) {
       throw new IllegalArgumentException("All of --dwh1, --dwh2, and --mergedDwh should be set!");
-    }
-    if (options.isMergeParquetViews() && options.getViewDefinitionsDir().isEmpty()) {
-      throw new IllegalArgumentException(
-          "When using --mergeParquetViews, --viewDefinitionsDir cannot be empty");
     }
 
     List<Pipeline> pipelines = createMergerPipelines(options, avroConversionUtil);

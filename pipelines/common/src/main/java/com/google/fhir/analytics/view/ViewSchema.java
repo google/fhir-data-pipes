@@ -256,9 +256,6 @@ public class ViewSchema {
         SchemaBuilder.record(view.getName()).namespace("org.viewDefinition").fields();
     for (Entry<String, Column> entry : view.getAllColumns().entrySet()) {
       Preconditions.checkState(entry.getValue() != null);
-      if (entry.getValue().getType() == null && entry.getValue().getInferredType() == null) {
-        log.warn("No type specified for column {}; using string instead.", entry.getKey());
-      }
       String columnType = entry.getValue().getType();
       String colName = entry.getKey();
 
