@@ -296,6 +296,10 @@ public class FhirEtl {
                 + options.getResourceList());
       }
     }
+    if (options.isCreateParquetViews() && Strings.isNullOrEmpty(options.getViewDefinitionsDir())) {
+      throw new IllegalArgumentException(
+          "When using --createParquetViews, --viewDefinitionsDir cannot be empty");
+    }
     if (options.getCacheBundleForParquetWrites()
         && !"DataflowRunner".equals(options.getRunner().getSimpleName())) {
       throw new IllegalArgumentException(

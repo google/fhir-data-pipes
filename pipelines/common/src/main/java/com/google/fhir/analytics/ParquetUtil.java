@@ -19,18 +19,30 @@ import ca.uhn.fhir.context.FhirVersionEnum;
 import com.cerner.bunsen.exception.ProfileException;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
+import com.google.common.collect.ImmutableList;
+import com.google.fhir.analytics.view.ViewApplicationException;
+import com.google.fhir.analytics.view.ViewApplicator;
+import com.google.fhir.analytics.view.ViewApplicator.RowList;
+import com.google.fhir.analytics.view.ViewDefinition;
+import com.google.fhir.analytics.view.ViewDefinitionException;
+import com.google.fhir.analytics.view.ViewManager;
+import com.google.fhir.analytics.view.ViewSchema;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.channels.Channels;
 import java.nio.channels.WritableByteChannel;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Random;
 import java.util.Set;
 import java.util.Timer;
 import java.util.TimerTask;
+import javax.annotation.Nullable;
 import org.apache.avro.generic.GenericRecord;
 import org.apache.beam.sdk.io.fs.ResolveOptions.StandardResolveOptions;
 import org.apache.beam.sdk.io.fs.ResourceId;
@@ -51,15 +63,23 @@ public class ParquetUtil {
   private static final Logger log = LoggerFactory.getLogger(ParquetUtil.class);
   public static String PARQUET_EXTENSION = ".parquet";
   private final AvroConversionUtil conversionUtil;
-  private final Map<String, WriterWithCache> writerMap;
-  private final int rowGroupSize;
 
+  private final Map<String, ViewDefinition> viewMap;
+
+  private final Map<String, ParquetWriter<GenericRecord>> viewWriterMap;
+  private final Map<String, WriterWithCache> writerMap;
+
+  private final int rowGroupSize;
   private final boolean cacheBundle;
   private final DwhFiles dwhFiles;
   private final Timer timer;
   private final Random random;
   private final String namePrefix;
   private boolean flushedInCurrentPeriod;
+
+  private ViewManager viewManager;
+
+  private final boolean createParquetViews;
 
   private synchronized void setFlushedInCurrentPeriod(boolean value) {
     flushedInCurrentPeriod = value;
@@ -70,6 +90,7 @@ public class ParquetUtil {
   }
 
   // TODO remove this constructor and only expose a similar one in `DwhFiles` (for testing).
+
   /**
    * @param fhirVersionEnum This should match the resources intended to be converted.
    * @param structureDefinitionsPath Directory path containing the structure definitions for custom
@@ -82,8 +103,8 @@ public class ParquetUtil {
    * @param namePrefix The prefix directory at which the Parquet files are written
    * @param recursiveDepth The maximum recursive depth for FHIR resources when converting to Avro.
    * @param cacheBundle Whether to cache output records or directly send them to the Parquet writer.
-   *     If this is enabled, then it is the responsibility of the user code to call emptyCache.
-   *     This is used when we want to make sure a DoFn is idempotent.
+   *     If this is enabled, then it is the responsibility of the user code to call emptyCache. This
+   *     is used when we want to make sure a DoFn is idempotent.
    * @throws ProfileException if any errors are encountered during initialisation of FhirContext
    */
   @VisibleForTesting
@@ -91,6 +112,9 @@ public class ParquetUtil {
       FhirVersionEnum fhirVersionEnum,
       String structureDefinitionsPath,
       String parquetFilePath,
+      String viewDefinitionsDir,
+      boolean createParquetViews,
+      List<String> resourceList,
       int secondsToFlush,
       int rowGroupSize,
       String namePrefix,
@@ -108,7 +132,53 @@ public class ParquetUtil {
     this.rowGroupSize = rowGroupSize;
     this.cacheBundle = cacheBundle;
     this.namePrefix = namePrefix;
+    this.createParquetViews = createParquetViews;
+    this.viewWriterMap = new HashMap<>();
+    this.viewMap = new HashMap<>();
+    this.viewManager = null;
     setFlushedInCurrentPeriod(false);
+    if (createParquetViews) {
+      try {
+        this.viewManager = ViewManager.createForDir(viewDefinitionsDir);
+      } catch (IOException | ViewDefinitionException e) {
+        String errorMsg = String.format("Error while reading views from %s", viewDefinitionsDir);
+        log.error(errorMsg, e);
+        throw new IllegalArgumentException(errorMsg);
+      }
+      List<String> names = new ArrayList<>();
+      List<ViewDefinition> allViews = new ArrayList<>();
+      for (String type : resourceList) {
+        List<ViewDefinition> allViewsForType = viewManager.getViewsForType(type);
+        if (allViewsForType != null) {
+          names.addAll(allViewsForType.stream().map(v -> v.getName()).toList());
+          allViews.addAll(allViewsForType);
+        }
+      }
+      for (ViewDefinition vDef : allViews) {
+        if (!viewMap.containsKey(vDef.getName())) {
+          viewMap.put(vDef.getName(), vDef);
+        }
+      }
+
+      Map<String, Integer> frequencyMap = new HashMap<>();
+      Set<String> dupViews = new HashSet<>();
+      for (String name : names) {
+        frequencyMap.put(name, frequencyMap.getOrDefault(name, 0) + 1);
+      }
+      for (String name : frequencyMap.keySet()) {
+        if (frequencyMap.get(name) > 1) {
+          dupViews.add(name);
+        }
+      }
+      if (!dupViews.isEmpty()) {
+        String errorMsg =
+            "Duplicate ViewDefinition names found: "
+                + Arrays.toString(dupViews.toArray())
+                + ". Ensure each view has a distinct name!";
+        log.error(errorMsg);
+        throw new IllegalArgumentException(errorMsg);
+      }
+    }
     if (secondsToFlush > 0) {
       TimerTask task =
           new TimerTask() {
@@ -140,7 +210,7 @@ public class ParquetUtil {
   @VisibleForTesting
   synchronized ResourceId getUniqueOutputFilePath(String resourceType) throws IOException {
     ResourceId resourceId = dwhFiles.getResourcePath(resourceType);
-    String uniquetFileName =
+    String uniqueFileName =
         String.format(
             "%s%s_output-parquet-th-%d-ts-%d-r-%d%s",
             namePrefix,
@@ -149,12 +219,32 @@ public class ParquetUtil {
             System.currentTimeMillis(),
             random.nextInt(1000000),
             PARQUET_EXTENSION);
-    return resourceId.resolve(uniquetFileName, StandardResolveOptions.RESOLVE_FILE);
+    return resourceId.resolve(uniqueFileName, StandardResolveOptions.RESOLVE_FILE);
   }
 
-  private synchronized void createWriter(String resourceType) throws IOException, ProfileException {
+  @VisibleForTesting
+  synchronized ResourceId getUniqueOutputFilePathView(String viewName) throws IOException {
+    ResourceId resourceId = dwhFiles.getResourcePath(viewName.toLowerCase(Locale.ENGLISH));
+    String uniqueFileName =
+        String.format(
+            "%s%s_output-parquet-th-%d-ts-%d-r-%d%s",
+            namePrefix,
+            viewName,
+            Thread.currentThread().getId(),
+            System.currentTimeMillis(),
+            random.nextInt(1000000),
+            PARQUET_EXTENSION);
+    return resourceId.resolve(uniqueFileName, StandardResolveOptions.RESOLVE_FILE);
+  }
 
-    ResourceId resourceId = getUniqueOutputFilePath(resourceType);
+  private synchronized void createWriter(String resourceType, @Nullable ViewDefinition vDef)
+      throws IOException, ProfileException {
+    boolean noView = vDef == null;
+    ResourceId resourceId =
+        noView
+            ? getUniqueOutputFilePath(resourceType)
+            : getUniqueOutputFilePathView(vDef.getName());
+
     WritableByteChannel writableByteChannel =
         org.apache.beam.sdk.io.FileSystems.create(resourceId, MimeTypes.BINARY);
     OutputStream outputStream = Channels.newOutputStream(writableByteChannel);
@@ -165,23 +255,27 @@ public class ParquetUtil {
     if (rowGroupSize > 0) {
       builder.withRowGroupSize(rowGroupSize);
     }
-    ParquetWriter<GenericRecord> writer =
-        builder.withSchema(conversionUtil.getResourceSchema(resourceType)).build();
-    writerMap.put(resourceType, new WriterWithCache(writer, this.cacheBundle));
+    ParquetWriter<GenericRecord> writer;
+    if (noView) {
+      writer = builder.withSchema(conversionUtil.getResourceSchema(resourceType)).build();
+      writerMap.put(resourceType, new WriterWithCache(writer, this.cacheBundle));
+    } else {
+      writer = builder.withSchema(ViewSchema.getAvroSchema(vDef)).build();
+      viewWriterMap.put(vDef.getName(), writer);
+    }
   }
 
   /**
-   * This is to write a FHIR resource to a Parquet file. This automatically handles file creation in
-   * a directory named after the resource type (e.g., `Patient`) with names following the
-   * "output-streaming-ddddd" pattern where `ddddd` is a string with five digits. NOTE: This should
-   * not be used in its current form once we move the streaming pipeline to Beam; the I/O should be
-   * left to Beam similar to the batch mode.
+   * This is to write a FHIR resource to a Parquet file. Automatically handles file creation in a
+   * directory named after the resource type (e.g., `Patient`) with names following the
+   * "output-parquet-th-T-ts-TS-r-R.parquet" pattern where T is the thread identifier, TS is a
+   * timestamp and R is a random number
    */
   public synchronized void write(Resource resource) throws IOException, ProfileException {
     Preconditions.checkNotNull(resource.fhirType());
     String resourceType = resource.fhirType();
     if (!writerMap.containsKey(resourceType)) {
-      createWriter(resourceType);
+      createWriter(resourceType, null);
     }
     final WriterWithCache writer = writerMap.get(resourceType);
     GenericRecord record = conversionUtil.convertToAvro(resource);
@@ -196,16 +290,49 @@ public class ParquetUtil {
     }
   }
 
+  /**
+   * This is to write a materialized View Definition to a Parquet file.
+   *
+   * @see #write(Resource)
+   */
+  public synchronized void write(Resource resource, ViewDefinition vDef)
+      throws IOException, ProfileException, ViewApplicationException {
+    Preconditions.checkNotNull(resource.fhirType());
+    if (!viewWriterMap.containsKey(vDef.getName())) {
+      createWriter("", vDef);
+    }
+    final ParquetWriter<GenericRecord> parquetWriter = viewWriterMap.get(vDef.getName());
+    ViewApplicator applicator = new ViewApplicator(vDef);
+    RowList rows = applicator.apply(resource);
+    List<GenericRecord> result = ViewSchema.setValueInRecord(rows, vDef);
+    for (GenericRecord record : result) {
+      parquetWriter.write(record);
+    }
+  }
+
   private synchronized void flush(String resourceType) throws IOException, ProfileException {
     WriterWithCache writer = writerMap.get(resourceType);
     if (writer != null && writer.getDataSize() > 0) {
       writer.close();
-      createWriter(resourceType);
+      createWriter(resourceType, null);
+    }
+  }
+
+  private synchronized void flushViewWriter(String viewName) throws IOException, ProfileException {
+    ParquetWriter<GenericRecord> writer = viewWriterMap.get(viewName);
+    if (writer != null && writer.getDataSize() > 0) {
+      writer.close();
+      //TODO: We need to investigate why we need to create the writer here. If we change this logic
+      // to remove the writer at this line, E2E Streaming Tests fail in CloudBuild.
+      createWriter(viewName, viewMap.get(viewName));
     }
   }
 
   synchronized void flushAll() throws IOException, ProfileException {
     log.info("Flushing all Parquet writers for thread " + Thread.currentThread().getId());
+    for (String viewName : viewWriterMap.keySet()) {
+      flushViewWriter(viewName);
+    }
     for (String resourceType : writerMap.keySet()) {
       flush(resourceType);
     }
@@ -216,6 +343,10 @@ public class ParquetUtil {
     if (timer != null) {
       timer.cancel();
     }
+    for (Map.Entry<String, ParquetWriter<GenericRecord>> entry : viewWriterMap.entrySet()) {
+      entry.getValue().close();
+      viewWriterMap.put(entry.getKey(), null);
+    }
     for (Map.Entry<String, WriterWithCache> entry : writerMap.entrySet()) {
       entry.getValue().close();
       writerMap.put(entry.getKey(), null);
@@ -223,7 +354,7 @@ public class ParquetUtil {
   }
 
   public void writeRecords(Bundle bundle, Set<String> resourceTypes)
-      throws IOException, ProfileException {
+      throws IOException, ProfileException, ViewApplicationException {
     if (bundle.getEntry() == null) {
       return;
     }
@@ -231,11 +362,20 @@ public class ParquetUtil {
       Resource resource = entry.getResource();
       if (resourceTypes == null || resourceTypes.contains(resource.getResourceType().name())) {
         write(resource);
+        if (createParquetViews) {
+          ImmutableList<ViewDefinition> views = viewManager.getViewsForType(resource.fhirType());
+          if (views != null) {
+            for (ViewDefinition vDef : views) {
+              write(resource, vDef);
+            }
+          }
+        }
       }
     }
   }
 
   private static class WriterWithCache {
+
     private final ParquetWriter<GenericRecord> writer;
     private final List<GenericRecord> cache;
     private final boolean useCache;
