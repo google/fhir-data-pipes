@@ -255,7 +255,7 @@ public class ParquetUtilTest {
   /** Tests the ParquetUtil write method for Materialized ViewDefinitions */
   @Test
   public void createOutputWithRowGroupSizeViewToParquet()
-      throws IOException, ProfileException, ViewApplicationException {
+      throws IOException, ProfileException, ViewApplicationException, ViewDefinitionException {
     rootPath = Files.createTempDirectory("PARQUET_TEST");
     String fileSeparator = DwhFiles.getFileSeparatorForDwhFiles(rootPath.toString());
     String path = Resources.getResource("parquet-util-view-test").getFile();
@@ -277,13 +277,7 @@ public class ParquetUtilTest {
     String viewJson =
         Resources.toString(
             Resources.getResource("observation_flat_view.json"), StandardCharsets.UTF_8);
-
-    ViewDefinition viewDef;
-    try {
-      viewDef = ViewDefinition.createFromString(viewJson);
-    } catch (ViewDefinitionException v) {
-      throw new IllegalArgumentException("Failed to validate the view in observation_flat_view");
-    }
+    ViewDefinition viewDef = ViewDefinition.createFromString(viewJson);
 
     Bundle bundle = parser.parseResource(Bundle.class, observationBundle);
     for (Bundle.BundleEntryComponent entry : bundle.getEntry()) {

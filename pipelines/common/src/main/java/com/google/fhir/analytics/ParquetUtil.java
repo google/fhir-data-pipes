@@ -322,6 +322,8 @@ public class ParquetUtil {
     ParquetWriter<GenericRecord> writer = viewWriterMap.get(viewName);
     if (writer != null && writer.getDataSize() > 0) {
       writer.close();
+      //TODO: We need to investigate why we need to create the writer here. If we change this logic
+      // to remove the writer at this line, E2E Streaming Tests fail in CloudBuild.
       createWriter(viewName, viewMap.get(viewName));
     }
   }
