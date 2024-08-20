@@ -134,10 +134,11 @@ public class ParquetUtil {
     this.namePrefix = namePrefix;
     this.createParquetViews = createParquetViews;
     this.viewWriterMap = new HashMap<>();
-    this.viewMap = new HashMap<>();
     this.viewManager = null;
     setFlushedInCurrentPeriod(false);
-    if (createParquetViews) {
+    if (!createParquetViews) {
+      this.viewMap = null;
+    } else {
       try {
         this.viewManager = ViewManager.createForDir(viewDefinitionsDir);
       } catch (IOException | ViewDefinitionException e) {
@@ -146,19 +147,8 @@ public class ParquetUtil {
         throw new IllegalArgumentException(errorMsg);
       }
       List<String> names = new ArrayList<>();
-      List<ViewDefinition> allViews = new ArrayList<>();
-      for (String type : resourceList) {
-        List<ViewDefinition> allViewsForType = viewManager.getViewsForType(type);
-        if (allViewsForType != null) {
-          names.addAll(allViewsForType.stream().map(v -> v.getName()).toList());
-          allViews.addAll(allViewsForType);
-        }
-      }
-      for (ViewDefinition vDef : allViews) {
-        if (!viewMap.containsKey(vDef.getName())) {
-          viewMap.put(vDef.getName(), vDef);
-        }
-      }
+      this.viewMap =
+          ViewSchema.createViewMap(names, new ArrayList<>(), resourceList, this.viewManager);
 
       Map<String, Integer> frequencyMap = new HashMap<>();
       Set<String> dupViews = new HashSet<>();
