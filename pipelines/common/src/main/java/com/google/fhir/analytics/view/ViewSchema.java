@@ -18,15 +18,24 @@ package com.google.fhir.analytics.view;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+import com.google.fhir.analytics.view.ViewApplicator.FlatRow;
 import com.google.fhir.analytics.view.ViewApplicator.RowElement;
+import com.google.fhir.analytics.view.ViewApplicator.RowList;
 import com.google.fhir.analytics.view.ViewDefinition.Column;
 import java.sql.JDBCType;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.sql.Timestamp;
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 import java.util.Map.Entry;
 import java.util.stream.Collectors;
+import org.apache.avro.Schema;
+import org.apache.avro.SchemaBuilder;
+import org.apache.avro.SchemaBuilder.FieldAssembler;
+import org.apache.avro.generic.GenericData;
+import org.apache.avro.generic.GenericRecord;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -159,5 +168,144 @@ public class ViewSchema {
         }
       }
     }
+  }
+
+  /**
+   * Loads flat view values into GenericRecords by adding each RowElement value to its respective
+   * column in a GenericRecord. Each GenericRecord contains values for one FlatRow
+   *
+   * @param rows RowList containing materialized view data
+   * @param vDef The current ViewDefinition used to define the flat view
+   * @return List of populated GenericRecords
+   */
+  public static List<GenericRecord> setValueInRecord(RowList rows, ViewDefinition vDef) {
+    List<GenericRecord> recordList = new ArrayList<>();
+
+    // Add each RowElement value to its respective column in the GenericRecord
+    Schema flatSchema = ViewSchema.getAvroSchema(vDef);
+    for (FlatRow flatRow : rows.getRows()) {
+      GenericRecord currentRecord = new GenericData.Record(flatSchema);
+      for (RowElement e : flatRow.getElements()) {
+        if (e.getPrimitive() != null) {
+          if (ViewApplicator.ID_TYPE.equals(e.getColumnInfo().getInferredType())) {
+            currentRecord.put(e.getColumnInfo().getName(), e.getString());
+          } else {
+            String elementType =
+                e.getColumnInfo().getType() == null ? "any" : e.getColumnInfo().getType();
+            switch (elementType) {
+              case "boolean":
+                currentRecord.put(e.getColumnInfo().getName(), e.<Boolean>getPrimitive());
+                break;
+              case "integer":
+              case "unsignedInt":
+              case "integer64":
+              case "decimal":
+                currentRecord.put(e.getColumnInfo().getName(), e.getPrimitive());
+                break;
+              case "date":
+              case "dateTime":
+              case "instant":
+              case "time":
+              case "base64Binary":
+              case "canonical":
+              case "code":
+              case "id":
+              case "markdown":
+              case "oid":
+              case "string":
+              case "uri":
+              case "url":
+              case "uuid":
+              default:
+                currentRecord.put(e.getColumnInfo().getName(), e.getString());
+                break;
+            }
+          }
+        } else {
+          if (e.getColumnInfo().isCollection() || e.getColumnInfo().getType() instanceof String) {
+            if (e.getValues() == null || e.getValues().size() < 1) {
+              currentRecord.put(e.getColumnInfo().getName(), null);
+            } else {
+              // Handles View Definition Collections and converts them to Avro String Arrays
+              String[] values = new String[e.getValues().size()];
+              for (int i = 0; i < e.getValues().size(); i++) {
+                values[i] = e.getValues().get(i).toString();
+              }
+              currentRecord.put(e.getName(), values);
+            }
+          } else {
+            // This happens when there is no value for a column with a primitive type.
+            currentRecord.put(e.getColumnInfo().getName(), null);
+          }
+        }
+      }
+      recordList.add(currentRecord);
+    }
+    return recordList;
+  }
+
+  /**
+   * Creates an Avro Schema for a given View Definition. Note: This conversion should be consistent
+   * with {@see #com.cerner.bunsen.avro.converters.DefinitionToAvroVisitor}
+   *
+   * @param view the input View Definition
+   * @return Avro Schema
+   */
+  public static Schema getAvroSchema(ViewDefinition view) {
+    FieldAssembler<Schema> schemaFields =
+        SchemaBuilder.record(view.getName()).namespace("org.viewDefinition").fields();
+    for (Entry<String, Column> entry : view.getAllColumns().entrySet()) {
+      Preconditions.checkState(entry.getValue() != null);
+      String columnType = entry.getValue().getType();
+      String colName = entry.getKey();
+
+      if (columnType != null) {
+        switch (columnType) {
+          case "boolean" -> schemaFields.optionalBoolean(colName);
+          case "integer", "unsignedInt" -> schemaFields.optionalInt(colName);
+          case "integer64" -> schemaFields.optionalLong(colName);
+          case "decimal" ->
+          // We cannot use Avro logical type `decimal` to represent FHIR `decimal` type. The
+          // reason is that
+          // Avro `decimal` type  has a fixed scale and a maximum precision but with a fixed scale
+          // we have
+          // no guarantees on the precision of the FHIR `decimal` type. See this for more details:
+          // https://github.com/GoogleCloudPlatform/openmrs-fhir-analytics/issues/156#issuecomment-880964207
+
+          // Note: The use Avro primitive type `Double` decreases precision but allows for
+          // conversion
+          schemaFields.optionalDouble(colName);
+          case "date",
+              "dateTime",
+              "instant",
+              "time",
+              "base64Binary",
+              "canonical",
+              "code",
+              "id",
+              "markdown",
+              "oid",
+              "string",
+              "uri",
+              "url",
+              "uuid" -> schemaFields.optionalString(colName);
+        }
+      } else {
+        if (entry.getValue().isCollection()) {
+          schemaFields
+              .name(colName)
+              .type()
+              .nullable()
+              .array()
+              .items(Schema.create(Schema.Type.STRING))
+              .noDefault();
+        } else {
+          // This is to handle non-primitive types or when the type is not specified, we may want to
+          // separate these cases from string in the future.
+          schemaFields.optionalString(colName);
+        }
+      }
+    }
+    return schemaFields.endRecord();
   }
 }
