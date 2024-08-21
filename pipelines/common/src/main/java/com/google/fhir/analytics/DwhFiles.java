@@ -187,6 +187,45 @@ public class DwhFiles {
   }
 
   /**
+   * This method returns the list of non-empty materialized view directories which contains at least
+   * one file under it. When the Full Run creates view directories, the name is always lowercase.
+   * FHIR ResourceType directories are capitalized
+   *
+   * @return the set of non-empty view directories
+   * @throws IOException
+   */
+  public Set<String> findNonEmptyViewTypes() throws IOException {
+    String fileSeparator = getFileSeparatorForDwhFiles(dwhRoot);
+    List<MatchResult> matchedChildResultList =
+        FileSystems.match(
+            List.of(
+                getPathEndingWithFileSeparator(dwhRoot, fileSeparator)
+                    + "*"
+                    + fileSeparator
+                    + "*"));
+    Set<String> fileSet = new HashSet<>();
+    for (MatchResult matchResult : matchedChildResultList) {
+      if (matchResult.status() == Status.OK && !matchResult.metadata().isEmpty()) {
+        for (Metadata metadata : matchResult.metadata()) {
+          fileSet.add(metadata.resourceId().getCurrentDirectory().getFilename());
+        }
+      } else if (matchResult.status() == Status.ERROR) {
+        log.error("Error matching resource types under {} ", dwhRoot);
+        throw new IOException(String.format("Error matching resource types under %s", dwhRoot));
+      }
+    }
+
+    Set<String> typeSet = Sets.newHashSet();
+    for (String file : fileSet) {
+      if (file.toLowerCase().equals(file)) {
+        typeSet.add(file);
+      }
+    }
+    log.info("View types under {} are {}", dwhRoot, typeSet);
+    return typeSet;
+  }
+
+  /**
    * This method returns the list of non-empty directories which contains at least one file under
    * it. The directory name should be a valid FHIR resource type.
    *
