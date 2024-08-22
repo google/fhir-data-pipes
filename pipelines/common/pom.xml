@@ -29,7 +29,7 @@
 
   <properties>
     <c3p0.version>0.10.1</c3p0.version>
-    <guava.version>33.2.1-jre</guava.version>
+    <guava.version>33.3.0-jre</guava.version>
   </properties>
 
   <dependencies>
@@ -56,7 +56,7 @@
     <dependency>
       <groupId>com.google.auth</groupId>
       <artifactId>google-auth-library-oauth2-http</artifactId>
-      <version>1.24.0</version>
+      <version>1.24.1</version>
     </dependency>
 
     <dependency>
