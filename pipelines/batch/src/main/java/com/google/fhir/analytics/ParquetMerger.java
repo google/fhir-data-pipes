@@ -91,7 +91,7 @@ public class ParquetMerger {
       Pipeline pipeline, DwhFiles dwh1, DwhFiles dwh2, String viewName, Schema schema)
       throws IOException {
 
-    //TODO:The extra reshuffle may be worth it to keep the logic simple and due to the smaller view
+    // TODO:The extra reshuffle may be worth it to keep the logic simple and due to the smaller view
     // schemas. Ask Chandra is the performance hit (memory-wise) won't be as large
 
     // Reading all parquet files at once instead of one set at a time, reduces the number of Flink

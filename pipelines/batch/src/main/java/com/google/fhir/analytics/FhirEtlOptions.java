@@ -230,13 +230,6 @@ public interface FhirEtlOptions extends BasePipelineOptions {
   void setCreateParquetViews(Boolean value);
 
   @Description(
-      "If set, flat Parquet files corresponding to input ViewDefinition are created as well.")
-  @Default.Boolean(false)
-  Boolean isCreateParquetViews();
-
-  void setCreateParquetViews(Boolean value);
-
-  @Description(
       "The path to the data-warehouse directory of Parquet files to be read. The content of this "
           + "directory is expected to have the same structure used in output data-warehouse, i.e., "
           + "one dir per each resource type. If this is enabled, --fhirServerUrl and "
