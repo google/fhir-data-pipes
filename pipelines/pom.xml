@@ -43,10 +43,10 @@
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <bunsen.version>0.5.14-SNAPSHOT</bunsen.version>
     <junit.version>4.13.2</junit.version>
-    <slf4j.version>2.0.13</slf4j.version>
+    <slf4j.version>2.0.16</slf4j.version>
     <logback.version>1.5.6</logback.version>
     <hapi.fhir.version>7.2.2</hapi.fhir.version>
-    <hamcrest.version>2.2</hamcrest.version>
+    <hamcrest.version>3.0</hamcrest.version>
     <mockito.version>5.2.0</mockito.version>
     <jcommander.version>1.82</jcommander.version>
     <license-maven-plugin.version>4.5</license-maven-plugin.version>
@@ -255,7 +255,7 @@
         </plugin>
         <plugin>
           <artifactId>maven-surefire-plugin</artifactId>
-          <version>3.3.1</version>
+          <version>3.4.0</version>
         </plugin>
         <!--
            Configures `mvn package` to produce a bundled jar ("fat jar") for runners
@@ -347,7 +347,7 @@
         <plugin>
           <groupId>org.codehaus.mojo</groupId>
           <artifactId>exec-maven-plugin</artifactId>
-          <version>3.3.0</version>
+          <version>3.4.1</version>
         </plugin>
       </plugins>
     </pluginManagement>
