@@ -83,7 +83,7 @@ public class LocalDwhFilesTest {
         Paths.get(observationPath.toString(), "observationPath.txt"),
         "SAMPLE TEXT".getBytes(StandardCharsets.UTF_8));
 
-    Set<String> resourceTypes = instance.findNonEmptyFhirResourceTypes();
+    Set<String> resourceTypes = instance.findNonEmptyViews(true);
     assertThat("Could not find Patient", resourceTypes.contains("Patient"));
     assertThat("Could not find Observation", resourceTypes.contains("Observation"));
     assertThat(resourceTypes.size(), equalTo(2));
@@ -113,7 +113,7 @@ public class LocalDwhFilesTest {
         Paths.get(observationPath.toString(), "observationPath.txt"),
         "SAMPLE TEXT".getBytes(StandardCharsets.UTF_8));
 
-    Set<String> resourceTypes = instance.findNonEmptyViewTypes();
+    Set<String> resourceTypes = instance.findNonEmptyViews(false);
     assertThat("Could not find Patient", resourceTypes.contains("patient_flat"));
     assertThat("Could not find Observation", !resourceTypes.contains("Observation"));
     assertThat("Could not find Test Directory!", !resourceTypes.contains("test_dir"));

@@ -25,7 +25,13 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.stream.Stream;
 import javax.annotation.Nullable;
 
@@ -36,6 +42,7 @@ import javax.annotation.Nullable;
 public class ViewManager {
 
   private static final String JSON_EXT = ".json";
+  private final Multimap<String, ViewDefinition> viewNameMap = HashMultimap.create();
 
   private final Multimap<String, ViewDefinition> viewMap = HashMultimap.create();
 
@@ -63,7 +70,48 @@ public class ViewManager {
       ViewDefinition vDef = ViewDefinition.createFromFile(p);
       viewManager.viewMap.put(vDef.getResource(), vDef);
     }
+
+    Collection<ViewDefinition> viewDefinitions = viewManager.viewMap.values();
+    List<String> viewNames = new ArrayList<>();
+    for (ViewDefinition vDef : viewDefinitions) {
+      viewManager.viewNameMap.put(vDef.getName(), vDef);
+      viewNames.add(vDef.getName());
+    }
+
+    // Checking for Duplicate View Definitions and returning the names of any duplicates found
+    Map<String, Integer> frequencyMap = new HashMap<>();
+    Set<String> dupViews = new HashSet<>();
+    for (String name : viewNames) {
+      frequencyMap.put(name, frequencyMap.getOrDefault(name, 0) + 1);
+    }
+    for (String name : frequencyMap.keySet()) {
+      if (frequencyMap.get(name) > 1) {
+        dupViews.add(name);
+      }
+    }
+    if (!dupViews.isEmpty()) {
+      String errorMsg =
+          "Duplicate ViewDefinition names found: "
+              + Arrays.toString(dupViews.toArray())
+              + ". Ensure each view has a distinct name!";
+      throw new IllegalArgumentException(errorMsg);
+    }
     return viewManager;
+  }
+
+  /**
+   * Because duplicate views are not accepted in the ViewManager, the collection returned by the
+   * viewNameMap Multimap will only contain one ViewDefinition
+   *
+   * @param viewName Name of the ViewDefinition to retrieve
+   * @return ViewDefinition
+   */
+  @Nullable
+  public ViewDefinition getViewDefinition(String viewName) {
+    if (viewNameMap.get(viewName).isEmpty()) {
+      return null;
+    }
+    return viewNameMap.get(viewName).iterator().next();
   }
 
   @Nullable
