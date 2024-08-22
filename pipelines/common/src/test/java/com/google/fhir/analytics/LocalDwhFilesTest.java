@@ -83,7 +83,7 @@ public class LocalDwhFilesTest {
         Paths.get(observationPath.toString(), "observationPath.txt"),
         "SAMPLE TEXT".getBytes(StandardCharsets.UTF_8));
 
-    Set<String> resourceTypes = instance.findNonEmptyFhirResourceTypes();
+    Set<String> resourceTypes = instance.findNonEmptyViews(true);
     assertThat("Could not find Patient", resourceTypes.contains("Patient"));
     assertThat("Could not find Observation", resourceTypes.contains("Observation"));
     assertThat(resourceTypes.size(), equalTo(2));
@@ -113,7 +113,7 @@ public class LocalDwhFilesTest {
         Paths.get(observationPath.toString(), "observationPath.txt"),
         "SAMPLE TEXT".getBytes(StandardCharsets.UTF_8));
 
-    Set<String> resourceTypes = instance.findNonEmptyViewTypes();
+    Set<String> resourceTypes = instance.findNonEmptyViews(false);
     assertThat("Could not find Patient", resourceTypes.contains("patient_flat"));
     assertThat("Could not find Observation", !resourceTypes.contains("Observation"));
     assertThat("Could not find Test Directory!", !resourceTypes.contains("test_dir"));
@@ -153,38 +153,6 @@ public class LocalDwhFilesTest {
 
     Files.delete(Paths.get(destPath.resolve("Patient").toString(), "patients.txt"));
     Files.delete(Paths.get(destPath.resolve("Patient").toString()));
-    Files.delete(Paths.get(patientPath.toString(), "patients.txt"));
-    Files.delete(Paths.get(patientPath.toString()));
-    Files.delete(destPath);
-    Files.delete(sourcePath);
-  }
-
-  @Test
-  public void copyViewTest() throws IOException {
-    Path sourcePath = Files.createTempDirectory("DWH_SOURCE_TEST");
-    FhirContext fhirContext = FhirContext.forR4Cached();
-    DwhFiles instance = new DwhFiles(sourcePath.toString(), fhirContext);
-    Path patientPath = Paths.get(sourcePath.toString(), "patient_flat");
-    Files.createDirectories(patientPath);
-    createFile(
-        Paths.get(patientPath.toString(), "patients.txt"),
-        "SAMPLE TEXT".getBytes(StandardCharsets.UTF_8));
-
-    Path destPath = Files.createTempDirectory("DWH_DEST_TEST");
-    instance.copyResourcesToDwh("patient_flat", DwhFiles.forRoot(destPath.toString(), fhirContext));
-
-    List<Path> destFiles = Files.list(destPath).collect(Collectors.toList());
-    assertThat(destFiles.size(), equalTo(1));
-    assertThat(destFiles.get(0).toString(), equalTo(destPath.resolve("patient_flat").toString()));
-
-    List<Path> destChildFiles = Files.list(destFiles.get(0)).collect(Collectors.toList());
-    assertThat(destChildFiles.size(), equalTo(1));
-    assertThat(
-        destChildFiles.get(0).toString(),
-        equalTo(destFiles.get(0).resolve("patients.txt").toString()));
-
-    Files.delete(Paths.get(destPath.resolve("patient_flat").toString(), "patients.txt"));
-    Files.delete(Paths.get(destPath.resolve("patient_flat").toString()));
     Files.delete(Paths.get(patientPath.toString(), "patients.txt"));
     Files.delete(Paths.get(patientPath.toString()));
     Files.delete(destPath);

@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2023 Google LLC
+ * Copyright 2020-2024 Google LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -114,7 +114,7 @@ public class GcsDwhFilesTest {
         .thenReturn(modelObjects);
 
     DwhFiles dwhFiles = new DwhFiles("gs://testbucket/testdirectory", FhirContext.forR4Cached());
-    Set<String> resourceTypes = dwhFiles.findNonEmptyFhirResourceTypes();
+    Set<String> resourceTypes = dwhFiles.findNonEmptyViews(true);
     assertThat("Could not find Patient", resourceTypes.contains("Patient"));
     assertThat("Could not find Observation", resourceTypes.contains("Observation"));
     assertThat(resourceTypes.size(), equalTo(2));
@@ -130,7 +130,7 @@ public class GcsDwhFilesTest {
         .thenReturn(modelObjects);
 
     DwhFiles dwhFiles = new DwhFiles("gs://testbucket/testdirectory", FhirContext.forR4Cached());
-    Set<String> resourceTypes = dwhFiles.findNonEmptyFhirResourceTypes();
+    Set<String> resourceTypes = dwhFiles.findNonEmptyViews(true);
     assertThat(resourceTypes.size(), equalTo(0));
   }
 

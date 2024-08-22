@@ -232,13 +232,16 @@ public class DwhFiles {
    * This method returns the list of non-empty directories which contains at least one file under
    * it.
    *
+   * @param viewFlag If true, the views returned will be valid FHIR Resource Types. If false, the
+   *     views will be valid View Definitions
    * @return the set of non-empty directories
-   * @throws IOException
+   * @throws IOException if the directory does not contain a valid file type
    */
-  public Set<String> findNonEmptyFhirResourceTypes() throws IOException {
+  public Set<String> findNonEmptyViews(Boolean viewFlag) throws IOException {
     // TODO : If the list of files under the dwhRoot is huge then there can be a lag in the api
     //  response. This issue https://github.com/google/fhir-data-pipes/issues/288 helps in
     //  maintaining the number of file to an optimum value.
+    String fileType = viewFlag ? "Resource types" : "View types";
     String fileSeparator = getFileSeparatorForDwhFiles(dwhRoot);
     List<MatchResult> matchedChildResultList =
         FileSystems.match(
@@ -254,21 +257,27 @@ public class DwhFiles {
           fileSet.add(metadata.resourceId().getCurrentDirectory().getFilename());
         }
       } else if (matchResult.status() == Status.ERROR) {
-        log.error("Error matching resource types under {} ", dwhRoot);
-        throw new IOException(String.format("Error matching resource types under %s", dwhRoot));
+        log.error("Error matching {} under {} ", fileType, dwhRoot);
+        throw new IOException(String.format("Error matching %s under %s", fileType, dwhRoot));
       }
     }
 
     Set<String> typeSet = Sets.newHashSet();
     for (String file : fileSet) {
-      try {
-        fhirContext.getResourceType(file);
-        typeSet.add(file);
-      } catch (DataFormatException e) {
-        log.debug("Ignoring file {} which is not a FHIR resource.", file);
+      if (viewFlag) {
+        try {
+          fhirContext.getResourceType(file);
+          typeSet.add(file);
+        } catch (DataFormatException e) {
+          log.debug("Ignoring file {} which is not a FHIR resource.", file);
+        }
+      } else {
+        if (file.toLowerCase().equals(file)) {
+          typeSet.add(file);
+        }
       }
     }
-    log.info("Resource types under {} are {}", dwhRoot, typeSet);
+    log.info("{} under {} are {}", fileType, dwhRoot, typeSet);
     return typeSet;
   }
 

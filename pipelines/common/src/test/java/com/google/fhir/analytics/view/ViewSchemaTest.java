@@ -62,19 +62,6 @@ public class ViewSchemaTest {
         ]
       }""";
 
-  private ViewDefinition loadDefinition(String viewFile) throws IOException {
-    String viewJson = Resources.toString(Resources.getResource(viewFile), StandardCharsets.UTF_8);
-    ViewDefinition viewDef;
-    try {
-      viewDef = ViewDefinition.createFromString(viewJson);
-    } catch (ViewDefinitionException e) {
-      // This is just for convenience, in production code this exception should be properly handled.
-      log.error("View validation for file {} failed with ", viewFile, e);
-      throw new IllegalArgumentException("Failed to validate the view in " + viewFile);
-    }
-    return viewDef;
-  }
-
   private <T extends IBaseResource> IBaseResource loadResource(
       String resourceFile, Class<T> resourceType) throws IOException {
     IParser jsonParser = FhirContext.forR4().newJsonParser();
@@ -86,16 +73,19 @@ public class ViewSchemaTest {
 
   private <T extends IBaseResource> RowList applyViewOnResource(
       String viewFile, String resourceFile, Class<T> resourceType)
-      throws IOException, ViewApplicationException {
-    ViewDefinition viewDef = loadDefinition(viewFile);
+      throws IOException, ViewApplicationException, ViewDefinitionException {
+    String viewJson = Resources.toString(Resources.getResource(viewFile), StandardCharsets.UTF_8);
+    ViewDefinition viewDef = ViewDefinition.createFromString(viewJson);
     IBaseResource resource = loadResource(resourceFile, resourceType);
     ViewApplicator applicator = new ViewApplicator(viewDef);
     return applicator.apply(resource);
   }
 
   @Test
-  public void schemaConversionPatient() throws IOException {
-    ViewDefinition vDef = loadDefinition("patient_flat_view.json");
+  public void schemaConversionPatient() throws IOException, ViewDefinitionException {
+    String viewJson =
+        Resources.toString(Resources.getResource("patient_flat_view.json"), StandardCharsets.UTF_8);
+    ViewDefinition vDef = ViewDefinition.createFromString(viewJson);
     Schema schema = ViewSchema.getAvroSchema(vDef);
 
     assertThat(schema.getField("pat_id").toString(), notNullValue());
@@ -109,14 +99,8 @@ public class ViewSchemaTest {
   }
 
   @Test
-  public void schemaConversionPatientWithCollection() throws IOException {
-    ViewDefinition viewDef;
-    try {
-      viewDef = ViewDefinition.createFromString(PATIENT_COLLECTION_VIEW);
-    } catch (ViewDefinitionException e) {
-
-      throw new IllegalArgumentException("Failed to validate the view in ");
-    }
+  public void schemaConversionPatientWithCollection() throws ViewDefinitionException {
+    ViewDefinition viewDef = ViewDefinition.createFromString(PATIENT_COLLECTION_VIEW);
 
     Schema schema = ViewSchema.getAvroSchema(viewDef);
     assertThat(schema.getField("id").toString(), notNullValue());
@@ -125,8 +109,11 @@ public class ViewSchemaTest {
   }
 
   @Test
-  public void schemaConversionObservation() throws IOException {
-    ViewDefinition vDef = loadDefinition("observation_flat_view.json");
+  public void schemaConversionObservation() throws IOException, ViewDefinitionException {
+    String viewJson =
+        Resources.toString(
+            Resources.getResource("observation_flat_view.json"), StandardCharsets.UTF_8);
+    ViewDefinition vDef = ViewDefinition.createFromString(viewJson);
     Schema schema = ViewSchema.getAvroSchema(vDef);
 
     assertThat(schema.getField("id").toString(), notNullValue());
@@ -142,8 +129,11 @@ public class ViewSchemaTest {
   }
 
   @Test
-  public void setValueInRecordPatientTest() throws IOException, ViewApplicationException {
-    ViewDefinition vDef = loadDefinition("patient_flat_view.json");
+  public void setValueInRecordPatientTest()
+      throws IOException, ViewApplicationException, ViewDefinitionException {
+    String viewJson =
+        Resources.toString(Resources.getResource("patient_flat_view.json"), StandardCharsets.UTF_8);
+    ViewDefinition vDef = ViewDefinition.createFromString(viewJson);
     String[] colNames = vDef.getAllColumns().keySet().toArray(String[]::new);
 
     RowList rows =
@@ -176,8 +166,12 @@ public class ViewSchemaTest {
   }
 
   @Test
-  public void setValueInRecordObservationTest() throws IOException, ViewApplicationException {
-    ViewDefinition vDef = loadDefinition("observation_flat_view.json");
+  public void setValueInRecordObservationTest()
+      throws IOException, ViewApplicationException, ViewDefinitionException {
+    String viewJson =
+        Resources.toString(
+            Resources.getResource("observation_flat_view.json"), StandardCharsets.UTF_8);
+    ViewDefinition vDef = ViewDefinition.createFromString(viewJson);
     String[] colNames = vDef.getAllColumns().keySet().toArray(String[]::new);
 
     RowList rows =
@@ -219,15 +213,10 @@ public class ViewSchemaTest {
    * @see com.google.fhir.analytics.view.ViewSchema#setValueInRecord(RowList, ViewDefinition)
    */
   @Test
-  public void setValueInRecordCollectionTest() throws IOException, ViewApplicationException {
+  public void setValueInRecordCollectionTest()
+      throws IOException, ViewApplicationException, ViewDefinitionException {
 
-    ViewDefinition viewDef;
-    try {
-      viewDef = ViewDefinition.createFromString(PATIENT_COLLECTION_VIEW);
-    } catch (ViewDefinitionException e) {
-
-      throw new IllegalArgumentException("Failed to validate the view in ");
-    }
+    ViewDefinition viewDef = ViewDefinition.createFromString(PATIENT_COLLECTION_VIEW);
     String[] colNames = viewDef.getAllColumns().keySet().toArray(String[]::new);
 
     IBaseResource resource = loadResource("patient_child_us_core_profile.json", Patient.class);
