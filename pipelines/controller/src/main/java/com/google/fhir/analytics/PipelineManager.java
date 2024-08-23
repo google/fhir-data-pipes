@@ -390,6 +390,7 @@ public class PipelineManager implements ApplicationListener<ApplicationReadyEven
             ? dataProperties.createRecreateViewsOptions(getCurrentDwhRoot())
             : dataProperties.createBatchOptions());
     FhirEtlOptions options = pipelineConfig.getFhirEtlOptions();
+    options.setCreateParquetViews(true);
     FlinkPipelineOptions flinkOptions = options.as(FlinkPipelineOptions.class);
     if (!Strings.isNullOrEmpty(flinkConfiguration.getFlinkConfDir())) {
       flinkOptions.setFlinkConfDir(flinkConfiguration.getFlinkConfDir());
