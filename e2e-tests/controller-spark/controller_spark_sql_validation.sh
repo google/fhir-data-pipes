@@ -227,17 +227,17 @@ function check_parquet() {
     TOTAL_TEST_OBS=$((2*TOTAL_TEST_OBS))
     
     local total_patient_flat=$(java -Xms16g -Xmx16g -jar \
-    ./parquet-tools-1.11.1.jar rowcount "${output}/dwh/incremental_run/patient_flat/" | \
+    ./parquet-tools-1.11.1.jar rowcount "${output}/incremental_run/patient_flat/" | \
     awk '{print $3}')
     print_message "Total patient flat rows synced to parquet ---> ${total_patient_flat}"
 
     local total_encounter_flat=$(java -Xms16g -Xmx16g -jar \
-    ./parquet-tools-1.11.1.jar rowcount "${output}/dwh/incremental_run/encounter_flat/" \
+    ./parquet-tools-1.11.1.jar rowcount "${output}/incremental_run/encounter_flat/" \
     | awk '{print $3}')
     print_message "Total encounter flat rows synced to parquet ---> ${total_encounter_flat}"
 
     local total_obs_flat=$(java -Xms16g -Xmx16g -jar ./parquet-tools-1.11.1.jar \
-    rowcount "${output}/dwh/incremental_run/observation_flat/" | awk '{print $3}')
+    rowcount "${output}/incremental_run/observation_flat/" | awk '{print $3}')
     print_message "Total observation flat rows synced to parquet ---> ${total_obs_flat}"
   fi
 
@@ -263,17 +263,17 @@ function check_parquet() {
             # TODO(itsiggs): could be a pathing issue. Don't know where to look for output
 
             local total_patient_flat=$(java -Xms16g -Xmx16g -jar \
-            ./parquet-tools-1.11.1.jar rowcount "${output}/*/incremental_run/patient_flat/" | \
+            ./parquet-tools-1.11.1.jar rowcount "${output}/incremental_run/patient_flat/" | \
             awk '{print $3}')
             print_message "BatchTotal patient flat rows synced to parquet ---> ${total_patient_flat}"
 
             local total_encounter_flat=$(java -Xms16g -Xmx16g -jar \
-            ./parquet-tools-1.11.1.jar rowcount "${output}/dwh/controller_DWH/incremental_run/encounter_flat/" \
+            ./parquet-tools-1.11.1.jar rowcount "dwh/controller_DWH/incremental_run/encounter_flat/" \
             | awk '{print $3}')
             print_message "BatchTotal encounter flat rows synced to parquet ---> ${total_encounter_flat}"
 
             local total_obs_flat=$(java -Xms16g -Xmx16g -jar ./parquet-tools-1.11.1.jar \
-            rowcount "${output}/*/incremental_run/observation_flat/" | awk '{print $3}')
+            rowcount "dwh/incremental_run/observation_flat/" | awk '{print $3}')
             print_message "BatchTotal observation flat rows synced to parquet ---> ${total_obs_flat}"
 
     elif [[ "${isIncremental}" == "true" ]] && (( total_patients == TOTAL_TEST_PATIENTS \
