@@ -36,8 +36,6 @@ import javax.annotation.Nullable;
 import org.apache.avro.Schema;
 import org.apache.avro.generic.GenericRecord;
 import org.apache.beam.sdk.Pipeline;
-import org.apache.beam.sdk.coders.KvCoder;
-import org.apache.beam.sdk.coders.StringUtf8Coder;
 import org.apache.beam.sdk.extensions.avro.coders.AvroCoder;
 import org.apache.beam.sdk.io.FileIO;
 import org.apache.beam.sdk.io.FileIO.ReadableFile;
@@ -115,14 +113,10 @@ public class ParquetMerger {
     Instant timestamp2 = dwh2.readTimestampFile(DwhFiles.TIMESTAMP_FILE_START);
 
     PCollection<KV<String, GenericRecord>> dwhIdGroup1 =
-        records1
-            .apply(ParDo.of(new GroupViewIds()))
-            .setCoder(KvCoder.of(StringUtf8Coder.of(), AvroCoder.of(schema)));
+        records1.apply(ParDo.of(new GroupViewIds()));
 
     PCollection<KV<String, GenericRecord>> dwhIdGroup2 =
-        records2
-            .apply(ParDo.of(new GroupViewIds()))
-            .setCoder(KvCoder.of(StringUtf8Coder.of(), AvroCoder.of(schema)));
+        records2.apply(ParDo.of(new GroupViewIds()));
 
     PCollection<KV<String, CoGbkResult>> results;
     if (timestamp1.isAfter(timestamp2)) {
@@ -270,15 +264,15 @@ public class ParquetMerger {
     DwhFiles dwhFiles2 = DwhFiles.forRoot(dwh2, avroConversionUtil.getFhirContext());
     DwhFiles mergedDwhFiles = DwhFiles.forRoot(mergedDwh, avroConversionUtil.getFhirContext());
 
-    Set<String> resourceTypes1 = dwhFiles1.findNonEmptyViews(true);
-    Set<String> resourceTypes2 = dwhFiles2.findNonEmptyViews(true);
+    Set<String> resourceTypes1 = dwhFiles1.findNonEmptyDirs(true);
+    Set<String> resourceTypes2 = dwhFiles2.findNonEmptyDirs(true);
     Set<String> dwhViews1 = new HashSet<>();
     Set<String> dwhViews2 = new HashSet<>();
 
     ViewManager viewManager = null;
     if (!Strings.isNullOrEmpty(options.getViewDefinitionsDir())) {
-      dwhViews1 = dwhFiles1.findNonEmptyViews(false);
-      dwhViews2 = dwhFiles2.findNonEmptyViews(false);
+      dwhViews1 = dwhFiles1.findNonEmptyDirs(false);
+      dwhViews2 = dwhFiles2.findNonEmptyDirs(false);
 
       try {
         viewManager = ViewManager.createForDir(options.getViewDefinitionsDir());

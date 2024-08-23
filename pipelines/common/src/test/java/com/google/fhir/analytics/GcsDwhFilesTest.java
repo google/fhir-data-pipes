@@ -114,7 +114,7 @@ public class GcsDwhFilesTest {
         .thenReturn(modelObjects);
 
     DwhFiles dwhFiles = new DwhFiles("gs://testbucket/testdirectory", FhirContext.forR4Cached());
-    Set<String> resourceTypes = dwhFiles.findNonEmptyViews(true);
+    Set<String> resourceTypes = dwhFiles.findNonEmptyDirs(true);
     assertThat("Could not find Patient", resourceTypes.contains("Patient"));
     assertThat("Could not find Observation", resourceTypes.contains("Observation"));
     assertThat(resourceTypes.size(), equalTo(2));
@@ -130,7 +130,7 @@ public class GcsDwhFilesTest {
         .thenReturn(modelObjects);
 
     DwhFiles dwhFiles = new DwhFiles("gs://testbucket/testdirectory", FhirContext.forR4Cached());
-    Set<String> resourceTypes = dwhFiles.findNonEmptyViews(true);
+    Set<String> resourceTypes = dwhFiles.findNonEmptyDirs(true);
     assertThat(resourceTypes.size(), equalTo(0));
   }
 

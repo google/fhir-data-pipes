@@ -369,7 +369,7 @@ public class FhirEtl {
     Preconditions.checkArgument(!options.getParquetInputDwhRoot().isEmpty());
     DwhFiles dwhFiles =
         DwhFiles.forRoot(options.getParquetInputDwhRoot(), avroConversionUtil.getFhirContext());
-    Set<String> resourceTypes = dwhFiles.findNonEmptyViews(true);
+    Set<String> resourceTypes = dwhFiles.findNonEmptyDirs(true);
     log.info("Reading Parquet files for these resource types: {}", resourceTypes);
     List<Pipeline> pipelineList = new ArrayList<>();
     for (String resourceType : resourceTypes) {

@@ -32,6 +32,8 @@ import java.nio.channels.ReadableByteChannel;
 import java.nio.channels.WritableByteChannel;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.FileAlreadyExistsException;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -190,16 +192,16 @@ public class DwhFiles {
    * This method returns the list of non-empty directories which contains at least one file under
    * it.
    *
-   * @param viewFlag If true, the views returned will be valid FHIR Resource Types. If false, the
+   * @param findResourceTypes If true, the views returned will be valid FHIR Resource Types. If false, the
    *     views will be valid View Definitions
    * @return the set of non-empty directories
    * @throws IOException if the directory does not contain a valid file type
    */
-  public Set<String> findNonEmptyViews(Boolean viewFlag) throws IOException {
+  public Set<String> findNonEmptyDirs(boolean findResourceTypes) throws IOException {
     // TODO : If the list of files under the dwhRoot is huge then there can be a lag in the api
     //  response. This issue https://github.com/google/fhir-data-pipes/issues/288 helps in
     //  maintaining the number of file to an optimum value.
-    String fileType = viewFlag ? "Resource types" : "View types";
+    String fileType = findResourceTypes ? "Resource types" : "Views";
     String fileSeparator = getFileSeparatorForDwhFiles(dwhRoot);
     List<MatchResult> matchedChildResultList =
         FileSystems.match(
@@ -222,7 +224,7 @@ public class DwhFiles {
 
     Set<String> typeSet = Sets.newHashSet();
     for (String file : fileSet) {
-      if (viewFlag) {
+      if (findResourceTypes) {
         try {
           fhirContext.getResourceType(file);
           typeSet.add(file);
@@ -230,8 +232,16 @@ public class DwhFiles {
           log.debug("Ignoring file {} which is not a FHIR resource.", file);
         }
       } else {
+        // Logic to verify if view directory contains parquet files
         if (file.toLowerCase().equals(file)) {
-          typeSet.add(file);
+          Path filePath = Paths.get(dwhRoot, file);
+          File[] dirFiles = new File(filePath.toString()).listFiles();
+          for (File f : dirFiles) {
+            if (f.getName().contains(".parquet")) {
+              typeSet.add(file);
+              break;
+            }
+          }
         }
       }
     }

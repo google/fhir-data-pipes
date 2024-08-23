@@ -83,7 +83,7 @@ public class LocalDwhFilesTest {
         Paths.get(observationPath.toString(), "observationPath.txt"),
         "SAMPLE TEXT".getBytes(StandardCharsets.UTF_8));
 
-    Set<String> resourceTypes = instance.findNonEmptyViews(true);
+    Set<String> resourceTypes = instance.findNonEmptyDirs(true);
     assertThat("Could not find Patient", resourceTypes.contains("Patient"));
     assertThat("Could not find Observation", resourceTypes.contains("Observation"));
     assertThat(resourceTypes.size(), equalTo(2));
@@ -103,9 +103,12 @@ public class LocalDwhFilesTest {
     Files.createDirectories(patientPath);
     Path testPath = Paths.get(root.toString(), "test_dir");
     Files.createDirectories(testPath);
-    createFile(
-        Paths.get(patientPath.toString(), "patients.txt"),
-        "SAMPLE TEXT".getBytes(StandardCharsets.UTF_8));
+    // createFile(
+    //     Paths.get(patientPath.toString(), "patients.txt"),
+    //     "SAMPLE TEXT".getBytes(StandardCharsets.UTF_8));
+
+    String viewFileName = "Patient_main_patient_flat_output-parquet-th-112-ts-1724089542269-r-195410.parquet";
+    createFile(Paths.get(patientPath.toString(), viewFileName), "Sample Text".getBytes(StandardCharsets.UTF_8));
 
     Path observationPath = Paths.get(root.toString(), "Observation");
     Files.createDirectories(observationPath);
@@ -113,7 +116,7 @@ public class LocalDwhFilesTest {
         Paths.get(observationPath.toString(), "observationPath.txt"),
         "SAMPLE TEXT".getBytes(StandardCharsets.UTF_8));
 
-    Set<String> resourceTypes = instance.findNonEmptyViews(false);
+    Set<String> resourceTypes = instance.findNonEmptyDirs(false);
     assertThat("Could not find Patient", resourceTypes.contains("patient_flat"));
     assertThat("Could not find Observation", !resourceTypes.contains("Observation"));
     assertThat("Could not find Test Directory!", !resourceTypes.contains("test_dir"));
@@ -121,7 +124,8 @@ public class LocalDwhFilesTest {
 
     Files.delete(Paths.get(observationPath.toString(), "observationPath.txt"));
     Files.delete(observationPath);
-    Files.delete(Paths.get(patientPath.toString(), "patients.txt"));
+    // Files.delete(Paths.get(patientPath.toString(), "patients.txt"));
+    Files.delete(Paths.get(patientPath.toString(), viewFileName));
     Files.delete(patientPath);
     Files.delete(testPath);
     Files.delete(root);
