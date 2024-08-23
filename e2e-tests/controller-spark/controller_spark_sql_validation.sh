@@ -222,7 +222,7 @@ function check_parquet() {
     # In case of incremental run, we will have two directories
     # assuming batch run was executed before this.
     TOTAL_TEST_PATIENTS=$((2*TOTAL_TEST_PATIENTS + 1))
-    TOTAL_VIEW_PATIENTS=213
+    TOTAL_VIEW_PATIENTS=$(213)
     TOTAL_TEST_ENCOUNTERS=$((2*TOTAL_TEST_ENCOUNTERS))
     TOTAL_TEST_OBS=$((2*TOTAL_TEST_OBS))
   fi
@@ -250,6 +250,11 @@ function check_parquet() {
     local total_obs_flat=$(java -Xms16g -Xmx16g -jar ./parquet-tools-1.11.1.jar \
     rowcount "${output}/*/observation_flat/" | awk '{print $3}')
     print_message "Total observation flat rows synced to parquet ---> ${total_obs_flat}"
+
+     local patient_flat_schema=$(java -Xms16g -Xmx16g -jar \
+        ./parquet-tools-1.11.1.jar schema "${output}/*/patient_flat/" | \
+        awk '{print}')
+        print_message "SCHEMA: ${patient_flat_schema}"
 
     print_message "Total patients: $total_patients"
     print_message "Total encounters: $total_encounters"
