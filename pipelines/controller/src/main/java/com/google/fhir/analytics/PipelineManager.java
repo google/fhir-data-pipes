@@ -457,6 +457,7 @@ public class PipelineManager implements ApplicationListener<ApplicationReadyEven
     mergerOptions.setStructureDefinitionsPath(
         Strings.nullToEmpty(dataProperties.getStructureDefinitionsPath()));
     mergerOptions.setFhirVersion(dataProperties.getFhirVersion());
+    mergerOptions.setViewDefinitionsDir("/config/views");
     if (dataProperties.getRowGroupSizeForParquetFiles() > 0) {
       mergerOptions.setRowGroupSizeForParquetFiles(dataProperties.getRowGroupSizeForParquetFiles());
     }
