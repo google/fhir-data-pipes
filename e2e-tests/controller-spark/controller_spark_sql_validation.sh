@@ -238,16 +238,16 @@ function check_parquet() {
     "${output}/*/Observation/" | awk '{print $3}')
 
     local total_patient_flat=$(java -Xms16g -Xmx16g -jar \
-    ./controller-spark/parquet-tools-1.11.1.jar rowcount "${output}/*/patient_flat/" | \
+    ./parquet-tools-1.11.1.jar rowcount "${output}/*/patient_flat/" | \
     awk '{print $3}')
     print_message "Total patient flat rows synced to parquet ---> ${total_patient_flat}"
 
     local total_encounter_flat=$(java -Xms16g -Xmx16g -jar \
-    ./controller-spark/parquet-tools-1.11.1.jar rowcount "${output}/*/encounter_flat/" \
+    ./parquet-tools-1.11.1.jar rowcount "${output}/*/encounter_flat/" \
     | awk '{print $3}')
     print_message "Total encounter flat rows synced to parquet ---> ${total_encounter_flat}"
 
-    local total_obs_flat=$(java -Xms16g -Xmx16g -jar ./controller-spark/parquet-tools-1.11.1.jar \
+    local total_obs_flat=$(java -Xms16g -Xmx16g -jar ./parquet-tools-1.11.1.jar \
     rowcount "${output}/*/observation_flat/" | awk '{print $3}')
     print_message "Total observation flat rows synced to parquet ---> ${total_obs_flat}"
 
