@@ -225,18 +225,7 @@ function check_parquet() {
     TOTAL_VIEW_PATIENTS=$(213)
     TOTAL_TEST_ENCOUNTERS=$((2*TOTAL_TEST_ENCOUNTERS))
     TOTAL_TEST_OBS=$((2*TOTAL_TEST_OBS))
-  fi
-
-  # check whether output directory has received parquet files.
-  if [[ "$(ls -A $output)" ]]
-  then
-    local total_patients=$(java -Xms16g -Xmx16g -jar ./parquet-tools-1.11.1.jar rowcount \
-    "${output}/*/Patient/" | awk '{print $3}')
-    local total_encounters=$(java -Xms16g -Xmx16g -jar ./parquet-tools-1.11.1.jar rowcount \
-    "${output}/*/Encounter/" | awk '{print $3}')
-    local total_observations=$(java -Xms16g -Xmx16g -jar ./parquet-tools-1.11.1.jar rowcount \
-    "${output}/*/Observation/" | awk '{print $3}')
-
+    
     local total_patient_flat=$(java -Xms16g -Xmx16g -jar \
     ./parquet-tools-1.11.1.jar rowcount "${output}/*/patient_flat/" | \
     awk '{print $3}')
@@ -250,32 +239,42 @@ function check_parquet() {
     local total_obs_flat=$(java -Xms16g -Xmx16g -jar ./parquet-tools-1.11.1.jar \
     rowcount "${output}/*/observation_flat/" | awk '{print $3}')
     print_message "Total observation flat rows synced to parquet ---> ${total_obs_flat}"
+  fi
 
-     local patient_flat_schema=$(java -Xms16g -Xmx16g -jar \
-        ./parquet-tools-1.11.1.jar schema "${output}/*/patient_flat/" | \
-        awk '{print}')
-        print_message "SCHEMA: ${patient_flat_schema}"
+  # check whether output directory has received parquet files.
+  if [[ "$(ls -A $output)" ]]
+  then
+    local total_patients=$(java -Xms16g -Xmx16g -jar ./parquet-tools-1.11.1.jar rowcount \
+    "${output}/*/Patient/" | awk '{print $3}')
+    local total_encounters=$(java -Xms16g -Xmx16g -jar ./parquet-tools-1.11.1.jar rowcount \
+    "${output}/*/Encounter/" | awk '{print $3}')
+    local total_observations=$(java -Xms16g -Xmx16g -jar ./parquet-tools-1.11.1.jar rowcount \
+    "${output}/*/Observation/" | awk '{print $3}')
 
     print_message "Total patients: $total_patients"
     print_message "Total encounters: $total_encounters"
     print_message "Total observations: $total_observations"
 
-    if [[ "${total_patients}" == "${TOTAL_TEST_PATIENTS}" && "${total_encounters}" \
-            == "${TOTAL_TEST_ENCOUNTERS}" && "${total_observations}" == "${TOTAL_TEST_OBS}" && \
-            total_obs_flat == "${TOTAL_TEST_OBS}" && \
-            total_patient_flat == "${TOTAL_VIEW_PATIENTS}" && \
-            total_encounter_flat == "${TOTAL_TEST_ENCOUNTERS}" ]] \
-        ; then
-        print_message "Pipeline transformation successfully completed."
+    if [[ "${isIncremental}" != "true" ]] && (( total_patients == TOTAL_TEST_PATIENTS && total_encounters \
+            == TOTAL_TEST_ENCOUNTERS && total_observations == TOTAL_TEST_OBS)) \
+            ; then
+            print_message "Pipeline transformation successfully completed."
+    elif [[ "${isIncremental}" == "true" ]] && (( total_patients == TOTAL_TEST_PATIENTS \
+            && total_encounters == TOTAL_TEST_ENCOUNTERS && \
+            total_observations == TOTAL_TEST_OBS \
+            && total_obs_flat == OBS_VIEW_ROWCOUNT && \
+            total_patient_flat == TOTAL_VIEW_PATIENTS && \
+            total_encounter_flat == TOTAL_TEST_ENCOUNTERS )); then
+            print_message "Pipeline transformation successfully completed."
     else
-        print_message "Mismatch in count of records"
-        print_message "Actual total patients: $total_patients, expected total: $TOTAL_TEST_PATIENTS"
-        print_message "Actual total encounters: $total_encounters, expected total: $TOTAL_TEST_ENCOUNTERS"
-        print_message "Total observations: $total_observations, expected total: $TOTAL_TEST_OBS"
-        print_message "Actual total materialized view patients: $total_patient_flat, expected total: $TOTAL_TOTAL_VIEW_PATIENTS"
-        print_message "Actual total materialized view encounters: $total_encounter_flat, expected total: $TOTAL_TEST_ENCOUNTERS"
-        print_message "Actual total materialized view observations: $total_obs_flat, expected total: $TOTAL_TEST_OBS"
-        exit 2
+            print_message "Mismatch in count of records"
+            print_message "Actual total patients: $total_patients, expected total: $TOTAL_TEST_PATIENTS"
+            print_message "Actual total encounters: $total_encounters, expected total: $TOTAL_TEST_ENCOUNTERS"
+            print_message "Total observations: $total_observations, expected total: $TOTAL_TEST_OBS"
+            print_message "Actual total materialized view patients: $total_patient_flat, expected total: $TOTAL_VIEW_PATIENTS"
+            print_message "Actual total materialized view encounters: $total_encounter_flat, expected total: $TOTAL_TEST_ENCOUNTERS"
+            print_message "Actual total materialized view observations: $total_obs_flat, expected total: $TOTAL_TEST_OBS"
+            exit 2
     fi
   else
     print_message "No parquet files available."
