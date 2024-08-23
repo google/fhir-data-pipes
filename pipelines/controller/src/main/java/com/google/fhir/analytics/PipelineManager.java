@@ -390,7 +390,7 @@ public class PipelineManager implements ApplicationListener<ApplicationReadyEven
             ? dataProperties.createRecreateViewsOptions(getCurrentDwhRoot())
             : dataProperties.createBatchOptions());
     FhirEtlOptions options = pipelineConfig.getFhirEtlOptions();
-    options.setCreateParquetViews(true);
+    //options.setCreateParquetViews(true);
     FlinkPipelineOptions flinkOptions = options.as(FlinkPipelineOptions.class);
     if (!Strings.isNullOrEmpty(flinkConfiguration.getFlinkConfDir())) {
       flinkOptions.setFlinkConfDir(flinkConfiguration.getFlinkConfDir());
@@ -458,7 +458,7 @@ public class PipelineManager implements ApplicationListener<ApplicationReadyEven
     mergerOptions.setStructureDefinitionsPath(
         Strings.nullToEmpty(dataProperties.getStructureDefinitionsPath()));
     mergerOptions.setFhirVersion(dataProperties.getFhirVersion());
-    mergerOptions.setViewDefinitionsDir("/config/views");
+    //mergerOptions.setViewDefinitionsDir("/config/views");
     if (dataProperties.getRowGroupSizeForParquetFiles() > 0) {
       mergerOptions.setRowGroupSizeForParquetFiles(dataProperties.getRowGroupSizeForParquetFiles());
     }
