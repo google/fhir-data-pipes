@@ -260,7 +260,7 @@ function check_parquet() {
             ; then
             print_message "Pipeline transformation successfully completed."
 
-            # TODO(itsiggs): could be a pathing issue. Don't know where to look for output
+            # TODO(itsiggs): could be a pathing issue. we don't know where to look for output
 
             local total_patient_flat=$(java -Xms16g -Xmx16g -jar \
             ./parquet-tools-1.11.1.jar rowcount "${output}/incremental_run/patient_flat/" | \
