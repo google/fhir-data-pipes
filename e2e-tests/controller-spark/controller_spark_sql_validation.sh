@@ -225,11 +225,13 @@ function check_parquet() {
     declare -i TOTAL_VIEW_PATIENTS=213
     TOTAL_TEST_ENCOUNTERS=$((2*TOTAL_TEST_ENCOUNTERS))
     TOTAL_TEST_OBS=$((2*TOTAL_TEST_OBS))
+    local dir_tree=$(find "${output}" -type d)
+    print_message "${dir_tree}"
     
     local total_patient_flat=$(java -Xms16g -Xmx16g -jar \
     ./parquet-tools-1.11.1.jar rowcount "${output}/incremental_run/patient_flat/" | \
     awk '{print $3}')
-    print_message "Total patient flat rows synced to parquet ---> ${total_patient_flat}"
+    print_message "INCTotal patient flat rows synced to parquet ---> ${total_patient_flat}"
 
     local total_encounter_flat=$(java -Xms16g -Xmx16g -jar \
     ./parquet-tools-1.11.1.jar rowcount "${output}/incremental_run/encounter_flat/" \
@@ -261,6 +263,8 @@ function check_parquet() {
             print_message "Pipeline transformation successfully completed."
 
             # TODO(itsiggs): could be a pathing issue. we don't know where to look for output
+            local dir_tree2=$(find "${output}" -type d)
+            print_message "${dir_tree2}"
 
             local total_patient_flat=$(java -Xms16g -Xmx16g -jar \
             ./parquet-tools-1.11.1.jar rowcount "${output}/incremental_run/patient_flat/" | \
