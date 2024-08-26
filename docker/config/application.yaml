@@ -44,7 +44,6 @@ fhirdata:
   rowGroupSizeForParquetFiles: 33554432   # 32mb
   viewDefinitionsDir: "config/views"
   createParquetViews: true
-  outputParquetPath: "/dwh/controller_DWH"
   sinkDbConfigPath: "config/hapi-postgres-config_local_views.json"
   #sinkFhirServerUrl: "http://sink-server:8080/fhir"
   #sinkUserName: "hapi"
