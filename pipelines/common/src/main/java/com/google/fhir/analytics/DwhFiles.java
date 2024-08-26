@@ -21,6 +21,7 @@ import com.google.api.client.util.Sets;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import com.google.common.collect.Iterables;
+import com.google.fhir.analytics.view.ViewManager;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
@@ -32,8 +33,6 @@ import java.nio.channels.ReadableByteChannel;
 import java.nio.channels.WritableByteChannel;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.FileAlreadyExistsException;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -43,6 +42,7 @@ import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
+import javax.annotation.Nullable;
 import lombok.Getter;
 import org.apache.beam.sdk.extensions.gcp.util.gcsfs.GcsPath;
 import org.apache.beam.sdk.io.FileSystems;
@@ -192,12 +192,15 @@ public class DwhFiles {
    * This method returns the list of non-empty directories which contains at least one file under
    * it.
    *
-   * @param findResourceTypes If true, the views returned will be valid FHIR Resource Types. If false, the
-   *     views will be valid View Definitions
+   * @param findResourceTypes If true, the views returned will be valid FHIR Resource Types. If
+   *     false, the views will be valid View Definitions
+   * @param viewManager Used to verify if non-empty directory is a valid View Definition, Should not
+   *     be set if {@param findResourceTypes} is true
    * @return the set of non-empty directories
    * @throws IOException if the directory does not contain a valid file type
    */
-  public Set<String> findNonEmptyDirs(boolean findResourceTypes) throws IOException {
+  public Set<String> findNonEmptyDirs(boolean findResourceTypes, @Nullable ViewManager viewManager)
+      throws IOException {
     // TODO : If the list of files under the dwhRoot is huge then there can be a lag in the api
     //  response. This issue https://github.com/google/fhir-data-pipes/issues/288 helps in
     //  maintaining the number of file to an optimum value.
@@ -232,16 +235,8 @@ public class DwhFiles {
           log.debug("Ignoring file {} which is not a FHIR resource.", file);
         }
       } else {
-        // Logic to verify if view directory contains parquet files
-        if (file.toLowerCase().equals(file)) {
-          Path filePath = Paths.get(dwhRoot, file);
-          File[] dirFiles = new File(filePath.toString()).listFiles();
-          for (File f : dirFiles) {
-            if (f.getName().contains(".parquet")) {
-              typeSet.add(file);
-              break;
-            }
-          }
+        if (viewManager != null && viewManager.getViewDefinition(file) != null) {
+          typeSet.add(file);
         }
       }
     }
@@ -253,9 +248,8 @@ public class DwhFiles {
    * This method copies all the files under the directory (getRoot() + resourceType) into the
    * destination DwhFiles under the similar directory.
    *
-   * @param resourceType
-   * @param destDwh
-   * @throws IOException
+   * @param resourceType The resource or view directory to be copied
+   * @param destDwh The output Dwh to copy files to
    */
   public void copyResourcesToDwh(String resourceType, DwhFiles destDwh) throws IOException {
     String fileSeparator = getFileSeparatorForDwhFiles(dwhRoot);

@@ -264,16 +264,13 @@ public class ParquetMerger {
     DwhFiles dwhFiles2 = DwhFiles.forRoot(dwh2, avroConversionUtil.getFhirContext());
     DwhFiles mergedDwhFiles = DwhFiles.forRoot(mergedDwh, avroConversionUtil.getFhirContext());
 
-    Set<String> resourceTypes1 = dwhFiles1.findNonEmptyDirs(true);
-    Set<String> resourceTypes2 = dwhFiles2.findNonEmptyDirs(true);
+    Set<String> resourceTypes1 = dwhFiles1.findNonEmptyDirs(true, null);
+    Set<String> resourceTypes2 = dwhFiles2.findNonEmptyDirs(true, null);
     Set<String> dwhViews1 = new HashSet<>();
     Set<String> dwhViews2 = new HashSet<>();
 
     ViewManager viewManager = null;
     if (!Strings.isNullOrEmpty(options.getViewDefinitionsDir())) {
-      dwhViews1 = dwhFiles1.findNonEmptyDirs(false);
-      dwhViews2 = dwhFiles2.findNonEmptyDirs(false);
-
       try {
         viewManager = ViewManager.createForDir(options.getViewDefinitionsDir());
       } catch (IOException | ViewDefinitionException e) {
@@ -282,6 +279,8 @@ public class ParquetMerger {
         log.error(errorMsg, e);
         throw new IllegalArgumentException(errorMsg);
       }
+      dwhViews1 = dwhFiles1.findNonEmptyDirs(false, viewManager);
+      dwhViews2 = dwhFiles2.findNonEmptyDirs(false, viewManager);
       copyDistinctResources(dwhViews1, dwhViews2, dwhFiles1, dwhFiles2, mergedDwhFiles);
     }
 
