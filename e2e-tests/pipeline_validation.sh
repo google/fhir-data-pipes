@@ -25,18 +25,18 @@ set -e
 # Prints the usage
 #################################################
 function usage() {
-  echo "This script validates if number of resources sunk in parquet files and" 
+  echo "This script validates if number of resources sunk in parquet files and"
   echo "sink FHIR server match what is stored in the source FHIR server"
-  echo 
+  echo
   echo " usage: ./pipeline_validation.sh  HOME_DIR  PARQUET_SUBDIR  [OPTIONS] "
   echo "    HOME_DIR          Path where e2e-tests directory is. Directory MUST"
   echo "                      contain the parquet tools jar as well as subdirectory"
   echo "                      of parquet file output"
   echo "    PARQUET_SUBDIR    Subdirectory name under HOME_DIR containing"
   echo "                      parquet files  "
-  echo 
+  echo
   echo " Options:  "
-  echo "     --use_docker_network     Flag to specify whether to use docker"  
+  echo "     --use_docker_network     Flag to specify whether to use docker"
   echo "                              or host network URLs"
   echo "     --streaming              Flag to specify whether we are testing a"
   echo "                              streaming pipeline"
@@ -92,10 +92,12 @@ function print_message() {
 #   SINK_FHIR_SERVER_URL
 #   STREAMING
 #   OPENMRS
+#   PARQUET_VIEW_ROWCOUNT
+#   OBS_VIEW_ROWCOUNT
 # Arguments:
-#   Path where e2e-tests directory is. Directory contains parquet tools jar as 
+#   Path where e2e-tests directory is. Directory contains parquet tools jar as
 #      well as subdirectory of parquet file output
-#   Subdirectory name under HOME_DIR containing parquet files. 
+#   Subdirectory name under HOME_DIR containing parquet files.
 #      Example: FHIR_SEARCH or JDBC_OPENMRS
 #   Optional: Flag to specify whether to use docker or host network URLs.
 #   Optional: Flag to specify streaming pipeline test.
@@ -112,12 +114,20 @@ function setup() {
   SOURCE_FHIR_SERVER_URL='http://localhost:8091'
   STREAMING=""
   OPENMRS=""
+  # This global variable is hardcoded to validate the View record count
+  # which can greater than the number of Resources in the source FHIR
+  # Server due to flattening
+  PARQUET_VIEW_ROWCOUNT=0
+  OBS_VIEW_ROWCOUNT=284925
 
   # TODO: We should refactor this code to parse the arguments by going through
   # each one and checking which ones are turned on.
   if [[ $5 = "--openmrs" ]] || [[ $6 = "--openmrs" ]] || [[ $7 = "--openmrs" ]]; then
     OPENMRS="on"
     SOURCE_FHIR_SERVER_URL='http://localhost:8099/openmrs/ws/fhir2/R4'
+    PARQUET_VIEW_ROWCOUNT=110
+  else
+    PARQUET_VIEW_ROWCOUNT=106
   fi
 
   if [[ $5 = "--use_docker_network" ]] || [[ $6 = "--use_docker_network" ]] || [[ $7 = "--use_docker_network" ]]; then
@@ -144,6 +154,8 @@ function setup() {
 #   TOTAL_TEST_OBS
 #   STREAMING
 #   OPENMRS
+#   PARQUET_VIEW_ROWCOUNT
+#   OBS_VIEW_ROWCOUNT
 #################################################
 function fhir_source_query() {
   local patient_query_param="?_summary=count"
@@ -152,11 +164,11 @@ function fhir_source_query() {
   local fhir_password="hapi"
   local fhir_url_extension="/fhir"
 
-  if [[ -n ${STREAMING} ]]; then 
+  if [[ -n ${STREAMING} ]]; then
       patient_query_param="?given=Alberta625"
       enc_obs_query_param="?subject.given=Alberta625"
   fi
-  
+
   if [[ -n ${OPENMRS} ]]; then
       fhir_username="admin"
       fhir_password="Admin123"
@@ -184,7 +196,7 @@ function fhir_source_query() {
 
 
 #################################################
-# Function that counts resources in parquet files and compares output to what 
+# Function that counts resources in parquet files and compares output to what
 #  is in source FHIR server
 # Globals:
 #   HOME_PATH
@@ -193,6 +205,8 @@ function fhir_source_query() {
 #   TOTAL_TEST_ENCOUNTERS
 #   TOTAL_TEST_OBS
 #   OPENMRS
+#   PARQUET_VIEW_ROWCOUNT
+#   OBS_VIEW_ROWCOUNT
 #################################################
 function test_parquet_sink() {
   print_message "Counting number of patients, encounters and obs sinked to parquet files"
@@ -210,18 +224,51 @@ function test_parquet_sink() {
   rowcount "${HOME_PATH}/${PARQUET_SUBDIR}/Observation/" | awk '{print $3}')
   print_message "Total obs synced to parquet ---> ${total_obs_streamed}"
 
-  if [[ "${total_patients_streamed}" == "${TOTAL_TEST_PATIENTS}" && "${total_encounters_streamed}" \
-        == "${TOTAL_TEST_ENCOUNTERS}" && "${total_obs_streamed}" == "${TOTAL_TEST_OBS}" ]] \
-    ; then
-    print_message "PARQUET SINK EXECUTED SUCCESSFULLY USING ${PARQUET_SUBDIR} MODE"
-  else
-    print_message "PARQUET SINK TEST FAILED USING ${PARQUET_SUBDIR} MODE"
-    exit 1
+  if [[ ! (-n ${STREAMING}) ]]; then
+    print_message "Parquet Sink Test Streaming ONLY"
+    local total_patient_flat=$(java -Xms16g -Xmx16g -jar \
+    ./controller-spark/parquet-tools-1.11.1.jar rowcount "${HOME_PATH}/${PARQUET_SUBDIR}/patient_flat/" | \
+    awk '{print $3}')
+    print_message "Total patient flat rows synced to parquet ---> ${total_patient_flat}"
+
+    local total_encounter_flat=$(java -Xms16g -Xmx16g -jar \
+    ./controller-spark/parquet-tools-1.11.1.jar rowcount "${HOME_PATH}/${PARQUET_SUBDIR}/encounter_flat/" \
+    | awk '{print $3}')
+    print_message "Total encounter flat rows synced to parquet ---> ${total_encounter_flat}"
+
+    local total_obs_flat=$(java -Xms16g -Xmx16g -jar ./controller-spark/parquet-tools-1.11.1.jar \
+    rowcount "${HOME_PATH}/${PARQUET_SUBDIR}/observation_flat/" | awk '{print $3}')
+    print_message "Total observation flat rows synced to parquet ---> ${total_obs_flat}"
+
+    if (( total_patients_streamed == TOTAL_TEST_PATIENTS && total_encounters_streamed \
+        == TOTAL_TEST_ENCOUNTERS && total_obs_streamed == TOTAL_TEST_OBS \
+        && total_obs_flat == TOTAL_TEST_OBS && \
+        total_patient_flat == PARQUET_VIEW_ROWCOUNT && \
+        total_encounter_flat == TOTAL_TEST_ENCOUNTERS )) ; then
+        print_message "PARQUET SINK EXECUTED SUCCESSFULLY USING ${PARQUET_SUBDIR} MODE"
+      elif [[ -n ${OPENMRS} ]] && (( total_patients_streamed == TOTAL_TEST_PATIENTS
+        && total_encounters_streamed \
+        == TOTAL_TEST_ENCOUNTERS && total_obs_streamed == TOTAL_TEST_OBS \
+        && total_obs_flat == OBS_VIEW_ROWCOUNT && \
+        total_patient_flat == PARQUET_VIEW_ROWCOUNT && \
+        total_encounter_flat == TOTAL_TEST_ENCOUNTERS )); then
+        print_message "PARQUET SINK EXECUTED SUCCESSFULLY USING ${PARQUET_SUBDIR} MODE"
+      else
+        print_message "PARQUET SINK TEST FAILED USING ${PARQUET_SUBDIR} MODE"
+        exit 1
+    fi
+  elif (( total_patients_streamed == TOTAL_TEST_PATIENTS && total_encounters_streamed \
+        == TOTAL_TEST_ENCOUNTERS && total_obs_streamed == TOTAL_TEST_OBS )) ; then
+        print_message "PARQUET SINK EXECUTED SUCCESSFULLY USING ${PARQUET_SUBDIR} MODE"
+      else
+        print_message "PARQUET SINK TEST FAILED USING ${PARQUET_SUBDIR} MODE"
+        exit 1
   fi
 }
 
+
 #################################################
-# Function that counts resources in  FHIR server and compares output to what is 
+# Function that counts resources in  FHIR server and compares output to what is
 #  in the source FHIR server
 # Globals:
 #   HOME_PATH
@@ -232,6 +279,8 @@ function test_parquet_sink() {
 #   TOTAL_TEST_OBS
 #   STREAMING
 #   OPENMRS
+#   PARQUET_VIEW_ROWCOUNT
+#   OBS_VIEW_ROWCOUNT
 #################################################
 function test_fhir_sink() {
   # This skips the test
@@ -242,7 +291,7 @@ function test_fhir_sink() {
   local patient_query_param="?_summary=count"
   local enc_obs_query_param="?_summary=count"
 
-  if [[ -n ${STREAMING} ]]; then 
+  if [[ -n ${STREAMING} ]]; then
       patient_query_param="?given=Alberta625&_summary=count"
       enc_obs_query_param="?subject.given=Alberta625&_summary=count"
   fi
@@ -287,7 +336,7 @@ function test_fhir_sink() {
 validate_args  "$@"
 setup "$@"
 print_message "---- STARTING ${PARQUET_SUBDIR} TEST ----"
-fhir_source_query 
-test_parquet_sink 
-test_fhir_sink 
+fhir_source_query
+test_parquet_sink
+test_fhir_sink
 print_message "END!!"
