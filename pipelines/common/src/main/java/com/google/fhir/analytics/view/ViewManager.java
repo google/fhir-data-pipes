@@ -25,7 +25,13 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.stream.Stream;
 import javax.annotation.Nullable;
 
@@ -36,6 +42,7 @@ import javax.annotation.Nullable;
 public class ViewManager {
 
   private static final String JSON_EXT = ".json";
+  private final Map<String, ViewDefinition> viewNameMap = new HashMap<>();
 
   private final Multimap<String, ViewDefinition> viewMap = HashMultimap.create();
 
@@ -63,7 +70,33 @@ public class ViewManager {
       ViewDefinition vDef = ViewDefinition.createFromFile(p);
       viewManager.viewMap.put(vDef.getResource(), vDef);
     }
+    // Checking for Duplicate View Definitions and returning the names of any duplicates found
+    Collection<ViewDefinition> viewDefinitions = viewManager.viewMap.values();
+    Set<String> dupViews = new HashSet<>();
+    for (ViewDefinition vDef : viewDefinitions) {
+      String viewName = vDef.getName();
+      if (viewManager.viewNameMap.containsKey(viewName)) {
+        dupViews.add(viewName);
+      }
+      viewManager.viewNameMap.put(viewName, vDef);
+    }
+
+    if (!dupViews.isEmpty()) {
+      String errorMsg =
+          "Duplicate ViewDefinition names found: "
+              + Arrays.toString(dupViews.toArray())
+              + ". Ensure each view has a distinct name!";
+      throw new IllegalArgumentException(errorMsg);
+    }
     return viewManager;
+  }
+
+  @Nullable
+  public ViewDefinition getViewDefinition(String viewName) {
+    if (!viewNameMap.containsKey(viewName)) {
+      return null;
+    }
+    return viewNameMap.get(viewName);
   }
 
   @Nullable

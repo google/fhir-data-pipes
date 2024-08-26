@@ -32,9 +32,7 @@ import java.io.OutputStream;
 import java.nio.channels.Channels;
 import java.nio.channels.WritableByteChannel;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -63,8 +61,6 @@ public class ParquetUtil {
   private static final Logger log = LoggerFactory.getLogger(ParquetUtil.class);
   public static String PARQUET_EXTENSION = ".parquet";
   private final AvroConversionUtil conversionUtil;
-
-  private final Map<String, ViewDefinition> viewMap;
 
   private final Map<String, ParquetWriter<GenericRecord>> viewWriterMap;
   private final Map<String, WriterWithCache> writerMap;
@@ -114,7 +110,6 @@ public class ParquetUtil {
       String parquetFilePath,
       String viewDefinitionsDir,
       boolean createParquetViews,
-      List<String> resourceList,
       int secondsToFlush,
       int rowGroupSize,
       String namePrefix,
@@ -134,7 +129,6 @@ public class ParquetUtil {
     this.namePrefix = namePrefix;
     this.createParquetViews = createParquetViews;
     this.viewWriterMap = new HashMap<>();
-    this.viewMap = new HashMap<>();
     this.viewManager = null;
     setFlushedInCurrentPeriod(false);
     if (createParquetViews) {
@@ -143,39 +137,6 @@ public class ParquetUtil {
       } catch (IOException | ViewDefinitionException e) {
         String errorMsg = String.format("Error while reading views from %s", viewDefinitionsDir);
         log.error(errorMsg, e);
-        throw new IllegalArgumentException(errorMsg);
-      }
-      List<String> names = new ArrayList<>();
-      List<ViewDefinition> allViews = new ArrayList<>();
-      for (String type : resourceList) {
-        List<ViewDefinition> allViewsForType = viewManager.getViewsForType(type);
-        if (allViewsForType != null) {
-          names.addAll(allViewsForType.stream().map(v -> v.getName()).toList());
-          allViews.addAll(allViewsForType);
-        }
-      }
-      for (ViewDefinition vDef : allViews) {
-        if (!viewMap.containsKey(vDef.getName())) {
-          viewMap.put(vDef.getName(), vDef);
-        }
-      }
-
-      Map<String, Integer> frequencyMap = new HashMap<>();
-      Set<String> dupViews = new HashSet<>();
-      for (String name : names) {
-        frequencyMap.put(name, frequencyMap.getOrDefault(name, 0) + 1);
-      }
-      for (String name : frequencyMap.keySet()) {
-        if (frequencyMap.get(name) > 1) {
-          dupViews.add(name);
-        }
-      }
-      if (!dupViews.isEmpty()) {
-        String errorMsg =
-            "Duplicate ViewDefinition names found: "
-                + Arrays.toString(dupViews.toArray())
-                + ". Ensure each view has a distinct name!";
-        log.error(errorMsg);
         throw new IllegalArgumentException(errorMsg);
       }
     }
@@ -324,7 +285,7 @@ public class ParquetUtil {
       writer.close();
       //TODO: We need to investigate why we need to create the writer here. If we change this logic
       // to remove the writer at this line, E2E Streaming Tests fail in CloudBuild.
-      createWriter(viewName, viewMap.get(viewName));
+      createWriter(viewName, this.viewManager.getViewDefinition(viewName));
     }
   }
 
