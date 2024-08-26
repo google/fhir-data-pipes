@@ -42,7 +42,7 @@ fhirdata:
   structureDefinitionsPath: "classpath:/r4-us-core-definitions"
   fhirVersion: "R4"
   rowGroupSizeForParquetFiles: 33554432   # 32mb
-  viewDefinitionsDir: "config/views"
+  viewDefinitionsDir: "config/views/"
   sinkDbConfigPath: "config/hapi-postgres-config_local_views.json"
   #sinkFhirServerUrl: "http://sink-server:8080/fhir"
   #sinkUserName: "hapi"
