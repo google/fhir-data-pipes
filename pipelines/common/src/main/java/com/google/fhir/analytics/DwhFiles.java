@@ -188,23 +188,30 @@ public class DwhFiles {
     return matchResult.status() == Status.OK;
   }
 
+  public Set<String> findNonEmptyResourceDirs() throws IOException {
+    return findNonEmptyDirs(null);
+  }
+
+  public Set<String> findNonEmptyViewDirs(ViewManager viewManager) throws IOException {
+    return findNonEmptyDirs(viewManager);
+  }
+
   /**
    * This method returns the list of non-empty directories which contains at least one file under
    * it.
    *
-   * @param findResourceTypes If true, the views returned will be valid FHIR Resource Types. If
-   *     false, the views will be valid View Definitions
-   * @param viewManager Used to verify if non-empty directory is a valid View Definition, Should not
-   *     be set if {@param findResourceTypes} is true
+   * @param viewManager Used to verify if non-empty directory is a valid View Definition. If null,
+   * the views returned will be valid FHIR Resource Types. Otherwise, the views will be valid
+   * View Definitions
    * @return the set of non-empty directories
    * @throws IOException if the directory does not contain a valid file type
    */
-  public Set<String> findNonEmptyDirs(boolean findResourceTypes, @Nullable ViewManager viewManager)
+  private Set<String> findNonEmptyDirs( @Nullable ViewManager viewManager)
       throws IOException {
     // TODO : If the list of files under the dwhRoot is huge then there can be a lag in the api
     //  response. This issue https://github.com/google/fhir-data-pipes/issues/288 helps in
     //  maintaining the number of file to an optimum value.
-    String fileType = findResourceTypes ? "Resource types" : "Views";
+    String fileType = viewManager == null ? "Resource types" : "Views";
     String fileSeparator = getFileSeparatorForDwhFiles(dwhRoot);
     List<MatchResult> matchedChildResultList =
         FileSystems.match(
@@ -227,7 +234,7 @@ public class DwhFiles {
 
     Set<String> typeSet = Sets.newHashSet();
     for (String file : fileSet) {
-      if (findResourceTypes) {
+      if (viewManager == null) {
         try {
           fhirContext.getResourceType(file);
           typeSet.add(file);
@@ -235,7 +242,7 @@ public class DwhFiles {
           log.debug("Ignoring file {} which is not a FHIR resource.", file);
         }
       } else {
-        if (viewManager != null && viewManager.getViewDefinition(file) != null) {
+        if (viewManager.getViewDefinition(file) != null) {
           typeSet.add(file);
         }
       }
