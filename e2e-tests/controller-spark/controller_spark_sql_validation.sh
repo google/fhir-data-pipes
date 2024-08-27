@@ -492,7 +492,7 @@ clear
 add_resource
 update_resource
 # Incremental run.
-run_pipeline "INCREMENTAL" "true"
+run_pipeline "INCREMENTAL"
 wait_for_completion
 check_parquet true
 fhir_source_query
