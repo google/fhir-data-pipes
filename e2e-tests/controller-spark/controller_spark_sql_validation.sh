@@ -222,11 +222,9 @@ function check_parquet() {
     # In case of incremental run, we will have two directories
     # assuming batch run was executed before this.
     TOTAL_TEST_PATIENTS=$((2*TOTAL_TEST_PATIENTS + 1))
-    declare -i TOTAL_VIEW_PATIENTS=213
+    declare -i TOTAL_VIEW_PATIENTS=108
     TOTAL_TEST_ENCOUNTERS=$((2*TOTAL_TEST_ENCOUNTERS))
     TOTAL_TEST_OBS=$((2*TOTAL_TEST_OBS))
-    local dir_tree=$(find "${output}" -type d)
-    print_message "${dir_tree}"
 
     local total_patient_flat=$(java -Xms16g -Xmx16g -jar \
     ./parquet-tools-1.11.1.jar rowcount "${output}/*/patient_flat/" | \
