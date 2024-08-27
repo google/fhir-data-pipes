@@ -196,7 +196,6 @@ public class DataProperties {
       options.setResourceList(resourceList);
     }
     options.setCreateParquetViews(createParquetViews);
-    logger.info("VIEW CREATION: " + options.isCreateParquetViews().toString());
     options.setViewDefinitionsDir(Strings.nullToEmpty(viewDefinitionsDir));
     options.setSinkDbConfigPath(Strings.nullToEmpty(sinkDbConfigPath));
     options.setStructureDefinitionsPath(Strings.nullToEmpty(structureDefinitionsPath));
