@@ -145,6 +145,9 @@ public class ConvertResourceFn extends FetchSearchPageFn<HapiRowDescriptor> {
     if (!parquetFile.isEmpty()) {
       startTime = System.currentTimeMillis();
       parquetUtil.write(resource);
+      if (createParquetViews) {
+        parquetUtil.writeViews(resource);
+      }
       totalGenerateTimeMillisMap.get(resourceType).inc(System.currentTimeMillis() - startTime);
     }
     if (!sinkPath.isEmpty()) {

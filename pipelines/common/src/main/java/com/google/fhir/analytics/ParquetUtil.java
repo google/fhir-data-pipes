@@ -324,13 +324,18 @@ public class ParquetUtil {
       if (resourceTypes == null || resourceTypes.contains(resource.getResourceType().name())) {
         write(resource);
         if (createParquetViews) {
-          ImmutableList<ViewDefinition> views = viewManager.getViewsForType(resource.fhirType());
-          if (views != null) {
-            for (ViewDefinition vDef : views) {
-              write(resource, vDef);
-            }
-          }
+          writeViews(resource);
         }
+      }
+    }
+  }
+
+  public void writeViews(Resource resource)
+      throws IOException, ProfileException, ViewApplicationException {
+    ImmutableList<ViewDefinition> views = viewManager.getViewsForType(resource.fhirType());
+    if (views != null) {
+      for (ViewDefinition vDef : views) {
+        write(resource, vDef);
       }
     }
   }

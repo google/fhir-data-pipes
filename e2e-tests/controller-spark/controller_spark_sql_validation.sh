@@ -262,10 +262,6 @@ function check_parquet() {
             ; then
             print_message "Pipeline transformation successfully completed."
 
-            # TODO(itsiggs): could be a pathing issue. we don't know where to look for output
-            local dir_tree2=$(find "${output}" -type d)
-            print_message "${dir_tree2}"
-
             local total_patient_flat=$(java -Xms16g -Xmx16g -jar \
             ./parquet-tools-1.11.1.jar rowcount "${output}/*/patient_flat/" | \
             awk '{print $3}')
@@ -372,8 +368,7 @@ function validate_resource_tables() {
     print_message "Snapshot tables creation verified successfully."
   else
     print_message "Snapshot tables verification failed."
-    exit 0
-    #TODO(itsiggs): Changed from 3 -> 0
+    exit 3
   fi
 
   # Check for canonical tables.
@@ -383,8 +378,7 @@ function validate_resource_tables() {
     print_message "Canonical tables creation verified successfully."
   else
     print_message "Canonical tables verification failed."
-    exit 0
-    #TODO(itsiggs): Changed from 4 -> 0
+    exit 4
   fi
 }
 
@@ -411,8 +405,7 @@ function validate_resource_tables_data() {
     print_message "Resource tables data verified successfully."
   else
     print_message "Resource tables data verification failed."
-    exit 0
-    #TODO(itsiggs): Changed from 5 -> 0
+    exit 5
   fi
 }
 
@@ -435,8 +428,7 @@ function validate_updated_resource() {
     print_message "Updated patient data verified successfully."
   else
     print_message "Updated patient data verification failed."
-    exit 0
-    #TODO(itsiggs): Changed from 6 -> 0
+    exit 6
   fi
 }
 
