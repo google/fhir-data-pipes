@@ -165,6 +165,8 @@ fhirdata:
   # relational database, the next sinkDbConfigPath should also be set.
   viewDefinitionsDir: "config/views"
 
+  createParquetViews: true
+
   # The configuration file for the sink database. If `viewDefinitionsDir` is set
   # then the generated views are materialized and written to this DB. If not,
   # then the raw FHIR JSON resources are written to this DB. Note enabling this
