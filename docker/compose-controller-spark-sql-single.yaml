@@ -63,7 +63,7 @@ services:
     environment:
       - JAVA_OPTS=$JAVA_OPTS
       # This is to turn this on in e2e but leave it off in the default config.
-      #- FHIRDATA_SINKFHIRSERVERURL=$FHIRDATA_SINKFHIRSERVERURL
+      - FHIRDATA_SINKFHIRSERVERURL=$FHIRDATA_SINKFHIRSERVERURL
     ports:
       - '8090:8080'
     networks:

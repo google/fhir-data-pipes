@@ -262,20 +262,6 @@ function check_parquet() {
             ; then
             print_message "Batch pipeline transformation successfully completed."
 
-            local total_patient_flat=$(java -Xms16g -Xmx16g -jar \
-            ./parquet-tools-1.11.1.jar rowcount "${output}/*/patient_flat/" | \
-            awk '{print $3}')
-            print_message "Total patient flat rows synced to parquet ---> ${total_patient_flat}"
-
-            local total_encounter_flat=$(java -Xms16g -Xmx16g -jar \
-            ./parquet-tools-1.11.1.jar rowcount "${output}/*/encounter_flat/" \
-            | awk '{print $3}')
-            print_message "BatchTotal encounter flat rows synced to parquet ---> ${total_encounter_flat}"
-
-            local total_obs_flat=$(java -Xms16g -Xmx16g -jar ./parquet-tools-1.11.1.jar \
-            rowcount "${output}/*/observation_flat/" | awk '{print $3}')
-            print_message "BatchTotal observation flat rows synced to parquet ---> ${total_obs_flat}"
-
     elif [[ "${isIncremental}" == "true" ]] && (( total_patients == TOTAL_TEST_PATIENTS \
             && total_encounters == TOTAL_TEST_ENCOUNTERS && \
             total_observations == TOTAL_TEST_OBS \
@@ -466,7 +452,7 @@ function test_fhir_sink(){
   print_message "FHIR SERVER SINK EXECUTED SUCCESSFULLY USING ${runMode} MODE"
   else
   print_message "FHIR SERVER SINK TEST FAILED USING ${runMode} MODE"
-  exit 0
+  exit 1
   fi
 }
 
