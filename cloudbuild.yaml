@@ -203,7 +203,6 @@ steps:
     - PIPELINE_CONFIG=/workspace/docker/config
     - DWH_ROOT=/workspace/e2e-tests/controller-spark/dwh
     - FHIRDATA_SINKFHIRSERVERURL=http://sink-server-controller:8080/fhir
-    - CREATEPARQUETVIEWS=true
   args: [ '-f', './docker/compose-controller-spark-sql-single.yaml', 'up',
           '--force-recreate', '-d' ]
   waitFor: ['Launch HAPI FHIR Sink Server Controller']

@@ -216,29 +216,16 @@ function wait_for_completion() {
 function check_parquet() {
   local isIncremental=$1
   local output="${HOME_PATH}/${PARQUET_SUBDIR}"
+  TOTAL_VIEW_PATIENTS=106
 
   if [[ "${isIncremental}" == "true" ]]
   then
     # In case of incremental run, we will have two directories
     # assuming batch run was executed before this.
     TOTAL_TEST_PATIENTS=$((2*TOTAL_TEST_PATIENTS + 1))
-    declare -i TOTAL_VIEW_PATIENTS=108
+    TOTAL_VIEW_PATIENTS=108
     TOTAL_TEST_ENCOUNTERS=$((2*TOTAL_TEST_ENCOUNTERS))
     TOTAL_TEST_OBS=$((2*TOTAL_TEST_OBS))
-
-    local total_patient_flat=$(java -Xms16g -Xmx16g -jar \
-    ./parquet-tools-1.11.1.jar rowcount "${output}/*/patient_flat/" | \
-    awk '{print $3}')
-    print_message "Total patient flat rows synced to parquet ---> ${total_patient_flat}"
-
-    local total_encounter_flat=$(java -Xms16g -Xmx16g -jar \
-    ./parquet-tools-1.11.1.jar rowcount "${output}/*/encounter_flat/" \
-    | awk '{print $3}')
-    print_message "Total encounter flat rows synced to parquet ---> ${total_encounter_flat}"
-
-    local total_obs_flat=$(java -Xms16g -Xmx16g -jar ./parquet-tools-1.11.1.jar \
-    rowcount "${output}/*/observation_flat/" | awk '{print $3}')
-    print_message "Total observation flat rows synced to parquet ---> ${total_obs_flat}"
   fi
 
   # check whether output directory has received parquet files.
@@ -251,22 +238,28 @@ function check_parquet() {
     local total_observations=$(java -Xms16g -Xmx16g -jar ./parquet-tools-1.11.1.jar rowcount \
     "${output}/*/Observation/" | awk '{print $3}')
 
+    local total_patient_flat=$(java -Xms16g -Xmx16g -jar ./parquet-tools-1.11.1.jar rowcount \
+    "${output}/*/patient_flat/" | awk '{print $3}')
+    local total_encounter_flat=$(java -Xms16g -Xmx16g -jar ./parquet-tools-1.11.1.jar rowcount \
+    "${output}/*/encounter_flat/" | awk '{print $3}')
+    local total_obs_flat=$(java -Xms16g -Xmx16g -jar ./parquet-tools-1.11.1.jar rowcount \
+     "${output}/*/observation_flat/" | awk '{print $3}')
+
     print_message "Total patients: $total_patients"
     print_message "Total encounters: $total_encounters"
     print_message "Total observations: $total_observations"
 
-    if [[ "${isIncremental}" != "true" ]] && (( total_patients == TOTAL_TEST_PATIENTS && total_encounters \
-            == TOTAL_TEST_ENCOUNTERS && total_observations == TOTAL_TEST_OBS)) \
-            ; then
-            print_message "Batch pipeline transformation successfully completed."
+    print_message "Total patient flat rows: ${total_patient_flat}"
+    print_message "Total encounter flat rows: ${total_encounter_flat}"
+    print_message "Total observation flat rows: ${total_obs_flat}"
 
-    elif [[ "${isIncremental}" == "true" ]] && (( total_patients == TOTAL_TEST_PATIENTS \
+    if (( total_patients == TOTAL_TEST_PATIENTS \
             && total_encounters == TOTAL_TEST_ENCOUNTERS && \
             total_observations == TOTAL_TEST_OBS \
             && total_obs_flat == TOTAL_TEST_OBS && \
             total_patient_flat == TOTAL_VIEW_PATIENTS && \
             total_encounter_flat == TOTAL_TEST_ENCOUNTERS )); then
-            print_message "Incremental pipeline transformation successfully completed."
+            print_message "Pipeline transformation successfully completed."
     else
             print_message "Mismatch in count of records"
             print_message "Actual total patients: $total_patients, expected total: $TOTAL_TEST_PATIENTS"
