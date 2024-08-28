@@ -263,7 +263,7 @@ function check_parquet() {
     elif [[ "${isIncremental}" == "true" ]] && (( total_patients == TOTAL_TEST_PATIENTS \
             && total_encounters == TOTAL_TEST_ENCOUNTERS && \
             total_observations == TOTAL_TEST_OBS \
-            && total_obs_flat == OBS_VIEW_ROWCOUNT && \
+            && total_obs_flat == TOTAL_TEST_OBS && \
             total_patient_flat == TOTAL_VIEW_PATIENTS && \
             total_encounter_flat == TOTAL_TEST_ENCOUNTERS )); then
             print_message "Incremental pipeline transformation successfully completed."
