@@ -32,7 +32,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import javax.annotation.Nullable;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.http.HttpHeaders;
@@ -65,7 +64,7 @@ public class BulkExportApiClient {
    * @return the absolute url via which the status and details of the job can be fetched
    */
   public String triggerBulkExportJob(
-      List<String> resourceTypes, @Nullable String since, FhirVersionEnum fhirVersionEnum) {
+      List<String> resourceTypes, String since, FhirVersionEnum fhirVersionEnum) {
     Map<String, List<String>> headers = new HashMap<>();
     headers.put(HttpHeaders.ACCEPT, Arrays.asList("application/fhir+ndjson"));
     headers.put("Prefer", Arrays.asList("respond-async"));
@@ -130,16 +129,18 @@ public class BulkExportApiClient {
   }
 
   private IBaseParameters fetchBulkExportParameters(
-      FhirVersionEnum fhirVersionEnum, List<String> resourceTypes, @Nullable String since) {
+      FhirVersionEnum fhirVersionEnum, List<String> resourceTypes, String since) {
+    since = Strings.nullToEmpty(since);
     switch (fhirVersionEnum) {
       case R4:
         Parameters r4Parameters = new Parameters();
         r4Parameters.addParameter(PARAMETER_TYPE, String.join(",", resourceTypes));
-        if (!Strings.isNullOrEmpty(since)) {
+        if (!since.isEmpty()) {
           r4Parameters.addParameter(PARAMETER_SINCE, new InstantType(since));
         }
         return r4Parameters;
       case DSTU3:
+        // TODO: Create a common interface to handle parameters of different versions
         org.hl7.fhir.dstu3.model.Parameters dstu3Parameters =
             new org.hl7.fhir.dstu3.model.Parameters();
         ParametersParameterComponent typeParameter = new ParametersParameterComponent();
@@ -147,7 +148,7 @@ public class BulkExportApiClient {
         typeParameter.setValue(new StringType(String.join(",", resourceTypes)));
         dstu3Parameters.addParameter(typeParameter);
 
-        if (!Strings.isNullOrEmpty(since)) {
+        if (!since.isEmpty()) {
           ParametersParameterComponent sinceParameter = new ParametersParameterComponent();
           sinceParameter.setName(PARAMETER_SINCE);
           sinceParameter.setValue(new org.hl7.fhir.dstu3.model.InstantType(since));

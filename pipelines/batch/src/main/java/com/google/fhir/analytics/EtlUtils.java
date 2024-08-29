@@ -94,12 +94,12 @@ class EtlUtils {
         fhirContext);
     // Transaction file exists for Batch Export mode, merge the timestamp file in this case
     if (DwhFiles.forRoot(options.getDwh1(), fhirContext)
-        .doesTimestampFileExist(DwhFiles.TIMESTAMP_FILE_TRANSACTION)) {
+        .doesTimestampFileExist(DwhFiles.TIMESTAMP_FILE_BULK_TRANSACTION_TIME)) {
       mergeWithLatestTimestamp(
           options.getDwh1(),
           options.getDwh2(),
           options.getMergedDwh(),
-          DwhFiles.TIMESTAMP_FILE_TRANSACTION,
+          DwhFiles.TIMESTAMP_FILE_BULK_TRANSACTION_TIME,
           fhirContext);
     }
     List<PipelineResult> pipelineResults = runMultiplePipelines(pipelines);

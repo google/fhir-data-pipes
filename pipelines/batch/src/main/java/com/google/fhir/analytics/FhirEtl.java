@@ -434,7 +434,7 @@ public class FhirEtl {
       DwhFiles.forRoot(options.getOutputParquetPath(), avroConversionUtil.getFhirContext())
           .writeTimestampFile(
               bulkExportResponse.transactionTime().toInstant(),
-              DwhFiles.TIMESTAMP_FILE_TRANSACTION);
+              DwhFiles.TIMESTAMP_FILE_BULK_TRANSACTION_TIME);
       for (String type : typeToNdjsonFileMappings.keySet()) {
         Pipeline pipeline = Pipeline.create(options);
         pipeline

@@ -57,6 +57,8 @@ public class BulkExportUtil {
     String contentLocationUrl =
         bulkExportApiClient.triggerBulkExportJob(resourceTypes, since, fhirVersionEnum);
     logger.info("Bulk Export has been started, contentLocationUrl={}", contentLocationUrl);
+    // TODO: Persist the bulk export content location url so that it can be reused in the cases of
+    //  application crash https://github.com/google/fhir-data-pipes/issues/1170
     return pollBulkExportJob(contentLocationUrl);
   }
 
