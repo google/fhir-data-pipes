@@ -120,7 +120,10 @@ abstract class FetchSearchPageFn<T> extends DoFn<T, KV<String, Integer>> {
 
   protected AvroConversionUtil avroConversionUtil;
 
+  private final boolean createParquetViews;
+
   FetchSearchPageFn(FhirEtlOptions options, String stageIdentifier) {
+    this.createParquetViews = options.isCreateParquetViews();
     this.sinkPath = options.getFhirSinkPath();
     this.sinkUsername = options.getSinkUserName();
     this.sinkPassword = options.getSinkPassword();
@@ -213,6 +216,8 @@ abstract class FetchSearchPageFn<T> extends DoFn<T, KV<String, Integer>> {
               fhirContext.getVersion().getVersion(),
               structureDefinitionsPath,
               parquetFile,
+              viewDefinitionsDir,
+              createParquetViews,
               secondsToFlush,
               rowGroupSize,
               stageIdentifier + "_",

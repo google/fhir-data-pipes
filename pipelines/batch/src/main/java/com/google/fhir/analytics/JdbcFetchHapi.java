@@ -310,6 +310,7 @@ public class JdbcFetchHapi {
   @VisibleForTesting
   List<QueryParameterDescriptor> generateQueryParameters(
       FhirEtlOptions options, String resourceType, int numResources) {
+    log.info("Generating query parameters for " + resourceType);
 
     int jdbcFetchSize = options.getJdbcFetchSize();
     List<QueryParameterDescriptor> queryParameterList = new ArrayList<QueryParameterDescriptor>();

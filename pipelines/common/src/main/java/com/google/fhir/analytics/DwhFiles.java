@@ -21,6 +21,7 @@ import com.google.api.client.util.Sets;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import com.google.common.collect.Iterables;
+import com.google.fhir.analytics.view.ViewManager;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
@@ -41,6 +42,7 @@ import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
+import javax.annotation.Nullable;
 import lombok.Getter;
 import org.apache.beam.sdk.extensions.gcp.util.gcsfs.GcsPath;
 import org.apache.beam.sdk.io.FileSystems;
@@ -188,17 +190,30 @@ public class DwhFiles {
     return matchResult.status() == Status.OK;
   }
 
+  public Set<String> findNonEmptyResourceDirs() throws IOException {
+    return findNonEmptyDirs(null);
+  }
+
+  public Set<String> findNonEmptyViewDirs(ViewManager viewManager) throws IOException {
+    return findNonEmptyDirs(viewManager);
+  }
+
   /**
    * This method returns the list of non-empty directories which contains at least one file under
-   * it. The directory name should be a valid FHIR resource type.
+   * it.
    *
+   * @param viewManager Used to verify if non-empty directory is a valid View Definition. If null,
+   * the views returned will be valid FHIR Resource Types. Otherwise, the views will be valid
+   * View Definitions
    * @return the set of non-empty directories
-   * @throws IOException
+   * @throws IOException if the directory does not contain a valid file type
    */
-  public Set<String> findNonEmptyFhirResourceTypes() throws IOException {
+  private Set<String> findNonEmptyDirs( @Nullable ViewManager viewManager)
+      throws IOException {
     // TODO : If the list of files under the dwhRoot is huge then there can be a lag in the api
     //  response. This issue https://github.com/google/fhir-data-pipes/issues/288 helps in
     //  maintaining the number of file to an optimum value.
+    String fileType = viewManager == null ? "Resource types" : "Views";
     String fileSeparator = getFileSeparatorForDwhFiles(dwhRoot);
     List<MatchResult> matchedChildResultList =
         FileSystems.match(
@@ -214,21 +229,27 @@ public class DwhFiles {
           fileSet.add(metadata.resourceId().getCurrentDirectory().getFilename());
         }
       } else if (matchResult.status() == Status.ERROR) {
-        log.error("Error matching resource types under {} ", dwhRoot);
-        throw new IOException(String.format("Error matching resource types under %s", dwhRoot));
+        log.error("Error matching {} under {} ", fileType, dwhRoot);
+        throw new IOException(String.format("Error matching %s under %s", fileType, dwhRoot));
       }
     }
 
     Set<String> typeSet = Sets.newHashSet();
     for (String file : fileSet) {
-      try {
-        fhirContext.getResourceType(file);
-        typeSet.add(file);
-      } catch (DataFormatException e) {
-        log.debug("Ignoring file {} which is not a FHIR resource.", file);
+      if (viewManager == null) {
+        try {
+          fhirContext.getResourceType(file);
+          typeSet.add(file);
+        } catch (DataFormatException e) {
+          log.debug("Ignoring file {} which is not a FHIR resource.", file);
+        }
+      } else {
+        if (viewManager.getViewDefinition(file) != null) {
+          typeSet.add(file);
+        }
       }
     }
-    log.info("Resource types under {} are {}", dwhRoot, typeSet);
+    log.info("{} under {} are {}", fileType, dwhRoot, typeSet);
     return typeSet;
   }
 
@@ -236,9 +257,8 @@ public class DwhFiles {
    * This method copies all the files under the directory (getRoot() + resourceType) into the
    * destination DwhFiles under the similar directory.
    *
-   * @param resourceType
-   * @param destDwh
-   * @throws IOException
+   * @param resourceType The resource or view directory to be copied
+   * @param destDwh The output Dwh to copy files to
    */
   public void copyResourcesToDwh(String resourceType, DwhFiles destDwh) throws IOException {
     String fileSeparator = getFileSeparatorForDwhFiles(dwhRoot);

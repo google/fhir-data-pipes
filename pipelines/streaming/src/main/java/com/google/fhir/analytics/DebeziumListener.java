@@ -93,6 +93,8 @@ public class DebeziumListener extends RouteBuilder {
             fhirContext.getVersion().getVersion(),
             "",
             params.outputParquetPath,
+            "",
+            false,
             params.secondsToFlushParquetFiles,
             params.rowGroupSizeForParquetFiles,
             "streaming_",

@@ -299,6 +299,10 @@ public class FhirEtl {
                 + options.getResourceList());
       }
     }
+    if (options.isCreateParquetViews() && Strings.isNullOrEmpty(options.getViewDefinitionsDir())) {
+      throw new IllegalArgumentException(
+          "When using --createParquetViews, --viewDefinitionsDir cannot be empty");
+    }
     if (options.getCacheBundleForParquetWrites()
         && !"DataflowRunner".equals(options.getRunner().getSimpleName())) {
       throw new IllegalArgumentException(
@@ -368,7 +372,7 @@ public class FhirEtl {
     Preconditions.checkArgument(!options.getParquetInputDwhRoot().isEmpty());
     DwhFiles dwhFiles =
         DwhFiles.forRoot(options.getParquetInputDwhRoot(), avroConversionUtil.getFhirContext());
-    Set<String> resourceTypes = dwhFiles.findNonEmptyFhirResourceTypes();
+    Set<String> resourceTypes = dwhFiles.findNonEmptyResourceDirs();
     log.info("Reading Parquet files for these resource types: {}", resourceTypes);
     List<Pipeline> pipelineList = new ArrayList<>();
     for (String resourceType : resourceTypes) {

@@ -92,6 +92,8 @@ public class DataProperties {
 
   private String viewDefinitionsDir;
 
+  private boolean isCreateParquetViews;
+
   private String sinkDbConfigPath;
 
   private String fhirServerPassword;
@@ -193,6 +195,7 @@ public class DataProperties {
     if (resourceList != null) {
       options.setResourceList(resourceList);
     }
+    options.setCreateParquetViews(isCreateParquetViews);
     options.setViewDefinitionsDir(Strings.nullToEmpty(viewDefinitionsDir));
     options.setSinkDbConfigPath(Strings.nullToEmpty(sinkDbConfigPath));
     options.setStructureDefinitionsPath(Strings.nullToEmpty(structureDefinitionsPath));
@@ -254,7 +257,9 @@ public class DataProperties {
             String.valueOf(rowGroupSizeForParquetFiles),
             "",
             ""),
-        new ConfigFields("fhirdata.recursiveDepth", String.valueOf(recursiveDepth), "", ""));
+        new ConfigFields("fhirdata.recursiveDepth", String.valueOf(recursiveDepth), "", ""),
+        new ConfigFields(
+            "fhirdata.isCreateParquetViews", String.valueOf(isCreateParquetViews), "", ""));
   }
 
   ConfigFields getConfigFields(FhirEtlOptions options, Method getMethod) {
