@@ -201,13 +201,12 @@ public class DwhFiles {
    * it.
    *
    * @param viewManager Used to verify if non-empty directory is a valid View Definition. If null,
-   * the views returned will be valid FHIR Resource Types. Otherwise, the views will be valid
-   * View Definitions
+   *     the views returned will be valid FHIR Resource Types. Otherwise, the views will be valid
+   *     View Definitions
    * @return the set of non-empty directories
    * @throws IOException if the directory does not contain a valid file type
    */
-  private Set<String> findNonEmptyDirs( @Nullable ViewManager viewManager)
-      throws IOException {
+  private Set<String> findNonEmptyDirs(@Nullable ViewManager viewManager) throws IOException {
     // TODO : If the list of files under the dwhRoot is huge then there can be a lag in the api
     //  response. This issue https://github.com/google/fhir-data-pipes/issues/288 helps in
     //  maintaining the number of file to an optimum value.

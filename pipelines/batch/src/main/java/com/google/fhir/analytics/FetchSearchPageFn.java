@@ -120,7 +120,7 @@ abstract class FetchSearchPageFn<T> extends DoFn<T, KV<String, Integer>> {
 
   protected AvroConversionUtil avroConversionUtil;
 
-  protected final boolean createParquetViews;
+  private final boolean createParquetViews;
 
   FetchSearchPageFn(FhirEtlOptions options, String stageIdentifier) {
     this.createParquetViews = options.isCreateParquetViews();

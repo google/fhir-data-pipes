@@ -232,7 +232,8 @@ public class ParquetUtil {
    * "output-parquet-th-T-ts-TS-r-R.parquet" pattern where T is the thread identifier, TS is a
    * timestamp and R is a random number
    */
-  public synchronized void write(Resource resource) throws IOException, ProfileException {
+  public synchronized void write(Resource resource)
+      throws IOException, ProfileException, ViewApplicationException {
     Preconditions.checkNotNull(resource.fhirType());
     String resourceType = resource.fhirType();
     if (!writerMap.containsKey(resourceType)) {
@@ -242,6 +243,14 @@ public class ParquetUtil {
     GenericRecord record = conversionUtil.convertToAvro(resource);
     if (record != null) {
       writer.write(record);
+    }
+    if (createParquetViews) {
+      ImmutableList<ViewDefinition> views = viewManager.getViewsForType(resource.fhirType());
+      if (views != null) {
+        for (ViewDefinition vDef : views) {
+          write(resource, vDef);
+        }
+      }
     }
   }
 
@@ -256,7 +265,7 @@ public class ParquetUtil {
    *
    * @see #write(Resource)
    */
-  public synchronized void write(Resource resource, ViewDefinition vDef)
+  private synchronized void write(Resource resource, ViewDefinition vDef)
       throws IOException, ProfileException, ViewApplicationException {
     Preconditions.checkNotNull(resource.fhirType());
     if (!viewWriterMap.containsKey(vDef.getName())) {
@@ -283,7 +292,7 @@ public class ParquetUtil {
     ParquetWriter<GenericRecord> writer = viewWriterMap.get(viewName);
     if (writer != null && writer.getDataSize() > 0) {
       writer.close();
-      //TODO: We need to investigate why we need to create the writer here. If we change this logic
+      // TODO: We need to investigate why we need to create the writer here. If we change this logic
       // to remove the writer at this line, E2E Streaming Tests fail in CloudBuild.
       createWriter(viewName, this.viewManager.getViewDefinition(viewName));
     }
@@ -323,19 +332,6 @@ public class ParquetUtil {
       Resource resource = entry.getResource();
       if (resourceTypes == null || resourceTypes.contains(resource.getResourceType().name())) {
         write(resource);
-        if (createParquetViews) {
-          writeViews(resource);
-        }
-      }
-    }
-  }
-
-  public void writeViews(Resource resource)
-      throws IOException, ProfileException, ViewApplicationException {
-    ImmutableList<ViewDefinition> views = viewManager.getViewsForType(resource.fhirType());
-    if (views != null) {
-      for (ViewDefinition vDef : views) {
-        write(resource, vDef);
       }
     }
   }
