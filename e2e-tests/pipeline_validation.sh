@@ -198,12 +198,11 @@ function test_parquet_sink() {
   # This global variable is hardcoded to validate the View record count
   # which can greater than the number of Resources in the source FHIR
   # Server due to flattening
-  PATIENT_VIEW_ROWCOUNT=0
-  OBS_VIEW_ROWCOUNT=284925
+  PATIENT_VIEW_ROWCOUNT=106
+  OBS_VIEW_ROWCOUNT=${TOTAL_TEST_OBS}
   if [[ -n ${OPENMRS} ]]; then
     PATIENT_VIEW_ROWCOUNT=110
-  else
-    PATIENT_VIEW_ROWCOUNT=106
+    OBS_VIEW_ROWCOUNT=284925
   fi
 
 
@@ -223,7 +222,7 @@ function test_parquet_sink() {
   print_message "Total obs synced to parquet ---> ${total_obs_streamed}"
 
   if [[ ! (-n ${STREAMING}) ]]; then
-    print_message "Parquet Sink Test Streaming ONLY"
+    print_message "Parquet Sink Test Non-Streaming mode"
     local total_patient_flat=$(java -Xms16g -Xmx16g -jar \
     ./controller-spark/parquet-tools-1.11.1.jar rowcount "${HOME_PATH}/${PARQUET_SUBDIR}/patient_flat/" | \
     awk '{print $3}')
@@ -240,16 +239,9 @@ function test_parquet_sink() {
 
     if (( total_patients_streamed == TOTAL_TEST_PATIENTS && total_encounters_streamed \
         == TOTAL_TEST_ENCOUNTERS && total_obs_streamed == TOTAL_TEST_OBS \
-        && total_obs_flat == TOTAL_TEST_OBS && \
-        total_patient_flat == PATIENT_VIEW_ROWCOUNT && \
-        total_encounter_flat == TOTAL_TEST_ENCOUNTERS )) ; then
-        print_message "PARQUET SINK EXECUTED SUCCESSFULLY USING ${PARQUET_SUBDIR} MODE"
-      elif [[ -n ${OPENMRS} ]] && (( total_patients_streamed == TOTAL_TEST_PATIENTS
-        && total_encounters_streamed \
-        == TOTAL_TEST_ENCOUNTERS && total_obs_streamed == TOTAL_TEST_OBS \
         && total_obs_flat == OBS_VIEW_ROWCOUNT && \
         total_patient_flat == PATIENT_VIEW_ROWCOUNT && \
-        total_encounter_flat == TOTAL_TEST_ENCOUNTERS )); then
+        total_encounter_flat == TOTAL_TEST_ENCOUNTERS )) ; then
         print_message "PARQUET SINK EXECUTED SUCCESSFULLY USING ${PARQUET_SUBDIR} MODE"
       else
         print_message "PARQUET SINK TEST FAILED USING ${PARQUET_SUBDIR} MODE"
