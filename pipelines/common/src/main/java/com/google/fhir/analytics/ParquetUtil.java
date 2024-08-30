@@ -62,7 +62,7 @@ public class ParquetUtil {
   public static String PARQUET_EXTENSION = ".parquet";
   private final AvroConversionUtil conversionUtil;
 
-  private final Map<String, ParquetWriter<GenericRecord>> viewWriterMap;
+  private final Map<String, WriterWithCache> viewWriterMap;
   private final Map<String, WriterWithCache> writerMap;
 
   private final int rowGroupSize;
@@ -222,7 +222,7 @@ public class ParquetUtil {
       writerMap.put(resourceType, new WriterWithCache(writer, this.cacheBundle));
     } else {
       writer = builder.withSchema(ViewSchema.getAvroSchema(vDef)).build();
-      viewWriterMap.put(vDef.getName(), writer);
+      viewWriterMap.put(vDef.getName(), new WriterWithCache(writer, this.cacheBundle));
     }
   }
 
@@ -258,6 +258,9 @@ public class ParquetUtil {
     for (WriterWithCache writer : writerMap.values()) {
       writer.flushCache();
     }
+    for (WriterWithCache writer : viewWriterMap.values()) {
+      writer.flushCache();
+    }
   }
 
   /**
@@ -271,7 +274,7 @@ public class ParquetUtil {
     if (!viewWriterMap.containsKey(vDef.getName())) {
       createWriter("", vDef);
     }
-    final ParquetWriter<GenericRecord> parquetWriter = viewWriterMap.get(vDef.getName());
+    final WriterWithCache parquetWriter = viewWriterMap.get(vDef.getName());
     ViewApplicator applicator = new ViewApplicator(vDef);
     RowList rows = applicator.apply(resource);
     List<GenericRecord> result = ViewSchema.setValueInRecord(rows, vDef);
@@ -289,7 +292,7 @@ public class ParquetUtil {
   }
 
   private synchronized void flushViewWriter(String viewName) throws IOException, ProfileException {
-    ParquetWriter<GenericRecord> writer = viewWriterMap.get(viewName);
+    WriterWithCache writer = viewWriterMap.get(viewName);
     if (writer != null && writer.getDataSize() > 0) {
       writer.close();
       // TODO: We need to investigate why we need to create the writer here. If we change this logic
@@ -313,7 +316,7 @@ public class ParquetUtil {
     if (timer != null) {
       timer.cancel();
     }
-    for (Map.Entry<String, ParquetWriter<GenericRecord>> entry : viewWriterMap.entrySet()) {
+    for (Map.Entry<String, WriterWithCache> entry : viewWriterMap.entrySet()) {
       entry.getValue().close();
       viewWriterMap.put(entry.getKey(), null);
     }
