@@ -17,7 +17,7 @@ package com.google.fhir.analytics;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
-import static org.mockito.Mockito.lenient;
+import static org.mockito.Mockito.*;
 
 import ca.uhn.fhir.context.FhirContext;
 import ca.uhn.fhir.parser.IParser;
@@ -81,7 +81,7 @@ public class FhirStoreUtilTest {
 
     patient = (Patient) patientBundle.getEntryFirstRep().getResource();
 
-    lenient().when(clientFactory.newGenericClient(sinkUrl)).thenReturn(client);
+    when(clientFactory.newGenericClient(sinkUrl)).thenReturn(client);
     lenient()
         .when(client.update().resource(patient).withId(patient.getId()).encodedJson())
         .thenReturn(iexec);

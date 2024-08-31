@@ -50,10 +50,10 @@ import org.apache.beam.sdk.io.fs.ResourceId;
 import org.apache.beam.sdk.options.PipelineOptionsFactory;
 import org.apache.beam.sdk.util.MimeTypes;
 import org.checkerframework.checker.nullness.qual.Nullable;
-import org.junit.After;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
@@ -64,7 +64,7 @@ public class GcsDwhFilesTest {
   @Mock private GcsUtil mockGcsUtil;
   private AutoCloseable closeable;
 
-  @Before
+  @BeforeEach
   public void setUp() {
     closeable = MockitoAnnotations.openMocks(this);
     GcsOptions gcsOptions = PipelineOptionsFactory.as(GcsOptions.class);
@@ -72,7 +72,7 @@ public class GcsDwhFilesTest {
     FileSystems.setDefaultPipelineOptions(gcsOptions);
   }
 
-  @After
+  @AfterEach
   public void closeService() throws Exception {
     closeable.close();
   }
@@ -176,7 +176,7 @@ public class GcsDwhFilesTest {
     Mockito.when(mockGcsUtil.getObjects(List.of(GcsPath.fromUri(gcsFileName)))).thenReturn(items);
 
     DwhFiles dwhFiles = new DwhFiles("gs://testbucket/testdirectory", FhirContext.forR4Cached());
-    Assert.assertThrows(
+    Assertions.assertThrows(
         FileAlreadyExistsException.class,
         () -> dwhFiles.writeTimestampFile(DwhFiles.TIMESTAMP_FILE_START));
   }
@@ -215,14 +215,14 @@ public class GcsDwhFilesTest {
     DwhFiles dwhFiles = new DwhFiles("gs://testbucket/testdirectory", FhirContext.forR4Cached());
     Instant actualInstant = dwhFiles.readTimestampFile(DwhFiles.TIMESTAMP_FILE_START);
 
-    Assert.assertEquals(currentInstant.getEpochSecond(), actualInstant.getEpochSecond());
+    Assertions.assertEquals(currentInstant.getEpochSecond(), actualInstant.getEpochSecond());
     Mockito.verify(mockGcsUtil, Mockito.times(1)).open(GcsPath.fromUri(gcsFileName));
   }
 
   @Test
   public void dwhRootPrefixForGCSPath_returnsFileSeparator() {
     String fileSeparator = DwhFiles.getFileSeparatorForDwhFiles("gs://testbucket/testdirectory");
-    Assert.assertEquals("/", fileSeparator);
+    Assertions.assertEquals("/", fileSeparator);
   }
 
   private void mockFileRead(String gcsFileName, Instant instant) throws IOException {
