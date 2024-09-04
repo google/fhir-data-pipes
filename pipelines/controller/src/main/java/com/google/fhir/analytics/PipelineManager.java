@@ -369,7 +369,10 @@ public class PipelineManager implements ApplicationListener<ApplicationReadyEven
   // Every 30 seconds, check for pipeline status and incremental pipeline schedule.
   @Scheduled(fixedDelay = 30000)
   private void checkSchedule()
-      throws IOException, PropertyVetoException, SQLException, ViewDefinitionException,
+      throws IOException,
+          PropertyVetoException,
+          SQLException,
+          ViewDefinitionException,
           ProfileException {
     LocalDateTime next = getNextIncrementalTime();
     if (next == null) {
