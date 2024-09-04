@@ -71,8 +71,12 @@ public class ConvertResourceFnTest {
 
   @Test
   public void testProcessPatientResource_withoutForcedId()
-      throws IOException, java.text.ParseException, SQLException, PropertyVetoException,
-          ViewApplicationException, ProfileException {
+      throws IOException,
+          java.text.ParseException,
+          SQLException,
+          PropertyVetoException,
+          ViewApplicationException,
+          ProfileException {
     String[] args = {"--outputParquetPath=SOME_PATH"};
     setUp(args);
     String patientResourceStr =
@@ -96,8 +100,12 @@ public class ConvertResourceFnTest {
 
   @Test
   public void testProcessPatientResource_withForcedId()
-      throws IOException, java.text.ParseException, SQLException, PropertyVetoException,
-          ViewApplicationException, ProfileException {
+      throws IOException,
+          java.text.ParseException,
+          SQLException,
+          PropertyVetoException,
+          ViewApplicationException,
+          ProfileException {
     String[] args = {"--outputParquetPath=SOME_PATH"};
     setUp(args);
     String patientResourceStr =
@@ -127,8 +135,12 @@ public class ConvertResourceFnTest {
 
   @Test
   public void testProcessDeletedPatientResourceFullMode()
-      throws SQLException, IOException, ParseException, PropertyVetoException,
-          ViewApplicationException, ProfileException {
+      throws SQLException,
+          IOException,
+          ParseException,
+          PropertyVetoException,
+          ViewApplicationException,
+          ProfileException {
     String[] args = {"--outputParquetPath=SOME_PATH", "--since="};
     setUp(args);
     // Deleted Patient resource
@@ -142,8 +154,12 @@ public class ConvertResourceFnTest {
 
   @Test
   public void testProcessDeletedPatientResourceIncrementalMode()
-      throws SQLException, IOException, ParseException, PropertyVetoException,
-          ViewApplicationException, ProfileException {
+      throws SQLException,
+          IOException,
+          ParseException,
+          PropertyVetoException,
+          ViewApplicationException,
+          ProfileException {
     String[] args = {"--outputParquetPath=SOME_PATH", "--since=NON-EMPTY"};
     setUp(args);
     // Deleted Patient resource
@@ -170,8 +186,12 @@ public class ConvertResourceFnTest {
 
   @Test
   public void testResourceMetaTags()
-      throws IOException, java.text.ParseException, SQLException, PropertyVetoException,
-          ViewApplicationException, ProfileException {
+      throws IOException,
+          java.text.ParseException,
+          SQLException,
+          PropertyVetoException,
+          ViewApplicationException,
+          ProfileException {
     String[] args = {"--outputParquetPath=SOME_PATH", "--since="};
     setUp(args);
     String patientResourceStr =
