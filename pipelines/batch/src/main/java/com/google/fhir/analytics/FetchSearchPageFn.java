@@ -27,8 +27,6 @@ import com.google.fhir.analytics.model.DatabaseConfiguration;
 import com.google.fhir.analytics.view.ViewApplicationException;
 import java.io.IOException;
 import java.sql.SQLException;
-import java.util.Arrays;
-import java.util.List;
 import java.util.Set;
 import javax.annotation.Nullable;
 import javax.sql.DataSource;
@@ -124,10 +122,7 @@ abstract class FetchSearchPageFn<T> extends DoFn<T, KV<String, Integer>> {
 
   private final boolean createParquetViews;
 
-  private final List<String> resourceList;
-
   FetchSearchPageFn(FhirEtlOptions options, String stageIdentifier) {
-    this.resourceList = Arrays.asList(options.getResourceList().split(","));
     this.createParquetViews = options.isCreateParquetViews();
     this.sinkPath = options.getFhirSinkPath();
     this.sinkUsername = options.getSinkUserName();
@@ -223,7 +218,6 @@ abstract class FetchSearchPageFn<T> extends DoFn<T, KV<String, Integer>> {
               parquetFile,
               viewDefinitionsDir,
               createParquetViews,
-              resourceList,
               secondsToFlush,
               rowGroupSize,
               stageIdentifier + "_",

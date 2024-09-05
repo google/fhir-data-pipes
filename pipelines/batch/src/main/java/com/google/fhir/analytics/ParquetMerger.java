@@ -17,14 +17,23 @@ package com.google.fhir.analytics;
 
 import com.cerner.bunsen.exception.ProfileException;
 import com.google.common.base.Preconditions;
+import com.google.common.base.Strings;
 import com.google.common.collect.Sets;
+import com.google.fhir.analytics.view.ViewDefinition;
+import com.google.fhir.analytics.view.ViewDefinitionException;
+import com.google.fhir.analytics.view.ViewManager;
+import com.google.fhir.analytics.view.ViewSchema;
 import java.io.IOException;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
+import javax.annotation.Nullable;
+import org.apache.avro.Schema;
 import org.apache.avro.generic.GenericRecord;
 import org.apache.beam.sdk.Pipeline;
 import org.apache.beam.sdk.extensions.avro.coders.AvroCoder;
@@ -39,8 +48,12 @@ import org.apache.beam.sdk.transforms.Create;
 import org.apache.beam.sdk.transforms.DoFn;
 import org.apache.beam.sdk.transforms.GroupByKey;
 import org.apache.beam.sdk.transforms.ParDo;
+import org.apache.beam.sdk.transforms.join.CoGbkResult;
+import org.apache.beam.sdk.transforms.join.CoGroupByKey;
+import org.apache.beam.sdk.transforms.join.KeyedPCollectionTuple;
 import org.apache.beam.sdk.values.KV;
 import org.apache.beam.sdk.values.PCollection;
+import org.apache.beam.sdk.values.TupleTag;
 import org.apache.parquet.hadoop.metadata.CompressionCodecName;
 import org.hl7.fhir.r4.model.codesystems.ActionType;
 import org.slf4j.Logger;
@@ -56,12 +69,69 @@ public class ParquetMerger {
 
   private static final Logger log = LoggerFactory.getLogger(ParquetMerger.class);
 
+  private static final TupleTag<GenericRecord> oldDwh = new TupleTag<>();
+
+  private static final TupleTag<GenericRecord> newDwh = new TupleTag<>();
+
   private static String ID_KEY = "id";
   private static String META_KEY = "meta";
   private static String LAST_UPDATED_KEY = "lastUpdated";
   private static String TAG_KEY = "tag";
   private static String SYSTEM_KEY = "system";
   private static String CODE_KEY = "code";
+
+  /**
+   * This method reads all the Parquet files under the paths {@code dwhFilesList} for the given
+   * {@code viewName}. It then groups the records by ID key, tags the records according to their
+   * creation timestamp and returns the grouped PCollection.
+   */
+  private static PCollection<KV<String, CoGbkResult>> readViewAndGroupById(
+      Pipeline pipeline, DwhFiles dwh1, DwhFiles dwh2, String viewName, Schema schema)
+      throws IOException {
+
+    // TODO:The extra reshuffle may be worth it to keep the logic simple and due to the smaller view
+    // schemas. Ask Chandra is the performance hit (memory-wise) won't be as large
+
+    // Reading all parquet files at once instead of one set at a time, reduces the number of Flink
+    // reshuffle operations by one.
+    PCollection<ReadableFile> inputFiles1 =
+        pipeline
+            .apply(Create.of(getParquetFilePaths(viewName, Arrays.asList(dwh1))))
+            .apply(FileIO.matchAll())
+            .apply(FileIO.readMatches());
+
+    PCollection<ReadableFile> inputFiles2 =
+        pipeline
+            .apply(Create.of(getParquetFilePaths(viewName, Arrays.asList(dwh2))))
+            .apply(FileIO.matchAll())
+            .apply(FileIO.readMatches());
+
+    PCollection<GenericRecord> records1 = inputFiles1.apply(ParquetIO.readFiles(schema));
+    PCollection<GenericRecord> records2 = inputFiles2.apply(ParquetIO.readFiles(schema));
+
+    Instant timestamp1 = dwh1.readTimestampFile(DwhFiles.TIMESTAMP_FILE_START);
+    Instant timestamp2 = dwh2.readTimestampFile(DwhFiles.TIMESTAMP_FILE_START);
+
+    PCollection<KV<String, GenericRecord>> dwhIdGroup1 =
+        records1.apply(ParDo.of(new GroupViewIds()));
+
+    PCollection<KV<String, GenericRecord>> dwhIdGroup2 =
+        records2.apply(ParDo.of(new GroupViewIds()));
+
+    PCollection<KV<String, CoGbkResult>> results;
+    if (timestamp1.isAfter(timestamp2)) {
+      results =
+          KeyedPCollectionTuple.of(oldDwh, dwhIdGroup2)
+              .and(newDwh, dwhIdGroup1)
+              .apply(CoGroupByKey.create());
+    } else {
+      results =
+          KeyedPCollectionTuple.of(newDwh, dwhIdGroup2)
+              .and(oldDwh, dwhIdGroup1)
+              .apply(CoGroupByKey.create());
+    }
+    return results;
+  }
 
   /**
    * This method reads all the Parquet files under the paths {@code dwhFilesList} for the given
@@ -194,59 +264,173 @@ public class ParquetMerger {
     DwhFiles dwhFiles2 = DwhFiles.forRoot(dwh2, avroConversionUtil.getFhirContext());
     DwhFiles mergedDwhFiles = DwhFiles.forRoot(mergedDwh, avroConversionUtil.getFhirContext());
 
-    Set<String> resourceTypes1 = dwhFiles1.findNonEmptyFhirResourceTypes();
-    Set<String> resourceTypes2 = dwhFiles2.findNonEmptyFhirResourceTypes();
+    Set<String> resourceTypes1 = dwhFiles1.findNonEmptyResourceDirs();
+    Set<String> resourceTypes2 = dwhFiles2.findNonEmptyResourceDirs();
+    Set<String> dwhViews1 = new HashSet<>();
+    Set<String> dwhViews2 = new HashSet<>();
 
-    for (String resourceType : Sets.difference(resourceTypes1, resourceTypes2)) {
-      dwhFiles1.copyResourcesToDwh(resourceType, mergedDwhFiles);
+    ViewManager viewManager = null;
+    if (!Strings.isNullOrEmpty(options.getViewDefinitionsDir())) {
+      try {
+        viewManager = ViewManager.createForDir(options.getViewDefinitionsDir());
+      } catch (IOException | ViewDefinitionException e) {
+        String errorMsg =
+            String.format("Error while reading views from %s", options.getViewDefinitionsDir());
+        log.error(errorMsg, e);
+        throw new IllegalArgumentException(errorMsg);
+      }
+      dwhViews1 = dwhFiles1.findNonEmptyViewDirs(viewManager);
+      dwhViews2 = dwhFiles2.findNonEmptyViewDirs(viewManager);
+      copyDistinctResources(dwhViews1, dwhViews2, dwhFiles1, dwhFiles2, mergedDwhFiles);
     }
-    for (String resourceType : Sets.difference(resourceTypes2, resourceTypes1)) {
-      dwhFiles2.copyResourcesToDwh(resourceType, mergedDwhFiles);
-    }
+
+    copyDistinctResources(resourceTypes1, resourceTypes2, dwhFiles1, dwhFiles2, mergedDwhFiles);
     List<Pipeline> pipelines = new ArrayList<>();
     for (String type : resourceTypes1) {
       if (!resourceTypes2.contains(type)) {
         continue;
       }
-      Pipeline pipeline = Pipeline.create(options);
-      pipelines.add(pipeline);
-      log.info("Merging resource type {}", type);
-      PCollection<KV<String, Iterable<GenericRecord>>> groupedRecords =
-          readAndGroupById(pipeline, Arrays.asList(dwhFiles1, dwhFiles2), type, avroConversionUtil);
+      pipelines.add(
+          writeMergedResources(
+              options,
+              avroConversionUtil,
+              dwhFiles1,
+              dwhFiles2,
+              mergedDwhFiles,
+              avroConversionUtil.getResourceSchema(type),
+              type,
+              numDuplicates,
+              numOutputRecords));
+    }
+    if ((!dwhViews1.isEmpty() || !dwhViews2.isEmpty())
+        && !Strings.isNullOrEmpty(options.getViewDefinitionsDir())) {
+      for (String viewName : dwhViews1) {
+        if (!dwhViews2.contains(viewName)) {
+          continue;
+        }
+        pipelines.add(
+            writeMergedViewsPipeline(
+                options, dwhFiles1, dwhFiles2, mergedDwhFiles, viewName, viewManager));
+      }
+    }
+    return pipelines;
+  }
+
+  public static Pipeline writeMergedViewsPipeline(
+      ParquetMergerOptions options,
+      DwhFiles dwhFiles1,
+      DwhFiles dwhFiles2,
+      DwhFiles mergedDwhFiles,
+      String viewName,
+      @Nullable ViewManager viewManager)
+      throws IOException {
+    Pipeline pipeline = Pipeline.create(options);
+    log.info("Merging materialized view {}", viewName);
+    ViewDefinition viewDef = viewManager.getViewDefinition(viewName);
+    if (viewDef != null) {
+      Schema schema = ViewSchema.getAvroSchema(viewDef);
+      PCollection<KV<String, CoGbkResult>> groupedRecords =
+          readViewAndGroupById(pipeline, dwhFiles1, dwhFiles2, viewName, schema);
       PCollection<GenericRecord> merged =
           groupedRecords
               .apply(
                   ParDo.of(
-                      new DoFn<KV<String, Iterable<GenericRecord>>, GenericRecord>() {
+                      new DoFn<KV<String, CoGbkResult>, GenericRecord>() {
+                        // Because of ViewDefinition flattening we might need to output multiple
+                        // GenericRecords
                         @ProcessElement
                         public void processElement(ProcessContext c) {
-                          KV<String, Iterable<GenericRecord>> e = c.element();
-                          GenericRecord lastRecord = findLastRecord(e.getValue(), numDuplicates);
-                          if (!isRecordDeleted(lastRecord)) {
-                            numOutputRecords.inc();
-                            c.output(lastRecord);
+                          KV<String, CoGbkResult> e = c.element();
+                          List<GenericRecord> lastRecords = new ArrayList<>();
+                          e.getValue().getAll(newDwh).forEach(lastRecords::add);
+                          for (GenericRecord r : lastRecords) {
+                            c.output(r);
                           }
                         }
                       }))
-              .setCoder(AvroCoder.of(avroConversionUtil.getResourceSchema(type)));
-
-      Sink parquetSink =
-          ParquetIO.sink(avroConversionUtil.getResourceSchema(type))
-              .withCompressionCodec(CompressionCodecName.SNAPPY);
-      if (options.getRowGroupSizeForParquetFiles() > 0) {
-        parquetSink = parquetSink.withRowGroupSize(options.getRowGroupSizeForParquetFiles());
-      }
-      merged.apply(
-          FileIO.<GenericRecord>write()
-              .via(parquetSink)
-              .to(mergedDwhFiles.getResourcePath(type).toString())
-              .withSuffix(".parquet")
-              // TODO if we don't set this, DirectRunner works fine but FlinkRunner only writes
-              //   ~10% of the records. This is not specific to Parquet or GenericRecord; it even
-              //   happens for TextIO. We should investigate this further and possibly file a bug.
-              .withNumShards(options.getNumShards()));
+              .setCoder(AvroCoder.of(schema));
+      writeToParquetSink(
+          options, merged, schema, mergedDwhFiles.getResourcePath(viewName).toString());
     }
-    return pipelines;
+    return pipeline;
+  }
+
+  public static Pipeline writeMergedResources(
+      ParquetMergerOptions options,
+      AvroConversionUtil avroConversionUtil,
+      DwhFiles dwhFiles1,
+      DwhFiles dwhFiles2,
+      DwhFiles mergedDwhFiles,
+      Schema schema,
+      String type,
+      Counter numDuplicates,
+      Counter numOutputRecords)
+      throws ProfileException {
+    Pipeline pipeline = Pipeline.create(options);
+    log.info("Merging resource type {}", type);
+    PCollection<KV<String, Iterable<GenericRecord>>> groupedRecords =
+        readAndGroupById(pipeline, Arrays.asList(dwhFiles1, dwhFiles2), type, avroConversionUtil);
+    PCollection<GenericRecord> merged =
+        groupedRecords.apply(
+            ParDo.of(
+                new DoFn<KV<String, Iterable<GenericRecord>>, GenericRecord>() {
+                  @ProcessElement
+                  public void processElement(ProcessContext c) {
+                    KV<String, Iterable<GenericRecord>> e = c.element();
+                    GenericRecord lastRecord = findLastRecord(e.getValue(), numDuplicates);
+                    if (!isRecordDeleted(lastRecord)) {
+                      numOutputRecords.inc();
+                      c.output(lastRecord);
+                    }
+                  }
+                }));
+    merged.setCoder(AvroCoder.of(schema));
+    writeToParquetSink(options, merged, schema, mergedDwhFiles.getResourcePath(type).toString());
+    return pipeline;
+  }
+
+  public static void writeToParquetSink(
+      ParquetMergerOptions options,
+      PCollection<GenericRecord> mergedRecords,
+      Schema schema,
+      String path) {
+    Sink parquetSink = ParquetIO.sink(schema).withCompressionCodec(CompressionCodecName.SNAPPY);
+    if (options.getRowGroupSizeForParquetFiles() > 0) {
+      parquetSink = parquetSink.withRowGroupSize(options.getRowGroupSizeForParquetFiles());
+    }
+    mergedRecords.apply(
+        FileIO.<GenericRecord>write()
+            .via(parquetSink)
+            .to(path)
+            .withSuffix(".parquet")
+            // TODO if we don't set this, DirectRunner works fine but FlinkRunner only writes
+            //   ~10% of the records. This is not specific to Parquet or GenericRecord; it even
+            //   happens for TextIO. We should investigate this further and possibly file a bug.
+            .withNumShards(options.getNumShards()));
+  }
+
+  public static void copyDistinctResources(
+      Set<String> types1, Set<String> types2, DwhFiles dwh1, DwhFiles dwh2, DwhFiles mergedDwh)
+      throws IOException {
+    for (String type : Sets.difference(types1, types2)) {
+      dwh1.copyResourcesToDwh(type, mergedDwh);
+    }
+    for (String type : Sets.difference(types2, types1)) {
+      dwh2.copyResourcesToDwh(type, mergedDwh);
+    }
+  }
+
+  /** DoFn to group GenericRecords by their IDs in a Key Value Mapping. */
+  private static class GroupViewIds extends DoFn<GenericRecord, KV<String, GenericRecord>> {
+    @ProcessElement
+    public void processElement(
+        @Element GenericRecord record, OutputReceiver<KV<String, GenericRecord>> out) {
+      String id = record.get(ID_KEY).toString();
+      if (id == null) {
+        throw new IllegalArgumentException(String.format("No %s key found in %s", ID_KEY, record));
+      }
+      out.output(KV.of(id, record));
+    }
   }
 
   public static void main(String[] args) throws IOException, ProfileException {

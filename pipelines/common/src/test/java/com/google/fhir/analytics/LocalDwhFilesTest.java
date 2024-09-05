@@ -19,6 +19,9 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 
 import ca.uhn.fhir.context.FhirContext;
+import com.google.common.io.Resources;
+import com.google.fhir.analytics.view.ViewDefinitionException;
+import com.google.fhir.analytics.view.ViewManager;
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -83,7 +86,7 @@ public class LocalDwhFilesTest {
         Paths.get(observationPath.toString(), "observationPath.txt"),
         "SAMPLE TEXT".getBytes(StandardCharsets.UTF_8));
 
-    Set<String> resourceTypes = instance.findNonEmptyFhirResourceTypes();
+    Set<String> resourceTypes = instance.findNonEmptyResourceDirs();
     assertThat("Could not find Patient", resourceTypes.contains("Patient"));
     assertThat("Could not find Observation", resourceTypes.contains("Observation"));
     assertThat(resourceTypes.size(), equalTo(2));
@@ -92,6 +95,44 @@ public class LocalDwhFilesTest {
     Files.delete(observationPath);
     Files.delete(Paths.get(patientPath.toString(), "patients.txt"));
     Files.delete(patientPath);
+    Files.delete(root);
+  }
+
+  @Test
+  public void findNonEmptyViewDirectoriesTest() throws IOException, ViewDefinitionException {
+    Path root = Files.createTempDirectory("DWH_FILES_TEST");
+    DwhFiles instance = new DwhFiles(root.toString(), FhirContext.forR4Cached());
+    String path = Resources.getResource("parquet-util-view-test").getFile();
+    ViewManager viewManager = ViewManager.createForDir(path);
+
+    Path obsPath = Paths.get(root.toString(), "observation_flat");
+    Files.createDirectories(obsPath);
+    Path testPath = Paths.get(root.toString(), "test_dir");
+    Files.createDirectories(testPath);
+
+    String viewFileName =
+        "Patient_main_patient_flat_output-parquet-th-112-ts-1724089542269-r-195410.parquet";
+    createFile(
+        Paths.get(obsPath.toString(), viewFileName),
+        "Sample Text".getBytes(StandardCharsets.UTF_8));
+
+    Path observationPath = Paths.get(root.toString(), "Observation");
+    Files.createDirectories(observationPath);
+    createFile(
+        Paths.get(observationPath.toString(), "observationPath.txt"),
+        "SAMPLE TEXT".getBytes(StandardCharsets.UTF_8));
+
+    Set<String> resourceTypes = instance.findNonEmptyViewDirs(viewManager);
+    assertThat("Could not find Patient", resourceTypes.contains("observation_flat"));
+    assertThat("Could not find Observation", !resourceTypes.contains("Observation"));
+    assertThat("Could not find Test Directory!", !resourceTypes.contains("test_dir"));
+    assertThat(resourceTypes.size(), equalTo(1));
+
+    Files.delete(Paths.get(observationPath.toString(), "observationPath.txt"));
+    Files.delete(observationPath);
+    Files.delete(Paths.get(obsPath.toString(), viewFileName));
+    Files.delete(obsPath);
+    Files.delete(testPath);
     Files.delete(root);
   }
 

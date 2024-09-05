@@ -24,14 +24,11 @@ import ca.uhn.fhir.parser.IParser;
 import com.cerner.bunsen.exception.ProfileException;
 import com.google.common.io.Resources;
 import com.google.fhir.analytics.view.ViewApplicationException;
-import com.google.fhir.analytics.view.ViewDefinition;
 import com.google.fhir.analytics.view.ViewDefinitionException;
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.*;
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.stream.Stream;
@@ -80,17 +77,7 @@ public class ParquetUtilTest {
     avroConversionUtil = AvroConversionUtil.getInstance(FhirVersionEnum.R4, "", 1);
     parquetUtil =
         new ParquetUtil(
-            FhirVersionEnum.R4,
-            "",
-            rootPath.toString(),
-            "",
-            false,
-            new ArrayList<>(),
-            0,
-            0,
-            "TEST_",
-            1,
-            false);
+            FhirVersionEnum.R4, "", rootPath.toString(), "", false, 0, 0, "TEST_", 1, false);
   }
 
   @Test
@@ -136,21 +123,10 @@ public class ParquetUtilTest {
   }
 
   @Test
-  public void createSingleOutput() throws IOException, ProfileException {
+  public void createSingleOutput() throws IOException, ProfileException, ViewApplicationException {
     rootPath = Files.createTempDirectory("PARQUET_TEST");
     parquetUtil =
-        new ParquetUtil(
-            FhirVersionEnum.R4,
-            "",
-            rootPath.toString(),
-            "",
-            false,
-            new ArrayList<>(),
-            0,
-            0,
-            "",
-            1,
-            false);
+        new ParquetUtil(FhirVersionEnum.R4, "", rootPath.toString(), "", false, 0, 0, "", 1, false);
     IParser parser = avroConversionUtil.getFhirContext().newJsonParser();
     Bundle bundle = parser.parseResource(Bundle.class, observationBundle);
     for (Bundle.BundleEntryComponent entry : bundle.getEntry()) {
@@ -174,21 +150,10 @@ public class ParquetUtilTest {
 
   @Test
   public void createMultipleOutputByTime()
-      throws IOException, InterruptedException, ProfileException {
+      throws IOException, InterruptedException, ProfileException, ViewApplicationException {
     rootPath = Files.createTempDirectory("PARQUET_TEST");
     parquetUtil =
-        new ParquetUtil(
-            FhirVersionEnum.R4,
-            "",
-            rootPath.toString(),
-            "",
-            false,
-            new ArrayList<>(),
-            1,
-            0,
-            "",
-            1,
-            false);
+        new ParquetUtil(FhirVersionEnum.R4, "", rootPath.toString(), "", false, 1, 0, "", 1, false);
     IParser parser = avroConversionUtil.getFhirContext().newJsonParser();
     Bundle bundle = parser.parseResource(Bundle.class, observationBundle);
     for (Bundle.BundleEntryComponent entry : bundle.getEntry()) {
@@ -212,21 +177,11 @@ public class ParquetUtilTest {
   }
 
   @Test
-  public void createSingleOutputWithRowGroupSize() throws IOException, ProfileException {
+  public void createSingleOutputWithRowGroupSize()
+      throws IOException, ProfileException, ViewApplicationException {
     rootPath = Files.createTempDirectory("PARQUET_TEST");
     parquetUtil =
-        new ParquetUtil(
-            FhirVersionEnum.R4,
-            "",
-            rootPath.toString(),
-            "",
-            false,
-            new ArrayList<>(),
-            0,
-            1,
-            "",
-            1,
-            false);
+        new ParquetUtil(FhirVersionEnum.R4, "", rootPath.toString(), "", false, 0, 1, "", 1, false);
     IParser parser = avroConversionUtil.getFhirContext().newJsonParser();
     Bundle bundle = parser.parseResource(Bundle.class, observationBundle);
     // There are 7 resources in the bundle so we write 15*7 (>100) resources, such that the page
@@ -261,27 +216,13 @@ public class ParquetUtilTest {
     String path = Resources.getResource("parquet-util-view-test").getFile();
     parquetUtil =
         new ParquetUtil(
-            FhirVersionEnum.R4,
-            "",
-            rootPath.toString(),
-            path,
-            true,
-            new ArrayList<>(Arrays.asList("Observation")),
-            0,
-            1,
-            "",
-            1,
-            false);
+            FhirVersionEnum.R4, "", rootPath.toString(), path, true, 0, 1, "", 1, false);
 
     IParser parser = avroConversionUtil.getFhirContext().newJsonParser();
-    String viewJson =
-        Resources.toString(
-            Resources.getResource("observation_flat_view.json"), StandardCharsets.UTF_8);
-    ViewDefinition viewDef = ViewDefinition.createFromString(viewJson);
 
     Bundle bundle = parser.parseResource(Bundle.class, observationBundle);
     for (Bundle.BundleEntryComponent entry : bundle.getEntry()) {
-      parquetUtil.write(entry.getResource(), viewDef);
+      parquetUtil.write(entry.getResource());
     }
     parquetUtil.closeAllWriters();
 
@@ -304,21 +245,11 @@ public class ParquetUtilTest {
    * https://github.com/GoogleCloudPlatform/openmrs-fhir-analytics/issues/156
    */
   @Test
-  public void writeObservationWithBigDecimalValue() throws IOException, ProfileException {
+  public void writeObservationWithBigDecimalValue()
+      throws IOException, ProfileException, ViewApplicationException {
     rootPath = Files.createTempDirectory("PARQUET_TEST");
     parquetUtil =
-        new ParquetUtil(
-            FhirVersionEnum.R4,
-            "",
-            rootPath.toString(),
-            "",
-            false,
-            new ArrayList<>(),
-            0,
-            0,
-            "",
-            1,
-            false);
+        new ParquetUtil(FhirVersionEnum.R4, "", rootPath.toString(), "", false, 0, 0, "", 1, false);
     String observationStr =
         Resources.toString(
             Resources.getResource("observation_decimal.json"), StandardCharsets.UTF_8);
@@ -333,18 +264,7 @@ public class ParquetUtilTest {
       throws IOException, ProfileException, ViewApplicationException {
     rootPath = Files.createTempDirectory("PARQUET_TEST");
     parquetUtil =
-        new ParquetUtil(
-            FhirVersionEnum.R4,
-            "",
-            rootPath.toString(),
-            "",
-            false,
-            new ArrayList<>(),
-            0,
-            0,
-            "",
-            1,
-            false);
+        new ParquetUtil(FhirVersionEnum.R4, "", rootPath.toString(), "", false, 0, 0, "", 1, false);
     String observationBundleStr =
         Resources.toString(
             Resources.getResource("observation_decimal_bundle.json"), StandardCharsets.UTF_8);
@@ -359,18 +279,7 @@ public class ParquetUtilTest {
       throws IOException, ProfileException, ViewApplicationException {
     rootPath = Files.createTempDirectory("PARQUET_TEST");
     parquetUtil =
-        new ParquetUtil(
-            FhirVersionEnum.R4,
-            "",
-            rootPath.toString(),
-            "",
-            false,
-            new ArrayList<>(),
-            0,
-            0,
-            "",
-            1,
-            false);
+        new ParquetUtil(FhirVersionEnum.R4, "", rootPath.toString(), "", false, 0, 0, "", 1, false);
 
     String patientStr =
         Resources.toString(Resources.getResource("patient_bundle.json"), StandardCharsets.UTF_8);
@@ -389,7 +298,8 @@ public class ParquetUtilTest {
   }
 
   @Test
-  public void writeQuestionnaireResponse() throws IOException, ProfileException {
+  public void writeQuestionnaireResponse()
+      throws IOException, ProfileException, ViewApplicationException {
     rootPath = Files.createTempDirectory("PARQUET_TEST");
     AvroConversionUtil.deRegisterMappingsFor(FhirVersionEnum.R4);
     avroConversionUtil =
@@ -401,7 +311,6 @@ public class ParquetUtilTest {
             rootPath.toString(),
             "",
             false,
-            new ArrayList<>(),
             0,
             0,
             "",

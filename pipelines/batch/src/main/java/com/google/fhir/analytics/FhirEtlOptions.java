@@ -223,15 +223,6 @@ public interface FhirEtlOptions extends BasePipelineOptions {
   void setRecreateSinkTables(Boolean value);
 
   @Description(
-      "The directory from which SQL-on-FHIR-v2 ViewDefinition json files are read.\n"
-          + "Note currently this requires setting sinkDbConfigPath as this is\n"
-          + "currently the only option for writing views (more to be added).")
-  @Default.String("")
-  String getViewDefinitionsDir();
-
-  void setViewDefinitionsDir(String value);
-
-  @Description(
       "If set, flat Parquet files corresponding to input ViewDefinition are created as well.")
   @Default.Boolean(false)
   Boolean isCreateParquetViews();

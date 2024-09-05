@@ -25,6 +25,16 @@ import org.apache.beam.sdk.options.PipelineOptions;
  * configurations
  */
 public interface BasePipelineOptions extends PipelineOptions {
+
+  @Description(
+      "The directory from which SQL-on-FHIR-v2 ViewDefinition json files are read. "
+          + "Note: For the Incremental Run, this directory must contain all the ViewDefinitions "
+          + "used to create views in both data-warehouses!")
+  @Default.String("")
+  String getViewDefinitionsDir();
+
+  void setViewDefinitionsDir(String value);
+
   @Description(
       "The approximate size (bytes) of the row-groups in Parquet files. When this size is reached,"
           + " the content is flushed to disk. A large value means more data for one column can fit"
