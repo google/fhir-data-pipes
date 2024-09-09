@@ -149,15 +149,19 @@ public class ConvertResourceFn extends FetchSearchPageFn<HapiRowDescriptor> {
     }
     if (!sinkPath.isEmpty()) {
       startTime = System.currentTimeMillis();
-      // TODO : Remove the deleted resources from the sink fhir store
-      // https://github.com/google/fhir-data-pipes/issues/588
-      fhirStoreUtil.uploadResource(resource);
+      if (jsonResource == null || jsonResource.isBlank()) {
+        fhirStoreUtil.deleteResourceById(resourceType, resource.getId());
+      } else {
+        fhirStoreUtil.uploadResource(resource);
+      }
       totalPushTimeMillisMap.get(resourceType).inc(System.currentTimeMillis() - startTime);
     }
     if (sinkDbConfig != null) {
-      // TODO : Remove the deleted resources from the sink database
-      // https://github.com/google/fhir-data-pipes/issues/588
-      jdbcWriter.writeResource(resource);
+      if (jsonResource == null || jsonResource.isBlank()) {
+        jdbcWriter.deleteResourceById(resourceType, resource.getId());
+      } else {
+        jdbcWriter.writeResource(resource);
+      }
     }
   }
 

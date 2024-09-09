@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2023 Google LLC
+ * Copyright 2020-2024 Google LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,6 +24,7 @@ import ca.uhn.fhir.parser.IParser;
 import ca.uhn.fhir.rest.api.MethodOutcome;
 import ca.uhn.fhir.rest.client.api.IGenericClient;
 import ca.uhn.fhir.rest.client.api.IRestfulClientFactory;
+import ca.uhn.fhir.rest.gclient.IDeleteTyped;
 import ca.uhn.fhir.rest.gclient.IUpdateTyped;
 import java.io.IOException;
 import java.io.InputStream;
@@ -49,6 +50,8 @@ public class FhirStoreUtilTest {
   private IGenericClient client;
 
   @Mock IUpdateTyped iexec;
+
+  @Mock IDeleteTyped iDeleteTyped;
 
   private FhirStoreUtil fhirStoreUtil;
 
@@ -118,5 +121,17 @@ public class FhirStoreUtilTest {
     assertThat(result, not(nullValue()));
     assertThat(result, not(Matchers.empty()));
     assertThat(result.iterator().next().getCreated(), equalTo(true));
+  }
+
+  @Test
+  public void testDeleteResource() {
+    String resourceType = "Patient";
+    String id = "patient-id";
+    when(client.delete().resourceById(resourceType, id)).thenReturn(iDeleteTyped);
+    MethodOutcome outcome = new MethodOutcome();
+    outcome.setCreated(true);
+    doReturn(outcome).when(iDeleteTyped).execute();
+    MethodOutcome result = fhirStoreUtil.deleteResourceById(resourceType, id);
+    assertThat(result.getCreated(), equalTo(true));
   }
 }
