@@ -446,6 +446,7 @@ public class PipelineManager implements ApplicationListener<ApplicationReadyEven
     mergerOptions.setDwh2(incrementalDwhRoot);
     mergerOptions.setMergedDwh(finalDwhRoot);
     mergerOptions.setRunner(FlinkRunner.class);
+    mergerOptions.setViewDefinitionsDir(options.getViewDefinitionsDir());
     // The number of shards is set based on the parallelism available for the FlinkRunner
     // Pipeline
     // TODO: For Flink non-local mode, refactor this to be not dependent on the

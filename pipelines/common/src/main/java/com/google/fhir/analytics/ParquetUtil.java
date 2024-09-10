@@ -62,7 +62,7 @@ public class ParquetUtil {
   public static String PARQUET_EXTENSION = ".parquet";
   private final AvroConversionUtil conversionUtil;
 
-  private final Map<String, ParquetWriter<GenericRecord>> viewWriterMap;
+  private final Map<String, WriterWithCache> viewWriterMap;
   private final Map<String, WriterWithCache> writerMap;
 
   private final int rowGroupSize;
@@ -222,7 +222,7 @@ public class ParquetUtil {
       writerMap.put(resourceType, new WriterWithCache(writer, this.cacheBundle));
     } else {
       writer = builder.withSchema(ViewSchema.getAvroSchema(vDef)).build();
-      viewWriterMap.put(vDef.getName(), writer);
+      viewWriterMap.put(vDef.getName(), new WriterWithCache(writer, this.cacheBundle));
     }
   }
 
@@ -232,7 +232,8 @@ public class ParquetUtil {
    * "output-parquet-th-T-ts-TS-r-R.parquet" pattern where T is the thread identifier, TS is a
    * timestamp and R is a random number
    */
-  public synchronized void write(Resource resource) throws IOException, ProfileException {
+  public synchronized void write(Resource resource)
+      throws IOException, ProfileException, ViewApplicationException {
     Preconditions.checkNotNull(resource.fhirType());
     String resourceType = resource.fhirType();
     if (!writerMap.containsKey(resourceType)) {
@@ -243,10 +244,21 @@ public class ParquetUtil {
     if (record != null) {
       writer.write(record);
     }
+    if (createParquetViews) {
+      ImmutableList<ViewDefinition> views = viewManager.getViewsForType(resource.fhirType());
+      if (views != null) {
+        for (ViewDefinition vDef : views) {
+          write(resource, vDef);
+        }
+      }
+    }
   }
 
   public synchronized void emptyCache() throws IOException {
     for (WriterWithCache writer : writerMap.values()) {
+      writer.flushCache();
+    }
+    for (WriterWithCache writer : viewWriterMap.values()) {
       writer.flushCache();
     }
   }
@@ -256,13 +268,13 @@ public class ParquetUtil {
    *
    * @see #write(Resource)
    */
-  public synchronized void write(Resource resource, ViewDefinition vDef)
+  private synchronized void write(Resource resource, ViewDefinition vDef)
       throws IOException, ProfileException, ViewApplicationException {
     Preconditions.checkNotNull(resource.fhirType());
     if (!viewWriterMap.containsKey(vDef.getName())) {
       createWriter("", vDef);
     }
-    final ParquetWriter<GenericRecord> parquetWriter = viewWriterMap.get(vDef.getName());
+    final WriterWithCache parquetWriter = viewWriterMap.get(vDef.getName());
     ViewApplicator applicator = new ViewApplicator(vDef);
     RowList rows = applicator.apply(resource);
     List<GenericRecord> result = ViewSchema.setValueInRecord(rows, vDef);
@@ -280,10 +292,10 @@ public class ParquetUtil {
   }
 
   private synchronized void flushViewWriter(String viewName) throws IOException, ProfileException {
-    ParquetWriter<GenericRecord> writer = viewWriterMap.get(viewName);
+    WriterWithCache writer = viewWriterMap.get(viewName);
     if (writer != null && writer.getDataSize() > 0) {
       writer.close();
-      //TODO: We need to investigate why we need to create the writer here. If we change this logic
+      // TODO: We need to investigate why we need to create the writer here. If we change this logic
       // to remove the writer at this line, E2E Streaming Tests fail in CloudBuild.
       createWriter(viewName, this.viewManager.getViewDefinition(viewName));
     }
@@ -304,7 +316,7 @@ public class ParquetUtil {
     if (timer != null) {
       timer.cancel();
     }
-    for (Map.Entry<String, ParquetWriter<GenericRecord>> entry : viewWriterMap.entrySet()) {
+    for (Map.Entry<String, WriterWithCache> entry : viewWriterMap.entrySet()) {
       entry.getValue().close();
       viewWriterMap.put(entry.getKey(), null);
     }
@@ -323,14 +335,6 @@ public class ParquetUtil {
       Resource resource = entry.getResource();
       if (resourceTypes == null || resourceTypes.contains(resource.getResourceType().name())) {
         write(resource);
-        if (createParquetViews) {
-          ImmutableList<ViewDefinition> views = viewManager.getViewsForType(resource.fhirType());
-          if (views != null) {
-            for (ViewDefinition vDef : views) {
-              write(resource, vDef);
-            }
-          }
-        }
       }
     }
   }

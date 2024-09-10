@@ -44,7 +44,7 @@
     <bunsen.version>0.5.14-SNAPSHOT</bunsen.version>
     <junit.version>4.13.2</junit.version>
     <slf4j.version>2.0.16</slf4j.version>
-    <logback.version>1.5.6</logback.version>
+    <logback.version>1.5.7</logback.version>
     <hapi.fhir.version>7.2.2</hapi.fhir.version>
     <hamcrest.version>3.0</hamcrest.version>
     <mockito.version>5.2.0</mockito.version>
@@ -255,7 +255,7 @@
         </plugin>
         <plugin>
           <artifactId>maven-surefire-plugin</artifactId>
-          <version>3.4.0</version>
+          <version>3.5.0</version>
         </plugin>
         <!--
            Configures `mvn package` to produce a bundled jar ("fat jar") for runners
@@ -271,20 +271,20 @@
         </plugin>
         <plugin>
           <artifactId>maven-install-plugin</artifactId>
-          <version>3.1.2</version>
+          <version>3.1.3</version>
         </plugin>
         <plugin>
           <artifactId>maven-deploy-plugin</artifactId>
-          <version>3.1.2</version>
+          <version>3.1.3</version>
         </plugin>
         <!-- site lifecycle, see https://maven.apache.org/ref/current/maven-core/lifecycles.html#site_Lifecycle -->
         <plugin>
           <artifactId>maven-site-plugin</artifactId>
-          <version>3.12.1</version>
+          <version>3.20.0</version>
         </plugin>
         <plugin>
           <artifactId>maven-project-info-reports-plugin</artifactId>
-          <version>3.6.2</version>
+          <version>3.7.0</version>
         </plugin>
         <!-- this is for finding files at the root ${main.basedir} easier -->
         <plugin>
