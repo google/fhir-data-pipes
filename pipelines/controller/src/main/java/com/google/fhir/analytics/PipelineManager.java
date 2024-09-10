@@ -29,7 +29,9 @@ import io.micrometer.core.instrument.MeterRegistry;
 import java.beans.PropertyVetoException;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.NoSuchFileException;
 import java.sql.SQLException;
+import java.time.Instant;
 import java.time.LocalDateTime;
 import java.util.Collections;
 import java.util.Comparator;
@@ -429,7 +431,7 @@ public class PipelineManager implements ApplicationListener<ApplicationReadyEven
     // TODO move old incremental_run dir if there is one
     String incrementalDwhRoot = currentDwh.newIncrementalRunPath().toString();
     options.setOutputParquetPath(incrementalDwhRoot);
-    String since = currentDwh.readTimestampFile(DwhFiles.TIMESTAMP_FILE_START).toString();
+    String since = fetchSinceTimestamp(options);
     options.setSince(since);
     FlinkPipelineOptions flinkOptionsForBatch = options.as(FlinkPipelineOptions.class);
     if (!Strings.isNullOrEmpty(flinkConfiguration.getFlinkConfDir())) {
@@ -482,6 +484,28 @@ public class PipelineManager implements ApplicationListener<ApplicationReadyEven
             FlinkRunner.class);
     logger.info("Running incremental pipeline for DWH {} since {}", currentDwh.getRoot(), since);
     currentPipeline.start();
+  }
+
+  private String fetchSinceTimestamp(FhirEtlOptions options) throws IOException {
+    Instant timestamp = null;
+    if (FhirFetchMode.BULK_EXPORT.equals(options.getFhirFetchMode())) {
+      try {
+        timestamp = currentDwh.readTimestampFile(DwhFiles.TIMESTAMP_FILE_BULK_TRANSACTION_TIME);
+      } catch (NoSuchFileException e) {
+        logger.warn(
+            "No bulk export timestamp file found for the previous run, will try to rely on the"
+                + " start timestamp");
+      }
+    }
+
+    if (timestamp == null) {
+      timestamp = currentDwh.readTimestampFile(DwhFiles.TIMESTAMP_FILE_START);
+    }
+    if (timestamp == null) {
+      throw new IllegalStateException(
+          "Timestamp value is empty and hence cannot start the pipeline");
+    }
+    return timestamp.toString();
   }
 
   @Override

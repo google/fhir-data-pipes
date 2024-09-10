@@ -38,6 +38,7 @@ import org.apache.http.HttpHeaders;
 import org.hl7.fhir.dstu3.model.Parameters.ParametersParameterComponent;
 import org.hl7.fhir.dstu3.model.StringType;
 import org.hl7.fhir.instance.model.api.IBaseParameters;
+import org.hl7.fhir.r4.model.InstantType;
 import org.hl7.fhir.r4.model.Parameters;
 
 /**
@@ -50,6 +51,7 @@ public class BulkExportApiClient {
   private static final String RETRY_AFTER = "retry-after";
   private static final String X_PROGRESS = "x-progress";
   private static final String PARAMETER_TYPE = "_type";
+  private static final String PARAMETER_SINCE = "_since";
 
   private final FetchUtil fetchUtil;
 
@@ -57,16 +59,18 @@ public class BulkExportApiClient {
    * Starts the bulk export for the given resourceTypes and fhirVersionEnum
    *
    * @param resourceTypes the types which needs to be exported
+   * @param since the fhir resources fetched should have been updated after this timestamp
    * @param fhirVersionEnum the fhir version of the resources to be exported
    * @return the absolute url via which the status and details of the job can be fetched
    */
-  public String triggerBulkExportJob(List<String> resourceTypes, FhirVersionEnum fhirVersionEnum) {
+  public String triggerBulkExportJob(
+      List<String> resourceTypes, String since, FhirVersionEnum fhirVersionEnum) {
     Map<String, List<String>> headers = new HashMap<>();
     headers.put(HttpHeaders.ACCEPT, Arrays.asList("application/fhir+ndjson"));
     headers.put("Prefer", Arrays.asList("respond-async"));
     MethodOutcome methodOutcome =
         fetchUtil.performServerOperation(
-            "export", fetchBulkExportParameters(fhirVersionEnum, resourceTypes), headers);
+            "export", fetchBulkExportParameters(fhirVersionEnum, resourceTypes, since), headers);
     if (!isStatusSuccessful(methodOutcome.getResponseStatusCode())) {
       throw new IllegalStateException(
           String.format(
@@ -125,20 +129,31 @@ public class BulkExportApiClient {
   }
 
   private IBaseParameters fetchBulkExportParameters(
-      FhirVersionEnum fhirVersionEnum, List<String> resourceTypes) {
+      FhirVersionEnum fhirVersionEnum, List<String> resourceTypes, String since) {
+    since = Strings.nullToEmpty(since);
     switch (fhirVersionEnum) {
       case R4:
         Parameters r4Parameters = new Parameters();
         r4Parameters.addParameter(PARAMETER_TYPE, String.join(",", resourceTypes));
+        if (!since.isEmpty()) {
+          r4Parameters.addParameter(PARAMETER_SINCE, new InstantType(since));
+        }
         return r4Parameters;
       case DSTU3:
+        // TODO: Create a common interface to handle parameters of different versions
         org.hl7.fhir.dstu3.model.Parameters dstu3Parameters =
             new org.hl7.fhir.dstu3.model.Parameters();
-        ParametersParameterComponent parametersParameterComponent =
-            new ParametersParameterComponent();
-        parametersParameterComponent.setName(PARAMETER_TYPE);
-        parametersParameterComponent.setValue(new StringType(String.join(",", resourceTypes)));
-        dstu3Parameters.addParameter(parametersParameterComponent);
+        ParametersParameterComponent typeParameter = new ParametersParameterComponent();
+        typeParameter.setName(PARAMETER_TYPE);
+        typeParameter.setValue(new StringType(String.join(",", resourceTypes)));
+        dstu3Parameters.addParameter(typeParameter);
+
+        if (!since.isEmpty()) {
+          ParametersParameterComponent sinceParameter = new ParametersParameterComponent();
+          sinceParameter.setName(PARAMETER_SINCE);
+          sinceParameter.setValue(new org.hl7.fhir.dstu3.model.InstantType(since));
+          dstu3Parameters.addParameter(sinceParameter);
+        }
         return dstu3Parameters;
       default:
         throw new IllegalArgumentException(

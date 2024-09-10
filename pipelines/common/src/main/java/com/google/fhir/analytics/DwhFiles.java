@@ -67,6 +67,9 @@ public class DwhFiles {
 
   public static final String TIMESTAMP_FILE_END = "timestamp_end.txt";
 
+  public static final String TIMESTAMP_FILE_BULK_TRANSACTION_TIME =
+      "timestamp_bulk_transaction_time.txt";
+
   private static final String INCREMENTAL_DIR = "incremental_run";
 
   // TODO: It is probably better if we build all DWH files related operations using Beam's
@@ -348,6 +351,26 @@ public class DwhFiles {
       throw new IllegalStateException(errorMessage);
     }
     return Instant.parse(result.get(0));
+  }
+
+  /** Checks if the given file exists in the data-warehouse at the root location */
+  public boolean doesTimestampFileExist(String fileName) throws IOException {
+    ResourceId resourceId =
+        FileSystems.matchNewResource(getRoot(), true)
+            .resolve(fileName, StandardResolveOptions.RESOLVE_FILE);
+    List<MatchResult> matchResultList =
+        FileSystems.matchResources(Collections.singletonList(resourceId));
+    MatchResult matchResult = Iterables.getOnlyElement(matchResultList);
+    if (matchResult.status() == Status.OK) {
+      return true;
+    } else if (matchResult.status() == Status.NOT_FOUND) {
+      return false;
+    } else {
+      String errorMessage =
+          String.format("Error matching file spec %s: status %s", resourceId, matchResult.status());
+      log.error(errorMessage);
+      throw new IOException(errorMessage);
+    }
   }
 
   public void overwriteFile(String fileName, byte[] content) throws IOException {
