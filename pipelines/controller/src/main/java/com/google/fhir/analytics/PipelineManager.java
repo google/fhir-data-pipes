@@ -569,8 +569,9 @@ public class PipelineManager implements ApplicationListener<ApplicationReadyEven
       Preconditions.checkState(paths != null, "Make sure DWH prefix is a valid path!");
 
       // Sort snapshots directories.
-      Collections.sort(paths, Comparator.comparing(ResourceId::toString));
-
+      Collections.sort(paths, Comparator.comparing(ResourceId::toString).reversed());
+      // Create canonical tables only for the most recent snapshot.
+      boolean canonical = true;
       for (ResourceId path : paths) {
         String[] tokens = path.getFilename().split(prefix + DataProperties.TIMESTAMP_PREFIX);
         if (tokens.length > 1) {
@@ -580,8 +581,9 @@ public class PipelineManager implements ApplicationListener<ApplicationReadyEven
           List<String> existingResources =
               dwhFilesManager.findExistingResources(baseDir + fileSeparator + path.getFilename());
           hiveTableManager.createResourceAndCanonicalTables(
-              existingResources, timestamp, path.getFilename());
+              existingResources, timestamp, path.getFilename(), canonical);
         }
+        canonical = false;
       }
     } catch (IOException e) {
       // In case of exceptions at this stage, we just log the exception.
@@ -741,7 +743,8 @@ public class PipelineManager implements ApplicationListener<ApplicationReadyEven
       logger.info("Creating resources on Hive server for resources: {}", resourceList);
       manager
           .getHiveTableManager()
-          .createResourceAndCanonicalTables(resourceList, timestampSuffix, thriftServerParquetPath);
+          .createResourceAndCanonicalTables(
+              resourceList, timestampSuffix, thriftServerParquetPath, true);
       logger.info("Created resources on Thrift server Hive");
     }
   }

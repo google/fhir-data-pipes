@@ -42,7 +42,9 @@ public class HiveTableManager {
 
   private final String viewsDir;
 
-  private static final String THRIFT_CONTAINER_PARQUET_DIR = "/dwh";
+  // private static final String THRIFT_CONTAINER_PARQUET_DIR = "/dwh";
+  private static final String THRIFT_CONTAINER_PARQUET_DIR =
+      "/usr/local/google/home/bashir/git_repos/bashir2/openmrs-fhir-analytics/docker/dwh";
 
   public HiveTableManager(DatabaseConfiguration hiveDbConfig, String viewsDir) {
     // We don't expect many Hive queries hence choosing a fixed/low number of connections.
@@ -70,7 +72,10 @@ public class HiveTableManager {
    * @throws SQLException
    */
   public synchronized void createResourceAndCanonicalTables(
-      List<String> resources, String timestamp, String thriftServerParquetPath)
+      List<String> resources,
+      String timestamp,
+      String thriftServerParquetPath,
+      boolean overwriteCanonical)
       throws SQLException {
     if (resources == null || resources.isEmpty()) {
       return;
@@ -78,7 +83,8 @@ public class HiveTableManager {
 
     try (Connection connection = dataSource.getConnection()) {
       for (String resource : resources) {
-        createTablesForResource(connection, resource, timestamp, thriftServerParquetPath);
+        createTablesForResource(
+            connection, resource, timestamp, thriftServerParquetPath, overwriteCanonical);
         createViews(connection, resource);
       }
     }
@@ -93,25 +99,37 @@ public class HiveTableManager {
    * respective resource name e.g. Patient
    */
   private synchronized void createTablesForResource(
-      Connection connection, String resource, String timestamp, String thriftServerParquetPath)
+      Connection connection,
+      String resource,
+      String timestamp,
+      String thriftServerParquetPath,
+      boolean overwriteCanonical)
       throws SQLException {
 
+    String location =
+        String.format("%s/%s/%s", THRIFT_CONTAINER_PARQUET_DIR, thriftServerParquetPath, resource);
     String sql =
         String.format(
-            "CREATE TABLE IF NOT EXISTS default.%s_%s USING PARQUET LOCATION '%s/%s/%s'",
-            resource, timestamp, THRIFT_CONTAINER_PARQUET_DIR, thriftServerParquetPath, resource);
+            "CREATE TABLE IF NOT EXISTS default.%s_%s USING PARQUET LOCATION '%s'",
+            resource, timestamp, location);
     executeSql(connection, sql);
 
-    // Drop canonical table if exists.
-    sql = String.format("DROP TABLE IF EXISTS default.%s", resource);
-    executeSql(connection, sql);
-
-    // Create canonical table with latest parquet files.
-    sql =
-        String.format(
-            "CREATE TABLE IF NOT EXISTS default.%s USING PARQUET LOCATION '%s/%s/%s'",
-            resource, THRIFT_CONTAINER_PARQUET_DIR, thriftServerParquetPath, resource);
-    executeSql(connection, sql);
+    if (overwriteCanonical) {
+      try {
+        // Create canonical table with the latest parquet files; this query fails if the table
+        // already exists, see catch block below.
+        sql =
+            String.format(
+                "CREATE TABLE default.%s USING PARQUET LOCATION '%s'", resource, location);
+        executeSql(connection, sql);
+      } catch (SQLException e) {
+        // Assuming the exception was for table existence which is a possible scenario.
+        logger.info(
+            "Canonical table {} already exists; updating its location to {}", resource, location);
+        sql = String.format("ALTER TABLE default.%s SET LOCATION '%s'", resource, location);
+        executeSql(connection, sql);
+      }
+    }
   }
 
   /**
