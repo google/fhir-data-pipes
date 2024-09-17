@@ -568,10 +568,9 @@ public class PipelineManager implements ApplicationListener<ApplicationReadyEven
 
       Preconditions.checkState(paths != null, "Make sure DWH prefix is a valid path!");
 
-      // Sort snapshots directories.
-      Collections.sort(paths, Comparator.comparing(ResourceId::toString).reversed());
-      // Create canonical tables only for the most recent snapshot.
-      boolean canonical = true;
+      // Sort snapshots directories such that the canonical view is created for the latest one.
+      Collections.sort(paths, Comparator.comparing(ResourceId::toString));
+
       for (ResourceId path : paths) {
         String[] tokens = path.getFilename().split(prefix + DataProperties.TIMESTAMP_PREFIX);
         if (tokens.length > 1) {
@@ -580,16 +579,20 @@ public class PipelineManager implements ApplicationListener<ApplicationReadyEven
           String fileSeparator = DwhFiles.getFileSeparatorForDwhFiles(rootPrefix);
           List<String> existingResources =
               dwhFilesManager.findExistingResources(baseDir + fileSeparator + path.getFilename());
-          hiveTableManager.createResourceAndCanonicalTables(
-              existingResources, timestamp, path.getFilename(), canonical);
+          try {
+            hiveTableManager.createResourceAndCanonicalTables(
+                existingResources, timestamp, path.getFilename());
+          } catch (SQLException e) {
+            logger.error(
+                "Exception while creating resource table on thriftserver for path: {}",
+                path.getFilename(),
+                e);
+          }
         }
-        canonical = false;
       }
     } catch (IOException e) {
       // In case of exceptions at this stage, we just log the exception.
       logger.error("Exception while reading thriftserver parquet output directory: ", e);
-    } catch (SQLException e) {
-      logger.error("Exception while creating resource tables on thriftserver: ", e);
     }
   }
 
@@ -743,8 +746,7 @@ public class PipelineManager implements ApplicationListener<ApplicationReadyEven
       logger.info("Creating resources on Hive server for resources: {}", resourceList);
       manager
           .getHiveTableManager()
-          .createResourceAndCanonicalTables(
-              resourceList, timestampSuffix, thriftServerParquetPath, true);
+          .createResourceAndCanonicalTables(resourceList, timestampSuffix, thriftServerParquetPath);
       logger.info("Created resources on Thrift server Hive");
     }
   }

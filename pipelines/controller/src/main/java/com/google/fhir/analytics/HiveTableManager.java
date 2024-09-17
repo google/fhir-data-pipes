@@ -42,9 +42,7 @@ public class HiveTableManager {
 
   private final String viewsDir;
 
-  // private static final String THRIFT_CONTAINER_PARQUET_DIR = "/dwh";
-  private static final String THRIFT_CONTAINER_PARQUET_DIR =
-      "/usr/local/google/home/bashir/git_repos/bashir2/openmrs-fhir-analytics/docker/dwh";
+  private static final String THRIFT_CONTAINER_PARQUET_DIR = "/dwh";
 
   public HiveTableManager(DatabaseConfiguration hiveDbConfig, String viewsDir) {
     // We don't expect many Hive queries hence choosing a fixed/low number of connections.
@@ -72,10 +70,7 @@ public class HiveTableManager {
    * @throws SQLException
    */
   public synchronized void createResourceAndCanonicalTables(
-      List<String> resources,
-      String timestamp,
-      String thriftServerParquetPath,
-      boolean overwriteCanonical)
+      List<String> resources, String timestamp, String thriftServerParquetPath)
       throws SQLException {
     if (resources == null || resources.isEmpty()) {
       return;
@@ -83,8 +78,7 @@ public class HiveTableManager {
 
     try (Connection connection = dataSource.getConnection()) {
       for (String resource : resources) {
-        createTablesForResource(
-            connection, resource, timestamp, thriftServerParquetPath, overwriteCanonical);
+        createTablesForResource(connection, resource, timestamp, thriftServerParquetPath);
         createViews(connection, resource);
       }
     }
@@ -99,43 +93,25 @@ public class HiveTableManager {
    * respective resource name e.g. Patient
    */
   private synchronized void createTablesForResource(
-      Connection connection,
-      String resource,
-      String timestamp,
-      String thriftServerParquetPath,
-      boolean overwriteCanonical)
+      Connection connection, String resource, String timestamp, String thriftServerParquetPath)
       throws SQLException {
 
     String location =
         String.format("%s/%s/%s", THRIFT_CONTAINER_PARQUET_DIR, thriftServerParquetPath, resource);
+    String tableName = String.format("%s_%s", resource, timestamp);
     String sql =
         String.format(
-            "CREATE TABLE IF NOT EXISTS default.%s_%s USING PARQUET LOCATION '%s'",
-            resource, timestamp, location);
+            "CREATE TABLE IF NOT EXISTS default.%s USING PARQUET LOCATION '%s'",
+            tableName, location);
     executeSql(connection, sql);
 
-    if (overwriteCanonical) {
-      try {
-        // We use a transaction such that both DROP and CREATE are done together.
-        connection.setAutoCommit(true);
-
-        // Instead of DROP and CREATE we could have used ALTER TABLE statement. However, using
-        // ALTER does not seem to trigger parsing/changing schema as well. So if we update the
-        // location of a resource to new Parquet files with a different schema (e.g., a different
-        // FHIR version, or updated extensions), the location is updated but not the schema.
-        sql = String.format("DROP TABLE IF EXISTS default.%s", resource);
-        executeSql(connection, sql);
-
-        // Create canonical table with latest parquet files.
-        sql =
-            String.format(
-                "CREATE TABLE default.%s USING PARQUET LOCATION '%s'", resource, location);
-        executeSql(connection, sql);
-        connection.commit();
-      } finally {
-        connection.setAutoCommit(true);
-      }
-    }
+    // Instead of DROP and CREATE we use a VIEW for canonical tables such that the update happens
+    // in one statement (because of lack of transactions in Hive JDBC driver). ALTER TABLE has its
+    // own problems too, e.g., it does not seem to trigger parsing/changing schema.
+    sql =
+        String.format(
+            "CREATE OR REPLACE VIEW default.%s AS SELECT * FROM default.%s", resource, tableName);
+    executeSql(connection, sql);
   }
 
   /**
