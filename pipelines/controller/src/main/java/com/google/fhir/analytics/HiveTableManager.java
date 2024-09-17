@@ -116,18 +116,24 @@ public class HiveTableManager {
 
     if (overwriteCanonical) {
       try {
-        // Create canonical table with the latest parquet files; this query fails if the table
-        // already exists, see catch block below.
+        // We use a transaction such that both DROP and CREATE are done together.
+        connection.setAutoCommit(true);
+
+        // Instead of DROP and CREATE we could have used ALTER TABLE statement. However, using
+        // ALTER does not seem to trigger parsing/changing schema as well. So if we update the
+        // location of a resource to new Parquet files with a different schema (e.g., a different
+        // FHIR version, or updated extensions), the location is updated but not the schema.
+        sql = String.format("DROP TABLE IF EXISTS default.%s", resource);
+        executeSql(connection, sql);
+
+        // Create canonical table with latest parquet files.
         sql =
             String.format(
                 "CREATE TABLE default.%s USING PARQUET LOCATION '%s'", resource, location);
         executeSql(connection, sql);
-      } catch (SQLException e) {
-        // Assuming the exception was for table existence which is a possible scenario.
-        logger.info(
-            "Canonical table {} already exists; updating its location to {}", resource, location);
-        sql = String.format("ALTER TABLE default.%s SET LOCATION '%s'", resource, location);
-        executeSql(connection, sql);
+        connection.commit();
+      } finally {
+        connection.setAutoCommit(true);
       }
     }
   }
