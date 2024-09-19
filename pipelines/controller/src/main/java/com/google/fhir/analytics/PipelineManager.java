@@ -567,7 +567,7 @@ public class PipelineManager implements ApplicationListener<ApplicationReadyEven
 
       Preconditions.checkState(paths != null, "Make sure DWH prefix is a valid path!");
 
-      // Sort snapshots directories.
+      // Sort snapshots directories such that the canonical view is created for the latest one.
       Collections.sort(paths, Comparator.comparing(ResourceId::toString));
 
       // TODO: Why are we creating these tables for all paths and not just the most recent? If all
@@ -580,15 +580,20 @@ public class PipelineManager implements ApplicationListener<ApplicationReadyEven
           String fileSeparator = DwhFiles.getFileSeparatorForDwhFiles(rootPrefix);
           List<String> existingResources =
               dwhFilesManager.findExistingResources(baseDir + fileSeparator + path.getFilename());
-          hiveTableManager.createResourceAndCanonicalTables(
-              existingResources, timestamp, path.getFilename());
+          try {
+            hiveTableManager.createResourceAndCanonicalTables(
+                existingResources, timestamp, path.getFilename());
+          } catch (SQLException e) {
+            logger.error(
+                "Exception while creating resource table on thriftserver for path: {}",
+                path.getFilename(),
+                e);
+          }
         }
       }
     } catch (IOException e) {
       // In case of exceptions at this stage, we just log the exception.
       logger.error("Exception while reading thriftserver parquet output directory: ", e);
-    } catch (SQLException e) {
-      logger.error("Exception while creating resource tables on thriftserver: ", e);
     }
   }
 
