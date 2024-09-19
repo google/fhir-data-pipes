@@ -71,7 +71,7 @@ public class LocalDwhFilesTest {
     FileSystems.create(file2, "test");
     // making sure that the last incremental path is returned
     assertThat(
-        instance.getIncrementalRunPath().toString(), equalTo(incrementalRunPath2.toString()));
+        instance.getLatestIncrementalRunPath().toString(), equalTo(incrementalRunPath2.toString()));
   }
 
   @Test

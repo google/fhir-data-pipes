@@ -269,7 +269,7 @@ public class PipelineManager implements ApplicationListener<ApplicationReadyEven
               .resolve(dwhDirectory, StandardResolveOptions.RESOLVE_DIRECTORY);
       DwhFiles dwhFiles =
           DwhFiles.forRoot(dwhDirectoryPath.toString(), avroConversionUtil.getFhirContext());
-      ResourceId incPath = dwhFiles.getIncrementalRunPath();
+      ResourceId incPath = dwhFiles.getLatestIncrementalRunPath();
       if (incPath != null) {
         updateLastRunDetails(incPath);
         return;

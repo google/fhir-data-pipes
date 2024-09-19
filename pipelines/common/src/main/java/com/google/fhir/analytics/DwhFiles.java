@@ -35,7 +35,6 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.FileAlreadyExistsException;
 import java.time.Instant;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashSet;
@@ -197,10 +196,11 @@ public class DwhFiles {
 
   /**
    * Also see {@link #newIncrementalRunPath()}
+   *
    * @return the current incremental run path if one found; null otherwise.
    */
   @Nullable
-  public ResourceId getIncrementalRunPath() throws IOException {
+  public ResourceId getLatestIncrementalRunPath() throws IOException {
     List<ResourceId> dirs =
         getAllChildDirectories(getRoot()).stream()
             .filter(dir -> dir.getFilename().contains(INCREMENTAL_DIR + TIMESTAMP_PREFIX))
