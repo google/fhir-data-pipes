@@ -27,7 +27,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.Instant;
-import java.util.Set;
 import java.util.stream.Collectors;
 import org.apache.beam.sdk.io.FileSystems;
 import org.apache.beam.sdk.io.fs.ResourceId;
@@ -102,29 +101,6 @@ public class LocalDwhFilesManagerTest {
     ResourceId dwhRoot = FileSystems.matchNewResource(root.toString(), true);
 
     assertThat(dwhFilesManager.isDwhComplete(dwhRoot), equalTo(false));
-  }
-
-  @Test
-  public void testGetAllChildDirectoriesOneLevelDeep() throws IOException {
-    Path rootDir = testPath.resolve("rootDir");
-    Path childDir1 = Paths.get(rootDir.toString(), "childDir1");
-    Files.createDirectories(childDir1);
-    Path fileAtChildDir1 = Path.of(childDir1.toString(), "file1.txt");
-    createFile(fileAtChildDir1, "SAMPLE TEXT".getBytes(StandardCharsets.UTF_8));
-    Path childDir2 = Paths.get(rootDir.toString(), "childDir2");
-    Files.createDirectories(childDir2);
-    Path fileAtChildDir2 = Path.of(childDir2.toString(), "file2.txt");
-    createFile(fileAtChildDir2, "SAMPLE TEXT".getBytes(StandardCharsets.UTF_8));
-
-    Set<ResourceId> childDirectories = dwhFilesManager.getAllChildDirectories(rootDir.toString());
-
-    assertThat(childDirectories.size(), equalTo(2));
-    assertThat(
-        childDirectories.contains(FileSystems.matchNewResource(childDir1.toString(), true)),
-        equalTo(true));
-    assertThat(
-        childDirectories.contains(FileSystems.matchNewResource(childDir2.toString(), true)),
-        equalTo(true));
   }
 
   @Test

@@ -206,6 +206,8 @@ public class ConvertResourceFn extends FetchSearchPageFn<HapiRowDescriptor> {
 
   private Resource createNewFhirResource(String fhirVersion, String resourceType) {
     try {
+      // TODO create tests for this method and different versions of FHIR; casting to R4 resource
+      //  does not seem right!
       return (Resource)
           Class.forName(getFhirBasePackageName(fhirVersion) + "." + resourceType)
               .getConstructor()

@@ -17,6 +17,7 @@ package com.google.fhir.analytics;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.startsWith;
 
 import ca.uhn.fhir.context.FhirContext;
 import com.google.common.io.Resources;
@@ -33,6 +34,8 @@ import java.time.Instant;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
+import org.apache.beam.sdk.io.FileSystems;
+import org.apache.beam.sdk.io.fs.ResolveOptions.StandardResolveOptions;
 import org.apache.beam.sdk.io.fs.ResourceId;
 import org.apache.commons.lang3.SystemUtils;
 import org.junit.Assert;
@@ -55,11 +58,30 @@ public class LocalDwhFilesTest {
   }
 
   @Test
+  public void getIncrementalRunPathTest() throws IOException {
+    Assume.assumeFalse(SystemUtils.IS_OS_WINDOWS);
+    DwhFiles instance = new DwhFiles("/tmp", FhirContext.forR4Cached());
+    ResourceId incrementalRunPath1 = instance.newIncrementalRunPath();
+    ResourceId file1 =
+        incrementalRunPath1.resolve("file1.txt", StandardResolveOptions.RESOLVE_FILE);
+    FileSystems.create(file1, "test");
+    ResourceId incrementalRunPath2 = instance.newIncrementalRunPath();
+    ResourceId file2 =
+        incrementalRunPath2.resolve("file2.txt", StandardResolveOptions.RESOLVE_FILE);
+    FileSystems.create(file2, "test");
+    // making sure that the last incremental path is returned
+    assertThat(
+        instance.getLatestIncrementalRunPath().toString(), equalTo(incrementalRunPath2.toString()));
+  }
+
+  @Test
   public void newIncrementalRunPathTestNonWindows() throws IOException {
     Assume.assumeFalse(SystemUtils.IS_OS_WINDOWS);
     DwhFiles instance = new DwhFiles("/tmp", FhirContext.forR4Cached());
     ResourceId incrementalRunPath = instance.newIncrementalRunPath();
-    assertThat(incrementalRunPath.toString(), equalTo("/tmp/incremental_run/"));
+    assertThat(
+        incrementalRunPath.toString(),
+        startsWith("/tmp/incremental_run" + DwhFiles.TIMESTAMP_PREFIX));
   }
 
   @Test
@@ -241,5 +263,35 @@ public class LocalDwhFilesTest {
 
   private void createFile(Path path, byte[] bytes) throws IOException {
     Files.write(path, bytes);
+  }
+
+  @Test
+  public void testGetAllChildDirectoriesOneLevelDeep() throws IOException {
+    Path rootDir = Files.createTempDirectory("DWH_FILES_TEST");
+    Path childDir1 = Paths.get(rootDir.toString(), "childDir1");
+    Files.createDirectories(childDir1);
+    Path fileAtChildDir1 = Path.of(childDir1.toString(), "file1.txt");
+    createFile(fileAtChildDir1, "SAMPLE TEXT".getBytes(StandardCharsets.UTF_8));
+    Path childDir2 = Paths.get(rootDir.toString(), "childDir2");
+    Files.createDirectories(childDir2);
+    Path fileAtChildDir2 = Path.of(childDir2.toString(), "file2.txt");
+    createFile(fileAtChildDir2, "SAMPLE TEXT".getBytes(StandardCharsets.UTF_8));
+
+    // The following directory should not appear in the results of `getAllChildDirectories`
+    // because only dirs at one-level deep should be returned.
+    Path childDir21 = Paths.get(childDir2.toString(), "childDir21");
+    Files.createDirectories(childDir21);
+    Path fileAtChildDir21 = Path.of(childDir21.toString(), "file3.txt");
+    createFile(fileAtChildDir21, "SAMPLE TEXT".getBytes(StandardCharsets.UTF_8));
+
+    Set<ResourceId> childDirectories = DwhFiles.getAllChildDirectories(rootDir.toString());
+
+    assertThat(childDirectories.size(), equalTo(2));
+    assertThat(
+        childDirectories.contains(FileSystems.matchNewResource(childDir1.toString(), true)),
+        equalTo(true));
+    assertThat(
+        childDirectories.contains(FileSystems.matchNewResource(childDir2.toString(), true)),
+        equalTo(true));
   }
 }

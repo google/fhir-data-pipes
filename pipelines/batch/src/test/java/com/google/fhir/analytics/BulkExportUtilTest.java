@@ -16,6 +16,7 @@
 package com.google.fhir.analytics;
 
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.equalTo;
 
 import ca.uhn.fhir.context.FhirVersionEnum;
@@ -25,7 +26,6 @@ import com.google.fhir.analytics.model.BulkExportResponse.Output;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Map;
 import org.apache.http.HttpStatus;
 import org.junit.Before;
 import org.junit.Test;
@@ -49,9 +49,10 @@ public class BulkExportUtilTest {
   @Test(timeout = 10000)
   public void testTriggerBulkExport() throws IOException {
     List<String> resourceTypes = Arrays.asList("Patient,Observation,Encounter");
+    String since = "2021-01-01T00:00:00Z";
     String mockLocationUrl =
         "http://localhost:8080/fhir/$export-poll-status?_jobId=2961c268-027e-49cb-839c-4c1ef76615c6";
-    Mockito.when(bulkExportApiClient.triggerBulkExportJob(resourceTypes, FhirVersionEnum.R4))
+    Mockito.when(bulkExportApiClient.triggerBulkExportJob(resourceTypes, since, FhirVersionEnum.R4))
         .thenReturn(mockLocationUrl);
 
     BulkExportHttpResponse acceptedResponse =
@@ -78,17 +79,16 @@ public class BulkExportUtilTest {
     Mockito.when(bulkExportApiClient.fetchBulkExportHttpResponse(mockLocationUrl))
         .thenReturn(acceptedResponse, completedResponse);
 
-    Map<String, List<String>> typeToFileMapping =
-        bulkExportUtil.triggerBulkExport(resourceTypes, FhirVersionEnum.R4);
-    assertThat(typeToFileMapping.size(), equalTo(2));
+    BulkExportResponse actualBulkExportResponse =
+        bulkExportUtil.triggerBulkExport(resourceTypes, since, FhirVersionEnum.R4);
+    assertThat(actualBulkExportResponse.output().size(), equalTo(2));
     assertThat(
-        typeToFileMapping.get("Patient"), equalTo(Arrays.asList("http://localhost:8080/file1")));
-    assertThat(
-        typeToFileMapping.get("Observation"),
-        equalTo(Arrays.asList("http://localhost:8080/file2")));
-
+        actualBulkExportResponse.output(),
+        containsInAnyOrder(
+            Output.builder().type("Patient").url("http://localhost:8080/file1").build(),
+            Output.builder().type("Observation").url("http://localhost:8080/file2").build()));
     Mockito.verify(bulkExportApiClient, Mockito.times(1))
-        .triggerBulkExportJob(resourceTypes, FhirVersionEnum.R4);
+        .triggerBulkExportJob(resourceTypes, since, FhirVersionEnum.R4);
     Mockito.verify(bulkExportApiClient, Mockito.times(2))
         .fetchBulkExportHttpResponse(mockLocationUrl);
   }

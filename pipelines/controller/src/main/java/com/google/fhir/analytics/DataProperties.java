@@ -20,7 +20,6 @@ import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
@@ -52,8 +51,6 @@ import org.springframework.stereotype.Component;
 public class DataProperties {
 
   private static final Logger logger = LoggerFactory.getLogger(DataProperties.class.getName());
-
-  static final String TIMESTAMP_PREFIX = "_TIMESTAMP_";
 
   private static final String GET_PREFIX = "get";
 
@@ -212,9 +209,8 @@ public class DataProperties {
     }
 
     // Using underscore for suffix as hyphens are discouraged in hive table names.
-    String timestampSuffix =
-        Instant.now().toString().replace(":", "-").replace("-", "_").replace(".", "_");
-    options.setOutputParquetPath(dwhRootPrefix + TIMESTAMP_PREFIX + timestampSuffix);
+    String timestampSuffix = DwhFiles.safeTimestampSuffix();
+    options.setOutputParquetPath(dwhRootPrefix + DwhFiles.TIMESTAMP_PREFIX + timestampSuffix);
 
     PipelineConfig.PipelineConfigBuilder pipelineConfigBuilder = addFlinkOptions(options);
 
@@ -222,7 +218,7 @@ public class DataProperties {
     String thriftServerParquetPathPrefix =
         dwhRootPrefix.substring(dwhRootPrefix.lastIndexOf("/") + 1, dwhRootPrefix.length());
     pipelineConfigBuilder.thriftServerParquetPath(
-        thriftServerParquetPathPrefix + TIMESTAMP_PREFIX + timestampSuffix);
+        thriftServerParquetPathPrefix + DwhFiles.TIMESTAMP_PREFIX + timestampSuffix);
     pipelineConfigBuilder.timestampSuffix(timestampSuffix);
 
     return pipelineConfigBuilder.build();

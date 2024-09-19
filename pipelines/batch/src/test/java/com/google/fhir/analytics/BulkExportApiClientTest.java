@@ -75,7 +75,7 @@ public class BulkExportApiClientTest {
     when(fetchUtil.performServerOperation(any(), any(), any())).thenReturn(methodOutcome);
 
     String contentLocationUrl =
-        bulkExportApiClient.triggerBulkExportJob(resourceTypes, FhirVersionEnum.R4);
+        bulkExportApiClient.triggerBulkExportJob(resourceTypes, null, FhirVersionEnum.R4);
 
     assertThat(contentLocationUrl, equalTo(mockLocationUrl));
     Mockito.verify(fetchUtil, times(1)).performServerOperation(any(), any(), any());
@@ -88,7 +88,7 @@ public class BulkExportApiClientTest {
     methodOutcome.setResponseStatusCode(HttpStatus.SC_BAD_REQUEST);
     when(fetchUtil.performServerOperation(any(), any(), any())).thenReturn(methodOutcome);
 
-    bulkExportApiClient.triggerBulkExportJob(resourceTypes, FhirVersionEnum.R4);
+    bulkExportApiClient.triggerBulkExportJob(resourceTypes, null, FhirVersionEnum.R4);
   }
 
   @Test
