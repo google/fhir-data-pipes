@@ -1,6 +1,9 @@
 {
   "resourceType": "http://hl7.org/fhir/uv/sql-on-fhir/StructureDefinition/ViewDefinition",
   "text": "This is the SQL-on-FHIR-v2 version of Organization_flat.sql",
+  "fhirVersion": [
+    "4.0"
+  ],
   "select": [
     {
       "column": [
