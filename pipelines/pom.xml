@@ -44,7 +44,7 @@
     <bunsen.version>0.5.14-SNAPSHOT</bunsen.version>
     <junit.version>4.13.2</junit.version>
     <slf4j.version>2.0.16</slf4j.version>
-    <logback.version>1.5.7</logback.version>
+    <logback.version>1.5.8</logback.version>
     <hapi.fhir.version>7.2.2</hapi.fhir.version>
     <hamcrest.version>3.0</hamcrest.version>
     <mockito.version>5.2.0</mockito.version>
