@@ -17,6 +17,7 @@ package com.google.fhir.analytics;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.startsWith;
 
 import ca.uhn.fhir.context.FhirContext;
 import com.google.api.services.storage.model.Objects;
@@ -92,7 +93,9 @@ public class GcsDwhFilesTest {
     Mockito.when(mockGcsUtil.getObjects(Mockito.anyList())).thenReturn(items);
 
     ResourceId resourceId = dwhFiles.newIncrementalRunPath();
-    assertThat(resourceId.toString(), equalTo("gs://testbucket/testdirectory/incremental_run/"));
+    assertThat(
+        resourceId.toString(),
+        startsWith("gs://testbucket/testdirectory/incremental_run" + DwhFiles.TIMESTAMP_PREFIX));
   }
 
   @Test
@@ -243,5 +246,42 @@ public class GcsDwhFilesTest {
         .setBucket(gcsPath.getBucket())
         .setName(gcsPath.getObject())
         .setSize(size);
+  }
+
+  @Test
+  public void testGetAllChildDirectoriesOneLevelDeep() throws IOException {
+    Objects modelObjects = new Objects();
+    List<StorageObject> items = new ArrayList<>();
+    // Files within the directory
+    items.add(
+        createStorageObject(
+            "gs://testbucket/testdirectory/Patient/patient.parquet", 1L /* fileSize */));
+    items.add(
+        createStorageObject(
+            "gs://testbucket/testdirectory/Observation/observation.parquet", 2L /* fileSize */));
+    // This is not returned in this case of GCS because there is no files right "under" TEST1.
+    // Note in GCS we do not have "directories", we are just simulating them by `/` separators.
+    items.add(
+        createStorageObject(
+            "gs://testbucket/testdirectory/TEST1/TEST2/file.txt", 2L /* fileSize */));
+    modelObjects.setItems(items);
+
+    Mockito.when(
+            mockGcsUtil.listObjects(
+                Mockito.eq("testbucket"), Mockito.anyString(), Mockito.isNull()))
+        .thenReturn(modelObjects);
+
+    Set<ResourceId> childDirectories =
+        DwhFiles.getAllChildDirectories("gs://testbucket/testdirectory");
+
+    assertThat(childDirectories.size(), equalTo(2));
+    assertThat(
+        childDirectories.contains(
+            FileSystems.matchNewResource("gs://testbucket/testdirectory/Patient", true)),
+        equalTo(true));
+    assertThat(
+        childDirectories.contains(
+            FileSystems.matchNewResource("gs://testbucket/testdirectory/Observation", true)),
+        equalTo(true));
   }
 }

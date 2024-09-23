@@ -194,12 +194,12 @@ public class PipelineManager implements ApplicationListener<ApplicationReadyEven
     try {
       String prefix = dwhFilesManager.getPrefix(rootPrefix);
       List<ResourceId> paths =
-          dwhFilesManager.getAllChildDirectories(baseDir).stream()
+          DwhFiles.getAllChildDirectories(baseDir).stream()
               .filter(dir -> dir.getFilename().startsWith(prefix))
               .collect(Collectors.toList());
 
       for (ResourceId path : paths) {
-        if (!path.getFilename().startsWith(prefix + DataProperties.TIMESTAMP_PREFIX)) {
+        if (!path.getFilename().startsWith(prefix + DwhFiles.TIMESTAMP_PREFIX)) {
           // This is not necessarily an error; the user may want to bootstrap from an already
           // created DWH outside the control-panel framework, e.g., by running the batch pipeline
           // directly.
@@ -207,7 +207,7 @@ public class PipelineManager implements ApplicationListener<ApplicationReadyEven
               "DWH directory {} does not start with {}{}",
               paths,
               prefix,
-              DataProperties.TIMESTAMP_PREFIX);
+              DwhFiles.TIMESTAMP_PREFIX);
         }
         if (lastDwh.isEmpty() || lastDwh.compareTo(path.getFilename()) < 0) {
           logger.debug("Found a more recent DWH {}", path.getFilename());
@@ -262,16 +262,16 @@ public class PipelineManager implements ApplicationListener<ApplicationReadyEven
    * This method initialises the lastRunDetails based on the dwh snapshot created recently. In case
    * an incremental run exists in the snapshot, the status is set based on the incremental run.
    */
-  private void initialiseLastRunDetails(String baseDir, String dwhDirectory)
-      throws ProfileException {
+  private void initialiseLastRunDetails(String baseDir, String dwhDirectory) {
     try {
       ResourceId dwhDirectoryPath =
           FileSystems.matchNewResource(baseDir, true)
               .resolve(dwhDirectory, StandardResolveOptions.RESOLVE_DIRECTORY);
       DwhFiles dwhFiles =
           DwhFiles.forRoot(dwhDirectoryPath.toString(), avroConversionUtil.getFhirContext());
-      if (dwhFiles.hasIncrementalDir()) {
-        updateLastRunDetails(dwhFiles.getIncrementalRunPath());
+      ResourceId incPath = dwhFiles.getLatestIncrementalRunPath();
+      if (incPath != null) {
+        updateLastRunDetails(incPath);
         return;
       }
       // In case of no incremental run, the status is set based on the dwhDirectory snapshot.
@@ -428,7 +428,6 @@ public class PipelineManager implements ApplicationListener<ApplicationReadyEven
     PipelineConfig pipelineConfig = dataProperties.createBatchOptions();
     FhirEtlOptions options = pipelineConfig.getFhirEtlOptions();
     String finalDwhRoot = options.getOutputParquetPath();
-    // TODO move old incremental_run dir if there is one
     String incrementalDwhRoot = currentDwh.newIncrementalRunPath().toString();
     options.setOutputParquetPath(incrementalDwhRoot);
     String since = fetchSinceTimestamp(options);
@@ -553,8 +552,8 @@ public class PipelineManager implements ApplicationListener<ApplicationReadyEven
 
     try {
       List<ResourceId> paths =
-          dwhFilesManager.getAllChildDirectories(baseDir).stream()
-              .filter(dir -> dir.getFilename().startsWith(prefix + DataProperties.TIMESTAMP_PREFIX))
+          DwhFiles.getAllChildDirectories(baseDir).stream()
+              .filter(dir -> dir.getFilename().startsWith(prefix + DwhFiles.TIMESTAMP_PREFIX))
               .filter(
                   dir -> {
                     try {
@@ -568,26 +567,33 @@ public class PipelineManager implements ApplicationListener<ApplicationReadyEven
 
       Preconditions.checkState(paths != null, "Make sure DWH prefix is a valid path!");
 
-      // Sort snapshots directories.
+      // Sort snapshots directories such that the canonical view is created for the latest one.
       Collections.sort(paths, Comparator.comparing(ResourceId::toString));
 
+      // TODO: Why are we creating these tables for all paths and not just the most recent? If all
+      //  are needed, why are we doing the above `sort`?
       for (ResourceId path : paths) {
-        String[] tokens = path.getFilename().split(prefix + DataProperties.TIMESTAMP_PREFIX);
+        String[] tokens = path.getFilename().split(prefix + DwhFiles.TIMESTAMP_PREFIX);
         if (tokens.length > 1) {
           String timestamp = tokens[1];
           logger.info("Creating resource tables for relative path {}", path.getFilename());
           String fileSeparator = DwhFiles.getFileSeparatorForDwhFiles(rootPrefix);
           List<String> existingResources =
               dwhFilesManager.findExistingResources(baseDir + fileSeparator + path.getFilename());
-          hiveTableManager.createResourceAndCanonicalTables(
-              existingResources, timestamp, path.getFilename());
+          try {
+            hiveTableManager.createResourceAndCanonicalTables(
+                existingResources, timestamp, path.getFilename());
+          } catch (SQLException e) {
+            logger.error(
+                "Exception while creating resource table on thriftserver for path: {}",
+                path.getFilename(),
+                e);
+          }
         }
       }
     } catch (IOException e) {
       // In case of exceptions at this stage, we just log the exception.
       logger.error("Exception while reading thriftserver parquet output directory: ", e);
-    } catch (SQLException e) {
-      logger.error("Exception while creating resource tables on thriftserver: ", e);
     }
   }
 

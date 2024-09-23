@@ -96,21 +96,21 @@ public class HiveTableManager {
       Connection connection, String resource, String timestamp, String thriftServerParquetPath)
       throws SQLException {
 
+    String location =
+        String.format("%s/%s/%s", THRIFT_CONTAINER_PARQUET_DIR, thriftServerParquetPath, resource);
+    String tableName = String.format("%s_%s", resource, timestamp);
     String sql =
         String.format(
-            "CREATE TABLE IF NOT EXISTS default.%s_%s USING PARQUET LOCATION '%s/%s/%s'",
-            resource, timestamp, THRIFT_CONTAINER_PARQUET_DIR, thriftServerParquetPath, resource);
+            "CREATE TABLE IF NOT EXISTS default.%s USING PARQUET LOCATION '%s'",
+            tableName, location);
     executeSql(connection, sql);
 
-    // Drop canonical table if exists.
-    sql = String.format("DROP TABLE IF EXISTS default.%s", resource);
-    executeSql(connection, sql);
-
-    // Create canonical table with latest parquet files.
+    // Instead of DROP and CREATE we use a VIEW for canonical tables such that the update happens
+    // in one statement (because of lack of transactions in Hive JDBC driver). ALTER TABLE has its
+    // own problems too, e.g., it does not seem to trigger parsing/changing schema.
     sql =
         String.format(
-            "CREATE TABLE IF NOT EXISTS default.%s USING PARQUET LOCATION '%s/%s/%s'",
-            resource, THRIFT_CONTAINER_PARQUET_DIR, thriftServerParquetPath, resource);
+            "CREATE OR REPLACE VIEW default.%s AS SELECT * FROM default.%s", resource, tableName);
     executeSql(connection, sql);
   }
 
