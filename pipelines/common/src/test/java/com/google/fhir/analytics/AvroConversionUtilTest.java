@@ -45,19 +45,19 @@ import org.hl7.fhir.r4.model.Bundle;
 import org.hl7.fhir.r4.model.Observation;
 import org.hl7.fhir.r4.model.Patient;
 import org.hl7.fhir.r4.model.Resource;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.junit.jupiter.MockitoExtension;
 
-@RunWith(MockitoJUnitRunner.class)
+@ExtendWith(MockitoExtension.class)
 public class AvroConversionUtilTest {
   private String patientBundle;
   private String observationBundle;
   private String usCoreProfilesStructureDefinitionsPath;
   public static final String BASE_PATIENT = "http://hl7.org/fhir/StructureDefinition/Patient";
 
-  @Before
+  @BeforeEach
   public void setup()
       throws IOException, ClassNotFoundException, URISyntaxException, ProfileException {
     AvroConversionUtil.initializeAvroConverters();
