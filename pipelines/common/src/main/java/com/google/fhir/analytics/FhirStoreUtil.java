@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2023 Google LLC
+ * Copyright 2020-2024 Google LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -90,6 +90,25 @@ public class FhirStoreUtil {
     }
 
     return updateFhirResource(sinkUrl, resource, interceptors);
+  }
+
+  /**
+   * Deletes a resource using the given resourceType and id
+   *
+   * @param resourceType the type of resource to be deleted
+   * @param id the id of the resource to be deleted
+   * @return the output result of delete operation
+   */
+  public MethodOutcome deleteResourceById(String resourceType, String id) {
+    Collection<IClientInterceptor> interceptors = Collections.emptyList();
+    if (!isNullOrEmpty(sinkUsername) && !isNullOrEmpty(sinkPassword)) {
+      interceptors = Collections.singleton(new BasicAuthInterceptor(sinkUsername, sinkPassword));
+    }
+    IGenericClient client = createGenericClient(sinkUrl, interceptors);
+    // Initialize the client, which will be used to interact with the service.
+    MethodOutcome outcome = client.delete().resourceById(resourceType, id).execute();
+    log.debug("FHIR resource deleted at" + sinkUrl + "? " + outcome.getCreated());
+    return outcome;
   }
 
   public Collection<MethodOutcome> uploadBundle(Bundle bundle) {

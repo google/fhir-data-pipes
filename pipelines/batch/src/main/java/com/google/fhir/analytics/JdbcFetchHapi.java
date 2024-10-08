@@ -161,8 +161,7 @@ public class JdbcFetchHapi {
                   + " FROM hfj_resource res JOIN"
                   + " hfj_res_ver ver ON res.res_id = ver.res_id AND res.res_ver = ver.res_ver "
                   + " LEFT JOIN hfj_forced_id hfi ON res.res_id = hfi.resource_pid "
-                  + " WHERE res.res_type = ? AND res.res_id % ? = ? AND"
-                  + " ver.res_encoding != 'DEL'");
+                  + " WHERE res.res_type = ? AND res.res_id % ? = ?");
       // TODO do date sanity-checking on `since` (note this is partly done by HAPI client call).
       if (since != null && !since.isEmpty()) {
         builder.append(" AND res.res_updated > '").append(since).append("'");
