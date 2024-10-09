@@ -16,6 +16,7 @@ import org.apache.avro.Schema;
 import org.apache.avro.Schema.Parser;
 import org.apache.avro.generic.IndexedRecord;
 import org.hl7.fhir.instance.model.api.IBaseResource;
+import org.hl7.fhir.r4.model.Base;
 import org.hl7.fhir.r4.model.Patient;
 import org.junit.Assert;
 import org.junit.Before;
@@ -116,9 +117,9 @@ public class AvroConverterMergeTest {
             loadResource(fhirContext, "/r4-us-core-resources/patient_us_core.json", Patient.class);
     IndexedRecord avroRecord = patientConverter.resourceToAvro(patient);
     Patient patientDecoded = (Patient) patientConverter.avroToResource(avroRecord);
-    // For why this is needed, see: https://github.com/google/fhir-data-pipes/issues/1003
-    patientDecoded.setId(patient.getIdElement());
-    Assert.assertTrue(patient.equalsDeep(patientDecoded));
+    Assert.assertTrue(
+        patient.equalsDeep(
+            (Base) TestUtil.encodeThenParse(patientDecoded, Patient.class, fhirContext)));
   }
 
   @Test

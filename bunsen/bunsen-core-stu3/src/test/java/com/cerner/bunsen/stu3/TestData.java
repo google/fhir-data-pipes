@@ -4,7 +4,6 @@ import com.google.common.collect.ImmutableList;
 import java.util.List;
 import org.hl7.fhir.dstu3.model.Address;
 import org.hl7.fhir.dstu3.model.BooleanType;
-import org.hl7.fhir.dstu3.model.CodeType;
 import org.hl7.fhir.dstu3.model.CodeableConcept;
 import org.hl7.fhir.dstu3.model.Coding;
 import org.hl7.fhir.dstu3.model.Condition;
@@ -185,7 +184,7 @@ public class TestData {
 
     Patient patient = new Patient();
 
-    patient.setId("test-patient");
+    patient.setId("Patient/test-patient");
     patient.setGender(AdministrativeGender.MALE);
     patient.setActive(true);
     patient.setMultipleBirth(new IntegerType(1));
@@ -193,7 +192,6 @@ public class TestData {
     // This is to introduce conflict with managingOrganization identifier
     // and make sure conflict is resolved.
     Identifier patientIdentifier = new Identifier();
-    patientIdentifier.setId("patient123");
     patientIdentifier.getAssigner().setReference("Organization/123");
     patient.setIdentifier(List.of(patientIdentifier));
 
@@ -202,12 +200,10 @@ public class TestData {
     patient.addGeneralPractitioner().setReference("Practitioner/12345");
 
     Identifier practitionerIdentifier = new Identifier();
-    practitionerIdentifier.setId("P123456");
     practitionerIdentifier.getAssigner().setReference("Organization/123456");
     patient.getGeneralPractitionerFirstRep().setIdentifier(practitionerIdentifier);
 
     Identifier managingOrganisationIdentifier = new Identifier();
-    managingOrganisationIdentifier.setId("O123456");
     managingOrganisationIdentifier.getAssigner().setReference("Organization/234");
     patient.getManagingOrganization().setIdentifier(managingOrganisationIdentifier);
 
@@ -218,14 +214,13 @@ public class TestData {
     address.setState("IL");
     address.setDistrict("12345");
 
-    Extension birthSex = patient.addExtension();
-
-    birthSex.setUrl(US_CORE_BIRTHSEX);
-    birthSex.setValue(new CodeType("M"));
-
     Extension ethnicity = patient.addExtension();
     ethnicity.setUrl(US_CORE_ETHNICITY);
     ethnicity.setValue(null);
+
+    Extension birthSex = patient.addExtension();
+    birthSex.setUrl(US_CORE_BIRTHSEX);
+    birthSex.setValue(new StringType("M"));
 
     Coding ombCoding = new Coding();
 
@@ -268,7 +263,6 @@ public class TestData {
     humanName.setFamily("family_name");
     humanName.addGiven("given_name");
     humanName.addGiven("middle_name");
-    humanName.setId("name123");
     patient.addName(humanName);
 
     Meta meta = new Meta();

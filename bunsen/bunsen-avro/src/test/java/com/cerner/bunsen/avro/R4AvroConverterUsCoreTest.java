@@ -23,6 +23,7 @@ import org.apache.avro.Schema;
 import org.apache.avro.compiler.specific.SpecificCompiler;
 import org.apache.avro.generic.GenericData.Record;
 import org.hl7.fhir.exceptions.FHIRException;
+import org.hl7.fhir.r4.model.Base;
 import org.hl7.fhir.r4.model.CodeableConcept;
 import org.hl7.fhir.r4.model.Coding;
 import org.hl7.fhir.r4.model.Condition;
@@ -43,7 +44,7 @@ import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-// TODO refactor the shared code with AvroConverterTest (STU3).
+// TODO refactor the shared code with `Stu3AvroConverterUsCoreTest`.
 public class R4AvroConverterUsCoreTest {
 
   private static final Observation testObservation = TestData.newObservation();
@@ -263,8 +264,8 @@ public class R4AvroConverterUsCoreTest {
   public void testIdInNestedElement() throws FHIRException {
 
     // Ensure that nested elements do not have id as property.
+    Assert.assertNotNull(testPatient.getAddress().get(0).getId());
     Assert.assertNull(testPatientDecoded.getAddress().get(0).getId());
-    Assert.assertNull(testPatientDecoded.getName().get(0).getId());
   }
 
   /**
@@ -587,10 +588,7 @@ public class R4AvroConverterUsCoreTest {
   @Test
   public void testMetaElement() {
 
-    String id = testPatient.getId();
     Meta meta = testPatient.getMeta();
-
-    Assert.assertEquals(id, testPatientDecoded.getId());
 
     Assert.assertEquals(meta.getTag().size(), testPatientDecoded.getMeta().getTag().size());
     Assert.assertEquals(
@@ -609,5 +607,15 @@ public class R4AvroConverterUsCoreTest {
   @Test
   public void setTestQuestionnaireResponseConversions() {
     Assert.assertTrue(testQuestionnaireResponse.equalsDeep(testQuestionnaireResponseDecoded));
+  }
+
+  @Test
+  public void identicalConvertedResource() {
+    // We need to remove id of inner fields as they are intentionally removed in Avro conversion.
+    Patient tempPatient = testPatient.copy();
+    tempPatient.getAddress().get(0).setId(null);
+    Assert.assertTrue(
+        tempPatient.equalsDeep(
+            (Base) TestUtil.encodeThenParse(testPatientDecoded, Patient.class, fhirContext)));
   }
 }
