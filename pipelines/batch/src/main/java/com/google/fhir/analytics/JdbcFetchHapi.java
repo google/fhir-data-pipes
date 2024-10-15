@@ -99,6 +99,7 @@ public class JdbcFetchHapi {
       }
 
       String resourceId = resultSet.getString("res_id");
+      String fhirId = resultSet.getString("fhir_id");
       String forcedId = resultSet.getString("forced_id");
       String resourceType = resultSet.getString("res_type");
       String lastUpdated = resultSet.getString("res_updated");
@@ -107,6 +108,7 @@ public class JdbcFetchHapi {
       numMappedResourcesMap.get(resourceType).inc();
       return HapiRowDescriptor.create(
           resourceId,
+          fhirId,
           forcedId,
           resourceType,
           lastUpdated,
@@ -135,6 +137,31 @@ public class JdbcFetchHapi {
     }
   }
 
+  public static class MdmLinkToRowDescriptor implements JdbcIO.RowMapper<MdmLink> {
+
+    @Override
+    public MdmLink mapRow(ResultSet resultSet) throws Exception {
+      return MdmLink.builder()
+          .sourceFhirId(resultSet.getString("source_fhir_id"))
+          .goldenFhirId(resultSet.getString("golden_fhir_id"))
+          .resourceId(resultSet.getString("src_resource_id"))
+          .build();
+    }
+  }
+
+  public static class SourceIdentifierToRowDescriptor
+      implements JdbcIO.RowMapper<SourceIdentifier> {
+
+    @Override
+    public SourceIdentifier mapRow(ResultSet resultSet) throws Exception {
+      return SourceIdentifier.builder()
+          .resourceId(resultSet.getString("golden_resource_pid"))
+          .system(resultSet.getString("sp_system"))
+          .value(resultSet.getString("sp_value"))
+          .build();
+    }
+  }
+
   /**
    * Utilizes Beam JdbcIO to query for resources directly from FHIR (HAPI) server's database and
    * returns a PCollection of Lists of String objects - each corresponding to a resource's payload
@@ -142,27 +169,46 @@ public class JdbcFetchHapi {
   public static class FetchRowsJdbcIo
       extends PTransform<PCollection<QueryParameterDescriptor>, PCollection<HapiRowDescriptor>> {
 
-    private String resourceList;
+    private final String resourceList;
     private final JdbcIO.DataSourceConfiguration dataSourceConfig;
 
     private final String query;
 
     private final String tagQuery;
 
+    private final String mdmQuery;
+
+    private final boolean isMdmResource;
+    private final boolean mapToGoldenResources;
+    private String identifiersQuery;
+
     public FetchRowsJdbcIo(
-        String resourceList, JdbcIO.DataSourceConfiguration dataSourceConfig, String since) {
+        String resourceList,
+        JdbcIO.DataSourceConfiguration dataSourceConfig,
+        String since,
+        boolean isMdmResource,
+        boolean mapToGoldenResource) {
       this.resourceList = resourceList;
       this.dataSourceConfig = dataSourceConfig;
+      this.isMdmResource = isMdmResource;
+      this.mapToGoldenResources = mapToGoldenResource;
       // Note the constraint on `res.res_ver` ensures we only pick the latest version.
       StringBuilder builder =
           new StringBuilder(
-              "SELECT res.res_id, hfi.forced_id, res.res_type, res.res_updated, res.res_ver,"
-                  + " res.res_version, ver.res_encoding, ver.res_text, ver.res_text_vc "
-                  + " FROM hfj_resource res JOIN"
-                  + " hfj_res_ver ver ON res.res_id = ver.res_id AND res.res_ver = ver.res_ver "
-                  + " LEFT JOIN hfj_forced_id hfi ON res.res_id = hfi.resource_pid "
-                  + " WHERE res.res_type = ? AND res.res_id % ? = ? AND"
-                  + " ver.res_encoding != 'DEL'");
+              "SELECT res.fhir_id, res.res_id, hfi.forced_id, res.res_type, res.res_updated,"
+                  + " res.res_ver, res.res_version, ver.res_encoding, ver.res_text, ver.res_text_vc"
+                  + " FROM hfj_resource res JOIN hfj_res_ver ver ON res.res_id = ver.res_id AND"
+                  + " res.res_ver = ver.res_ver LEFT JOIN hfj_forced_id hfi ON res.res_id ="
+                  + " hfi.resource_pid");
+      if (isMdmResource) {
+        builder.append(
+            " LEFT JOIN hfj_res_tag tag ON tag.res_id = res.res_id JOIN hfj_tag_def tag_def"
+                + " ON tag_def.tag_id = tag.tag_id"
+                + " WHERE tag_def.tag_code = 'GOLDEN_RECORD' AND");
+      } else {
+        builder.append(" WHERE");
+      }
+      builder.append(" res.res_type = ? AND res.res_id % ? = ? AND ver.res_encoding != 'DEL'");
       // TODO do date sanity-checking on `since` (note this is partly done by HAPI client call).
       if (since != null && !since.isEmpty()) {
         builder.append(" AND res.res_updated > '").append(since).append("'");
@@ -172,62 +218,108 @@ public class JdbcFetchHapi {
 
       builder =
           new StringBuilder(
-              "select td.tag_code, td.tag_display, td.tag_system, td.tag_type, tag.res_id from"
-                  + " hfj_res_tag tag join hfj_tag_def td on tag.tag_id = td.tag_id join"
-                  + " hfj_resource res on tag.res_id = res.res_id where res.res_type = ? and"
+              "SELECT td.tag_code, td.tag_display, td.tag_system, td.tag_type, tag.res_id FROM"
+                  + " hfj_res_tag tag JOIN hfj_tag_def td ON tag.tag_id = td.tag_id JOIN"
+                  + " hfj_resource res ON tag.res_id = res.res_id WHERE res.res_type = ? AND"
                   + " res.res_id % ? = ? ");
       if (since != null && !since.isEmpty()) {
         builder.append("  and res.res_updated > '").append(since).append("'");
       }
       tagQuery = builder.toString();
       log.info("JDBC query for tags: " + tagQuery);
+
+      builder =
+          new StringBuilder(
+              "SELECT res_link.src_resource_id, golden.fhir_id AS golden_fhir_id, source.fhir_id AS"
+                  + " source_fhir_id FROM hfj_res_link res_link JOIN mpi_link mdm_link ON"
+                  + " res_link.target_resource_id = mdm_link.target_pid JOIN hfj_resource golden ON"
+                  + " golden.res_id = mdm_link.golden_resource_pid JOIN hfj_resource source ON"
+                  + " source.res_id = mdm_link.target_pid WHERE res_link.source_resource_type = ?"
+                  + " AND res_link.src_resource_id % ? = ? AND"
+                  + " mdm_link.match_result = 2 OR mdm_link.match_result = 1");
+      mdmQuery = builder.toString();
+      log.info("JDBC query for mdm: " + mdmQuery);
+
+      if (isMdmResource) {
+        builder =
+            new StringBuilder(
+                "SELECT identifier.sp_system, identifier.sp_value, mdm_link.golden_resource_pid"
+                    + " FROM hfj_spidx_token identifier JOIN hfj_resource res ON identifier.res_id"
+                    + " = res.res_id JOIN mpi_link mdm_link ON mdm_link.target_pid ="
+                    + " identifier.res_id WHERE sp_name = 'identifier' AND identifier.sp_system !="
+                    + " 'http://hapifhir.io/fhir/NamingSystem/mdm-golden-resource-enterprise-id'"
+                    + " AND res.res_type = ? AND mdm_link.golden_resource_pid % ? = ?");
+
+        identifiersQuery = builder.toString();
+        log.info("JDBC query for source identifiers: " + identifiersQuery);
+      }
     }
 
     @Override
     public PCollection<HapiRowDescriptor> expand(
         PCollection<QueryParameterDescriptor> queryParameters) {
       PCollection<HapiRowDescriptor> hapiRowDescriptorPCollection =
-          queryParameters.apply(
-              "JdbcIO readAll",
-              JdbcIO.<QueryParameterDescriptor, HapiRowDescriptor>readAll()
-                  .withDataSourceConfiguration(dataSourceConfig)
-                  .withParameterSetter(
-                      (JdbcIO.PreparedStatementSetter<QueryParameterDescriptor>)
-                          (element, preparedStatement) -> {
-                            preparedStatement.setString(1, element.resourceType());
-                            preparedStatement.setInt(2, element.numBatches());
-                            preparedStatement.setInt(3, element.batchId());
-                          })
-                  // We are disabling this parameter because by default, this parameter causes
-                  // JdbcIO to
-                  // add a reshuffle transform after reading from the database. This breaks fusion
-                  // between the read and write operations, thus resulting in high memory overhead.
-                  // Disabling the below parameter results in optimal performance.
-                  .withOutputParallelization(false)
-                  .withQuery(query)
-                  .withRowMapper(new ResultSetToRowDescriptor(resourceList)));
+          createPCollection(
+              queryParameters, "JdbcIO readAll", query, new ResultSetToRowDescriptor(resourceList));
       PCollection<ResourceTag> resourceTagPCollection =
-          queryParameters.apply(
-              "JdbcIO fetch tags",
-              JdbcIO.<QueryParameterDescriptor, ResourceTag>readAll()
-                  .withDataSourceConfiguration(dataSourceConfig)
-                  .withParameterSetter(
-                      (JdbcIO.PreparedStatementSetter<QueryParameterDescriptor>)
-                          (element, preparedStatement) -> {
-                            preparedStatement.setString(1, element.resourceType());
-                            preparedStatement.setInt(2, element.numBatches());
-                            preparedStatement.setInt(3, element.batchId());
-                          })
-                  .withOutputParallelization(false)
-                  .withQuery(tagQuery)
-                  .withRowMapper(new CodingToRowDescriptor()));
+          createPCollection(
+              queryParameters, "JdbcIO fetch tags", tagQuery, new CodingToRowDescriptor());
 
-      return joinResourceTagCollections(hapiRowDescriptorPCollection, resourceTagPCollection);
+      PCollection<MdmLink> mdmLinkPCollection = null;
+      if (mapToGoldenResources) {
+        mdmLinkPCollection =
+            createPCollection(
+                queryParameters, "JdbcIO fetch mdm links", mdmQuery, new MdmLinkToRowDescriptor());
+      }
+
+      PCollection<SourceIdentifier> sourceIdentifierPCollection = null;
+      if (isMdmResource) {
+        sourceIdentifierPCollection =
+            createPCollection(
+                queryParameters,
+                "JdbcIO fetch source identifiers",
+                identifiersQuery,
+                new SourceIdentifierToRowDescriptor());
+      }
+
+      return joinResourceTagCollections(
+          hapiRowDescriptorPCollection,
+          resourceTagPCollection,
+          mdmLinkPCollection,
+          sourceIdentifierPCollection);
+    }
+
+    private <T> PCollection<T> createPCollection(
+        PCollection<QueryParameterDescriptor> queryParameters,
+        String description,
+        String query,
+        JdbcIO.RowMapper<T> rowMapper) {
+      return queryParameters.apply(
+          description,
+          JdbcIO.<QueryParameterDescriptor, T>readAll()
+              .withDataSourceConfiguration(dataSourceConfig)
+              .withParameterSetter(
+                  (JdbcIO.PreparedStatementSetter<QueryParameterDescriptor>)
+                      (element, preparedStatement) -> {
+                        preparedStatement.setString(1, element.resourceType());
+                        preparedStatement.setInt(2, element.numBatches());
+                        preparedStatement.setInt(3, element.batchId());
+                      })
+              // We are disabling this parameter because by default, this parameter causes
+              // JdbcIO to
+              // add a reshuffle transform after reading from the database. This breaks fusion
+              // between the read and write operations, thus resulting in high memory overhead.
+              // Disabling the below parameter results in optimal performance.
+              .withOutputParallelization(false)
+              .withQuery(query)
+              .withRowMapper(rowMapper));
     }
 
     private PCollection<HapiRowDescriptor> joinResourceTagCollections(
         PCollection<HapiRowDescriptor> hapiRowDescriptorPCollection,
-        PCollection<ResourceTag> resourceTagPCollection) {
+        PCollection<ResourceTag> resourceTagPCollection,
+        PCollection<MdmLink> mdmLinkPCollection,
+        PCollection<SourceIdentifier> sourceIdentifierPCollection) {
       // Step to convert HapiRowDescriptor to key value struct <ResourceId, HapiRowDescriptor>,
       // this will help in joining with tag PCollection.
       PCollection<KV<String, HapiRowDescriptor>> resourceCollection =
@@ -260,16 +352,53 @@ public class JdbcFetchHapi {
       // Helper Tuples for joining.
       TupleTag<HapiRowDescriptor> resourceTuple = new TupleTag<>();
       TupleTag<ResourceTag> resourceTagTuple = new TupleTag<>();
+      TupleTag<MdmLink> mdmLinkTuple = new TupleTag<>();
+      TupleTag<SourceIdentifier> sourceIdentifierTuple = new TupleTag<>();
 
       // Join the collections.
-      PCollection<KV<String, CoGbkResult>> joinedResourceCollection =
+      KeyedPCollectionTuple<String> partialJoinedResourceCollection =
           KeyedPCollectionTuple.of(resourceTuple, resourceCollection)
-              .and(resourceTagTuple, tagCollection)
-              .apply(CoGroupByKey.create());
+              .and(resourceTagTuple, tagCollection);
+
+      if (mapToGoldenResources) {
+        PCollection<KV<String, MdmLink>> mdmLinkCollection =
+            mdmLinkPCollection.apply(
+                "Convert MdmLink Collection to KV",
+                ParDo.of(
+                    new DoFn<MdmLink, KV<String, MdmLink>>() {
+                      @ProcessElement
+                      public void processElement(ProcessContext processContext) {
+                        MdmLink mdmLink = processContext.element();
+                        processContext.output(KV.of(mdmLink.getResourceId(), mdmLink));
+                      }
+                    }));
+        partialJoinedResourceCollection =
+            partialJoinedResourceCollection.and(mdmLinkTuple, mdmLinkCollection);
+      }
+
+      if (isMdmResource) {
+        PCollection<KV<String, SourceIdentifier>> sourceIdentifierCollection =
+            sourceIdentifierPCollection.apply(
+                "Convert SourceIdentifier Collection to KV",
+                ParDo.of(
+                    new DoFn<SourceIdentifier, KV<String, SourceIdentifier>>() {
+                      @ProcessElement
+                      public void processElement(ProcessContext processContext) {
+                        SourceIdentifier sourceIdentifier = processContext.element();
+                        processContext.output(
+                            KV.of(sourceIdentifier.getResourceId(), sourceIdentifier));
+                      }
+                    }));
+        partialJoinedResourceCollection =
+            partialJoinedResourceCollection.and(sourceIdentifierTuple, sourceIdentifierCollection);
+      }
+
+      PCollection<KV<String, CoGbkResult>> joinedResourceCollection =
+          partialJoinedResourceCollection.apply(CoGroupByKey.create());
 
       // Process the HapiRowDescriptor collection from the joined collection.
       return joinedResourceCollection.apply(
-          "Join Resource and Tag Collections",
+          "Join Resource, Tag, MDM Link, and Source Identifier Collections",
           ParDo.of(
               new DoFn<KV<String, CoGbkResult>, HapiRowDescriptor>() {
                 @ProcessElement
@@ -285,12 +414,31 @@ public class JdbcFetchHapi {
                     tags.add(resourceTag);
                   }
 
+                  List<MdmLink> mdmLinks = new ArrayList<>();
+                  if (mapToGoldenResources) {
+                    Iterable<MdmLink> mdmLinkIterable = element.getValue().getAll(mdmLinkTuple);
+                    for (MdmLink mdmLink : mdmLinkIterable) {
+                      mdmLinks.add(mdmLink);
+                    }
+                  }
+
+                  List<SourceIdentifier> sourceIdentifiers = new ArrayList<>();
+                  if (isMdmResource) {
+                    Iterable<SourceIdentifier> sourceIdentifierIterable =
+                        element.getValue().getAll(sourceIdentifierTuple);
+                    for (SourceIdentifier sourceIdentifier : sourceIdentifierIterable) {
+                      sourceIdentifiers.add(sourceIdentifier);
+                    }
+                  }
+
                   Iterator<HapiRowDescriptor> iterator = hapiRowDescriptorIterable.iterator();
                   if (iterator.hasNext()) {
                     HapiRowDescriptor hapiRowDescriptor = iterator.next();
                     // This is to avoid IllegalMutationException.
                     HapiRowDescriptor rowDescriptor = SerializationUtils.clone(hapiRowDescriptor);
                     rowDescriptor.setTags(tags);
+                    rowDescriptor.setMdmLinks(mdmLinks);
+                    rowDescriptor.setSourceIdentifiers(sourceIdentifiers);
                     processContext.output(rowDescriptor);
                   }
                 }
@@ -338,13 +486,21 @@ public class JdbcFetchHapi {
    * @param since the time from which the records need to be fetched
    * @return a Map storing the counts of each resource type
    */
-  public Map<String, Integer> searchResourceCounts(String resourceList, String since)
-      throws SQLException {
+  public Map<String, Integer> searchResourceCounts(
+      String resourceList, String since, String mdmResourceList) throws SQLException {
     Set<String> resourceTypes = new HashSet<>(Arrays.asList(resourceList.split(",")));
     Map<String, Integer> resourceCountMap = new HashMap<>();
     for (String resourceType : resourceTypes) {
       StringBuilder builder = new StringBuilder();
-      builder.append("SELECT count(*) as count FROM hfj_resource res where res.res_type = ?");
+      builder.append("SELECT count(*) as count FROM hfj_resource res");
+      if (mdmResourceList.contains(resourceType)) {
+        builder.append(
+            " LEFT JOIN hfj_res_tag tag ON tag.res_id = res.res_id JOIN hfj_tag_def tag_def"
+                + " ON tag_def.tag_id = tag.tag_id"
+                + " WHERE tag_def.tag_code = 'GOLDEN_RECORD' AND res.res_type = ?");
+      } else {
+        builder.append(" WHERE res.res_type = ?");
+      }
       if (Strings.isNullOrEmpty(since)) { // full mode
         builder.append(" AND res.res_deleted_at IS NULL ");
       } else { // incremental mode

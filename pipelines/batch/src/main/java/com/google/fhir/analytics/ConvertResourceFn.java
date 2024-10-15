@@ -35,6 +35,7 @@ import org.apache.beam.sdk.metrics.Metrics;
 import org.hl7.fhir.exceptions.FHIRException;
 import org.hl7.fhir.r4.model.CanonicalType;
 import org.hl7.fhir.r4.model.Coding;
+import org.hl7.fhir.r4.model.Identifier;
 import org.hl7.fhir.r4.model.Meta;
 import org.hl7.fhir.r4.model.Resource;
 import org.hl7.fhir.r4.model.codesystems.ActionType;
@@ -55,6 +56,8 @@ public class ConvertResourceFn extends FetchSearchPageFn<HapiRowDescriptor> {
 
   private final HashMap<String, Counter> totalPushTimeMillisMap;
 
+  private final List<String> mdmResourceTypes;
+
   private final Boolean processDeletedRecords;
 
   Counter counter =
@@ -70,7 +73,8 @@ public class ConvertResourceFn extends FetchSearchPageFn<HapiRowDescriptor> {
     // Only in the incremental mode we process deleted resources.
     this.processDeletedRecords = !Strings.isNullOrEmpty(options.getSince());
     List<String> resourceTypes = Arrays.asList(options.getResourceList().split(","));
-    for (String resourceType : resourceTypes) {
+    this.mdmResourceTypes = Arrays.asList(options.getMdmResourceList().split(","));
+    for (String resourceType : options.getResourceList().split(",")) {
       this.numFetchedResourcesMap.put(
           resourceType,
           Metrics.counter(
@@ -97,7 +101,7 @@ public class ConvertResourceFn extends FetchSearchPageFn<HapiRowDescriptor> {
 
   public void writeResource(HapiRowDescriptor element)
       throws IOException, ParseException, SQLException, ViewApplicationException, ProfileException {
-    String resourceId = element.resourceId();
+    String fhirId = element.fhirId();
     String forcedId = element.forcedId();
     String resourceType = element.resourceType();
     Meta meta =
@@ -105,7 +109,7 @@ public class ConvertResourceFn extends FetchSearchPageFn<HapiRowDescriptor> {
             .setVersionId(element.resourceVersion())
             .setLastUpdated(simpleDateFormat.parse(element.lastUpdated()));
     setMetaTags(element, meta);
-    String jsonResource = element.jsonResource();
+    String jsonResource = updateSourceIds(element);
     long startTime = System.currentTimeMillis();
     Resource resource = null;
     if (jsonResource == null || jsonResource.isBlank()) {
@@ -134,11 +138,15 @@ public class ConvertResourceFn extends FetchSearchPageFn<HapiRowDescriptor> {
     }
     totalParseTimeMillisMap.get(resourceType).inc(System.currentTimeMillis() - startTime);
     if (forcedId == null || forcedId.equals("")) {
-      resource.setId(resourceId);
+      resource.setId(fhirId);
     } else {
       resource.setId(forcedId);
     }
     resource.setMeta(meta);
+
+    if (mdmResourceTypes.contains(resourceType)) {
+      addSourceIdentifiers(resource, element);
+    }
 
     numFetchedResourcesMap.get(resourceType).inc(1);
 
@@ -188,6 +196,39 @@ public class ConvertResourceFn extends FetchSearchPageFn<HapiRowDescriptor> {
       }
       if (!securityList.isEmpty()) {
         meta.setSecurity(securityList);
+      }
+    }
+  }
+
+  private String updateSourceIds(HapiRowDescriptor element) {
+    String jsonResource = element.jsonResource();
+    if (element.getMdmLinks() != null) {
+      for (MdmLink mdmLink : element.getMdmLinks()) {
+        jsonResource =
+            jsonResource.replaceAll(mdmLink.getSourceFhirId(), mdmLink.getGoldenFhirId());
+      }
+    }
+    return jsonResource;
+  }
+
+  private void addSourceIdentifiers(Resource resource, HapiRowDescriptor element) {
+    if (element.getSourceIdentifiers() != null) {
+      List<Identifier> identifiers = new ArrayList<>();
+      for (SourceIdentifier sourceIdentifier : element.getSourceIdentifiers()) {
+        identifiers.add(
+            new Identifier()
+                .setSystem(sourceIdentifier.getSystem())
+                .setValue(sourceIdentifier.getValue()));
+      }
+
+      try {
+        resource.getClass().getMethod("setIdentifier", List.class).invoke(resource, identifiers);
+      } catch (InvocationTargetException | IllegalAccessException | NoSuchMethodException e) {
+        log.warn(
+            "Failed to set identifiers for ${}, check that mdmResourceList is properly configured:"
+                + " ",
+            resource.fhirType(),
+            e);
       }
     }
   }

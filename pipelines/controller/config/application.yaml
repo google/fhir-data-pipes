@@ -139,6 +139,16 @@ fhirdata:
   # you can use those predefined views in your dev. env. too.
   hiveResourceViewsDir: "config/views"
 
+  # Whether to use HAPI-FHIR's MDM service to replace resource references with
+  # their golden resource counterparts.
+  mapToGoldenResources: false
+
+  # Comma separated list of resources that are tracked by HAPI FHIR's MDM service.
+  mdmResourceList: ""
+
+  # Whether to treat possible matches as full matches when mapping resources to their golden resource.
+  treatPossibleMatchesAsMatches: true
+
   # Directory path containing the structure definition files for any custom profiles that needs to be
   # supported. If this starts with `classpath:` then the a classpath resource is
   # assumed and the path should always start with a `/`.
