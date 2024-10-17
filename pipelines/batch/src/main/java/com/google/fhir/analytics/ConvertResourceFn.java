@@ -108,7 +108,8 @@ public class ConvertResourceFn extends FetchSearchPageFn<HapiRowDescriptor> {
     String jsonResource = element.jsonResource();
     long startTime = System.currentTimeMillis();
     Resource resource = null;
-    if (jsonResource == null || jsonResource.isBlank()) {
+    boolean isResourceDeleted = jsonResource == null || jsonResource.isBlank();
+    if (isResourceDeleted) {
       // The jsonResource field will be empty in case of deleted records and are ignored during
       // the initial batch run
       if (!processDeletedRecords) {
@@ -149,7 +150,7 @@ public class ConvertResourceFn extends FetchSearchPageFn<HapiRowDescriptor> {
     }
     if (!sinkPath.isEmpty()) {
       startTime = System.currentTimeMillis();
-      if (jsonResource == null || jsonResource.isBlank()) {
+      if (isResourceDeleted) {
         fhirStoreUtil.deleteResourceById(resourceType, resource.getId());
       } else {
         fhirStoreUtil.uploadResource(resource);
@@ -157,7 +158,7 @@ public class ConvertResourceFn extends FetchSearchPageFn<HapiRowDescriptor> {
       totalPushTimeMillisMap.get(resourceType).inc(System.currentTimeMillis() - startTime);
     }
     if (sinkDbConfig != null) {
-      if (jsonResource == null || jsonResource.isBlank()) {
+      if (isResourceDeleted) {
         jdbcWriter.deleteResourceById(resourceType, resource.getId());
       } else {
         jdbcWriter.writeResource(resource);
