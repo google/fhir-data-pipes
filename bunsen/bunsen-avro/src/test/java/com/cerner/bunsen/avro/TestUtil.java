@@ -12,7 +12,8 @@ public class TestUtil {
    * to a HAPI object and verify we get the original HAPI object. This is needed because HAPI adds
    * some information, like `resourceType` in `id` fields, when parsing from JSON but, we don't have
    * that in the `id` field of converted Avro fields. See:
-   * https://github.com/google/fhir-data-pipes/issues/1003
+   * https://github.com/google/fhir-data-pipes/issues/1003 Also see:
+   * https://github.com/google/fhir-data-pipes/issues/1214
    *
    * @param resource the resource which is created from an Avro record.
    * @param resourceClass the Class of the resource.
