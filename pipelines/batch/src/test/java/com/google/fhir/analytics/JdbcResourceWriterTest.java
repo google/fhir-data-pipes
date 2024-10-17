@@ -86,4 +86,15 @@ public class JdbcResourceWriterTest {
     assertThat(indexCaptor.getAllValues().get(2), equalTo(3));
     assertThat(idCaptor.getAllValues().get(2), equalTo("my-patient-id"));
   }
+
+  @Test
+  public void testDeleteResource() throws SQLException {
+    JdbcResourceWriter jdbcResourceWriter = new JdbcResourceWriter(dataSourceMock, "", fhirContext);
+    String resourceType = "Patient";
+    String id = "123456";
+    jdbcResourceWriter.deleteResourceById(resourceType, id);
+    verify(statementMock, times(1)).setString(indexCaptor.capture(), idCaptor.capture());
+    assertThat(indexCaptor.getAllValues().get(0), equalTo(1));
+    assertThat(idCaptor.getAllValues().get(0), equalTo("123456"));
+  }
 }
