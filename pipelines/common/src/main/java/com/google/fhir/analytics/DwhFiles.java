@@ -36,6 +36,7 @@ import java.nio.file.FileAlreadyExistsException;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -67,7 +68,12 @@ public class DwhFiles {
 
   public static final String TIMESTAMP_FILE_END = "timestamp_end.txt";
 
+  public static final String TIMESTAMP_FILE_BULK_TRANSACTION_TIME =
+      "timestamp_bulk_transaction_time.txt";
+
   private static final String INCREMENTAL_DIR = "incremental_run";
+
+  static final String TIMESTAMP_PREFIX = "_TIMESTAMP_";
 
   // TODO: It is probably better if we build all DWH files related operations using Beam's
   //  filesystem API such that when a new filesystem is registered, it automatically works
@@ -118,6 +124,10 @@ public class DwhFiles {
     return new DwhFiles(dwhRoot, fhirContext);
   }
 
+  public static String safeTimestampSuffix() {
+    return Instant.now().toString().replace(":", "-").replace("-", "_").replace(".", "_");
+  }
+
   public String getRoot() {
     return dwhRoot;
   }
@@ -142,50 +152,76 @@ public class DwhFiles {
         "%s*%s", getResourcePath(resourceType).toString(), ParquetUtil.PARQUET_EXTENSION);
   }
 
+  // TODO: Move this to a util class and make it non-static.
   /**
-   * This returns the default incremental run path; each incremental run is relative to a full path,
-   * hence we put this directory under the full-run root.
+   * Returns all the child directories under the given base directory which are 1-level deep. Note
+   * in many cloud/distributed file-systems, we do not have "directories"; there are only buckets
+   * and files in those buckets. We use file-seprators (e.g., `/`) to simulate the concept of
+   * directories. So for example, this method returns an empty set if `baseDir` is `bucket/test` and
+   * the only file in that bucket is `bucket/test/dir1/dir2/file.txt`. If `baseDir` is
+   * `bucket/test/dir1`, in the above example, `dir2` is returned.
    *
-   * @return the default incremental run path
+   * @param baseDir the path under which "directories" are looked for.
+   * @return The list of all child directories under the base directory
+   * @throws IOException
    */
-  public ResourceId getIncrementalRunPath() {
-    return FileSystems.matchNewResource(getRoot(), true)
-        .resolve(INCREMENTAL_DIR, StandardResolveOptions.RESOLVE_DIRECTORY);
+  static Set<ResourceId> getAllChildDirectories(String baseDir) throws IOException {
+    String fileSeparator = getFileSeparatorForDwhFiles(baseDir);
+    // Avoid using ResourceId.resolve(..) method to resolve the files when the path contains glob
+    // expressions with multiple special characters like **, */* etc as this api only supports
+    // single special characters like `*` or `..`. Rather use the FileSystems.match(..) if the path
+    // contains glob expressions.
+    List<MatchResult> matchResultList =
+        FileSystems.match(
+            List.of(
+                getPathEndingWithFileSeparator(baseDir, fileSeparator)
+                    + "*"
+                    + fileSeparator
+                    + "*"));
+    Set<ResourceId> childDirectories = new HashSet<>();
+    for (MatchResult matchResult : matchResultList) {
+      if (matchResult.status() == Status.OK && !matchResult.metadata().isEmpty()) {
+        for (Metadata metadata : matchResult.metadata()) {
+          childDirectories.add(metadata.resourceId().getCurrentDirectory());
+        }
+      } else if (matchResult.status() == Status.ERROR) {
+        String errorMessage = String.format("Error matching files under directory %s", baseDir);
+        log.error(errorMessage);
+        throw new IOException(errorMessage);
+      }
+    }
+    log.info("Child directories of {} are {}", baseDir, childDirectories);
+    return childDirectories;
   }
 
-  /** This is used when we want to keep a backup of the old incremental run output. */
-  public ResourceId getIncrementalRunPathWithTimestamp() {
+  /**
+   * Also see {@link #newIncrementalRunPath()}
+   *
+   * @return the current incremental run path if one found; null otherwise.
+   */
+  @Nullable
+  public ResourceId getLatestIncrementalRunPath() throws IOException {
+    List<ResourceId> dirs =
+        getAllChildDirectories(getRoot()).stream()
+            .filter(dir -> dir.getFilename().contains(INCREMENTAL_DIR + TIMESTAMP_PREFIX))
+            .collect(Collectors.toList());
+    if (dirs.isEmpty()) return null;
+
+    Collections.sort(dirs, Comparator.comparing(ResourceId::toString));
+    return dirs.get(dirs.size() - 1);
+  }
+
+  /**
+   * This returns a new incremental-run path based on the current timestamp. Note that each
+   * incremental-run is relative to a full-run, hence we put this directory under the full-run root.
+   *
+   * @return a new incremental run path based on the current timestamp.
+   */
+  public ResourceId newIncrementalRunPath() {
     return FileSystems.matchNewResource(getRoot(), true)
         .resolve(
-            String.format("%s_old_%d", INCREMENTAL_DIR, System.currentTimeMillis()),
+            String.format("%s%s%s", INCREMENTAL_DIR, TIMESTAMP_PREFIX, safeTimestampSuffix()),
             StandardResolveOptions.RESOLVE_DIRECTORY);
-  }
-
-  /**
-   * Similar to {@link #getIncrementalRunPath} but also checks if that directory exists and if so,
-   * moves it to {@link #getIncrementalRunPathWithTimestamp()}.
-   *
-   * @return same as {@link #getIncrementalRunPath()}
-   * @throws IOException if the directory move fails
-   */
-  public ResourceId newIncrementalRunPath() throws IOException {
-    ResourceId incPath = getIncrementalRunPath();
-    if (hasIncrementalDir()) {
-      ResourceId movePath = getIncrementalRunPathWithTimestamp();
-      log.info("Moving the old {} directory to {}", INCREMENTAL_DIR, movePath);
-      FileSystems.rename(Collections.singletonList(incPath), Collections.singletonList(movePath));
-    }
-    return incPath;
-  }
-
-  /**
-   * @return true iff there is already an incremental run subdirectory in this DWH.
-   */
-  public boolean hasIncrementalDir() throws IOException {
-    List<MatchResult> matches =
-        FileSystems.matchResources(Collections.singletonList(getIncrementalRunPath()));
-    MatchResult matchResult = Iterables.getOnlyElement(matches);
-    return matchResult.status() == Status.OK;
   }
 
   public Set<String> findNonEmptyResourceDirs() throws IOException {
@@ -348,6 +384,26 @@ public class DwhFiles {
       throw new IllegalStateException(errorMessage);
     }
     return Instant.parse(result.get(0));
+  }
+
+  /** Checks if the given file exists in the data-warehouse at the root location */
+  public boolean doesTimestampFileExist(String fileName) throws IOException {
+    ResourceId resourceId =
+        FileSystems.matchNewResource(getRoot(), true)
+            .resolve(fileName, StandardResolveOptions.RESOLVE_FILE);
+    List<MatchResult> matchResultList =
+        FileSystems.matchResources(Collections.singletonList(resourceId));
+    MatchResult matchResult = Iterables.getOnlyElement(matchResultList);
+    if (matchResult.status() == Status.OK) {
+      return true;
+    } else if (matchResult.status() == Status.NOT_FOUND) {
+      return false;
+    } else {
+      String errorMessage =
+          String.format("Error matching file spec %s: status %s", resourceId, matchResult.status());
+      log.error(errorMessage);
+      throw new IOException(errorMessage);
+    }
   }
 
   public void overwriteFile(String fileName, byte[] content) throws IOException {

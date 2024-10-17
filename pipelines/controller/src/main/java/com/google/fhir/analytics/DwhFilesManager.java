@@ -140,7 +140,7 @@ public class DwhFilesManager {
     try {
       String prefix = getPrefix(dwhRootPrefix);
       List<ResourceId> paths =
-          getAllChildDirectories(baseDir).stream()
+          DwhFiles.getAllChildDirectories(baseDir).stream()
               .filter(dir -> dir.getFilename().startsWith(prefix))
               .collect(Collectors.toList());
 
@@ -336,49 +336,13 @@ public class DwhFilesManager {
   }
 
   List<String> findExistingResources(String dwhRoot) throws IOException {
-    Set<ResourceId> childPaths = getAllChildDirectories(dwhRoot);
+    Set<ResourceId> childPaths = DwhFiles.getAllChildDirectories(dwhRoot);
     Set<String> configuredSet =
         new HashSet<>(Arrays.asList(dataProperties.getResourceList().split(",")));
     return childPaths.stream()
         .map(r -> r.getFilename())
         .filter(r -> configuredSet.contains(r))
         .collect(Collectors.toList());
-  }
-
-  /**
-   * Returns all the child directories under the given base directory which are 1-level deep.
-   *
-   * @param baseDir
-   * @return The list of all child directories under the base directory
-   * @throws IOException
-   */
-  Set<ResourceId> getAllChildDirectories(String baseDir) throws IOException {
-    String fileSeparator = DwhFiles.getFileSeparatorForDwhFiles(baseDir);
-    // Avoid using ResourceId.resolve(..) method to resolve the files when the path contains glob
-    // expressions with multiple special characters like **, */* etc as this api only supports
-    // single special characters like `*` or `..`. Rather use the FileSystems.match(..) if the path
-    // contains glob expressions.
-    List<MatchResult> matchResultList =
-        FileSystems.match(
-            List.of(
-                DwhFiles.getPathEndingWithFileSeparator(baseDir, fileSeparator)
-                    + "*"
-                    + fileSeparator
-                    + "*"));
-    Set<ResourceId> childDirectories = new HashSet<>();
-    for (MatchResult matchResult : matchResultList) {
-      if (matchResult.status() == Status.OK && !matchResult.metadata().isEmpty()) {
-        for (Metadata metadata : matchResult.metadata()) {
-          childDirectories.add(metadata.resourceId().getCurrentDirectory());
-        }
-      } else if (matchResult.status() == Status.ERROR) {
-        String errorMessage = String.format("Error matching files under directory %s", baseDir);
-        logger.error(errorMessage);
-        throw new IOException(errorMessage);
-      }
-    }
-    logger.info("Child directories : {}", childDirectories);
-    return childDirectories;
   }
 
   private int getLastIndexOfSlash(String dwhRootPrefix) {

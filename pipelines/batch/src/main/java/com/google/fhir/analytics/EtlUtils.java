@@ -86,19 +86,39 @@ class EtlUtils {
   static List<PipelineResult> runMultipleMergerPipelinesWithTimestamp(
       List<Pipeline> pipelines, ParquetMergerOptions options, FhirContext fhirContext)
       throws IOException {
-    Instant instant1 =
-        DwhFiles.forRoot(options.getDwh1(), fhirContext)
-            .readTimestampFile(DwhFiles.TIMESTAMP_FILE_START);
-    Instant instant2 =
-        DwhFiles.forRoot(options.getDwh2(), fhirContext)
-            .readTimestampFile(DwhFiles.TIMESTAMP_FILE_START);
-    Instant mergedInstant = (instant1.compareTo(instant2) > 0) ? instant1 : instant2;
-    DwhFiles.forRoot(options.getMergedDwh(), fhirContext)
-        .writeTimestampFile(mergedInstant, DwhFiles.TIMESTAMP_FILE_START);
+    mergeWithLatestTimestamp(
+        options.getDwh1(),
+        options.getDwh2(),
+        options.getMergedDwh(),
+        DwhFiles.TIMESTAMP_FILE_START,
+        fhirContext);
+    // Transaction file exists for Batch Export mode, merge the timestamp file in this case
+    if (DwhFiles.forRoot(options.getDwh1(), fhirContext)
+        .doesTimestampFileExist(DwhFiles.TIMESTAMP_FILE_BULK_TRANSACTION_TIME)) {
+      mergeWithLatestTimestamp(
+          options.getDwh1(),
+          options.getDwh2(),
+          options.getMergedDwh(),
+          DwhFiles.TIMESTAMP_FILE_BULK_TRANSACTION_TIME,
+          fhirContext);
+    }
     List<PipelineResult> pipelineResults = runMultiplePipelines(pipelines);
     DwhFiles.forRoot(options.getMergedDwh(), fhirContext)
         .writeTimestampFile(DwhFiles.TIMESTAMP_FILE_END);
     return pipelineResults;
+  }
+
+  private static void mergeWithLatestTimestamp(
+      String dwhRoot1,
+      String dwhRoot2,
+      String mergedDwhRoot,
+      String fileName,
+      FhirContext fhirContext)
+      throws IOException {
+    Instant instant1 = DwhFiles.forRoot(dwhRoot1, fhirContext).readTimestampFile(fileName);
+    Instant instant2 = DwhFiles.forRoot(dwhRoot2, fhirContext).readTimestampFile(fileName);
+    Instant mergedInstant = (instant1.compareTo(instant2) > 0) ? instant1 : instant2;
+    DwhFiles.forRoot(mergedDwhRoot, fhirContext).writeTimestampFile(mergedInstant, fileName);
   }
 
   /**

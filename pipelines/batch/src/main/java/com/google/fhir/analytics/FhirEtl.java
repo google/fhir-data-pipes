@@ -24,6 +24,8 @@ import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.google.fhir.analytics.metrics.PipelineMetrics;
 import com.google.fhir.analytics.metrics.PipelineMetricsProvider;
+import com.google.fhir.analytics.model.BulkExportResponse;
+import com.google.fhir.analytics.model.BulkExportResponse.Output;
 import com.google.fhir.analytics.model.DatabaseConfiguration;
 import com.google.fhir.analytics.view.ViewDefinitionException;
 import java.io.IOException;
@@ -53,6 +55,7 @@ import org.apache.beam.sdk.transforms.Sum;
 import org.apache.beam.sdk.values.KV;
 import org.apache.beam.sdk.values.PCollection;
 import org.apache.beam.sdk.values.PCollectionList;
+import org.apache.commons.collections.CollectionUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -418,10 +421,20 @@ public class FhirEtl {
         Arrays.asList(options.getResourceList().split(",")).stream()
             .distinct()
             .collect(Collectors.toList());
+    BulkExportResponse bulkExportResponse =
+        bulkExportUtil.triggerBulkExport(
+            resourceTypes, options.getSince(), options.getFhirVersion());
+
     Map<String, List<String>> typeToNdjsonFileMappings =
-        bulkExportUtil.triggerBulkExport(resourceTypes, options.getFhirVersion());
+        validateAndFetchNdjsonFileMappings(bulkExportResponse);
     List<Pipeline> pipelines = new ArrayList<>();
     if (typeToNdjsonFileMappings != null && !typeToNdjsonFileMappings.isEmpty()) {
+      // Update the transaction timestamp value from the bulkExportResponse. This value will be used
+      // as the start timestamp for the next bulk export job.
+      DwhFiles.forRoot(options.getOutputParquetPath(), avroConversionUtil.getFhirContext())
+          .writeTimestampFile(
+              bulkExportResponse.transactionTime().toInstant(),
+              DwhFiles.TIMESTAMP_FILE_BULK_TRANSACTION_TIME);
       for (String type : typeToNdjsonFileMappings.keySet()) {
         Pipeline pipeline = Pipeline.create(options);
         pipeline
@@ -431,6 +444,36 @@ public class FhirEtl {
       }
     }
     return pipelines;
+  }
+
+  private static Map<String, List<String>> validateAndFetchNdjsonFileMappings(
+      BulkExportResponse bulkExportResponse) {
+    if (!CollectionUtils.isEmpty(bulkExportResponse.error())) {
+      log.error("Error occurred during bulk export, error={}", bulkExportResponse.error());
+      throw new IllegalStateException("Error occurred during bulk export, please check logs");
+    }
+
+    if (bulkExportResponse.transactionTime() == null) {
+      String errorMsg = "Transaction time cannot be empty for bulk export response";
+      log.error(errorMsg);
+      throw new IllegalStateException(errorMsg);
+    }
+
+    if (CollectionUtils.isEmpty(bulkExportResponse.output())
+        && CollectionUtils.isEmpty(bulkExportResponse.deleted())) {
+      log.warn("No resources found to be exported!");
+      return Maps.newHashMap();
+    }
+    if (!CollectionUtils.isEmpty(bulkExportResponse.deleted())) {
+      // TODO : Delete the FHIR resources
+    }
+    if (!CollectionUtils.isEmpty(bulkExportResponse.output())) {
+      return bulkExportResponse.output().stream()
+          .collect(
+              Collectors.groupingBy(
+                  Output::type, Collectors.mapping(Output::url, Collectors.toList())));
+    }
+    return Maps.newHashMap();
   }
 
   /**
