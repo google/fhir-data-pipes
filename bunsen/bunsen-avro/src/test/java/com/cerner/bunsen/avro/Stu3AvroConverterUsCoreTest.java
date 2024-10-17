@@ -22,6 +22,7 @@ import org.apache.avro.Protocol;
 import org.apache.avro.Schema;
 import org.apache.avro.compiler.specific.SpecificCompiler;
 import org.apache.avro.generic.GenericData.Record;
+import org.hl7.fhir.dstu3.model.Base;
 import org.hl7.fhir.dstu3.model.CodeableConcept;
 import org.hl7.fhir.dstu3.model.Coding;
 import org.hl7.fhir.dstu3.model.Condition;
@@ -203,8 +204,8 @@ public class Stu3AvroConverterUsCoreTest {
   public void testIdInNestedElement() throws FHIRException {
 
     // Ensure that nested elements do not have id as property.
+    Assert.assertNotNull(testPatient.getAddress().get(0).getId());
     Assert.assertNull(testPatientDecoded.getAddress().get(0).getId());
-    Assert.assertNull(testPatientDecoded.getName().get(0).getId());
   }
 
   /**
@@ -530,15 +531,22 @@ public class Stu3AvroConverterUsCoreTest {
   @Test
   public void testMetaElement() {
 
-    String id = testPatient.getId();
     Meta meta = testPatient.getMeta();
-
-    Assert.assertEquals(id, testPatientDecoded.getId());
 
     Assert.assertEquals(meta.getTag().size(), testPatientDecoded.getMeta().getTag().size());
     Assert.assertEquals(
         meta.getTag().get(0).getCode(), testPatientDecoded.getMeta().getTag().get(0).getCode());
     Assert.assertEquals(
         meta.getTag().get(0).getSystem(), testPatientDecoded.getMeta().getTag().get(0).getSystem());
+  }
+
+  @Test
+  public void identicalConvertedResource() {
+    // We need to remove id of inner fields as they are intentionally removed in Avro conversion.
+    Patient tempPatient = testPatient.copy();
+    tempPatient.getAddress().get(0).setId(null);
+    Assert.assertTrue(
+        tempPatient.equalsDeep(
+            (Base) TestUtil.encodeThenParse(testPatientDecoded, Patient.class, fhirContext)));
   }
 }
