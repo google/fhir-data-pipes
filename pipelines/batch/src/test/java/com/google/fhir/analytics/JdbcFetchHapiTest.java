@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2023 Google LLC
+ * Copyright 2020-2024 Google LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -80,6 +80,7 @@ public class JdbcFetchHapiTest extends TestCase {
   @Test
   public void testMapRow() throws Exception {
     Mockito.when(resultSet.getString("res_encoding")).thenReturn("DEL");
+    Mockito.when(resultSet.getString("fhir_id")).thenReturn("mock-id");
     Mockito.when(resultSet.getString("res_id")).thenReturn("101");
     Mockito.when(resultSet.getString("res_type")).thenReturn("Encounter");
     Mockito.when(resultSet.getString("res_updated")).thenReturn("2002-03-12 10:09:20");
@@ -90,6 +91,7 @@ public class JdbcFetchHapiTest extends TestCase {
         new JdbcFetchHapi.ResultSetToRowDescriptor(options.getResourceList()).mapRow(resultSet);
 
     assertNotNull(rowDescriptor);
+    assertEquals(rowDescriptor.fhirId(), "mock-id");
     assertEquals(rowDescriptor.resourceId(), "101");
     assertEquals(rowDescriptor.resourceType(), "Encounter");
     assertEquals(rowDescriptor.resourceVersion(), "1");
@@ -111,13 +113,14 @@ public class JdbcFetchHapiTest extends TestCase {
     Mockito.when(mockedDataSource.getConnection()).thenReturn(mockedConnection);
     Mockito.when(
             mockedConnection.prepareStatement(
-                "SELECT count(*) as count FROM hfj_resource res where res.res_type = ? AND"
+                "SELECT count(*) as count FROM hfj_resource res WHERE res.res_type = ? AND"
                     + " res.res_updated > '"
                     + since
                     + "'"))
         .thenReturn(mockedPreparedStatement);
 
-    Map<String, Integer> resourceCountMap = jdbcFetchHapi.searchResourceCounts(resourceList, since);
+    Map<String, Integer> resourceCountMap =
+        jdbcFetchHapi.searchResourceCounts(resourceList, since, "");
 
     assertThat(resourceCountMap.get("Patient"), equalTo(100));
     assertThat(resourceCountMap.get("Encounter"), equalTo(100));
