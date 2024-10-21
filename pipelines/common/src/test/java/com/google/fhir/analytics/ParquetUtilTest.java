@@ -36,21 +36,18 @@ import org.apache.beam.sdk.io.fs.ResourceId;
 import org.hl7.fhir.r4.model.Bundle;
 import org.hl7.fhir.r4.model.Observation;
 import org.hl7.fhir.r4.model.QuestionnaireResponse;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
-import org.junit.runner.RunWith;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.api.io.TempDir;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 // TODO add testes for DSTU3 resources too.
 
-@RunWith(MockitoJUnitRunner.class)
+@ExtendWith(MockitoExtension.class)
 public class ParquetUtilTest {
 
   private static final String PARQUET_ROOT = "parquet_root";
-
-  private String patientBundle;
 
   private String observationBundle;
 
@@ -60,16 +57,15 @@ public class ParquetUtilTest {
 
   private Path rootPath;
 
-  @Rule public TemporaryFolder testFolder = new TemporaryFolder();
+  @TempDir File temporaryFolder;
 
-  @Before
+  @BeforeEach
   public void setup() throws IOException, ProfileException {
-    File rootFolder = testFolder.newFolder(PARQUET_ROOT);
+    File rootFolder = new File(temporaryFolder, PARQUET_ROOT);
     rootPath = Paths.get(rootFolder.getPath());
     Files.createDirectories(rootPath);
     AvroConversionUtil.initializeAvroConverters();
-    patientBundle =
-        Resources.toString(Resources.getResource("patient_bundle.json"), StandardCharsets.UTF_8);
+
     observationBundle =
         Resources.toString(
             Resources.getResource("observation_bundle.json"), StandardCharsets.UTF_8);
