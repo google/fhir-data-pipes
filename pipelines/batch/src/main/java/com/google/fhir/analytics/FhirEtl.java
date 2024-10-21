@@ -321,10 +321,12 @@ public class FhirEtl {
 
     JdbcFetchHapi jdbcFetchHapi = new JdbcFetchHapi(jdbcSource);
     Map<String, Integer> resourceCount =
-        jdbcFetchHapi.searchResourceCounts(options.getResourceList(), options.getSince());
+        jdbcFetchHapi.searchResourceCounts(
+            options.getResourceList(), options.getSince(), options.getMdmResourceList());
 
     List<Pipeline> pipelines = new ArrayList<>();
     long totalNumOfResources = 0l;
+    List<String> mdmResourceTypes = Arrays.asList(options.getMdmResourceList().split(","));
     for (String resourceType : options.getResourceList().split(",")) {
       int numResources = resourceCount.get(resourceType);
       if (numResources == 0) {
@@ -346,7 +348,9 @@ public class FhirEtl {
               new JdbcFetchHapi.FetchRowsJdbcIo(
                   options.getResourceList(),
                   JdbcIO.DataSourceConfiguration.create(jdbcSource),
-                  options.getSince()));
+                  options.getSince(),
+                  mdmResourceTypes.contains(resourceType),
+                  options.getMapToGoldenResources()));
 
       payload.apply(
           "Convert to parquet for " + resourceType,
