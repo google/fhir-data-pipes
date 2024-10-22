@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2023 Google LLC
+ * Copyright 2020-2024 Google LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,6 +32,7 @@ abstract class HapiRowDescriptor implements Serializable {
 
   static HapiRowDescriptor create(
       String resourceId,
+      String fhirId,
       String forcedId,
       String resourceType,
       String lastUpdated,
@@ -40,6 +41,7 @@ abstract class HapiRowDescriptor implements Serializable {
       String jsonResource) {
     return new AutoValue_HapiRowDescriptor(
         resourceId,
+        fhirId,
         forcedId,
         resourceType,
         lastUpdated,
@@ -49,6 +51,8 @@ abstract class HapiRowDescriptor implements Serializable {
   }
 
   abstract String resourceId();
+
+  abstract String fhirId();
 
   @Nullable
   abstract String forcedId();
@@ -65,4 +69,8 @@ abstract class HapiRowDescriptor implements Serializable {
 
   // FHIR tags.
   List<ResourceTag> tags;
+
+  List<MdmLink> mdmLinks;
+
+  List<SourceIdentifier> sourceIdentifiers;
 }
