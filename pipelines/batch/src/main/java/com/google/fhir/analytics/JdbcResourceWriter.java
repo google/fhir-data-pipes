@@ -181,14 +181,34 @@ public class JdbcResourceWriter {
     }
   }
 
-  // TODO expose this such that we can properly handle deleted FHIR resources in the pipeline.
-  private static void deleteOldViewRows(DataSource dataSource, String tableName, String resId)
+  private static void deleteRowsById(DataSource dataSource, String tableName, String resId)
       throws SQLException {
     String sql = String.format("DELETE FROM %s WHERE %s=? ;", tableName, ID_COLUMN);
     try (Connection connection = dataSource.getConnection();
         PreparedStatement statement = connection.prepareStatement(sql)) {
       statement.setString(1, resId);
       statement.execute();
+    }
+  }
+
+  /**
+   * Deletes a resource based on resourceType and id
+   *
+   * @param resourceType the type of resource to be deleted
+   * @param id the id of the resource to be deleted
+   * @throws SQLException
+   */
+  public void deleteResourceById(String resourceType, String id) throws SQLException {
+    if (viewManager == null) {
+      deleteRowsById(jdbcDataSource, resourceType, id);
+    } else {
+      ImmutableList<ViewDefinition> views = viewManager.getViewsForType(resourceType);
+      for (ViewDefinition vDef : views) {
+        if (Strings.isNullOrEmpty(vDef.getName())) {
+          throw new SQLException("Field `name` in ViewDefinition is not defined.");
+        }
+        deleteRowsById(jdbcDataSource, vDef.getName(), id);
+      }
     }
   }
 
@@ -220,13 +240,12 @@ public class JdbcResourceWriter {
           ViewApplicator applicator = new ViewApplicator(vDef);
           RowList rowList = applicator.apply(resource);
           // We should first delete old rows produced from the same resource in a previous run:
-          deleteOldViewRows(
+          deleteRowsById(
               jdbcDataSource, vDef.getName(), ViewApplicator.getIdString(resource.getIdElement()));
           StringBuilder builder = new StringBuilder("INSERT INTO ");
           builder.append(vDef.getName()).append(" (");
           builder.append(String.join(",", rowList.getColumnInfos().keySet()));
           builder.append(") VALUES(");
-          // TODO handle deleted resources: https://github.com/google/fhir-data-pipes/issues/588
           builder.append(
               String.join(
                   ",",
