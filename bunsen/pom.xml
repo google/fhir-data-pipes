@@ -25,7 +25,7 @@
 
   <properties>
     <compile.source>11</compile.source>
-    <hapi.fhir.version>7.2.2</hapi.fhir.version>
+    <hapi.fhir.version>7.4.5</hapi.fhir.version>
     <avro.version>1.12.0</avro.version>
     <junit.version>4.13.2</junit.version>
     <hamcrest.version>3.0</hamcrest.version>
@@ -89,6 +89,12 @@
       <groupId>com.fasterxml.jackson.core</groupId>
       <artifactId>jackson-core</artifactId>
       <version>2.18.1</version>
+    </dependency>
+
+    <dependency>
+      <groupId>org.apache.commons</groupId>
+      <artifactId>commons-collections4</artifactId>
+      <version>4.4</version>
     </dependency>
   </dependencies>
 
