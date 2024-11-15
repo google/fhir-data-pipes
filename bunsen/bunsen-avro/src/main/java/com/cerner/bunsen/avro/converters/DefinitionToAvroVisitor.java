@@ -140,6 +140,8 @@ public class DefinitionToAvroVisitor implements DefinitionVisitor<HapiConverter<
           .put("time", STRING_CONVERTER)
           .put("string", STRING_CONVERTER)
           .put("oid", STRING_CONVERTER)
+          // Note `xhtml` types are currently skipped because of:
+          // https://github.com/google/fhir-data-pipes/issues/1014
           .put("xhtml", STRING_CONVERTER)
           .put("decimal", DOUBLE_CONVERTER)
           .put("integer", INTEGER_CONVERTER)

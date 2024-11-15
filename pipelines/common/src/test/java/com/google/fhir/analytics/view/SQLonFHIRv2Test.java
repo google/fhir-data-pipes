@@ -55,7 +55,6 @@ import org.hl7.fhir.instance.model.api.IBaseDecimalDatatype;
 import org.hl7.fhir.instance.model.api.IBaseResource;
 import org.hl7.fhir.instance.model.api.IIdType;
 import org.hl7.fhir.instance.model.api.IPrimitiveType;
-import org.hl7.fhir.r4.utils.FHIRLexer.FHIRLexerException;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.junit.MockitoJUnitRunner;
@@ -144,7 +143,7 @@ public class SQLonFHIRv2Test {
                 String.format(
                     "Number of rows does not match %d vs %d", totalRows, expectedRows.getNumRows()),
                 totalRows == expectedRows.getNumRows());
-          } catch (ViewApplicationException | ViewDefinitionException | FHIRLexerException e) {
+          } catch (ViewApplicationException | ViewDefinitionException e) {
             assertThat(
                 "View exceptions were thrown while none was expected!", expectedRows == null);
           }
