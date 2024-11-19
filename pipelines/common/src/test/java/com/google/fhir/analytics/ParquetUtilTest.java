@@ -132,7 +132,7 @@ public class ParquetUtilTest {
     for (Bundle.BundleEntryComponent entry : bundle.getEntry()) {
       parquetUtil.write(entry.getResource());
     }
-    parquetUtil.closeAllWriters();
+    parquetUtil.flushAllWritersAndStopTimer();
     String fileSeparator = DwhFiles.getFileSeparatorForDwhFiles(rootPath.toString());
     Stream<Path> files =
         Files.list(rootPath.resolve("Observation"))
@@ -160,7 +160,7 @@ public class ParquetUtilTest {
       parquetUtil.write(entry.getResource());
       TimeUnit.SECONDS.sleep(2); // A better way to test this is to inject a mocked `Timer`.
     }
-    parquetUtil.closeAllWriters();
+    parquetUtil.flushAllWritersAndStopTimer();
     String fileSeparator = DwhFiles.getFileSeparatorForDwhFiles(rootPath.toString());
     Stream<Path> files =
         Files.list(rootPath.resolve("Observation"))
@@ -173,7 +173,7 @@ public class ParquetUtilTest {
                                 + "Observation"
                                 + fileSeparator
                                 + "Observation_output-"));
-    assertThat(files.count(), equalTo(7L));
+    assertThat(files.count(), equalTo(6L));
   }
 
   @Test
@@ -191,7 +191,7 @@ public class ParquetUtilTest {
         parquetUtil.write(entry.getResource());
       }
     }
-    parquetUtil.closeAllWriters();
+    parquetUtil.flushAllWritersAndStopTimer();
     String fileSeparator = DwhFiles.getFileSeparatorForDwhFiles(rootPath.toString());
     Stream<Path> files =
         Files.list(rootPath.resolve("Observation"))
@@ -224,7 +224,7 @@ public class ParquetUtilTest {
     for (Bundle.BundleEntryComponent entry : bundle.getEntry()) {
       parquetUtil.write(entry.getResource());
     }
-    parquetUtil.closeAllWriters();
+    parquetUtil.flushAllWritersAndStopTimer();
 
     Stream<Path> files =
         Files.list(rootPath.resolve("observation_flat"))
@@ -294,7 +294,7 @@ public class ParquetUtilTest {
     Bundle bundle2 = parser2.parseResource(Bundle.class, patientUsCoreStr);
     parquetUtil.writeRecords(bundle2, null);
 
-    parquetUtil.closeAllWriters();
+    parquetUtil.flushAllWritersAndStopTimer();
   }
 
   @Test
@@ -325,7 +325,7 @@ public class ParquetUtilTest {
         parser.parseResource(QuestionnaireResponse.class, questionnaireResponseStr);
     parquetUtil.write(questionnaireResponse);
 
-    parquetUtil.closeAllWriters();
+    parquetUtil.flushAllWritersAndStopTimer();
     AvroConversionUtil.deRegisterMappingsFor(FhirVersionEnum.R4);
   }
 }
