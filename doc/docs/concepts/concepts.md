@@ -3,12 +3,12 @@
 The key concepts that underpin the OHS Analytics components are:
 
 1. **ETL Pipelines:** ETL Pipelines and Controller can be configured to
-   continuously transform FHIR data into an analytics friendly Parquet on FHIR
-   format.
+   continuously transform FHIR data into an analytics friendly "Parquet-on-FHIR"
+   schema.
 2. **Deployment approaches**: The pipelines are designed to accommodate various
    deployment approaches in terms of scalability; from a single machine to a
    distributed cluster environments.
-3. **Query simplification approaches:** Once the data is transformed into an
+3. **View layer for query simplification:** Once the data is transformed into an
    analytics-friendly format, it should be queried. Multiple approaches are
    provided and/or showcased to flatten FHIR schema to make developing analytics
    solutions easier.
@@ -46,9 +46,9 @@ FHIR Data Pipes is designed to fetch FHIR source data in various forms and APIs:
   the [Bulk Export API](https://build.fhir.org/ig/HL7/bulk-data/export.html).
 * Files in json and ndjson formats.
 
-### Transformation
+### Transform to Parquet-on-FHIR
 
-FHIR Resources are transformed into a "Parquet on FHIR" format:
+FHIR Resources are transformed into a "Parquet-on-FHIR" format which forms the "base DWH".
 
 * Uses a forked version
   of [Bunsen library](https://github.com/google/fhir-data-pipes/tree/master/bunsen) (
@@ -98,7 +98,7 @@ requirements, and expertise of the team.
 | Exploratory data science or ML use cases                                         | Use the generated Parquet files which as _"near lossless"_ for enhanced data science workflows           | Can either use the Parquet or custom schema to power dashboards or reports                |
 | Push FHIR data to a central FHIR-store (e.g., for a Shared Health Record system) | Use the Pipelines Controller to push from a FHIR source to a FHIR sink                                   | Management of the intermediate Parquet files created as part of the pipelines             | 
 
-## Query Simplification with Flat Views
+## View layer for simplifying queries
 
 FHIR Data Pipes provides two approaches for flattening the FHIR resources into
 virtual or materialized views:
@@ -110,5 +110,3 @@ resources to generate materialized views (within the pipeline)
 
 For more information on both of these approaches, please
 check [Schema and Flat Views](views.md).
-
-
