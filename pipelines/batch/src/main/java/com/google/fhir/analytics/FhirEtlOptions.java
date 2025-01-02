@@ -261,7 +261,7 @@ public interface FhirEtlOptions extends BasePipelineOptions {
 
   void setSourceNDJsonFilePattern(String value);
 
-  @Description("Flag to switch off/on creation of a  parquet DWH")
+  @Description("Flag to switch off/on creation of parquet files; can be turned off when syncing from a FHIR server to another.")
   @Default.Boolean(true)
   Boolean isCreateParquetDwh();
 
