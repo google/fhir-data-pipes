@@ -73,7 +73,7 @@ fhirdata:
   # that directory too, such that files created by the pipelines are readable by
   # the Thrift Server, e.g., `setfacl -d -m o::rx dwh/`.
   dwhRootPrefix: "dwh/controller_DEV_DWH"
-  #Whether to create a  Parquet DWH or not.In case of syncying between a FHIR server to FHIR server , 
+  # Whether to create a  Parquet DWH or not. In case of syncing from a FHIR server to another, if Parquet files are not needed, their generation can be switched off by this flag.
   # generation of parquet DWH could be switched off/on
   createParquetDwh: true
 
