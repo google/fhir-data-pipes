@@ -19,6 +19,7 @@ import com.cerner.bunsen.exception.ProfileException;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.fhir.analytics.model.DatabaseConfiguration;
 import com.google.fhir.analytics.model.EventConfiguration;
+import com.google.fhir.analytics.view.ViewApplicationException;
 import io.debezium.data.Envelope.Operation;
 import java.io.IOException;
 import java.sql.SQLException;
@@ -90,7 +91,8 @@ public class FhirConverter implements Processor {
     }
   }
 
-  public void process(Exchange exchange) throws SQLException, ProfileException {
+  public void process(Exchange exchange)
+      throws SQLException, ProfileException, ViewApplicationException {
     Message message = exchange.getMessage();
     final Map payload = message.getBody(Map.class);
     final Map sourceMetadata =

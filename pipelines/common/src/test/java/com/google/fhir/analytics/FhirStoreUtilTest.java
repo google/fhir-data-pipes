@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2023 Google LLC
+ * Copyright 2020-2024 Google LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,6 +24,7 @@ import ca.uhn.fhir.parser.IParser;
 import ca.uhn.fhir.rest.api.MethodOutcome;
 import ca.uhn.fhir.rest.client.api.IGenericClient;
 import ca.uhn.fhir.rest.client.api.IRestfulClientFactory;
+import ca.uhn.fhir.rest.gclient.IDeleteTyped;
 import ca.uhn.fhir.rest.gclient.IUpdateTyped;
 import java.io.IOException;
 import java.io.InputStream;
@@ -31,15 +32,15 @@ import java.util.Collection;
 import org.hamcrest.Matchers;
 import org.hl7.fhir.r4.model.Bundle;
 import org.hl7.fhir.r4.model.Patient;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Answers;
 import org.mockito.ArgumentMatchers;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
 
-@RunWith(MockitoJUnitRunner.class)
+@ExtendWith(MockitoExtension.class)
 public class FhirStoreUtilTest {
 
   @Mock(answer = Answers.RETURNS_DEEP_STUBS)
@@ -50,6 +51,8 @@ public class FhirStoreUtilTest {
 
   @Mock IUpdateTyped iexec;
 
+  @Mock IDeleteTyped iDeleteTyped;
+
   private FhirStoreUtil fhirStoreUtil;
 
   private Patient patient;
@@ -58,7 +61,7 @@ public class FhirStoreUtilTest {
 
   private Bundle patientResponseBundle;
 
-  @Before
+  @BeforeEach
   public void setup() throws IOException {
     IParser jsonParser = FhirContext.forR4().newJsonParser();
 
@@ -79,10 +82,13 @@ public class FhirStoreUtilTest {
     patient = (Patient) patientBundle.getEntryFirstRep().getResource();
 
     when(clientFactory.newGenericClient(sinkUrl)).thenReturn(client);
-    when(client.update().resource(patient).withId(patient.getId()).encodedJson()).thenReturn(iexec);
-    when(client.transaction().withBundle(ArgumentMatchers.any(Bundle.class)).execute())
+    lenient()
+        .when(client.update().resource(patient).withId(patient.getId()).encodedJson())
+        .thenReturn(iexec);
+    lenient()
+        .when(client.transaction().withBundle(ArgumentMatchers.any(Bundle.class)).execute())
         .thenReturn(patientResponseBundle);
-    doReturn(outcome).when(iexec).execute();
+    lenient().doReturn(outcome).when(iexec).execute();
 
     fhirStoreUtil = FhirStoreUtil.createFhirStoreUtil(sinkUrl, clientFactory);
   }
@@ -118,5 +124,17 @@ public class FhirStoreUtilTest {
     assertThat(result, not(nullValue()));
     assertThat(result, not(Matchers.empty()));
     assertThat(result.iterator().next().getCreated(), equalTo(true));
+  }
+
+  @Test
+  public void testDeleteResource() {
+    String resourceType = "Patient";
+    String id = "patient-id";
+    when(client.delete().resourceById(resourceType, id)).thenReturn(iDeleteTyped);
+    MethodOutcome outcome = new MethodOutcome();
+    outcome.setCreated(true);
+    doReturn(outcome).when(iDeleteTyped).execute();
+    MethodOutcome result = fhirStoreUtil.deleteResourceById(resourceType, id);
+    assertThat(result.getCreated(), equalTo(true));
   }
 }

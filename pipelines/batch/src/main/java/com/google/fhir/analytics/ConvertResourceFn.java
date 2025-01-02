@@ -108,7 +108,8 @@ public class ConvertResourceFn extends FetchSearchPageFn<HapiRowDescriptor> {
     String jsonResource = element.jsonResource();
     long startTime = System.currentTimeMillis();
     Resource resource = null;
-    if (jsonResource == null || jsonResource.isBlank()) {
+    boolean isResourceDeleted = jsonResource == null || jsonResource.isBlank();
+    if (isResourceDeleted) {
       // The jsonResource field will be empty in case of deleted records and are ignored during
       // the initial batch run
       if (!processDeletedRecords) {
@@ -149,15 +150,19 @@ public class ConvertResourceFn extends FetchSearchPageFn<HapiRowDescriptor> {
     }
     if (!sinkPath.isEmpty()) {
       startTime = System.currentTimeMillis();
-      // TODO : Remove the deleted resources from the sink fhir store
-      // https://github.com/google/fhir-data-pipes/issues/588
-      fhirStoreUtil.uploadResource(resource);
+      if (isResourceDeleted) {
+        fhirStoreUtil.deleteResourceById(resourceType, resource.getId());
+      } else {
+        fhirStoreUtil.uploadResource(resource);
+      }
       totalPushTimeMillisMap.get(resourceType).inc(System.currentTimeMillis() - startTime);
     }
     if (sinkDbConfig != null) {
-      // TODO : Remove the deleted resources from the sink database
-      // https://github.com/google/fhir-data-pipes/issues/588
-      jdbcWriter.writeResource(resource);
+      if (isResourceDeleted) {
+        jdbcWriter.deleteResourceById(resourceType, resource.getId());
+      } else {
+        jdbcWriter.writeResource(resource);
+      }
     }
   }
 
@@ -206,6 +211,8 @@ public class ConvertResourceFn extends FetchSearchPageFn<HapiRowDescriptor> {
 
   private Resource createNewFhirResource(String fhirVersion, String resourceType) {
     try {
+      // TODO create tests for this method and different versions of FHIR; casting to R4 resource
+      //  does not seem right!
       return (Resource)
           Class.forName(getFhirBasePackageName(fhirVersion) + "." + resourceType)
               .getConstructor()

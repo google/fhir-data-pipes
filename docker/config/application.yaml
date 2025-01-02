@@ -18,6 +18,7 @@
 # of these options.
 # This config is meant to be used by `compose-controller-spark-sql.yaml`.
 fhirdata:
+  fhirFetchMode: "HAPI_JDBC"
   # 172.17.0.1 is an example docker network interface ip address;
   # `hapi-server` is another docker example where a container with that name is
   # running on the same docker network.
@@ -44,6 +45,7 @@ fhirdata:
   fhirVersion: "R4"
   rowGroupSizeForParquetFiles: 33554432   # 32mb
   viewDefinitionsDir: "config/views"
+  createParquetViews: true
   sinkDbConfigPath: "config/hapi-postgres-config_local_views.json"
   #sinkFhirServerUrl: "http://sink-server:8080/fhir"
   #sinkUserName: "hapi"

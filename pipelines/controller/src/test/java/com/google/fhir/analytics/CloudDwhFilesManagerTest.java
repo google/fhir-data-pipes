@@ -18,14 +18,12 @@ package com.google.fhir.analytics;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 
-import com.google.api.services.storage.model.Objects;
 import com.google.api.services.storage.model.StorageObject;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
 import org.apache.beam.sdk.extensions.gcp.options.GcsOptions;
 import org.apache.beam.sdk.extensions.gcp.util.GcsUtil;
 import org.apache.beam.sdk.extensions.gcp.util.GcsUtil.StorageObjectOrIOException;
@@ -119,39 +117,6 @@ public class CloudDwhFilesManagerTest {
 
     ResourceId dwhRoot = FileSystems.matchNewResource("gs://testbucket/testdirectory", true);
     assertThat(dwhFilesManager.isDwhComplete(dwhRoot), equalTo(false));
-  }
-
-  @Test
-  public void testGetAllChildDirectoriesOneLevelDeep() throws IOException {
-    Objects modelObjects = new Objects();
-    List<StorageObject> items = new ArrayList<>();
-    // Files within the directory
-    items.add(
-        createStorageObject(
-            "gs://testbucket/testdirectory/Patient/patient.parquet", 1L /* fileSize */));
-    items.add(
-        createStorageObject(
-            "gs://testbucket/testdirectory/Observation/observation.parquet", 2L /* fileSize */));
-    modelObjects.setItems(items);
-
-    Mockito.when(
-            mockGcsUtil.listObjects(
-                Mockito.eq("testbucket"), Mockito.anyString(), Mockito.isNull()))
-        .thenReturn(modelObjects);
-
-    DwhFilesManager dwhFilesManager = new DwhFilesManager(dataProperties);
-    Set<ResourceId> childDirectories =
-        dwhFilesManager.getAllChildDirectories("gs://testbucket/testdirectory");
-
-    assertThat(childDirectories.size(), equalTo(2));
-    assertThat(
-        childDirectories.contains(
-            FileSystems.matchNewResource("gs://testbucket/testdirectory/Patient", true)),
-        equalTo(true));
-    assertThat(
-        childDirectories.contains(
-            FileSystems.matchNewResource("gs://testbucket/testdirectory/Observation", true)),
-        equalTo(true));
   }
 
   @Test

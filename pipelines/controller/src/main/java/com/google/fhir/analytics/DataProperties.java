@@ -20,7 +20,6 @@ import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
@@ -53,8 +52,6 @@ public class DataProperties {
 
   private static final Logger logger = LoggerFactory.getLogger(DataProperties.class.getName());
 
-  static final String TIMESTAMP_PREFIX = "_TIMESTAMP_";
-
   private static final String GET_PREFIX = "get";
 
   private static final Set<String> EXCLUDED_ARGS =
@@ -65,6 +62,8 @@ public class DataProperties {
   private static final Class[] DEFAULT_ANNOTATIONS = {
     Default.String.class, Default.Integer.class, Default.Boolean.class, Default.Long.class
   };
+
+  private FhirFetchMode fhirFetchMode;
 
   private String fhirServerUrl;
 
@@ -89,6 +88,8 @@ public class DataProperties {
   private String hiveResourceViewsDir;
 
   private String viewDefinitionsDir;
+
+  private boolean createParquetViews;
 
   private String sinkDbConfigPath;
 
@@ -123,11 +124,16 @@ public class DataProperties {
   @PostConstruct
   void validateProperties() {
     CronExpression.parse(incrementalSchedule);
-
+    Preconditions.checkState(
+        FhirFetchMode.FHIR_SEARCH.equals(fhirFetchMode)
+            || FhirFetchMode.BULK_EXPORT.equals(fhirFetchMode)
+            || FhirFetchMode.HAPI_JDBC.equals(fhirFetchMode)
+            || FhirFetchMode.OPENMRS_JDBC.equals(fhirFetchMode),
+        "fhirFetchMode should be one of FHIR_SEARCH || BULK_EXPORT || HAPI_JDBC || OPENMRS_JDBC for"
+            + " the controller application");
     Preconditions.checkArgument(
         !Strings.isNullOrEmpty(fhirServerUrl) || !Strings.isNullOrEmpty(dbConfig),
         "At least one of fhirServerUrl or dbConfig should be set!");
-    Preconditions.checkState(fhirVersion != null, "FhirVersion cannot be empty");
 
     Preconditions.checkArgument(
         !Strings.isNullOrEmpty(dwhRootPrefix), "dwhRootPrefix is required!");
@@ -142,6 +148,7 @@ public class DataProperties {
       Preconditions.checkArgument(!Strings.isNullOrEmpty(fhirServerUrl));
       logger.info("Using FHIR-search mode since dbConfig is not set.");
     }
+    Preconditions.checkState(fhirVersion != null, "FhirVersion cannot be empty");
     Preconditions.checkState(!createHiveResourceTables || !thriftserverHiveConfig.isEmpty());
     Preconditions.checkState(!createHiveResourceTables || createParquetDwh);
   }
@@ -168,6 +175,7 @@ public class DataProperties {
         viewDefinitionsDir,
         sinkDbConfigPath,
         dwhRoot);
+    options.setFhirFetchMode(FhirFetchMode.PARQUET);
     options.setParquetInputDwhRoot(dwhRoot);
     options.setViewDefinitionsDir(viewDefinitionsDir);
     options.setSinkDbConfigPath(sinkDbConfigPath);
@@ -182,6 +190,7 @@ public class DataProperties {
 
   PipelineConfig createBatchOptions() {
     FhirEtlOptions options = PipelineOptionsFactory.as(FhirEtlOptions.class);
+    options.setFhirFetchMode(fhirFetchMode);
     logger.info("Converting options for fhirServerUrl {} and dbConfig {}", fhirServerUrl, dbConfig);
     if (!Strings.isNullOrEmpty(dbConfig)) {
       // TODO add OpenMRS support too; it should be easy but we want to make it explicit, such that
@@ -199,6 +208,7 @@ public class DataProperties {
     if (resourceList != null) {
       options.setResourceList(resourceList);
     }
+    options.setCreateParquetViews(createParquetViews);
     options.setViewDefinitionsDir(Strings.nullToEmpty(viewDefinitionsDir));
     options.setSinkDbConfigPath(Strings.nullToEmpty(sinkDbConfigPath));
     options.setStructureDefinitionsPath(Strings.nullToEmpty(structureDefinitionsPath));
@@ -215,9 +225,8 @@ public class DataProperties {
     }
 
     // Using underscore for suffix as hyphens are discouraged in hive table names.
-    String timestampSuffix =
-        Instant.now().toString().replace(":", "-").replace("-", "_").replace(".", "_");
-    options.setOutputParquetPath(dwhRootPrefix + TIMESTAMP_PREFIX + timestampSuffix);
+    String timestampSuffix = DwhFiles.safeTimestampSuffix();
+    options.setOutputParquetPath(dwhRootPrefix + DwhFiles.TIMESTAMP_PREFIX + timestampSuffix);
 
     options.setCreateParquetDwh(createParquetDwh);
 
@@ -227,7 +236,7 @@ public class DataProperties {
     String thriftServerParquetPathPrefix =
         dwhRootPrefix.substring(dwhRootPrefix.lastIndexOf("/") + 1, dwhRootPrefix.length());
     pipelineConfigBuilder.thriftServerParquetPath(
-        thriftServerParquetPathPrefix + TIMESTAMP_PREFIX + timestampSuffix);
+        thriftServerParquetPathPrefix + DwhFiles.TIMESTAMP_PREFIX + timestampSuffix);
     pipelineConfigBuilder.timestampSuffix(timestampSuffix);
 
     return pipelineConfigBuilder.build();
@@ -236,6 +245,8 @@ public class DataProperties {
   List<ConfigFields> getConfigParams() {
     // TODO automate generation of this list.
     return List.of(
+        new ConfigFields(
+            "fhirdata.fhirFetchMode", fhirFetchMode != null ? fhirFetchMode.name() : "", "", ""),
         new ConfigFields("fhirdata.fhirServerUrl", fhirServerUrl, "", ""),
         new ConfigFields("fhirdata.dwhRootPrefix", dwhRootPrefix, "", ""),
         new ConfigFields("fhirdata.createParquetDwh", String.valueOf(createParquetDwh), "", ""),
@@ -261,7 +272,9 @@ public class DataProperties {
             String.valueOf(rowGroupSizeForParquetFiles),
             "",
             ""),
-        new ConfigFields("fhirdata.recursiveDepth", String.valueOf(recursiveDepth), "", ""));
+        new ConfigFields("fhirdata.recursiveDepth", String.valueOf(recursiveDepth), "", ""),
+        new ConfigFields(
+            "fhirdata.createParquetViews", String.valueOf(createParquetViews), "", ""));
   }
 
   ConfigFields getConfigFields(FhirEtlOptions options, Method getMethod) {

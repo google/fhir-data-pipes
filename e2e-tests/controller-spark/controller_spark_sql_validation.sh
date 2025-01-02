@@ -101,7 +101,7 @@ function setup() {
   THRIFTSERVER_URL='localhost:10001'
   if [[ $3 = "--use_docker_network" ]]; then
     SOURCE_FHIR_SERVER_URL='http://hapi-server:8080'
-    SINK_FHIR_SERVER_URL='http://sink-server:8080'
+    SINK_FHIR_SERVER_URL='http://sink-server-controller:8080'
     PIPELINE_CONTROLLER_URL='http://pipeline-controller:8080'
     THRIFTSERVER_URL='spark:10000'
   fi
@@ -125,19 +125,25 @@ function query_fhir_server(){
   local encounter_json_file=$3
   local obs_json_file=$4
 
-  print_message "Finding number of patients, encounters and obs in FHIR server"
+  print_message "Finding number of patients, encounters and obs in FHIR server ${server_url}"
 
-  curl -L -X GET -u hapi:hapi --connect-timeout 5 --max-time 20 \
+  curl -L -X GET -u hapi:hapi --connect-timeout 5 --header 'Cache-Control: no-cache' --max-time 20 "${server_url}/fhir/Patient${query_param}"
+
+  curl -L -X GET -u hapi:hapi --connect-timeout 5 --header 'Cache-Control: no-cache' --max-time 20 \
   "${server_url}/fhir/Patient${query_param}" 2>/dev/null \
   >"${HOME_PATH}/${PARQUET_SUBDIR}/${patient_json_file}"
 
-  curl -L -X GET -u hapi:hapi --connect-timeout 5 --max-time 20 \
+  print_message "Write Patients into File"
+
+  curl -L -X GET -u hapi:hapi --connect-timeout 5 --header 'Cache-Control: no-cache' --max-time 20 \
   "${server_url}/fhir/Encounter${query_param}" 2>/dev/null \
   >"${HOME_PATH}/${PARQUET_SUBDIR}/${encounter_json_file}"
 
-  curl -L -X GET -u hapi:hapi --connect-timeout 5 --max-time 20 \
+  curl -L -X GET -u hapi:hapi --connect-timeout 5 --header 'Cache-Control: no-cache' --max-time 20 \
   "${server_url}/fhir/Observation${query_param}" 2>/dev/null\
   >"${HOME_PATH}/${PARQUET_SUBDIR}/${obs_json_file}"
+
+  print_message "Write Observation into File"
 }
 
 #################################################
@@ -153,6 +159,7 @@ function query_fhir_server(){
 function fhir_source_query() {
 
   query_fhir_server "${SOURCE_FHIR_SERVER_URL}"  "patients.json" "encounters.json" "obs.json"
+  print_message "Before count"
   TOTAL_TEST_PATIENTS=$(jq '.total' "${HOME_PATH}/${PARQUET_SUBDIR}/patients.json")
   print_message "Total FHIR source test patients ---> ${TOTAL_TEST_PATIENTS}"
 
@@ -179,6 +186,27 @@ function run_pipeline() {
   --header 'Accept: */*' -v
 }
 
+function wait_for_completion() {
+  local runtime="15 minute"
+  local end_time=$(date -ud "$runtime" +%s)
+
+  while [[ $(date -u +%s) -le $end_time ]]
+  do
+    local pipeline_status=$(curl --location --request GET "${PIPELINE_CONTROLLER_URL}/status?" \
+    --connect-timeout 5 \
+    --header 'Content-Type: application/json' \
+    --header 'Accept: */*' -v \
+    | jq -r '.pipelineStatus')
+
+    if [[ "${pipeline_status}" == "RUNNING" ]]
+    then
+      sleep 5
+    else
+      break
+    fi
+  done
+}
+
 #######################################################################
 # Function to check periodically parquet files in the given directory
 # and verify the number of created resources against the number got from
@@ -197,16 +225,18 @@ function check_parquet() {
   local runtime="5 minute"
   local end_time=$(date -ud "$runtime" +%s)
   local output="${HOME_PATH}/${PARQUET_SUBDIR}"
-  local timeout=true
+  TOTAL_VIEW_PATIENTS=106
 
   if [[ "${isIncremental}" == "true" ]]
   then
     # In case of incremental run, we will have two directories
     # assuming batch run was executed before this.
     TOTAL_TEST_PATIENTS=$((2*TOTAL_TEST_PATIENTS + 1))
+    TOTAL_VIEW_PATIENTS=108
     TOTAL_TEST_ENCOUNTERS=$((2*TOTAL_TEST_ENCOUNTERS))
     TOTAL_TEST_OBS=$((2*TOTAL_TEST_OBS))
   fi
+
 
   while [[ $(date -u +%s) -le $end_time ]]
   do
@@ -237,8 +267,52 @@ function check_parquet() {
   done
 
   if [[ "${timeout}" == "true" ]]
+
+  # check whether output directory has received parquet files.
+  if [[ "$(ls -A $output)" ]]
+
   then
-    print_message "Could not validate parquet files."
+    local total_patients=$(java -Xms16g -Xmx16g -jar ./parquet-tools-1.11.1.jar rowcount \
+    "${output}/*/Patient/" | awk '{print $3}')
+    local total_encounters=$(java -Xms16g -Xmx16g -jar ./parquet-tools-1.11.1.jar rowcount \
+    "${output}/*/Encounter/" | awk '{print $3}')
+    local total_observations=$(java -Xms16g -Xmx16g -jar ./parquet-tools-1.11.1.jar rowcount \
+    "${output}/*/Observation/" | awk '{print $3}')
+
+    local total_patient_flat=$(java -Xms16g -Xmx16g -jar ./parquet-tools-1.11.1.jar rowcount \
+    "${output}/*/patient_flat/" | awk '{print $3}')
+    local total_encounter_flat=$(java -Xms16g -Xmx16g -jar ./parquet-tools-1.11.1.jar rowcount \
+    "${output}/*/encounter_flat/" | awk '{print $3}')
+    local total_obs_flat=$(java -Xms16g -Xmx16g -jar ./parquet-tools-1.11.1.jar rowcount \
+     "${output}/*/observation_flat/" | awk '{print $3}')
+
+    print_message "Total patients: $total_patients"
+    print_message "Total encounters: $total_encounters"
+    print_message "Total observations: $total_observations"
+
+    print_message "Total patient flat rows: ${total_patient_flat}"
+    print_message "Total encounter flat rows: ${total_encounter_flat}"
+    print_message "Total observation flat rows: ${total_obs_flat}"
+
+    if (( total_patients == TOTAL_TEST_PATIENTS \
+            && total_encounters == TOTAL_TEST_ENCOUNTERS && \
+            total_observations == TOTAL_TEST_OBS \
+            && total_obs_flat == TOTAL_TEST_OBS && \
+            total_patient_flat == TOTAL_VIEW_PATIENTS && \
+            total_encounter_flat == TOTAL_TEST_ENCOUNTERS )); then
+            print_message "Pipeline transformation successfully completed."
+    else
+            print_message "Mismatch in count of records"
+            print_message "Actual total patients: $total_patients, expected total: $TOTAL_TEST_PATIENTS"
+            print_message "Actual total encounters: $total_encounters, expected total: $TOTAL_TEST_ENCOUNTERS"
+            print_message "Total observations: $total_observations, expected total: $TOTAL_TEST_OBS"
+            print_message "Actual total materialized view patients: $total_patient_flat, expected total: $TOTAL_VIEW_PATIENTS"
+            print_message "Actual total materialized view encounters: $total_encounter_flat, expected total: $TOTAL_TEST_ENCOUNTERS"
+            print_message "Actual total materialized view observations: $total_obs_flat, expected total: $TOTAL_TEST_OBS"
+            exit 2
+    fi
+  else
+    print_message "No parquet files available."
     exit 2
   fi
 }
@@ -378,7 +452,7 @@ function validate_updated_resource() {
 
 
 #################################################
-# Function that counts resources in  FHIR server and compares output to what is 
+# Function that counts resources in  FHIR server and compares output to what is
 #  in the source FHIR server
 # Globals:
 #   HOME_PATH
@@ -417,8 +491,9 @@ function test_fhir_sink(){
 validate_args  "$@"
 setup "$@"
 fhir_source_query
-sleep 50
+sleep 30
 run_pipeline "FULL"
+
 if [[ "${DWH_TYPE}" == "PARQUET" ]]
 then
   check_parquet false
@@ -428,16 +503,18 @@ else
   test_fhir_sink "FULL"
 fi
 
+wait_for_completion
+check_parquet false
+test_fhir_sink "FULL"
+
+
 clear
 
 add_resource
 update_resource
-
-# Provide enough buffer time before triggering the incremental run so that the previous full run
-# completes fully (including creation of hive tables)
-sleep 60
 # Incremental run.
 run_pipeline "INCREMENTAL"
+
 if [[ "${DWH_TYPE}" == "PARQUET" ]]
 then
   check_parquet true
@@ -459,6 +536,16 @@ then
   run_pipeline "VIEWS"
 
 fi
+
+wait_for_completion
+check_parquet true
+fhir_source_query
+test_fhir_sink "INCREMENTAL"
+
+validate_resource_tables
+validate_resource_tables_data
+validate_updated_resource
+
 
 
 print_message "END!!"

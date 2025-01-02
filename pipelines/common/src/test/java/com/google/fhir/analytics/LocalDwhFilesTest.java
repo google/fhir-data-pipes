@@ -17,8 +17,12 @@ package com.google.fhir.analytics;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.startsWith;
 
 import ca.uhn.fhir.context.FhirContext;
+import com.google.common.io.Resources;
+import com.google.fhir.analytics.view.ViewDefinitionException;
+import com.google.fhir.analytics.view.ViewManager;
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -30,38 +34,60 @@ import java.time.Instant;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
+import org.apache.beam.sdk.io.FileSystems;
+import org.apache.beam.sdk.io.fs.ResolveOptions.StandardResolveOptions;
 import org.apache.beam.sdk.io.fs.ResourceId;
 import org.apache.commons.lang3.SystemUtils;
-import org.junit.Assert;
 import org.junit.Assume;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Assumptions;
+import org.junit.jupiter.api.Test;
 
 public class LocalDwhFilesTest {
   @Test
   public void getResourcePathTestNonWindows() {
-    Assume.assumeFalse(SystemUtils.IS_OS_WINDOWS);
+    Assumptions.assumeFalse(SystemUtils.IS_OS_WINDOWS);
     DwhFiles dwhFiles = new DwhFiles("/tmp", FhirContext.forR4Cached());
     assertThat(dwhFiles.getResourcePath("Patient").toString(), equalTo("/tmp/Patient/"));
   }
 
   @Test
   public void getResourcePathTestWindows() {
-    Assume.assumeTrue(SystemUtils.IS_OS_WINDOWS);
+    Assumptions.assumeTrue(SystemUtils.IS_OS_WINDOWS);
     DwhFiles dwhFiles = new DwhFiles("C:\\tmp", FhirContext.forR4Cached());
     assertThat(dwhFiles.getResourcePath("Patient").toString(), equalTo("C:\\tmp\\Patient\\"));
   }
 
   @Test
-  public void newIncrementalRunPathTestNonWindows() throws IOException {
+  public void getIncrementalRunPathTest() throws IOException {
     Assume.assumeFalse(SystemUtils.IS_OS_WINDOWS);
     DwhFiles instance = new DwhFiles("/tmp", FhirContext.forR4Cached());
+    ResourceId incrementalRunPath1 = instance.newIncrementalRunPath();
+    ResourceId file1 =
+        incrementalRunPath1.resolve("file1.txt", StandardResolveOptions.RESOLVE_FILE);
+    FileSystems.create(file1, "test");
+    ResourceId incrementalRunPath2 = instance.newIncrementalRunPath();
+    ResourceId file2 =
+        incrementalRunPath2.resolve("file2.txt", StandardResolveOptions.RESOLVE_FILE);
+    FileSystems.create(file2, "test");
+    // making sure that the last incremental path is returned
+    assertThat(
+        instance.getLatestIncrementalRunPath().toString(), equalTo(incrementalRunPath2.toString()));
+  }
+
+  @Test
+  public void newIncrementalRunPathTestNonWindows() throws IOException {
+    Assumptions.assumeFalse(SystemUtils.IS_OS_WINDOWS);
+    DwhFiles instance = new DwhFiles("/tmp", FhirContext.forR4Cached());
     ResourceId incrementalRunPath = instance.newIncrementalRunPath();
-    assertThat(incrementalRunPath.toString(), equalTo("/tmp/incremental_run/"));
+    assertThat(
+        incrementalRunPath.toString(),
+        startsWith("/tmp/incremental_run" + DwhFiles.TIMESTAMP_PREFIX));
   }
 
   @Test
   public void newIncrementalRunPathTesWindows() throws IOException {
-    Assume.assumeTrue(SystemUtils.IS_OS_WINDOWS);
+    Assumptions.assumeTrue(SystemUtils.IS_OS_WINDOWS);
     DwhFiles instance = new DwhFiles("C:\\tmp", FhirContext.forR4Cached());
     ResourceId incrementalRunPath = instance.newIncrementalRunPath();
     assertThat(incrementalRunPath.toString(), equalTo("C:\\tmp\\incremental_run\\"));
@@ -83,7 +109,7 @@ public class LocalDwhFilesTest {
         Paths.get(observationPath.toString(), "observationPath.txt"),
         "SAMPLE TEXT".getBytes(StandardCharsets.UTF_8));
 
-    Set<String> resourceTypes = instance.findNonEmptyFhirResourceTypes();
+    Set<String> resourceTypes = instance.findNonEmptyResourceDirs();
     assertThat("Could not find Patient", resourceTypes.contains("Patient"));
     assertThat("Could not find Observation", resourceTypes.contains("Observation"));
     assertThat(resourceTypes.size(), equalTo(2));
@@ -92,6 +118,44 @@ public class LocalDwhFilesTest {
     Files.delete(observationPath);
     Files.delete(Paths.get(patientPath.toString(), "patients.txt"));
     Files.delete(patientPath);
+    Files.delete(root);
+  }
+
+  @Test
+  public void findNonEmptyViewDirectoriesTest() throws IOException, ViewDefinitionException {
+    Path root = Files.createTempDirectory("DWH_FILES_TEST");
+    DwhFiles instance = new DwhFiles(root.toString(), FhirContext.forR4Cached());
+    String path = Resources.getResource("parquet-util-view-test").getFile();
+    ViewManager viewManager = ViewManager.createForDir(path);
+
+    Path obsPath = Paths.get(root.toString(), "observation_flat");
+    Files.createDirectories(obsPath);
+    Path testPath = Paths.get(root.toString(), "test_dir");
+    Files.createDirectories(testPath);
+
+    String viewFileName =
+        "Patient_main_patient_flat_output-parquet-th-112-ts-1724089542269-r-195410.parquet";
+    createFile(
+        Paths.get(obsPath.toString(), viewFileName),
+        "Sample Text".getBytes(StandardCharsets.UTF_8));
+
+    Path observationPath = Paths.get(root.toString(), "Observation");
+    Files.createDirectories(observationPath);
+    createFile(
+        Paths.get(observationPath.toString(), "observationPath.txt"),
+        "SAMPLE TEXT".getBytes(StandardCharsets.UTF_8));
+
+    Set<String> resourceTypes = instance.findNonEmptyViewDirs(viewManager);
+    assertThat("Could not find Patient", resourceTypes.contains("observation_flat"));
+    assertThat("Could not find Observation", !resourceTypes.contains("Observation"));
+    assertThat("Could not find Test Directory!", !resourceTypes.contains("test_dir"));
+    assertThat(resourceTypes.size(), equalTo(1));
+
+    Files.delete(Paths.get(observationPath.toString(), "observationPath.txt"));
+    Files.delete(observationPath);
+    Files.delete(Paths.get(obsPath.toString(), viewFileName));
+    Files.delete(obsPath);
+    Files.delete(testPath);
     Files.delete(root);
   }
 
@@ -134,7 +198,7 @@ public class LocalDwhFilesTest {
     createFile(timestampPath, Instant.now().toString().getBytes(StandardCharsets.UTF_8));
     DwhFiles dwhFiles = new DwhFiles(root.toString(), FhirContext.forR4Cached());
 
-    Assert.assertThrows(
+    Assertions.assertThrows(
         FileAlreadyExistsException.class,
         () -> dwhFiles.writeTimestampFile(DwhFiles.TIMESTAMP_FILE_START));
 
@@ -168,7 +232,7 @@ public class LocalDwhFilesTest {
 
     Instant actualInstant = dwhFiles.readTimestampFile(DwhFiles.TIMESTAMP_FILE_START);
 
-    Assert.assertEquals(currentInstant.getEpochSecond(), actualInstant.getEpochSecond());
+    Assertions.assertEquals(currentInstant.getEpochSecond(), actualInstant.getEpochSecond());
 
     Files.delete(timestampPath);
     Files.delete(root);
@@ -176,29 +240,59 @@ public class LocalDwhFilesTest {
 
   @Test
   public void passNonWindowsLocalPathDwhRootPrefix_returnsFileSeparator() {
-    Assume.assumeFalse(SystemUtils.IS_OS_WINDOWS);
+    Assumptions.assumeFalse(SystemUtils.IS_OS_WINDOWS);
     // Absolute Path
     String fs1 = DwhFiles.getFileSeparatorForDwhFiles("/rootDir/prefix");
-    Assert.assertEquals(File.separator, fs1);
+    Assertions.assertEquals(File.separator, fs1);
     // Relative Path
     String fs2 = DwhFiles.getFileSeparatorForDwhFiles("baseDir/prefix");
-    Assert.assertEquals(File.separator, fs2);
+    Assertions.assertEquals(File.separator, fs2);
   }
 
   @Test
   public void passWindowsLocalPathDwhRootPrefix_returnsFileSeparator() {
-    Assume.assumeTrue(SystemUtils.IS_OS_WINDOWS);
+    Assumptions.assumeTrue(SystemUtils.IS_OS_WINDOWS);
     // Absolute Path
     String fs1 = DwhFiles.getFileSeparatorForDwhFiles("C:\\prefix");
-    Assert.assertEquals(File.separator, fs1);
+    Assertions.assertEquals(File.separator, fs1);
     String fs2 = DwhFiles.getFileSeparatorForDwhFiles("C:\\rootDir\\prefix");
-    Assert.assertEquals(File.separator, fs2);
+    Assertions.assertEquals(File.separator, fs2);
     // Relative Path
     String fs3 = DwhFiles.getFileSeparatorForDwhFiles("baseDir\\prefix");
-    Assert.assertEquals(File.separator, fs3);
+    Assertions.assertEquals(File.separator, fs3);
   }
 
   private void createFile(Path path, byte[] bytes) throws IOException {
     Files.write(path, bytes);
+  }
+
+  @Test
+  public void testGetAllChildDirectoriesOneLevelDeep() throws IOException {
+    Path rootDir = Files.createTempDirectory("DWH_FILES_TEST");
+    Path childDir1 = Paths.get(rootDir.toString(), "childDir1");
+    Files.createDirectories(childDir1);
+    Path fileAtChildDir1 = Path.of(childDir1.toString(), "file1.txt");
+    createFile(fileAtChildDir1, "SAMPLE TEXT".getBytes(StandardCharsets.UTF_8));
+    Path childDir2 = Paths.get(rootDir.toString(), "childDir2");
+    Files.createDirectories(childDir2);
+    Path fileAtChildDir2 = Path.of(childDir2.toString(), "file2.txt");
+    createFile(fileAtChildDir2, "SAMPLE TEXT".getBytes(StandardCharsets.UTF_8));
+
+    // The following directory should not appear in the results of `getAllChildDirectories`
+    // because only dirs at one-level deep should be returned.
+    Path childDir21 = Paths.get(childDir2.toString(), "childDir21");
+    Files.createDirectories(childDir21);
+    Path fileAtChildDir21 = Path.of(childDir21.toString(), "file3.txt");
+    createFile(fileAtChildDir21, "SAMPLE TEXT".getBytes(StandardCharsets.UTF_8));
+
+    Set<ResourceId> childDirectories = DwhFiles.getAllChildDirectories(rootDir.toString());
+
+    assertThat(childDirectories.size(), equalTo(2));
+    assertThat(
+        childDirectories.contains(FileSystems.matchNewResource(childDir1.toString(), true)),
+        equalTo(true));
+    assertThat(
+        childDirectories.contains(FileSystems.matchNewResource(childDir2.toString(), true)),
+        equalTo(true));
   }
 }

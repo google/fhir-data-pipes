@@ -15,26 +15,32 @@
 # limitations under the License.
 
 ################################ WAIT FOR STREAMING ########################### Script used in e2e-test that waits for Streaming pipeline to sink resources
+#
+# Example usage:
+#   ./wait_for_streaming.sh --FHIR_SERVER_URL=http://openmrs:8080 --SINK_SERVER=http://sink-server-for-openmrs:8080
 
 set -e
 
 #################################################
-# Function that defines the endpoints
+# Set the global variables
 # Globals:
 #   FHIR_SERVER_URL
 #   SINK_SERVER
-# Arguments:
-#   Flag whether to use docker network. By default, host URL is  used. 
 #################################################
-function setup() {  
-  FHIR_SERVER_URL='http://localhost:8099/openmrs/ws/fhir2/R4'
-  SINK_SERVER='http://localhost:8098'
-
-  if [[ $1 = "--use_docker_network" ]]; then
-    FHIR_SERVER_URL='http://openmrs:8080/openmrs/ws/fhir2/R4'
-    SINK_SERVER='http://sink-server:8080'
-  fi
-}
+while [ $# -gt 0 ]; do
+  case "$1" in
+    --FHIR_SERVER_URL=*)
+      FHIR_SERVER_URL="${1#*=}"
+      ;;
+    --SINK_SERVER=*)
+      SINK_SERVER="${1#*=}"
+      ;;
+    *)
+      printf "Error: Invalid argument %s" "$1"
+      exit 1
+  esac
+  shift
+done
 
 #################################################
 # Function that starts streaming pipeline
@@ -46,7 +52,7 @@ function start_pipeline() {
     echo "STARTING STREAMING PIPELINE"
     cd /workspace/pipelines
     ../utils/start_pipelines.sh -s -streamingLog /workspace/e2e-tests/log.log \
-    -u ${FHIR_SERVER_URL}  -o /workspace/e2e-tests/STREAMING \
+    -u ${FHIR_SERVER_URL}/openmrs/ws/fhir2/R4  -o /workspace/e2e-tests/STREAMING \
     -secondsToFlushStreaming 5 -fhirSinkPath ${SINK_SERVER}/fhir \
     -sinkUsername hapi -sinkPassword hapi
 }
@@ -61,7 +67,7 @@ function wait_for_sink() {
     local count=0
     cd /workspace
     python3 synthea-hiv/uploader/main.py OpenMRS \
-    ${FHIR_SERVER_URL} \
+    ${FHIR_SERVER_URL}/openmrs/ws/fhir2/R4 \
     --input_dir e2e-tests/streaming_test_patient --convert_to_openmrs
     until [[ ${count} -ne 0 ]]; do
       # TODO: There seems to be a race condition here: we wait for results
@@ -76,6 +82,5 @@ function wait_for_sink() {
 
 }
 
-setup $1
 start_pipeline
 wait_for_sink

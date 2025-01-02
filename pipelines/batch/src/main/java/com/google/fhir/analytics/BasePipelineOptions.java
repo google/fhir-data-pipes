@@ -25,6 +25,16 @@ import org.apache.beam.sdk.options.PipelineOptions;
  * configurations
  */
 public interface BasePipelineOptions extends PipelineOptions {
+
+  @Description(
+      "The directory from which SQL-on-FHIR-v2 ViewDefinition json files are read. "
+          + "Note: For the Incremental Run, this directory must contain all the ViewDefinitions "
+          + "used to create views in both data-warehouses!")
+  @Default.String("")
+  String getViewDefinitionsDir();
+
+  void setViewDefinitionsDir(String value);
+
   @Description(
       "The approximate size (bytes) of the row-groups in Parquet files. When this size is reached,"
           + " the content is flushed to disk. A large value means more data for one column can fit"
@@ -36,6 +46,16 @@ public interface BasePipelineOptions extends PipelineOptions {
   int getRowGroupSizeForParquetFiles();
 
   void setRowGroupSizeForParquetFiles(int value);
+
+  @Description(
+      "This is an experimental feature which is intended for Dataflow runner only. The purpose is "
+          + "to cache output Parquet records for each Beam bundle such that the DoFn "
+          + "is idempotent, or to be more precise, can be retried for an incomplete "
+          + "bundle (Beam's bundle not FHIR) without corrupting the Parquet output.")
+  @Default.Boolean(false)
+  boolean getCacheBundleForParquetWrites();
+
+  void setCacheBundleForParquetWrites(boolean value);
 
   @Description(
       "Directory containing the structure definition files for any custom profiles that needs to be"

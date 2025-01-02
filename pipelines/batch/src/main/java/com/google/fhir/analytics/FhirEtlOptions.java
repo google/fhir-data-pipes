@@ -22,6 +22,13 @@ import org.apache.beam.sdk.options.Validation.Required;
 /** Options supported by {@link FhirEtl}. */
 public interface FhirEtlOptions extends BasePipelineOptions {
 
+  @Description(
+      "Mode through which the FHIR resources have to be fetched from the source FHIR server")
+  @Default.Enum("FHIR_SEARCH")
+  FhirFetchMode getFhirFetchMode();
+
+  void setFhirFetchMode(FhirFetchMode fhirFetchMode);
+
   @Description("Fhir source server URL, e.g., http://localhost:8091/fhir, etc.")
   @Required
   @Default.String("")
@@ -216,13 +223,11 @@ public interface FhirEtlOptions extends BasePipelineOptions {
   void setRecreateSinkTables(Boolean value);
 
   @Description(
-      "The directory from which SQL-on-FHIR-v2 ViewDefinition json files are read.\n"
-          + "Note currently this requires setting sinkDbConfigPath as this is\n"
-          + "currently the only option for writing views (more to be added).")
-  @Default.String("")
-  String getViewDefinitionsDir();
+      "If set, flat Parquet files corresponding to input ViewDefinition are created as well.")
+  @Default.Boolean(false)
+  Boolean isCreateParquetViews();
 
-  void setViewDefinitionsDir(String value);
+  void setCreateParquetViews(Boolean value);
 
   @Description(
       "The path to the data-warehouse directory of Parquet files to be read. The content of this "
@@ -246,24 +251,24 @@ public interface FhirEtlOptions extends BasePipelineOptions {
   // void setSinkCsvDir();
 
   @Description(
-      "The pattern for input JSON files, e.g., 'PATH/*'. Each file should be one Bundle resource. "
-          + "[EXPERIMENTAL]")
+      "Comma separated list of file patterns for input JSON files, e.g., 'PATH1/*,PATH2/*'. Each "
+          + "file should be one Bundle resource [EXPERIMENTAL]")
   @Default.String("")
-  String getSourceJsonFilePattern();
+  String getSourceJsonFilePatternList();
 
-  void setSourceJsonFilePattern(String value);
+  void setSourceJsonFilePatternList(String value);
 
   @Description(
-      "The pattern for input NDJSON files, e.g., 'PATH/*'. Each file contain FHIR resources"
-          + " serialized with no whitespace, and separated by a newline pair.")
+      "Comma separated list of input NDJSON files, e.g., 'PATH1/*,PATH2/*'. Each file contain FHIR "
+          + "resources serialized with no whitespace, and separated by a newline pair.")
   @Default.String("")
-  String getSourceNDJsonFilePattern();
-
-  void setSourceNDJsonFilePattern(String value);
+  String getSourceNdjsonFilePatternList();
 
   @Description("Flag to switch off/on creation of parquet files; can be turned off when syncing from a FHIR server to another.")
   @Default.Boolean(true)
   Boolean isCreateParquetDwh();
 
   void setCreateParquetDwh(Boolean value);
+
+  void setSourceNdjsonFilePatternList(String value);
 }

@@ -36,6 +36,8 @@ public abstract class StructureDefinitions {
           .add("time")
           .add("string")
           .add("oid")
+          // Note `xhtml` types are currently skipped because of:
+          // https://github.com/google/fhir-data-pipes/issues/1014
           .add("xhtml")
           .add("decimal")
           .add("integer")

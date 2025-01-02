@@ -93,10 +93,13 @@ public class DebeziumListener extends RouteBuilder {
             fhirContext.getVersion().getVersion(),
             "",
             params.outputParquetPath,
+            "",
+            false,
             params.secondsToFlushParquetFiles,
             params.rowGroupSizeForParquetFiles,
             "streaming_",
-            1);
+            1,
+            false);
     DataSource jdbcSource =
         JdbcConnectionPools.getInstance()
             .getPooledDataSource(

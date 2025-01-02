@@ -46,6 +46,9 @@ ENV NUM_FILE_SHARDS=3
 ENV FHIR_DATABASE_CONFIG_PATH="/workspace/utils/hapi-postgres-config.json"
 ENV JDBC_MODE_HAPI=false
 ENV RUNNER="DirectRunner"
+ENV FHIR_FETCH_MODE="FHIR_SEARCH"
+ENV VIEW_DEFINITIONS_DIR="/workspace/docker/config/views/"
+ENV CREATE_PARQUET_VIEWS=true
 
 
 ENTRYPOINT java -jar /usr/src/Main/app.jar  \
@@ -55,4 +58,6 @@ ENTRYPOINT java -jar /usr/src/Main/app.jar  \
            --outputParquetPath=${PARQUET_PATH} --jdbcModeEnabled=${JDBC_MODE_ENABLED} \
            --jdbcMaxPoolSize=${JDBC_MAX_POOL_SIZE} \
            --fhirDatabaseConfigPath=${FHIR_DATABASE_CONFIG_PATH} --jdbcInitialPoolSize=${JDBC_INITIAL_POOL_SIZE} \
-           --jdbcFetchSize=${JDBC_FETCH_SIZE} --jdbcModeHapi=${JDBC_MODE_HAPI} --runner=${RUNNER}
+           --jdbcFetchSize=${JDBC_FETCH_SIZE} --jdbcModeHapi=${JDBC_MODE_HAPI} --runner=${RUNNER} \
+           --fhirFetchMode=${FHIR_FETCH_MODE} \
+           --viewDefinitionsDir=${VIEW_DEFINITIONS_DIR} --createParquetViews=${CREATE_PARQUET_VIEWS}
