@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2024 Google LLC
+ * Copyright 2020-2025 Google LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@ import ca.uhn.fhir.context.ParserOptions;
 import ca.uhn.fhir.parser.IParser;
 import com.cerner.bunsen.exception.ProfileException;
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Strings;
 import com.google.fhir.analytics.JdbcConnectionPools.DataSourceConfig;
 import com.google.fhir.analytics.model.DatabaseConfiguration;
 import com.google.fhir.analytics.view.ViewApplicationException;
@@ -87,7 +88,7 @@ abstract class FetchSearchPageFn<T> extends DoFn<T, KV<String, Integer>> {
 
   protected final String parquetFile;
 
-  protected final Boolean createParquetDwh;
+  protected final Boolean generateParquetFiles;
 
   private final int secondsToFlush;
 
@@ -136,7 +137,7 @@ abstract class FetchSearchPageFn<T> extends DoFn<T, KV<String, Integer>> {
     this.oAuthClientSecret = options.getFhirServerOAuthClientSecret();
     this.stageIdentifier = stageIdentifier;
     this.parquetFile = options.getOutputParquetPath();
-    this.createParquetDwh = options.isCreateParquetDwh();
+    this.generateParquetFiles = options.isGenerateParquetFiles();
     this.secondsToFlush = options.getSecondsToFlushParquetFiles();
     this.rowGroupSize = options.getRowGroupSizeForParquetFiles();
     if (DATAFLOW_RUNNER.equals(options.getRunner().getSimpleName())) {
@@ -212,7 +213,7 @@ abstract class FetchSearchPageFn<T> extends DoFn<T, KV<String, Integer>> {
             oAuthClientSecret,
             fhirContext);
     fhirSearchUtil = new FhirSearchUtil(fetchUtil);
-    if (createParquetDwh) {
+    if (generateParquetFiles && !Strings.isNullOrEmpty(parquetFile)) {
       parquetUtil =
           new ParquetUtil(
               fhirContext.getVersion().getVersion(),

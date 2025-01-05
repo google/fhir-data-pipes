@@ -222,8 +222,6 @@ function wait_for_completion() {
 #######################################################################
 function check_parquet() {
   local isIncremental=$1
-  local runtime="5 minute"
-  local end_time=$(date -ud "$runtime" +%s)
   local output="${HOME_PATH}/${PARQUET_SUBDIR}"
   TOTAL_VIEW_PATIENTS=106
 
@@ -237,40 +235,8 @@ function check_parquet() {
     TOTAL_TEST_OBS=$((2*TOTAL_TEST_OBS))
   fi
 
-
-  while [[ $(date -u +%s) -le $end_time ]]
-  do
-    # check whether output directory has started receiving parquet files.
-    if [[ "$(ls -A $output)" ]]
-    then
-      local total_patients=$(java -Xms16g -Xmx16g -jar ./parquet-tools-1.11.1.jar rowcount \
-      "${output}/*/Patient/" | awk '{print $3}')
-      local total_encounters=$(java -Xms16g -Xmx16g -jar ./parquet-tools-1.11.1.jar rowcount \
-      "${output}/*/Encounter/" | awk '{print $3}')
-      local total_observations=$(java -Xms16g -Xmx16g -jar ./parquet-tools-1.11.1.jar rowcount \
-      "${output}/*/Observation/" | awk '{print $3}')
-
-      print_message "Total patients: $total_patients"
-      print_message "Total encounters: $total_encounters"
-      print_message "Total observations: $total_observations"
-
-      if [[ "${total_patients}" == "${TOTAL_TEST_PATIENTS}" && "${total_encounters}" \
-              == "${TOTAL_TEST_ENCOUNTERS}" && "${total_observations}" == "${TOTAL_TEST_OBS}" ]] \
-          ; then
-          print_message "Pipeline transformation successfully completed."
-          timeout=false
-          break
-      else
-          sleep 10
-      fi
-    fi
-  done
-
-  if [[ "${timeout}" == "true" ]]
-
   # check whether output directory has received parquet files.
   if [[ "$(ls -A $output)" ]]
-
   then
     local total_patients=$(java -Xms16g -Xmx16g -jar ./parquet-tools-1.11.1.jar rowcount \
     "${output}/*/Patient/" | awk '{print $3}')
@@ -451,6 +417,26 @@ function validate_updated_resource() {
 }
 
 
+function validate_updated_resource_in_fhir_sink() {
+  local fhir_username="hapi"
+  local fhir_password="hapi"
+  local fhir_url_extension="/fhir"
+
+  # Fetch the patient resource using the Patient ID
+  local updated_family_name=$(curl -X GET -H "Content-Type: application/json; charset=utf-8" -u $fhir_username:$fhir_password \
+  --connect-timeout 5 --max-time 20 "${SINK_FHIR_SERVER_URL}${fhir_url_extension}/Patient/${PATIENT_ID}" \
+  | jq -r '.name[0].family')
+
+  if [[ "${updated_family_name}" == "Anderson" ]]
+  then
+    print_message "Updated Patient data for ${PATIENT_ID} in FHIR sink verified successfully."
+  else
+    print_message "Updated Patient data verification for ${PATIENT_ID} in FHIR sink failed."
+    exit 6
+  fi
+}
+
+
 #################################################
 # Function that counts resources in  FHIR server and compares output to what is
 #  in the source FHIR server
@@ -493,20 +479,13 @@ setup "$@"
 fhir_source_query
 sleep 30
 run_pipeline "FULL"
-
+wait_for_completion
 if [[ "${DWH_TYPE}" == "PARQUET" ]]
 then
   check_parquet false
 else
-  # Provide enough  Buffer time for FULL pipeline to completely run before testing the sink FHIR server
-  sleep 900
   test_fhir_sink "FULL"
 fi
-
-wait_for_completion
-check_parquet false
-test_fhir_sink "FULL"
-
 
 clear
 
@@ -514,38 +493,20 @@ add_resource
 update_resource
 # Incremental run.
 run_pipeline "INCREMENTAL"
-
+wait_for_completion
 if [[ "${DWH_TYPE}" == "PARQUET" ]]
 then
   check_parquet true
-else
-  fhir_source_query
-  # Provide enough Buffer time for FULL pipeline to completely run before testing the sink FHIR server
-  sleep 300
-  test_fhir_sink "INCREMENTAL"
-fi
-
-if [[ "${DWH_TYPE}" == "PARQUET" ]]
-then
   validate_resource_tables
   validate_resource_tables_data
   validate_updated_resource
-
   # View recreation run
   # TODO add validation for the views as well
   run_pipeline "VIEWS"
-
+else
+  fhir_source_query
+  test_fhir_sink "INCREMENTAL"
+  validate_updated_resource_in_fhir_sink
 fi
-
-wait_for_completion
-check_parquet true
-fhir_source_query
-test_fhir_sink "INCREMENTAL"
-
-validate_resource_tables
-validate_resource_tables_data
-validate_updated_resource
-
-
 
 print_message "END!!"

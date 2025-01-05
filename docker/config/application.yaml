@@ -26,8 +26,7 @@ fhirdata:
   # fhirServerUrl: "http://hapi-server:8080/fhir"
   dbConfig: "config/hapi-postgres-config_local.json"
   dwhRootPrefix: "/dwh/controller_DWH"
-  #Whether to create a Parquet DWH or not
-  createParquetDwh: true
+  generateParquetFiles: true
   incrementalSchedule: "0 0 * * * *"
   purgeSchedule: "0 30 * * * *"
   numOfDwhSnapshotsToRetain: 2

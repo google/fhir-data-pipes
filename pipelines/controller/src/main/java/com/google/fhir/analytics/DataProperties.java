@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2024 Google LLC
+ * Copyright 2020-2025 Google LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -119,7 +119,7 @@ public class DataProperties {
 
   private int recursiveDepth;
 
-  private boolean createParquetDwh;
+  private boolean generateParquetFiles;
 
   @PostConstruct
   void validateProperties() {
@@ -137,20 +137,10 @@ public class DataProperties {
 
     Preconditions.checkArgument(
         !Strings.isNullOrEmpty(dwhRootPrefix), "dwhRootPrefix is required!");
-
-    if (!Strings.isNullOrEmpty(dbConfig)) {
-      if (!Strings.isNullOrEmpty(fhirServerUrl)) {
-        logger.warn("Both fhirServerUrl and dbConfig are set; ignoring fhirServerUrl!");
-      }
-      logger.info("Using JDBC mode since dbConfig is set.");
-    } else {
-      // This should always be true because of the first Precondition.
-      Preconditions.checkArgument(!Strings.isNullOrEmpty(fhirServerUrl));
-      logger.info("Using FHIR-search mode since dbConfig is not set.");
-    }
     Preconditions.checkState(fhirVersion != null, "FhirVersion cannot be empty");
     Preconditions.checkState(!createHiveResourceTables || !thriftserverHiveConfig.isEmpty());
-    Preconditions.checkState(!createHiveResourceTables || createParquetDwh);
+    Preconditions.checkState(!createHiveResourceTables || generateParquetFiles);
+    Preconditions.checkState(!createParquetViews || generateParquetFiles);
   }
 
   private PipelineConfig.PipelineConfigBuilder addFlinkOptions(FhirEtlOptions options) {
@@ -228,7 +218,7 @@ public class DataProperties {
     String timestampSuffix = DwhFiles.safeTimestampSuffix();
     options.setOutputParquetPath(dwhRootPrefix + DwhFiles.TIMESTAMP_PREFIX + timestampSuffix);
 
-    options.setCreateParquetDwh(createParquetDwh);
+    options.setGenerateParquetFiles(generateParquetFiles);
 
     PipelineConfig.PipelineConfigBuilder pipelineConfigBuilder = addFlinkOptions(options);
 
@@ -249,7 +239,8 @@ public class DataProperties {
             "fhirdata.fhirFetchMode", fhirFetchMode != null ? fhirFetchMode.name() : "", "", ""),
         new ConfigFields("fhirdata.fhirServerUrl", fhirServerUrl, "", ""),
         new ConfigFields("fhirdata.dwhRootPrefix", dwhRootPrefix, "", ""),
-        new ConfigFields("fhirdata.createParquetDwh", String.valueOf(createParquetDwh), "", ""),
+        new ConfigFields(
+            "fhirdata.generateParquetFiles", String.valueOf(generateParquetFiles), "", ""),
         new ConfigFields("fhirdata.incrementalSchedule", incrementalSchedule, "", ""),
         new ConfigFields("fhirdata.purgeSchedule", purgeSchedule, "", ""),
         new ConfigFields(
