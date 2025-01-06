@@ -25,7 +25,7 @@
 
   <properties>
     <compile.source>11</compile.source>
-    <hapi.fhir.version>7.6.0</hapi.fhir.version>
+    <hapi.fhir.version>7.6.1</hapi.fhir.version>
     <avro.version>1.12.0</avro.version>
     <junit.version>4.13.2</junit.version>
     <hamcrest.version>3.0</hamcrest.version>
@@ -35,7 +35,7 @@
     <maven-javadoc.plugin.version>3.11.1</maven-javadoc.plugin.version>
     <maven-project-info-reports.plugin.version>3.8.0</maven-project-info-reports.plugin.version>
     <slf4j.version>2.0.16</slf4j.version>
-    <logback.version>1.5.12</logback.version>
+    <logback.version>1.5.16</logback.version>
   </properties>
 
   <modules>
