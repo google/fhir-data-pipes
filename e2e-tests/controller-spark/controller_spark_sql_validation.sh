@@ -478,6 +478,7 @@ validate_args  "$@"
 setup "$@"
 fhir_source_query
 sleep 30
+# Full run.
 run_pipeline "FULL"
 wait_for_completion
 if [[ "${DWH_TYPE}" == "PARQUET" ]]
