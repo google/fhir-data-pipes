@@ -1020,7 +1020,7 @@ source to Parquet format.</p>
 <li>Configurable support for FHIR profiles and extensions</li>
 <li>(Optional) In-pipeline 'flattening' of FHIR data
   using <a href="https://build.fhir.org/ig/FHIR/sql-on-fhir-v2/StructureDefinition-ViewDefinition.html">ViewDefinition</a>
-  resources - <a href="views#viewdefinition-resource">read more</a></li>
+  resources - <a href="../views#viewdefinition-resource">read more</a></li>
 </ul>
 <h3 id="loading">Loading</h3>
 <p>FHIR Data Pipes supports different SQL Data Warehouse options depending on the
@@ -1040,7 +1040,7 @@ full", "incremental", and "merger" pipelines together.</p>
 <li>The Pipelines Controller is built on top of pipelines and shares many of the
   same settings</li>
 <li>Using the controller module you can schedule periodic incremental updates or
-  use the <a href="../additional#web-control-panel">Web Control Panel</a> to start the
+  use the <a href="../../additional/#web-control-panel">Web Control Panel</a> to start the
   pipeline
   manually</li>
 </ul>
@@ -1060,12 +1060,12 @@ requirements, and expertise of the team.</p>
 <tbody>
 <tr>
 <td>Simple relational database to power dashboards or reporting</td>
-<td>Custom schema defined as ViewDefinition Resources - <a href="tutorial_lossy_example/">see tutorial</a></td>
+<td>Custom schema defined as ViewDefinition Resources - <a href="../views/#query-simplification">see Views</a></td>
 <td>By design, this will provide a subset of FHIR data in flat tables</td>
 </tr>
 <tr>
 <td>Horizontally scalable query architecture with lossless FHIR data</td>
-<td>Parquet based DWH and distributed query engine (e.g. SparkSQL) - <a href="tutorial_add_dashboard/">see tutorial</a></td>
+<td>Parquet based DWH and distributed query engine (e.g. SparkSQL) - <a href="../../tutorials/add_dashboard/">see tutorial</a></td>
 <td>This requires a distributed file system for Parquet files and a distributed query engine.</td>
 </tr>
 <tr>
