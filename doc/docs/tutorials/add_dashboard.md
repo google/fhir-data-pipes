@@ -148,7 +148,7 @@ that as a bar chart over time. The query is provided below.
   database to "Single Machine Test Data" or the name you chose.
 
 Enter the following as the query as either a raw SQL-on-FHIR query or using
-the [pre-defined](../../concepts/#sql-virtual-views) observation_flat views:
+the [pre-defined](../../concepts/views) observation_flat views:
 
 === "Using SQL-on-FHIR Query"
 
