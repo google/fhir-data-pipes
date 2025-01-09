@@ -12,7 +12,7 @@ materialized) which can then be queried using simpler SQL statements.
 ## Parquet-on-FHIR schema
 The _FHIR Data Pipes ETL Pipelines_ convert raw FHIR 
 resources to a _Parquet-on-FHIR_ schema representation. This takes place for
-each resource type and follows the [FHIR Data Pipes Schema Mapping Rules](https://github.com/google/fhir-data-pipes/blob/master/doc/schema.md){:.external}.
+each resource type and follows the [Schema Mapping Rules](https://github.com/google/fhir-data-pipes/blob/master/doc/schema.md).
 
 The generated columnar Parquet files provide the 'base data warehouse' that can
 be queried using any Parquet-aware tools (e.g a SQL based query engine) or 
