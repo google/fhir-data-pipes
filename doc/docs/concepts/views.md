@@ -10,7 +10,7 @@ to address this is to flatten the data into a set of views (virtual or
 materialized) which can then be queried using simpler SQL statements.
 
 ## Parquet-on-FHIR schema
-The output of the _FHIR Data Pipes ETL Pipelines_ is conversion of raw FHIR 
+The _FHIR Data Pipes ETL Pipelines_ convert raw FHIR 
 resources to a _Parquet-on-FHIR_ schema representation. This takes place for
 each resource type and follows the [FHIR Data Pipes Schema Mapping Rules](https://github.com/google/fhir-data-pipes/blob/master/doc/schema.md){:.external}.
 
