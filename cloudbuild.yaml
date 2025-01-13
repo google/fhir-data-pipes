@@ -218,7 +218,7 @@ steps:
 #   - docker logs pipeline-controller
 
 - name: 'docker/compose'
-  id: 'Bring down controller and Spark containers for FHIR server to FHIR server sync'
+  id: 'Bring down controller and Spark containers'
   args: [ '-f', './docker/compose-controller-spark-sql-single.yaml', 'down' ,'-v']
   waitFor: ['Run E2E Test for Dockerized Controller and Spark Thriftserver']
 
