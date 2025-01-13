@@ -227,7 +227,7 @@ steps:
 
 # Spinning up only the pipeline controller for FHIR server to FHIR server sync
 - name: 'docker/compose'
-  id: 'Bring up the pipeline controller for for FHIR server to FHIR server sync'
+  id: 'Bring up the pipeline controller for FHIR server to FHIR server sync'
   env:
     - PIPELINE_CONFIG=/workspace/docker/config
     - DWH_ROOT=/workspace/e2e-tests/controller-spark/dwh
@@ -242,7 +242,7 @@ steps:
 
 - name: '${_REPOSITORY}/e2e-tests/controller-spark:${_TAG}'
   id: 'Run E2E Test for Dockerized Controller in FHIR server to FHIR server sync mode'   
-  waitFor: ['Bring up the pipeline controller for for FHIR server to FHIR server sync']
+  waitFor: ['Bring up the pipeline controller for FHIR server to FHIR server sync']
   env:
     - DWH_TYPE="FHIR"  
 
