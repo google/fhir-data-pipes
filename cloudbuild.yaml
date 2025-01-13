@@ -224,7 +224,7 @@ steps:
 
 - name: 'docker/compose'
   id: 'Launch HAPI FHIR Sink Server'
-  args: [ '-f', './docker/sink-compose.yml', '-p', 'sink-server-controller', 'up','--force-recreate', '-d' ]
+  args: [ '-f', './docker/sink-compose.yml', '-p', 'sink-server', 'up','--force-recreate', '-d' ]
   env:
     - SINK_SERVER_NAME=sink-server-controller
     - SINK_SERVER_PORT=9001
