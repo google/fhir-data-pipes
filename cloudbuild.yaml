@@ -246,7 +246,7 @@ steps:
   waitFor: ['Launch HAPI FHIR Sink Server Controller']         
 
 - name: '${_REPOSITORY}/e2e-tests/controller-spark:${_TAG}'
-  id: 'Run E2E Test for Dockerized Controller for FHIR server to FHIR server sync'   
+  id: 'Run E2E Test for Dockerized Controller in FHIR server to FHIR server sync mode'   
   waitFor: ['Bring up the pipeline controller']
   env:
     - DWH_TYPE="FHIR"  
