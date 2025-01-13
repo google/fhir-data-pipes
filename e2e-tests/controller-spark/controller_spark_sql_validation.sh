@@ -68,7 +68,7 @@ function print_message() {
   local print_prefix=""
   if [[ "${DWH_TYPE}" == "PARQUET" ]]
   then
-    print_prefix="E2E TEST FOR CONTROLLER SPARK DEPLOYMENT:"
+    print_prefix="E2E TEST FOR CONTROLLER PARQUET BASED DEPLOYMENT:"
   else
     print_prefix="E2E TEST FOR CONTROLLER FHIR SERVER TO FHIR SERVER SYNC:"
   fi
