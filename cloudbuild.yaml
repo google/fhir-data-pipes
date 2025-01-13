@@ -223,7 +223,7 @@ steps:
   waitFor: ['Run E2E Test for Dockerized Controller and Spark Thriftserver']
 
 - name: 'docker/compose'
-  id: 'Launch HAPI FHIR Sink Server Controller'
+  id: 'Launch HAPI FHIR Sink Server'
   args: [ '-f', './docker/sink-compose.yml', '-p', 'sink-server-controller', 'up','--force-recreate', '-d' ]
   env:
     - SINK_SERVER_NAME=sink-server-controller
