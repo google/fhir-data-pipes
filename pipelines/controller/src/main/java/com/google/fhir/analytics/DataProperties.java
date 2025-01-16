@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2024 Google LLC
+ * Copyright 2020-2025 Google LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -119,6 +119,8 @@ public class DataProperties {
 
   private int recursiveDepth;
 
+  private boolean generateParquetFiles;
+
   @PostConstruct
   void validateProperties() {
     CronExpression.parse(incrementalSchedule);
@@ -133,8 +135,12 @@ public class DataProperties {
         !Strings.isNullOrEmpty(fhirServerUrl) || !Strings.isNullOrEmpty(dbConfig),
         "At least one of fhirServerUrl or dbConfig should be set!");
 
+    Preconditions.checkArgument(
+        !Strings.isNullOrEmpty(dwhRootPrefix), "dwhRootPrefix is required!");
     Preconditions.checkState(fhirVersion != null, "FhirVersion cannot be empty");
     Preconditions.checkState(!createHiveResourceTables || !thriftserverHiveConfig.isEmpty());
+    Preconditions.checkState(!createHiveResourceTables || generateParquetFiles);
+    Preconditions.checkState(!createParquetViews || generateParquetFiles);
   }
 
   private PipelineConfig.PipelineConfigBuilder addFlinkOptions(FhirEtlOptions options) {
@@ -212,6 +218,8 @@ public class DataProperties {
     String timestampSuffix = DwhFiles.safeTimestampSuffix();
     options.setOutputParquetPath(dwhRootPrefix + DwhFiles.TIMESTAMP_PREFIX + timestampSuffix);
 
+    options.setGenerateParquetFiles(generateParquetFiles);
+
     PipelineConfig.PipelineConfigBuilder pipelineConfigBuilder = addFlinkOptions(options);
 
     // Get hold of thrift server parquet directory from dwhRootPrefix config.
@@ -231,6 +239,8 @@ public class DataProperties {
             "fhirdata.fhirFetchMode", fhirFetchMode != null ? fhirFetchMode.name() : "", "", ""),
         new ConfigFields("fhirdata.fhirServerUrl", fhirServerUrl, "", ""),
         new ConfigFields("fhirdata.dwhRootPrefix", dwhRootPrefix, "", ""),
+        new ConfigFields(
+            "fhirdata.generateParquetFiles", String.valueOf(generateParquetFiles), "", ""),
         new ConfigFields("fhirdata.incrementalSchedule", incrementalSchedule, "", ""),
         new ConfigFields("fhirdata.purgeSchedule", purgeSchedule, "", ""),
         new ConfigFields(
