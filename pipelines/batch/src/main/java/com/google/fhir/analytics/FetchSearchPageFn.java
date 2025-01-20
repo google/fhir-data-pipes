@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2024 Google LLC
+ * Copyright 2020-2025 Google LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -88,6 +88,8 @@ abstract class FetchSearchPageFn<T> extends DoFn<T, KV<String, Integer>> {
 
   protected final String parquetFile;
 
+  protected final Boolean generateParquetFiles;
+
   private final int secondsToFlush;
 
   private final int rowGroupSize;
@@ -135,6 +137,7 @@ abstract class FetchSearchPageFn<T> extends DoFn<T, KV<String, Integer>> {
     this.oAuthClientSecret = options.getFhirServerOAuthClientSecret();
     this.stageIdentifier = stageIdentifier;
     this.parquetFile = options.getOutputParquetPath();
+    this.generateParquetFiles = options.isGenerateParquetFiles();
     this.secondsToFlush = options.getSecondsToFlushParquetFiles();
     this.rowGroupSize = options.getRowGroupSizeForParquetFiles();
     // TODO enable the caching feature for all runners.
@@ -211,7 +214,7 @@ abstract class FetchSearchPageFn<T> extends DoFn<T, KV<String, Integer>> {
             oAuthClientSecret,
             fhirContext);
     fhirSearchUtil = new FhirSearchUtil(fetchUtil);
-    if (!Strings.isNullOrEmpty(parquetFile)) {
+    if (generateParquetFiles && !Strings.isNullOrEmpty(parquetFile)) {
       parquetUtil =
           new ParquetUtil(
               fhirContext.getVersion().getVersion(),

@@ -25,17 +25,17 @@
 
   <properties>
     <compile.source>11</compile.source>
-    <hapi.fhir.version>7.4.5</hapi.fhir.version>
+    <hapi.fhir.version>7.6.1</hapi.fhir.version>
     <avro.version>1.12.0</avro.version>
     <junit.version>4.13.2</junit.version>
     <hamcrest.version>3.0</hamcrest.version>
     <scm.url>http://github.com/cerner/bunsen/tree/master/</scm.url>
     <scm.connection>scm:git:git@github.com/cerner/bunsen.git</scm.connection>
     <python.version>3.5.3</python.version>
-    <maven-javadoc.plugin.version>3.11.1</maven-javadoc.plugin.version>
+    <maven-javadoc.plugin.version>3.11.2</maven-javadoc.plugin.version>
     <maven-project-info-reports.plugin.version>3.8.0</maven-project-info-reports.plugin.version>
     <slf4j.version>2.0.16</slf4j.version>
-    <logback.version>1.5.12</logback.version>
+    <logback.version>1.5.16</logback.version>
   </properties>
 
   <modules>
@@ -88,7 +88,7 @@
     <dependency>
       <groupId>com.fasterxml.jackson.core</groupId>
       <artifactId>jackson-core</artifactId>
-      <version>2.18.1</version>
+      <version>2.18.2</version>
     </dependency>
 
     <dependency>
@@ -231,7 +231,7 @@
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-javadoc-plugin</artifactId>
-          <version>3.11.1</version>
+          <version>3.11.2</version>
         </plugin>
 
         <plugin>

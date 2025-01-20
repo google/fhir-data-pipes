@@ -514,8 +514,12 @@ public class FhirEtl {
   }
 
   public static void main(String[] args)
-      throws IOException, SQLException, ViewDefinitionException, ProfileException,
-          ExecutionException, InterruptedException {
+      throws IOException,
+          SQLException,
+          ViewDefinitionException,
+          ProfileException,
+          ExecutionException,
+          InterruptedException {
 
     AvroConversionUtil.initializeAvroConverters();
 
