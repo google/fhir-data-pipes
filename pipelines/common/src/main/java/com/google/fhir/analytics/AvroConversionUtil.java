@@ -152,8 +152,7 @@ public class AvroConversionUtil {
   }
 
   @VisibleForTesting
-  @Nullable
-  GenericRecord convertToAvro(Resource resource) throws ProfileException {
+  @Nullable GenericRecord convertToAvro(Resource resource) throws ProfileException {
     AvroConverter converter = getConverter(resource.getResourceType().name());
     // TODO: Check why Bunsen returns IndexedRecord instead of GenericRecord.
     return (GenericRecord) converter.resourceToAvro(resource);
