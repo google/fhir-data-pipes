@@ -3,8 +3,8 @@
 The key concepts that underpin the OHS Analytics components are:
 
 1. **ETL Pipelines:** ETL Pipelines and Controller can be configured to
-   continuously transform FHIR data into an analytics friendly "Parquet-on-FHIR"
-   schema.
+   continuously transform FHIR data into an analytics friendly
+   ["Parquet-on-FHIR" schema](https://github.com/google/fhir-data-pipes/blob/master/doc/schema.md).
 2. **Deployment approaches**: The pipelines are designed to accommodate various
    deployment approaches in terms of scalability; from a single machine to a
    distributed cluster environments.

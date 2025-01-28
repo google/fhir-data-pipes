@@ -190,14 +190,26 @@ Using the ViewDefinition editor you can:
 
 ## Output Data Formats
 
-Applying the FHIR ViewDefinition resources to the "base dwh" will generate materialized views which represent a "constrained" set of data to be used for downstream analytics applications (such as dashboards or reporting). 
+Applying the FHIR ViewDefinition resources to the "base dwh" will generate
+materialized views which represent a "constrained" set of data to be used for
+downstream analytics applications (such as dashboards or reporting).
+This feature is enabled when the
+[viewDefinitionsDir](https://github.com/google/fhir-data-pipes/blob/ffecd7c7bf23d86bee0c6dde0dd5d549038f769d/pipelines/controller/config/application.yaml#L166C3-L166C21)
+is set.
 
-These can be outputted in any tabular format with current support for Database tables and Parquet files.
+These can be outputted in any tabular format with current support for Database
+tables and Parquet files.
 
 ### Conversion to Database tables
 
-The resulting database tables can be loaded into a commonly used relational database management system such as [PostgresSQL](https://www.postgresql.org/) or [MySQL](https://www.mysql.com/).
+The resulting database tables can be loaded into a commonly used relational
+database management system such as [PostgresSQL](https://www.postgresql.org/)
+or [MySQL](https://www.mysql.com/). This is enabled when the
+[sinkDbConfigPath](https://github.com/google/fhir-data-pipes/blob/ffecd7c7bf23d86bee0c6dde0dd5d549038f769d/pipelines/controller/config/application.yaml#L173)
+is set.
 
 ### Conversion to Parquet
 
-The resulting Parquet files can be easily loaded into any Parquet-aware query engine. Examples include [SparkSQL](https://spark.apache.org/sql/) or [duckdb](https://duckdb.org/)
+The resulting Parquet files can be easily loaded into any Parquet-aware query
+engine. Examples include [SparkSQL](https://spark.apache.org/sql/)
+or [duckdb](https://duckdb.org/)
