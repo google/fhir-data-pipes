@@ -38,21 +38,22 @@ import org.apache.beam.sdk.io.FileSystems;
 import org.apache.beam.sdk.io.fs.ResolveOptions.StandardResolveOptions;
 import org.apache.beam.sdk.io.fs.ResourceId;
 import org.apache.commons.lang3.SystemUtils;
-import org.junit.Assert;
 import org.junit.Assume;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Assumptions;
+import org.junit.jupiter.api.Test;
 
 public class LocalDwhFilesTest {
   @Test
   public void getResourcePathTestNonWindows() {
-    Assume.assumeFalse(SystemUtils.IS_OS_WINDOWS);
+    Assumptions.assumeFalse(SystemUtils.IS_OS_WINDOWS);
     DwhFiles dwhFiles = new DwhFiles("/tmp", FhirContext.forR4Cached());
     assertThat(dwhFiles.getResourcePath("Patient").toString(), equalTo("/tmp/Patient/"));
   }
 
   @Test
   public void getResourcePathTestWindows() {
-    Assume.assumeTrue(SystemUtils.IS_OS_WINDOWS);
+    Assumptions.assumeTrue(SystemUtils.IS_OS_WINDOWS);
     DwhFiles dwhFiles = new DwhFiles("C:\\tmp", FhirContext.forR4Cached());
     assertThat(dwhFiles.getResourcePath("Patient").toString(), equalTo("C:\\tmp\\Patient\\"));
   }
@@ -76,7 +77,7 @@ public class LocalDwhFilesTest {
 
   @Test
   public void newIncrementalRunPathTestNonWindows() throws IOException {
-    Assume.assumeFalse(SystemUtils.IS_OS_WINDOWS);
+    Assumptions.assumeFalse(SystemUtils.IS_OS_WINDOWS);
     DwhFiles instance = new DwhFiles("/tmp", FhirContext.forR4Cached());
     ResourceId incrementalRunPath = instance.newIncrementalRunPath();
     assertThat(
@@ -86,7 +87,7 @@ public class LocalDwhFilesTest {
 
   @Test
   public void newIncrementalRunPathTesWindows() throws IOException {
-    Assume.assumeTrue(SystemUtils.IS_OS_WINDOWS);
+    Assumptions.assumeTrue(SystemUtils.IS_OS_WINDOWS);
     DwhFiles instance = new DwhFiles("C:\\tmp", FhirContext.forR4Cached());
     ResourceId incrementalRunPath = instance.newIncrementalRunPath();
     assertThat(incrementalRunPath.toString(), equalTo("C:\\tmp\\incremental_run\\"));
@@ -197,7 +198,7 @@ public class LocalDwhFilesTest {
     createFile(timestampPath, Instant.now().toString().getBytes(StandardCharsets.UTF_8));
     DwhFiles dwhFiles = new DwhFiles(root.toString(), FhirContext.forR4Cached());
 
-    Assert.assertThrows(
+    Assertions.assertThrows(
         FileAlreadyExistsException.class,
         () -> dwhFiles.writeTimestampFile(DwhFiles.TIMESTAMP_FILE_START));
 
@@ -231,7 +232,7 @@ public class LocalDwhFilesTest {
 
     Instant actualInstant = dwhFiles.readTimestampFile(DwhFiles.TIMESTAMP_FILE_START);
 
-    Assert.assertEquals(currentInstant.getEpochSecond(), actualInstant.getEpochSecond());
+    Assertions.assertEquals(currentInstant.getEpochSecond(), actualInstant.getEpochSecond());
 
     Files.delete(timestampPath);
     Files.delete(root);
@@ -239,26 +240,26 @@ public class LocalDwhFilesTest {
 
   @Test
   public void passNonWindowsLocalPathDwhRootPrefix_returnsFileSeparator() {
-    Assume.assumeFalse(SystemUtils.IS_OS_WINDOWS);
+    Assumptions.assumeFalse(SystemUtils.IS_OS_WINDOWS);
     // Absolute Path
     String fs1 = DwhFiles.getFileSeparatorForDwhFiles("/rootDir/prefix");
-    Assert.assertEquals(File.separator, fs1);
+    Assertions.assertEquals(File.separator, fs1);
     // Relative Path
     String fs2 = DwhFiles.getFileSeparatorForDwhFiles("baseDir/prefix");
-    Assert.assertEquals(File.separator, fs2);
+    Assertions.assertEquals(File.separator, fs2);
   }
 
   @Test
   public void passWindowsLocalPathDwhRootPrefix_returnsFileSeparator() {
-    Assume.assumeTrue(SystemUtils.IS_OS_WINDOWS);
+    Assumptions.assumeTrue(SystemUtils.IS_OS_WINDOWS);
     // Absolute Path
     String fs1 = DwhFiles.getFileSeparatorForDwhFiles("C:\\prefix");
-    Assert.assertEquals(File.separator, fs1);
+    Assertions.assertEquals(File.separator, fs1);
     String fs2 = DwhFiles.getFileSeparatorForDwhFiles("C:\\rootDir\\prefix");
-    Assert.assertEquals(File.separator, fs2);
+    Assertions.assertEquals(File.separator, fs2);
     // Relative Path
     String fs3 = DwhFiles.getFileSeparatorForDwhFiles("baseDir\\prefix");
-    Assert.assertEquals(File.separator, fs3);
+    Assertions.assertEquals(File.separator, fs3);
   }
 
   private void createFile(Path path, byte[] bytes) throws IOException {

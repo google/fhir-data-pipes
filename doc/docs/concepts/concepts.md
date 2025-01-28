@@ -56,7 +56,7 @@ FHIR Resources are transformed into a "Parquet-on-FHIR" format which forms the "
 * Configurable support for FHIR profiles and extensions
 * (Optional) In-pipeline 'flattening' of FHIR data
   using [ViewDefinition](https://build.fhir.org/ig/FHIR/sql-on-fhir-v2/StructureDefinition-ViewDefinition.html)
-  resources - [read more](views#viewdefinition-resource)
+  resources - [read more](../views#viewdefinition-resource)
 
 ### Loading
 
@@ -78,7 +78,7 @@ full", "incremental", and "merger" pipelines together.
 * The Pipelines Controller is built on top of pipelines and shares many of the
   same settings
 * Using the controller module you can schedule periodic incremental updates or
-  use the [Web Control Panel](../additional#web-control-panel) to start the
+  use the [Web Control Panel](../../additional/#web-control-panel) to start the
   pipeline
   manually
 
@@ -90,13 +90,13 @@ Choosing the right approach, comes down to a number of factors including the
 specific use-case, infrastructure constraints of the project, future scalability
 requirements, and expertise of the team.
 
-| Scenario                                                                         | Approach                                                                                                 | Considerations                                                                            |
-|----------------------------------------------------------------------------------|----------------------------------------------------------------------------------------------------------|-------------------------------------------------------------------------------------------|
-| Simple relational database to power dashboards or reporting                      | Custom schema defined as ViewDefinition Resources - [see tutorial](tutorial_lossy_example/)              | By design, this will provide a subset of FHIR data in flat tables                         |
-| Horizontally scalable query architecture with lossless FHIR data                 | Parquet based DWH and distributed query engine (e.g. SparkSQL) - [see tutorial](tutorial_add_dashboard/) | This requires a distributed file system for Parquet files and a distributed query engine. |
-| Lossless FHIR DWH with a single process query engine                             | Parquet based DWH with non-distributed query engine set-up (e.g. single-node Spark or DuckDB)            | Scalability and performance (e.g. SparkSQL >> DuckDB)                                     |
-| Exploratory data science or ML use cases                                         | Use the generated Parquet files which as _"near lossless"_ for enhanced data science workflows           | Can either use the Parquet or custom schema to power dashboards or reports                |
-| Push FHIR data to a central FHIR-store (e.g., for a Shared Health Record system) | Use the Pipelines Controller to push from a FHIR source to a FHIR sink                                   | Management of the intermediate Parquet files created as part of the pipelines             | 
+| Scenario                                                                         | Approach                                                                                                        | Considerations                                                                            |
+|----------------------------------------------------------------------------------|-----------------------------------------------------------------------------------------------------------------|-------------------------------------------------------------------------------------------|
+| Simple relational database to power dashboards or reporting                      | Custom schema defined as ViewDefinition Resources - [see Views](../views/#query-simplification)                 | By design, this will provide a subset of FHIR data in flat tables                         |
+| Horizontally scalable query architecture with lossless FHIR data                 | Parquet based DWH and distributed query engine (e.g. SparkSQL) - [see tutorial](../../tutorials/add_dashboard/) | This requires a distributed file system for Parquet files and a distributed query engine. |
+| Lossless FHIR DWH with a single process query engine                             | Parquet based DWH with non-distributed query engine set-up (e.g. single-node Spark or DuckDB)                   | Scalability and performance (e.g. SparkSQL >> DuckDB)                                     |
+| Exploratory data science or ML use cases                                         | Use the generated Parquet files which as _"near lossless"_ for enhanced data science workflows                  | Can either use the Parquet or custom schema to power dashboards or reports                |
+| Push FHIR data to a central FHIR-store (e.g., for a Shared Health Record system) | Use the Pipelines Controller to push from a FHIR source to a FHIR sink                                          | Management of the intermediate Parquet files created as part of the pipelines             | 
 
 ## View layer for simplifying queries
 

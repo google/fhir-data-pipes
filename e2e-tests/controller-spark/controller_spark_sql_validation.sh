@@ -65,7 +65,13 @@ function validate_args() {
 #   anything that needs printing
 #################################################
 function print_message() {
-  local print_prefix="E2E TEST FOR CONTROLLER SPARK DEPLOYMENT:"
+  local print_prefix=""
+  if [[ "${DWH_TYPE}" == "PARQUET" ]]
+  then
+    print_prefix="E2E TEST FOR CONTROLLER PARQUET BASED DEPLOYMENT:"
+  else
+    print_prefix="E2E TEST FOR CONTROLLER FHIR SERVER TO FHIR SERVER SYNC:"
+  fi
   echo "${print_prefix} $*"
 }
 
@@ -88,6 +94,7 @@ function print_message() {
 function setup() {
   HOME_PATH=$1
   PARQUET_SUBDIR=$2
+  DWH_TYPE=$4
   SOURCE_FHIR_SERVER_URL='http://localhost:8091'
   SINK_FHIR_SERVER_URL='http://localhost:8098'
   PIPELINE_CONTROLLER_URL='http://localhost:8090'
@@ -410,6 +417,26 @@ function validate_updated_resource() {
 }
 
 
+function validate_updated_resource_in_fhir_sink() {
+  local fhir_username="hapi"
+  local fhir_password="hapi"
+  local fhir_url_extension="/fhir"
+
+  # Fetch the patient resource using the Patient ID
+  local updated_family_name=$(curl -X GET -H "Content-Type: application/json; charset=utf-8" -u $fhir_username:$fhir_password \
+  --connect-timeout 5 --max-time 20 "${SINK_FHIR_SERVER_URL}${fhir_url_extension}/Patient/${PATIENT_ID}" \
+  | jq -r '.name[0].family')
+
+  if [[ "${updated_family_name}" == "Anderson" ]]
+  then
+    print_message "Updated Patient data for ${PATIENT_ID} in FHIR sink verified successfully."
+  else
+    print_message "Updated Patient data verification for ${PATIENT_ID} in FHIR sink failed."
+    exit 6
+  fi
+}
+
+
 #################################################
 # Function that counts resources in  FHIR server and compares output to what is
 #  in the source FHIR server
@@ -451,10 +478,15 @@ validate_args  "$@"
 setup "$@"
 fhir_source_query
 sleep 30
+# Full run.
 run_pipeline "FULL"
 wait_for_completion
-check_parquet false
-test_fhir_sink "FULL"
+if [[ "${DWH_TYPE}" == "PARQUET" ]]
+then
+  check_parquet false
+else
+  test_fhir_sink "FULL"
+fi
 
 clear
 
@@ -463,16 +495,19 @@ update_resource
 # Incremental run.
 run_pipeline "INCREMENTAL"
 wait_for_completion
-check_parquet true
-fhir_source_query
-test_fhir_sink "INCREMENTAL"
-
-validate_resource_tables
-validate_resource_tables_data
-validate_updated_resource
-
-# View recreation run
-# TODO add validation for the views as well
-run_pipeline "VIEWS"
+if [[ "${DWH_TYPE}" == "PARQUET" ]]
+then
+  check_parquet true
+  validate_resource_tables
+  validate_resource_tables_data
+  validate_updated_resource
+  # View recreation run
+  # TODO add validation for the views as well
+  run_pipeline "VIEWS"
+else
+  fhir_source_query
+  test_fhir_sink "INCREMENTAL"
+  validate_updated_resource_in_fhir_sink
+fi
 
 print_message "END!!"

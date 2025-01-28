@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2024 Google LLC
+ * Copyright 2020-2025 Google LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -263,6 +263,14 @@ public interface FhirEtlOptions extends BasePipelineOptions {
           + "resources serialized with no whitespace, and separated by a newline pair.")
   @Default.String("")
   String getSourceNdjsonFilePatternList();
+
+  @Description(
+      "Flag to switch off/on generation of parquet files; can be turned off when syncing from a"
+          + " FHIR server to another.")
+  @Default.Boolean(true)
+  Boolean isGenerateParquetFiles();
+
+  void setGenerateParquetFiles(Boolean value);
 
   void setSourceNdjsonFilePatternList(String value);
 }

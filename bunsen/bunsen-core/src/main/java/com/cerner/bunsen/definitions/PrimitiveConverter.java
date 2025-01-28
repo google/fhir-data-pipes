@@ -63,7 +63,13 @@ public abstract class PrimitiveConverter<T> extends HapiConverter<T> {
 
   @Override
   public Object fromHapi(Object input) {
-
+    // TODO: remove this hack! It is added to address this bug:
+    // https://github.com/google/fhir-data-pipes/issues/1014
+    // with root cause being:
+    // https://github.com/hapifhir/org.hl7.fhir.core/issues/1800
+    if (!(input instanceof IPrimitiveType)) {
+      return "";
+    }
     return fromHapi((IPrimitiveType) input);
   }
 
