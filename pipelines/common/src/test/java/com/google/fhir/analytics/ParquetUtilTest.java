@@ -31,8 +31,13 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.*;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import java.util.List;
 import org.apache.beam.sdk.io.fs.ResourceId;
+import org.apache.hadoop.conf.Configuration;
+import org.apache.parquet.hadoop.ParquetFileReader;
+import org.apache.parquet.hadoop.util.HadoopInputFile;
 import org.hl7.fhir.r4.model.Bundle;
 import org.hl7.fhir.r4.model.Observation;
 import org.hl7.fhir.r4.model.QuestionnaireResponse;
@@ -41,6 +46,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.io.TempDir;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.w3c.dom.stylesheets.LinkStyle;
 
 // TODO add testes for DSTU3 resources too.
 
@@ -181,12 +187,12 @@ public class ParquetUtilTest {
       throws IOException, ProfileException, ViewApplicationException {
     rootPath = Files.createTempDirectory("PARQUET_TEST");
     // This came from debugging `InternalParquetRecordWriter`!
-    final int approximateRecordMemSize = 458;
+    final int approximateMemSizeOfOneObservarion = 458;
     // We could also set a very small rowGroupSize to force multiple groups but because
     // each group has at least 100 records (regardless of its size), then setting a very
     // small number will trigger this warning which creates thousands of log lines:
     // https://github.com/apache/parquet-java/blob/fb6f0be0323f5f52715b54b8c6602763d8d0128d/parquet-hadoop/src/main/java/org/apache/parquet/hadoop/InternalParquetRecordWriter.java#L203
-    final int rowGroupSize = approximateRecordMemSize * 90;
+    final int rowGroupSize = approximateMemSizeOfOneObservarion * 90;
     parquetUtil =
         new ParquetUtil(
             FhirVersionEnum.R4, "", rootPath.toString(), "", false, 0, rowGroupSize, "", 1, false);
@@ -201,7 +207,7 @@ public class ParquetUtilTest {
     }
     parquetUtil.closeAllWriters();
     String fileSeparator = DwhFiles.getFileSeparatorForDwhFiles(rootPath.toString());
-    Stream<Path> files =
+    List<Path> files =
         Files.list(rootPath.resolve("Observation"))
             .filter(
                 f ->
@@ -211,9 +217,16 @@ public class ParquetUtilTest {
                                 + fileSeparator
                                 + "Observation"
                                 + fileSeparator
-                                + "Observation_output-"));
-    // TODO only checking the number of files is not enough; we should also check it is not empty.
-    assertThat(files.count(), equalTo(1L));
+                                + "Observation_output-"))
+            .collect(Collectors.toList());
+    // We expect only one file to be created.
+    assertThat(files.size(), equalTo(1));
+    HadoopInputFile file =
+        HadoopInputFile.fromPath(
+            new org.apache.hadoop.fs.Path(files.get(0).toUri()), new Configuration());
+    ParquetFileReader reader = ParquetFileReader.open(file);
+    // Verify that two row groups have been created:
+    assertThat(reader.getRowGroups().size(), equalTo(2));
   }
 
   /** Tests the ParquetUtil write method for Materialized ViewDefinitions */
