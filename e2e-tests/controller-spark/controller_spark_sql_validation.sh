@@ -227,10 +227,12 @@ function check_parquet() {
 
   if [[ "${isIncremental}" == "true" ]]
   then
-    # In case of incremental run, we will have two directories
-    # assuming batch run was executed before this.
+    # In case of incremental run, we will have two directories (because a batch
+    # run was executed first); one directory is for the first batch run and
+    # the second is for the merge step of the incremental run. The second
+    # directory has one more patient, hence the new totals.
     TOTAL_TEST_PATIENTS=$((2*TOTAL_TEST_PATIENTS + 1))
-    TOTAL_VIEW_PATIENTS=213
+    TOTAL_VIEW_PATIENTS=$((2*TOTAL_VIEW_PATIENTS + 1))
     TOTAL_TEST_ENCOUNTERS=$((2*TOTAL_TEST_ENCOUNTERS))
     TOTAL_TEST_OBS=$((2*TOTAL_TEST_OBS))
   fi
