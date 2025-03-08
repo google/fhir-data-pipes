@@ -30,7 +30,7 @@ COPY ./coverage ./coverage
 
 # Updating license will fail in e2e and there is no point doing it here anyways.
 # Note this build can be faster by excluding some uber-jars we don't copy.
-RUN mvn --batch-mode clean package -Dlicense.skip=true -Dmaven.javadoc.skip=true -Dmaven.source.skip=true -T 1C
+RUN mvn --no-transfer-progress --batch-mode clean package -Dlicense.skip=true -Dmaven.javadoc.skip=true -Dmaven.source.skip=true -Dspotless.apply.skip=true -T 2C
 
 FROM eclipse-temurin:17-jdk-focal as main
 
