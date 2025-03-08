@@ -55,7 +55,7 @@ steps:
   entrypoint: /bin/bash
   args:
   - -c
-  - mvn --no-transfer-progress -e -T 1C install -Dlicense.skip=true -Dspotless.apply.skip=true
+  - mvn --no-transfer-progress -e -T 2C install -Dlicense.skip=true -Dspotless.apply.skip=true
   waitFor: ['-']
 
 - name: 'gcr.io/cloud-builders/docker'
