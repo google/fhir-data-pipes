@@ -55,7 +55,7 @@ steps:
   entrypoint: /bin/bash
   args:
   - -c
-  - mvn --no-transfer-progress -e -T 1C install -Dlicense.skip=true -Dspotless.apply.skip=true
+  - mvn --no-transfer-progress -e -T 2C install -Dlicense.skip=true -Dspotless.apply.skip=true
   waitFor: ['-']
 
 - name: 'gcr.io/cloud-builders/docker'
@@ -198,7 +198,8 @@ steps:
 
 - name: '${_REPOSITORY}/e2e-tests/controller-spark:${_TAG}'
   id: 'Run E2E Test for Dockerized Controller and Spark Thriftserver'
-  waitFor: ['Bring up controller and Spark containers']
+  waitFor: [ 'Bring up controller and Spark containers',
+             'Run E2E Test for BULK_EXPORT mode with HAPI source' ]
 
 # The controller logs don't appear in Cloud Build output because we run it in
 # the detached mode. For debugging controller failures we can use something like
@@ -269,7 +270,8 @@ steps:
   env:
     - SINK_SERVER_NAME=sink-server-for-openmrs
     - SINK_SERVER_PORT=9002
-  waitFor: ['Turn down FHIR Sink Server JDBC','Run E2E Test for BULK_EXPORT mode with HAPI source']
+  waitFor: [ 'Turn down FHIR Sink Server JDBC',
+             'Run E2E Test for BULK_EXPORT mode with HAPI source' ]
 
 - name: 'gcr.io/cloud-builders/docker'
   id: 'Wait for Servers Start'
