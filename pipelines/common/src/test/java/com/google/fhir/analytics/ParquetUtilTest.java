@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2024 Google LLC
+ * Copyright 2020-2025 Google LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,10 +29,15 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.*;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import org.apache.beam.sdk.io.fs.ResourceId;
+import org.apache.hadoop.conf.Configuration;
+import org.apache.parquet.hadoop.ParquetFileReader;
+import org.apache.parquet.hadoop.util.HadoopInputFile;
 import org.hl7.fhir.r4.model.Bundle;
 import org.hl7.fhir.r4.model.Observation;
 import org.hl7.fhir.r4.model.QuestionnaireResponse;
@@ -172,24 +177,36 @@ public class ParquetUtilTest {
     assertThat(files.count(), equalTo(7L));
   }
 
+  /**
+   * The point of this test is to reduce the row-group size and show we still get a single file when
+   * there are multiple groups.
+   */
   @Test
   public void createSingleOutputWithRowGroupSize()
       throws IOException, ProfileException, ViewApplicationException {
     rootPath = Files.createTempDirectory("PARQUET_TEST");
+    // This came from debugging `InternalParquetRecordWriter`!
+    final int approximateMemSizeOfOneObservarion = 458;
+    // We could also set a very small rowGroupSize to force multiple groups but because
+    // each group has at least 100 records (regardless of its size), then setting a very
+    // small number will trigger this warning which creates thousands of log lines:
+    // https://github.com/apache/parquet-java/blob/fb6f0be0323f5f52715b54b8c6602763d8d0128d/parquet-hadoop/src/main/java/org/apache/parquet/hadoop/InternalParquetRecordWriter.java#L203
+    final int rowGroupSize = approximateMemSizeOfOneObservarion * 90;
     parquetUtil =
-        new ParquetUtil(FhirVersionEnum.R4, "", rootPath.toString(), "", false, 0, 1, "", 1, false);
+        new ParquetUtil(
+            FhirVersionEnum.R4, "", rootPath.toString(), "", false, 0, rowGroupSize, "", 1, false);
     IParser parser = avroConversionUtil.getFhirContext().newJsonParser();
     Bundle bundle = parser.parseResource(Bundle.class, observationBundle);
-    // There are 7 resources in the bundle so we write 15*7 (>100) resources, such that the page
+    // There are 6 resources in the bundle, so we write 17*6 (>100) resources, such that the page
     // group size check is triggered but still it is expected to generate one file only.
-    for (int i = 0; i < 15; i++) {
+    for (int i = 0; i < 17; i++) {
       for (Bundle.BundleEntryComponent entry : bundle.getEntry()) {
         parquetUtil.write(entry.getResource());
       }
     }
     parquetUtil.closeAllWriters();
     String fileSeparator = DwhFiles.getFileSeparatorForDwhFiles(rootPath.toString());
-    Stream<Path> files =
+    List<Path> files =
         Files.list(rootPath.resolve("Observation"))
             .filter(
                 f ->
@@ -199,20 +216,28 @@ public class ParquetUtilTest {
                                 + fileSeparator
                                 + "Observation"
                                 + fileSeparator
-                                + "Observation_output-"));
-    assertThat(files.count(), equalTo(1L));
+                                + "Observation_output-"))
+            .collect(Collectors.toList());
+    // We expect only one file to be created.
+    assertThat(files.size(), equalTo(1));
+    HadoopInputFile file =
+        HadoopInputFile.fromPath(
+            new org.apache.hadoop.fs.Path(files.get(0).toUri()), new Configuration());
+    ParquetFileReader reader = ParquetFileReader.open(file);
+    // Verify that two row groups have been created:
+    assertThat(reader.getRowGroups().size(), equalTo(2));
   }
 
   /** Tests the ParquetUtil write method for Materialized ViewDefinitions */
   @Test
-  public void createOutputWithRowGroupSizeViewToParquet()
+  public void createOutputViewToParquet()
       throws IOException, ProfileException, ViewApplicationException, ViewDefinitionException {
     rootPath = Files.createTempDirectory("PARQUET_TEST");
     String fileSeparator = DwhFiles.getFileSeparatorForDwhFiles(rootPath.toString());
     String path = Resources.getResource("parquet-util-view-test").getFile();
     parquetUtil =
         new ParquetUtil(
-            FhirVersionEnum.R4, "", rootPath.toString(), path, true, 0, 1, "", 1, false);
+            FhirVersionEnum.R4, "", rootPath.toString(), path, true, 0, 0, "", 1, false);
 
     IParser parser = avroConversionUtil.getFhirContext().newJsonParser();
 
