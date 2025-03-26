@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2024 Google LLC
+ * Copyright 2020-2025 Google LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ import ca.uhn.fhir.context.FhirVersionEnum;
 import com.cerner.bunsen.exception.ProfileException;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
+import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
 import com.google.fhir.analytics.view.ViewApplicationException;
 import com.google.fhir.analytics.view.ViewApplicator;
@@ -73,16 +74,14 @@ public class ParquetUtil {
   private final String namePrefix;
   private boolean flushedInCurrentPeriod;
 
+  private final String outputParquetPath;
+
   private ViewManager viewManager;
 
-  private final boolean createParquetViews;
+  private final String outputParquetViewPath;
 
   private synchronized void setFlushedInCurrentPeriod(boolean value) {
     flushedInCurrentPeriod = value;
-  }
-
-  public String getParquetPath() {
-    return dwhFiles.getRoot();
   }
 
   // TODO remove this constructor and only expose a similar one in `DwhFiles` (for testing).
@@ -91,7 +90,7 @@ public class ParquetUtil {
    * @param fhirVersionEnum This should match the resources intended to be converted.
    * @param structureDefinitionsPath Directory path containing the structure definitions for custom
    *     fhir profiles; if it starts with `classpath:` then classpath will be searched instead.
-   * @param parquetFilePath The directory under which the Parquet files are written.
+   * @param outputParquetFilePath The directory under which the Parquet files are written.
    * @param secondsToFlush The interval after which the content of Parquet writers is flushed to
    *     disk.
    * @param rowGroupSize The approximate size of row-groups in the Parquet files (0 means use
@@ -107,31 +106,49 @@ public class ParquetUtil {
   ParquetUtil(
       FhirVersionEnum fhirVersionEnum,
       String structureDefinitionsPath,
-      String parquetFilePath,
+      String outputParquetFilePath,
+      String inputParquetFilePath,
       String viewDefinitionsDir,
-      boolean createParquetViews,
+      String outputParquetViewPath,
       int secondsToFlush,
       int rowGroupSize,
       String namePrefix,
       int recursiveDepth,
       boolean cacheBundle)
       throws ProfileException {
+    Preconditions.checkState(
+        !Strings.isNullOrEmpty(outputParquetFilePath)
+            || !Strings.isNullOrEmpty(outputParquetViewPath));
+    // For logic simplification, we do not support reading from Parquet and writing into Parquet.
+    Preconditions.checkState(
+        Strings.isNullOrEmpty(outputParquetFilePath)
+            || Strings.isNullOrEmpty(inputParquetFilePath));
     if (fhirVersionEnum == FhirVersionEnum.DSTU3 || fhirVersionEnum == FhirVersionEnum.R4) {
       this.conversionUtil =
           AvroConversionUtil.getInstance(fhirVersionEnum, structureDefinitionsPath, recursiveDepth);
     } else {
       throw new IllegalArgumentException("Only versions 3 and 4 of FHIR are supported!");
     }
-    this.dwhFiles = new DwhFiles(parquetFilePath, conversionUtil.getFhirContext());
+    if (!Strings.isNullOrEmpty(outputParquetFilePath)) {
+      this.dwhFiles =
+          DwhFiles.forRoot(
+              outputParquetFilePath, outputParquetViewPath, conversionUtil.getFhirContext());
+    } else {
+      // This is a "Regenerate View" mode.
+      this.dwhFiles =
+          DwhFiles.forRoot(
+              inputParquetFilePath, outputParquetViewPath, conversionUtil.getFhirContext());
+    }
     this.writerMap = new HashMap<>();
     this.rowGroupSize = rowGroupSize;
     this.cacheBundle = cacheBundle;
     this.namePrefix = namePrefix;
-    this.createParquetViews = createParquetViews;
+    this.outputParquetPath = outputParquetFilePath;
+    this.outputParquetViewPath = outputParquetViewPath;
     this.viewWriterMap = new HashMap<>();
     this.viewManager = null;
     setFlushedInCurrentPeriod(false);
-    if (createParquetViews) {
+    if (!Strings.isNullOrEmpty(outputParquetViewPath)) {
       try {
         this.viewManager = ViewManager.createForDir(viewDefinitionsDir);
       } catch (IOException | ViewDefinitionException e) {
@@ -169,7 +186,7 @@ public class ParquetUtil {
   }
 
   @VisibleForTesting
-  synchronized ResourceId getUniqueOutputFilePath(String resourceType) throws IOException {
+  synchronized ResourceId getUniqueOutputFilePath(String resourceType) {
     ResourceId resourceId = dwhFiles.getResourcePath(resourceType);
     String uniqueFileName =
         String.format(
@@ -184,8 +201,8 @@ public class ParquetUtil {
   }
 
   @VisibleForTesting
-  synchronized ResourceId getUniqueOutputFilePathView(String viewName) throws IOException {
-    ResourceId resourceId = dwhFiles.getResourcePath(viewName.toLowerCase(Locale.ENGLISH));
+  synchronized ResourceId getUniqueOutputFilePathView(String viewName) {
+    ResourceId resourceId = dwhFiles.getViewPath(viewName.toLowerCase(Locale.ENGLISH));
     String uniqueFileName =
         String.format(
             "%s%s_output-parquet-th-%d-ts-%d-r-%d%s",
@@ -235,16 +252,18 @@ public class ParquetUtil {
   public synchronized void write(Resource resource)
       throws IOException, ProfileException, ViewApplicationException {
     Preconditions.checkNotNull(resource.fhirType());
-    String resourceType = resource.fhirType();
-    if (!writerMap.containsKey(resourceType)) {
-      createWriter(resourceType, null);
+    if (!Strings.isNullOrEmpty(outputParquetPath)) {
+      String resourceType = resource.fhirType();
+      if (!writerMap.containsKey(resourceType)) {
+        createWriter(resourceType, null);
+      }
+      final WriterWithCache writer = writerMap.get(resourceType);
+      GenericRecord record = conversionUtil.convertToAvro(resource);
+      if (record != null) {
+        writer.write(record);
+      }
     }
-    final WriterWithCache writer = writerMap.get(resourceType);
-    GenericRecord record = conversionUtil.convertToAvro(resource);
-    if (record != null) {
-      writer.write(record);
-    }
-    if (createParquetViews) {
+    if (!Strings.isNullOrEmpty(outputParquetViewPath)) {
       ImmutableList<ViewDefinition> views = viewManager.getViewsForType(resource.fhirType());
       if (views != null) {
         for (ViewDefinition vDef : views) {
@@ -277,6 +296,7 @@ public class ParquetUtil {
     final WriterWithCache parquetWriter = viewWriterMap.get(vDef.getName());
     ViewApplicator applicator = new ViewApplicator(vDef);
     RowList rows = applicator.apply(resource);
+    // TODO: This creates the schema separately for each resource which is inefficient; fix it!
     List<GenericRecord> result = ViewSchema.setValueInRecord(rows, vDef);
     for (GenericRecord record : result) {
       parquetWriter.write(record);

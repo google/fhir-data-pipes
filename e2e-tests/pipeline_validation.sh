@@ -226,17 +226,21 @@ function test_parquet_sink() {
   if [[ ! (-n ${STREAMING}) ]]; then
     print_message "Parquet Sink Test Non-Streaming mode"
     local total_patient_flat=$(java -Xms16g -Xmx16g -jar \
-    ./controller-spark/parquet-tools-1.11.1.jar rowcount "${HOME_PATH}/${PARQUET_SUBDIR}/patient_flat/" | \
+    ./controller-spark/parquet-tools-1.11.1.jar rowcount \
+    "${HOME_PATH}/${PARQUET_SUBDIR}/VIEWS_TIMESTAMP_*/patient_flat/" | \
     awk '{print $3}')
     print_message "Total patient flat rows synced to parquet ---> ${total_patient_flat}"
 
     local total_encounter_flat=$(java -Xms16g -Xmx16g -jar \
-    ./controller-spark/parquet-tools-1.11.1.jar rowcount "${HOME_PATH}/${PARQUET_SUBDIR}/encounter_flat/" \
+    ./controller-spark/parquet-tools-1.11.1.jar rowcount \
+    "${HOME_PATH}/${PARQUET_SUBDIR}/VIEWS_TIMESTAMP_*/encounter_flat/" \
     | awk '{print $3}')
     print_message "Total encounter flat rows synced to parquet ---> ${total_encounter_flat}"
 
-    local total_obs_flat=$(java -Xms16g -Xmx16g -jar ./controller-spark/parquet-tools-1.11.1.jar \
-    rowcount "${HOME_PATH}/${PARQUET_SUBDIR}/observation_flat/" | awk '{print $3}')
+    local total_obs_flat=$(java -Xms16g -Xmx16g -jar \
+    ./controller-spark/parquet-tools-1.11.1.jar rowcount \
+    "${HOME_PATH}/${PARQUET_SUBDIR}/VIEWS_TIMESTAMP_*/observation_flat/" \
+    | awk '{print $3}')
     print_message "Total observation flat rows synced to parquet ---> ${total_obs_flat}"
 
     if (( total_patients_streamed == TOTAL_TEST_PATIENTS && total_encounters_streamed \

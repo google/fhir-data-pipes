@@ -1,4 +1,4 @@
-CREATE OR REPLACE VIEW Immunization_flat AS
+CREATE OR REPLACE VIEW Immunization_flat_view AS
 SELECT I.id AS id, I.patient.patientId AS patient_id,
   I.encounter.encounterId AS encounter_id, I.status,
   ISC.system AS statusReason_sys, ISC.code AS statusReason_code,

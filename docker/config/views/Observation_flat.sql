@@ -1,4 +1,4 @@
-CREATE OR REPLACE VIEW Observation_flat AS
+CREATE OR REPLACE VIEW Observation_flat_view AS
 SELECT O.id AS id, O.subject.patientId AS patient_id,
   O.encounter.encounterId as encounter_id,
   O.status, OCC.code, OCC.`system` AS code_sys,

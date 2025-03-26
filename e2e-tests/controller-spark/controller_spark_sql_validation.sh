@@ -248,11 +248,11 @@ function check_parquet() {
     "${output}/*/Observation/" | awk '{print $3}')
 
     local total_patient_flat=$(java -Xms16g -Xmx16g -jar ./parquet-tools-1.11.1.jar rowcount \
-    "${output}/*/patient_flat/" | awk '{print $3}')
+    "${output}/*/VIEWS_TIMESTAMP_*/patient_flat/" | awk '{print $3}')
     local total_encounter_flat=$(java -Xms16g -Xmx16g -jar ./parquet-tools-1.11.1.jar rowcount \
-    "${output}/*/encounter_flat/" | awk '{print $3}')
+    "${output}/*/VIEWS_TIMESTAMP_*/encounter_flat/" | awk '{print $3}')
     local total_obs_flat=$(java -Xms16g -Xmx16g -jar ./parquet-tools-1.11.1.jar rowcount \
-     "${output}/*/observation_flat/" | awk '{print $3}')
+     "${output}/*/VIEWS_TIMESTAMP_*/observation_flat/" | awk '{print $3}')
 
     print_message "Total patients: $total_patients"
     print_message "Total encounters: $total_encounters"

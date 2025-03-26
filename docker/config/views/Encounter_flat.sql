@@ -1,4 +1,4 @@
-CREATE OR REPLACE VIEW Encounter_flat AS
+CREATE OR REPLACE VIEW Encounter_flat_view AS
 SELECT E.id AS id, E.status, ETC.system AS type_sys,
   ETC.code AS type_code, E.subject.PatientId AS patient_id,
   EP.individual.practitionerId AS practitioner_id,
