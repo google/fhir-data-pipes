@@ -26,6 +26,11 @@ import lombok.Data;
 @Builder(toBuilder = true)
 public class PipelineConfig {
   private FhirEtlOptions fhirEtlOptions;
+  // This is the path relative to the base dir for all DWH roots. For example, if the dwhRootPrefix
+  // is `/a/b/c/prefix` and the actual path of a DWH is `/a/b/c/prefix_TIMESTAMP_1`, then
+  // `thriftServerParquetPath` should be `prefix_TIMESTAMP_1`. The reason for this name is that
+  // this is the path under `/dwh/` on the Thrift server docker image in the standard configuration
+  // where the common base dir for all DWHs is mounted on `/dwh/`.
   private String thriftServerParquetPath;
   private String timestampSuffix;
 }
