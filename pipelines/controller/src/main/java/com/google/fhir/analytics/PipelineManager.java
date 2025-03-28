@@ -609,9 +609,8 @@ public class PipelineManager implements ApplicationListener<ApplicationReadyEven
 
     try {
       logger.info("Creating resources on Hive server for resources: {}", existingResources);
-      hiveTableManager
-          .createResourceAndCanonicalTables(
-              existingResources, timestampSuffix, thriftServerParquetPath, true);
+      hiveTableManager.createResourceAndCanonicalTables(
+          existingResources, timestampSuffix, thriftServerParquetPath, true);
       if (dataProperties.isCreateParquetViews()) {
         ResourceId viewRoot = DwhFiles.getLatestViewsPath(dwhRoot);
         // TODO a more complete approach is to fallback to the latest complete view set.
@@ -763,7 +762,6 @@ public class PipelineManager implements ApplicationListener<ApplicationReadyEven
             (System.currentTimeMillis() - start) / 1000);
       }
     }
-
   }
 
   /** This method captures the given exception into a file rooted at the dwhRoot location. */

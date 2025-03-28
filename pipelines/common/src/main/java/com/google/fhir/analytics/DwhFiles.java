@@ -60,15 +60,18 @@ import org.slf4j.LoggerFactory;
  * The interface for working with the data-warehouse files. This is where all file-structure logic
  * should be implemented. This should support different file-systems, including distributed ones.
  *
- * The general structure of DWH files is as follows (note in some distributed file systems there
+ * <p>The general structure of DWH files is as follows (note in some distributed file systems there
  * is no notion of "directory", we just use the term to refer to segments between `/`):
- * - Let's say the root path is DWH_ROOT.
- * - Parquet files for each FHIR resource type, e.g., Patient, go under DWH_ROOT/Patient.
- * - For a set of resource Parquet files, we may regenerate views multiple times (e.g., after
- *   editing ViewDefinition files); each view set goes under a separate "dir" starting with VIEWS_,
- *   e.g., for a view called `patient_flat` we may have DWH_ROOT/VIEWS_TIMESTAMP_1/patient_flat and
- *   DWH_ROOT/VIEWS_TIMESTAMP_2/patient_flat.
- * - For each incremental run, we create a new DWH_ROOT/incremental_run_TIMESTAMP "dir".
+ *
+ * <ul>
+ *   <li>Let's say the root path is DWH_ROOT
+ *   <li>Parquet files for each FHIR resource type, e.g., Patient, go under DWH_ROOT/Patient.
+ *   <li>For a set of resource Parquet files, we may regenerate views multiple times (e.g., after
+ *       editing ViewDefinition files); each view set goes under a separate "dir" starting with
+ *       VIEWS_, e.g., for a view called `patient_flat` we may have
+ *       DWH_ROOT/VIEWS_TIMESTAMP_1/patient_flat and DWH_ROOT/VIEWS_TIMESTAMP_2/patient_flat.
+ *   <li>For each incremental run, we create a new DWH_ROOT/incremental_run_TIMESTAMP "dir".
+ * </ul>
  */
 public class DwhFiles {
 
