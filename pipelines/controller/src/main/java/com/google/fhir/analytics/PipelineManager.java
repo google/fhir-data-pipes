@@ -36,6 +36,7 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
+import javax.annotation.Nullable;
 import javax.annotation.PostConstruct;
 import lombok.Data;
 import org.apache.beam.runners.flink.FlinkPipelineOptions;
@@ -583,9 +584,8 @@ public class PipelineManager implements ApplicationListener<ApplicationReadyEven
       // TODO: Why are we creating these tables for all paths and not just the most recent? If all
       //  are needed, why are we doing the above `sort`?
       for (ResourceId path : paths) {
-        String[] tokens = path.getFilename().split(prefix + DwhFiles.TIMESTAMP_PREFIX);
-        if (tokens.length > 1) {
-          String timestamp = tokens[1];
+        String timestamp = getTimestampSuffix(path.getFilename());
+        if (timestamp != null) {
           logger.info("Creating resource tables for relative path {}", path.getFilename());
           String fileSeparator = DwhFiles.getFileSeparatorForDwhFiles(rootPrefix);
           String pathDwhRoot = baseDir + fileSeparator + path.getFilename();
@@ -598,6 +598,13 @@ public class PipelineManager implements ApplicationListener<ApplicationReadyEven
     } catch (ViewDefinitionException e) {
       logger.error("Exception while reading ViewDefinitions: ", e);
     }
+  }
+
+  @Nullable
+  private String getTimestampSuffix(String path) {
+    String[] tokens = path.split(DwhFiles.TIMESTAMP_PREFIX);
+    if (tokens.length < 1) return null;
+    return tokens[tokens.length - 1].replaceAll("/", "");
   }
 
   private void createHiveTablesIfNeeded(
@@ -620,8 +627,14 @@ public class PipelineManager implements ApplicationListener<ApplicationReadyEven
                   viewRoot.toString(), dataProperties.getViewDefinitionsDir());
           String sep = DwhFiles.getFileSeparatorForDwhFiles(dataProperties.getDwhRootPrefix());
           String thriftServerViewPath = thriftServerParquetPath + sep + viewRoot.getFilename();
+          // This is to differentiate view-sets where we have multiple view-sets per DWH root.
+          String viewTimestampSuffix = timestampSuffix;
+          String viewTimestamp = getTimestampSuffix(viewRoot.getFilename());
+          if (viewTimestamp != null) {
+            viewTimestampSuffix = timestampSuffix + "_" + viewTimestamp;
+          }
           hiveTableManager.createResourceAndCanonicalTables(
-              existingViews, timestampSuffix, thriftServerViewPath, false);
+              existingViews, viewTimestampSuffix, thriftServerViewPath, false);
         }
       }
       logger.info("Created resources on Thrift server Hive");

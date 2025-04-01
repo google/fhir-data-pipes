@@ -178,6 +178,9 @@ public class DataProperties {
     if (rowGroupSizeForParquetFiles > 0) {
       options.setRowGroupSizeForParquetFiles(rowGroupSizeForParquetFiles);
     }
+    if (resourceList != null) {
+      options.setResourceList(resourceList);
+    }
     return addFlinkOptions(options).build();
   }
 
