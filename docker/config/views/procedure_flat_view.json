@@ -48,11 +48,15 @@
       "column": [
         {
           "path": "code",
-          "name": "code"
+          "name": "code_code"
         },
         {
           "path": "system",
-          "name": "system"
+          "name": "code_sys"
+        },
+        {
+          "path": "display",
+          "name": "code_display"
         }
       ]
     }
