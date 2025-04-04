@@ -48,7 +48,8 @@ ENV JDBC_MODE_HAPI=false
 ENV RUNNER="DirectRunner"
 ENV FHIR_FETCH_MODE="FHIR_SEARCH"
 ENV VIEW_DEFINITIONS_DIR="/workspace/docker/config/views/"
-ENV CREATE_PARQUET_VIEWS=true
+# This is to simulate a real controller scenario (this is assumed in e2e-tests).
+ENV OUTPUT_PARQUET_VIEW_PATH="/tmp/VIEWS_TIMESTAMP_1/"
 
 
 ENTRYPOINT java -jar /usr/src/Main/app.jar  \
@@ -60,4 +61,5 @@ ENTRYPOINT java -jar /usr/src/Main/app.jar  \
            --fhirDatabaseConfigPath=${FHIR_DATABASE_CONFIG_PATH} --jdbcInitialPoolSize=${JDBC_INITIAL_POOL_SIZE} \
            --jdbcFetchSize=${JDBC_FETCH_SIZE} --jdbcModeHapi=${JDBC_MODE_HAPI} --runner=${RUNNER} \
            --fhirFetchMode=${FHIR_FETCH_MODE} \
-           --viewDefinitionsDir=${VIEW_DEFINITIONS_DIR} --createParquetViews=${CREATE_PARQUET_VIEWS}
+           --viewDefinitionsDir=${VIEW_DEFINITIONS_DIR} \
+           --outputParquetViewPath=${OUTPUT_PARQUET_VIEW_PATH}

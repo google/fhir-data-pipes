@@ -167,6 +167,9 @@ public class DataProperties {
         dwhRoot);
     options.setFhirFetchMode(FhirFetchMode.PARQUET);
     options.setParquetInputDwhRoot(dwhRoot);
+    if (createParquetViews) {
+      options.setOutputParquetViewPath(DwhFiles.newViewsPath(dwhRoot).toString());
+    }
     options.setViewDefinitionsDir(viewDefinitionsDir);
     options.setSinkDbConfigPath(sinkDbConfigPath);
     options.setRecreateSinkTables(true);
@@ -174,6 +177,9 @@ public class DataProperties {
     options.setFhirVersion(fhirVersion);
     if (rowGroupSizeForParquetFiles > 0) {
       options.setRowGroupSizeForParquetFiles(rowGroupSizeForParquetFiles);
+    }
+    if (resourceList != null) {
+      options.setResourceList(resourceList);
     }
     return addFlinkOptions(options).build();
   }
@@ -198,7 +204,6 @@ public class DataProperties {
     if (resourceList != null) {
       options.setResourceList(resourceList);
     }
-    options.setCreateParquetViews(createParquetViews);
     options.setViewDefinitionsDir(Strings.nullToEmpty(viewDefinitionsDir));
     options.setSinkDbConfigPath(Strings.nullToEmpty(sinkDbConfigPath));
     options.setStructureDefinitionsPath(Strings.nullToEmpty(structureDefinitionsPath));
@@ -216,9 +221,14 @@ public class DataProperties {
 
     // Using underscore for suffix as hyphens are discouraged in hive table names.
     String timestampSuffix = DwhFiles.safeTimestampSuffix();
-    options.setOutputParquetPath(dwhRootPrefix + DwhFiles.TIMESTAMP_PREFIX + timestampSuffix);
+    String newDwhRoot = dwhRootPrefix + DwhFiles.TIMESTAMP_PREFIX + timestampSuffix;
+    options.setOutputParquetPath(newDwhRoot);
 
     options.setGenerateParquetFiles(generateParquetFiles);
+
+    if (createParquetViews) {
+      options.setOutputParquetViewPath(DwhFiles.newViewsPath(newDwhRoot).toString());
+    }
 
     PipelineConfig.PipelineConfigBuilder pipelineConfigBuilder = addFlinkOptions(options);
 
