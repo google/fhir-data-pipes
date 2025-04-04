@@ -1,4 +1,4 @@
-CREATE OR REPLACE VIEW Practitioner_flat AS
+CREATE OR REPLACE VIEW Practitioner_flat_view AS
 SELECT P.id AS id, P.active, PN.family, PNG AS given, PA.city,
   PA.country, P.gender, PQCC.system AS qualification_system,
   PQCC.code AS qualification_code
