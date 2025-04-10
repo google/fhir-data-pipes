@@ -1,4 +1,4 @@
-CREATE OR REPLACE VIEW PractitionerRole_flat AS
+CREATE OR REPLACE VIEW PractitionerRole_flat_view AS
 SELECT P.id AS id, P.practitioner.practitionerId as practitioner_id,
   P.active, P.organization.organizationId AS organization_id,
   PCC.system, PCC.code,

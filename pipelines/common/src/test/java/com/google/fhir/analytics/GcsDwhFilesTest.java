@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2024 Google LLC
+ * Copyright 2020-2025 Google LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -79,14 +79,16 @@ public class GcsDwhFilesTest {
 
   @Test
   public void getResourcePathTest() {
-    DwhFiles dwhFiles = new DwhFiles("gs://testbucket/testdirectory", FhirContext.forR4Cached());
+    DwhFiles dwhFiles =
+        DwhFiles.forRoot("gs://testbucket/testdirectory", FhirContext.forR4Cached());
     ResourceId resourceId = dwhFiles.getResourcePath("Patient");
     assertThat(resourceId.toString(), equalTo("gs://testbucket/testdirectory/Patient/"));
   }
 
   @Test
   public void newIncrementalRunPathTest() throws IOException {
-    DwhFiles dwhFiles = new DwhFiles("gs://testbucket/testdirectory", FhirContext.forR4Cached());
+    DwhFiles dwhFiles =
+        DwhFiles.forRoot("gs://testbucket/testdirectory", FhirContext.forR4Cached());
 
     List<StorageObjectOrIOException> items = new ArrayList<>();
     items.add(StorageObjectOrIOException.create(new FileNotFoundException()));
@@ -116,7 +118,8 @@ public class GcsDwhFilesTest {
                 Mockito.eq("testbucket"), Mockito.anyString(), Mockito.isNull(String.class)))
         .thenReturn(modelObjects);
 
-    DwhFiles dwhFiles = new DwhFiles("gs://testbucket/testdirectory", FhirContext.forR4Cached());
+    DwhFiles dwhFiles =
+        DwhFiles.forRoot("gs://testbucket/testdirectory", FhirContext.forR4Cached());
     Set<String> resourceTypes = dwhFiles.findNonEmptyResourceDirs();
     assertThat("Could not find Patient", resourceTypes.contains("Patient"));
     assertThat("Could not find Observation", resourceTypes.contains("Observation"));
@@ -132,7 +135,8 @@ public class GcsDwhFilesTest {
                 Mockito.eq("testbucket"), Mockito.anyString(), Mockito.isNull(String.class)))
         .thenReturn(modelObjects);
 
-    DwhFiles dwhFiles = new DwhFiles("gs://testbucket/testdirectory", FhirContext.forR4Cached());
+    DwhFiles dwhFiles =
+        DwhFiles.forRoot("gs://testbucket/testdirectory", FhirContext.forR4Cached());
     Set<String> resourceTypes = dwhFiles.findNonEmptyResourceDirs();
     assertThat(resourceTypes.size(), equalTo(0));
   }
@@ -141,9 +145,9 @@ public class GcsDwhFilesTest {
   public void copyResourceTypeTest() throws IOException {
 
     DwhFiles sourceDwhFiles =
-        new DwhFiles("gs://testbucket/source-test-directory", FhirContext.forR4Cached());
+        DwhFiles.forRoot("gs://testbucket/source-test-directory", FhirContext.forR4Cached());
     DwhFiles destDwhFiles =
-        new DwhFiles("gs://testbucket/dest-test-directory", FhirContext.forR4Cached());
+        DwhFiles.forRoot("gs://testbucket/dest-test-directory", FhirContext.forR4Cached());
     Objects modelObjects = new Objects();
     List<StorageObject> items = new ArrayList<>();
     // Files within the directory
@@ -156,7 +160,7 @@ public class GcsDwhFilesTest {
             mockGcsUtil.listObjects(
                 Mockito.eq("testbucket"), Mockito.anyString(), Mockito.isNull(String.class)))
         .thenReturn(modelObjects);
-    sourceDwhFiles.copyResourcesToDwh("Patient", destDwhFiles);
+    DwhFiles.copyDirToDwh(sourceDwhFiles.getRoot(), "Patient", destDwhFiles.getRoot());
 
     Mockito.verify(mockGcsUtil, Mockito.times(1))
         .copy(
@@ -175,10 +179,11 @@ public class GcsDwhFilesTest {
         StorageObjectOrIOException.create(createStorageObject(gcsFileName, 1L /* fileSize */)));
     Mockito.when(mockGcsUtil.getObjects(List.of(GcsPath.fromUri(gcsFileName)))).thenReturn(items);
 
-    DwhFiles dwhFiles = new DwhFiles("gs://testbucket/testdirectory", FhirContext.forR4Cached());
     Assertions.assertThrows(
         FileAlreadyExistsException.class,
-        () -> dwhFiles.writeTimestampFile(DwhFiles.TIMESTAMP_FILE_START));
+        () ->
+            DwhFiles.writeTimestampFile(
+                "gs://testbucket/testdirectory", DwhFiles.TIMESTAMP_FILE_START));
   }
 
   @Test
@@ -196,8 +201,7 @@ public class GcsDwhFilesTest {
                 CreateOptions.builder().setContentType(MimeTypes.BINARY).build()))
         .thenReturn(writableByteChannel);
 
-    DwhFiles dwhFiles = new DwhFiles("gs://testbucket/testdirectory", FhirContext.forR4Cached());
-    dwhFiles.writeTimestampFile(DwhFiles.TIMESTAMP_FILE_START);
+    DwhFiles.writeTimestampFile("gs://testbucket/testdirectory", DwhFiles.TIMESTAMP_FILE_START);
 
     Mockito.verify(mockGcsUtil, Mockito.times(1)).getObjects(List.of(GcsPath.fromUri(gcsFileName)));
     Mockito.verify(mockGcsUtil, Mockito.times(1))
@@ -212,8 +216,8 @@ public class GcsDwhFilesTest {
     Instant currentInstant = Instant.now();
     mockFileRead(gcsFileName, currentInstant);
 
-    DwhFiles dwhFiles = new DwhFiles("gs://testbucket/testdirectory", FhirContext.forR4Cached());
-    Instant actualInstant = dwhFiles.readTimestampFile(DwhFiles.TIMESTAMP_FILE_START);
+    Instant actualInstant =
+        DwhFiles.readTimestampFile("gs://testbucket/testdirectory", DwhFiles.TIMESTAMP_FILE_START);
 
     Assertions.assertEquals(currentInstant.getEpochSecond(), actualInstant.getEpochSecond());
     Mockito.verify(mockGcsUtil, Mockito.times(1)).open(GcsPath.fromUri(gcsFileName));

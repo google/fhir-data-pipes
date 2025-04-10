@@ -107,6 +107,7 @@ steps:
   env:
   - FHIR_SERVER_URL=http://hapi-server:8080/fhir
   - PARQUET_PATH=/workspace/e2e-tests/FHIR_SEARCH_HAPI
+  - OUTPUT_PARQUET_VIEW_PATH=/workspace/e2e-tests/FHIR_SEARCH_HAPI/VIEWS_TIMESTAMP_1
   - SINK_PATH=http://sink-server-search:8080/fhir
   - SINK_USERNAME=hapi
   - SINK_PASSWORD=hapi
@@ -132,6 +133,7 @@ steps:
     - SINK_PASSWORD=hapi
     - FHIR_DATABASE_CONFIG_PATH=/workspace/utils/hapi-postgres-config.json
     - PARQUET_PATH=/workspace/e2e-tests/JDBC_HAPI
+    - OUTPUT_PARQUET_VIEW_PATH=/workspace/e2e-tests/JDBC_HAPI/VIEWS_TIMESTAMP_1
     - JDBC_FETCH_SIZE=1000
   waitFor: ['Build Pipeline Images', 'Upload to HAPI']
 
@@ -150,6 +152,7 @@ steps:
     - FHIR_FETCH_MODE=BULK_EXPORT
     - FHIR_SERVER_URL=http://hapi-server:8080/fhir
     - PARQUET_PATH=/workspace/e2e-tests/BULK_EXPORT
+    - OUTPUT_PARQUET_VIEW_PATH=/workspace/e2e-tests/BULK_EXPORT/VIEWS_TIMESTAMP_1
   waitFor: ['Run E2E Test for JDBC mode with HAPI source']
 
 - name: '${_REPOSITORY}/e2e-tests:${_TAG}'
@@ -294,6 +297,7 @@ steps:
   id: 'Run Batch Pipeline FHIR-search mode with OpenMRS source'
   env:
     - PARQUET_PATH=/workspace/e2e-tests/FHIR_SEARCH_OPENMRS
+    - OUTPUT_PARQUET_VIEW_PATH=/workspace/e2e-tests/FHIR_SEARCH_OPENMRS/VIEWS_TIMESTAMP_1
     - SINK_PATH=http://sink-server-for-openmrs:8080/fhir
     - SINK_USERNAME=hapi
     - SINK_PASSWORD=hapi
@@ -314,6 +318,7 @@ steps:
   env:
     - JDBC_MODE_ENABLED=true
     - PARQUET_PATH=/workspace/e2e-tests/JDBC_OPENMRS
+    - OUTPUT_PARQUET_VIEW_PATH=/workspace/e2e-tests/JDBC_OPENMRS/VIEWS_TIMESTAMP_1
     - SINK_PATH=http://sink-server-for-openmrs:8080/fhir
     - SINK_USERNAME=hapi
     - SINK_PASSWORD=hapi
