@@ -3,12 +3,23 @@
 ## Overview
 
 The heavily nested nature of FHIR resources and the
-_[Parquet on FHIR schema](https://github.com/google/fhir-data-pipes/blob/master/doc/schema.md)_
+_[Parquet-on-FHIR schema](#parquet-on-fhir-schema)_
 requires complex SQL queries that
 can make them difficult to work with for analytics use cases. A common approach
-to
-address this is to flatten the data into a set of views (virtual or
+to address this is to flatten the data into a set of views (virtual or
 materialized) which can then be queried using simpler SQL statements.
+
+## Parquet-on-FHIR schema
+The _FHIR Data Pipes ETL Pipelines_ convert raw FHIR 
+resources to a _Parquet-on-FHIR_ schema representation. This takes place for
+each resource type and follows the [Schema Mapping Rules](https://github.com/google/fhir-data-pipes/blob/master/doc/schema.md).
+
+The generated columnar Parquet files provide the *"base data warehouse"* that can
+be queried using any Parquet-aware tools (e.g a SQL based query engine) or 
+further transformed [via the view layer](#flattening-via-the-view-layer)
+into materialized views.
+
+## Flattening via the view layer
 
 FHIR Data Pipes provides two approaches for flattening the FHIR resources into
 virtual or materialized views:
@@ -179,12 +190,26 @@ Using the ViewDefinition editor you can:
 
 ## Output Data Formats
 
-### Conversion to PostgreSQL
+Applying the FHIR ViewDefinition resources to the "base dwh" will generate
+materialized views which represent a "constrained" set of data to be used for
+downstream analytics applications (such as dashboards or reporting).
+This feature is enabled when the
+[viewDefinitionsDir](https://github.com/google/fhir-data-pipes/blob/ffecd7c7bf23d86bee0c6dde0dd5d549038f769d/pipelines/controller/config/application.yaml#L166C3-L166C21)
+is set.
 
-To be continued... 
+These can be outputted in any tabular format with current support for Database
+tables and Parquet files.
 
+### Conversion to Database tables
+
+The resulting database tables can be loaded into a commonly used relational
+database management system such as [PostgresSQL](https://www.postgresql.org/)
+or [MySQL](https://www.mysql.com/). This is enabled when the
+[sinkDbConfigPath](https://github.com/google/fhir-data-pipes/blob/ffecd7c7bf23d86bee0c6dde0dd5d549038f769d/pipelines/controller/config/application.yaml#L173)
+is set.
 
 ### Conversion to Parquet
 
-To be continued...
-
+The resulting Parquet files can be easily loaded into any Parquet-aware query
+engine. Examples include [SparkSQL](https://spark.apache.org/sql/)
+or [duckdb](https://duckdb.org/)
