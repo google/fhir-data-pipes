@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2024 Google LLC
+ * Copyright 2020-2025 Google LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -167,8 +167,11 @@ public class ViewApplicator {
    * Note `element` can be null in which case the output would have a single row with the name of
    * all columns and all values being null.
    */
-  private RowList applyAllSelects(@Nullable IBase element, List<Select> selectList)
+  private RowList applyAllSelects(@Nullable IBase element, @Nullable List<Select> selectList)
       throws ViewApplicationException {
+    if (selectList == null) {
+      return EMPTY_LIST;
+    }
     List<RowList> rowsPerSelect = new ArrayList<>();
     for (Select s : selectList) {
       rowsPerSelect.add(applySelect(element, s));

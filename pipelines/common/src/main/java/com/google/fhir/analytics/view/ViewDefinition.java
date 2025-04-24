@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2024 Google LLC
+ * Copyright 2020-2025 Google LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,6 +38,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import lombok.Builder;
 import lombok.Getter;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -48,13 +49,13 @@ public class ViewDefinition {
   private static Pattern CONSTANT_PATTERN = Pattern.compile("%[A-Za-z][A-Za-z0-9_]*");
   private static Pattern SQL_NAME_PATTERN = Pattern.compile("^[A-Za-z][A-Za-z0-9_]*$");
 
-  @Getter private String name;
-  @Getter private String resource;
-  @Getter private List<String> fhirVersion;
-  @Getter private List<Select> select;
-  @Getter private List<Where> where;
+  @Getter @Nullable private String name;
+  @Getter @Nullable private String resource;
+  @Getter @Nullable private List<String> fhirVersion;
+  @Getter @Nullable private List<Select> select;
+  @Getter @Nullable private List<Where> where;
   // We don't need to expose constants because we do the replacement as part of the setup.
-  private List<Constant> constant;
+  @Nullable private List<Constant> constant;
   // This is also used internally for processing constants and should not be exposed.
   private final Map<String, String> constMap = new HashMap<>();
 
@@ -100,7 +101,8 @@ public class ViewDefinition {
    * @throws ViewDefinitionException if there is any column inconsistency, e.g., duplicates.
    */
   @VisibleForTesting
-  void validateAndSetUp(boolean checkName, String fhirVersion) throws ViewDefinitionException {
+  void validateAndSetUp(boolean checkName, @Nullable String fhirVersion)
+      throws ViewDefinitionException {
     if (Strings.isNullOrEmpty(resource)) {
       throw new ViewDefinitionException(
           "The resource field of a view should be a valid FHIR resource type.");
@@ -142,7 +144,7 @@ public class ViewDefinition {
    * @throws ViewDefinitionException for repeated columns or other requirements not satisfied.
    */
   private LinkedHashMap<String, Column> validateAndReplaceConstantsInSelects(
-      List<Select> selects, LinkedHashMap<String, Column> currentColumns)
+      @Nullable List<Select> selects, LinkedHashMap<String, Column> currentColumns)
       throws ViewDefinitionException {
     LinkedHashMap<String, Column> newCols = newTypeMap();
     if (selects == null) {
@@ -172,21 +174,22 @@ public class ViewDefinition {
     LinkedHashMap<String, Column> newCols = newTypeMap();
     if (select.getColumn() != null) {
       for (Column c : select.getColumn()) {
-        if (Strings.nullToEmpty(c.name).isEmpty()) {
+        String colName = Strings.nullToEmpty(c.name);
+        if (colName.isEmpty()) {
           throw new ViewDefinitionException("Column name cannot be empty!");
         }
-        if (!SQL_NAME_PATTERN.matcher(c.name).matches()) {
+        if (!SQL_NAME_PATTERN.matcher(colName).matches()) {
           throw new ViewDefinitionException(
-              "Column name " + c.name + " does not match 'sql-name' pattern!");
+              "Column name " + colName + " does not match 'sql-name' pattern!");
         }
         if (Strings.nullToEmpty(c.path).isEmpty()) {
           throw new ViewDefinitionException("Column path cannot be empty for " + c.name);
         }
-        if (currentColumns.containsKey(c.getName()) || newCols.containsKey(c.getName())) {
-          throw new ViewDefinitionException("Repeated column name " + c.getName());
+        if (currentColumns.containsKey(colName) || newCols.containsKey(colName)) {
+          throw new ViewDefinitionException("Repeated column name " + colName);
         }
         // TODO implement automatic type derivation support.
-        newCols.put(c.getName(), c);
+        newCols.put(colName, c);
         c.path = validateAndReplaceConstants(c.getPath());
       }
     }
@@ -248,7 +251,12 @@ public class ViewDefinition {
     return true;
   }
 
-  private String validateAndReplaceConstants(String fhirPath) throws ViewDefinitionException {
+  @Nullable
+  private String validateAndReplaceConstants(@Nullable String fhirPath)
+      throws ViewDefinitionException {
+    if (fhirPath == null) {
+      return null;
+    }
     Matcher matcher = CONSTANT_PATTERN.matcher(fhirPath);
     try {
       return matcher.replaceAll(
@@ -268,53 +276,53 @@ public class ViewDefinition {
 
   @Getter
   public static class Select {
-    private List<Column> column;
-    private List<Select> select;
-    private String forEach;
-    private String forEachOrNull;
-    private List<Select> unionAll;
+    @Nullable private List<Column> column;
+    @Nullable private List<Select> select;
+    @Nullable private String forEach;
+    @Nullable private String forEachOrNull;
+    @Nullable private List<Select> unionAll;
   }
 
   @Builder(toBuilder = true)
   @Getter
   public static class Column {
-    private String path;
-    private String name;
-    private String type;
-    private boolean collection;
-    private String description;
+    @Nullable private String path;
+    @Nullable private String name;
+    @Nullable private String type;
+    @Nullable private boolean collection;
+    @Nullable private String description;
     // The following fields are _not_ read from the ViewDefinition.
-    private String inferredType;
+    @Nullable private String inferredType;
     private boolean inferredCollection;
   }
 
   @Getter
   public static class Where {
-    private String path;
+    @Nullable private String path;
   }
 
   @Getter
   public static class Constant {
-    private String name;
-    private String valueBase64Binary;
-    private Boolean valueBoolean;
-    private String valueCanonical;
-    private String valueCode;
-    private String valueDate;
-    private String valueDateTime;
-    private String valueDecimal;
-    private String valueId;
-    private String valueInstant;
-    private Integer valueInteger;
-    private Integer valueInteger64;
-    private String valueOid;
-    private String valueString;
-    private Integer valuePositiveInt;
-    private String valueTime;
-    private Integer valueUnsignedInt;
-    private String valueUri;
-    private String valueUrl;
-    private String valueUuid;
+    private String name = "!BAD_NAME!"; // This has to be set in the input ViewDefinition.
+    @Nullable private String valueBase64Binary;
+    @Nullable private Boolean valueBoolean;
+    @Nullable private String valueCanonical;
+    @Nullable private String valueCode;
+    @Nullable private String valueDate;
+    @Nullable private String valueDateTime;
+    @Nullable private String valueDecimal;
+    @Nullable private String valueId;
+    @Nullable private String valueInstant;
+    @Nullable private Integer valueInteger;
+    @Nullable private Integer valueInteger64;
+    @Nullable private String valueOid;
+    @Nullable private String valueString;
+    @Nullable private Integer valuePositiveInt;
+    @Nullable private String valueTime;
+    @Nullable private Integer valueUnsignedInt;
+    @Nullable private String valueUri;
+    @Nullable private String valueUrl;
+    @Nullable private String valueUuid;
 
     private String quoteString(String s) {
       return "'" + s + "'";
