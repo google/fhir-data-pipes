@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2023 Google LLC
+ * Copyright 2020-2025 Google LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,9 +15,11 @@
  */
 package com.google.fhir.analytics.view;
 
+import org.jspecify.annotations.Nullable;
+
 public class ViewDefinitionException extends Exception {
 
-  public ViewDefinitionException(String message) {
+  public ViewDefinitionException(@Nullable String message) {
     super(message);
   }
 }

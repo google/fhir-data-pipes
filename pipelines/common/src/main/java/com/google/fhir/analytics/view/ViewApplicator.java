@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2024 Google LLC
+ * Copyright 2020-2025 Google LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,7 +40,6 @@ import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
-import javax.annotation.Nullable;
 import lombok.Builder;
 import lombok.Getter;
 import org.hl7.fhir.dstu3.hapi.fluentpath.FhirPathDstu3;
@@ -52,6 +51,7 @@ import org.hl7.fhir.instance.model.api.IPrimitiveType;
 import org.hl7.fhir.r4.hapi.fluentpath.FhirPathR4;
 import org.hl7.fhir.r4b.hapi.fhirpath.FhirPathR4B;
 import org.hl7.fhir.r5.hapi.fhirpath.FhirPathR5;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -167,8 +167,11 @@ public class ViewApplicator {
    * Note `element` can be null in which case the output would have a single row with the name of
    * all columns and all values being null.
    */
-  private RowList applyAllSelects(@Nullable IBase element, List<Select> selectList)
+  private RowList applyAllSelects(@Nullable IBase element, @Nullable List<Select> selectList)
       throws ViewApplicationException {
+    if (selectList == null) {
+      return EMPTY_LIST;
+    }
     List<RowList> rowsPerSelect = new ArrayList<>();
     for (Select s : selectList) {
       rowsPerSelect.add(applySelect(element, s));
