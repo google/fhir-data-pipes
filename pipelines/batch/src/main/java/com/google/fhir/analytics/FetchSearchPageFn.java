@@ -272,7 +272,7 @@ abstract class FetchSearchPageFn<T> extends DoFn<T, KV<String, Integer>> {
     // DataflowRunner and that's why we have the finishBundle method above:
     // https://beam.apache.org/releases/javadoc/current/org/apache/beam/sdk/transforms/DoFn.Teardown.html
     if (parquetUtil != null) {
-      parquetUtil.flushAllWriters();
+      parquetUtil.flushAllWritersAndStopTimer();
     }
   }
 
