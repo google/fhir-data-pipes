@@ -264,7 +264,7 @@ public class ParquetUtil {
       String resourceType = resource.fhirType();
       WriterWithCache writer = writerMap.get(resourceType);
       if (writer == null) {
-        createWriter(resourceType, null);
+        writer = createWriter(resourceType, null);
       }
       GenericRecord record = conversionUtil.convertToAvro(resource);
       if (record != null) {
@@ -314,7 +314,7 @@ public class ParquetUtil {
     WriterWithCache writer = viewWriterMap.get(viewName);
     if (writer != null && writer.getDataSize() > 0) {
       writer.close();
-      writerMap.put(viewName, null);
+      viewWriterMap.put(viewName, null);
     }
   }
 
