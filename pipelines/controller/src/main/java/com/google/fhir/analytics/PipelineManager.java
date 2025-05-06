@@ -239,7 +239,7 @@ public class PipelineManager implements ApplicationListener<ApplicationReadyEven
         String currentDwhRoot = resourceId.toString();
         // TODO: If there are errors from the last VIEW run, expose them in the UI.
         currentDwh =
-            DwhFiles.forRootAndFindViewPath(currentDwhRoot, avroConversionUtil.getFhirContext());
+            DwhFiles.forRootWithLatestViewPath(currentDwhRoot, avroConversionUtil.getFhirContext());
         // There exists a DWH from before, so we set the scheduler to continue updating the DWH.
         lastRunEnd = LocalDateTime.now();
       } catch (IOException e) {
@@ -615,7 +615,7 @@ public class PipelineManager implements ApplicationListener<ApplicationReadyEven
   }
 
   private synchronized void updateDwh(String newRoot) throws IOException {
-    currentDwh = DwhFiles.forRootAndFindViewPath(newRoot, avroConversionUtil.getFhirContext());
+    currentDwh = DwhFiles.forRootWithLatestViewPath(newRoot, avroConversionUtil.getFhirContext());
   }
 
   private static class PipelineThread extends Thread {

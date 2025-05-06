@@ -151,7 +151,7 @@ public class DwhFiles {
     return new DwhFiles(dwhRoot, viewRoot, fhirContext);
   }
 
-  static DwhFiles forRootAndFindViewPath(String dwhRoot, FhirContext fhirContext)
+  static DwhFiles forRootWithLatestViewPath(String dwhRoot, FhirContext fhirContext)
       throws IOException {
     ResourceId latestViewPath = DwhFiles.getLatestViewsPath(dwhRoot);
     String lastViewPath = latestViewPath == null ? null : latestViewPath.toString();

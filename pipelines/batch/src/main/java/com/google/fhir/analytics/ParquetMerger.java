@@ -273,8 +273,8 @@ public class ParquetMerger {
     // We don't know the path of this merged view path outside ParquetMerger, hence we write the
     // start timestamp file here.
     DwhFiles.writeTimestampFile(mergedDwhViewPath.toString(), DwhFiles.TIMESTAMP_FILE_START);
-    DwhFiles dwhFiles1 = DwhFiles.forRootAndFindViewPath(dwh1, avroConversionUtil.getFhirContext());
-    DwhFiles dwhFiles2 = DwhFiles.forRootAndFindViewPath(dwh2, avroConversionUtil.getFhirContext());
+    DwhFiles dwhFiles1 = DwhFiles.forRootWithLatestViewPath(dwh1, avroConversionUtil.getFhirContext());
+    DwhFiles dwhFiles2 = DwhFiles.forRootWithLatestViewPath(dwh2, avroConversionUtil.getFhirContext());
     DwhFiles mergedDwhFiles =
         DwhFiles.forRoot(mergedDwh, mergedDwhViewPath, avroConversionUtil.getFhirContext());
 
