@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2024 Google LLC
+ * Copyright 2020-2025 Google LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,7 +26,6 @@ import com.google.fhir.analytics.model.DatabaseConfiguration;
 import com.google.fhir.analytics.view.ViewDefinitionException;
 import io.micrometer.core.instrument.Gauge;
 import io.micrometer.core.instrument.MeterRegistry;
-import java.beans.PropertyVetoException;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.NoSuchFileException;
@@ -37,6 +36,7 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
+import javax.annotation.Nullable;
 import javax.annotation.PostConstruct;
 import lombok.Data;
 import org.apache.beam.runners.flink.FlinkPipelineOptions;
@@ -103,6 +103,7 @@ public class PipelineManager implements ApplicationListener<ApplicationReadyEven
   private static final String ERROR_FILE_NAME = "error.log";
   private static final String SUCCESS = "SUCCESS";
   private static final String FAILURE = "FAILURE";
+  private static final String FAILED_TO_START = "FAILED_TO_START";
 
   static enum RunMode {
     INCREMENTAL,
@@ -232,12 +233,20 @@ public class PipelineManager implements ApplicationListener<ApplicationReadyEven
       lastRunEnd = null;
     } else {
       logger.info("Initializing with most recent DWH {}", lastCompletedDwh);
-      ResourceId resourceId =
-          FileSystems.matchNewResource(baseDir, true)
-              .resolve(lastCompletedDwh, StandardResolveOptions.RESOLVE_DIRECTORY);
-      currentDwh = DwhFiles.forRoot(resourceId.toString(), avroConversionUtil.getFhirContext());
-      // There exists a DWH from before, so we set the scheduler to continue updating the DWH.
-      lastRunEnd = LocalDateTime.now();
+      try {
+        ResourceId resourceId =
+            FileSystems.matchNewResource(baseDir, true)
+                .resolve(lastCompletedDwh, StandardResolveOptions.RESOLVE_DIRECTORY);
+        String currentDwhRoot = resourceId.toString();
+        // TODO: If there are errors from the last VIEW run, expose them in the UI.
+        currentDwh =
+            DwhFiles.forRootWithLatestViewPath(currentDwhRoot, avroConversionUtil.getFhirContext());
+        // There exists a DWH from before, so we set the scheduler to continue updating the DWH.
+        lastRunEnd = LocalDateTime.now();
+      } catch (IOException e) {
+        logger.error("IOException while initializing DWH: ", e);
+        throw new RuntimeException(e);
+      }
     }
     if (!lastDwh.isEmpty()) {
       initialiseLastRunDetails(baseDir, lastDwh);
@@ -267,9 +276,7 @@ public class PipelineManager implements ApplicationListener<ApplicationReadyEven
       ResourceId dwhDirectoryPath =
           FileSystems.matchNewResource(baseDir, true)
               .resolve(dwhDirectory, StandardResolveOptions.RESOLVE_DIRECTORY);
-      DwhFiles dwhFiles =
-          DwhFiles.forRoot(dwhDirectoryPath.toString(), avroConversionUtil.getFhirContext());
-      ResourceId incPath = dwhFiles.getLatestIncrementalRunPath();
+      ResourceId incPath = DwhFiles.getLatestIncrementalRunPath(dwhDirectoryPath.toString());
       if (incPath != null) {
         updateLastRunDetails(incPath);
         return;
@@ -285,8 +292,10 @@ public class PipelineManager implements ApplicationListener<ApplicationReadyEven
   private void updateLastRunDetails(ResourceId dwhDirectoryPath) throws IOException {
     if (dwhFilesManager.isDwhComplete(dwhDirectoryPath)) {
       setLastRunDetails(dwhDirectoryPath.toString(), SUCCESS);
-    } else {
+    } else if (dwhFilesManager.isDwhJobStarted(dwhDirectoryPath)) {
       setLastRunDetails(dwhDirectoryPath.toString(), FAILURE);
+    } else {
+      setLastRunDetails(dwhDirectoryPath.toString(), FAILED_TO_START);
     }
   }
 
@@ -368,12 +377,7 @@ public class PipelineManager implements ApplicationListener<ApplicationReadyEven
 
   // Every 30 seconds, check for pipeline status and incremental pipeline schedule.
   @Scheduled(fixedDelay = 30000)
-  private void checkSchedule()
-      throws IOException,
-          PropertyVetoException,
-          SQLException,
-          ViewDefinitionException,
-          ProfileException {
+  private void checkSchedule() throws IOException {
     LocalDateTime next = getNextIncrementalTime();
     if (next == null) {
       return;
@@ -433,6 +437,10 @@ public class PipelineManager implements ApplicationListener<ApplicationReadyEven
     String finalDwhRoot = options.getOutputParquetPath();
     String incrementalDwhRoot = currentDwh.newIncrementalRunPath().toString();
     options.setOutputParquetPath(incrementalDwhRoot);
+    String incrementalViewPath = DwhFiles.newViewsPath(incrementalDwhRoot).toString();
+    if (dataProperties.isCreateParquetViews()) {
+      options.setOutputParquetViewPath(incrementalViewPath);
+    }
     String since = fetchSinceTimestamp(options);
     options.setSince(since);
     FlinkPipelineOptions flinkOptionsForBatch = options.as(FlinkPipelineOptions.class);
@@ -576,36 +584,68 @@ public class PipelineManager implements ApplicationListener<ApplicationReadyEven
       // TODO: Why are we creating these tables for all paths and not just the most recent? If all
       //  are needed, why are we doing the above `sort`?
       for (ResourceId path : paths) {
-        String[] tokens = path.getFilename().split(prefix + DwhFiles.TIMESTAMP_PREFIX);
-        if (tokens.length > 1) {
-          String timestamp = tokens[1];
+        String timestamp = getTimestampSuffix(path.getFilename());
+        if (timestamp != null) {
           logger.info("Creating resource tables for relative path {}", path.getFilename());
           String fileSeparator = DwhFiles.getFileSeparatorForDwhFiles(rootPrefix);
-          List<String> existingResources =
-              dwhFilesManager.findExistingResources(baseDir + fileSeparator + path.getFilename());
-          try {
-            hiveTableManager.createResourceAndCanonicalTables(
-                existingResources, timestamp, path.getFilename());
-          } catch (SQLException e) {
-            logger.error(
-                "Exception while creating resource table on thriftserver for path: {}",
-                path.getFilename(),
-                e);
-          }
+          String pathDwhRoot = baseDir + fileSeparator + path.getFilename();
+          createHiveTablesIfNeeded(pathDwhRoot, timestamp, path.getFilename());
         }
       }
     } catch (IOException e) {
       // In case of exceptions at this stage, we just log the exception.
       logger.error("Exception while reading thriftserver parquet output directory: ", e);
+    } catch (ViewDefinitionException e) {
+      logger.error("Exception while reading ViewDefinitions: ", e);
     }
   }
 
-  HiveTableManager getHiveTableManager() {
-    return hiveTableManager;
+  @Nullable
+  private String getTimestampSuffix(String path) {
+    String[] tokens = path.split(DwhFiles.TIMESTAMP_PREFIX);
+    if (tokens.length < 1) return null;
+    return tokens[tokens.length - 1].replaceAll("/", "");
   }
 
-  private synchronized void updateDwh(String newRoot) throws ProfileException {
-    currentDwh = DwhFiles.forRoot(newRoot, avroConversionUtil.getFhirContext());
+  private void createHiveTablesIfNeeded(
+      String dwhRoot, String timestampSuffix, String thriftServerParquetPath)
+      throws IOException, ViewDefinitionException {
+    if (!dataProperties.isCreateHiveResourceTables()) return;
+
+    List<String> existingResources = dwhFilesManager.findExistingResources(dwhRoot);
+
+    try {
+      logger.info("Creating resources on Hive server for resources: {}", existingResources);
+      hiveTableManager.createResourceAndCanonicalTables(
+          existingResources, timestampSuffix, thriftServerParquetPath, true);
+      if (dataProperties.isCreateParquetViews()) {
+        ResourceId viewRoot = DwhFiles.getLatestViewsPath(dwhRoot);
+        // TODO a more complete approach is to fallback to the latest complete view set.
+        if (viewRoot != null && dwhFilesManager.isDwhComplete(viewRoot)) {
+          List<String> existingViews =
+              dwhFilesManager.findExistingViews(
+                  viewRoot.toString(), dataProperties.getViewDefinitionsDir());
+          String sep = DwhFiles.getFileSeparatorForDwhFiles(dataProperties.getDwhRootPrefix());
+          String thriftServerViewPath = thriftServerParquetPath + sep + viewRoot.getFilename();
+          // This is to differentiate view-sets where we have multiple view-sets per DWH root.
+          String viewTimestampSuffix = timestampSuffix;
+          String viewTimestamp = getTimestampSuffix(viewRoot.getFilename());
+          if (viewTimestamp != null) {
+            viewTimestampSuffix = timestampSuffix + "_" + viewTimestamp;
+          }
+          hiveTableManager.createResourceAndCanonicalTables(
+              existingViews, viewTimestampSuffix, thriftServerViewPath, false);
+        }
+      }
+      logger.info("Created resources on Thrift server Hive");
+    } catch (SQLException e) {
+      logger.error(
+          "Exception while creating resource table on thriftserver for path: {}", dwhRoot, e);
+    }
+  }
+
+  private synchronized void updateDwh(String newRoot) throws IOException {
+    currentDwh = DwhFiles.forRootWithLatestViewPath(newRoot, avroConversionUtil.getFhirContext());
   }
 
   private static class PipelineThread extends Thread {
@@ -693,7 +733,7 @@ public class PipelineManager implements ApplicationListener<ApplicationReadyEven
         }
 
         List<PipelineResult> pipelineResults =
-            EtlUtils.runMultiplePipelinesWithTimestamp(pipelines, options, fhirContext);
+            EtlUtils.runMultiplePipelinesWithTimestamp(pipelines, options);
         // Remove the metrics of the previous pipeline and register the new metrics
         manager.removePipelineMetrics();
         pipelineResults.stream()
@@ -711,19 +751,15 @@ public class PipelineManager implements ApplicationListener<ApplicationReadyEven
               ParquetMerger.createMergerPipelines(mergerOptions, avroConversionUtil);
           logger.info("Merger options are {}", mergerOptions);
           List<PipelineResult> mergerPipelineResults =
-              EtlUtils.runMultipleMergerPipelinesWithTimestamp(
-                  mergerPipelines, mergerOptions, fhirContext);
+              EtlUtils.runMultipleMergerPipelinesWithTimestamp(mergerPipelines, mergerOptions);
           mergerPipelineResults.stream()
               .forEach(pipelineResult -> manager.publishPipelineMetrics(pipelineResult.metrics()));
           manager.updateDwh(currentDwhRoot);
         }
-        if (dataProperties.isCreateHiveResourceTables()) {
-          List<String> existingResources = dwhFilesManager.findExistingResources(currentDwhRoot);
-          createHiveResourceTables(
-              existingResources,
-              pipelineConfig.getTimestampSuffix(),
-              pipelineConfig.getThriftServerParquetPath());
-        }
+        manager.createHiveTablesIfNeeded(
+            currentDwhRoot,
+            pipelineConfig.getTimestampSuffix(),
+            pipelineConfig.getThriftServerParquetPath());
         manager.setLastRunStatus(LastRunStatus.SUCCESS);
         manager.setLastRunDetails(currentDwhRoot, SUCCESS);
       } catch (Exception e) {
@@ -739,20 +775,6 @@ public class PipelineManager implements ApplicationListener<ApplicationReadyEven
             (System.currentTimeMillis() - start) / 1000);
       }
     }
-
-    private void createHiveResourceTables(
-        List<String> resourceList, String timestampSuffix, String thriftServerParquetPath)
-        throws IOException, SQLException {
-      logger.info("Establishing connection to Thrift server Hive");
-      DatabaseConfiguration dbConfig =
-          DatabaseConfiguration.createConfigFromFile(dataProperties.getThriftserverHiveConfig());
-
-      logger.info("Creating resources on Hive server for resources: {}", resourceList);
-      manager
-          .getHiveTableManager()
-          .createResourceAndCanonicalTables(resourceList, timestampSuffix, thriftServerParquetPath);
-      logger.info("Created resources on Thrift server Hive");
-    }
   }
 
   /** This method captures the given exception into a file rooted at the dwhRoot location. */
@@ -760,8 +782,8 @@ public class PipelineManager implements ApplicationListener<ApplicationReadyEven
     try {
       if (!Strings.isNullOrEmpty(dwhRoot)) {
         String stackTrace = ExceptionUtils.getStackTrace(e);
-        DwhFiles.forRoot(dwhRoot, fhirContext)
-            .overwriteFile(ERROR_FILE_NAME, stackTrace.getBytes(StandardCharsets.UTF_8));
+        DwhFiles.overwriteFile(
+            dwhRoot, ERROR_FILE_NAME, stackTrace.getBytes(StandardCharsets.UTF_8));
       }
     } catch (IOException ex) {
       logger.error("Error while capturing error to a file", ex);
@@ -770,13 +792,17 @@ public class PipelineManager implements ApplicationListener<ApplicationReadyEven
 
   /** Sets the details of the last pipeline run with the given dwhRoot as the snapshot location. */
   void setLastRunDetails(String dwhRoot, String status) {
+    // TODO for `status`, use an enum instead of String.
     DwhRunDetails dwhRunDetails = new DwhRunDetails();
     try {
-      DwhFiles dwhFiles = DwhFiles.forRoot(dwhRoot, avroConversionUtil.getFhirContext());
-      String startTime = dwhFiles.readTimestampFile(DwhFiles.TIMESTAMP_FILE_START).toString();
-      dwhRunDetails.setStartTime(startTime);
-      if (!Strings.isNullOrEmpty(status) && status.equalsIgnoreCase(SUCCESS)) {
-        String endTime = dwhFiles.readTimestampFile(DwhFiles.TIMESTAMP_FILE_END).toString();
+      if (!FAILED_TO_START.equalsIgnoreCase(status)) {
+        String startTime =
+            DwhFiles.readTimestampFile(dwhRoot, DwhFiles.TIMESTAMP_FILE_START).toString();
+        dwhRunDetails.setStartTime(startTime);
+      }
+      if (SUCCESS.equalsIgnoreCase(status)) {
+        String endTime =
+            DwhFiles.readTimestampFile(dwhRoot, DwhFiles.TIMESTAMP_FILE_END).toString();
         dwhRunDetails.setEndTime(endTime);
       } else {
         String fileSeparator = DwhFiles.getFileSeparatorForDwhFiles(dwhRoot);

@@ -1,4 +1,4 @@
-CREATE OR REPLACE VIEW Patient_flat_2 AS
+CREATE OR REPLACE VIEW Patient_flat_2_view AS
 SELECT P.id AS id, P.active, PN.family, PNG AS given, P.gender,
   P.deceased.Boolean AS deceased, P.birthDate,
   YEAR(current_date()) - YEAR(P.birthDate) AS age,
