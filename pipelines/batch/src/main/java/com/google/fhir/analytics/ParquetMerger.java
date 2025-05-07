@@ -32,7 +32,6 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
-import javax.annotation.Nullable;
 import org.apache.avro.Schema;
 import org.apache.avro.generic.GenericRecord;
 import org.apache.beam.sdk.Pipeline;
@@ -56,6 +55,7 @@ import org.apache.beam.sdk.values.PCollection;
 import org.apache.beam.sdk.values.TupleTag;
 import org.apache.parquet.hadoop.metadata.CompressionCodecName;
 import org.hl7.fhir.r4.model.codesystems.ActionType;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -273,8 +273,10 @@ public class ParquetMerger {
     // We don't know the path of this merged view path outside ParquetMerger, hence we write the
     // start timestamp file here.
     DwhFiles.writeTimestampFile(mergedDwhViewPath.toString(), DwhFiles.TIMESTAMP_FILE_START);
-    DwhFiles dwhFiles1 = DwhFiles.forRootAndFindViewPath(dwh1, avroConversionUtil.getFhirContext());
-    DwhFiles dwhFiles2 = DwhFiles.forRootAndFindViewPath(dwh2, avroConversionUtil.getFhirContext());
+    DwhFiles dwhFiles1 =
+        DwhFiles.forRootWithLatestViewPath(dwh1, avroConversionUtil.getFhirContext());
+    DwhFiles dwhFiles2 =
+        DwhFiles.forRootWithLatestViewPath(dwh2, avroConversionUtil.getFhirContext());
     DwhFiles mergedDwhFiles =
         DwhFiles.forRoot(mergedDwh, mergedDwhViewPath, avroConversionUtil.getFhirContext());
 
