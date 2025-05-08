@@ -110,7 +110,9 @@ fhirdata:
   # number of cores in the machine, whereas in the remote mode (cluster) only 1 thread is used.
   # If set to a positive value, then in both the modes the pipeline uses these many threads combined
   # across all the workers.
-  numThreads: -1
+  # numThreads: -1
+  # For test purposes in the dev env. we set number of threads to one.
+  numThreads: 1
 
   # In case of Flink local execution mode (which is the default currently), generate Flink
   # configuration file `flink-conf.yaml` automatically based on the parallelism set via the
@@ -167,6 +169,9 @@ fhirdata:
   # `.json` is assumed to be a single ViewDefinition. To output these views to a
   # relational database, the next sinkDbConfigPath should also be set.
   viewDefinitionsDir: "config/views"
+
+  # Whether to generate Parquet materialized views or not.
+  createParquetViews: true
 
   # The configuration file for the sink database. If `viewDefinitionsDir` is set
   # then the generated views are materialized and written to this DB. If not,

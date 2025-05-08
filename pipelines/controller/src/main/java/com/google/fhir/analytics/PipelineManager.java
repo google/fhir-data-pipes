@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2024 Google LLC
+ * Copyright 2020-2025 Google LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -232,12 +232,20 @@ public class PipelineManager implements ApplicationListener<ApplicationReadyEven
       lastRunEnd = null;
     } else {
       logger.info("Initializing with most recent DWH {}", lastCompletedDwh);
-      ResourceId resourceId =
-          FileSystems.matchNewResource(baseDir, true)
-              .resolve(lastCompletedDwh, StandardResolveOptions.RESOLVE_DIRECTORY);
-      currentDwh = DwhFiles.forRoot(resourceId.toString(), avroConversionUtil.getFhirContext());
-      // There exists a DWH from before, so we set the scheduler to continue updating the DWH.
-      lastRunEnd = LocalDateTime.now();
+      try {
+        ResourceId resourceId =
+            FileSystems.matchNewResource(baseDir, true)
+                .resolve(lastCompletedDwh, StandardResolveOptions.RESOLVE_DIRECTORY);
+        String currentDwhRoot = resourceId.toString();
+        // TODO: If there are errors from the last VIEW run, expose them in the UI.
+        currentDwh =
+            DwhFiles.forRootWithLatestViewPath(currentDwhRoot, avroConversionUtil.getFhirContext());
+        // There exists a DWH from before, so we set the scheduler to continue updating the DWH.
+        lastRunEnd = LocalDateTime.now();
+      } catch (IOException e) {
+        logger.error("IOException while initializing DWH: ", e);
+        throw new RuntimeException(e);
+      }
     }
     if (!lastDwh.isEmpty()) {
       initialiseLastRunDetails(baseDir, lastDwh);
@@ -267,9 +275,7 @@ public class PipelineManager implements ApplicationListener<ApplicationReadyEven
       ResourceId dwhDirectoryPath =
           FileSystems.matchNewResource(baseDir, true)
               .resolve(dwhDirectory, StandardResolveOptions.RESOLVE_DIRECTORY);
-      DwhFiles dwhFiles =
-          DwhFiles.forRoot(dwhDirectoryPath.toString(), avroConversionUtil.getFhirContext());
-      ResourceId incPath = dwhFiles.getLatestIncrementalRunPath();
+      ResourceId incPath = DwhFiles.getLatestIncrementalRunPath(dwhDirectoryPath.toString());
       if (incPath != null) {
         updateLastRunDetails(incPath);
         return;
@@ -433,6 +439,10 @@ public class PipelineManager implements ApplicationListener<ApplicationReadyEven
     String finalDwhRoot = options.getOutputParquetPath();
     String incrementalDwhRoot = currentDwh.newIncrementalRunPath().toString();
     options.setOutputParquetPath(incrementalDwhRoot);
+    String incrementalViewPath = DwhFiles.newViewsPath(incrementalDwhRoot).toString();
+    if (dataProperties.isCreateParquetViews()) {
+      options.setOutputParquetViewPath(incrementalViewPath);
+    }
     String since = fetchSinceTimestamp(options);
     options.setSince(since);
     FlinkPipelineOptions flinkOptionsForBatch = options.as(FlinkPipelineOptions.class);
@@ -604,8 +614,8 @@ public class PipelineManager implements ApplicationListener<ApplicationReadyEven
     return hiveTableManager;
   }
 
-  private synchronized void updateDwh(String newRoot) throws ProfileException {
-    currentDwh = DwhFiles.forRoot(newRoot, avroConversionUtil.getFhirContext());
+  private synchronized void updateDwh(String newRoot) throws IOException {
+    currentDwh = DwhFiles.forRootWithLatestViewPath(newRoot, avroConversionUtil.getFhirContext());
   }
 
   private static class PipelineThread extends Thread {
@@ -693,7 +703,7 @@ public class PipelineManager implements ApplicationListener<ApplicationReadyEven
         }
 
         List<PipelineResult> pipelineResults =
-            EtlUtils.runMultiplePipelinesWithTimestamp(pipelines, options, fhirContext);
+            EtlUtils.runMultiplePipelinesWithTimestamp(pipelines, options);
         // Remove the metrics of the previous pipeline and register the new metrics
         manager.removePipelineMetrics();
         pipelineResults.stream()
@@ -711,8 +721,7 @@ public class PipelineManager implements ApplicationListener<ApplicationReadyEven
               ParquetMerger.createMergerPipelines(mergerOptions, avroConversionUtil);
           logger.info("Merger options are {}", mergerOptions);
           List<PipelineResult> mergerPipelineResults =
-              EtlUtils.runMultipleMergerPipelinesWithTimestamp(
-                  mergerPipelines, mergerOptions, fhirContext);
+              EtlUtils.runMultipleMergerPipelinesWithTimestamp(mergerPipelines, mergerOptions);
           mergerPipelineResults.stream()
               .forEach(pipelineResult -> manager.publishPipelineMetrics(pipelineResult.metrics()));
           manager.updateDwh(currentDwhRoot);
@@ -760,8 +769,8 @@ public class PipelineManager implements ApplicationListener<ApplicationReadyEven
     try {
       if (!Strings.isNullOrEmpty(dwhRoot)) {
         String stackTrace = ExceptionUtils.getStackTrace(e);
-        DwhFiles.forRoot(dwhRoot, fhirContext)
-            .overwriteFile(ERROR_FILE_NAME, stackTrace.getBytes(StandardCharsets.UTF_8));
+        DwhFiles.overwriteFile(
+            dwhRoot, ERROR_FILE_NAME, stackTrace.getBytes(StandardCharsets.UTF_8));
       }
     } catch (IOException ex) {
       logger.error("Error while capturing error to a file", ex);
@@ -772,11 +781,12 @@ public class PipelineManager implements ApplicationListener<ApplicationReadyEven
   void setLastRunDetails(String dwhRoot, String status) {
     DwhRunDetails dwhRunDetails = new DwhRunDetails();
     try {
-      DwhFiles dwhFiles = DwhFiles.forRoot(dwhRoot, avroConversionUtil.getFhirContext());
-      String startTime = dwhFiles.readTimestampFile(DwhFiles.TIMESTAMP_FILE_START).toString();
+      String startTime =
+          DwhFiles.readTimestampFile(dwhRoot, DwhFiles.TIMESTAMP_FILE_START).toString();
       dwhRunDetails.setStartTime(startTime);
       if (!Strings.isNullOrEmpty(status) && status.equalsIgnoreCase(SUCCESS)) {
-        String endTime = dwhFiles.readTimestampFile(DwhFiles.TIMESTAMP_FILE_END).toString();
+        String endTime =
+            DwhFiles.readTimestampFile(dwhRoot, DwhFiles.TIMESTAMP_FILE_END).toString();
         dwhRunDetails.setEndTime(endTime);
       } else {
         String fileSeparator = DwhFiles.getFileSeparatorForDwhFiles(dwhRoot);
