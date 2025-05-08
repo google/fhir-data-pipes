@@ -348,8 +348,10 @@ function validate_resource_tables() {
   --outputformat=csv2 >>hive_resource_tables.csv
 
   # Check for snapshot tables.
-  if [[ $(grep patient_ hive_resource_tables.csv) && $(grep encounter_ hive_resource_tables.csv) \
-      && $(grep observation_ hive_resource_tables.csv) ]]
+  if [[ $(grep patient_ hive_resource_tables.csv) \
+      && $(grep encounter_ hive_resource_tables.csv) \
+      && $(grep observation_ hive_resource_tables.csv) \
+      && $(grep patient_flat_ hive_resource_tables.csv) ]]
   then
     print_message "Snapshot tables creation verified successfully."
   else
@@ -358,8 +360,10 @@ function validate_resource_tables() {
   fi
 
   # Check for canonical tables.
-  if [[ $(grep -w patient hive_resource_tables.csv) && $(grep -w encounter hive_resource_tables.csv) \
-      && $(grep -w observation hive_resource_tables.csv) ]]
+  if [[ $(grep -w patient hive_resource_tables.csv) \
+      && $(grep -w encounter hive_resource_tables.csv) \
+      && $(grep -w observation hive_resource_tables.csv) \
+      && $(grep -w patient_flat hive_resource_tables.csv) ]]
   then
     print_message "Canonical tables creation verified successfully."
   else

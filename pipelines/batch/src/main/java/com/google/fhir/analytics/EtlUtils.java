@@ -70,6 +70,7 @@ class EtlUtils {
    */
   static List<PipelineResult> runMultiplePipelinesWithTimestamp(
       List<Pipeline> pipelines, FhirEtlOptions options) throws IOException {
+    log.info("Starting another run with flags: " + options);
     String dwhRoot = options.getOutputParquetPath();
     String viewRoot = options.getOutputParquetViewPath();
     if (!Strings.isNullOrEmpty(dwhRoot)) {
@@ -92,6 +93,7 @@ class EtlUtils {
   /** Similar to {@link #runMultiplePipelinesWithTimestamp} but for the merge pipeline. */
   static List<PipelineResult> runMultipleMergerPipelinesWithTimestamp(
       List<Pipeline> pipelines, ParquetMergerOptions options) throws IOException {
+    log.info("Starting another merger-run with flags: " + options);
     mergeWithLatestTimestamp(
         options.getDwh1(),
         options.getDwh2(),
