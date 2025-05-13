@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2024 Google LLC
+ * Copyright 2020-2025 Google LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,6 +23,8 @@ import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import com.google.common.collect.Iterables;
 import com.google.fhir.analytics.DwhFiles.CloudPath;
+import com.google.fhir.analytics.view.ViewDefinitionException;
+import com.google.fhir.analytics.view.ViewManager;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.DirectoryNotEmptyException;
@@ -264,6 +266,21 @@ public class DwhFilesManager {
   }
 
   /**
+   * Checks if the pipeline corresponding to creation of the given DWH started, i.e., the start
+   * timestamp file is found there. This is useful to differentiate a case where the pipeline
+   * initialization fails, and it does not even reach the step to create the start timestamp.
+   *
+   * @param dwhResource the root path of DWH
+   * @return whether the pipeline for this DWH started or not
+   * @throws IOException
+   */
+  boolean isDwhJobStarted(ResourceId dwhResource) throws IOException {
+    ResourceId startTimestampResource =
+        dwhResource.resolve(DwhFiles.TIMESTAMP_FILE_START, StandardResolveOptions.RESOLVE_FILE);
+    return doesFileExist(startTimestampResource);
+  }
+
+  /**
    * This method checks if the given resource exists in the file system or not
    *
    * @param resourceId the resource to be checked
@@ -342,6 +359,19 @@ public class DwhFilesManager {
     return childPaths.stream()
         .map(r -> r.getFilename())
         .filter(r -> configuredSet.contains(r))
+        .collect(Collectors.toList());
+  }
+
+  List<String> findExistingViews(String viewRoot, String viewDefinitionsDir)
+      throws IOException, ViewDefinitionException {
+    Set<ResourceId> childPaths = DwhFiles.getAllChildDirectories(viewRoot);
+    // The reason viewManager is recreated (instead of creating it once in the constructor)
+    // is that the content of viewDefinitionsDir may change while controller is running.
+    // This function is not expected to be called frequently o.w., we should improve performance.
+    ViewManager viewManager = ViewManager.createForDir(viewDefinitionsDir);
+    return childPaths.stream()
+        .map(r -> r.getFilename())
+        .filter(r -> viewManager.getViewDefinition(r) != null)
         .collect(Collectors.toList());
   }
 
