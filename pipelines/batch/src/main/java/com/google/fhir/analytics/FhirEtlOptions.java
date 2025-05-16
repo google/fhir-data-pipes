@@ -23,7 +23,20 @@ import org.apache.beam.sdk.options.Validation.Required;
 public interface FhirEtlOptions extends BasePipelineOptions {
 
   @Description(
-      "Mode through which the FHIR resources have to be fetched from the source FHIR server")
+      "Mode through which the FHIR resources have to be fetched from the source FHIR server. "
+          + "Supported modes are:\n"
+          + "  FHIR_SEARCH: Reads resources through the FIHR Search API; "
+          + "--fhirServerUrl should be set in this mode.\n"
+          + "  PARQUET: Reads resources from input Parquet files; this is only intended for "
+          + "regenerating flat views or syncing resources with an external FHIR server.\n"
+          + "  JSON: Reads resources from input JSON files; --sourceJsonFilePattern should be set "
+          + "in this mode.\n"
+          + "  NDJSON: Reads resources from input ndjson files; --sourceNdjsonFilePattern "
+          + "should be set in this mode.\n"
+          + "  BULK_EXPORT: Reads resources through the FIHR Bulk Export API; "
+          + "--fhirServerUrl should be set in this mode.\n"
+          + "  HAPI_JDBC: Reads resources through a direct JDBC connection to the database of a "
+          + "HAPI server; --fhirDatabaseConfigPath should be set in this mode.\n")
   @Default.Enum("FHIR_SEARCH")
   FhirFetchMode getFhirFetchMode();
 
@@ -223,11 +236,12 @@ public interface FhirEtlOptions extends BasePipelineOptions {
   void setRecreateSinkTables(Boolean value);
 
   @Description(
-      "If set, flat Parquet files corresponding to input ViewDefinition are created as well.")
-  @Default.Boolean(false)
-  Boolean isCreateParquetViews();
+      "If set, flat Parquet files corresponding to input ViewDefinition are created and written\n"
+          + "in this directory. Each view will be in a sub-directory based on its `name` field.")
+  @Default.String("")
+  String getOutputParquetViewPath();
 
-  void setCreateParquetViews(Boolean value);
+  void setOutputParquetViewPath(String value);
 
   @Description(
       "The path to the data-warehouse directory of Parquet files to be read. The content of this "

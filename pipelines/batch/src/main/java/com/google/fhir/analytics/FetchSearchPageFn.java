@@ -86,7 +86,11 @@ abstract class FetchSearchPageFn<T> extends DoFn<T, KV<String, Integer>> {
 
   protected final String stageIdentifier;
 
-  protected final String parquetFile;
+  protected final String outputParquetPath;
+
+  private final String inputParquetPath;
+
+  private final String outputParquetViewPath;
 
   protected final Boolean generateParquetFiles;
 
@@ -122,10 +126,8 @@ abstract class FetchSearchPageFn<T> extends DoFn<T, KV<String, Integer>> {
 
   protected AvroConversionUtil avroConversionUtil;
 
-  private final boolean createParquetViews;
-
   FetchSearchPageFn(FhirEtlOptions options, String stageIdentifier) {
-    this.createParquetViews = options.isCreateParquetViews();
+    this.outputParquetViewPath = options.getOutputParquetViewPath();
     this.sinkPath = options.getFhirSinkPath();
     this.sinkUsername = options.getSinkUserName();
     this.sinkPassword = options.getSinkPassword();
@@ -136,7 +138,8 @@ abstract class FetchSearchPageFn<T> extends DoFn<T, KV<String, Integer>> {
     this.oAuthClientId = options.getFhirServerOAuthClientId();
     this.oAuthClientSecret = options.getFhirServerOAuthClientSecret();
     this.stageIdentifier = stageIdentifier;
-    this.parquetFile = options.getOutputParquetPath();
+    this.outputParquetPath = options.getOutputParquetPath();
+    this.inputParquetPath = options.getParquetInputDwhRoot();
     this.generateParquetFiles = options.isGenerateParquetFiles();
     this.secondsToFlush = options.getSecondsToFlushParquetFiles();
     this.rowGroupSize = options.getRowGroupSizeForParquetFiles();
@@ -214,14 +217,18 @@ abstract class FetchSearchPageFn<T> extends DoFn<T, KV<String, Integer>> {
             oAuthClientSecret,
             fhirContext);
     fhirSearchUtil = new FhirSearchUtil(fetchUtil);
-    if (generateParquetFiles && !Strings.isNullOrEmpty(parquetFile)) {
+    // TODO remove generateParquetFiles and instead rely on not setting outputParquetPath.
+    if (generateParquetFiles
+        && (!Strings.isNullOrEmpty(outputParquetPath)
+            || !Strings.isNullOrEmpty(outputParquetViewPath))) {
       parquetUtil =
           new ParquetUtil(
               fhirContext.getVersion().getVersion(),
               structureDefinitionsPath,
-              parquetFile,
+              outputParquetPath,
+              inputParquetPath,
               viewDefinitionsDir,
-              createParquetViews,
+              outputParquetViewPath,
               secondsToFlush,
               rowGroupSize,
               stageIdentifier + "_",

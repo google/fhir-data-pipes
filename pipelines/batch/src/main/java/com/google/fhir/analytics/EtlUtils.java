@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2024 Google LLC
+ * Copyright 2020-2025 Google LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,7 @@
  */
 package com.google.fhir.analytics;
 
-import ca.uhn.fhir.context.FhirContext;
+import com.google.common.base.Strings;
 import java.io.IOException;
 import java.time.Instant;
 import java.util.ArrayList;
@@ -28,6 +28,7 @@ import java.util.concurrent.Executors;
 import java.util.function.Supplier;
 import org.apache.beam.sdk.Pipeline;
 import org.apache.beam.sdk.PipelineResult;
+import org.apache.beam.sdk.io.fs.ResourceId;
 import org.apache.beam.sdk.metrics.MetricNameFilter;
 import org.apache.beam.sdk.metrics.MetricQueryResults;
 import org.apache.beam.sdk.metrics.MetricResult;
@@ -68,57 +69,65 @@ class EtlUtils {
    * @throws IOException if writing the timestamp file fails.
    */
   static List<PipelineResult> runMultiplePipelinesWithTimestamp(
-      List<Pipeline> pipelines, FhirEtlOptions options, FhirContext fhirContext)
-      throws IOException {
+      List<Pipeline> pipelines, FhirEtlOptions options) throws IOException {
+    log.info("Starting another run with flags: " + options);
     String dwhRoot = options.getOutputParquetPath();
-    if (dwhRoot != null && !dwhRoot.isEmpty()) {
+    String viewRoot = options.getOutputParquetViewPath();
+    if (!Strings.isNullOrEmpty(dwhRoot)) {
       // TODO write pipeline options too such that it  can be validated for incremental runs.
-      DwhFiles.forRoot(dwhRoot, fhirContext).writeTimestampFile(DwhFiles.TIMESTAMP_FILE_START);
+      DwhFiles.writeTimestampFile(dwhRoot, DwhFiles.TIMESTAMP_FILE_START);
+    }
+    if (!Strings.isNullOrEmpty(viewRoot)) {
+      DwhFiles.writeTimestampFile(viewRoot, DwhFiles.TIMESTAMP_FILE_START);
     }
     List<PipelineResult> pipelineResults = runMultiplePipelines(pipelines);
-    if (dwhRoot != null && !dwhRoot.isEmpty()) {
-      DwhFiles.forRoot(dwhRoot, fhirContext).writeTimestampFile(DwhFiles.TIMESTAMP_FILE_END);
+    if (!Strings.isNullOrEmpty(viewRoot)) {
+      DwhFiles.writeTimestampFile(viewRoot, DwhFiles.TIMESTAMP_FILE_END);
+    }
+    if (!Strings.isNullOrEmpty(dwhRoot)) {
+      DwhFiles.writeTimestampFile(dwhRoot, DwhFiles.TIMESTAMP_FILE_END);
     }
     return pipelineResults;
   }
 
   /** Similar to {@link #runMultiplePipelinesWithTimestamp} but for the merge pipeline. */
   static List<PipelineResult> runMultipleMergerPipelinesWithTimestamp(
-      List<Pipeline> pipelines, ParquetMergerOptions options, FhirContext fhirContext)
-      throws IOException {
+      List<Pipeline> pipelines, ParquetMergerOptions options) throws IOException {
+    log.info("Starting another merger-run with flags: " + options);
     mergeWithLatestTimestamp(
         options.getDwh1(),
         options.getDwh2(),
         options.getMergedDwh(),
-        DwhFiles.TIMESTAMP_FILE_START,
-        fhirContext);
+        DwhFiles.TIMESTAMP_FILE_START);
     // Transaction file exists for Batch Export mode, merge the timestamp file in this case
-    if (DwhFiles.forRoot(options.getDwh1(), fhirContext)
-        .doesTimestampFileExist(DwhFiles.TIMESTAMP_FILE_BULK_TRANSACTION_TIME)) {
+    if (DwhFiles.doesTimestampFileExist(
+        options.getDwh1(), DwhFiles.TIMESTAMP_FILE_BULK_TRANSACTION_TIME)) {
       mergeWithLatestTimestamp(
           options.getDwh1(),
           options.getDwh2(),
           options.getMergedDwh(),
-          DwhFiles.TIMESTAMP_FILE_BULK_TRANSACTION_TIME,
-          fhirContext);
+          DwhFiles.TIMESTAMP_FILE_BULK_TRANSACTION_TIME);
     }
     List<PipelineResult> pipelineResults = runMultiplePipelines(pipelines);
-    DwhFiles.forRoot(options.getMergedDwh(), fhirContext)
-        .writeTimestampFile(DwhFiles.TIMESTAMP_FILE_END);
+    DwhFiles.writeTimestampFile(options.getMergedDwh(), DwhFiles.TIMESTAMP_FILE_END);
+    if (!Strings.isNullOrEmpty(options.getViewDefinitionsDir())) {
+      ResourceId viewPath = DwhFiles.getLatestViewsPath(options.getMergedDwh());
+      if (viewPath != null) {
+        // Note in this function, we cannot write the start timestamp file under the VIEWS path
+        // because the exact value of that path is determined in ParquetMerger. Hence, writing
+        // the start timestamp is also done there.
+        DwhFiles.writeTimestampFile(viewPath.toString(), DwhFiles.TIMESTAMP_FILE_END);
+      }
+    }
     return pipelineResults;
   }
 
   private static void mergeWithLatestTimestamp(
-      String dwhRoot1,
-      String dwhRoot2,
-      String mergedDwhRoot,
-      String fileName,
-      FhirContext fhirContext)
-      throws IOException {
-    Instant instant1 = DwhFiles.forRoot(dwhRoot1, fhirContext).readTimestampFile(fileName);
-    Instant instant2 = DwhFiles.forRoot(dwhRoot2, fhirContext).readTimestampFile(fileName);
+      String dwhRoot1, String dwhRoot2, String mergedDwhRoot, String fileName) throws IOException {
+    Instant instant1 = DwhFiles.readTimestampFile(dwhRoot1, fileName);
+    Instant instant2 = DwhFiles.readTimestampFile(dwhRoot2, fileName);
     Instant mergedInstant = (instant1.compareTo(instant2) > 0) ? instant1 : instant2;
-    DwhFiles.forRoot(mergedDwhRoot, fhirContext).writeTimestampFile(mergedInstant, fileName);
+    DwhFiles.writeTimestampFile(mergedDwhRoot, mergedInstant, fileName);
   }
 
   /**

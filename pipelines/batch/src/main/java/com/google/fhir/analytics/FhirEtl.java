@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2024 Google LLC
+ * Copyright 2020-2025 Google LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -264,6 +264,7 @@ public class FhirEtl {
             "--parquetInputDwhRoot cannot be empty for PARQUET fetch mode");
         // This constraint is to make the PipelineManager logic simpler and because there is
         // currently no use-case for both reading from Parquet files and also writing into Parquet.
+        // The only case is creating Parquet views, which is handled by --outputParquetViewPath
         Preconditions.checkState(
             Strings.isNullOrEmpty(options.getOutputParquetPath()),
             "--parquetInputDwhRoot and --outputParquetPath cannot be used together!");
@@ -299,9 +300,10 @@ public class FhirEtl {
                 + options.getResourceList());
       }
     }
-    if (options.isCreateParquetViews() && Strings.isNullOrEmpty(options.getViewDefinitionsDir())) {
+    if (!Strings.isNullOrEmpty(options.getOutputParquetViewPath())
+        && Strings.isNullOrEmpty(options.getViewDefinitionsDir())) {
       throw new IllegalArgumentException(
-          "When using --createParquetViews, --viewDefinitionsDir cannot be empty");
+          "When setting --outputParquetViewPath, --viewDefinitionsDir cannot be empty");
     }
     if (options.getCacheBundleForParquetWrites()
         && !"DataflowRunner".equals(options.getRunner().getSimpleName())) {
@@ -371,7 +373,10 @@ public class FhirEtl {
       throws IOException, ProfileException {
     Preconditions.checkArgument(!options.getParquetInputDwhRoot().isEmpty());
     DwhFiles dwhFiles =
-        DwhFiles.forRoot(options.getParquetInputDwhRoot(), avroConversionUtil.getFhirContext());
+        DwhFiles.forRoot(
+            options.getParquetInputDwhRoot(),
+            options.getOutputParquetViewPath(),
+            avroConversionUtil.getFhirContext());
     Set<String> resourceTypes = dwhFiles.findNonEmptyResourceDirs();
     log.info("Reading Parquet files for these resource types: {}", resourceTypes);
     List<Pipeline> pipelineList = new ArrayList<>();
@@ -379,7 +384,7 @@ public class FhirEtl {
       Pipeline pipeline = Pipeline.create(options);
       PCollection<ReadableFile> inputFiles =
           pipeline
-              .apply(Create.of(dwhFiles.getFilePattern(resourceType)))
+              .apply(Create.of(dwhFiles.getResourceFilePattern(resourceType)))
               .apply(FileIO.matchAll())
               .apply(FileIO.readMatches());
 
@@ -431,10 +436,10 @@ public class FhirEtl {
     if (typeToNdjsonFileMappings != null && !typeToNdjsonFileMappings.isEmpty()) {
       // Update the transaction timestamp value from the bulkExportResponse. This value will be used
       // as the start timestamp for the next bulk export job.
-      DwhFiles.forRoot(options.getOutputParquetPath(), avroConversionUtil.getFhirContext())
-          .writeTimestampFile(
-              bulkExportResponse.transactionTime().toInstant(),
-              DwhFiles.TIMESTAMP_FILE_BULK_TRANSACTION_TIME);
+      DwhFiles.writeTimestampFile(
+          options.getOutputParquetPath(),
+          bulkExportResponse.transactionTime().toInstant(),
+          DwhFiles.TIMESTAMP_FILE_BULK_TRANSACTION_TIME);
       for (String type : typeToNdjsonFileMappings.keySet()) {
         Pipeline pipeline = Pipeline.create(options);
         pipeline
@@ -534,8 +539,7 @@ public class FhirEtl {
             options.getStructureDefinitionsPath(),
             options.getRecursiveDepth());
     List<Pipeline> pipelines = setupAndBuildPipelines(options, avroConversionUtil);
-    EtlUtils.runMultiplePipelinesWithTimestamp(
-        pipelines, options, avroConversionUtil.getFhirContext());
+    EtlUtils.runMultiplePipelinesWithTimestamp(pipelines, options);
 
     log.info("DONE!");
   }
