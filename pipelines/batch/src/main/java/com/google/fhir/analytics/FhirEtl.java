@@ -377,7 +377,16 @@ public class FhirEtl {
             options.getParquetInputDwhRoot(),
             options.getOutputParquetViewPath(),
             avroConversionUtil.getFhirContext());
-    Set<String> resourceTypes = dwhFiles.findNonEmptyResourceDirs();
+    Set<String> foundResourceTypes = dwhFiles.findNonEmptyResourceDirs();
+    log.info("Found Parquet files for these resource types: {}", foundResourceTypes);
+    Set<String> resourceTypes = Sets.newHashSet(options.getResourceList().split(","));
+    if (!resourceTypes.equals(foundResourceTypes)) {
+      log.warn(
+          "Found resource types {} is not equal to requested resource types {}",
+          foundResourceTypes,
+          resourceTypes);
+      resourceTypes.retainAll(foundResourceTypes);
+    }
     log.info("Reading Parquet files for these resource types: {}", resourceTypes);
     List<Pipeline> pipelineList = new ArrayList<>();
     for (String resourceType : resourceTypes) {
