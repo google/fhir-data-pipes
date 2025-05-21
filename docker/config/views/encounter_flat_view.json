@@ -47,6 +47,10 @@
         {
           "path": "code",
           "name": "type_code"
+        },
+        {
+          "path": "display",
+          "name": "type_display"
         }
       ]
     },

@@ -51,11 +51,15 @@
       "column": [
         {
           "path": "system",
-          "name": "med_system"
+          "name": "medication_system"
         },
         {
           "path": "code",
-          "name": "med_code"
+          "name": "medication_code"
+        },
+        {
+          "path": "display",
+          "name": "medication_display"
         }
       ]
     },
@@ -69,6 +73,10 @@
         {
           "path": "code",
           "name": "statusReason_code"
+        },
+        {
+          "path": "display",
+          "name": "statusReason_display"
         }
       ]
     }
