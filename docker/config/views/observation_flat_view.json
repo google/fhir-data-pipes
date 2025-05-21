@@ -32,6 +32,18 @@
           "path": "value.ofType(Quantity).value",
           "name": "val_quantity",
           "type": "decimal"
+        },
+        {
+          "path": "value.ofType(Quantity).unit",
+          "name": "val_quantity_unit"
+        },
+        {
+          "path": "value.ofType(Quantity).system",
+          "name": "val_quantity_system"
+        },
+        {
+          "path": "value.ofType(Quantity).code",
+          "name": "val_quantity_code"
         }
       ]
     },
