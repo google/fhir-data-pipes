@@ -32,6 +32,18 @@
           "path": "value.ofType(Quantity).value",
           "name": "val_quantity",
           "type": "decimal"
+        },
+        {
+          "path": "value.ofType(Quantity).unit",
+          "name": "val_quantity_unit"
+        },
+        {
+          "path": "value.ofType(Quantity).system",
+          "name": "val_quantity_system"
+        },
+        {
+          "path": "value.ofType(Quantity).code",
+          "name": "val_quantity_code"
         }
       ]
     },
@@ -40,11 +52,15 @@
       "column": [
         {
           "path": "code",
-          "name": "code"
+          "name": "code_code"
         },
         {
           "path": "system",
           "name": "code_sys"
+        },
+        {
+          "path": "display",
+          "name": "code_display"
         }
       ]
     },
@@ -53,11 +69,15 @@
       "column": [
         {
           "path": "code",
-          "name": "val_code"
+          "name": "value_code"
         },
         {
           "path": "system",
-          "name": "val_sys"
+          "name": "value_sys"
+        },
+        {
+          "path": "display",
+          "name": "value_display"
         }
       ]
     }
