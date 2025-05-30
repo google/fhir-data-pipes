@@ -78,20 +78,6 @@ mvn compile exec:java -pl batch \
     --fhirServerUserName=admin --fhirServerPassword=Admin123 "
 ```
 
-for streaming
-
-```
-mvn compile exec:java -pl streaming-binlog \
-  -Dexec.args="--databaseHostName=localhost \
-  --databasePort=3306 --databaseUser=root --databasePassword=debezium\
-  --databaseServerName=mysql --databaseSchema=openmrs --databaseServerId=77 \
-  --fhirServerUserName=admin --fhirServerPassword=Admin123 \
-  --fhirServerUrl=http://localhost:8099/openmrs/ws/fhir2/R4 \
-  --fhirSinkPath=http://localhost:5001/fhir \
-  --sinkUserName=hapi --sinkPassword=Admin123 \
-  --outputParquetPath=/tmp/"
-```
-
 You can track all the transactions in the OpenHIM instance Under the Tab
 `Transaction Log`
 
