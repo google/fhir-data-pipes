@@ -251,8 +251,29 @@ function check_parquet() {
     "${output}/*/VIEWS_TIMESTAMP_*/patient_flat/" | awk '{print $3}')
     local total_encounter_flat=$(java -Xms16g -Xmx16g -jar ./parquet-tools-1.11.1.jar rowcount \
     "${output}/*/VIEWS_TIMESTAMP_*/encounter_flat/" | awk '{print $3}')
-    local total_obs_flat=$(java -Xms16g -Xmx16g -jar ./parquet-tools-1.11.1.jar rowcount \
-     "${output}/*/VIEWS_TIMESTAMP_*/observation_flat/" | awk '{print $3}')
+
+    # --- BEGIN: retry loop for observation_flat flake (#1315) -----------------
+    local retries=0
+    local max_retries=5
+    local sleep_secs=5
+    local total_obs_flat
+    while true; do
+      total_obs_flat=$(java -Xms16g -Xmx16g -jar ./parquet-tools-1.11.1.jar rowcount \
+        "${output}/*/VIEWS_TIMESTAMP_*/observation_flat/" | awk '{print $3}')
+
+      if [[ "$total_obs_flat" -eq "$TOTAL_TEST_OBS" ]]; then
+        break
+      fi
+
+      if [[ $retries -ge $max_retries ]]; then
+        break
+      fi
+
+      retries=$((retries + 1))
+      print_message "Observation_flat count ($total_obs_flat) != expected ($TOTAL_TEST_OBS) – retry ${retries}/${max_retries} in ${sleep_secs}s"
+      sleep "$sleep_secs"
+    done
+    # --- END: retry loop -------------------------------------------------------
 
     print_message "Total patients: $total_patients"
     print_message "Total encounters: $total_encounters"
