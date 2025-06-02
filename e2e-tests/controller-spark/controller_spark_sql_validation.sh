@@ -241,38 +241,79 @@ function check_parquet() {
   if [[ "$(ls -A $output)" ]]
   then
     local total_patients=$(java -Xms16g -Xmx16g -jar ./parquet-tools-1.11.1.jar rowcount \
-    "${output}/*/Patient/" | awk '{print $3}')
+    "${output}/*/Patient/" 2>/dev/null | awk '{print $3}')
     local total_encounters=$(java -Xms16g -Xmx16g -jar ./parquet-tools-1.11.1.jar rowcount \
-    "${output}/*/Encounter/" | awk '{print $3}')
+    "${output}/*/Encounter/" 2>/dev/null | awk '{print $3}')
     local total_observations=$(java -Xms16g -Xmx16g -jar ./parquet-tools-1.11.1.jar rowcount \
-    "${output}/*/Observation/" | awk '{print $3}')
+    "${output}/*/Observation/" 2>/dev/null | awk '{print $3}')
 
     local total_patient_flat=$(java -Xms16g -Xmx16g -jar ./parquet-tools-1.11.1.jar rowcount \
-    "${output}/*/VIEWS_TIMESTAMP_*/patient_flat/" | awk '{print $3}')
+    "${output}/*/VIEWS_TIMESTAMP_*/patient_flat/" 2>/dev/null | awk '{print $3}')
     local total_encounter_flat=$(java -Xms16g -Xmx16g -jar ./parquet-tools-1.11.1.jar rowcount \
-    "${output}/*/VIEWS_TIMESTAMP_*/encounter_flat/" | awk '{print $3}')
+    "${output}/*/VIEWS_TIMESTAMP_*/encounter_flat/" 2>/dev/null | awk '{print $3}')
 
     # --- BEGIN: retry loop for observation_flat flake (#1315) -----------------
     local retries=0
     local max_retries=5
     local sleep_secs=5
-    local total_obs_flat
-    while true; do
-      total_obs_flat=$(java -Xms16g -Xmx16g -jar ./parquet-tools-1.11.1.jar rowcount \
-        "${output}/*/VIEWS_TIMESTAMP_*/observation_flat/" | awk '{print $3}')
+    local total_obs_flat=0
+    local raw_count
 
-      if [[ "$total_obs_flat" -eq "$TOTAL_TEST_OBS" ]]; then
-        break
+    # First check if the VIEWS_TIMESTAMP_*/observation_flat directory exists (FHIR-Search mode)
+    shopt -s nullglob
+    local view_dirs=( "$output"/*/VIEWS_TIMESTAMP_*/observation_flat/ )
+    shopt -u nullglob
+
+    if [[ ${#view_dirs[@]} -gt 0 ]]; then
+      # Retry until the row count matches TOTAL_TEST_OBS or we exhaust retries
+      while true; do
+        raw_count=$(
+          java -Xms16g -Xmx16g -jar ./parquet-tools-1.11.1.jar rowcount \
+            "${output}/*/VIEWS_TIMESTAMP_*/observation_flat/" 2>/dev/null | awk '{print $3}'
+        )
+
+        # If raw_count is empty or non‐numeric, treat as zero
+        if [[ -z "$raw_count" || ! "$raw_count" =~ ^[0-9]+$ ]]; then
+          total_obs_flat=0
+        else
+          total_obs_flat=$raw_count
+        fi
+
+        if [[ $total_obs_flat -eq $TOTAL_TEST_OBS ]]; then
+          break
+        fi
+
+        if [[ $retries -ge $max_retries ]]; then
+          break
+        fi
+
+        retries=$((retries + 1))
+        print_message "Observation_flat count ($total_obs_flat) != expected ($TOTAL_TEST_OBS) – retry ${retries}/${max_retries} in ${sleep_secs}s"
+        sleep "$sleep_secs"
+      done
+
+    else
+      # If no VIEWS_TIMESTAMP_*/observation_flat folder, check for a direct observation_flat (JDBC mode)
+      shopt -s nullglob
+      local jdbc_dirs=( "$output"/*/observation_flat/ )
+      shopt -u nullglob
+
+      if [[ ${#jdbc_dirs[@]} -gt 0 ]]; then
+        raw_count=$(
+          java -Xms16g -Xmx16g -jar ./parquet-tools-1.11.1.jar rowcount \
+            "${output}/*/observation_flat/" 2>/dev/null | awk '{print $3}'
+        )
+
+        if [[ -z "$raw_count" || ! "$raw_count" =~ ^[0-9]+$ ]]; then
+          total_obs_flat=0
+        else
+          total_obs_flat=$raw_count
+        fi
+      else
+        # Neither pattern exists → treat as zero
+        total_obs_flat=0
       fi
-
-      if [[ $retries -ge $max_retries ]]; then
-        break
-      fi
-
-      retries=$((retries + 1))
-      print_message "Observation_flat count ($total_obs_flat) != expected ($TOTAL_TEST_OBS) – retry ${retries}/${max_retries} in ${sleep_secs}s"
-      sleep "$sleep_secs"
-    done
+    fi
     # --- END: retry loop -------------------------------------------------------
 
     print_message "Total patients: $total_patients"
