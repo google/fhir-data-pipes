@@ -39,6 +39,10 @@
         {
           "path": "code",
           "name": "statusReason_code"
+        },
+        {
+          "path": "display",
+          "name": "statusReason_display"
         }
       ]
     },
@@ -47,11 +51,15 @@
       "column": [
         {
           "path": "system",
-          "name": "vaccine_sys"
+          "name": "vaccineCode_sys"
         },
         {
           "path": "code",
-          "name": "vaccine_code"
+          "name": "vaccineCode_code"
+        },
+        {
+          "path": "display",
+          "name": "vaccineCode_display"
         }
       ]
     },

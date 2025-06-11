@@ -65,6 +65,10 @@
         {
           "path": "code",
           "name": "qualification_code"
+        },
+        {
+          "path": "display",
+          "name": "qualification_display"
         }
       ]
     }
