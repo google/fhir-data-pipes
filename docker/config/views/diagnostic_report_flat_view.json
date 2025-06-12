@@ -33,12 +33,16 @@
       "forEachOrNull": "code.coding",
       "column": [
         {
-          "path": "system",
-          "name": "system"
+          "path": "code",
+          "name": "code_code"
         },
         {
-          "path": "code",
-          "name": "code"
+          "path": "system",
+          "name": "code_sys"
+        },
+        {
+          "path": "display",
+          "name": "code_display"
         }
       ]
     },
