@@ -28,7 +28,7 @@
   <artifactId>common</artifactId>
 
   <properties>
-    <c3p0.version>0.10.2</c3p0.version>
+    <c3p0.version>0.11.1</c3p0.version>
     <guava.version>33.4.8-jre</guava.version>
   </properties>
 
@@ -62,7 +62,7 @@
     <dependency>
       <groupId>com.google.apis</groupId>
       <artifactId>google-api-services-healthcare</artifactId>
-      <version>v1-rev20250430-2.0.0</version>
+      <version>v1-rev20250526-2.0.0</version>
     </dependency>
 
     <dependency>
