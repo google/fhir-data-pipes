@@ -1,25 +1,28 @@
 package com.cerner.bunsen.avro;
 
+import static org.junit.jupiter.api.Assertions.*;
+
 import ca.uhn.fhir.context.FhirContext;
 import ca.uhn.fhir.context.FhirVersionEnum;
 import com.cerner.bunsen.ProfileMapperFhirContexts;
 import com.cerner.bunsen.exception.ProfileException;
 import com.cerner.bunsen.r4.TestData;
+import java.net.URI;
 import java.net.URISyntaxException;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.List;
 import org.apache.avro.generic.GenericData.Record;
 import org.hl7.fhir.r4.model.CodeableConcept;
 import org.hl7.fhir.r4.model.Extension;
 import org.hl7.fhir.r4.model.Patient;
-import org.junit.Assert;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 
 /**
- * This class tests the used defined structure definitions which should also follow the HL7 FHIR
- * specifications and these are just some additional test cases, apart from the regular US Core
- * Profiles tests.
+ * This class tests the user-defined structure definitions which should also follow the HL7 FHIR
+ * specifications. These are additional test cases beyond the regular US Core Profiles tests.
  */
 public class R4AvroConverterCustomProfileTest {
 
@@ -30,12 +33,20 @@ public class R4AvroConverterCustomProfileTest {
 
   private static Patient testBunsenTestProfilePatientDecoded;
 
-  @BeforeClass
+  @BeforeAll
   public static void setUp() throws URISyntaxException, ProfileException {
     ProfileMapperFhirContexts.getInstance().deRegisterFhirContexts(FhirVersionEnum.R4);
+    URI profileDirUri =
+        R4AvroConverterCustomProfileTest.class
+            .getResource("/r4-custom-profile-definitions")
+            .toURI();
+
+    Path profileDirPath = Paths.get(profileDirUri);
+
     FhirContext fhirContext =
         ProfileMapperFhirContexts.getInstance()
-            .contextFor(FhirVersionEnum.R4, "classpath:/r4-custom-profile-definitions");
+            .contextFor(FhirVersionEnum.R4, profileDirPath.toString());
+
     List<String> patientProfiles =
         Arrays.asList(
             "http://hl7.org/fhir/StructureDefinition/Patient",
@@ -52,7 +63,6 @@ public class R4AvroConverterCustomProfileTest {
 
   @Test
   public void testSimpleExtensionWithBooleanField() {
-
     Boolean expected =
         (Boolean)
             testBunsenTestProfilePatient
@@ -62,7 +72,7 @@ public class R4AvroConverterCustomProfileTest {
                 .getValue();
 
     Boolean actual = (Boolean) avroBunsenTestProfilePatient.get("booleanfield");
-    Assert.assertEquals(expected, actual);
+    assertEquals(expected, actual);
 
     Boolean decodedBooleanField =
         (Boolean)
@@ -72,12 +82,11 @@ public class R4AvroConverterCustomProfileTest {
                 .getValueAsPrimitive()
                 .getValue();
 
-    Assert.assertEquals(expected, decodedBooleanField);
+    assertEquals(expected, decodedBooleanField);
   }
 
   @Test
   public void testSimpleExtensionWithIntegerField() {
-
     Integer expected =
         (Integer)
             testBunsenTestProfilePatient
@@ -87,7 +96,7 @@ public class R4AvroConverterCustomProfileTest {
                 .getValue();
 
     Integer actual = (Integer) avroBunsenTestProfilePatient.get("integerfield");
-    Assert.assertEquals(expected, actual);
+    assertEquals(expected, actual);
 
     Integer decodedIntegerField =
         (Integer)
@@ -97,12 +106,11 @@ public class R4AvroConverterCustomProfileTest {
                 .getValueAsPrimitive()
                 .getValue();
 
-    Assert.assertEquals(expected, decodedIntegerField);
+    assertEquals(expected, decodedIntegerField);
   }
 
   @Test
   public void testMultiExtensionWithIntegerArrayField() {
-
     Integer expected1 =
         (Integer)
             testBunsenTestProfilePatient
@@ -124,8 +132,8 @@ public class R4AvroConverterCustomProfileTest {
     Integer actual2 =
         ((List<Integer>) avroBunsenTestProfilePatient.get("integerArrayField")).get(1);
 
-    Assert.assertEquals(expected1, actual1);
-    Assert.assertEquals(expected2, actual2);
+    assertEquals(expected1, actual1);
+    assertEquals(expected2, actual2);
 
     Integer decodedIntegerField1 =
         (Integer)
@@ -143,10 +151,8 @@ public class R4AvroConverterCustomProfileTest {
                 .getValueAsPrimitive()
                 .getValue();
 
-    Assert.assertEquals(expected1, decodedIntegerField1);
-    Assert.assertEquals(expected2, decodedIntegerField2);
-
-    final List<Record> nestedExtList = (List<Record>) avroBunsenTestProfilePatient.get("nestedExt");
+    assertEquals(expected1, decodedIntegerField1);
+    assertEquals(expected2, decodedIntegerField2);
   }
 
   @Test
@@ -244,14 +250,13 @@ public class R4AvroConverterCustomProfileTest {
                 .get(0)
                 .getValue();
 
-    Assert.assertEquals(text1, decodedText1);
-    Assert.assertEquals(text2, decodedText2);
-    Assert.assertEquals(text3, decodedText3);
+    assertEquals(text1, decodedText1);
+    assertEquals(text2, decodedText2);
+    assertEquals(text3, decodedText3);
 
-    Assert.assertTrue(codeableConcept1.equalsDeep(decodedCodeableConcept1));
-    Assert.assertTrue(codeableConcept2.equalsDeep(decodedCodeableConcept2));
-    Assert.assertTrue(codeableConcept3.equalsDeep(decodedCodeableConcept3));
-
+    assertTrue(codeableConcept1.equalsDeep(decodedCodeableConcept1));
+    assertTrue(codeableConcept2.equalsDeep(decodedCodeableConcept2));
+    assertTrue(codeableConcept3.equalsDeep(decodedCodeableConcept3));
     final List<Record> nestedExtList = (List<Record>) avroBunsenTestProfilePatient.get("nestedExt");
 
     final Record nestedExt1 = nestedExtList.get(0);
@@ -263,19 +268,19 @@ public class R4AvroConverterCustomProfileTest {
     final List<Record> codeableConceptsList1 = (List<Record>) nestedExt1.get("codeableConceptExt");
     final List<Record> codeableConceptsList2 = (List<Record>) nestedExt2.get("codeableConceptExt");
 
-    Assert.assertEquals(text1, textList1.get(0));
-    Assert.assertEquals(text2, textList1.get(1));
-    Assert.assertEquals(text3, textList2.get(0));
+    assertEquals(text1, textList1.get(0));
+    assertEquals(text2, textList1.get(1));
+    assertEquals(text3, textList2.get(0));
 
-    Assert.assertEquals(
+    assertEquals(
         codeableConcept1.getCoding().get(0).getCode(),
         ((List<Record>) codeableConceptsList1.get(0).get("coding")).get(0).get("code"));
 
-    Assert.assertEquals(
+    assertEquals(
         codeableConcept2.getCoding().get(0).getCode(),
         ((List<Record>) codeableConceptsList1.get(1).get("coding")).get(0).get("code"));
 
-    Assert.assertEquals(
+    assertEquals(
         codeableConcept3.getCoding().get(0).getCode(),
         ((List<Record>) codeableConceptsList2.get(0).get("coding")).get(0).get("code"));
   }
@@ -293,7 +298,7 @@ public class R4AvroConverterCustomProfileTest {
 
     String actual = (String) avroBunsenTestProfilePatient.get("stringModifierExt");
 
-    Assert.assertEquals(expected, actual);
+    assertEquals(expected, actual);
 
     String decodedStringField =
         (String)
@@ -303,7 +308,7 @@ public class R4AvroConverterCustomProfileTest {
                 .getValueAsPrimitive()
                 .getValue();
 
-    Assert.assertEquals(expected, decodedStringField);
+    assertEquals(expected, decodedStringField);
   }
 
   @Test
@@ -341,32 +346,31 @@ public class R4AvroConverterCustomProfileTest {
                 .get(1)
                 .getValue();
 
-    Assert.assertTrue(expected1.equalsDeep(decodedCodeableConceptField1));
-    Assert.assertTrue(expected2.equalsDeep(decodedCodeableConceptField2));
-
+    assertTrue(expected1.equalsDeep(decodedCodeableConceptField1));
+    assertTrue(expected2.equalsDeep(decodedCodeableConceptField2));
     final List<Record> codeableConceptList =
         (List<Record>) avroBunsenTestProfilePatient.get("codeableConceptModifierExt");
 
     final Record codeableConcept1 = codeableConceptList.get(0);
     final Record codeableConcept2 = codeableConceptList.get(1);
 
-    Assert.assertEquals(
+    assertEquals(
         decodedCodeableConceptField1.getCoding().get(0).getSystem(),
         ((List<Record>) codeableConcept1.get("coding")).get(0).get("system"));
-    Assert.assertEquals(
+    assertEquals(
         decodedCodeableConceptField1.getCoding().get(0).getCode(),
         ((List<Record>) codeableConcept1.get("coding")).get(0).get("code"));
-    Assert.assertEquals(
+    assertEquals(
         decodedCodeableConceptField1.getCoding().get(0).getDisplay(),
         ((List<Record>) codeableConcept1.get("coding")).get(0).get("display"));
 
-    Assert.assertEquals(
+    assertEquals(
         decodedCodeableConceptField2.getCoding().get(0).getSystem(),
         ((List<Record>) codeableConcept2.get("coding")).get(0).get("system"));
-    Assert.assertEquals(
+    assertEquals(
         decodedCodeableConceptField2.getCoding().get(0).getCode(),
         ((List<Record>) codeableConcept2.get("coding")).get(0).get("code"));
-    Assert.assertEquals(
+    assertEquals(
         decodedCodeableConceptField2.getCoding().get(0).getDisplay(),
         ((List<Record>) codeableConcept2.get("coding")).get(0).get("display"));
   }
