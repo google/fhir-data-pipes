@@ -69,6 +69,19 @@
           ]
         }
       ]
+    },
+    {
+      "column": [
+        {
+          "path": "value",
+          "name": "identifier_value"
+        },
+        {
+          "path": "system",
+          "name": "identifier_sys"
+        }
+      ],
+      "forEachOrNull": "identifier"
     }
   ],
   "name": "patient_flat",

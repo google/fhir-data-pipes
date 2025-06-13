@@ -17,7 +17,7 @@ These tools are intended to be generic and eventually work with any FHIR-based
 data source and data warehouse. Here is the list of main directories with a
 brief description of their content:
 
-- [pipelines/](pipelines/) **\*START HERE\***: Batch and streaming pipelines to transform data from 
+- [pipelines/](pipelines/) **\*START HERE\***: Batch pipelines to transform data from 
 a FHIR-based source to an analytics-friendly data warehouse or another FHIR
 store.
 
