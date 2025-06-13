@@ -223,7 +223,7 @@ function wait_for_completion() {
 function check_parquet() {
   local isIncremental=$1
   local output="${HOME_PATH}/${PARQUET_SUBDIR}"
-  TOTAL_VIEW_PATIENTS=106
+  TOTAL_VIEW_PATIENTS=528
 
   if [[ "${isIncremental}" == "true" ]]
   then
@@ -232,7 +232,7 @@ function check_parquet() {
     # the second is for the merge step of the incremental run. The second
     # directory has one more patient, hence the new totals.
     TOTAL_TEST_PATIENTS=$((2*TOTAL_TEST_PATIENTS + 1))
-    TOTAL_VIEW_PATIENTS=$((2*TOTAL_VIEW_PATIENTS + 1))
+    TOTAL_VIEW_PATIENTS=1060
     TOTAL_TEST_ENCOUNTERS=$((2*TOTAL_TEST_ENCOUNTERS))
     TOTAL_TEST_OBS=$((2*TOTAL_TEST_OBS))
   fi
