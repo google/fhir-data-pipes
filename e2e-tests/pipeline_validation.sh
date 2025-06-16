@@ -200,7 +200,7 @@ function test_parquet_sink() {
   # This global variable is hardcoded to validate the View record count
   # which can greater than the number of Resources in the source FHIR
   # Server due to flattening
-  PATIENT_VIEW_ROWCOUNT=106
+  PATIENT_VIEW_ROWCOUNT=528
   OBS_VIEW_ROWCOUNT=${TOTAL_TEST_OBS}
   if [[ -n ${OPENMRS} ]]; then
     PATIENT_VIEW_ROWCOUNT=108

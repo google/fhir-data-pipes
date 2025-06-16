@@ -1,0 +1,10 @@
+google
+google-genai
+numpy
+pandas
+psycopg2
+pyhive
+seaborn
+sqlalchemy
+stanza
+thrift_sasl
