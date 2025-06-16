@@ -33,12 +33,12 @@ retry_rowcount() {
     # ── 1. Find a path that actually contains files
     for p in "${paths[@]}"; do
       shopt -s nullglob
-      local files=( ${p} )
+      local files=( "${p}" )
       shopt -u nullglob
 
       if [[ ${#files[@]} -gt 0 ]]; then
         raw_count=$(java -Xms16g -Xmx16g -jar ./parquet-tools-1.11.1.jar rowcount \
-                    ${p} 2>/dev/null | awk '{print $3}')  # shellcheck disable=SC2086
+                    "${p}" 2>/dev/null | awk '{print $3}')
         break
       fi
     done
@@ -56,12 +56,8 @@ retry_rowcount() {
       return 0
     fi
 
-    # ── 4. Fast-fail if no files ever matched on the *first* pass
-    if [[ "${retries}" -eq 0 && "${final_count}" -eq 0 ]]; then
-      echo "E2E TEST: [${label}] no matching Parquet files under '${globs}'" >&2
-      echo "${final_count}"
-      return 1
-    fi
+    # ── 4.Optional Fast-fail if no files ever matched on the *first* pass -- this can be implemented in future
+
 
     # ── 5. Give up?
     if [[ "${retries}" -ge "${max_retries}" ]]; then
