@@ -41,6 +41,7 @@ public class DataPropertiesTest {
     mockFhirServer.start(9091);
     mockFhirServer.enqueue(MockUtil.getMockResponse("data/fhir-metadata-sample.json"));
     mockFhirServer.enqueue(MockUtil.getMockResponse("data/fhir-metadata-sample.json"));
+    mockFhirServer.enqueue(MockUtil.getMockResponse("data/patient-count-sample.json"));
   }
 
   @Test

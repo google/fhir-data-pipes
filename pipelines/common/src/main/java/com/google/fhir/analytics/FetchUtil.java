@@ -19,6 +19,8 @@ import ca.uhn.fhir.context.FhirContext;
 import ca.uhn.fhir.rest.api.EncodingEnum;
 import ca.uhn.fhir.rest.api.MethodOutcome;
 import ca.uhn.fhir.rest.api.RequestTypeEnum;
+import ca.uhn.fhir.rest.api.SearchTotalModeEnum;
+import ca.uhn.fhir.rest.api.SummaryEnum;
 import ca.uhn.fhir.rest.client.api.IClientInterceptor;
 import ca.uhn.fhir.rest.client.api.IGenericClient;
 import ca.uhn.fhir.rest.client.api.IHttpClient;
@@ -30,6 +32,7 @@ import ca.uhn.fhir.rest.client.interceptor.BearerTokenAuthInterceptor;
 import ca.uhn.fhir.rest.client.interceptor.LoggingInterceptor;
 import ca.uhn.fhir.rest.gclient.IOperationUntyped;
 import ca.uhn.fhir.rest.gclient.IOperationUntypedWithInput;
+import ca.uhn.fhir.rest.gclient.IQuery;
 import com.google.api.client.auth.oauth2.ClientCredentialsTokenRequest;
 import com.google.api.client.auth.oauth2.TokenResponse;
 import com.google.api.client.http.BasicAuthentication;
@@ -44,6 +47,9 @@ import java.util.List;
 import java.util.Map;
 import org.hl7.fhir.instance.model.api.IBaseParameters;
 import org.hl7.fhir.instance.model.api.IBaseResource;
+import org.hl7.fhir.r4.model.Bundle;
+import org.hl7.fhir.r4.model.CapabilityStatement;
+import org.hl7.fhir.r4.model.Patient;
 import org.hl7.fhir.r4.model.Resource;
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
@@ -241,6 +247,32 @@ public class FetchUtil {
 
   public String getSourceFhirUrl() {
     return fhirUrl;
+  }
+
+  /**
+   * Validates if a connection can be established to the FHIR server by executing a search query.
+   */
+  public void testFhirConnection() {
+    log.info("Validating FHIR connection");
+    IGenericClient client = getSourceClient();
+    // The query is executed and checked for any errors during the connection, the result is ignored
+    // TODO: A similar metadata check is done internally in the client code; we should avoid one.
+    client.capabilities().ofType(CapabilityStatement.class).execute();
+    if (authInterceptor != null) {
+      // CapabilityStatement is not enough when OAuth is set because it bypasses auth.
+      // TODO make the resource type configurable when the server does not support Patient type.
+      IQuery<Bundle> query =
+          client
+              .search()
+              .forResource(Patient.class)
+              .summaryMode(SummaryEnum.COUNT)
+              .totalMode(SearchTotalModeEnum.ACCURATE)
+              .returnBundle(Bundle.class);
+      // The query is executed and checked for any errors during the connection, the result is
+      // ignored
+      query.execute();
+    }
+    log.info("Validating FHIR connection successful");
   }
 
   /**
