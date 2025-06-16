@@ -20,6 +20,11 @@
 
 set -e
 
+# -------------------------------------------------------------------
+# Shared helper for robust Parquet row-count with retry/back-off
+# -------------------------------------------------------------------
+source "$(dirname "$0")/../lib/parquet_utils.sh"
+
 #################################################
 # Prints the usage
 #################################################
@@ -190,7 +195,7 @@ function wait_for_completion() {
   local runtime="15 minute"
   local end_time=$(date -ud "$runtime" +%s)
 
-  while [[ $(date -u +%s) -le $end_time ]]
+  while [[ $(date -u +%s) -le ${end_time} ]]
   do
     local pipeline_status=$(curl --location --request GET "${PIPELINE_CONTROLLER_URL}/status?" \
     --connect-timeout 5 \
@@ -238,87 +243,51 @@ function check_parquet() {
   fi
 
   # check whether output directory has received parquet files.
-  if [[ "$(ls -A $output)" ]]
+  if [[ "$(ls -A "${output}")" ]]
   then
-    local total_patients=$(java -Xms16g -Xmx16g -jar ./parquet-tools-1.11.1.jar rowcount \
-    "${output}/*/Patient/" 2>/dev/null | awk '{print $3}')
-    local total_encounters=$(java -Xms16g -Xmx16g -jar ./parquet-tools-1.11.1.jar rowcount \
-    "${output}/*/Encounter/" 2>/dev/null | awk '{print $3}')
-    local total_observations=$(java -Xms16g -Xmx16g -jar ./parquet-tools-1.11.1.jar rowcount \
-    "${output}/*/Observation/" 2>/dev/null | awk '{print $3}')
+    # ------------------------------------------------------------------
+    # Row-counts with retry (shared helper)
+    # ------------------------------------------------------------------
+    local total_patients
+    total_patients=$(retry_rowcount \
+      "${output}/*/Patient/" \
+      "${TOTAL_TEST_PATIENTS}" \
+      "patients") || true
 
-    local total_patient_flat=$(java -Xms16g -Xmx16g -jar ./parquet-tools-1.11.1.jar rowcount \
-    "${output}/*/VIEWS_TIMESTAMP_*/patient_flat/" 2>/dev/null | awk '{print $3}')
-    local total_encounter_flat=$(java -Xms16g -Xmx16g -jar ./parquet-tools-1.11.1.jar rowcount \
-    "${output}/*/VIEWS_TIMESTAMP_*/encounter_flat/" 2>/dev/null | awk '{print $3}')
+    local total_encounters
+    total_encounters=$(retry_rowcount \
+      "${output}/*/Encounter/" \
+      "${TOTAL_TEST_ENCOUNTERS}" \
+      "encounters") || true
 
-    # --- BEGIN: retry loop for observation_flat flake (#1315) -----------------
-    local retries=0
-    local max_retries=5
-    local sleep_secs=5
-    local total_obs_flat=0
-    local raw_count
+    local total_observations
+    total_observations=$(retry_rowcount \
+      "${output}/*/Observation/" \
+      "${TOTAL_TEST_OBS}" \
+      "observations") || true
 
-    # First check if the VIEWS_TIMESTAMP_*/observation_flat directory exists (FHIR-Search mode)
-    shopt -s nullglob
-    local view_dirs=( "$output"/*/VIEWS_TIMESTAMP_*/observation_flat/ )
-    shopt -u nullglob
+    local total_patient_flat
+    total_patient_flat=$(retry_rowcount \
+      "${output}/*/VIEWS_TIMESTAMP_*/patient_flat/" \
+      "${TOTAL_VIEW_PATIENTS}" \
+      "patient_flat") || true
 
-    if [[ ${#view_dirs[@]} -gt 0 ]]; then
-      # Retry until the row count matches TOTAL_TEST_OBS or we exhaust retries
-      while true; do
-        raw_count=$(
-          java -Xms16g -Xmx16g -jar ./parquet-tools-1.11.1.jar rowcount \
-            "${output}/*/VIEWS_TIMESTAMP_*/observation_flat/" 2>/dev/null | awk '{print $3}'
-        )
+    local total_encounter_flat
+    total_encounter_flat=$(retry_rowcount \
+      "${output}/*/VIEWS_TIMESTAMP_*/encounter_flat/" \
+      "${TOTAL_TEST_ENCOUNTERS}" \
+      "encounter_flat") || true
 
-        # If raw_count is empty or non‐numeric, treat as zero
-        if [[ -z "$raw_count" || ! "$raw_count" =~ ^[0-9]+$ ]]; then
-          total_obs_flat=0
-        else
-          total_obs_flat=$raw_count
-        fi
+    local total_obs_flat
+    total_obs_flat=$(retry_rowcount \
+      "${output}/*/VIEWS_TIMESTAMP_*/observation_flat/":"${output}/*/observation_flat/" \
+      "${TOTAL_TEST_OBS}" \
+      "observation_flat") || true
+    # ------------------------------------------------------------------
 
-        if [[ $total_obs_flat -eq $TOTAL_TEST_OBS ]]; then
-          break
-        fi
-
-        if [[ $retries -ge $max_retries ]]; then
-          break
-        fi
-
-        retries=$((retries + 1))
-        print_message "Observation_flat count ($total_obs_flat) != expected ($TOTAL_TEST_OBS) – retry ${retries}/${max_retries} in ${sleep_secs}s"
-        sleep "$sleep_secs"
-      done
-
-    else
-      # If no VIEWS_TIMESTAMP_*/observation_flat folder, check for a direct observation_flat (JDBC mode)
-      shopt -s nullglob
-      local jdbc_dirs=( "$output"/*/observation_flat/ )
-      shopt -u nullglob
-
-      if [[ ${#jdbc_dirs[@]} -gt 0 ]]; then
-        raw_count=$(
-          java -Xms16g -Xmx16g -jar ./parquet-tools-1.11.1.jar rowcount \
-            "${output}/*/observation_flat/" 2>/dev/null | awk '{print $3}'
-        )
-
-        if [[ -z "$raw_count" || ! "$raw_count" =~ ^[0-9]+$ ]]; then
-          total_obs_flat=0
-        else
-          total_obs_flat=$raw_count
-        fi
-      else
-        # Neither pattern exists → treat as zero
-        total_obs_flat=0
-      fi
-    fi
-    # --- END: retry loop -------------------------------------------------------
-
-    print_message "Total patients: $total_patients"
-    print_message "Total encounters: $total_encounters"
-    print_message "Total observations: $total_observations"
+    print_message "Total patients: ${total_patients}"
+    print_message "Total encounters: ${total_encounters}"
+    print_message "Total observations: ${total_observations}"
 
     print_message "Total patient flat rows: ${total_patient_flat}"
     print_message "Total encounter flat rows: ${total_encounter_flat}"
@@ -333,12 +302,12 @@ function check_parquet() {
             print_message "Pipeline transformation successfully completed."
     else
             print_message "Mismatch in count of records"
-            print_message "Actual total patients: $total_patients, expected total: $TOTAL_TEST_PATIENTS"
-            print_message "Actual total encounters: $total_encounters, expected total: $TOTAL_TEST_ENCOUNTERS"
-            print_message "Total observations: $total_observations, expected total: $TOTAL_TEST_OBS"
-            print_message "Actual total materialized view patients: $total_patient_flat, expected total: $TOTAL_VIEW_PATIENTS"
-            print_message "Actual total materialized view encounters: $total_encounter_flat, expected total: $TOTAL_TEST_ENCOUNTERS"
-            print_message "Actual total materialized view observations: $total_obs_flat, expected total: $TOTAL_TEST_OBS"
+            print_message "Actual total patients: ${total_patients}, expected total: ${TOTAL_TEST_PATIENTS}"
+            print_message "Actual total encounters: ${total_encounters}, expected total: ${TOTAL_TEST_ENCOUNTERS}"
+            print_message "Total observations: ${total_observations}, expected total: ${TOTAL_TEST_OBS}"
+            print_message "Actual total materialized view patients: ${total_patient_flat}, expected total: ${TOTAL_VIEW_PATIENTS}"
+            print_message "Actual total materialized view encounters: ${total_encounter_flat}, expected total: ${TOTAL_TEST_ENCOUNTERS}"
+            print_message "Actual total materialized view observations: ${total_obs_flat}, expected total: ${TOTAL_TEST_OBS}"
             exit 2
     fi
   else
@@ -354,7 +323,7 @@ function check_parquet() {
 #   PARQUET_SUBDIR
 #######################################################################
 function clear() {
-  rm -rf $HOME_PATH/$PARQUET_SUBDIR/*.json
+  rm -rf "${HOME_PATH}/${PARQUET_SUBDIR}"/*.json
 }
 
 #######################################################################
