@@ -31,11 +31,15 @@
       "column": [
         {
           "path": "system",
-          "name": "system"
+          "name": "code_sys"
         },
         {
           "path": "code",
-          "name": "code"
+          "name": "code_code"
+        },
+        {
+          "path": "display",
+          "name": "code_display"
         }
       ]
     },
@@ -49,6 +53,10 @@
         {
           "path": "code",
           "name": "specialty_code"
+        },
+        {
+          "path": "display",
+          "name": "specialty_display"
         }
       ]
     },
