@@ -259,6 +259,7 @@ public class FetchUtil {
     // TODO: A similar metadata check is done internally in the client code; we should avoid one.
     client.capabilities().ofType(CapabilityStatement.class).execute();
     if (authInterceptor != null) {
+      log.info("Validating the authentication config through /Patient endpoint.");
       // CapabilityStatement is not enough when OAuth is set because it bypasses auth.
       // TODO make the resource type configurable when the server does not support Patient type.
       IQuery<Bundle> query =
