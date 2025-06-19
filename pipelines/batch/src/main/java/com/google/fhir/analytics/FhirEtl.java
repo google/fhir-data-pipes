@@ -97,6 +97,7 @@ public class FhirEtl {
         options.getFhirServerOAuthTokenEndpoint(),
         options.getFhirServerOAuthClientId(),
         options.getFhirServerOAuthClientSecret(),
+        options.getCheckPatientEndpoint(),
         fhirContext);
   }
 

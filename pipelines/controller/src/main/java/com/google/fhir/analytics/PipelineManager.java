@@ -337,6 +337,7 @@ public class PipelineManager implements ApplicationListener<ApplicationReadyEven
             options.getFhirServerOAuthTokenEndpoint(),
             options.getFhirServerOAuthClientId(),
             options.getFhirServerOAuthClientSecret(),
+            options.getCheckPatientEndpoint(),
             avroConversionUtil.getFhirContext());
     fetchUtil.testFhirConnection();
   }

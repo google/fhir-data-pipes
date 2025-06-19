@@ -49,6 +49,13 @@ public interface FhirEtlOptions extends BasePipelineOptions {
 
   void setFhirServerUrl(String value);
 
+  @Description("Whether to check the /Patient endpoint with a count query at the start-up.")
+  @Required
+  @Default.Boolean(true)
+  Boolean getCheckPatientEndpoint();
+
+  void setCheckPatientEndpoint(Boolean value);
+
   @Description("Comma separated list of resource to fetch, e.g., 'Patient,Encounter,Observation'.")
   @Default.String("Patient,Encounter,Observation")
   String getResourceList();

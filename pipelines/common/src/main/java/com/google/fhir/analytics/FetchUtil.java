@@ -70,6 +70,8 @@ public class FetchUtil {
 
   private final String oAuthClientSecret;
 
+  private final boolean checkPatientEndpoint;
+
   private final FhirContext fhirContext;
 
   @Nullable private final IClientInterceptor authInterceptor;
@@ -81,12 +83,14 @@ public class FetchUtil {
       String oAuthTokenEndpoint,
       String oAuthClientId,
       String oAuthClientSecret,
+      boolean checkPatientEndpoint,
       FhirContext fhirContext) {
     this.fhirUrl = sourceFhirUrl;
     this.sourceUser = Strings.nullToEmpty(sourceUser);
     this.oAuthTokenEndpoint = Strings.nullToEmpty(oAuthTokenEndpoint);
     this.oAuthClientId = Strings.nullToEmpty(oAuthClientId);
     this.oAuthClientSecret = Strings.nullToEmpty(oAuthClientSecret);
+    this.checkPatientEndpoint = checkPatientEndpoint;
     this.fhirContext = fhirContext;
     Preconditions.checkState(
         this.oAuthTokenEndpoint.isEmpty()
@@ -99,8 +103,10 @@ public class FetchUtil {
           new ClientCredentialsAuthInterceptor(
               oAuthTokenEndpoint, oAuthClientId, oAuthClientSecret);
     } else if (!this.sourceUser.isEmpty()) {
+      log.info("Using Basic authentication for user ", this.sourceUser);
       authInterceptor = new BasicAuthInterceptor(this.sourceUser, sourcePw);
     } else {
+      log.info("No FHIR-server authentication is configured.");
       authInterceptor = null;
     }
   }
@@ -258,10 +264,9 @@ public class FetchUtil {
     // The query is executed and checked for any errors during the connection, the result is ignored
     // TODO: A similar metadata check is done internally in the client code; we should avoid one.
     client.capabilities().ofType(CapabilityStatement.class).execute();
-    if (authInterceptor != null) {
-      log.info("Validating the authentication config through /Patient endpoint.");
-      // CapabilityStatement is not enough when OAuth is set because it bypasses auth.
-      // TODO make the resource type configurable when the server does not support Patient type.
+    if (checkPatientEndpoint) {
+      // CapabilityStatement (/metadata) does not test the auth config, hence this check.
+      log.info("Validating /Patient endpoint.");
       IQuery<Bundle> query =
           client
               .search()
@@ -269,8 +274,7 @@ public class FetchUtil {
               .summaryMode(SummaryEnum.COUNT)
               .totalMode(SearchTotalModeEnum.ACCURATE)
               .returnBundle(Bundle.class);
-      // The query is executed and checked for any errors during the connection, the result is
-      // ignored
+      // The query is executed to check for any errors during the connection, the result is ignored.
       query.execute();
     }
     log.info("Validating FHIR connection successful");

@@ -105,6 +105,8 @@ public class DataProperties {
 
   private String fhirServerOAuthClientSecret;
 
+  private boolean checkPatientEndpoint;
+
   private String sinkFhirServerUrl;
 
   public String sinkUserName;
@@ -200,6 +202,7 @@ public class DataProperties {
       options.setFhirServerOAuthTokenEndpoint(Strings.nullToEmpty(fhirServerOAuthTokenEndpoint));
       options.setFhirServerOAuthClientId(Strings.nullToEmpty(fhirServerOAuthClientId));
       options.setFhirServerOAuthClientSecret(Strings.nullToEmpty(fhirServerOAuthClientSecret));
+      options.setCheckPatientEndpoint(checkPatientEndpoint);
     }
     if (resourceList != null) {
       options.setResourceList(resourceList);
