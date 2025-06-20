@@ -38,6 +38,11 @@ fhirdata:
   #fhirServerOAuthClientId: "THE_CLIENT_ID"
   #fhirServerOAuthClientSecret: "THE_CLIENT_SECRET"
 
+  # Whether to check the /Patient endpoint when validating FHIR server connection.
+  # This is by default is enabled because it tests the auth config but can be disabled
+  # if the FHIR server does not support /Patient.
+  #checkPatientEndpoint: true
+
   # The path to the file containing JDBC settings for connecting to a HAPI FHIR
   # server database. If this is set, resources are fetched directly from the
   # database and `fhirServerUrl` is ignored.
@@ -178,7 +183,7 @@ fhirdata:
   # then the raw FHIR JSON resources are written to this DB. Note enabling this
   # feature can have a noticeable impact on pipelines performance. The default
   # empty string disables this feature.
-  sinkDbConfigPath: "config/hapi-postgres-config_local_views.json"
+  #sinkDbConfigPath: "config/hapi-postgres-config_local_views.json"
 
   # The base URL of the sink FHIR server. If not set, the feature for sending
   # resources to a sink FHIR server is disabled.
