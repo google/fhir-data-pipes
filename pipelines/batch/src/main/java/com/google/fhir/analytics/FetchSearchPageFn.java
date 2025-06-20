@@ -78,6 +78,8 @@ abstract class FetchSearchPageFn<T> extends DoFn<T, KV<String, Integer>> {
 
   private final String oAuthClientSecret;
 
+  private final boolean checkPatientEndpoint;
+
   protected final String sinkPath;
 
   private final String sinkUsername;
@@ -137,6 +139,7 @@ abstract class FetchSearchPageFn<T> extends DoFn<T, KV<String, Integer>> {
     this.oAuthTokenEndpoint = options.getFhirServerOAuthTokenEndpoint();
     this.oAuthClientId = options.getFhirServerOAuthClientId();
     this.oAuthClientSecret = options.getFhirServerOAuthClientSecret();
+    this.checkPatientEndpoint = options.getCheckPatientEndpoint();
     this.stageIdentifier = stageIdentifier;
     this.outputParquetPath = options.getOutputParquetPath();
     this.inputParquetPath = options.getParquetInputDwhRoot();
@@ -215,6 +218,7 @@ abstract class FetchSearchPageFn<T> extends DoFn<T, KV<String, Integer>> {
             oAuthTokenEndpoint,
             oAuthClientId,
             oAuthClientSecret,
+            checkPatientEndpoint,
             fhirContext);
     fhirSearchUtil = new FhirSearchUtil(fetchUtil);
     // TODO remove generateParquetFiles and instead rely on not setting outputParquetPath.
