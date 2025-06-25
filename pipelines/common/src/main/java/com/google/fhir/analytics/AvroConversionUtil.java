@@ -151,11 +151,28 @@ public class AvroConversionUtil {
     return converterMap.get(resourceType);
   }
 
+/*
   @VisibleForTesting
   @Nullable GenericRecord convertToAvro(Resource resource) throws ProfileException {
     AvroConverter converter = getConverter(resource.getResourceType().name());
     // TODO: Check why Bunsen returns IndexedRecord instead of GenericRecord.
     return (GenericRecord) converter.resourceToAvro(resource);
+  }
+  */
+  
+  // Catch any RuntimeException and log the error instead of crashing the whole pipeline for an issue with one FHIR resource.
+  @VisibleForTesting
+  @Nullable GenericRecord convertToAvro(Resource resource) throws ProfileException {
+    AvroConverter converter = getConverter(resource.getResourceType().name());
+    // TODO: Check why Bunsen returns IndexedRecord instead of GenericRecord.
+	GenericRecord gr = null;
+	try {
+		gr = (GenericRecord) converter.resourceToAvro(resource);
+	} catch (RuntimeException e) {
+		String errorMsg = "Unable to process resource " + resource.getResourceType().name() + "/" + resource.getId() + ": " + e.toString();
+		log.error(errorMsg);
+	}
+    return gr;
   }
 
   @VisibleForTesting
