@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2023 Google LLC
+ * Copyright 2020-2025 Google LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,8 +26,6 @@ import org.springframework.boot.actuate.endpoint.Producible;
 import org.springframework.boot.actuate.endpoint.annotation.Endpoint;
 import org.springframework.boot.actuate.endpoint.annotation.ReadOperation;
 import org.springframework.boot.actuate.endpoint.web.WebEndpointResponse;
-import org.springframework.boot.actuate.endpoint.web.annotation.WebEndpoint;
-import org.springframework.stereotype.Component;
 import org.springframework.util.MimeType;
 import org.springframework.util.MimeTypeUtils;
 
@@ -35,12 +33,14 @@ import org.springframework.util.MimeTypeUtils;
  * This is a custom implementation of the spring actuator {@link Endpoint @Endpoint} which exports
  * only the pipeline metrics in a format that can be scraped by the Prometheus server.
  */
-@WebEndpoint(id = "pipeline-metrics")
-@Component
+// @WebEndpoint(id = "pipeline-metrics")
+// @Component
 public class PipelineMetricsEndpoint {
 
   private static final int METRICS_SCRAPE_CHARS_EXTRA = 1024;
 
+  // The CollectorRegistry @Bean is removed after Spring 3.2.2 so this component needs to be fixed
+  // (see PrometheusMetricsExportAutoConfiguration).
   private final CollectorRegistry collectorRegistry;
 
   private volatile int nextMetricsScrapeSize = 16;
