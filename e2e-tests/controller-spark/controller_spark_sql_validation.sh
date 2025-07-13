@@ -250,37 +250,37 @@ function check_parquet() {
     # ------------------------------------------------------------------
     local total_patients
     total_patients=$(retry_rowcount \
-      "${output}/*/Patient/" \
+      "${output}"/*/Patient/ \
       "${TOTAL_TEST_PATIENTS}" \
       "patients") || true
 
     local total_encounters
     total_encounters=$(retry_rowcount \
-      "${output}/*/Encounter/" \
+      "${output}"/*/Encounter/ \
       "${TOTAL_TEST_ENCOUNTERS}" \
       "encounters") || true
 
     local total_observations
     total_observations=$(retry_rowcount \
-      "${output}/*/Observation/" \
+      "${output}"/*/Observation/ \
       "${TOTAL_TEST_OBS}" \
       "observations") || true
 
     local total_patient_flat
     total_patient_flat=$(retry_rowcount \
-      "${output}/*/VIEWS_TIMESTAMP_*/patient_flat/" \
+      "${output}"/*/VIEWS_TIMESTAMP_*/patient_flat/ \
       "${TOTAL_VIEW_PATIENTS}" \
       "patient_flat") || true
 
     local total_encounter_flat
     total_encounter_flat=$(retry_rowcount \
-      "${output}/*/VIEWS_TIMESTAMP_*/encounter_flat/" \
+      "${output}"/*/VIEWS_TIMESTAMP_*/encounter_flat/ \
       "${TOTAL_TEST_ENCOUNTERS}" \
       "encounter_flat") || true
 
     local total_obs_flat
     total_obs_flat=$(retry_rowcount \
-      "${output}/*/VIEWS_TIMESTAMP_*/observation_flat/":"${output}/*/observation_flat/" \
+      "${output}"/*/VIEWS_TIMESTAMP_*/observation_flat/ \
       "${TOTAL_TEST_OBS}" \
       "observation_flat") || true
     # ------------------------------------------------------------------
