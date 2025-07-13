@@ -303,11 +303,11 @@ public class PipelineManager implements ApplicationListener<ApplicationReadyEven
    * Validate the FHIR source configuration parameters during the launch of the application. This is
    * to detect any mis-configurations earlier enough and avoid failures during pipeline runs.
    */
-  void validateFhirSourceConfiguration(FhirEtlOptions options) throws ProfileException {
+  void validateFhirSourceConfiguration(FhirEtlOptions options) {
     if (Boolean.TRUE.equals(options.isJdbcModeHapi())) {
       validateDbConfigParameters(options.getFhirDatabaseConfigPath());
     } else if (!Strings.isNullOrEmpty(options.getFhirServerUrl())) {
-      validateFhirSearchParameters(options);
+      validateFhirServerParams(options);
     }
   }
 
@@ -328,13 +328,8 @@ public class PipelineManager implements ApplicationListener<ApplicationReadyEven
     }
   }
 
-  private void validateFhirSearchParameters(FhirEtlOptions options) throws ProfileException {
-    FhirSearchUtil fhirSearchUtil = getFhirSearchUtil(options);
-    fhirSearchUtil.testFhirConnection();
-  }
-
-  private FhirSearchUtil getFhirSearchUtil(FhirEtlOptions options) {
-    return new FhirSearchUtil(
+  private void validateFhirServerParams(FhirEtlOptions options) {
+    FetchUtil fetchUtil =
         new FetchUtil(
             options.getFhirServerUrl(),
             options.getFhirServerUserName(),
@@ -342,7 +337,9 @@ public class PipelineManager implements ApplicationListener<ApplicationReadyEven
             options.getFhirServerOAuthTokenEndpoint(),
             options.getFhirServerOAuthClientId(),
             options.getFhirServerOAuthClientSecret(),
-            avroConversionUtil.getFhirContext()));
+            options.getCheckPatientEndpoint(),
+            avroConversionUtil.getFhirContext());
+    fetchUtil.testFhirConnection();
   }
 
   synchronized boolean isBatchRun() {

@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
 
-    Copyright 2020-2024 Google LLC
+    Copyright 2020-2025 Google LLC
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -30,7 +30,7 @@
 
   <properties>
     <java.version>17</java.version>
-    <spring-boot.version>3.2.2</spring-boot.version>
+    <spring-boot.version>3.5.3</spring-boot.version>
   </properties>
 
   <dependencyManagement>
@@ -84,6 +84,11 @@
     <dependency>
       <groupId>io.micrometer</groupId>
       <artifactId>micrometer-registry-prometheus</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>io.prometheus</groupId>
+      <artifactId>simpleclient</artifactId>
+      <version>0.16.0</version>
     </dependency>
 
     <!-- This is to make it easier to hot-swap static content, i.e., to make
