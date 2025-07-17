@@ -12,7 +12,6 @@ set -euo pipefail
 #   label     – short metric name for log messages.
 #
 # Prints the final count on stdout.
-# Returns 0 if expected count is reached; returns 1 after retries if not.
 
 retry_rowcount() {
   local parquet_glob="$1"
@@ -44,7 +43,7 @@ retry_rowcount() {
     # ── 3. Success?
     if [[ "${final_count}" -eq "${expected}" ]]; then
       echo "${final_count}"
-      return 0
+      return
     fi
 
     # ── 4.Optional Fast-fail if no files ever matched on the *first* pass -- this can be implemented in future
@@ -53,7 +52,7 @@ retry_rowcount() {
     # ── 5. Give up?
     if [[ "${retries}" -ge "${max_retries}" ]]; then
       echo "${final_count}"
-      return 1
+      return
     fi
 
     # ── 6. Sleep & retry
