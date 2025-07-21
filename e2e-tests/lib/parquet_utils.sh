@@ -26,9 +26,29 @@ retry_rowcount() {
   local raw_count=0
   local final_count=0
 
+  # JAR discovery logic
+  if [[ -z "${PARQUET_TOOLS_JAR:-}" ]]; then
+      # Search up to three levels above this script (first match wins).
+      local this_dir
+      this_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+      PARQUET_TOOLS_JAR="$(find "$this_dir"/.. -maxdepth 3 -name 'parquet-tools-*.jar' 2>/dev/null | head -n1)"
+      PARQUET_TOOLS_JAR="${PARQUET_TOOLS_JAR:-./parquet-tools-1.11.1.jar}"  # legacy relative path
+      export PARQUET_TOOLS_JAR
+  fi
+
+  local parquet_tools_jar="$PARQUET_TOOLS_JAR"
+
+  if [[ ! -f "$parquet_tools_jar" ]]; then
+    echo "E2E TEST ERROR: parquet-tools JAR not found at: $parquet_tools_jar" >&2
+    echo "E2E TEST ERROR: Set PARQUET_TOOLS_JAR environment variable to override." >&2
+    echo "0"
+    return
+  fi
+
   while true; do
     # ── 1. Ask parquet-tools for a row count
-    raw_count=$(java -Xms16g -Xmx16g -jar ./parquet-tools-1.11.1.jar rowcount \
+    raw_count=$(java -Xms16g -Xmx16g -jar "${parquet_tools_jar}" rowcount \
                 "${parquet_glob}" 2>/dev/null | awk '{print $3}')
 
     # ── 2. Normalise raw_count
