@@ -19,7 +19,7 @@ retry_rowcount() {
   local label="$3"
 
   # CI can override cadence through env vars
-  local max_retries="${ROWCOUNT_MAX_RETRIES:-5}"
+  local max_retries="${ROWCOUNT_MAX_RETRIES:-12}"
   local sleep_secs="${ROWCOUNT_SLEEP_SECS:-5}"
 
   local retries=0
@@ -34,6 +34,7 @@ retry_rowcount() {
 
       PARQUET_TOOLS_JAR="$(find "$this_dir"/.. -maxdepth 3 -name 'parquet-tools-*.jar' 2>/dev/null | head -n1)"
       PARQUET_TOOLS_JAR="${PARQUET_TOOLS_JAR:-./parquet-tools-1.11.1.jar}"  # legacy relative path
+      echo "E2E TEST DEBUG: using parquet JAR => $PARQUET_TOOLS_JAR" >&2
       export PARQUET_TOOLS_JAR
   fi
 

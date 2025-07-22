@@ -343,7 +343,7 @@ function test_fhir_sink() {
   print_message "Total encounters sinked to fhir ---> ${total_encounters_sinked_fhir}"
 
   local total_obs_sinked_fhir
-  total_encounters_sinked_fhir=$(jq '.total' "${HOME_PATH}/${FHIR_JSON_SUBDIR}/fhir/obs.json")
+  total_obs_sinked_fhir=$(jq '.total' "${HOME_PATH}/${FHIR_JSON_SUBDIR}/fhir/obs.json")
   print_message "Total observations sinked to fhir ---> ${total_obs_sinked_fhir}"
 
   if [[ "${total_patients_sinked_fhir}" == "${TOTAL_TEST_PATIENTS}" && "${total_encounters_sinked_fhir}" \
