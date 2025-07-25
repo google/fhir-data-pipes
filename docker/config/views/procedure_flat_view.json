@@ -40,6 +40,11 @@
           "path": "performed.ofType(Period).end",
           "name": "period_end",
           "type": "dateTime"
+        },
+        {
+          "path": "performed.ofType(dateTime)",
+          "name": "performed_time",
+          "type": "dateTime"
         }
       ]
     },
