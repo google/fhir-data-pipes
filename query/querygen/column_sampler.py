@@ -32,7 +32,7 @@ class ColumnSampler:
                 con=self._target_db)[['col_name', 'data_type']].values:
             sample_values += f"""
 Here are {num_samples} sample values from column {r[0]} of table {table_name}
-sorted by their frequencies over at most {num_samples * 1000} rows: \n
+sorted by their frequencies over ALL rows: \n
 """
             # We are trying to balance between performance and value of the extracted
             # records; doing the GROUP BY on the whole table can be expensive.
@@ -42,7 +42,9 @@ sorted by their frequencies over at most {num_samples * 1000} rows: \n
                 FROM (
                   SELECT {r[0]} AS column_value
                   FROM {table_name}
-                  LIMIT {num_samples * 1000}
+                  -- For improve speed we can limit number of rows being
+                  -- sampled but will hinder quality.
+                  -- LIMIT {num_samples * 1000}
                 )
                 GROUP BY column_value
                 ORDER BY num_records DESC
