@@ -25,6 +25,8 @@ set -e
 # -------------------------------------------------------------------
 source "$(dirname "$0")/../lib/parquet_utils.sh"
 
+PARQUET_TOOLS_JAR=""
+
 #################################################
 # Prints the usage
 #################################################
@@ -104,6 +106,7 @@ function setup() {
   SINK_FHIR_SERVER_URL='http://localhost:8098'
   PIPELINE_CONTROLLER_URL='http://localhost:8090'
   THRIFTSERVER_URL='localhost:10001'
+  PARQUET_TOOLS_JAR="${HOME_PATH}/parquet-tools-1.11.1.jar"
   if [[ $3 = "--use_docker_network" ]]; then
     SOURCE_FHIR_SERVER_URL='http://hapi-server:8080'
     SINK_FHIR_SERVER_URL='http://sink-server-controller:8080'
@@ -252,37 +255,43 @@ function check_parquet() {
     total_patients=$(retry_rowcount \
       "${output}/*/Patient/" \
       "${TOTAL_TEST_PATIENTS}" \
-      "patients") || true
+      "patients" \
+      "${PARQUET_TOOLS_JAR}") || true
 
     local total_encounters
     total_encounters=$(retry_rowcount \
       "${output}/*/Encounter/" \
       "${TOTAL_TEST_ENCOUNTERS}" \
-      "encounters") || true
+      "encounters" \
+      "${PARQUET_TOOLS_JAR}") || true
 
     local total_observations
     total_observations=$(retry_rowcount \
       "${output}/*/Observation/" \
       "${TOTAL_TEST_OBS}" \
-      "observations") || true
+      "observations" \
+      "${PARQUET_TOOLS_JAR}") || true
 
     local total_patient_flat
     total_patient_flat=$(retry_rowcount \
       "${output}/*/VIEWS_TIMESTAMP_*/patient_flat/" \
       "${TOTAL_VIEW_PATIENTS}" \
-      "patient_flat") || true
+      "patient_flat" \
+      "${PARQUET_TOOLS_JAR}") || true
 
     local total_encounter_flat
     total_encounter_flat=$(retry_rowcount \
       "${output}/*/VIEWS_TIMESTAMP_*/encounter_flat/" \
       "${TOTAL_TEST_ENCOUNTERS}" \
-      "encounter_flat") || true
+      "encounter_flat" \
+      "${PARQUET_TOOLS_JAR}") || true
 
     local total_obs_flat
     total_obs_flat=$(retry_rowcount \
       "${output}/*/VIEWS_TIMESTAMP_*/observation_flat/" \
       "${TOTAL_TEST_OBS}" \
-      "observation_flat") || true
+      "observation_flat" \
+      "${PARQUET_TOOLS_JAR}") || true
     # ------------------------------------------------------------------
 
     print_message "Total patients: ${total_patients}"

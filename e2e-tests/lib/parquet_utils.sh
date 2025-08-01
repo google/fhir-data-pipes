@@ -4,12 +4,13 @@
 
 set -euo pipefail
 
-# retry_rowcount <path> <expected> <label>
-#   path      – shell glob pointing to a Parquet folder (wildcards allowed).
-#               The glob is passed verbatim to parquet-tools, which understands
-#               Hadoop-style wild-cards (e.g. "…/*/Patient/").
-#   expected  – integer row count we expect to see.
-#   label     – short metric name for log messages.
+# retry_rowcount <path> <expected> <label> <parquet_jar>
+#   path         – shell glob pointing to a Parquet folder (wildcards allowed).
+#                  The glob is passed verbatim to parquet-tools, which understands
+#                  Hadoop-style wild-cards (e.g. "…/*/Patient/").
+#   expected     – integer row count we expect to see.
+#   label        – short metric name for log messages.
+#   parquet_jar  – full path to the parquet-tools JAR file.
 #
 # Prints the final count on stdout.
 
@@ -17,6 +18,7 @@ retry_rowcount() {
   local parquet_glob="$1"
   local expected="$2"
   local label="$3"
+  local parquet_tools_jar="$4"
 
   # CI can override cadence through env vars
   local max_retries="${ROWCOUNT_MAX_RETRIES:-12}"
@@ -26,23 +28,9 @@ retry_rowcount() {
   local raw_count=0
   local final_count=0
 
-  # JAR discovery logic
-  if [[ -z "${PARQUET_TOOLS_JAR:-}" ]]; then
-      # Search up to three levels above this script (first match wins).
-      local this_dir
-      this_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-
-      PARQUET_TOOLS_JAR="$(find "$this_dir"/.. -maxdepth 3 -name 'parquet-tools-*.jar' 2>/dev/null | head -n1)"
-      PARQUET_TOOLS_JAR="${PARQUET_TOOLS_JAR:-./parquet-tools-1.11.1.jar}"  # legacy relative path
-      echo "E2E TEST DEBUG: using parquet JAR => $PARQUET_TOOLS_JAR" >&2
-      export PARQUET_TOOLS_JAR
-  fi
-
-  local parquet_tools_jar="$PARQUET_TOOLS_JAR"
-
+  # Verify JAR exists
   if [[ ! -f "$parquet_tools_jar" ]]; then
     echo "E2E TEST ERROR: parquet-tools JAR not found at: $parquet_tools_jar" >&2
-    echo "E2E TEST ERROR: Set PARQUET_TOOLS_JAR environment variable to override." >&2
     echo "0"
     return
   fi

@@ -26,6 +26,8 @@ set -e
 # -------------------------------------------------------------------
 source "$(dirname "$0")/lib/parquet_utils.sh"
 
+PARQUET_TOOLS_JAR=""
+
 #################################################
 # Prints the usage
 #################################################
@@ -111,6 +113,7 @@ function setup() {
   PARQUET_SUBDIR=$2
   FHIR_JSON_SUBDIR=$3
   SINK_FHIR_SERVER_URL=$4
+  PARQUET_TOOLS_JAR="${HOME_PATH}/controller-spark/parquet-tools-1.11.1.jar"
   rm -rf "${HOME_PATH:?}/${FHIR_JSON_SUBDIR:?}"
   rm -rf "${HOME_PATH}/${PARQUET_SUBDIR}"/*.json
   find "${HOME_PATH}/${PARQUET_SUBDIR}" -size 0 -delete
@@ -220,21 +223,24 @@ function test_parquet_sink() {
   total_patients_streamed=$(retry_rowcount \
           "${HOME_PATH}/${PARQUET_SUBDIR}/Patient/" \
           "${TOTAL_TEST_PATIENTS}" \
-          "patients") || true
+          "patients"\
+          "${PARQUET_TOOLS_JAR}") || true
   print_message "Total patients synced to Parquet ---> ${total_patients_streamed}"
 
   local total_encounters_streamed
   total_encounters_streamed=$(retry_rowcount \
           "${HOME_PATH}/${PARQUET_SUBDIR}/Encounter/" \
           "${TOTAL_TEST_ENCOUNTERS}" \
-          "encounters") || true
+          "encounters" \
+          "${PARQUET_TOOLS_JAR}") || true
   print_message "Total encounters synced to Parquet ---> ${total_encounters_streamed}"
 
   local total_obs_streamed
   total_obs_streamed=$(retry_rowcount \
           "${HOME_PATH}/${PARQUET_SUBDIR}/Observation/" \
           "${TOTAL_TEST_OBS}" \
-          "observations") || true
+          "observations" \
+          "${PARQUET_TOOLS_JAR}") || true
   print_message "Total obs synced to Parquet ---> ${total_obs_streamed}"
 
   if [[ -z ${STREAMING} ]]; then
@@ -244,21 +250,24 @@ function test_parquet_sink() {
     total_patient_flat=$(retry_rowcount \
           "${HOME_PATH}/${PARQUET_SUBDIR}/VIEWS_TIMESTAMP_*/patient_flat/" \
           "${patient_view_expect}" \
-          "patient_flat") || true
+          "patient_flat" \
+          "${PARQUET_TOOLS_JAR}") || true
     print_message "Total patient-flat rows synced ---> ${total_patient_flat}"
 
     local total_encounter_flat
     total_encounter_flat=$(retry_rowcount \
           "${HOME_PATH}/${PARQUET_SUBDIR}/VIEWS_TIMESTAMP_*/encounter_flat/" \
           "${TOTAL_TEST_ENCOUNTERS}" \
-          "encounter_flat") || true
+          "encounter_flat" \
+          "${PARQUET_TOOLS_JAR}") || true
      print_message "Total encounter-flat rows synced ---> ${total_encounter_flat}"
 
     local total_obs_flat
     total_obs_flat=$(retry_rowcount \
           "${HOME_PATH}/${PARQUET_SUBDIR}/VIEWS_TIMESTAMP_*/observation_flat/" \
           "${obs_view_expect}" \
-          "observation_flat") || true
+          "observation_flat" \
+          "${PARQUET_TOOLS_JAR}") || true
     print_message "Total observation-flat rows synced ---> ${total_obs_flat}"
   fi
 
