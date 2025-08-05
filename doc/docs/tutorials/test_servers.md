@@ -45,10 +45,10 @@ There are *3 Docker server* configurations you can use for testing:
     to the FHIR server that you brought up using the [Synthea data
     uploader](https://github.com/google/fhir-data-pipes/blob/master/synthea-hiv/README.md#Uploader).
 
-    The uploader requires the `google-auth` Python library, which you can install using:
+    The uploader requires that you install the `uploader` module requirements first. You can do this by running:
 
     ```shell
-    pip3 install --upgrade google-auth
+    pip3 install -r ./synthea-hiv/uploader/requirements.txt
     ```
 
     For example, to upload to the HAPI FHIR server brought up in the previous step, run:
