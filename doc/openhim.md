@@ -54,7 +54,7 @@ For the server to route to :
 `Host: 172.17.0.1` (Docker Bridge Ip address), `Port: 8098` (Port for the Hapi fhir server) .
 ```
 
-see section *Using Docker compose* to fire up the Hapi fhir server and openmrs.
+see section _Using Docker compose_ to fire up the Hapi fhir server and openmrs.
 \
 Note that Openhim listens to client requests at `port:5001` by default.
 
