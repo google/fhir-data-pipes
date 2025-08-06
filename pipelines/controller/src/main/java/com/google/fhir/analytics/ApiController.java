@@ -31,7 +31,13 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.channels.Channels;
 import java.nio.channels.ReadableByteChannel;
+import java.time.LocalDateTime;
 import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
 import org.apache.beam.sdk.io.FileSystems;
 import org.apache.beam.sdk.io.fs.ResourceId;
 import org.hl7.fhir.instance.model.api.IBaseResource;
@@ -48,6 +54,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.PathVariable;
 
 @RestController
 public class ApiController {
@@ -57,6 +64,10 @@ public class ApiController {
   private static final String SUCCESS = "SUCCESS";
 
   @Autowired private PipelineManager pipelineManager;
+
+  @Autowired private DataProperties dataProperties;
+
+  @Autowired private DwhFilesManager dwhFilesManager;
 
   @PostMapping("/run")
   public ResponseEntity<String> runBatch(
@@ -166,4 +177,54 @@ public class ApiController {
     }
     return new ResponseEntity<>(response, status);
   }
+
+  @GetMapping("/next")
+  public ScheduleDto getSchedule() {
+    ScheduleDto schedule = new ScheduleDto();
+    LocalDateTime nextRun = pipelineManager.getNextIncrementalTime();
+    if (nextRun == null) {
+      schedule.setNextRun("NOT SCHEDULED");
+    } else {
+      schedule.setNextRun(nextRun.toString());
+    }
+    return schedule;
+  }
+
+  @GetMapping("/dwh")
+  public DwhDto getDwh() {
+
+    DwhDto dwhDto = new DwhDto();
+    String dwh = pipelineManager.getCurrentDwhRoot();
+    dwhDto.setDwhPrefix(dataProperties.getDwhRootPrefix());
+    dwhDto.setDwhPath(dwh == null || dwh.isEmpty() ? "" : dwh);
+    dwhDto.setDwhSnapshots(dwhFilesManager.listDwhSnapshots());
+
+    return dwhDto;
+  }
+
+  @GetMapping("/config")
+  public Map<String,String> getConfigs() {
+    return getConfigMap(null);
+  }
+
+  @GetMapping("/config/{name}")
+  public Map<String,String> getConfigs(@PathVariable String name) {
+    return getConfigMap(name);
+  }
+
+  private Map<String, String> getConfigMap(String configName) {
+    List<DataProperties.ConfigFields> configParams = dataProperties.getConfigParams();
+
+    Map<String, String> configMap;
+    Stream<DataProperties.ConfigFields> fieldsStream = configParams.stream();
+
+    if (configName != null && !configName.isEmpty()) {
+      fieldsStream = fieldsStream.filter(configField -> configField.name.equals(configName));
+    }
+
+    configMap = fieldsStream.collect(Collectors.toMap(configField -> configField.name,
+            configField -> configField.value != null ? configField.value : ""));
+    return configMap;
+  }
+
 }

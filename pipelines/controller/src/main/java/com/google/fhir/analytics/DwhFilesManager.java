@@ -155,6 +155,25 @@ public class DwhFilesManager {
     }
   }
 
+  /**
+   * This method will scan the DWH base directory and return DWH snapshots.
+   */
+  public List<String> listDwhSnapshots() {
+    List<String> paths = new ArrayList<>();
+    try {
+      String baseDir = getBaseDir(dwhRootPrefix);
+      String prefix = getPrefix(dwhRootPrefix);
+      paths =
+              DwhFiles.getAllChildDirectories(baseDir).stream()
+                      .map(ResourceId::getFilename)
+                      .filter(filename -> filename.startsWith(prefix)).collect(Collectors.toList());
+
+    } catch (IOException e) {
+      logger.error("Error occurred while retrieving snapshots", e);
+    }
+    return paths;
+  }
+
   private void deleteOlderSnapshots(
       List<ResourceId> allPaths, TreeSet<String> recentSnapshotsToBeRetained) throws IOException {
     for (ResourceId path : allPaths) {
