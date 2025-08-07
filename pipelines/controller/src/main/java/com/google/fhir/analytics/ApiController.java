@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2024 Google LLC
+ * Copyright 2020-2025 Google LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,7 +37,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-
 import org.apache.beam.sdk.io.FileSystems;
 import org.apache.beam.sdk.io.fs.ResourceId;
 import org.hl7.fhir.instance.model.api.IBaseResource;
@@ -51,10 +50,10 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.bind.annotation.PathVariable;
 
 @RestController
 public class ApiController {
@@ -203,12 +202,12 @@ public class ApiController {
   }
 
   @GetMapping("/config")
-  public Map<String,String> getConfigs() {
+  public Map<String, String> getConfigs() {
     return getConfigMap(null);
   }
 
   @GetMapping("/config/{name}")
-  public Map<String,String> getConfigs(@PathVariable String name) {
+  public Map<String, String> getConfigs(@PathVariable String name) {
     return getConfigMap(name);
   }
 
@@ -222,9 +221,11 @@ public class ApiController {
       fieldsStream = fieldsStream.filter(configField -> configField.name.equals(configName));
     }
 
-    configMap = fieldsStream.collect(Collectors.toMap(configField -> configField.name,
-            configField -> configField.value != null ? configField.value : ""));
+    configMap =
+        fieldsStream.collect(
+            Collectors.toMap(
+                configField -> configField.name,
+                configField -> configField.value != null ? configField.value : ""));
     return configMap;
   }
-
 }

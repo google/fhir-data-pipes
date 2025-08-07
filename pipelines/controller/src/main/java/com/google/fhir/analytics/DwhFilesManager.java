@@ -155,9 +155,7 @@ public class DwhFilesManager {
     }
   }
 
-  /**
-   * This method will scan the DWH base directory and return DWH snapshots.
-   */
+  /** This method will scan the DWH base directory and return DWH snapshots. */
   public List<String> listDwhSnapshots() {
     List<String> paths = new ArrayList<>();
     try {
