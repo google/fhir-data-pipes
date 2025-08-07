@@ -17,12 +17,12 @@ set -euo pipefail
 retry_rowcount() {
   local parquet_glob="$1"
   local expected="$2"
-  local label="$3"  # will remove this non used label once the issue is fixed
+  local label="$3"
   local parquet_tools_jar="$4"
 
   # CI can override cadence through env vars
-  local max_retries="${ROWCOUNT_MAX_RETRIES:-30}" #will reduce this once the issue is identified
-  local sleep_secs="${ROWCOUNT_SLEEP_SECS:-20}"
+  local max_retries="${ROWCOUNT_MAX_RETRIES:-12}"
+  local sleep_secs="${ROWCOUNT_SLEEP_SECS:-5}"
 
   local retries=0
   local raw_count=0
@@ -42,7 +42,7 @@ retry_rowcount() {
 
     # ── 2. Normalise raw_count
     if [[ -z "${raw_count}" || ! "${raw_count}" =~ ^[0-9]+$ ]]; then
-      echo "E2E TEST ERROR: [${parquet_glob}] parquet-tools returned '${raw_count}' " \
+      echo "E2E TEST ERROR: [${label}] parquet-tools returned '${raw_count}' " \
            "(treating as 0)" >&2
       final_count=0
     else
@@ -66,7 +66,7 @@ retry_rowcount() {
 
     # ── 6. Sleep & retry
     retries=$((retries + 1))
-    echo "E2E TEST: [${parquet_glob}] raw=${raw_count}, expected=${expected} — retry ${retries}/${max_retries} in ${sleep_secs}s" >&2
+    echo "E2E TEST: [${label}] raw=${raw_count}, expected=${expected} — retry ${retries}/${max_retries} in ${sleep_secs}s" >&2
     sleep "${sleep_secs}"
   done
 }

@@ -223,7 +223,6 @@ function test_parquet_sink() {
   total_patients_streamed=$(retry_rowcount \
           "${HOME_PATH}/${PARQUET_SUBDIR}/Patient/" \
           "${TOTAL_TEST_PATIENTS}" \
-          "patients"\
           "${PARQUET_TOOLS_JAR}") || true
   print_message "Total patients synced to Parquet ---> ${total_patients_streamed}"
 
@@ -231,16 +230,14 @@ function test_parquet_sink() {
   total_encounters_streamed=$(retry_rowcount \
           "${HOME_PATH}/${PARQUET_SUBDIR}/Encounter/" \
           "${TOTAL_TEST_ENCOUNTERS}" \
-          "encounters" \
-          "${PARQUET_TOOLS_JAR}") || true
+           "${PARQUET_TOOLS_JAR}") || true
   print_message "Total encounters synced to Parquet ---> ${total_encounters_streamed}"
 
   local total_obs_streamed
   total_obs_streamed=$(retry_rowcount \
           "${HOME_PATH}/${PARQUET_SUBDIR}/Observation/" \
           "${TOTAL_TEST_OBS}" \
-          "observations" \
-          "${PARQUET_TOOLS_JAR}") || true
+           "${PARQUET_TOOLS_JAR}") || true
   print_message "Total obs synced to Parquet ---> ${total_obs_streamed}"
 
   if [[ -z ${STREAMING} ]]; then
@@ -250,7 +247,6 @@ function test_parquet_sink() {
     total_patient_flat=$(retry_rowcount \
           "${HOME_PATH}/${PARQUET_SUBDIR}/VIEWS_TIMESTAMP_*/patient_flat/" \
           "${patient_view_expect}" \
-          "patient_flat" \
           "${PARQUET_TOOLS_JAR}") || true
     print_message "Total patient-flat rows synced ---> ${total_patient_flat}"
 
@@ -258,15 +254,13 @@ function test_parquet_sink() {
     total_encounter_flat=$(retry_rowcount \
           "${HOME_PATH}/${PARQUET_SUBDIR}/VIEWS_TIMESTAMP_*/encounter_flat/" \
           "${TOTAL_TEST_ENCOUNTERS}" \
-          "encounter_flat" \
-          "${PARQUET_TOOLS_JAR}") || true
+           "${PARQUET_TOOLS_JAR}") || true
      print_message "Total encounter-flat rows synced ---> ${total_encounter_flat}"
 
     local total_obs_flat
     total_obs_flat=$(retry_rowcount \
           "${HOME_PATH}/${PARQUET_SUBDIR}/VIEWS_TIMESTAMP_*/observation_flat/" \
           "${obs_view_expect}" \
-          "observation_flat" \
           "${PARQUET_TOOLS_JAR}") || true
     print_message "Total observation-flat rows synced ---> ${total_obs_flat}"
   fi

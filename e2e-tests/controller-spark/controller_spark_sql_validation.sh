@@ -255,42 +255,36 @@ function check_parquet() {
     total_patients=$(retry_rowcount \
       "${output}/*/Patient/" \
       "${TOTAL_TEST_PATIENTS}" \
-      "patients" \
       "${PARQUET_TOOLS_JAR}") || true
 
     local total_encounters
     total_encounters=$(retry_rowcount \
       "${output}/*/Encounter/" \
       "${TOTAL_TEST_ENCOUNTERS}" \
-      "encounters" \
       "${PARQUET_TOOLS_JAR}") || true
 
     local total_observations
     total_observations=$(retry_rowcount \
       "${output}/*/Observation/" \
       "${TOTAL_TEST_OBS}" \
-      "observations" \
       "${PARQUET_TOOLS_JAR}") || true
 
     local total_patient_flat
     total_patient_flat=$(retry_rowcount \
       "${output}/*/VIEWS_TIMESTAMP_*/patient_flat/" \
       "${TOTAL_VIEW_PATIENTS}" \
-      "patient_flat" \
       "${PARQUET_TOOLS_JAR}") || true
 
     local total_encounter_flat
     total_encounter_flat=$(retry_rowcount \
       "${output}/*/VIEWS_TIMESTAMP_*/encounter_flat/" \
       "${TOTAL_TEST_ENCOUNTERS}" \
-      "encounter_flat" \
       "${PARQUET_TOOLS_JAR}") || true
 
     local total_obs_flat
     total_obs_flat=$(retry_rowcount \
       "${output}/*/VIEWS_TIMESTAMP_*/observation_flat/" \
       "${TOTAL_TEST_OBS}" \
-      "observation_flat" \
       "${PARQUET_TOOLS_JAR}") || true
     # ------------------------------------------------------------------
 
