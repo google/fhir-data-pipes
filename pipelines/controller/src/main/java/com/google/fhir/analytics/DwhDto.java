@@ -13,7 +13,7 @@ public class DwhDto {
     @JsonProperty("dwh_path_latest")
     private String dwhPath;
 
-    @JsonProperty("dwh_snapshots")
+    @JsonProperty("dwh_snapshot_ids")
     private List<String> dwhSnapshots;
 
 }

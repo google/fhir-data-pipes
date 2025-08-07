@@ -163,10 +163,12 @@ public class DwhFilesManager {
     try {
       String baseDir = getBaseDir(dwhRootPrefix);
       String prefix = getPrefix(dwhRootPrefix);
+      String snapshotPrefix = dwhRootPrefix.substring(0, dwhRootPrefix.indexOf(prefix));
       paths =
-              DwhFiles.getAllChildDirectories(baseDir).stream()
-                      .map(ResourceId::getFilename)
-                      .filter(filename -> filename.startsWith(prefix)).collect(Collectors.toList());
+          DwhFiles.getAllChildDirectories(baseDir).stream()
+              .filter(resourceId -> resourceId.getFilename().startsWith(prefix))
+              .map(it -> snapshotPrefix + it.getFilename())
+              .collect(Collectors.toList());
 
     } catch (IOException e) {
       logger.error("Error occurred while retrieving snapshots", e);
