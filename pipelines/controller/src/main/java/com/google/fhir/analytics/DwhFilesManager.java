@@ -173,6 +173,40 @@ public class DwhFilesManager {
     return paths;
   }
 
+  /**
+   * This method will scan the DWH base directory to check for a DWH snapshots that matches the
+   * provided name. Any incomplete snapshots will not be purged by this job and will have to be
+   * manually verified and acted upon.
+   *
+   * @param snapshotId the snapshot id which needs to be purged and should start with the
+   *     dwhRootPrefix format <baseDir>/<prefix>
+   */
+  public void deleteDwhSnapshotFiles(String snapshotId) {
+    Preconditions.checkState(
+        !Strings.isNullOrEmpty(snapshotId), "snapshot id should not be null or empty");
+    Preconditions.checkState(
+        snapshotId.trim().startsWith(dwhRootPrefix),
+        "Invalid prefix for the snapshot id. It should start with the dwhRootPrefix: "
+            + dwhRootPrefix);
+    try {
+      String baseDir = getBaseDir(dwhRootPrefix);
+      ResourceId resourceId =
+          DwhFiles.getAllChildDirectories(baseDir).stream()
+              .filter(dir -> dir.getFilename().startsWith(getPrefix(snapshotId)))
+              .findFirst()
+              .orElseThrow(
+                  () ->
+                      new IllegalArgumentException(
+                          "File not found for Snapshot with id: " + snapshotId));
+
+      logger.info("Deleting snapshot " + snapshotId);
+      deleteDirectoryAndFiles(resourceId);
+
+    } catch (IOException e) {
+      logger.error("Error occurred while purging older snapshots", e);
+    }
+  }
+
   private void deleteOlderSnapshots(
       List<ResourceId> allPaths, TreeSet<String> recentSnapshotsToBeRetained) throws IOException {
     for (ResourceId path : allPaths) {
