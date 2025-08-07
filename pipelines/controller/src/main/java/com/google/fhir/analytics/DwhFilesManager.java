@@ -161,11 +161,10 @@ public class DwhFilesManager {
     try {
       String baseDir = getBaseDir(dwhRootPrefix);
       String prefix = getPrefix(dwhRootPrefix);
-      String snapshotPrefix = dwhRootPrefix.substring(0, dwhRootPrefix.indexOf(prefix));
       paths =
           DwhFiles.getAllChildDirectories(baseDir).stream()
               .filter(resourceId -> resourceId.getFilename().startsWith(prefix))
-              .map(it -> snapshotPrefix + it.getFilename())
+              .map(it -> baseDir + File.separatorChar + it.getFilename())
               .collect(Collectors.toList());
 
     } catch (IOException e) {

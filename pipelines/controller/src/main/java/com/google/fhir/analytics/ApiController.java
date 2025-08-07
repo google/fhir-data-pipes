@@ -191,13 +191,11 @@ public class ApiController {
 
   @GetMapping("/dwh")
   public DwhDto getDwh() {
-
     DwhDto dwhDto = new DwhDto();
     String dwh = pipelineManager.getCurrentDwhRoot();
     dwhDto.setDwhPrefix(dataProperties.getDwhRootPrefix());
     dwhDto.setDwhPath(dwh == null || dwh.isEmpty() ? "" : dwh);
     dwhDto.setDwhSnapshots(dwhFilesManager.listDwhSnapshots());
-
     return dwhDto;
   }
 
