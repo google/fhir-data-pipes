@@ -11,14 +11,14 @@
         <link rel="canonical" href="https://example.com/analytics/installation_controller/">
       
       
-        <link rel="prev" href="../installation_docker/">
+        <link rel="prev" href="../installation_pipeline/">
       
       
-        <link rel="next" href="../installation_pipeline/">
+        <link rel="next" href="../tutorials/">
       
       
       <link rel="icon" href="../assets/images/favicon.png">
-      <meta name="generator" content="mkdocs-1.6.0, mkdocs-material-9.5.27">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.6.16">
     
     
       
@@ -26,7 +26,7 @@
       
     
     
-      <link rel="stylesheet" href="../assets/stylesheets/main.6543a935.min.css">
+      <link rel="stylesheet" href="../assets/stylesheets/main.7e37652d.min.css">
       
         
         <link rel="stylesheet" href="../assets/stylesheets/palette.06af60db.min.css">
@@ -48,7 +48,7 @@
       
     
     
-    <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce((e,_)=>(e<<5)-e+_.charCodeAt(0),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
     
       
 
@@ -93,12 +93,12 @@
     <a href=".." title="OHS Analytics Documentation" class="md-header__button md-logo" aria-label="OHS Analytics Documentation" data-md-component="logo">
       
   
-  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54Z"/></svg>
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
 
     </a>
     <label class="md-header__button md-icon" for="__drawer">
       
-      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3V6m0 5h18v2H3v-2m0 5h18v2H3v-2Z"/></svg>
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
     </label>
     <div class="md-header__title" data-md-component="header-title">
       <div class="md-header__ellipsis">
@@ -126,7 +126,7 @@
     <input class="md-option" data-md-color-media="" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="purple"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_0">
     
       <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_1" hidden>
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M17 6H7c-3.31 0-6 2.69-6 6s2.69 6 6 6h10c3.31 0 6-2.69 6-6s-2.69-6-6-6zm0 10H7c-2.21 0-4-1.79-4-4s1.79-4 4-4h10c2.21 0 4 1.79 4 4s-1.79 4-4 4zM7 9c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/></svg>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M17 6H7c-3.31 0-6 2.69-6 6s2.69 6 6 6h10c3.31 0 6-2.69 6-6s-2.69-6-6-6m0 10H7c-2.21 0-4-1.79-4-4s1.79-4 4-4h10c2.21 0 4 1.79 4 4s-1.79 4-4 4M7 9c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3"/></svg>
       </label>
     
   
@@ -136,7 +136,7 @@
     <input class="md-option" data-md-color-media="" data-md-color-scheme="slate" data-md-color-primary="indigo" data-md-color-accent="lime"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_1">
     
       <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_0" hidden>
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M17 7H7a5 5 0 0 0-5 5 5 5 0 0 0 5 5h10a5 5 0 0 0 5-5 5 5 0 0 0-5-5m0 8a3 3 0 0 1-3-3 3 3 0 0 1 3-3 3 3 0 0 1 3 3 3 3 0 0 1-3 3Z"/></svg>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M17 7H7a5 5 0 0 0-5 5 5 5 0 0 0 5 5h10a5 5 0 0 0 5-5 5 5 0 0 0-5-5m0 8a3 3 0 0 1-3-3 3 3 0 0 1 3-3 3 3 0 0 1 3 3 3 3 0 0 1-3 3"/></svg>
       </label>
     
   
@@ -144,30 +144,32 @@
       
     
     
-      <script>var media,input,key,value,palette=__md_get("__palette");if(palette&&palette.color){"(prefers-color-scheme)"===palette.color.media&&(media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']"),palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent"));for([key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
     
     
     
-      <label class="md-header__button md-icon" for="__search">
-        
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.516 6.516 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5Z"/></svg>
-      </label>
-      <div class="md-search" data-md-component="search" role="dialog">
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
   <label class="md-search__overlay" for="__search"></label>
   <div class="md-search__inner" role="search">
     <form class="md-search__form" name="search">
       <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
       <label class="md-search__icon md-icon" for="__search">
         
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.516 6.516 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5Z"/></svg>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
         
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12Z"/></svg>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
       </label>
       <nav class="md-search__options" aria-label="Search">
         
         <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
           
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12 19 6.41Z"/></svg>
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
         </button>
       </nav>
       
@@ -186,13 +188,14 @@
     </div>
   </div>
 </div>
+      
     
     
       <div class="md-header__source">
         <a href="https://github.com/google/fhir-data-pipes" title="Go to repository" class="md-source" data-md-component="source">
   <div class="md-source__icon md-icon">
     
-    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 496 512"><!--! Font Awesome Free 6.5.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2024 Fonticons, Inc.--><path d="M165.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6zm-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3zm44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9zM244.8 8C106.1 8 0 113.3 0 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C428.2 457.8 496 362.9 496 252 496 113.3 383.5 8 244.8 8zM97.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1zm-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7zm32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1zm-11.4-14.7c-1.6 1-1.6 3.6 0 5.9 1.6 2.3 4.3 3.3 5.6 2.3 1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2z"/></svg>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.0.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path fill="currentColor" d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
   </div>
   <div class="md-source__repository">
     FHIR Data Pipes
@@ -228,7 +231,7 @@
     <a href=".." title="OHS Analytics Documentation" class="md-nav__button md-logo" aria-label="OHS Analytics Documentation" data-md-component="logo">
       
   
-  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54Z"/></svg>
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
 
     </a>
     OHS Analytics Documentation
@@ -238,7 +241,7 @@
       <a href="https://github.com/google/fhir-data-pipes" title="Go to repository" class="md-source" data-md-component="source">
   <div class="md-source__icon md-icon">
     
-    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 496 512"><!--! Font Awesome Free 6.5.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2024 Fonticons, Inc.--><path d="M165.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6zm-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3zm44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9zM244.8 8C106.1 8 0 113.3 0 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C428.2 457.8 496 362.9 496 252 496 113.3 383.5 8 244.8 8zM97.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1zm-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7zm32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1zm-11.4-14.7c-1.6 1-1.6 3.6 0 5.9 1.6 2.3 4.3 3.3 5.6 2.3 1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2z"/></svg>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.0.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path fill="currentColor" d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
   </div>
   <div class="md-source__repository">
     FHIR Data Pipes
@@ -258,8 +261,10 @@
       <a href=".." class="md-nav__link">
         
   
+  
   <span class="md-ellipsis">
     Home
+    
   </span>
   
 
@@ -274,80 +279,18 @@
   
   
   
-    
-    
-    
-    
-    <li class="md-nav__item md-nav__item--nested">
-      
+    <li class="md-nav__item">
+      <a href="../concepts/" class="md-nav__link">
         
-        
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" >
-        
-          
-          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
-            
+  
   
   <span class="md-ellipsis">
     Concepts
-  </span>
-  
-
-            <span class="md-nav__icon md-icon"></span>
-          </label>
-        
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_2">
-            <span class="md-nav__icon md-icon"></span>
-            Concepts
-          </label>
-          <ul class="md-nav__list" data-md-scrollfix>
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../concepts/concepts/" class="md-nav__link">
-        
-  
-  <span class="md-ellipsis">
-    OHS Analytics Concepts
+    
   </span>
   
 
       </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../concepts/views/" class="md-nav__link">
-        
-  
-  <span class="md-ellipsis">
-    Schema and Flat Views
-  </span>
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-          </ul>
-        </nav>
-      
     </li>
   
 
@@ -360,6 +303,7 @@
   
   
   
+    
     
     
     
@@ -374,8 +318,10 @@
           <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
             
   
+  
   <span class="md-ellipsis">
     Getting Started
+    
   </span>
   
 
@@ -399,8 +345,10 @@
       <a href="../getting_started/" class="md-nav__link">
         
   
+  
   <span class="md-ellipsis">
     Start Here
+    
   </span>
   
 
@@ -420,8 +368,33 @@
       <a href="../installation_docker/" class="md-nav__link">
         
   
+  
   <span class="md-ellipsis">
-    Docker Containers
+    Docker containers
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../installation_pipeline/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Deploy the "Pipelines"
+    
   </span>
   
 
@@ -450,8 +423,10 @@
         <label class="md-nav__link md-nav__link--active" for="__toc">
           
   
+  
   <span class="md-ellipsis">
     Deploy the "Controller Module"
+    
   </span>
   
 
@@ -461,8 +436,10 @@
       <a href="./" class="md-nav__link md-nav__link--active">
         
   
+  
   <span class="md-ellipsis">
     Deploy the "Controller Module"
+    
   </span>
   
 
@@ -521,45 +498,18 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#fhir-search-input-parameters" class="md-nav__link">
+  <a href="#main-configuration-parameters" class="md-nav__link">
     <span class="md-ellipsis">
-      FHIR Search Input Parameters
+      Main configuration parameters
     </span>
   </a>
   
 </li>
         
           <li class="md-nav__item">
-  <a href="#authentication" class="md-nav__link">
+  <a href="#batch-pipeline-non-default-configurations" class="md-nav__link">
     <span class="md-ellipsis">
-      Authentication
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#jdbc-input-parameters" class="md-nav__link">
-    <span class="md-ellipsis">
-      JDBC Input Parameters
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#advanced-configurations" class="md-nav__link">
-    <span class="md-ellipsis">
-      Advanced Configurations
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#fhir-output-parameters" class="md-nav__link">
-    <span class="md-ellipsis">
-      FHIR Output Parameters
+      Batch pipeline non-default configurations
     </span>
   </a>
   
@@ -574,27 +524,6 @@
   
 </nav>
       
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../installation_pipeline/" class="md-nav__link">
-        
-  
-  <span class="md-ellipsis">
-    Deploy the "Pipelines"
-  </span>
-  
-
-      </a>
     </li>
   
 
@@ -617,6 +546,7 @@
     
     
     
+    
     <li class="md-nav__item md-nav__item--nested">
       
         
@@ -627,8 +557,10 @@
           <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="0">
             
   
+  
   <span class="md-ellipsis">
     Tutorials
+    
   </span>
   
 
@@ -652,8 +584,10 @@
       <a href="../tutorials/" class="md-nav__link">
         
   
+  
   <span class="md-ellipsis">
     Tutorials
+    
   </span>
   
 
@@ -673,8 +607,10 @@
       <a href="../tutorials/test_servers/" class="md-nav__link">
         
   
+  
   <span class="md-ellipsis">
     Set up local test servers
+    
   </span>
   
 
@@ -694,8 +630,10 @@
       <a href="../tutorials/single_machine/" class="md-nav__link">
         
   
+  
   <span class="md-ellipsis">
     Single Machine Deployment
+    
   </span>
   
 
@@ -715,8 +653,33 @@
       <a href="../tutorials/add_dashboard/" class="md-nav__link">
         
   
+  
   <span class="md-ellipsis">
     Visualize Parquet DWH with Apache Superset
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../tutorials/postgres_example/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    PostgreSQL DWH using custom schema
+    
   </span>
   
 
@@ -743,8 +706,10 @@
       <a href="../additional/" class="md-nav__link">
         
   
+  
   <span class="md-ellipsis">
     Additional Topics
+    
   </span>
   
 
@@ -763,6 +728,7 @@
     
     
     
+    
     <li class="md-nav__item md-nav__item--nested">
       
         
@@ -773,8 +739,10 @@
           <label class="md-nav__link" for="__nav_6" id="__nav_6_label" tabindex="0">
             
   
+  
   <span class="md-ellipsis">
     Community
+    
   </span>
   
 
@@ -798,8 +766,10 @@
       <a href="../support/" class="md-nav__link">
         
   
+  
   <span class="md-ellipsis">
     Support
+    
   </span>
   
 
@@ -819,8 +789,10 @@
       <a href="../contributing/" class="md-nav__link">
         
   
+  
   <span class="md-ellipsis">
     Contributing
+    
   </span>
   
 
@@ -840,8 +812,10 @@
       <a href="../release_process/" class="md-nav__link">
         
   
+  
   <span class="md-ellipsis">
     Release process
+    
   </span>
   
 
@@ -922,45 +896,18 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#fhir-search-input-parameters" class="md-nav__link">
+  <a href="#main-configuration-parameters" class="md-nav__link">
     <span class="md-ellipsis">
-      FHIR Search Input Parameters
+      Main configuration parameters
     </span>
   </a>
   
 </li>
         
           <li class="md-nav__item">
-  <a href="#authentication" class="md-nav__link">
+  <a href="#batch-pipeline-non-default-configurations" class="md-nav__link">
     <span class="md-ellipsis">
-      Authentication
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#jdbc-input-parameters" class="md-nav__link">
-    <span class="md-ellipsis">
-      JDBC Input Parameters
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#advanced-configurations" class="md-nav__link">
-    <span class="md-ellipsis">
-      Advanced Configurations
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#fhir-output-parameters" class="md-nav__link">
-    <span class="md-ellipsis">
-      FHIR Output Parameters
+      Batch pipeline non-default configurations
     </span>
   </a>
   
@@ -985,6 +932,7 @@
                 
                   
 
+
   
   
 
@@ -1001,12 +949,10 @@
 <h2 id="usage">Usage</h2>
 <p>The FHIR Pipelines Controller helps you schedule and manage the running of the
 FHIR Data Pipes Pipeline. Using the Controller module you can configure the
-Pipeline to run either full or incremental transformations, and it can also be
-used to monitor the pipelines.</p>
-<p>The Controller acts as a simplified entry point to managing the Data Pipes
-Pipelines for less experienced users and non-developers, all the configurations 
-and features supported by the controller are also available by running the 
-<a href="../installation_pipeline/#setup">ETL Pipelines</a> as a Java JAR.</p>
+Pipeline to run either full or incremental transformations, and it can be used
+to monitor the pipelines.</p>
+<p>Once deployed, the Controller can be managed via the cmd-line
+or <a href="./additional#web-control-panel">Web Control Panel</a>.</p>
 <h2 id="setup">Setup</h2>
 <ol>
 <li>Clone the
@@ -1017,272 +963,71 @@ and features supported by the controller are also available by running the
 </ol>
 <p>Later terminal commands will assume your working directory is the <code>controller</code>
 directory.</p>
-<p><br></p>
-<p>Next, configure the FHIR Pipelines Controller. The controller
+<p>Next, configure the FHIR Pipelines Controller. The FHIR Pipelines Controller
 relies on several configuration files to run. Edit them to match your
-environment and requirements. For sample values that are used
-in <a href="tutorials/single_machine">single machine deployment examples</a>
-see <a href="https://github.com/google/fhir-data-pipes/tree/master/docker/config">docker/config</a>.</p>
+environment and requirements.</p>
 <ul>
-<li><strong>Main settings for Pipeline Controller</strong>:
-  <a href="https://github.com/google/fhir-data-pipes/tree/master/pipelines/controller/config/application.yaml"><code>pipelines/controller/config/application.yaml</code></a>.
-  Edit the values to match your FHIR server and use case.</li>
-<li><strong>JDBC settings</strong>:
-  <a href="https://github.com/google/fhir-data-pipes/tree/master/pipelines/controller/config/hapi-postgres-config.json"><code>pipelines/controller/config/hapi-postgres-config.json</code></a>.
-  If you are using the JDBC mode to read resources, edit the values to match the
-  database of your HAPI FHIR server. The JDBC mode is not implemented for other
-  FHIR servers.</li>
-<li><strong>Customized FlinkRunner settings</strong>:
-  <a href="https://github.com/google/fhir-data-pipes/tree/master/pipelines/controller/config/flink-conf.yaml"><code>pipelines/controller/config/flink-conf.yaml</code></a>.
+<li><strong>Main settings for Pipeline Controller
+  </strong>: <a href="https://github.com/google/fhir-data-pipes/tree/master/pipelines/controller/config/application.yaml"><code>pipelines/controller/config/application.yaml</code></a>.
+  Edit the values to match your HAPI FHIR server and use case.</li>
+<li><strong>JDBC settings
+  </strong>: <a href="https://github.com/google/fhir-data-pipes/tree/master/pipelines/controller/config/hapi-postgres-config.json"><code>pipelines/controller/config/hapi-postgres-config.json</code></a>.
+  Edit the values to match the Postgres database of your HAPI FHIR server.</li>
+<li><strong>Customized FlinkRunner settings
+  </strong>: <a href="https://github.com/google/fhir-data-pipes/tree/master/pipelines/controller/config/flink-conf.yaml"><code>pipelines/controller/config/flink-conf.yaml</code></a>.
   To use this file, set
   the <a href="https://nightlies.apache.org/flink/flink-docs-master/docs/deployment/config/"><code>FLINK_CONF_DIR</code> environmental variable</a>:
   <code>export FLINK_CONF_DIR=[PATH]/flink-conf.yaml</code>. Changing
   <code>taskmanager.memory.network.max</code> is necessary to avoid memory errors for
   large datasets or when running on machines with limited memory.</li>
-<li><strong>Spark Server settings</strong>:
-  <a href="https://github.com/google/fhir-data-pipes/tree/master/pipelines/controller/config/thriftserver-hive-config.json"><code>pipelines/controller/config/thriftserver-hive-config.json</code></a>.
-  Used to connect to a Spark server
-  when <a href="https://github.com/google/fhir-data-pipes/blob/42c5e309b37faf6f61b0e5d3f993c6e7d448974c/pipelines/controller/config/application.yaml#L121"><code>createHiveResourceTables</code></a>
-  is set
+<li>**Spark Server settings:
+  ** <a href="https://github.com/google/fhir-data-pipes/tree/master/pipelines/controller/config/thriftserver-hive-config.json"><code>pipelines/controller/config/thriftserver-hive-config.json</code></a>.
+  Used to connect to a Spark server when <code>createHiveResourceTables</code> is set
   to <code>true</code>. Edit the values to match your Spark server if necessary.</li>
 </ul>
 <h2 id="run-the-fhir-pipelines-controller">Run the FHIR Pipelines Controller</h2>
-<p>The Pipelines Controller is run from the <a href="additional#web-control-panel">FHIR Pipelines Control Panel</a>. </p>
-<div class="admonition warning">
-<p class="admonition-title">Warning</p>
-<p>Note: The Pipelines Controller is not intended to be a security barrier. As such the control panel does not support user authorization or any advanced security features.</p>
-</div>
-<p>There are 2 ways to run the FHIR Pipelines Controller from the web application
-control panel.</p>
-<p>Using <strong>Spring Boot</strong>:</p>
+<p>There are 2 ways to run the FHIR Pipelines Controller.</p>
+<p>Using Spring Boot:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>mvn spring-boot:run
 </code></pre></div>
-<p>Running the <strong>JAR</strong> directly:</p>
+<p>Running the JAR directly:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>mvn clean install
 <a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>java -jar ./target/controller-bundled.jar
 </code></pre></div>
 <p>After running, open a web browser and visit http://localhost:8080. You should
-see the FHIR Pipelines Control Panel.</p>
+see the <a href="./additional#web-control-panel">FHIR Pipelines Control Panel</a>.</p>
 <p>There are 3 ways to have the FHIR Pipelines Controller run the transformation
 pipeline:</p>
 <ul>
 <li>Manually trigger the <strong>Run Full</strong> option by clicking the button. This
   transforms all the selected FHIR resource types to Parquet files. You are
-  <strong>required</strong> to use this option once before using any of the following
+  required to use the <strong>Run Full</strong> option once before using any of the following
   incremental options.</li>
 <li>Manually trigger the <strong>Run Incremental</strong> option by clicking the button. This
   only outputs resources that are new or changed since the last run.</li>
 <li>Automatically scheduled incremental runs, as specified by
-  <a href="#advanced-configurations"><code>incrementalSchedule</code></a> parameter. You can see
-  when the
+  <code>incrementalSchedule</code> in
+  the <code>[application.yaml]((https://github.com/google/fhir-data-pipes/tree/master/pipelines/controller/config/application.yaml)</code>
+  file. You can see when the
   next scheduled run is near the top of the control panel.</li>
 </ul>
-<p><strong>Note:</strong> The bottom area of the control panel shows the current options being 
-  used by the Pipelines Controller.</p>
-<p><br></p>
 <p>After running the pipeline, look for the Parquet files created in the directory
 specified by <code>dwhRootPrefix</code> in
-the <a href="https://github.com/google/fhir-data-pipes/tree/master/pipelines/controller/config/application.yaml">application.yaml</a>
+the <code>[application.yaml]((https://github.com/google/fhir-data-pipes/tree/master/pipelines/controller/config/application.yaml)</code>
 file.</p>
 <h2 id="explore-the-configuration-settings">Explore the configuration settings</h2>
-<p>The parameters described in this section correspond to the settings in
-the <a href="https://github.com/google/fhir-data-pipes/tree/master/pipelines/controller/config/application.yaml">application.yaml</a>
-file. Please reference this file for comprehensive information on each
-configuration parameter</p>
-<h3 id="fhir-search-input-parameters">FHIR Search Input Parameters</h3>
-<ul>
-<li><code>fhirServerUrl</code>: Base URL of the source FHIR server. If <code>dbConfig</code> is not set,
-  resources are fetched from this URL through the FHIR Search API.
-  e.g. <code>http://172.17.0.1:8091/fhir</code></li>
-<li><code>fhirServerUserName</code>, <code>fhirServerPassword</code>: The user-name/password should be
-  set if the FHIR server supports Basic Auth. Default: <code>admin</code>, <code>Admin123</code></li>
-</ul>
-<h3 id="authentication">Authentication</h3>
-<p>The following client credentials should be set if the source FHIR server accepts
-OAuth access tokens. Note the client credentials (the secret) are
-sensitive, and it is probably a better practice to set these through
-command-line arguments <a href="../additional/#authentication">here</a>.</p>
-<ul>
-<li><code>fhirServerOAuthTokenEndpoint</code></li>
-<li><code>fhirServerOAuthClientId</code></li>
-<li><code>fhirServerOAuthClientSecret</code></li>
-</ul>
-<h3 id="jdbc-input-parameters">JDBC Input Parameters</h3>
-<ul>
-<li>
-<p><code>dbConfig</code>: The path to the file containing JDBC settings for connecting to a
-  HAPI FHIR
-  server database. If this is set, resources are fetched directly from the
-  database and <code>fhirServerUrl</code> is ignored.
-  Equivalent to pipeline <code>fhirDatabaseConfigPath</code> parameter.</p>
-</li>
-<li>
-<p><code>dwhRootPrefix</code>: The path to output Parquet files to. The last portion of the
-  path is used as a prefix for naming the directory that contains
-  per-resource directories with an added timestamp.</p>
-</li>
-</ul>
-<div class="admonition info">
-<p class="admonition-title">Info</p>
-<p>Visit the <a href="https://github.com/google/fhir-data-pipes/tree/master/pipelines/controller/config/application.yaml{target=&quot;_blank&quot;}">application.yaml</a> file for more file path configs based on different file systems</p>
-</div>
-<h3 id="advanced-configurations">Advanced Configurations</h3>
-<ul>
-<li><code>incrementalSchedule</code>: The schedule for automatic incremental pipeline runs.
-  Uses the Spring CronExpression format, i.e.,
-  "second minute hour day-of-the-month month day-of-the-week"<ul>
-<li>"0 0 * * * *" means top of every hour</li>
-<li>"<em>/40 * * * * </em>" means every 40 seconds</li>
-</ul>
-</li>
-</ul>
-<div class="admonition info">
-<p class="admonition-title">Info</p>
-<p>Scheduling very frequent runs is resource intensive</p>
-</div>
-<ul>
-<li>
-<p><code>purgeSchedule</code>: The schedule for automatic DWH snapshot purging. There is no
-  benefit
-  to scheduling the purge job more frequently than incremental runs.
-  Uses the Spring CronExpression format.</p>
-</li>
-<li>
-<p><code>numOfDwhSnapshotsToRetain</code>: The number of DWH snapshots to retain when the
-  purge job runs.
-  This parameter <strong>must be &gt; 0</strong> or the purge job will not run. If a pipeline
-  run fails
-  for any reason, any partial output must be manually removed.</p>
-</li>
-<li>
-<p><code>resourceList</code>: The comma-separated list of FHIR resources to fetch/monitor.
-  Equivalent to pipeline <code>resourceList</code> parameter.
-  Note there is no Questionnaire in our test FHIR server, read
-  more <a href="https://github.com/google/fhir-data-pipes/issues/785">here</a>.
-  Default: <code>Patient, Encounter, Observation, Questionnaire, Condition, Practitioner, Location, Organization</code></p>
-</li>
-<li>
-<p><code>numThreads</code>: The parallelism to be used for a pipeline job. In case of
-  FlinkRunner, if the value is set to
-  -1, then in the local execution mode the number of threads the job uses will
-  be equal to the
-  number of cores in the machine, whereas in the remote mode (cluster) only 1
-  thread is used.
-  If set to a positive value, then in both modes the pipeline will use that many
-  threads combined
-  across all the workers.</p>
-</li>
-<li>
-<p><code>autoGenerateFlinkConfiguration</code>: In case of Flink local execution mode (which
-  is the default), generate Flink
-  configuration file <code>flink-conf.yaml</code> automatically based on the parallelism
-  set via the
-  parameter <code>numThreads</code> and the <code>cores</code> available in the machine. The generated
-  file will have
-  the parameters set with optimised values necessary to run the pipelines
-  without fail. Disable
-  this parameter to manually pass the configuration file by pointing the
-  environment variable
-  FLINK_CONF_DIR to the directory where the flink-conf.yaml is placed.</p>
-</li>
-</ul>
-<div class="admonition info">
-<p class="admonition-title">Info</p>
-<p>For Flink non-local execution mode, this parameter has to be disabled and the configuration file has to be passed manually which has more fine-grained control parameters</p>
-</div>
-<ul>
-<li>
-<p><code>createHiveResourceTables</code>: Boolean determining if resource tables should be
-  automatically created on a
-  Hive/Spark server. Primarily meant for single-machine deployment.</p>
-</li>
-<li>
-<p><code>thriftserverHiveConfig</code>: Path to a file with the settings used to create
-  tables.
-  Required if createHiveResourceTables is <code>true</code>.</p>
-</li>
-<li>
-<p><code>hiveResourceViewsDir</code>: Path to a directory
-  containing <a href="../concepts/views/#viewdefinition-resource">View Definition</a> for
-  each resource type.
-  If not set or set to empty string, automatic view creation is disabled.
-  Otherwise, for each resource type, its view definition SQL queries are read
-  and applied from corresponding files, i.e., any file that starts with the
-  resource name and ends in <code>.sql</code>, e.g., <code>DiagnosticReport_flat.sql</code>. Only
-  applies when createHiveResourceTables is <code>true</code>.</p>
-</li>
-</ul>
-<div class="admonition info">
-<p class="admonition-title">Developers Note:</p>
-<p>If you symlink <code>[repo_root]/docker/config/views</code> here you can use those predefined views in your dev environment too</p>
-</div>
-<ul>
-<li>
-<p><code>viewDefinitionsDir</code>: The location from
-  which <a href="../concepts/views/#viewdefinition-resource">View Definition</a> resources
-  are read and applied to the
-  corresponding input FHIR resources. Any file in this directory that ends in
-  <code>.json</code> is assumed to be a single ViewDefinition. To output these views to a
-  relational database, the next <code>sinkDbConfigPath</code> should also be set.</p>
-</li>
-<li>
-<p><code>structureDefinitionsPath</code>: Directory path containing the structure definition
-  files for any custom profiles that need to be
-  supported. If this starts with <code>classpath:</code> then a classpath resource is
-  assumed and the path should always start with a <code>/</code>.
-  Do not configure anything if custom profiles are not needed. Examples can be
-  found below:</p>
-<ul>
-<li>"config/r4-us-core-definitions"</li>
-<li>"classpath:/r4-us-core-definitions"</li>
-</ul>
-</li>
-<li>
-<p><code>fhirVersion</code>: # The fhir version to be used for the FHIR Context APIs. This
-  is an enum value and the possible
-  values should be one from the list
-  mentioned <a href="https://github.com/hapifhir/hapi-fhir/blob/a5eddc3837c72e5a6df4fd65150c8e10ec966f4e/hapi-fhir-base/src/main/java/ca/uhn/fhir/context/FhirVersionEnum.java#L37">here</a>.
-  Currently, only enums <code>R4</code> and <code>DSTU3</code> are supported by the application.</p>
-</li>
-<li>
-<p><code>rowGroupSizeForParquetFiles</code>: This is the size of the Parquet Row Group (a
-  logical horizontal partitioning into rows) that
-  will be used for creating row groups in parquet file by pipelines. A large
-  value means more data
-  for one column can be fit into one big column chunk which will speed up the
-  reading of column
-  data. On the downside, more in-memory will be needed to hold the data before
-  writing to files.</p>
-</li>
-<li>
-<p><code>recursiveDepth</code>: The maximum depth for traversing StructureDefinitions in
-  Parquet schema
-  generation (if it is non-positive, the default 1 will be used). Note in most
-  cases, the default 1 is sufficient and increasing that can result in
-  significantly larger schema and more complexity. For details
-  see <a href="https://github.com/FHIR/sql-on-fhir/blob/master/sql-on-fhir.md#recursive-structures">here</a></p>
-</li>
-</ul>
-<h3 id="fhir-output-parameters">FHIR Output Parameters</h3>
-<ul>
-<li>
-<p><code>sinkDbConfigPath</code>: The configuration file for the sink database.
-  If <code>viewDefinitionsDir</code> is set
-  then the generated views are materialized and written to this DB. If not,
-  the raw FHIR JSON resources are written to this DB. The default
-  empty string disables this feature. Note enabling this
-  feature can have a noticeable impact on pipelines performance.</p>
-</li>
-<li>
-<p><code>sinkFhirServerUrl</code>: The base URL of the sink FHIR server. If not set, the
-  feature for sending
-  resources to a sink FHIR server is disabled.</p>
-</li>
-<li>
-<p><code>sinkUserName</code>, <code>sinkPassword</code>: The following user-name/password should be set
-  if the sink FHIR server supports Basic Auth. Default: <code>hapi</code>, <code>hapi123</code></p>
-</li>
-</ul>
+<p>The bottom area of the control panel shows the options being used by the FHIR
+Pipelines Controller.</p>
+<h3 id="main-configuration-parameters">Main configuration parameters</h3>
+<p>This section corresponds to the settings in
+the <code>[application.yaml]((https://github.com/google/fhir-data-pipes/tree/master/pipelines/controller/config/application.yaml)</code>
+file.</p>
+<h3 id="batch-pipeline-non-default-configurations">Batch pipeline non-default configurations</h3>
+<p>This section calls out FHIR Data Pipes batch pipeline settings that are
+different from their default values. These are also mostly derived from
+<code>[application.yaml]((https://github.com/google/fhir-data-pipes/tree/master/pipelines/controller/config/application.yaml)</code>.
+Use these settings if you want to run the batch pipeline
+manually.</p>
 
 
 
@@ -1300,14 +1045,14 @@ command-line arguments <a href="../additional/#authentication">here</a>.</p>
             </div>
           
           
-  <script>var tabs=__md_get("__tabs");if(Array.isArray(tabs))e:for(var set of document.querySelectorAll(".tabbed-set")){var tab,labels=set.querySelector(".tabbed-labels");for(tab of tabs)for(var label of labels.getElementsByTagName("label"))if(label.innerText.trim()===tab){var input=document.getElementById(label.htmlFor);input.checked=!0;continue e}}</script>
+  <script>var tabs=__md_get("__tabs");if(Array.isArray(tabs))e:for(var set of document.querySelectorAll(".tabbed-set")){var labels=set.querySelector(".tabbed-labels");for(var tab of tabs)for(var label of labels.getElementsByTagName("label"))if(label.innerText.trim()===tab){var input=document.getElementById(label.htmlFor);input.checked=!0;continue e}}</script>
 
 <script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
         </div>
         
           <button type="button" class="md-top md-icon" data-md-component="top" hidden>
   
-  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8v12Z"/></svg>
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
   Back to top
 </button>
         
@@ -1320,35 +1065,35 @@ command-line arguments <a href="../additional/#authentication">here</a>.</p>
       <nav class="md-footer__inner md-grid" aria-label="Footer" >
         
           
-          <a href="../installation_docker/" class="md-footer__link md-footer__link--prev" aria-label="Previous: Docker Containers">
+          <a href="../installation_pipeline/" class="md-footer__link md-footer__link--prev" aria-label="Previous: Deploy the &#34;Pipelines&#34;">
             <div class="md-footer__button md-icon">
               
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12Z"/></svg>
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
             </div>
             <div class="md-footer__title">
               <span class="md-footer__direction">
                 Previous
               </span>
               <div class="md-ellipsis">
-                Docker Containers
+                Deploy the "Pipelines"
               </div>
             </div>
           </a>
         
         
           
-          <a href="../installation_pipeline/" class="md-footer__link md-footer__link--next" aria-label="Next: Deploy the &#34;Pipelines&#34;">
+          <a href="../tutorials/" class="md-footer__link md-footer__link--next" aria-label="Next: Tutorials">
             <div class="md-footer__title">
               <span class="md-footer__direction">
                 Next
               </span>
               <div class="md-ellipsis">
-                Deploy the "Pipelines"
+                Tutorials
               </div>
             </div>
             <div class="md-footer__button md-icon">
               
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M4 11v2h12l-5.5 5.5 1.42 1.42L19.84 12l-7.92-7.92L10.5 5.5 16 11H4Z"/></svg>
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M4 11v2h12l-5.5 5.5 1.42 1.42L19.84 12l-7.92-7.92L10.5 5.5 16 11z"/></svg>
             </div>
           </a>
         
@@ -1382,10 +1127,12 @@ command-line arguments <a href="../additional/#authentication">here</a>.</p>
     </div>
     
     
-    <script id="__config" type="application/json">{"base": "..", "features": ["navigation.tabs.sticky", "navigation.section", "toc.follow", "navigation.top", "navigation.path", "search.suggest", "search.highlight", "content.tabs.link", "content.code.annotation", "content.code.copy", "navigation.footer"], "search": "../assets/javascripts/workers/search.b8dbb3d2.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}}</script>
+    
+      
+      <script id="__config" type="application/json">{"base": "..", "features": ["navigation.tabs.sticky", "navigation.section", "toc.follow", "navigation.top", "navigation.path", "search.suggest", "search.highlight", "content.tabs.link", "content.code.annotation", "content.code.copy", "navigation.footer"], "search": "../assets/javascripts/workers/search.d50fe291.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
     
     
-      <script src="../assets/javascripts/bundle.ad660dcc.min.js"></script>
+      <script src="../assets/javascripts/bundle.50899def.min.js"></script>
       
     
   </body>
