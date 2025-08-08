@@ -180,7 +180,7 @@ public class ApiController {
   }
 
   @GetMapping("/next")
-  public ScheduleDto getSchedule() {
+  public ScheduleDto getNextScheduled() {
     ScheduleDto schedule = new ScheduleDto();
     LocalDateTime nextRun = pipelineManager.getNextIncrementalTime();
     if (nextRun == null) {
