@@ -15,7 +15,7 @@
 # limitations under the License.
 
 
-################################## WAIT FOR START ############################# 
+################################## WAIT FOR START #############################
 # Script used in e2e-test that waits for OpenMRS and FHIR servers to start.
 #
 # Example usage:
@@ -65,7 +65,7 @@ function wait_for_servers_to_start() {
 }
 
 #################################################
-# Function to check if fhir server completed initialization 
+# Function to check if fhir server completed initialization
 #################################################
 function openmrs_server_check() {
   openmrs_start_wait_time=0
@@ -88,7 +88,7 @@ function openmrs_server_check() {
 }
 
 #################################################
-# Function to check if HAPI server completed initialization 
+# Function to check if HAPI server completed initialization
 #################################################
 function hapi_server_check() {
   fhir_server_start_wait_time=0
