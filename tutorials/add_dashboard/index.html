@@ -14,7 +14,7 @@
         <link rel="prev" href="../single_machine/">
       
       
-        <link rel="next" href="../postgres_example/">
+        <link rel="next" href="../../additional/">
       
       
       <link rel="icon" href="../../assets/images/favicon.png">
@@ -279,9 +279,20 @@
   
   
   
-    <li class="md-nav__item">
-      <a href="../../concepts/" class="md-nav__link">
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
         
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
+            
   
   
   <span class="md-ellipsis">
@@ -290,7 +301,65 @@
   </span>
   
 
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            Concepts
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../concepts/concepts/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    OHS Analytics Concepts
+    
+  </span>
+  
+
       </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../concepts/views/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Schema and Flat Views
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
     </li>
   
 
@@ -368,30 +437,7 @@
   
   
   <span class="md-ellipsis">
-    Docker containers
-    
-  </span>
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../installation_pipeline/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    Deploy the "Pipelines"
+    Docker Containers
     
   </span>
   
@@ -415,6 +461,29 @@
   
   <span class="md-ellipsis">
     Deploy the "Controller Module"
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../installation_pipeline/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Deploy the "Pipelines"
     
   </span>
   
@@ -715,29 +784,6 @@
   
 </nav>
       
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../postgres_example/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    PostgreSQL DWH using custom schema
-    
-  </span>
-  
-
-      </a>
     </li>
   
 
@@ -1046,18 +1092,25 @@
 
 
 <h1 id="visualize-parquet-dwh-with-apache-superset">Visualize Parquet DWH with Apache Superset</h1>
-<p>Generating dashboards is a common task for many digital health projects. </p>
-<p>This tutorial shows you how to use the popular open source <a href="https://superset.apache.org/">Apache Superset</a> package to build a dashboard on top of the "lossless" parquet DWH created via the FHIR Data Pipes <a href="../tutorial_single_machine">Single Machine Deployment Tutorial</a>.</p>
-<p>The principles here will apply to <strong>any</strong> visualization or BI tool that has a hive connector.</p>
+<p>Generating dashboards is a common task for many digital health projects.</p>
+<p>This tutorial shows you how to use the popular open source
+<a href="https://superset.apache.org/">Apache Superset</a> package to build a dashboard on
+top of the "lossless" parquet DWH created via the FHIR Data Pipes
+<a href="../tutorial_single_machine">Single Machine Deployment Tutorial</a>.</p>
+<p>The principles here will apply to <strong>any</strong> visualization or BI tool that has a
+hive connector.</p>
 <h2 id="prerequisites">Prerequisites</h2>
 <ul>
-<li>A FHIR Data Pipes single machine deployment using [local test
-    servers] as the data source</li>
+<li>A FHIR Data Pipes single machine deployment using
+  <a href="../test_servers/">local test servers</a> as the data source</li>
 <li>Run the full pipeline at least once before following this guide.</li>
 </ul>
 <h2 id="install-apache-superset">Install Apache Superset</h2>
-<p>There are <a href="https://superset.apache.org/">several ways to install Superset</a>. A simple option is to <a href="https://superset.apache.org/docs/installation/docker-compose/#installing-superset-locally-using-docker-compose">install Superset locally using docker-compose</a>. Once it is set-up, log in by visiting http://localhost:8088/ and using the default credentials username: <code>admin</code>
-password: <code>admin</code>.</p>
+<p>There are <a href="https://superset.apache.org/">several ways to install Superset</a>. A
+simple option is to
+<a href="https://superset.apache.org/docs/installation/docker-compose/#installing-superset-locally-using-docker-compose">install Superset locally using docker-compose</a>.
+Once it is set-up, log in by visiting http://localhost:8088/ and using the
+default credentials username: <code>admin</code> password: <code>admin</code>.</p>
 <h2 id="connect-to-the-apache-spark-sql-data-source">Connect to the Apache Spark SQL data source</h2>
 <ol>
 <li>In the upper-right corner, select <strong>Settings &gt; Database Connections</strong>.</li>
@@ -1066,128 +1119,112 @@ password: <code>admin</code>.</p>
 <h2 id="create-the-connection-for-spark-sql">Create the connection for Spark SQL</h2>
 <ol>
 <li>Under <strong>Supported Databases</strong>, select <strong>Apache Spark SQL</strong>.</li>
-<li>Under <strong>Display Name</strong>, enter "Single Machine Test Data" or another name
-    your choice.</li>
-<li>
-<p>Under <strong>SQLAlchemy URI</strong>, enter the following:</p>
+<li>Under <strong>Display Name</strong>, enter "Single Machine Test Data" or another name your
+   choice.</li>
+<li>Under <strong>SQLAlchemy URI</strong>, enter the following:</li>
+</ol>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>hive://hive@&lt;IP_address_of_docker_network_gateway&gt;:10001
 </code></pre></div>
 <p>To find the IP address, run:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>docker<span class="w"> </span>network<span class="w"> </span>inspect<span class="w"> </span>bridge<span class="w"> </span>--format<span class="o">=</span><span class="s1">&#39;{{json .IPAM.Config}}&#39;</span>
 </code></pre></div>
-</li>
-<li>
-<p>Select <strong>Test Connection</strong>. You should see a pop-up in the bottom-right
-    corner that says "Connection looks good!"</p>
-<ul>
-<li>If you get an error, double-check the IP address is correct. You may
-    also need to <a href="https://superset.apache.org/docs/databases/installing-database-drivers">install the Apache Spark SQL database drivers</a>.</li>
-</ul>
-</li>
+<ol start="4">
+<li>Select <strong>Test Connection</strong>. You should see a pop-up in the bottom-right
+   corner that says "Connection looks good!"
+   - If you get an error, double-check the IP address is correct. You may also
+     need to <a href="https://superset.apache.org/docs/databases/installing-database-drivers">install the Apache Spark SQL database drivers</a>.</li>
 <li>Select <strong>Connect</strong>. Although you see an error: "An error occurred while
-    creating databases: Fatal error" the connection is still created.</li>
-<li>Close the <strong>Connect a database</strong> window by clicking outside of it and
-    refresh the <strong>Databases</strong> page. The database you just created should appear.</li>
+   creating databases: Fatal error" the connection is still created.</li>
+<li>Close the <strong>Connect a database</strong> window by clicking outside of it and refresh
+   the <strong>Databases</strong> page. The database you just created should appear.</li>
 </ol>
 <h2 id="create-a-dashboard">Create a dashboard</h2>
 <p>Create an empty dashboard so you can add charts to it as they are created.</p>
 <ol>
 <li>At the top of the Superset page select the <strong>Dashboard</strong> tab, then click <strong>+
-    Dashboard</strong>.</li>
+   Dashboard</strong>.</li>
 <li>Select the title area which reads <strong>[ untitled dashboard ]</strong> and give the
-    dashboard a name. The examples below use "Sample Dashboard".</li>
+   dashboard a name. The examples below use "Sample Dashboard".</li>
 <li>In the upper-right corner, select <strong>Save</strong>.</li>
 </ol>
 <h2 id="query-the-database-and-generate-charts">Query the database and generate Charts</h2>
 <ol>
 <li>From the top tabs, select <strong>SQL &gt; SQL Lab</strong>.</li>
 <li>If this is your first time using SQL Lab, you should be in a blank, empty
-    tab. If not, click <strong>New tab</strong> or press <code>Control+T</code> to create one.</li>
-<li>On the left side under <strong>Database</strong>, select the database you created
-    earlier, for example <strong>Single Machine Test Data</strong>.</li>
+   tab. If not, click <strong>New tab</strong> or press <code>Control+T</code> to create one.</li>
+<li>On the left side under <strong>Database</strong>, select the database you created earlier,
+   for example <strong>Single Machine Test Data</strong>.</li>
 </ol>
 <h3 id="add-a-big-number">Add a Big Number</h3>
 <p>This first chart shows the total number of patients as a "Big Number".</p>
 <ol>
-<li>
-<p>Replace the placeholder query <code>SELECT ...</code> with the following:</p>
+<li>Replace the placeholder query <code>SELECT ...</code> with the following:</li>
+</ol>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="k">SELECT</span><span class="w"> </span><span class="k">COUNT</span><span class="p">(</span><span class="o">*</span><span class="p">)</span><span class="w"> </span><span class="k">FROM</span><span class="w"> </span><span class="n">Patient</span><span class="p">;</span>
 </code></pre></div>
-</li>
-<li>
-<p>Click <strong>Run</strong>. After a moment, the results of the query should appear.</p>
-</li>
+<ol start="2">
+<li>Click <strong>Run</strong>. After a moment, the results of the query should appear.</li>
 <li>In the <strong>Results</strong> section, click <strong>Create Chart</strong>. This brings you to a new
-    chart page.</li>
+   chart page.</li>
 <li>Under the <strong>Chart Source</strong> pane, click <strong>Create a dataset</strong> and name it
-    "Patient Count Dataset".</li>
+   "Patient Count Dataset".</li>
 <li>Under the <strong>Data</strong> tab, switch to the <strong>4k (Big Number)</strong> chart type.</li>
 <li>In the <strong>Query</strong> section, click the <strong>Metric</strong> section and set the following
-    values:<ol>
+   values:</li>
 <li>Column: <code>count(1)</code></li>
 <li>Aggregate: <code>MAX</code></li>
-</ol>
-</li>
 <li>Click <strong>Update Chart</strong> at the bottom of the pane.</li>
 </ol>
 <p>The chart updates to show a single large number of the count of patients.</p>
-<ol>
-<li>Click <strong>Save</strong> to bring up the <strong>Save chart</strong> dialog. Name the chart
-    "Patient Count" and under <strong>Add to Dashboard</strong> select the dashboard you
-    created previously.</li>
+<ol start="8">
+<li>Click <strong>Save</strong> to bring up the <strong>Save chart</strong> dialog. Name the chart "Patient
+   Count" and under <strong>Add to Dashboard</strong> select the dashboard you created
+   previously.</li>
 </ol>
 <h3 id="add-a-pie-chart">Add a pie chart</h3>
 <p>The next chart shows the split of patients by gender as a pie chart.</p>
 <ol>
-<li>Navigate back to SQL Lab. You should see the previous patient count query.<ul>
-<li>If you'd like to keep the patient count query, make a new tab and set
-    the database to "Single Machine Test Data" or the name you chose.</li>
-</ul>
-</li>
-<li>
-<p>Enter the following as the query:</p>
+<li>Navigate back to SQL Lab. You should see the previous patient count query.
+   - If you'd like to keep the patient count query, make a new tab and set the
+     database to "Single Machine Test Data" or the name you chose.</li>
+<li>Enter the following as the query:</li>
+</ol>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="k">SELECT</span><span class="w"> </span><span class="o">`</span><span class="n">gender</span><span class="o">`</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="o">`</span><span class="n">gender</span><span class="o">`</span><span class="p">,</span>
 <a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="w">       </span><span class="k">count</span><span class="p">(</span><span class="o">`</span><span class="n">gender</span><span class="o">`</span><span class="p">)</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="o">`</span><span class="k">COUNT</span><span class="p">(</span><span class="n">gender</span><span class="p">)</span><span class="o">`</span>
 <a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a><span class="k">FROM</span><span class="w"> </span><span class="n">Patient</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="n">P</span>
 <a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a><span class="k">GROUP</span><span class="w"> </span><span class="k">BY</span><span class="w"> </span><span class="o">`</span><span class="n">gender</span><span class="o">`</span>
 <a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a><span class="k">ORDER</span><span class="w"> </span><span class="k">BY</span><span class="w"> </span><span class="o">`</span><span class="k">COUNT</span><span class="p">(</span><span class="n">gender</span><span class="p">)</span><span class="o">`</span><span class="w"> </span><span class="k">DESC</span><span class="p">;</span>
 </code></pre></div>
-</li>
-<li>
-<p>Click <strong>Run</strong>. After a moment, the results of the query should appear.</p>
-</li>
+<ol start="3">
+<li>Click <strong>Run</strong>. After a moment, the results of the query should appear.</li>
 <li>In the <strong>Results</strong> section, click <strong>Create Chart</strong>. This brings you to a new
-    chart page.</li>
+   chart page.</li>
 <li>Under the <strong>Chart Source</strong> pane, click <strong>Create a dataset</strong> and name it
-    "Gender Split Dataset".</li>
+   "Gender Split Dataset".</li>
 <li>Under the <strong>Data</strong> tab, switch to the <strong>Pie Chart</strong> chart type.</li>
-<li>In the <strong>Query</strong> section, set the following values:<ul>
-<li>Dimensions:<ol>
-<li>Column: <code>gender</code></li>
+<li>In the <strong>Query</strong> section, set the following values:
+   - Dimensions:<ol>
+<li>Column: <code>gender</code>
+   - Metric: 2. Column: <code>COUNT(gender)</code> 3. Aggregate: <code>MAX</code></li>
 </ol>
 </li>
-<li>Metric:<ol>
-<li>Column: <code>COUNT(gender)</code></li>
-<li>Aggregate: <code>MAX</code></li>
-</ol>
-</li>
-</ul>
-</li>
-<li>Click <strong>Update Chart</strong> at the bottom of the pane. The chart updates to show
-    a pie chart of patients by gender.</li>
+<li>Click <strong>Update Chart</strong> at the bottom of the pane. The chart updates to show a
+   pie chart of patients by gender.</li>
 <li>Click <strong>Save</strong> to bring up the <strong>Save chart</strong> dialog. Name the chart "Gender
-    Split" and under <strong>Add to Dashboard</strong> select the dashboard you created
-    previously.</li>
+   Split" and under <strong>Add to Dashboard</strong> select the dashboard you created
+   previously.</li>
 </ol>
 <h3 id="add-a-complex-bar-chart">Add a complex bar chart</h3>
 <p>The next chart shows number of patients on HIV treatment by year and display
 that as a bar chart over time. The query is provided below.</p>
 <ul>
-<li>Navigate back to SQL Lab. </li>
-<li>You should see the previous patient count query. </li>
-<li>If you'd like to keep the patient count query, make a new tab and set the database to "Single Machine Test Data" or the name you chose.</li>
+<li>Navigate back to SQL Lab.</li>
+<li>You should see the previous patient count query.</li>
+<li>If you'd like to keep the patient count query, make a new tab and set the
+  database to "Single Machine Test Data" or the name you chose.</li>
 </ul>
-<p>Enter the following as the query as either a raw SQL-on-FHIR query or using the <a href="../../concepts/#sql-virtual-views">pre-defined</a> observation_flat views:</p>
+<p>Enter the following as the query as either a raw SQL-on-FHIR query or using the
+<a href="../../concepts/views">pre-defined</a> observation_flat views:</p>
 <div class="tabbed-set tabbed-alternate" data-tabs="1:2"><input checked="checked" id="__tabbed_1_1" name="__tabbed_1" type="radio" /><input id="__tabbed_1_2" name="__tabbed_1" type="radio" /><div class="tabbed-labels"><label for="__tabbed_1_1">Using SQL-on-FHIR Query</label><label for="__tabbed_1_2">With pre-defined flat views</label></div>
 <div class="tabbed-content">
 <div class="tabbed-block">
@@ -1207,7 +1244,7 @@ that as a bar chart over time. The query is provided below.</p>
 <a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a><span class="w">    </span><span class="k">AND</span><span class="w"> </span><span class="n">o</span><span class="p">.</span><span class="n">val_code</span><span class="w"> </span><span class="k">LIKE</span><span class="w"> </span><span class="ss">&quot;1256%&quot;</span>
 <a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a><span class="w">    </span><span class="k">AND</span><span class="w"> </span><span class="k">YEAR</span><span class="p">(</span><span class="n">o</span><span class="p">.</span><span class="n">obs_date</span><span class="p">)</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="mi">2023</span>
 <a id="__codelineno-5-6" name="__codelineno-5-6" href="#__codelineno-5-6"></a><span class="k">GROUP</span><span class="w"> </span><span class="k">BY</span><span class="w"> </span><span class="k">YEAR</span><span class="p">(</span><span class="n">o</span><span class="p">.</span><span class="n">obs_date</span><span class="p">)</span>
-<a id="__codelineno-5-7" name="__codelineno-5-7" href="#__codelineno-5-7"></a><span class="k">ORDER</span><span class="w"> </span><span class="k">BY</span><span class="w"> </span><span class="k">YEAR</span><span class="p">(</span><span class="n">o</span><span class="p">.</span><span class="n">obs_date</span><span class="p">)</span><span class="w"> </span><span class="k">ASC</span><span class="w"> </span>
+<a id="__codelineno-5-7" name="__codelineno-5-7" href="#__codelineno-5-7"></a><span class="k">ORDER</span><span class="w"> </span><span class="k">BY</span><span class="w"> </span><span class="k">YEAR</span><span class="p">(</span><span class="n">o</span><span class="p">.</span><span class="n">obs_date</span><span class="p">)</span><span class="w"> </span><span class="k">ASC</span>
 </code></pre></div>
 </div>
 </div>
@@ -1216,22 +1253,20 @@ that as a bar chart over time. The query is provided below.</p>
 <ul>
 <li>Click <strong>Run</strong>. After a moment, the results of the query should appear.</li>
 <li>In the <strong>Results</strong> section, click <strong>Create Chart</strong>. This brings you to a new
-    chart page.</li>
+  chart page.</li>
 <li>Under the <strong>Chart Source</strong> pane, click <strong>Create a dataset</strong> and name it "HIV
-    Treatment Dataset".</li>
+  Treatment Dataset".</li>
 <li>Under the <strong>Data</strong> tab, switch to the <strong>Bar Chart</strong> chart type.</li>
-<li>
-<p>In the <strong>Query</strong> section, set the following values:</p>
+<li>In the <strong>Query</strong> section, set the following values:</li>
+</ul>
 <p>X-Axis: Custom SQL: <code>YEAR(date\_time)</code></p>
 <p>Metric: Column: <code>patient\_id</code>, Aggregate: <code>COUNT</code></p>
-</li>
-<li>
-<p>Click <strong>Update Chart</strong> at the bottom of the pane. The chart updates to show
-    a bar chart of patients undergoing HIV treatment per year.</p>
-</li>
+<ul>
+<li>Click <strong>Update Chart</strong> at the bottom of the pane. The chart updates to show a
+  bar chart of patients undergoing HIV treatment per year.</li>
 <li>Click <strong>Save</strong> to bring up the <strong>Save chart</strong> dialog. Name the chart "HIV
-    Treatment" and under <strong>Add to Dashboard</strong> select the dashboard you created
-    previously.</li>
+  Treatment" and under <strong>Add to Dashboard</strong> select the dashboard you created
+  previously.</li>
 </ul>
 <h2 id="edit-the-dashboard">Edit the Dashboard</h2>
 <p>Navigate to the <strong>Dashboards</strong> section and select the Sample Dashboard you
@@ -1242,11 +1277,11 @@ then:</p>
 <ol>
 <li>In the right pane select the <strong>Layout Elements</strong> tab.</li>
 <li>Add a second row by dragging a <strong>Row</strong> element onto the canvas below the
-    existing row.</li>
-<li>Arrange the charts to have the Patient Count and Gender Split in the top
-    row, and HIV Treatment in the bottom row.</li>
+   existing row.</li>
+<li>Arrange the charts to have the Patient Count and Gender Split in the top row,
+   and HIV Treatment in the bottom row.</li>
 <li>Resize the top charts to use half of the width by dragging the edge of the
-    chart.</li>
+   chart.</li>
 <li>Resize the HIV Treatment chart to take up the whole width of the row.</li>
 <li>Add a header element at the top and enter "Key Program Metrics".</li>
 </ol>
@@ -1256,27 +1291,24 @@ then:</p>
 <p>To check that the dashboard is working properly, add a new patient to the FHIR
 Store and run the incremental pipeline.</p>
 <ol>
-<li>
-<p>Add a new patient to the server:</p>
+<li>Add a new patient to the server:</li>
+</ol>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a>curl -X POST -H &quot;Content-Type: application/fhir+json; charset=utf-8&quot; \
 <a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a>     &#39;http://localhost:8091/fhir/Patient/&#39; -d &#39;{&quot;resourceType&quot;: &quot;Patient&quot;}&#39;
 </code></pre></div>
-</li>
-<li>
-<p>Alternatively, use the HAPI FHIR server tester; go to <a href="http://localhost:8091/resource?serverId=home&amp;pretty=false&amp;\_summary=&amp;resource=Patient&amp;resource=Patient">the Patient resource
-    tester</a>, click the <strong>CRUD Operations</strong> tab, paste the following resource
-    into the <strong>Contents</strong> field of the <strong>Create</strong> section, then click
-    <strong>Create</strong>.</p>
+<ol start="2">
+<li>Alternatively, use the HAPI FHIR server tester; go to <a href="http://localhost:8091/resource?serverId=home&amp;pretty=false&amp;_summary=&amp;resource=Patient&amp;resource=Patient">the Patient resource
+   tester</a>, click the <strong>CRUD Operations</strong> tab, paste the following resource
+   into the <strong>Contents</strong> field of the <strong>Create</strong> section, then click <strong>Create</strong>.</li>
+</ol>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a>{&quot;resourceType&quot;: &quot;Patient&quot;}
 </code></pre></div>
-</li>
-<li>
-<p>Open the Pipeline Controller at http://localhost:8090 and run the
-    incremental pipeline.</p>
-</li>
-<li>Once the pipeline has finished, go to Superset and open your dashboard.
-    Click the <strong>...</strong> button next to <strong>Edit Dashboard</strong> and then click <strong>Refresh
-    dashboard</strong>. You should see the patient count increase by 1.</li>
+<ol start="3">
+<li>Open the Pipeline Controller at http://localhost:8090 and run the incremental
+   pipeline.</li>
+<li>Once the pipeline has finished, go to Superset and open your dashboard. Click
+   the <strong>...</strong> button next to <strong>Edit Dashboard</strong> and then click <strong>Refresh
+   dashboard</strong>. You should see the patient count increase by 1.</li>
 </ol>
 <h2 id="learn-more">Learn more</h2>
 <p>For more information about Superset, go to the <a href="https://superset.apache.org/docs/intro">Superset documentation</a>.</p>
@@ -1334,13 +1366,13 @@ Store and run the incremental pipeline.</p>
         
         
           
-          <a href="../postgres_example/" class="md-footer__link md-footer__link--next" aria-label="Next: PostgreSQL DWH using custom schema">
+          <a href="../../additional/" class="md-footer__link md-footer__link--next" aria-label="Next: Additional Topics">
             <div class="md-footer__title">
               <span class="md-footer__direction">
                 Next
               </span>
               <div class="md-ellipsis">
-                PostgreSQL DWH using custom schema
+                Additional Topics
               </div>
             </div>
             <div class="md-footer__button md-icon">

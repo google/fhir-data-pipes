@@ -11,10 +11,10 @@
         <link rel="canonical" href="https://example.com/analytics/installation_controller/">
       
       
-        <link rel="prev" href="../installation_pipeline/">
+        <link rel="prev" href="../installation_docker/">
       
       
-        <link rel="next" href="../tutorials/">
+        <link rel="next" href="../installation_pipeline/">
       
       
       <link rel="icon" href="../assets/images/favicon.png">
@@ -279,9 +279,20 @@
   
   
   
-    <li class="md-nav__item">
-      <a href="../concepts/" class="md-nav__link">
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
         
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
+            
   
   
   <span class="md-ellipsis">
@@ -290,7 +301,65 @@
   </span>
   
 
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            Concepts
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../concepts/concepts/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    OHS Analytics Concepts
+    
+  </span>
+  
+
       </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../concepts/views/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Schema and Flat Views
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
     </li>
   
 
@@ -370,30 +439,7 @@
   
   
   <span class="md-ellipsis">
-    Docker containers
-    
-  </span>
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../installation_pipeline/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    Deploy the "Pipelines"
+    Docker Containers
     
   </span>
   
@@ -498,18 +544,45 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#main-configuration-parameters" class="md-nav__link">
+  <a href="#fhir-search-input-parameters" class="md-nav__link">
     <span class="md-ellipsis">
-      Main configuration parameters
+      FHIR Search Input Parameters
     </span>
   </a>
   
 </li>
         
           <li class="md-nav__item">
-  <a href="#batch-pipeline-non-default-configurations" class="md-nav__link">
+  <a href="#authentication" class="md-nav__link">
     <span class="md-ellipsis">
-      Batch pipeline non-default configurations
+      Authentication
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#jdbc-input-parameters" class="md-nav__link">
+    <span class="md-ellipsis">
+      JDBC Input Parameters
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#advanced-configurations" class="md-nav__link">
+    <span class="md-ellipsis">
+      Advanced Configurations
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#fhir-output-parameters" class="md-nav__link">
+    <span class="md-ellipsis">
+      FHIR Output Parameters
     </span>
   </a>
   
@@ -524,6 +597,29 @@
   
 </nav>
       
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../installation_pipeline/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Deploy the "Pipelines"
+    
+  </span>
+  
+
+      </a>
     </li>
   
 
@@ -656,29 +752,6 @@
   
   <span class="md-ellipsis">
     Visualize Parquet DWH with Apache Superset
-    
-  </span>
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../tutorials/postgres_example/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    PostgreSQL DWH using custom schema
     
   </span>
   
@@ -896,18 +969,45 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#main-configuration-parameters" class="md-nav__link">
+  <a href="#fhir-search-input-parameters" class="md-nav__link">
     <span class="md-ellipsis">
-      Main configuration parameters
+      FHIR Search Input Parameters
     </span>
   </a>
   
 </li>
         
           <li class="md-nav__item">
-  <a href="#batch-pipeline-non-default-configurations" class="md-nav__link">
+  <a href="#authentication" class="md-nav__link">
     <span class="md-ellipsis">
-      Batch pipeline non-default configurations
+      Authentication
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#jdbc-input-parameters" class="md-nav__link">
+    <span class="md-ellipsis">
+      JDBC Input Parameters
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#advanced-configurations" class="md-nav__link">
+    <span class="md-ellipsis">
+      Advanced Configurations
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#fhir-output-parameters" class="md-nav__link">
+    <span class="md-ellipsis">
+      FHIR Output Parameters
     </span>
   </a>
   
@@ -949,10 +1049,12 @@
 <h2 id="usage">Usage</h2>
 <p>The FHIR Pipelines Controller helps you schedule and manage the running of the
 FHIR Data Pipes Pipeline. Using the Controller module you can configure the
-Pipeline to run either full or incremental transformations, and it can be used
-to monitor the pipelines.</p>
-<p>Once deployed, the Controller can be managed via the cmd-line
-or <a href="./additional#web-control-panel">Web Control Panel</a>.</p>
+Pipeline to run either full or incremental transformations, and it can also be
+used to monitor the pipelines.</p>
+<p>The Controller acts as a simplified entry point to managing the Data Pipes
+Pipelines for less experienced users and non-developers, all the configurations
+and features supported by the controller are also available by running the
+<a href="../installation_pipeline/#setup">ETL Pipelines</a> as a Java JAR.</p>
 <h2 id="setup">Setup</h2>
 <ol>
 <li>Clone the
@@ -963,71 +1065,253 @@ or <a href="./additional#web-control-panel">Web Control Panel</a>.</p>
 </ol>
 <p>Later terminal commands will assume your working directory is the <code>controller</code>
 directory.</p>
-<p>Next, configure the FHIR Pipelines Controller. The FHIR Pipelines Controller
-relies on several configuration files to run. Edit them to match your
-environment and requirements.</p>
+<p><br></p>
+<p>Next, configure the FHIR Pipelines Controller. The controller relies on several
+configuration files to run. Edit them to match your environment and
+requirements. For sample values that are used in
+<a href="tutorials/single_machine">single machine deployment examples</a> see
+<a href="https://github.com/google/fhir-data-pipes/tree/master/docker/config">docker/config</a>.</p>
 <ul>
-<li><strong>Main settings for Pipeline Controller
-  </strong>: <a href="https://github.com/google/fhir-data-pipes/tree/master/pipelines/controller/config/application.yaml"><code>pipelines/controller/config/application.yaml</code></a>.
-  Edit the values to match your HAPI FHIR server and use case.</li>
-<li><strong>JDBC settings
-  </strong>: <a href="https://github.com/google/fhir-data-pipes/tree/master/pipelines/controller/config/hapi-postgres-config.json"><code>pipelines/controller/config/hapi-postgres-config.json</code></a>.
-  Edit the values to match the Postgres database of your HAPI FHIR server.</li>
-<li><strong>Customized FlinkRunner settings
-  </strong>: <a href="https://github.com/google/fhir-data-pipes/tree/master/pipelines/controller/config/flink-conf.yaml"><code>pipelines/controller/config/flink-conf.yaml</code></a>.
-  To use this file, set
-  the <a href="https://nightlies.apache.org/flink/flink-docs-master/docs/deployment/config/"><code>FLINK_CONF_DIR</code> environmental variable</a>:
+<li><strong>Main settings for Pipeline Controller</strong>:
+  <a href="https://github.com/google/fhir-data-pipes/tree/master/pipelines/controller/config/application.yaml"><code>pipelines/controller/config/application.yaml</code></a>.
+  Edit the values to match your FHIR server and use case.</li>
+<li><strong>JDBC settings</strong>:
+  <a href="https://github.com/google/fhir-data-pipes/tree/master/pipelines/controller/config/hapi-postgres-config.json"><code>pipelines/controller/config/hapi-postgres-config.json</code></a>.
+  If you are using the JDBC mode to read resources, edit the values to match the
+  database of your HAPI FHIR server. The JDBC mode is not implemented for other
+  FHIR servers.</li>
+<li><strong>Customized FlinkRunner settings</strong>:
+  <a href="https://github.com/google/fhir-data-pipes/tree/master/pipelines/controller/config/flink-conf.yaml"><code>pipelines/controller/config/flink-conf.yaml</code></a>.
+  To use this file, set the
+  <a href="https://nightlies.apache.org/flink/flink-docs-master/docs/deployment/config/"><code>FLINK_CONF_DIR</code> environmental variable</a>:
   <code>export FLINK_CONF_DIR=[PATH]/flink-conf.yaml</code>. Changing
-  <code>taskmanager.memory.network.max</code> is necessary to avoid memory errors for
-  large datasets or when running on machines with limited memory.</li>
-<li>**Spark Server settings:
-  ** <a href="https://github.com/google/fhir-data-pipes/tree/master/pipelines/controller/config/thriftserver-hive-config.json"><code>pipelines/controller/config/thriftserver-hive-config.json</code></a>.
-  Used to connect to a Spark server when <code>createHiveResourceTables</code> is set
-  to <code>true</code>. Edit the values to match your Spark server if necessary.</li>
+  <code>taskmanager.memory.network.max</code> is necessary to avoid memory errors for large
+  datasets or when running on machines with limited memory.</li>
+<li><strong>Spark Server settings</strong>:
+  <a href="https://github.com/google/fhir-data-pipes/tree/master/pipelines/controller/config/thriftserver-hive-config.json"><code>pipelines/controller/config/thriftserver-hive-config.json</code></a>.
+  Used to connect to a Spark server when
+  <a href="https://github.com/google/fhir-data-pipes/blob/42c5e309b37faf6f61b0e5d3f993c6e7d448974c/pipelines/controller/config/application.yaml#L121"><code>createHiveResourceTables</code></a>
+  is set to <code>true</code>. Edit the values to match your Spark server if necessary.</li>
 </ul>
 <h2 id="run-the-fhir-pipelines-controller">Run the FHIR Pipelines Controller</h2>
-<p>There are 2 ways to run the FHIR Pipelines Controller.</p>
-<p>Using Spring Boot:</p>
+<p>The Pipelines Controller is run from the
+<a href="additional#web-control-panel">FHIR Pipelines Control Panel</a>.</p>
+<div class="admonition warning">
+<p class="admonition-title">Warning</p>
+<p>Note: The Pipelines Controller is not intended to be a security barrier. As such the control panel does not support user authorization or any advanced security features.</p>
+</div>
+<p>There are 2 ways to run the FHIR Pipelines Controller from the web application
+control panel.</p>
+<p>Using <strong>Spring Boot</strong>:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>mvn spring-boot:run
 </code></pre></div>
-<p>Running the JAR directly:</p>
+<p>Running the <strong>JAR</strong> directly:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>mvn clean install
 <a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>java -jar ./target/controller-bundled.jar
 </code></pre></div>
 <p>After running, open a web browser and visit http://localhost:8080. You should
-see the <a href="./additional#web-control-panel">FHIR Pipelines Control Panel</a>.</p>
+see the FHIR Pipelines Control Panel.</p>
 <p>There are 3 ways to have the FHIR Pipelines Controller run the transformation
 pipeline:</p>
 <ul>
 <li>Manually trigger the <strong>Run Full</strong> option by clicking the button. This
   transforms all the selected FHIR resource types to Parquet files. You are
-  required to use the <strong>Run Full</strong> option once before using any of the following
+  <strong>required</strong> to use this option once before using any of the following
   incremental options.</li>
 <li>Manually trigger the <strong>Run Incremental</strong> option by clicking the button. This
   only outputs resources that are new or changed since the last run.</li>
 <li>Automatically scheduled incremental runs, as specified by
-  <code>incrementalSchedule</code> in
-  the <code>[application.yaml]((https://github.com/google/fhir-data-pipes/tree/master/pipelines/controller/config/application.yaml)</code>
-  file. You can see when the
-  next scheduled run is near the top of the control panel.</li>
+  <a href="#advanced-configurations"><code>incrementalSchedule</code></a> parameter. You can see when
+  the next scheduled run is near the top of the control panel.</li>
 </ul>
+<p><strong>Note:</strong> The bottom area of the control panel shows the current options being
+  used by the Pipelines Controller.</p>
+<p><br></p>
 <p>After running the pipeline, look for the Parquet files created in the directory
-specified by <code>dwhRootPrefix</code> in
-the <code>[application.yaml]((https://github.com/google/fhir-data-pipes/tree/master/pipelines/controller/config/application.yaml)</code>
+specified by <code>dwhRootPrefix</code> in the
+<a href="https://github.com/google/fhir-data-pipes/tree/master/pipelines/controller/config/application.yaml">application.yaml</a>
 file.</p>
 <h2 id="explore-the-configuration-settings">Explore the configuration settings</h2>
-<p>The bottom area of the control panel shows the options being used by the FHIR
-Pipelines Controller.</p>
-<h3 id="main-configuration-parameters">Main configuration parameters</h3>
-<p>This section corresponds to the settings in
-the <code>[application.yaml]((https://github.com/google/fhir-data-pipes/tree/master/pipelines/controller/config/application.yaml)</code>
-file.</p>
-<h3 id="batch-pipeline-non-default-configurations">Batch pipeline non-default configurations</h3>
-<p>This section calls out FHIR Data Pipes batch pipeline settings that are
-different from their default values. These are also mostly derived from
-<code>[application.yaml]((https://github.com/google/fhir-data-pipes/tree/master/pipelines/controller/config/application.yaml)</code>.
-Use these settings if you want to run the batch pipeline
-manually.</p>
+<p>The parameters described in this section correspond to the settings in the
+<a href="https://github.com/google/fhir-data-pipes/tree/master/pipelines/controller/config/application.yaml">application.yaml</a>
+file. Please reference this file for comprehensive information on each
+configuration parameter</p>
+<h3 id="fhir-search-input-parameters">FHIR Search Input Parameters</h3>
+<ul>
+<li><code>fhirServerUrl</code>: Base URL of the source FHIR server. If <code>dbConfig</code> is not set,
+  resources are fetched from this URL through the FHIR Search API. e.g.
+  <code>http://172.17.0.1:8091/fhir</code></li>
+<li><code>fhirServerUserName</code>, <code>fhirServerPassword</code>: The user-name/password should be
+  set if the FHIR server supports Basic Auth. Default: <code>admin</code>, <code>Admin123</code></li>
+</ul>
+<h3 id="authentication">Authentication</h3>
+<p>The following client credentials should be set if the source FHIR server accepts
+OAuth access tokens. Note the client credentials (the secret) are sensitive, and
+it is probably a better practice to set these through command-line arguments
+<a href="../additional/#authentication">here</a>.</p>
+<ul>
+<li><code>fhirServerOAuthTokenEndpoint</code></li>
+<li><code>fhirServerOAuthClientId</code></li>
+<li><code>fhirServerOAuthClientSecret</code></li>
+</ul>
+<h3 id="jdbc-input-parameters">JDBC Input Parameters</h3>
+<ul>
+<li>
+<p><code>dbConfig</code>: The path to the file containing JDBC settings for connecting to a
+  HAPI FHIR server database. If this is set, resources are fetched directly from
+  the database and <code>fhirServerUrl</code> is ignored. Equivalent to pipeline
+  <code>fhirDatabaseConfigPath</code> parameter.</p>
+</li>
+<li>
+<p><code>dwhRootPrefix</code>: The path to output Parquet files to. The last portion of the
+  path is used as a prefix for naming the directory that contains per-resource
+  directories with an added timestamp.</p>
+</li>
+</ul>
+<div class="admonition info">
+<p class="admonition-title">Info</p>
+<p>Visit the <a href="https://github.com/google/fhir-data-pipes/tree/master/pipelines/controller/config/application.yaml{target=&quot;_blank&quot;}">application.yaml</a> file for more file path configs based on different file systems</p>
+</div>
+<h3 id="advanced-configurations">Advanced Configurations</h3>
+<ul>
+<li><code>incrementalSchedule</code>: The schedule for automatic incremental pipeline runs.
+  Uses the Spring CronExpression format, i.e., "second minute hour
+  day-of-the-month month day-of-the-week"</li>
+<li>"0 0 * * * *" means top of every hour</li>
+<li>"_/40 _ * * * *" means every 40 seconds</li>
+</ul>
+<div class="admonition info">
+<p class="admonition-title">Info</p>
+<p>Scheduling very frequent runs is resource intensive</p>
+</div>
+<ul>
+<li>
+<p><code>purgeSchedule</code>: The schedule for automatic DWH snapshot purging. There is no
+  benefit to scheduling the purge job more frequently than incremental runs.
+  Uses the Spring CronExpression format.</p>
+</li>
+<li>
+<p><code>numOfDwhSnapshotsToRetain</code>: The number of DWH snapshots to retain when the
+  purge job runs. This parameter <strong>must be &gt; 0</strong> or the purge job will not run.
+  If a pipeline run fails for any reason, any partial output must be manually
+  removed.</p>
+</li>
+<li>
+<p><code>resourceList</code>: The comma-separated list of FHIR resources to fetch/monitor.
+  Equivalent to pipeline <code>resourceList</code> parameter. Note there is no
+  Questionnaire in our test FHIR server, read more
+  <a href="https://github.com/google/fhir-data-pipes/issues/785">here</a>. Default:
+  <code>Patient, Encounter, Observation, Questionnaire, Condition, Practitioner, Location, Organization</code></p>
+</li>
+<li>
+<p><code>numThreads</code>: The parallelism to be used for a pipeline job. In case of
+  FlinkRunner, if the value is set to -1, then in the local execution mode the
+  number of threads the job uses will be equal to the number of cores in the
+  machine, whereas in the remote mode (cluster) only 1 thread is used. If set to
+  a positive value, then in both modes the pipeline will use that many threads
+  combined across all the workers.</p>
+</li>
+<li>
+<p><code>autoGenerateFlinkConfiguration</code>: In case of Flink local execution mode (which
+  is the default), generate Flink configuration file <code>flink-conf.yaml</code>
+  automatically based on the parallelism set via the parameter <code>numThreads</code> and
+  the <code>cores</code> available in the machine. The generated file will have the
+  parameters set with optimised values necessary to run the pipelines without
+  fail. Disable this parameter to manually pass the configuration file by
+  pointing the environment variable FLINK_CONF_DIR to the directory where the
+  flink-conf.yaml is placed.</p>
+</li>
+</ul>
+<div class="admonition info">
+<p class="admonition-title">Info</p>
+<p>For Flink non-local execution mode, this parameter has to be disabled and the configuration file has to be passed manually which has more fine-grained control parameters</p>
+</div>
+<ul>
+<li>
+<p><code>createHiveResourceTables</code>: Boolean determining if resource tables should be
+  automatically created on a Hive/Spark server. Primarily meant for
+  single-machine deployment.</p>
+</li>
+<li>
+<p><code>thriftserverHiveConfig</code>: Path to a file with the settings used to create
+  tables. Required if createHiveResourceTables is <code>true</code>.</p>
+</li>
+<li>
+<p><code>hiveResourceViewsDir</code>: Path to a directory containing
+  <a href="../concepts/views/#viewdefinition-resource">View Definition</a> for each resource
+  type. If not set or set to empty string, automatic view creation is disabled.
+  Otherwise, for each resource type, its view definition SQL queries are read
+  and applied from corresponding files, i.e., any file that starts with the
+  resource name and ends in <code>.sql</code>, e.g., <code>DiagnosticReport_flat.sql</code>. Only
+  applies when createHiveResourceTables is <code>true</code>.</p>
+</li>
+</ul>
+<div class="admonition info">
+<p class="admonition-title">Developers Note:</p>
+<p>If you symlink <code>[repo_root]/docker/config/views</code> here you can use those predefined views in your dev environment too</p>
+</div>
+<ul>
+<li>
+<p><code>viewDefinitionsDir</code>: The location from which
+  <a href="../concepts/views/#viewdefinition-resource">View Definition</a> resources are
+  read and applied to the corresponding input FHIR resources. Any file in this
+  directory that ends in <code>.json</code> is assumed to be a single ViewDefinition. To
+  output these views to a relational database, the next <code>sinkDbConfigPath</code>
+  should also be set.</p>
+</li>
+<li>
+<p><code>structureDefinitionsPath</code>: Directory path containing the structure definition
+  files for any custom profiles that need to be supported. If this starts with
+  <code>classpath:</code> then a classpath resource is assumed and the path should always
+  start with a <code>/</code>. Do not configure anything if custom profiles are not needed.
+  Examples can be found below:</p>
+</li>
+<li>
+<p>"config/r4-us-core-definitions"</p>
+</li>
+<li>
+<p>"classpath:/r4-us-core-definitions"</p>
+</li>
+<li>
+<p><code>fhirVersion</code>: # The fhir version to be used for the FHIR Context APIs. This
+  is an enum value and the possible values should be one from the list mentioned
+  <a href="https://github.com/hapifhir/hapi-fhir/blob/a5eddc3837c72e5a6df4fd65150c8e10ec966f4e/hapi-fhir-base/src/main/java/ca/uhn/fhir/context/FhirVersionEnum.java#L37">here</a>.
+  Currently, only enums <code>R4</code> and <code>DSTU3</code> are supported by the application.</p>
+</li>
+<li>
+<p><code>rowGroupSizeForParquetFiles</code>: This is the size of the Parquet Row Group (a
+  logical horizontal partitioning into rows) that will be used for creating row
+  groups in parquet file by pipelines. A large value means more data for one
+  column can be fit into one big column chunk which will speed up the reading of
+  column data. On the downside, more in-memory will be needed to hold the data
+  before writing to files.</p>
+</li>
+<li>
+<p><code>recursiveDepth</code>: The maximum depth for traversing StructureDefinitions in
+  Parquet schema generation (if it is non-positive, the default 1 will be used).
+  Note in most cases, the default 1 is sufficient and increasing that can result
+  in significantly larger schema and more complexity. For details see
+  <a href="https://github.com/FHIR/sql-on-fhir/blob/master/sql-on-fhir.md#recursive-structures">here</a></p>
+</li>
+</ul>
+<h3 id="fhir-output-parameters">FHIR Output Parameters</h3>
+<ul>
+<li>
+<p><code>sinkDbConfigPath</code>: The configuration file for the sink database. If
+  <code>viewDefinitionsDir</code> is set then the generated views are materialized and
+  written to this DB. If not, the raw FHIR JSON resources are written to this
+  DB. The default empty string disables this feature. Note enabling this feature
+  can have a noticeable impact on pipelines performance.</p>
+</li>
+<li>
+<p><code>sinkFhirServerUrl</code>: The base URL of the sink FHIR server. If not set, the
+  feature for sending resources to a sink FHIR server is disabled.</p>
+</li>
+<li>
+<p><code>sinkUserName</code>, <code>sinkPassword</code>: The following user-name/password should be set
+  if the sink FHIR server supports Basic Auth. Default: <code>hapi</code>, <code>hapi123</code></p>
+</li>
+</ul>
 
 
 
@@ -1065,7 +1349,7 @@ manually.</p>
       <nav class="md-footer__inner md-grid" aria-label="Footer" >
         
           
-          <a href="../installation_pipeline/" class="md-footer__link md-footer__link--prev" aria-label="Previous: Deploy the &#34;Pipelines&#34;">
+          <a href="../installation_docker/" class="md-footer__link md-footer__link--prev" aria-label="Previous: Docker Containers">
             <div class="md-footer__button md-icon">
               
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
@@ -1075,20 +1359,20 @@ manually.</p>
                 Previous
               </span>
               <div class="md-ellipsis">
-                Deploy the "Pipelines"
+                Docker Containers
               </div>
             </div>
           </a>
         
         
           
-          <a href="../tutorials/" class="md-footer__link md-footer__link--next" aria-label="Next: Tutorials">
+          <a href="../installation_pipeline/" class="md-footer__link md-footer__link--next" aria-label="Next: Deploy the &#34;Pipelines&#34;">
             <div class="md-footer__title">
               <span class="md-footer__direction">
                 Next
               </span>
               <div class="md-ellipsis">
-                Tutorials
+                Deploy the "Pipelines"
               </div>
             </div>
             <div class="md-footer__button md-icon">

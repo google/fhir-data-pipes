@@ -11,10 +11,10 @@
         <link rel="canonical" href="https://example.com/analytics/installation_pipeline/">
       
       
-        <link rel="prev" href="../installation_docker/">
+        <link rel="prev" href="../installation_controller/">
       
       
-        <link rel="next" href="../installation_controller/">
+        <link rel="next" href="../tutorials/">
       
       
       <link rel="icon" href="../assets/images/favicon.png">
@@ -279,9 +279,20 @@
   
   
   
-    <li class="md-nav__item">
-      <a href="../concepts/" class="md-nav__link">
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
         
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
+            
   
   
   <span class="md-ellipsis">
@@ -290,7 +301,65 @@
   </span>
   
 
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            Concepts
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../concepts/concepts/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    OHS Analytics Concepts
+    
+  </span>
+  
+
       </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../concepts/views/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Schema and Flat Views
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
     </li>
   
 
@@ -370,7 +439,30 @@
   
   
   <span class="md-ellipsis">
-    Docker containers
+    Docker Containers
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../installation_controller/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Deploy the "Controller Module"
     
   </span>
   
@@ -569,29 +661,6 @@
 
               
             
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../installation_controller/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    Deploy the "Controller Module"
-    
-  </span>
-  
-
-      </a>
-    </li>
-  
-
-              
-            
           </ul>
         </nav>
       
@@ -719,29 +788,6 @@
   
   <span class="md-ellipsis">
     Visualize Parquet DWH with Apache Superset
-    
-  </span>
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../tutorials/postgres_example/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    PostgreSQL DWH using custom schema
     
   </span>
   
@@ -1067,18 +1113,18 @@
 <div class="admonition tip">
 <p class="admonition-title">Guide Overview</p>
 <ul>
-<li>This guide will walk you through how to deploy and run the ETL Pipelines Java JAR</li>
-<li>To help with scheduling and managing the ETL Pipeline, a separate Pipeline Controller module is provided (see next guide)</li>
-<li>For ease of deployment a set of example docker compose configurations that include the Pipeline and Controller has been provided. See the Docker section</li>
+<li>This guide will walk you through how to deploy and run the ETL Pipelines Java JAR without the use of the controller</li>
+<li>This section is intended for developers and gives an advanced overview of the ETL Pipelines functionality and its configurations</li>
+<li>For ease of deployment a set of example Docker Compose configurations that include both the Pipelines and Controller has been provided. See the Docker section</li>
 </ul>
 </div>
 <h2 id="intro-to-the-etl-pipeline">Intro to the ETL Pipeline</h2>
-<p>The ETL Pipelines is a Java JAR - designed to run on
-an <a href="https://beam.apache.org/">Apache Beam</a> - that transforms data from a FHIR
+<p>The ETL Pipelines is a Java JAR - designed to run on an
+<a href="https://beam.apache.org/">Apache Beam</a> - that transforms data from a FHIR
 source (via FHIR API, JDBC or ndjson) to either
 <a href="https://parquet.apache.org">Apache Parquet files</a> for analysis or another FHIR
-store for data integration. The source code is available in
-the <a href="https://github.com/google/fhir-data-pipes/tree/master/pipelines/batch"><code>pipelines/batch</code></a>
+store for data integration. The source code is available in the
+<a href="https://github.com/google/fhir-data-pipes/tree/master/pipelines/batch"><code>pipelines/batch</code></a>
 directory.</p>
 <p><strong>Input or source options:</strong> There are three options for reading the source FHIR
 data:</p>
@@ -1090,10 +1136,12 @@ data:</p>
 <li><em>JDBC</em>: This mode uses the
   <a href="https://docs.oracle.com/javase/8/docs/technotes/guides/jdbc/">Java Database Connectivity (JDBC) API</a>
   to read FHIR resources directly from the database of a FHIR server. It's
-  tested
-  with <a href="https://github.com/hapifhir/hapi-fhir-jpaserver-starter#postgresql-configuration">HAPI FHIR server using PostgreSQL database</a>
+  tested with
+  <a href="https://github.com/hapifhir/hapi-fhir-jpaserver-starter#postgresql-configuration">HAPI FHIR server using PostgreSQL database</a>
   or an <a href="https://openmrs.org/">OpenMRS</a> instance using MySQL.</li>
-<li><em>ndjson</em>: To do</li>
+<li><em>ndjson</em>: Newline Delimited JSON, a file format typically created from the
+  FHIR Bulk Export API. Reading FHIR Data in this format is not currently
+  supported.</li>
 </ul>
 <p><strong>Note</strong>: JDBC support beyond HAPI FHIR and OpenMRS is not currently planned.
 Our long-term approach for a generic high-throughput alternative is to use the
@@ -1136,14 +1184,14 @@ or run the pipeline with the <code>help</code> option:</p>
 <ul>
 <li><code>resourceList</code> - A comma-separated list of
   <a href="https://www.hl7.org/fhir/resourcelist.html">FHIR resources</a> to include in the
-  pipeline. Default: <code>Patient,Encounter,Observation</code></li>
+  pipeline. Default: <code>Patient, Encounter, Observation</code></li>
 <li><code>runner</code> -
   <a href="https://beam.apache.org/documentation/runners/capability-matrix/">The Apache Beam Runner</a>
-  to use. Pipelines supports <code>DirectRunner</code> and <code>FlinkRunner</code> by default; other
+  to use. Pipelines supports <code>DirectRunner</code> and <code>FlinkRunner</code> by default. Other
   runners can be enabled by Maven profiles, e.g.,
   <a href="https://github.com/google/fhir-data-pipes/blob/16fcc255cef4d2708b9941a854e6c638b2533d45/pipelines/batch/pom.xml#L257">DataflowRunner</a>.
   See also
-  <a href="pipelines/batch/README.md#a-note-about-beam-runners">A note about Beam runners</a>.
+  <a href="../../pipelines/batch/README.md#a-note-about-beam-runners">A note about Beam runners</a>.
   Default: <code>DirectRunner</code></li>
 </ul>
 <h3 id="fhir-search-input-parameters">FHIR-Search input parameters</h3>
@@ -1166,14 +1214,10 @@ or run the pipeline with the <code>help</code> option:</p>
 and edit the values to match your database server.</p>
 <p>2: Enable JDBC mode for your source server:</p>
 <ul>
-<li>OpenMRS<ul>
+<li>OpenMRS</li>
 <li><code>jdbcModeEnabled=true</code></li>
-</ul>
-</li>
-<li>HAPI FHIR server<ul>
+<li>HAPI FHIR server</li>
 <li><code>jdbcModeHapi=true</code></li>
-</ul>
-</li>
 </ul>
 <p>3: Specify the path to your config file.</p>
 <ul>
@@ -1192,7 +1236,7 @@ and edit the values to match your database server.</p>
 <h3 id="parquet-output-parameters">Parquet output parameters</h3>
 <p>Parquet files are output when <code>outputParquetPath</code> is set.</p>
 <ul>
-<li><code>outputParquetPath</code> - The file path to write Parquet files to, e.g.,
+<li><code>outputParquetPath</code> - The file path to write Parquet files to, e.g.
   <code>./tmp/parquet/</code>. Default: empty string, which does not output Parquet files.</li>
 <li><code>secondsToFlushParquetFiles</code> - The number of seconds to wait before flushing
   all Parquet writers with non-empty content to files. Use <code>0</code> to disable.
@@ -1222,12 +1266,12 @@ field is set.</p>
 for large datasets consider using a production grade runner like
 <a href="https://beam.apache.org/documentation/runners/flink/">Flink</a>. This can be done
 by adding the parameter <code>--runner=FlinkRunner</code> (use <code>--maxParallelism</code> and
-<code>--parallelism</code> to control parallelism). This may avoid some of the memory
-issues of <code>DirectRunner</code>.</p>
+<code>--parallelism</code> to control parallelism). This may avoid some memory issues of
+<code>DirectRunner</code>.</p>
 <h2 id="example-configurations">Example configurations</h2>
 <p>These examples are set up to work with
 <a href="../tutorials/test_servers/">local test servers</a>.</p>
-<div class="tabbed-set tabbed-alternate" data-tabs="1:2"><input checked="checked" id="__tabbed_1_1" name="__tabbed_1" type="radio" /><input id="__tabbed_1_2" name="__tabbed_1" type="radio" /><div class="tabbed-labels"><label for="__tabbed_1_1">FHIR Search to Parquet files</label><label for="__tabbed_1_2">HAPI FHIR JDBC to a FHIR server</label></div>
+<div class="tabbed-set tabbed-alternate" data-tabs="1:2"><input checked="checked" id="__tabbed_1_1" name="__tabbed_1" type="radio" /><input id="__tabbed_1_2" name="__tabbed_1" type="radio" /><div class="tabbed-labels"><label for="__tabbed_1_1">FHIR Server to Parquet files</label><label for="__tabbed_1_2">HAPI FHIR JDBC to a FHIR server</label></div>
 <div class="tabbed-content">
 <div class="tabbed-block">
 <div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>java<span class="w"> </span>-cp<span class="w"> </span>./pipelines/batch/target/batch-bundled.jar<span class="w"> </span><span class="se">\</span>
@@ -1254,14 +1298,16 @@ issues of <code>DirectRunner</code>.</p>
 </div>
 <h2 id="managing-and-scheduling-the-pipeline">Managing and scheduling the Pipeline</h2>
 <p>The ETL Pipeline is designed as a stand-alone Apache Beam service. The Pipeline
-Controller module provides capabilities to help manage the Pipeline including:
-scheduling full versus incremental runs. It also provides
-some <a href="./additional#managing-pipelines">monitoring capabilities</a>.</p>
+Controller module provides capabilities to help manage the Pipeline including
+scheduling full versus incremental runs. It also provides some
+<a href="./additional#monitoring-pipelines">monitoring capabilities</a>.</p>
 <h2 id="how-to-query-the-data-warehouse">How to query the data warehouse</h2>
 <p>To query Parquet files, load them into a compatible data engine such as Apache
 Spark or use python in a jupyter notebook.</p>
-<p>The <a href="../tutorials/single_machine/">single machine Docker Compose configuration</a>
-runs the pipeline and loads data into an Apache Spark Thrift server for you.</p>
+<p>The <a href="../tutorials/single_machine/">"Single Machine"</a> docker compose configuration
+runs the pipeline and loads data into an Apache Spark Thrift Server for you. You
+can connect to this Thrift Server with a database client of you choice to query
+the transformed FHIR Data.</p>
 
 
 
@@ -1299,7 +1345,7 @@ runs the pipeline and loads data into an Apache Spark Thrift server for you.</p>
       <nav class="md-footer__inner md-grid" aria-label="Footer" >
         
           
-          <a href="../installation_docker/" class="md-footer__link md-footer__link--prev" aria-label="Previous: Docker containers">
+          <a href="../installation_controller/" class="md-footer__link md-footer__link--prev" aria-label="Previous: Deploy the &#34;Controller Module&#34;">
             <div class="md-footer__button md-icon">
               
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
@@ -1309,20 +1355,20 @@ runs the pipeline and loads data into an Apache Spark Thrift server for you.</p>
                 Previous
               </span>
               <div class="md-ellipsis">
-                Docker containers
+                Deploy the "Controller Module"
               </div>
             </div>
           </a>
         
         
           
-          <a href="../installation_controller/" class="md-footer__link md-footer__link--next" aria-label="Next: Deploy the &#34;Controller Module&#34;">
+          <a href="../tutorials/" class="md-footer__link md-footer__link--next" aria-label="Next: Tutorials">
             <div class="md-footer__title">
               <span class="md-footer__direction">
                 Next
               </span>
               <div class="md-ellipsis">
-                Deploy the "Controller Module"
+                Tutorials
               </div>
             </div>
             <div class="md-footer__button md-icon">

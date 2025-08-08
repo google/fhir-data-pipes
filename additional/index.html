@@ -11,7 +11,7 @@
         <link rel="canonical" href="https://example.com/analytics/additional/">
       
       
-        <link rel="prev" href="../tutorials/postgres_example/">
+        <link rel="prev" href="../tutorials/add_dashboard/">
       
       
         <link rel="next" href="../support/">
@@ -279,9 +279,20 @@
   
   
   
-    <li class="md-nav__item">
-      <a href="../concepts/" class="md-nav__link">
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
         
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
+            
   
   
   <span class="md-ellipsis">
@@ -290,7 +301,65 @@
   </span>
   
 
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            Concepts
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../concepts/concepts/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    OHS Analytics Concepts
+    
+  </span>
+  
+
       </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../concepts/views/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Schema and Flat Views
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
     </li>
   
 
@@ -368,30 +437,7 @@
   
   
   <span class="md-ellipsis">
-    Docker containers
-    
-  </span>
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../installation_pipeline/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    Deploy the "Pipelines"
+    Docker Containers
     
   </span>
   
@@ -415,6 +461,29 @@
   
   <span class="md-ellipsis">
     Deploy the "Controller Module"
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../installation_pipeline/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Deploy the "Pipelines"
     
   </span>
   
@@ -552,29 +621,6 @@
   
   <span class="md-ellipsis">
     Visualize Parquet DWH with Apache Superset
-    
-  </span>
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../tutorials/postgres_example/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    PostgreSQL DWH using custom schema
     
   </span>
   
@@ -917,50 +963,36 @@
 <li>oAuthPassword</li>
 </ul>
 <p>You can add oAuth authentication to the pipeline by providing the required set
-of parameters via the command line or in
-the <code>/pipelines/controller/config/application.yaml</code> file.</p>
-<div class="tabbed-set tabbed-alternate" data-tabs="1:2"><input checked="checked" id="__tabbed_1_1" name="__tabbed_1" type="radio" /><input id="__tabbed_1_2" name="__tabbed_1" type="radio" /><div class="tabbed-labels"><label for="__tabbed_1_1">Cmd line</label><label for="__tabbed_1_2">application.yaml</label></div>
+of parameters via the command line or in the
+<code>/pipelines/controller/config/application.yaml</code> file.</p>
+<div class="tabbed-set tabbed-alternate" data-tabs="1:1"><input checked="checked" id="__tabbed_1_1" name="__tabbed_1" type="radio" /><div class="tabbed-labels"><label for="__tabbed_1_1">Cmd line</label></div>
 <div class="tabbed-content">
-<div class="tabbed-block">
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="n">$</span><span class="w"> </span><span class="n">java</span><span class="w"> </span><span class="o">-</span><span class="n">cp</span><span class="w"> </span><span class="p">.</span><span class="o">/</span><span class="n">pipelines</span><span class="o">/</span><span class="n">batch</span><span class="o">/</span><span class="n">target</span><span class="o">/</span><span class="n">batch</span><span class="o">-</span><span class="n">bundled</span><span class="o">-</span><span class="mf">0.1.0</span><span class="o">-</span><span class="n">SNAPSHOT</span><span class="p">.</span><span class="na">jar</span><span class="w"> </span><span class="n">org</span><span class="p">.</span><span class="na">openmrs</span><span class="p">.</span><span class="na">analytics</span><span class="p">.</span><span class="na">FhirEtl</span><span class="w"> </span><span class="err">\</span>
-<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="w">    </span><span class="o">--</span><span class="n">fhirServerUrl</span><span class="o">=[</span><span class="n">FHIR_SERVER_URL</span><span class="o">]</span><span class="w"> </span><span class="o">--</span><span class="n">outputParquetPath</span><span class="o">=[</span><span class="n">PATH</span><span class="o">]</span><span class="w"> </span><span class="err">\</span>
-<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="w">    </span><span class="o">--</span><span class="n">resourceList</span><span class="o">=</span><span class="n">Patient</span><span class="p">,</span><span class="n">Encounter</span><span class="p">,</span><span class="n">Observation</span><span class="w"> </span><span class="o">--</span><span class="n">batchSize</span><span class="o">=</span><span class="mi">200</span><span class="w"> </span><span class="err">\</span>
-<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="w">    </span><span class="o">--</span><span class="n">clientId</span><span class="o">=[</span><span class="n">CLIENT_ID</span><span class="o">]</span><span class="w"> </span><span class="o">--</span><span class="n">clientSecret</span><span class="o">=[</span><span class="n">CLIENT_SECRET</span><span class="o">]</span><span class="w"> </span><span class="err">\</span>
-<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="w">    </span><span class="o">--</span><span class="n">OAuthUsername</span><span class="o">=[</span><span class="n">USERNAME</span><span class="o">]</span><span class="w"> </span><span class="o">--</span><span class="n">OAuthPassword</span><span class="o">=[</span><span class="n">PASSSWORD</span><span class="o">]</span><span class="w"> </span><span class="err">\</span>
-<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a><span class="w">    </span><span class="o">--</span><span class="n">oidConnectUrl</span><span class="o">=</span><span class="w"> </span><span class="o">[</span><span class="n">OPENID_CONNECT_URL</span><span class="o">]</span><span class="w"> </span><span class="err">\</span>
-</code></pre></div>
-</div>
-<div class="tabbed-block">
-<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>fhirdata:
-<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>.....
-<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>    # The following client credentials should be set if the FHIR server accepts
-<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>    # OAuth access tokens. Note the client credentials, e.g., the secret, are
-<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>    # sensitive, and it is probably a better practice to set these through
-<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>    # command-line arguments.
-<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a>    fhirServerOAuthTokenEndpoint: &quot;https://path_to_endpoint_for_token&quot;
-<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a>    fhirServerOAuthClientId: &quot;THE_CLIENT_ID&quot;
-<a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a>    fhirServerOAuthClientSecret: &quot;THE_CLIENT_SECRET&quot;
-</code></pre></div>
+<div class="tabbed-block"></div>
 </div>
 </div>
+<p><code>java $ java -cp ./pipelines/batch/target/batch-bundled-0.1.0-SNAPSHOT.jar org.openmrs.analytics.FhirEtl \ --fhirServerUrl=[FHIR_SERVER_URL] --outputParquetPath=[PATH] \ --resourceList=Patient,Encounter,Observation --batchSize=200 \ --clientId=[CLIENT_ID] --clientSecret=[CLIENT_SECRET] \ --OAuthUsername=[USERNAME] --OAuthPassword=[PASSSWORD] \ --oidConnectUrl= [OPENID_CONNECT_URL] \</code></p>
+<div class="tabbed-set tabbed-alternate" data-tabs="2:1"><input checked="checked" id="__tabbed_2_1" name="__tabbed_2" type="radio" /><div class="tabbed-labels"><label for="__tabbed_2_1">application.yaml</label></div>
+<div class="tabbed-content">
+<div class="tabbed-block"></div>
 </div>
+</div>
+<p><code>fhirdata: ..... # The following client credentials should be set if the FHIR server accepts # OAuth access tokens. Note the client credentials, e.g., the secret, are # sensitive, and it is probably a better practice to set these through # command-line arguments. fhirServerOAuthTokenEndpoint: "https://path_to_endpoint_for_token" fhirServerOAuthClientId: "THE_CLIENT_ID" fhirServerOAuthClientSecret: "THE_CLIENT_SECRET"</code></p>
 <h2 id="config-properties">Config properties</h2>
-<p>The main configuration for the FHIR Data Pipes Pipeline and Controller is
-the <code>/pipelines/controller/config/application.yaml</code> file which is well
-documented.</p>
-<p>When using the provided docker images, this will be found
-in <code>/docker/config.application.yaml</code></p>
+<p>The main configuration for the FHIR Data Pipes Pipeline and Controller is the
+<code>/pipelines/controller/config/application.yaml</code> file which is well documented.</p>
+<p>When using the provided docker images, this will be found in
+<code>/docker/config.application.yaml</code></p>
 <h2 id="parquet-on-fhir-schema">Parquet on FHIR schema</h2>
 <p>Apache Parquet is a horizontally scalable columnar format that is optimized for
 performance.</p>
 <p>FHIR Data Pipes transforms FHIR resources to <em>"near lossless"</em> 'Parquet on FHIR'
-representation based on
-the <a href="https://github.com/FHIR/sql-on-fhir/blob/master/sql-on-fhir.md">"Simplified SQL Projection of FHIR Resources"</a> (
-<em>'SQL-on-FHIR-v1'</em>) schema</p>
+representation based on the
+<a href="https://github.com/google/fhir-data-pipes/blob/master/doc/schema.md">"Simplified SQL Projection of FHIR Resources"</a>
+( <em>'SQL-on-FHIR-v1'</em>) schema</p>
 <ul>
 <li>
-<p>The conversion is done using a forked version
-  of <a href="https://github.com/google/fhir-data-pipes/tree/master/bunsen">Bunsen library</a>
+<p>The conversion is done using a forked version of
+  <a href="https://github.com/google/fhir-data-pipes/tree/master/bunsen">Bunsen library</a>
   to transform from FHIR (<em>current support for STU3, R4</em>) to the SQL-on-FHIR-v1
   schema</p>
 </li>
@@ -973,8 +1005,8 @@ the <a href="https://github.com/FHIR/sql-on-fhir/blob/master/sql-on-fhir.md">"Si
 </li>
 </ul>
 <h2 id="monitoring-pipelines">Monitoring pipelines</h2>
-<p>The pipelines controller exposes a number of management end-points that can help
-with monitoring the health of pipelines.</p>
+<p>The pipelines controller exposes management end-points that can help with
+monitoring the health of pipelines.</p>
 <ul>
 <li>The application has been integrated with the Spring Boot Actuator of Spring
   and has exposed Rest API end points for monitoring, health checks, metrics
@@ -982,9 +1014,8 @@ with monitoring the health of pipelines.</p>
 <li>The end points can be customised in the configuration file.</li>
 <li>It can easily be integrated with tools like Prometheus for monitoring metrics.</li>
 </ul>
-<p><strong>Via the Web Control Panel</strong>
-The Web Control panel provides a quick glimpse about the latest state
-of the application including:</p>
+<p><strong>Via the Web Control Panel</strong> The Web Control panel provides a quick glimpse
+about the latest state of the application including:</p>
 <ul>
 <li>Controls for triggering pipeline run on-demand</li>
 <li>A readable view of the application configuration</li>
@@ -1045,7 +1076,7 @@ with the pipeline controller easier.</p>
       <nav class="md-footer__inner md-grid" aria-label="Footer" >
         
           
-          <a href="../tutorials/postgres_example/" class="md-footer__link md-footer__link--prev" aria-label="Previous: PostgreSQL DWH using custom schema">
+          <a href="../tutorials/add_dashboard/" class="md-footer__link md-footer__link--prev" aria-label="Previous: Visualize Parquet DWH with Apache Superset">
             <div class="md-footer__button md-icon">
               
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
@@ -1055,7 +1086,7 @@ with the pipeline controller easier.</p>
                 Previous
               </span>
               <div class="md-ellipsis">
-                PostgreSQL DWH using custom schema
+                Visualize Parquet DWH with Apache Superset
               </div>
             </div>
           </a>

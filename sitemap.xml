@@ -9,10 +9,6 @@
          <lastmod>2025-08-08</lastmod>
     </url>
     <url>
-         <loc>https://example.com/analytics/concepts/</loc>
-         <lastmod>2025-08-08</lastmod>
-    </url>
-    <url>
          <loc>https://example.com/analytics/contributing/</loc>
          <lastmod>2025-08-08</lastmod>
     </url>
@@ -41,6 +37,14 @@
          <lastmod>2025-08-08</lastmod>
     </url>
     <url>
+         <loc>https://example.com/analytics/concepts/concepts/</loc>
+         <lastmod>2025-08-08</lastmod>
+    </url>
+    <url>
+         <loc>https://example.com/analytics/concepts/views/</loc>
+         <lastmod>2025-08-08</lastmod>
+    </url>
+    <url>
          <loc>https://example.com/analytics/tutorials/</loc>
          <lastmod>2025-08-08</lastmod>
     </url>
@@ -50,10 +54,6 @@
     </url>
     <url>
          <loc>https://example.com/analytics/tutorials/gcp_fhirstore/</loc>
-         <lastmod>2025-08-08</lastmod>
-    </url>
-    <url>
-         <loc>https://example.com/analytics/tutorials/postgres_example/</loc>
          <lastmod>2025-08-08</lastmod>
     </url>
     <url>
