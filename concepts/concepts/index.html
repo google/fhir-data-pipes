@@ -1037,10 +1037,10 @@
 <p>FHIR Data Pipes is built on <a href="https://beam.apache.org/">Apache Beam</a> SDK <strong>for
 ease of scalability</strong> and has multiple deployment options from <em>local, to
 on-prem clusters to public clouds</em>.</p>
-<p>FHIR Data Pipes is made up of the <strong>ETL Pipelines</strong> and <strong>Controller</strong>
-modules * *that are designed to work together** to provide continuous
-transformation of FHIR data to Apache Parquet files (for data analysis) or
-another FHIR server ( for data integration).</p>
+<p>FHIR Data Pipes is made up of the <strong>ETL Pipelines</strong> and <strong>Controller</strong> modules *
+<em>that are designed to work together</em>* to provide continuous transformation of
+FHIR data to Apache Parquet files (for data analysis) or another FHIR server (
+for data integration).</p>
 <p><img alt="FHIR Data Pipes Transform Step Image" src="../../images/ETL_FHIR_to_Parquet.png" /></p>
 <h2 id="etl-pipelines">ETL Pipelines</h2>
 <p>Java binaries to <strong>Extract</strong>, <strong>Transform</strong> and <strong>Load</strong> FHIR data from a FHIR
@@ -1049,25 +1049,25 @@ source to Parquet format.</p>
 <p>FHIR Data Pipes is designed to fetch FHIR source data in various forms and APIs:</p>
 <ul>
 <li><a href="https://www.hl7.org/fhir/search.html">FHIR Search API</a>: This should work with
-  most FHIR servers, including those using FHIR data model like HAPI FHIR or
-  FHIR facades like OpenMRS.</li>
+  most FHIR
+  servers, including those using FHIR data model like HAPI FHIR or FHIR facades
+  like OpenMRS.</li>
 <li>Direct database access: This is mostly a more efficient approach that works
   with HAPI FHIR only.</li>
 <li>Bulk Export API: This will gradually become our main fetch API as more FHIR
-  servers implement the
-  <a href="https://build.fhir.org/ig/HL7/bulk-data/export.html">Bulk Export API</a>.</li>
+  servers implement
+  the <a href="https://build.fhir.org/ig/HL7/bulk-data/export.html">Bulk Export API</a>.</li>
 <li>Files in json and ndjson formats.</li>
 </ul>
 <h3 id="transform-to-parquet-on-fhir">Transform to Parquet-on-FHIR</h3>
-<p>FHIR Resources are transformed into a "Parquet-on-FHIR" format which forms the
-"base DWH".</p>
+<p>FHIR Resources are transformed into a "Parquet-on-FHIR" format which forms the "base DWH".</p>
 <ul>
-<li>Uses a forked version of
-  <a href="https://github.com/google/fhir-data-pipes/tree/master/bunsen">Bunsen library</a>
-  ( currently supports STU3 and R4 versions of FHIR)</li>
+<li>Uses a forked version
+  of <a href="https://github.com/google/fhir-data-pipes/tree/master/bunsen">Bunsen library</a> (
+  currently supports STU3 and R4 versions of FHIR)</li>
 <li>Configurable support for FHIR profiles and extensions</li>
-<li>(Optional) In-pipeline 'flattening' of FHIR data using
-  <a href="https://build.fhir.org/ig/FHIR/sql-on-fhir-v2/StructureDefinition-ViewDefinition.html">ViewDefinition</a>
+<li>(Optional) In-pipeline 'flattening' of FHIR data
+  using <a href="https://build.fhir.org/ig/FHIR/sql-on-fhir-v2/StructureDefinition-ViewDefinition.html">ViewDefinition</a>
   resources - <a href="../views#viewdefinition-resource">read more</a></li>
 </ul>
 <h3 id="loading">Loading</h3>
@@ -1077,19 +1077,20 @@ needs of the project. These include:</p>
 <li>Loading Parquet files into an OLAP query engine such as SparkSQL (which can be
   deployed on a single machine or a distributed cluster) or DuckDB (single
   machine in-process) or many other tools that understand Parquet.</li>
-<li>Traditional relational databases such as PostgreSQL (when using FHIR
-  <a href="https://build.fhir.org/ig/FHIR/sql-on-fhir-v2/StructureDefinition-ViewDefinition.html">ViewDefinition</a>
+<li>Traditional relational databases such as PostgreSQL (when using
+  FHIR <a href="https://build.fhir.org/ig/FHIR/sql-on-fhir-v2/StructureDefinition-ViewDefinition.html">ViewDefinition</a>
   resources to generate materialized views)</li>
 </ul>
 <h2 id="pipeline-controller-module">Pipeline Controller Module</h2>
-<p>A user-interface wrapper for the FHIR Data Pipes Pipelines, integrating " full",
-"incremental", and "merger" pipelines together.</p>
+<p>A user-interface wrapper for the FHIR Data Pipes Pipelines, integrating "
+full", "incremental", and "merger" pipelines together.</p>
 <ul>
 <li>The Pipelines Controller is built on top of pipelines and shares many of the
   same settings</li>
 <li>Using the controller module you can schedule periodic incremental updates or
   use the <a href="../../additional/#web-control-panel">Web Control Panel</a> to start the
-  pipeline manually</li>
+  pipeline
+  manually</li>
 </ul>
 <h2 id="deployment-approaches">Deployment Approaches</h2>
 <p>There are a number of different deployment approaches - see table below.</p>
@@ -1140,13 +1141,12 @@ virtual or materialized views:</p>
 <p>SQL queries to generate virtual views (outside the pipeline)</p>
 </li>
 <li>
-<p>FHIR
-   <a href="https://build.fhir.org/ig/FHIR/sql-on-fhir-v2/StructureDefinition-ViewDefinition.html">ViewDefinition</a>
-   resources to generate materialized views (within the pipeline)</p>
+<p>FHIR <a href="https://build.fhir.org/ig/FHIR/sql-on-fhir-v2/StructureDefinition-ViewDefinition.html">ViewDefinition</a>
+resources to generate materialized views (within the pipeline)</p>
 </li>
 </ol>
-<p>For more information on both of these approaches, please check
-<a href="../views/">Schema and Flat Views</a>.</p>
+<p>For more information on both of these approaches, please
+check <a href="../views/">Schema and Flat Views</a>.</p>
 
 
 

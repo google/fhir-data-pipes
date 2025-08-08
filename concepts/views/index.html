@@ -1082,36 +1082,34 @@
 <h1 id="schema-and-flat-views">Schema and Flat Views</h1>
 <h2 id="overview">Overview</h2>
 <p>The heavily nested nature of FHIR resources and the
-<em><a href="#parquet-on-fhir-schema">Parquet-on-FHIR schema</a></em> requires complex SQL queries
-that can make them difficult to work with for analytics use cases. A common
-approach to address this is to flatten the data into a set of views (virtual or
+<em><a href="#parquet-on-fhir-schema">Parquet-on-FHIR schema</a></em>
+requires complex SQL queries that
+can make them difficult to work with for analytics use cases. A common approach
+to address this is to flatten the data into a set of views (virtual or
 materialized) which can then be queried using simpler SQL statements.</p>
 <h2 id="parquet-on-fhir-schema">Parquet-on-FHIR schema</h2>
-<p>The <em>FHIR Data Pipes ETL Pipelines</em> convert raw FHIR resources to a
-<em>Parquet-on-FHIR</em> schema representation. This takes place for each resource type
-and follows the
-<a href="https://github.com/google/fhir-data-pipes/blob/master/doc/schema.md">Schema Mapping Rules</a>.</p>
-<p>The generated columnar Parquet files provide the <em>"base data warehouse"</em> that
-can be queried using any Parquet-aware tools (e.g a SQL based query engine) or
-further transformed <a href="#flattening-via-the-view-layer">via the view layer</a> into
-materialized views.</p>
+<p>The <em>FHIR Data Pipes ETL Pipelines</em> convert raw FHIR 
+resources to a <em>Parquet-on-FHIR</em> schema representation. This takes place for
+each resource type and follows the <a href="https://github.com/google/fhir-data-pipes/blob/master/doc/schema.md">Schema Mapping Rules</a>.</p>
+<p>The generated columnar Parquet files provide the <em>"base data warehouse"</em> that can
+be queried using any Parquet-aware tools (e.g a SQL based query engine) or 
+further transformed <a href="#flattening-via-the-view-layer">via the view layer</a>
+into materialized views.</p>
 <h2 id="flattening-via-the-view-layer">Flattening via the view layer</h2>
 <p>FHIR Data Pipes provides two approaches for flattening the FHIR resources into
 virtual or materialized views:</p>
 <ol>
 <li>
-<p>SQL queries to generate
-   <a href="https://github.com/google/fhir-data-pipes/tree/master/docker/config/views">virtual views</a>
-   ( outside the pipeline)</p>
+<p>SQL queries to
+   generate <a href="https://github.com/google/fhir-data-pipes/tree/master/docker/config/views">virtual views</a> (
+   outside the pipeline)</p>
 </li>
 <li>
-<p>FHIR
-   <a href="https://build.fhir.org/ig/FHIR/sql-on-fhir-v2/StructureDefinition-ViewDefinition.html">ViewDefinition</a>
-   resources to generate materialized views (within the pipeline)</p>
+<p>FHIR <a href="https://build.fhir.org/ig/FHIR/sql-on-fhir-v2/StructureDefinition-ViewDefinition.html">ViewDefinition</a>
+resources to generate materialized views (within the pipeline)</p>
 </li>
 </ol>
-<p>For both of these approaches, a set of
-<a href="https://github.com/google/fhir-data-pipes/tree/master/docker/config/views"><strong>"predefined views"</strong></a>
+<p>For both of these approaches, a set of <a href="https://github.com/google/fhir-data-pipes/tree/master/docker/config/views"><strong>"predefined views"</strong></a>
 for common FHIR resources are provided. These can be modified or extended.</p>
 <p>The currently supported list (as of July, 2024) are:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>Condition
@@ -1129,10 +1127,10 @@ for common FHIR resources are provided. These can be modified or extended.</p>
 </code></pre></div>
 <h3 id="sql-virtual-views">SQL virtual views</h3>
 <p>These are samples of more complex SQL-on-FHIR queries for defining flat views
-for common FHIR resources. These virtual views are applied outside the pipelines
-in a downstream SQL query engine.</p>
-<p>The queries, which have <code>.sql</code> suffix, can be found in
-<a href="https://github.com/google/fhir-data-pipes/tree/master/docker/config/views">/docker/config/views</a>
+for common FHIR resources. These virtual views are applied outside the
+pipelines in a downstream SQL query engine.</p>
+<p>The queries, which have <code>.sql</code> suffix, can be found
+in <a href="https://github.com/google/fhir-data-pipes/tree/master/docker/config/views">/docker/config/views</a>
 directory (e.g <code>Patient_flat.sql</code>).</p>
 <p>An example of a flat view for the Observation resource is below:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="k">CREATE</span><span class="w"> </span><span class="k">OR</span><span class="w"> </span><span class="k">REPLACE</span><span class="w"> </span><span class="k">VIEW</span><span class="w"> </span><span class="n">flat_observation</span><span class="w"> </span><span class="k">AS</span>
@@ -1145,10 +1143,9 @@ directory (e.g <code>Patient_flat.sql</code>).</p>
 <a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a><span class="w">        </span><span class="k">LATERAL</span><span class="w"> </span><span class="k">VIEW</span><span class="w"> </span><span class="k">OUTER</span><span class="w"> </span><span class="n">explode</span><span class="p">(</span><span class="n">O</span><span class="p">.</span><span class="n">value</span><span class="p">.</span><span class="n">codeableConcept</span><span class="p">.</span><span class="n">coding</span><span class="p">)</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="n">OVCC</span>
 </code></pre></div>
 <h2 id="query-simplification">Query Simplification</h2>
-<p>The following example is taken from a tutorial Jupyter notebook available
-<a href="https://github.com/google/fhir-data-pipes/blob/master/query/queries_large.ipynb">here</a>.</p>
-<p>The following queries count the number of patients that have had an observation
-with a specific code (HIV viral load), with a value below a certain threshold
+<p>The following example is taken from a tutorial Jupyter notebook available <a href="https://github.com/google/fhir-data-pipes/blob/master/query/queries_large.ipynb">here</a>.</p>
+<p>The following queries count the number of patients that have had an observation 
+with a specific code (HIV viral load), with a value below a certain threshold 
 for the year 2010.</p>
 <div class="tabbed-set tabbed-alternate" data-tabs="1:2"><input checked="checked" id="__tabbed_1_1" name="__tabbed_1" type="radio" /><input id="__tabbed_1_2" name="__tabbed_1" type="radio" /><div class="tabbed-labels"><label for="__tabbed_1_1">Standalone Query</label><label for="__tabbed_1_2">Query with Views</label></div>
 <div class="tabbed-content">
@@ -1188,14 +1185,14 @@ The output relation should have a count of 3074 patients:
 </div>
 </div>
 <p>This approach preserves the nested structures and arrays of FHIR resources
-within the <code>Observation_flat</code> view. The results of these queries can then be
+within the <code>Observation_flat</code> view. The results of these queries can then be 
 used as arbitrary tables for further data analysis in other tools.</p>
 <h3 id="viewdefinition-resource">ViewDefinition resource</h3>
-<p>The
-<a href="https://build.fhir.org/ig/FHIR/sql-on-fhir-v2/">SQL-on-FHIR-v2 specification</a>
+<p>The <a href="https://build.fhir.org/ig/FHIR/sql-on-fhir-v2/">SQL-on-FHIR-v2 specification</a>
 defines a ViewDefinition resource for defining views. Each column in the view is
-defined using a <a href="https://hl7.org/fhirpath/">FHIRPath expression</a>. There is also
-an un-nesting construct and support for <code>constant</code> and <code>where</code> clauses too.</p>
+defined using a <a href="https://hl7.org/fhirpath/">FHIRPath expression</a>.
+There is also an un-nesting construct and
+support for <code>constant</code> and <code>where</code> clauses too.</p>
 <div class="admonition info">
 <p class="admonition-title">Note</p>
 <ul>
@@ -1209,9 +1206,9 @@ ViewDefinition Resources over the “Data Layer” (lossless representation of t
 FHIR data). The output of this are a set of portable, tabular views that can be
 consumed by the “Analytics Layer” which is any number of tools that can be used
 to work with the resulting tabular data.</p>
-<p>FHIR Data Pipes is a
-<a href="https://fhir.github.io/sql-on-fhir-v2/#impls">reference implementation</a> of the
-SQL-on-FHIR-v2 specification:</p>
+<p>FHIR Data Pipes is
+a <a href="https://fhir.github.io/sql-on-fhir-v2/#impls">reference implementation</a> of
+the SQL-on-FHIR-v2 specification:</p>
 <ul>
 <li>
 <p>The "View Runner" is, by default, part of the ETL Pipelines and uses the
@@ -1220,10 +1217,11 @@ SQL-on-FHIR-v2 specification:</p>
 </li>
 <li>
 <p>When enabled as part of the Pipeline configuration, thr "View Runner" will
-  apply the ViewDefinition resources from the
-  <a href="https://github.com/google/fhir-data-pipes/tree/master/docker/config/views">views folder</a>
-  and materialize the resulting tables to the configured database (an instance
-  of PostgresSQL, MySQL, etc.).</p>
+  apply the
+  ViewDefinition resources from
+  the <a href="https://github.com/google/fhir-data-pipes/tree/master/docker/config/views">views folder</a>
+  and materialize the resulting tables to the configured database (an
+  instance of PostgresSQL, MySQL, etc.).</p>
 </li>
 <li>
 <p>A set of pre-defined ViewDefinitions for common FHIR resources is provided as
@@ -1241,8 +1239,8 @@ get a hands-on understanding of the Patient ViewDefinition resource, and many
 more</p>
 <h3 id="viewdefinition-editor">ViewDefinition editor</h3>
 <p>The ViewDefinition editor provides a way to quickly evaluate ViewDefinition
-resources against sample FHIR data. You access it as part of the
-<a href="../additional#web-control-panel">Web Control Panel</a>, selecting the "Views"
+resources against sample FHIR data. You access it as part of
+the <a href="../additional#web-control-panel">Web Control Panel</a>, selecting the "Views"
 navigation item in the top right corner.</p>
 <p>Using the ViewDefinition editor you can:</p>
 <ul>
@@ -1254,22 +1252,22 @@ navigation item in the top right corner.</p>
 <h2 id="output-data-formats">Output Data Formats</h2>
 <p>Applying the FHIR ViewDefinition resources to the "base dwh" will generate
 materialized views which represent a "constrained" set of data to be used for
-downstream analytics applications (such as dashboards or reporting). This
-feature is enabled when the
+downstream analytics applications (such as dashboards or reporting).
+This feature is enabled when the
 <a href="https://github.com/google/fhir-data-pipes/blob/ffecd7c7bf23d86bee0c6dde0dd5d549038f769d/pipelines/controller/config/application.yaml#L166C3-L166C21">viewDefinitionsDir</a>
 is set.</p>
 <p>These can be outputted in any tabular format with current support for Database
 tables and Parquet files.</p>
 <h3 id="conversion-to-database-tables">Conversion to Database tables</h3>
 <p>The resulting database tables can be loaded into a commonly used relational
-database management system such as <a href="https://www.postgresql.org/">PostgresSQL</a> or
-<a href="https://www.mysql.com/">MySQL</a>. This is enabled when the
+database management system such as <a href="https://www.postgresql.org/">PostgresSQL</a>
+or <a href="https://www.mysql.com/">MySQL</a>. This is enabled when the
 <a href="https://github.com/google/fhir-data-pipes/blob/ffecd7c7bf23d86bee0c6dde0dd5d549038f769d/pipelines/controller/config/application.yaml#L173">sinkDbConfigPath</a>
 is set.</p>
 <h3 id="conversion-to-parquet">Conversion to Parquet</h3>
 <p>The resulting Parquet files can be easily loaded into any Parquet-aware query
-engine. Examples include <a href="https://spark.apache.org/sql/">SparkSQL</a> or
-<a href="https://duckdb.org/">duckdb</a></p>
+engine. Examples include <a href="https://spark.apache.org/sql/">SparkSQL</a>
+or <a href="https://duckdb.org/">duckdb</a></p>
 
 
 
