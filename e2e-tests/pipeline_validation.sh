@@ -156,8 +156,8 @@ function setup() {
 #   OPENMRS
 #################################################
 function fhir_source_query() {
-  local patient_query_param="?_summary=count"
-  local enc_obs_query_param="?_summary=count"
+  local patient_query_param="?_summary=count&_total=accurate"
+  local enc_obs_query_param="?_summary=count&_total=accurate"
   local fhir_username="hapi"
   local fhir_password="hapi"
   local fhir_url_extension="/fhir"
@@ -311,12 +311,12 @@ function test_fhir_sink() {
     return
   fi
 
-  local patient_query_param="?_summary=count"
-  local enc_obs_query_param="?_summary=count"
+  local patient_query_param="?_summary=count&_total=accurate"
+  local enc_obs_query_param="?_summary=count&_total=accurate"
 
   if [[ -n ${STREAMING} ]]; then
-      patient_query_param="?given=Alberta625&_summary=count"
-      enc_obs_query_param="?subject.given=Alberta625&_summary=count"
+      patient_query_param="?given=Alberta625&_summary=count&_total=accurate"
+      enc_obs_query_param="?subject.given=Alberta625&_summary=count&_total=accurate"
   fi
   print_message "Finding number of patients, encounters and obs in FHIR server"
 
