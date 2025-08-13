@@ -50,6 +50,14 @@ There are *3 Docker server* configurations you can use for testing:
     ```shell
     pip3 install -r ./synthea-hiv/uploader/requirements.txt
     ```
+    Please note, it is a good idea to first create a Python `virtualenv` before running the above command to
+    avoid conflicts with other Python packages you may have installed globally. You can do this by running:
+    ```shell
+    $ virtualenv -p python3.8 venv
+    $ . ./venv/bin/activate
+    ```
+
+    Then, you can run the uploader script to upload the synthetic data to the FHIR server.
 
     For example, to upload to the HAPI FHIR server brought up in the previous step, run:
 
