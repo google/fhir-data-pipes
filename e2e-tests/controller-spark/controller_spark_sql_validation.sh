@@ -20,6 +20,13 @@
 
 set -e
 
+# -------------------------------------------------------------------
+# Shared helper for robust Parquet row-count with retry/back-off
+# -------------------------------------------------------------------
+source "$(dirname "$0")/../lib/parquet_utils.sh"
+
+PARQUET_TOOLS_JAR=""
+
 #################################################
 # Prints the usage
 #################################################
@@ -99,6 +106,7 @@ function setup() {
   SINK_FHIR_SERVER_URL='http://localhost:8098'
   PIPELINE_CONTROLLER_URL='http://localhost:8090'
   THRIFTSERVER_URL='localhost:10001'
+  PARQUET_TOOLS_JAR="${HOME_PATH}/parquet-tools-1.11.1.jar"
   if [[ $3 = "--use_docker_network" ]]; then
     SOURCE_FHIR_SERVER_URL='http://hapi-server:8080'
     SINK_FHIR_SERVER_URL='http://sink-server-controller:8080'
@@ -190,7 +198,7 @@ function wait_for_completion() {
   local runtime="15 minute"
   local end_time=$(date -ud "$runtime" +%s)
 
-  while [[ $(date -u +%s) -le $end_time ]]
+  while [[ $(date -u +%s) -le ${end_time} ]]
   do
     local pipeline_status=$(curl --location --request GET "${PIPELINE_CONTROLLER_URL}/status?" \
     --connect-timeout 5 \
@@ -238,25 +246,51 @@ function check_parquet() {
   fi
 
   # check whether output directory has received parquet files.
-  if [[ "$(ls -A $output)" ]]
+  if [[ "$(ls -A "${output}")" ]]
   then
-    local total_patients=$(java -Xms16g -Xmx16g -jar ./parquet-tools-1.11.1.jar rowcount \
-    "${output}/*/Patient/" | awk '{print $3}')
-    local total_encounters=$(java -Xms16g -Xmx16g -jar ./parquet-tools-1.11.1.jar rowcount \
-    "${output}/*/Encounter/" | awk '{print $3}')
-    local total_observations=$(java -Xms16g -Xmx16g -jar ./parquet-tools-1.11.1.jar rowcount \
-    "${output}/*/Observation/" | awk '{print $3}')
+    # ------------------------------------------------------------------
+    # Row-counts with retry (shared helper)
+    # ------------------------------------------------------------------
+    local total_patients
+    total_patients=$(retry_rowcount \
+      "${output}/*/Patient/" \
+      "${TOTAL_TEST_PATIENTS}" \
+      "${PARQUET_TOOLS_JAR}") || true
 
-    local total_patient_flat=$(java -Xms16g -Xmx16g -jar ./parquet-tools-1.11.1.jar rowcount \
-    "${output}/*/VIEWS_TIMESTAMP_*/patient_flat/" | awk '{print $3}')
-    local total_encounter_flat=$(java -Xms16g -Xmx16g -jar ./parquet-tools-1.11.1.jar rowcount \
-    "${output}/*/VIEWS_TIMESTAMP_*/encounter_flat/" | awk '{print $3}')
-    local total_obs_flat=$(java -Xms16g -Xmx16g -jar ./parquet-tools-1.11.1.jar rowcount \
-     "${output}/*/VIEWS_TIMESTAMP_*/observation_flat/" | awk '{print $3}')
+    local total_encounters
+    total_encounters=$(retry_rowcount \
+      "${output}/*/Encounter/" \
+      "${TOTAL_TEST_ENCOUNTERS}" \
+      "${PARQUET_TOOLS_JAR}") || true
 
-    print_message "Total patients: $total_patients"
-    print_message "Total encounters: $total_encounters"
-    print_message "Total observations: $total_observations"
+    local total_observations
+    total_observations=$(retry_rowcount \
+      "${output}/*/Observation/" \
+      "${TOTAL_TEST_OBS}" \
+      "${PARQUET_TOOLS_JAR}") || true
+
+    local total_patient_flat
+    total_patient_flat=$(retry_rowcount \
+      "${output}/*/VIEWS_TIMESTAMP_*/patient_flat/" \
+      "${TOTAL_VIEW_PATIENTS}" \
+      "${PARQUET_TOOLS_JAR}") || true
+
+    local total_encounter_flat
+    total_encounter_flat=$(retry_rowcount \
+      "${output}/*/VIEWS_TIMESTAMP_*/encounter_flat/" \
+      "${TOTAL_TEST_ENCOUNTERS}" \
+      "${PARQUET_TOOLS_JAR}") || true
+
+    local total_obs_flat
+    total_obs_flat=$(retry_rowcount \
+      "${output}/*/VIEWS_TIMESTAMP_*/observation_flat/" \
+      "${TOTAL_TEST_OBS}" \
+      "${PARQUET_TOOLS_JAR}") || true
+    # ------------------------------------------------------------------
+
+    print_message "Total patients: ${total_patients}"
+    print_message "Total encounters: ${total_encounters}"
+    print_message "Total observations: ${total_observations}"
 
     print_message "Total patient flat rows: ${total_patient_flat}"
     print_message "Total encounter flat rows: ${total_encounter_flat}"
@@ -271,12 +305,12 @@ function check_parquet() {
             print_message "Pipeline transformation successfully completed."
     else
             print_message "Mismatch in count of records"
-            print_message "Actual total patients: $total_patients, expected total: $TOTAL_TEST_PATIENTS"
-            print_message "Actual total encounters: $total_encounters, expected total: $TOTAL_TEST_ENCOUNTERS"
-            print_message "Total observations: $total_observations, expected total: $TOTAL_TEST_OBS"
-            print_message "Actual total materialized view patients: $total_patient_flat, expected total: $TOTAL_VIEW_PATIENTS"
-            print_message "Actual total materialized view encounters: $total_encounter_flat, expected total: $TOTAL_TEST_ENCOUNTERS"
-            print_message "Actual total materialized view observations: $total_obs_flat, expected total: $TOTAL_TEST_OBS"
+            print_message "Actual total patients: ${total_patients}, expected total: ${TOTAL_TEST_PATIENTS}"
+            print_message "Actual total encounters: ${total_encounters}, expected total: ${TOTAL_TEST_ENCOUNTERS}"
+            print_message "Total observations: ${total_observations}, expected total: ${TOTAL_TEST_OBS}"
+            print_message "Actual total materialized view patients: ${total_patient_flat}, expected total: ${TOTAL_VIEW_PATIENTS}"
+            print_message "Actual total materialized view encounters: ${total_encounter_flat}, expected total: ${TOTAL_TEST_ENCOUNTERS}"
+            print_message "Actual total materialized view observations: ${total_obs_flat}, expected total: ${TOTAL_TEST_OBS}"
             exit 2
     fi
   else
@@ -292,7 +326,7 @@ function check_parquet() {
 #   PARQUET_SUBDIR
 #######################################################################
 function clear() {
-  rm -rf $HOME_PATH/$PARQUET_SUBDIR/*.json
+  rm -rf "${HOME_PATH}/${PARQUET_SUBDIR}"/*.json
 }
 
 #######################################################################
