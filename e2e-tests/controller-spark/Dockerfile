@@ -14,12 +14,21 @@
 
 FROM bitnami/spark:3.3
 
+##############################################################################################
+# NOTE: This Docker image is designed to run exclusively in Cloud Build environment.
+# Where the entire repository is automatically mounted at /workspace.
+# Scripts (controller_spark_sql_validation.sh, lib/parquet_utils.sh)
+# and JARs (parquet-tools-1.11.1.jar) are accessed directly from the mounted repository
+# at runtime so we do **NOT** COPY them into the image.
+#
+# If you ever need to run this image **outside** Cloud Build, you must bind-mount the repo
+# to /workspace or manually copy the required files into the container.
+##############################################################################################
+
 USER root
 RUN apt-get update && apt-get install -y jq curl python3 python3-pip
 RUN pip3 install virtualenv google-auth requests
 
-COPY controller_spark_sql_validation.sh controller_spark_sql_validation.sh
-COPY parquet-tools-1.11.1.jar  parquet-tools-1.11.1.jar
 ENV PARQUET_SUBDIR="dwh"
 ENV DOCKER_NETWORK="--use_docker_network"
 ENV HOME_DIR="/workspace/e2e-tests/controller-spark"
