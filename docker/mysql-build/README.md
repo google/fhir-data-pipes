@@ -1,17 +1,18 @@
 # OCL-Loaded MySQL Image Setup
 
->**Note**: The need to create an OCL-loaded MySQL image is infrequent; this is
+> **Note**: The need to create an OCL-loaded MySQL image is infrequent; this is
+
     only needed for updating OpenMRS release or the OCL dictionary.
 
 The official MySQL image stores data in a Docker volume. This means that if we
 load the OCL Dictionary, it is stored in a volume, and not the container, which
 means that every time we spin up the MySQL image, we would need to wait 45
-minutes for the OCL Dictionary to load.  
+minutes for the OCL Dictionary to load.
 
 We can avoid this long wait time by creating a custom MySQL image that stores
 data in the container itself. Once we load the OCL dictionary, we can save the
 state of the container using `docker commit`, and tag the newly created image as
-`openmrs-fhir-mysql-ocl:latest`. The tagged image is  used in
+`openmrs-fhir-mysql-ocl:latest`. The tagged image is used in
 [openmrs-compose.yaml](../openmrs-compose.yaml), and this directory has the
 files needed to create that image.
 

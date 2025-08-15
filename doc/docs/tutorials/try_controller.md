@@ -6,8 +6,8 @@ collection of Apache Parquet files. It uses FHIR Data Pipes JDBC pipeline to run
 either full or incremental transformations to a Parquet data warehouse.
 
 The FHIR Pipelines Controller only works with HAPI FHIR servers using Postgres.
-You can
-see [an example of configuring a HAPI FHIR server to use Postgres here](https://github.com/hapifhir/hapi-fhir-jpaserver-starter#postgresql-configuration).
+You can see
+[an example of configuring a HAPI FHIR server to use Postgres here](https://github.com/hapifhir/hapi-fhir-jpaserver-starter#postgresql-configuration).
 
 This guide will show you how to set up the FHIR Pipelines Controller with a test
 HAPI FHIR server. It assumes you are using Linux, but should work with other
@@ -15,8 +15,8 @@ environments with minor adjustments.
 
 ## Clone the fhir-data-pipes repository
 
-Clone
-the [fhir-data-pipes GitHub repository](https://github.com/google/fhir-data-pipes)
+Clone the
+[fhir-data-pipes GitHub repository](https://github.com/google/fhir-data-pipes)
 using your preferred method. After cloned, open a terminal window and `cd` to
 the directory where you cloned it. Later terminal commands will assume your
 working directory is the repository root.
@@ -26,14 +26,14 @@ working directory is the repository root.
 The repository includes a [Docker Compose](https://docs.docker.com/compose/)
 configuration to bring up a HAPI FHIR server configured to use Postgres.
 
-To set up the test
-server, [follow these instructions](https://github.com/google/fhir-data-pipes/wiki/Try-the-pipelines-using-local-test-servers).
+To set up the test server,
+[follow these instructions](https://github.com/google/fhir-data-pipes/wiki/Try-the-pipelines-using-local-test-servers).
 At step two, follow the instructions for "HAPI source server with Postgres".
 
 ## Configure the FHIR Pipelines Controller
 
-First,
-open [`pipelines/controller/config/application.yml`](https://github.com/google/fhir-data-pipes/blob/master/pipelines/controller/config/application.yaml)
+First, open
+[`pipelines/controller/config/application.yml`](https://github.com/google/fhir-data-pipes/blob/master/pipelines/controller/config/application.yaml)
 in a text editor.
 
 Change fhirServerUrl to be:
@@ -47,8 +47,8 @@ remain the same. Note the value of `dwhRootPrefix`, as it will be where the
 Parquet files are written. You can also adjust this value if desired. Save and
 close the file.
 
-Next,
-open [`pipelines/controller/config/hapi-postgres-config.json`](https://github.com/google/fhir-data-pipes/blob/master/pipelines/controller/config/hapi-postgres-config.json)
+Next, open
+[`pipelines/controller/config/hapi-postgres-config.json`](https://github.com/google/fhir-data-pipes/blob/master/pipelines/controller/config/hapi-postgres-config.json)
 in a text editor.
 
 Change `databaseHostName` to be:
@@ -88,8 +88,8 @@ This section corresponds to the settings in the `application.yml` file.
 ### Batch pipeline non-default configurations
 
 This section calls out FHIR Data Pipes batch pipeline settings that are
-different from their default values. These are also mostly derived
-from `application.yml`. Use these settings if you want to run the batch pipeline
+different from their default values. These are also mostly derived from
+`application.yml`. Use these settings if you want to run the batch pipeline
 manually.
 
 ## Query the DWH

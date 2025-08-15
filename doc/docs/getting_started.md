@@ -6,9 +6,9 @@ of data and requirements for horizontal scalability.
 
 Installation options include:
 
-* Via docker images
-* Deploy Data Pipes "Pipelines"
-* Deploy Data Pipes "Pipelines Controller"
+- Via docker images
+- Deploy Data Pipes "Pipelines"
+- Deploy Data Pipes "Pipelines Controller"
 
 !!! tip "Quick Start Guide"
 

@@ -31,5 +31,3 @@ if [[ ${COUNT} -eq 0 ]]; then
 else
   echo "${print_prefix} Completed Successfully!"
 fi
-
-
