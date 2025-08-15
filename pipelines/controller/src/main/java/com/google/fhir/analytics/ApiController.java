@@ -16,6 +16,7 @@
 package com.google.fhir.analytics;
 
 import ca.uhn.fhir.parser.DataFormatException;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.base.Strings;
 import com.google.fhir.analytics.PipelineManager.DwhRunDetails;
 import com.google.fhir.analytics.PipelineManager.RunMode;
@@ -37,6 +38,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import lombok.Data;
 import org.apache.beam.sdk.io.FileSystems;
 import org.apache.beam.sdk.io.fs.ResourceId;
 import org.hl7.fhir.instance.model.api.IBaseResource;
@@ -233,5 +235,23 @@ public class ApiController {
                 configField -> configField.name,
                 configField -> configField.value != null ? configField.value : ""));
     return configMap;
+  }
+
+  @Data
+  public class ScheduleDto {
+    @JsonProperty("next_run")
+    private String nextRun;
+  }
+
+  @Data
+  public class DwhDto {
+    @JsonProperty("dwh_prefix")
+    private String dwhPrefix;
+
+    @JsonProperty("dwh_path_latest")
+    private String dwhPath;
+
+    @JsonProperty("dwh_snapshot_ids")
+    private List<String> dwhSnapshots;
   }
 }
