@@ -27,6 +27,12 @@ COPY ./pipelines ./pipelines
 COPY ./pom.xml ./pom.xml
 COPY ./utils ./utils
 COPY ./coverage ./coverage
+COPY ./doc/pom.xml ./doc/pom.xml
+COPY ./docker/pom.xml ./docker/pom.xml
+COPY ./dwh/pom.xml ./dwh/pom.xml
+COPY ./e2e-tests/pom.xml ./doc/pom.xml
+COPY ./query/pom.xml ./query/pom.xml
+COPY ./synthea-hiv/pom.xml ./synthea-hiv/pom.xml
 
 # Updating license will fail in e2e and there is no point doing it here anyways.
 # Note this build can be faster by excluding some uber-jars we don't copy.
