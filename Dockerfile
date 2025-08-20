@@ -30,7 +30,7 @@ COPY ./coverage ./coverage
 COPY ./doc/pom.xml ./doc/pom.xml
 COPY ./docker/pom.xml ./docker/pom.xml
 COPY ./dwh/pom.xml ./dwh/pom.xml
-COPY ./e2e-tests/pom.xml ./doc/pom.xml
+COPY ./e2e-tests/pom.xml ./e2e-tests/pom.xml
 COPY ./query/pom.xml ./query/pom.xml
 COPY ./synthea-hiv/pom.xml ./synthea-hiv/pom.xml
 
