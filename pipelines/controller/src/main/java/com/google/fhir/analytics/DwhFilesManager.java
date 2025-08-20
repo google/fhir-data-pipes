@@ -181,30 +181,26 @@ public class DwhFilesManager {
    * @param snapshotId the snapshot id which needs to be purged and should start with the
    *     dwhRootPrefix format <baseDir>/<prefix>
    */
-  public void deleteDwhSnapshotFiles(String snapshotId) {
+  public void deleteDwhSnapshotFiles(String snapshotId) throws IOException {
     Preconditions.checkState(
         !Strings.isNullOrEmpty(snapshotId), "snapshot id should not be null or empty");
     Preconditions.checkState(
         snapshotId.trim().startsWith(dwhRootPrefix),
         "Invalid prefix for the snapshot id. It should start with the dwhRootPrefix: "
             + dwhRootPrefix);
-    try {
-      String baseDir = getBaseDir(dwhRootPrefix);
-      ResourceId resourceId =
-          DwhFiles.getAllChildDirectories(baseDir).stream()
-              .filter(dir -> dir.getFilename().startsWith(getPrefix(snapshotId)))
-              .findFirst()
-              .orElseThrow(
-                  () ->
-                      new IllegalArgumentException(
-                          "File not found for Snapshot with id: " + snapshotId));
 
-      logger.info("Deleting snapshot " + snapshotId);
-      deleteDirectoryAndFiles(resourceId);
+    String baseDir = getBaseDir(dwhRootPrefix);
+    ResourceId resourceId =
+        DwhFiles.getAllChildDirectories(baseDir).stream()
+            .filter(dir -> dir.getFilename().startsWith(getPrefix(snapshotId)))
+            .findFirst()
+            .orElseThrow(
+                () ->
+                    new IllegalArgumentException(
+                        "File not found for Snapshot with id: " + snapshotId));
 
-    } catch (IOException e) {
-      logger.error("Error occurred while purging older snapshots", e);
-    }
+    logger.info("Deleting snapshot " + snapshotId);
+    deleteDirectoryAndFiles(resourceId);
   }
 
   private void deleteOlderSnapshots(
