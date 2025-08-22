@@ -20,7 +20,7 @@ ease of scalability** and has multiple deployment options from _local, to
 on-prem clusters to public clouds_.
 
 FHIR Data Pipes is made up of the **ETL Pipelines** and **Controller**
-modules \* \*that are designed to work together\*\* to provide continuous
+modules *that are designed to work together* to provide continuous
 transformation of FHIR data to Apache Parquet files (for data analysis) or
 another FHIR server ( for data integration).
 
