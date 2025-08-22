@@ -27,7 +27,7 @@ virtual or materialized views:
 
 1. SQL queries to generate
    [virtual views](https://github.com/google/fhir-data-pipes/tree/master/docker/config/views)
-   ( outside the pipeline)
+   (outside the pipeline)
 
 2. FHIR
    [ViewDefinition](https://build.fhir.org/ig/FHIR/sql-on-fhir-v2/StructureDefinition-ViewDefinition.html)
