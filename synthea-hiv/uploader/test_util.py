@@ -19,5 +19,5 @@ from typing import Dict
 
 
 def read_file(resource: str) -> Dict[str, str]:
-  with open(f'test_files/test_{resource}.json') as f:
-    return json.loads(f.read())
+    with open(f"test_files/test_{resource}.json") as f:
+        return json.loads(f.read())
