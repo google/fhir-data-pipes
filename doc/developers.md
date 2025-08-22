@@ -48,6 +48,19 @@ Observation) to create some updates in the binlog. Now if you keep a copy of
 original version of A (before the changes) you can reuse it in future runs to
 replay the new events with no more interactions with OpenMRS.
 
+## Python development
+This requires you to run to install some dev dependencies e.g. `black` and `isort` packages.
+It is a good idea to first create a Python `virtualenv`: (Run these commands from the root of the repo)
+
+  ```shell
+  virtualenv -p python3 venv
+  source ./venv/bin/activate
+  ```
+Then install the dev requirements:
+  ```shell
+  pip install -r pip install -r requirements-dev.txt
+  ````
+
 ## Running end-to-end tests on Cloud Build
 
 When a Pull Request is submitted, it triggers a request to Google-owned project

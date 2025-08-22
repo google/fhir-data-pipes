@@ -24,6 +24,7 @@ function that defines the source of the data.
 from __future__ import annotations
 
 import typing as tp
+
 import pandas
 
 
@@ -165,9 +166,7 @@ class PatientQuery:
           typeCode: A list of encounter type codes that should be kept or None
             if there are no type constraints.
         """
-        self._enc_constraint = EncounterConstraints(
-            locationId, typeSystem, typeCode
-        )
+        self._enc_constraint = EncounterConstraints(locationId, typeSystem, typeCode)
 
     def get_patient_obs_view(
         self, sample_count: tp.Optional[Int] = None
