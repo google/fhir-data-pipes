@@ -7,7 +7,7 @@
 # This script:
 # 1) Finds the pid of the fhir (HAPI) server and runs pidstat on the server
 # 2) Runs pidstat on the database
-# 3) Starts batch job with the specified input parameters 
+# 3) Starts batch job with the specified input parameters
 # 4) Runs pidstat on the pipeline
 # 5) Stop all pidstat jobs once batch job completes
 
@@ -29,12 +29,12 @@ db_monitor_pid=$!
 
 #Launch batch job and monitor resource usage for the pipeline
 echo "Starting batch job with $1 parallel proc."
-cd .. 
+cd ..
 cd ..
 java -cp pipelines/batch/target/batch-bundled.jar com.google.fhir.analytics.FhirEtl --fhirFetchMode=FHIR_SEARCH --fhirServerUrl=http://localhost:8098/fhir --fhirServerUserName=hapi --fhirServerPassword=hapi --outputParquetPath=$3 --resourceList=Patient,Encounter,Observation --batchSize=20 --targetParallelism=$1 2>&1 &
 pidstat 1 -r -u -d -h -p $! > $4$2/raw/pipeline_stats_$1_proc.txt
 
-#Stop all pidstat jobs 
+#Stop all pidstat jobs
 echo "Batch Job Complete... Stopping resource monitoring."
 kill -9 $server_monitor_pid
 kill -9 $db_monitor_pid
