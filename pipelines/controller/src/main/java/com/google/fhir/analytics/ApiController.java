@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2024 Google LLC
+ * Copyright 2020-2025 Google LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 package com.google.fhir.analytics;
 
 import ca.uhn.fhir.parser.DataFormatException;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.base.Strings;
 import com.google.fhir.analytics.PipelineManager.DwhRunDetails;
 import com.google.fhir.analytics.PipelineManager.RunMode;
@@ -31,7 +32,13 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.channels.Channels;
 import java.nio.channels.ReadableByteChannel;
+import java.time.LocalDateTime;
 import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+import lombok.Data;
 import org.apache.beam.sdk.io.FileSystems;
 import org.apache.beam.sdk.io.fs.ResourceId;
 import org.hl7.fhir.instance.model.api.IBaseResource;
@@ -44,9 +51,12 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.util.MultiValueMap;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
@@ -57,6 +67,10 @@ public class ApiController {
   private static final String SUCCESS = "SUCCESS";
 
   @Autowired private PipelineManager pipelineManager;
+
+  @Autowired private DataProperties dataProperties;
+
+  @Autowired private DwhFilesManager dwhFilesManager;
 
   @PostMapping("/run")
   public ResponseEntity<String> runBatch(
@@ -165,5 +179,79 @@ public class ApiController {
       status = HttpStatus.INTERNAL_SERVER_ERROR;
     }
     return new ResponseEntity<>(response, status);
+  }
+
+  @GetMapping("/next")
+  public ScheduleDto getNextScheduled() {
+    ScheduleDto schedule = new ScheduleDto();
+    LocalDateTime nextRun = pipelineManager.getNextIncrementalTime();
+    if (nextRun == null) {
+      schedule.setNextRun("NOT SCHEDULED");
+    } else {
+      schedule.setNextRun(nextRun.toString());
+    }
+    return schedule;
+  }
+
+  @GetMapping("/dwh")
+  public DwhDto getDwh() {
+    DwhDto dwhDto = new DwhDto();
+    String dwh = pipelineManager.getCurrentDwhRoot();
+    dwhDto.setDwhPrefix(dataProperties.getDwhRootPrefix());
+    dwhDto.setDwhPath(dwh == null || dwh.isEmpty() ? "" : dwh);
+    dwhDto.setDwhSnapshots(dwhFilesManager.listDwhSnapshots());
+    return dwhDto;
+  }
+
+  @DeleteMapping("/dwh")
+  @ResponseStatus(HttpStatus.NO_CONTENT)
+  public void deleteSnapshot(@RequestParam String snapshotId) throws IOException {
+    dwhFilesManager.deleteDwhSnapshotFiles(snapshotId);
+  }
+
+  @GetMapping("/config")
+  public Map<String, String> getConfigs() {
+    return getConfigMap(null);
+  }
+
+  @GetMapping("/config/{name}")
+  public Map<String, String> getConfigs(@PathVariable String name) {
+    return getConfigMap(name);
+  }
+
+  private Map<String, String> getConfigMap(String configName) {
+    List<DataProperties.ConfigFields> configParams = dataProperties.getConfigParams();
+
+    Map<String, String> configMap;
+    Stream<DataProperties.ConfigFields> fieldsStream = configParams.stream();
+
+    if (configName != null && !configName.isEmpty()) {
+      fieldsStream = fieldsStream.filter(configField -> configField.name.equals(configName));
+    }
+
+    configMap =
+        fieldsStream.collect(
+            Collectors.toMap(
+                configField -> configField.name,
+                configField -> configField.value != null ? configField.value : ""));
+    return configMap;
+  }
+
+  @Data
+  public class ScheduleDto {
+    @JsonProperty("next_run")
+    private String nextRun;
+  }
+
+  @Data
+  public class DwhDto {
+    @JsonProperty("dwh_prefix")
+    private String dwhPrefix;
+
+    @JsonProperty("dwh_path_latest")
+    private String dwhPath;
+
+    @JsonProperty("dwh_snapshot_ids")
+    private List<String> dwhSnapshots;
   }
 }
