@@ -52,7 +52,7 @@ FHIR Resources are transformed into a "Parquet-on-FHIR" format which forms the
 
 - Uses a forked version of
   [Bunsen library](https://github.com/google/fhir-data-pipes/tree/master/bunsen)
-  ( currently supports STU3 and R4 versions of FHIR)
+  (currently supports STU3 and R4 versions of FHIR)
 - Configurable support for FHIR profiles and extensions
 - (Optional) In-pipeline 'flattening' of FHIR data using
   [ViewDefinition](https://build.fhir.org/ig/FHIR/sql-on-fhir-v2/StructureDefinition-ViewDefinition.html)
