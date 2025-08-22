@@ -205,7 +205,7 @@ public class ApiController {
 
   @DeleteMapping("/dwh")
   @ResponseStatus(HttpStatus.NO_CONTENT)
-  public void deleteSnapshot(@RequestParam String snapshotId) {
+  public void deleteSnapshot(@RequestParam String snapshotId) throws IOException {
     dwhFilesManager.deleteDwhSnapshotFiles(snapshotId);
   }
 

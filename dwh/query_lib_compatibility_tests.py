@@ -14,14 +14,15 @@
 
 import abc
 import unittest
-import query_lib as ql
 
+import query_lib as ql
 
 _BIGQUERY_DATASET = "synthea_big_r4"
 _PROJECT_NAME = "fhir-analytics-test"
 _CODE_SYSTEM = "http://www.ampathkenya.org"
 
 _SPARK_BASE_DIR = "./test_files/parquet_big_db_r4"
+
 
 class _PatientQueryTest:
     """
@@ -35,9 +36,7 @@ class _PatientQueryTest:
 
     def test_encounter_basic_query(self):
         pq = self.get_patient_query_instance()
-        actual_df = pq.get_patient_encounter_view(
-            force_location_type_columns=True
-        )
+        actual_df = pq.get_patient_encounter_view(force_location_type_columns=True)
         self.assertEqual(62833, len(actual_df))
         expected_cols = sorted(
             [
@@ -59,9 +58,7 @@ class _PatientQueryTest:
         pq.encounter_constraints(
             typeSystem="http://fhir.openmrs.org/code-system/encounter-type"
         )
-        actual_df = pq.get_patient_encounter_view(
-            force_location_type_columns=False
-        )
+        actual_df = pq.get_patient_encounter_view(force_location_type_columns=False)
         self.assertSetEqual(
             set(actual_df["encTypeSystem"]),
             {"http://fhir.openmrs.org/code-system/encounter-type"},
@@ -76,9 +73,7 @@ class _PatientQueryTest:
 
         pq.encounter_constraints(typeCode=test_codes)
 
-        actual_df = pq.get_patient_encounter_view(
-            force_location_type_columns=False
-        )
+        actual_df = pq.get_patient_encounter_view(force_location_type_columns=False)
 
         self.assertSetEqual(set(actual_df["encTypeCode"]), set(test_codes))
 
@@ -147,23 +142,15 @@ class _PatientQueryTest:
         # Creating a new `patient_query` to drop all previous constraints
         # and recreate flat views.
         patient_query = self.get_patient_query_instance()
-        patient_query.include_all_other_codes(
-            min_time=start_date, max_time=end_date
-        )
-        patient_query.include_obs_in_value_and_time_range(
-            "1111", max_time="2011-01-01"
-        )
+        patient_query.include_all_other_codes(min_time=start_date, max_time=end_date)
+        patient_query.include_obs_in_value_and_time_range("1111", max_time="2011-01-01")
 
         agg_df = patient_query.get_patient_obs_view()
         self.assertTrue(
             agg_df[agg_df["code"] == "1111"]["max_date"].max() < "2011-01-01",
         )
-        self.assertTrue(
-            agg_df[agg_df["code"] != "1111"]["max_date"].max() < end_date
-        )
-        self.assertTrue(
-            agg_df[agg_df["code"] != "1111"]["min_date"].min() > start_date
-        )
+        self.assertTrue(agg_df[agg_df["code"] != "1111"]["max_date"].max() < end_date)
+        self.assertTrue(agg_df[agg_df["code"] != "1111"]["min_date"].min() > start_date)
 
     def test_obs_query_type_codes(self):
         _VL_CODE = "856"  # HIV VIRAL LOAD
@@ -201,12 +188,10 @@ class _PatientQueryTest:
         )
 
         self.assertTrue(
-            agg_df[agg_df["code"] != _ARV_PLAN]["max_date"].max()
-            < other_end_date
+            agg_df[agg_df["code"] != _ARV_PLAN]["max_date"].max() < other_end_date
         )
         self.assertTrue(
-            agg_df[agg_df["code"] != _ARV_PLAN]["min_date"].min()
-            > other_start_date
+            agg_df[agg_df["code"] != _ARV_PLAN]["min_date"].min() > other_start_date
         )
 
 

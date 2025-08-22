@@ -16,6 +16,7 @@
 
 import logging
 
+
 def create_logger(module_name: str, class_name: str):
-    name = module_name + '.' + class_name
+    name = module_name + "." + class_name
     return logging.getLogger(name)
