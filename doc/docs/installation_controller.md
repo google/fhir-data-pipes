@@ -156,7 +156,7 @@ it is probably a better practice to set these through command-line arguments
   Uses the Spring CronExpression format, i.e., "second minute hour
   day-of-the-month month day-of-the-week"
   - "0 0 \* \* \* \*" means top of every hour
-  - "_/40 _ \* \* \* \*" means every 40 seconds
+  - "\*/40 \* \* \* \*" means every 40 seconds
 
 !!! info "Info"
 
