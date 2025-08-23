@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 # Copyright 2020-2025 Google LLC
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -10,18 +11,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-r"""CLI tooling for the pipeline controller.
-     Each flag has a shorthand equivalent e.g. --help and -h
-
-Example usage:
-
-python3 main.py --command config
-
-python3 main.py -c config --api-url http://localhost:9004 -cn fhirdata.fhirServerUrl
-
-python3 main.py -c dwh-delete -sid
-                        dwh/controller_DEV_DWH_TIMESTAMP_2025_08_14 T12_26_31_956581Z
-"""
 
 import argparse
 import json
@@ -31,7 +20,7 @@ from typing import Any, Dict, Optional
 
 import requests
 
-API_BASE_URL = "http://localhost:9004"
+API_URL = "http://localhost:9004"
 
 
 def _make_api_request(
@@ -50,7 +39,6 @@ def _make_api_request(
         else:
             print("Response is not JSON:")
             data = response.text
-
         return data
     except requests.exceptions.RequestException as req_err:
         logging.error(f"An error occurred during the request: {req_err}")
@@ -60,7 +48,7 @@ def _make_api_request(
         return None
 
 
-def download_file(url, filename) -> str:
+def download_file(url: str, filename: str) -> str:
     """
     Downloads a file from a URL to a local file.
     """
@@ -81,30 +69,24 @@ def delete_snapshot(url: str) -> str:
         return f"Error deleting snapshot: {e}"
 
 
-if __name__ == "__main__":
+def main() -> None:
     logging.basicConfig(level=logging.INFO)
-
     parser = argparse.ArgumentParser(
-        description="Upload FHIR Bundles.",
+        description="The CLI tool for fhir-data-pipes",
         formatter_class=argparse.RawTextHelpFormatter,
     )
+    subparsers = parser.add_subparsers(dest="command", help="Available commands")
 
     parser.add_argument(
-        "--api-url",
-        "-au",
+        "url",
         type=str,
-        required=False,
-        default=API_BASE_URL,
-        help="base url of the REST API",
+        help="url of the REST API",
     )
 
     parser.add_argument(
-        "--command",
-        "-c",
+        "command",
         type=str,
-        required=True,
-        help="pass the specific command, options are dwh, dwh-delete, next,"
-        "status, run, config, download-error-log, tables",
+        help="pass the specific command, options are dwh, delete-snapshot, next,",
     )
 
     parser.add_argument(
@@ -121,7 +103,7 @@ if __name__ == "__main__":
         "-cn",
         type=str,
         required=False,
-        help="name of the configuration key. Used with '--command config'",
+        help="name of the configuration key. Used with 'config' argument",
     )
 
     parser.add_argument(
@@ -130,16 +112,15 @@ if __name__ == "__main__":
         type=str,
         required=False,
         help="the runType argument, options are full, incremental, views. "
-        "Used with '--command run'",
+        "Used with 'run' argument",
     )
 
     args = parser.parse_args()
-
     logging.info(f"Running pipeline controller command: {args.command}")
 
     if args.command == "dwh":
         endpoint = "/dwh"
-    if args.command == "dwh-delete":
+    elif args.command == "delete-snapshot":
         endpoint = "/dwh"
         if not args.snapshot_id:
             raise Exception(
@@ -166,15 +147,15 @@ if __name__ == "__main__":
             )
     else:
         logging.error(f"Invalid config: {args.command}")
+
         exit(1)
 
     params = {}
-
-    active_base_url = args.api_url if args.api_url else API_BASE_URL
+    active_base_url = args.url if args.url else API_URL
 
     if args.command == "config" and args.config_name:
         url = f"{active_base_url}{endpoint}/{args.config_name}"
-    elif args.command == "dwh-delete" and args.snapshot_id:
+    elif args.command == "delete-snapshot" and args.snapshot_id:
         url = f"{active_base_url}/dwh?snapshotId={args.snapshot_id}"
     elif args.command == "run" and args.run_mode:
         url = f"{active_base_url}/run?runMode={args.run_mode.upper()}"
@@ -183,7 +164,7 @@ if __name__ == "__main__":
 
     if args.command == "download-error-log":
         response = download_file(url, "download-error-log.log")
-    elif args.command == "dwh-delete":
+    elif args.command == "delete-snapshot":
         response = delete_snapshot(url)
     elif args.command == "tables" or args.command == "run":
         response = _make_api_request("POST", url, params)
@@ -198,3 +179,7 @@ if __name__ == "__main__":
         print(json.dumps(response, indent=4))
     except json.JSONDecodeError as json_err:
         print(response)
+
+
+if __name__ == "__main__":
+    main()
