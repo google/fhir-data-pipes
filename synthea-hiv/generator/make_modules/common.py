@@ -12,35 +12,39 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+
 class CodeDisplay:
-  """Holds name and code value."""
+    """Holds name and code value."""
 
-  def __init__(self, name: str, code: str):
-    self.name = name
-    self.code = code
+    def __init__(self, name: str, code: str):
+        self.name = name
+        self.code = code
 
-  def __str__(self):
-    return self.name
+    def __str__(self):
+        return self.name
 
-  def __repr__(self):
-    return self.__str__()
-    
+    def __repr__(self):
+        return self.__str__()
+
+
 def fill_answer_key(question: CodeDisplay, answer: CodeDisplay, state_name: str):
-  return {
-          'type': 'Observation',
-          'category': 'survey',
-          'unit': '',
-          'codes': [{
-              'system': 'LOINC',
-              'code': question.code,
-              'display': question.name,
-              'value_set': ''
-          }],
-          'direct_transition': state_name,
-          'name': answer.name,
-          'value_code': {
-              'system': 'SNOMED-CT',
-              'code': answer.code,
-              'display': answer.name
-          }
-      }
+    return {
+        "type": "Observation",
+        "category": "survey",
+        "unit": "",
+        "codes": [
+            {
+                "system": "LOINC",
+                "code": question.code,
+                "display": question.name,
+                "value_set": "",
+            }
+        ],
+        "direct_transition": state_name,
+        "name": answer.name,
+        "value_code": {
+            "system": "SNOMED-CT",
+            "code": answer.code,
+            "display": answer.name,
+        },
+    }

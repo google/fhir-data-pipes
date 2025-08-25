@@ -15,10 +15,12 @@
 # This is to ignore all `dwh` dirs; the root one has a lot of test parquet files
 # and we also commonly use this directory name for storing pipelines' outputs.
 **/dwh/
-
+!dwh/pom.xml
 # Ignoring other large directories that are not needed for the docker image.
 docker/mysql-build
 synthea-hiv/
+!synthea-hiv/pom.xml
 e2e-tests/
+!e2e-tests/pom.xml
 **/tmp
 **/venv*

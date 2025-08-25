@@ -20,20 +20,24 @@ import test_util
 
 class BundleTest(unittest.TestCase):
 
-  def setUp(self):
-    super().setUp()
-    content = test_util.read_file('bundle')
-    self.each_bundle = bundle.Bundle('anything', content)
+    def setUp(self):
+        super().setUp()
+        content = test_util.read_file("bundle")
+        self.each_bundle = bundle.Bundle("anything", content)
 
-  def test_extract_resources(self):
-    self.each_bundle.extract_resources()
-    self.assertEqual(self.each_bundle.openmrs_patient.base.original_id,
-                     '495b7301-3b1b-9283-0334-8b574c3f9424')
-    self.assertEqual(len(self.each_bundle.openmrs_encounters), 65)
-    encounter = self.each_bundle.openmrs_encounters[0]
-    self.assertEqual(encounter.base.original_id,
-                     '5f670aae-c503-52a5-6c06-4fdd70f11d2b')
-    self.assertEqual(len(self.each_bundle.openmrs_observations), 12)
-    observation = self.each_bundle.openmrs_observations[0]
-    self.assertEqual(observation.base.original_id,
-                     '7f714e6d-954e-d209-4586-fe3ae1b2e88a')
+    def test_extract_resources(self):
+        self.each_bundle.extract_resources()
+        self.assertEqual(
+            self.each_bundle.openmrs_patient.base.original_id,
+            "495b7301-3b1b-9283-0334-8b574c3f9424",
+        )
+        self.assertEqual(len(self.each_bundle.openmrs_encounters), 65)
+        encounter = self.each_bundle.openmrs_encounters[0]
+        self.assertEqual(
+            encounter.base.original_id, "5f670aae-c503-52a5-6c06-4fdd70f11d2b"
+        )
+        self.assertEqual(len(self.each_bundle.openmrs_observations), 12)
+        observation = self.each_bundle.openmrs_observations[0]
+        self.assertEqual(
+            observation.base.original_id, "7f714e6d-954e-d209-4586-fe3ae1b2e88a"
+        )

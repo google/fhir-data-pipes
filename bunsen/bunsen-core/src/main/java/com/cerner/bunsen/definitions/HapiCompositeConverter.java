@@ -215,7 +215,7 @@ public abstract class HapiCompositeConverter<T> extends HapiConverter<T> {
 
         for (IBaseExtension extension : extensions) {
 
-          if (extension.getUrl().equals(converter.extensionUrl())) {
+          if (converter.extensionUrl().equals(extension.getUrl())) {
 
             values[valueIndex] = schemaEntry.result().fromHapi(extension);
           }
@@ -234,7 +234,7 @@ public abstract class HapiCompositeConverter<T> extends HapiConverter<T> {
 
         final List<? extends IBaseExtension> extensionList =
             extensions.stream()
-                .filter(extension -> extension.getUrl().equals(extensionUrl))
+                .filter(extension -> extensionUrl.equals(extension.getUrl()))
                 .collect(Collectors.toList());
 
         if (extensionList.size() > 0) {

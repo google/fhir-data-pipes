@@ -1,12 +1,14 @@
 # Set-up Local Test Servers
 
-This guide shows how to use provided Docker images to bring up test servers (and optionally load with synthetic data) to easily get started the FHIR Data Pipes pipelines. 
+This guide shows how to use provided Docker images to bring up test servers (and
+optionally load with synthetic data) to easily get started the FHIR Data Pipes
+pipelines.
 
-There are *3 Docker server* configurations you can use for testing:
+There are _3 Docker server_ configurations you can use for testing:
 
-*   HAPI FHIR server with Postgres (source)
-*   OpenMRS Reference Application with MySQL (source)
-*   HAPI FHIR server (destination)
+- HAPI FHIR server with Postgres (source)
+- OpenMRS Reference Application with MySQL (source)
+- HAPI FHIR server (destination)
 
 ## Instructions
 
@@ -20,30 +22,29 @@ There are *3 Docker server* configurations you can use for testing:
 
 2.  Bring up a FHIR source server for the pipeline. This can be either:
 
-    *   [HAPI FHIR server with
-        Postgres](https://github.com/google/fhir-data-pipes/blob/master/docker/hapi-compose.yml):
+    - [HAPI FHIR server with Postgres](https://github.com/google/fhir-data-pipes/blob/master/docker/hapi-compose.yml):
 
-        ```shell
-        docker-compose  -f ./docker/hapi-compose.yml up  --force-recreate -d
-        ```
+      ```shell
+      docker-compose  -f ./docker/hapi-compose.yml up  --force-recreate -d
+      ```
 
-        The base FHIR URL for this server is `http://localhost:8091/fhir`. If you get a CORS error
-        when accessing the URL, try manually refreshing (e.g. ctrl-shift-r).
+      The base FHIR URL for this server is `http://localhost:8091/fhir`. If you
+      get a CORS error when accessing the URL, try manually refreshing (e.g.
+      ctrl-shift-r).
 
-    *   [OpenMRS Reference Application with
-        MySQL](https://github.com/google/fhir-data-pipes/blob/master/docker/openmrs-compose.yaml):
+    - [OpenMRS Reference Application with MySQL](https://github.com/google/fhir-data-pipes/blob/master/docker/openmrs-compose.yaml):
 
-        ```shell
-        docker-compose -f ./docker/openmrs-compose.yml up --force-recreate -d
-        ```
+      ```shell
+      docker-compose -f ./docker/openmrs-compose.yml up --force-recreate -d
+      ```
 
-        The base FHIR URL for this server is
-        `http://localhost:8099/openmrs/ws/fhir2/R4`
+      The base FHIR URL for this server is
+      `http://localhost:8099/openmrs/ws/fhir2/R4`
 
 3.  Upload the synthetic data stored in
     [sample_data](https://github.com/google/fhir-data-pipes/blob/master/synthea-hiv/sample_data)
-    to the FHIR server that you brought up using the [Synthea data
-    uploader](https://github.com/google/fhir-data-pipes/blob/master/synthea-hiv/README.md#Uploader).
+    to the FHIR server that you brought up using the
+    [Synthea data uploader](https://github.com/google/fhir-data-pipes/blob/master/synthea-hiv/README.md#Uploader).
 
     The uploader requires that you install the `uploader` module requirements first. You can do this by running:
 
@@ -59,7 +60,8 @@ There are *3 Docker server* configurations you can use for testing:
 
     Then, you can run the uploader script to upload the synthetic data to the FHIR server.
 
-    For example, to upload to the HAPI FHIR server brought up in the previous step, run:
+    For example, to upload to the HAPI FHIR server brought up in the previous
+    step, run:
 
     ```shell
     python3 ./synthea-hiv/uploader/main.py HAPI http://localhost:8091/fhir \
@@ -68,13 +70,13 @@ There are *3 Docker server* configurations you can use for testing:
 
     Depending on your machine, using too many cores may slow down your machine
     or cause JDBC connection pool errors with the HAPI FHIR server. Reducing the
-    number of cores using the `--cores` flag should help at the cost of increasing
-    the time to upload the data.
+    number of cores using the `--cores` flag should help at the cost of
+    increasing the time to upload the data.
 
-4.  (optional) If you only want to output Apache Parquet files, there is no additional
-    setup. If you want to test outputting to another FHIR server, then bring up a
-    destination [HAPI FHIR
-    server](https://github.com/google/fhir-data-pipes/blob/master/docker/sink-compose.yml):
+4.  (optional) If you only want to output Apache Parquet files, there is no
+    additional setup. If you want to test outputting to another FHIR server,
+    then bring up a destination
+    [HAPI FHIR server](https://github.com/google/fhir-data-pipes/blob/master/docker/sink-compose.yml):
 
     ```shell
     docker-compose  -f ./docker/sink-compose.yml up  --force-recreate -d

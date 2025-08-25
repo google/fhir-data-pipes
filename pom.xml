@@ -30,6 +30,13 @@
     <!-- This module is only for collecting all coverage data, see:
       https://github.com/jacoco/jacoco/wiki/MavenMultiModule -->
     <module>coverage</module>
+    <module>doc</module>
+    <module>docker</module>
+    <module>dwh</module>
+    <module>e2e-tests</module>
+    <module>query</module>
+    <module>synthea-hiv</module>
+    <module>utils</module>
   </modules>
 
   <properties>

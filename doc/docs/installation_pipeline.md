@@ -8,13 +8,13 @@
 
 ## Intro to the ETL Pipeline
 
-The ETL Pipelines is a Java JAR - designed to run on
-an [Apache Beam](https://beam.apache.org/) - that transforms data from a FHIR
+The ETL Pipelines is a Java JAR - designed to run on an
+[Apache Beam](https://beam.apache.org/) - that transforms data from a FHIR
 source (via FHIR API, JDBC or ndjson) to either
 [Apache Parquet files](https://parquet.apache.org) for analysis or another FHIR
-store for data integration. The source code is available in
-the [`pipelines/batch`](https://github.com/google/fhir-data-pipes/tree/master/pipelines/batch)
-directory. 
+store for data integration. The source code is available in the
+[`pipelines/batch`](https://github.com/google/fhir-data-pipes/tree/master/pipelines/batch)
+directory.
 
 **Input or source options:** There are three options for reading the source FHIR
 data:
@@ -26,12 +26,12 @@ data:
 - _JDBC_: This mode uses the
   [Java Database Connectivity (JDBC) API](https://docs.oracle.com/javase/8/docs/technotes/guides/jdbc/)
   to read FHIR resources directly from the database of a FHIR server. It's
-  tested
-  with [HAPI FHIR server using PostgreSQL database](https://github.com/hapifhir/hapi-fhir-jpaserver-starter#postgresql-configuration)
+  tested with
+  [HAPI FHIR server using PostgreSQL database](https://github.com/hapifhir/hapi-fhir-jpaserver-starter#postgresql-configuration)
   or an [OpenMRS](https://openmrs.org/) instance using MySQL.
-- _ndjson_: Newline Delimited JSON, a file format typically created from the 
-  FHIR Bulk Export API. Reading FHIR Data in this format is not currently 
-supported. 
+- _ndjson_: Newline Delimited JSON, a file format typically created from the
+  FHIR Bulk Export API. Reading FHIR Data in this format is not currently
+  supported.
 
 **Note**: JDBC support beyond HAPI FHIR and OpenMRS is not currently planned.
 Our long-term approach for a generic high-throughput alternative is to use the
@@ -120,9 +120,9 @@ and edit the values to match your database server.
 2: Enable JDBC mode for your source server:
 
 - OpenMRS
-    - `jdbcModeEnabled=true`
+  - `jdbcModeEnabled=true`
 - HAPI FHIR server
-    - `jdbcModeHapi=true`
+  - `jdbcModeHapi=true`
 
 3: Specify the path to your config file.
 
@@ -174,8 +174,8 @@ If the pipeline is run on a single machine (i.e., not on a distributed cluster),
 for large datasets consider using a production grade runner like
 [Flink](https://beam.apache.org/documentation/runners/flink/). This can be done
 by adding the parameter `--runner=FlinkRunner` (use `--maxParallelism` and
-`--parallelism` to control parallelism). This may avoid some memory
-issues of `DirectRunner`.
+`--parallelism` to control parallelism). This may avoid some memory issues of
+`DirectRunner`.
 
 ## Example configurations
 
@@ -211,15 +211,15 @@ These examples are set up to work with
 
 The ETL Pipeline is designed as a stand-alone Apache Beam service. The Pipeline
 Controller module provides capabilities to help manage the Pipeline including
-scheduling full versus incremental runs. It also provides
-some [monitoring capabilities](./additional#monitoring-pipelines).
+scheduling full versus incremental runs. It also provides some
+[monitoring capabilities](./additional#monitoring-pipelines).
 
 ## How to query the data warehouse
 
 To query Parquet files, load them into a compatible data engine such as Apache
-Spark or use python in a jupyter notebook. 
+Spark or use python in a jupyter notebook.
 
 The ["Single Machine"](tutorials/single_machine.md) docker compose configuration
-runs the pipeline and loads data into an Apache Spark Thrift Server for you. 
-You can connect to this Thrift Server with a database client of you choice to 
-query the transformed FHIR Data.
+runs the pipeline and loads data into an Apache Spark Thrift Server for you. You
+can connect to this Thrift Server with a database client of you choice to query
+the transformed FHIR Data.

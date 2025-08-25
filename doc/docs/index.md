@@ -1,9 +1,9 @@
 # Introduction
 
 The Open Health Stack's Analytics components provide a scalable and flexible
-collection of tools to transform
-complex [HL7 FHIR](https://www.hl7.org/fhir/overview.html) data into formats for
-running _analytics_ workloads and building downstream applications.
+collection of tools to transform complex
+[HL7 FHIR](https://www.hl7.org/fhir/overview.html) data into formats for running
+_analytics_ workloads and building downstream applications.
 
 Using OHS, developers can use familiar languages and tools to build analytics
 solutions for different use cases: from generating reports and powering
@@ -13,36 +13,36 @@ dashboards to exploratory data science and machine learning.
 
 ## Key features
 
-* [Apache Beam](https://beam.apache.org) based ETL pipelines to continuously
-  transform FHIR
-  resources to _"near lossless"_ 'FHIR-in-Parquet' representation based on a
+- [Apache Beam](https://beam.apache.org) based ETL pipelines to continuously
+  transform FHIR resources to _"near lossless"_ 'FHIR-in-Parquet' representation
+  based on a
   [natural schema](https://github.com/FHIR/sql-on-fhir/blob/master/sql-on-fhir.md)
   for projecting FHIR resource to Parquet.
 
-* Pipelines Controller module provides pipeline management and scheduling
+- Pipelines Controller module provides pipeline management and scheduling
   capabilities.
 
-* Flexible deployment modes to meet the needs of different projects and teams
+- Flexible deployment modes to meet the needs of different projects and teams
   from simple single machine to multi-worker horizontally scalable distributed
   environments. With support for local, on-prem or cloud based runners.
 
-* Support for different target databases including traditional RDBMS (such
-  as [PostgreSQL](https://www.postgresql.org/)) or any OLAP engines that can
-  load Parquet files (such as [SparkSQL](https://spark.apache.org/sql/)
-  or [DuckDB](https://duckdb.org/)).
+- Support for different target databases including traditional RDBMS (such as
+  [PostgreSQL](https://www.postgresql.org/)) or any OLAP engines that can load
+  Parquet files (such as [SparkSQL](https://spark.apache.org/sql/) or
+  [DuckDB](https://duckdb.org/)).
 
-* Simplify querying data by defining views in SQL or
-  as [ViewDefinition](https://build.fhir.org/ig/FHIR/sql-on-fhir-v2/StructureDefinition-ViewDefinition.html)
+- Simplify querying data by defining views in SQL or as
+  [ViewDefinition](https://build.fhir.org/ig/FHIR/sql-on-fhir-v2/StructureDefinition-ViewDefinition.html)
   resources to create flattened tables. Easily build analytics applications with
-  common languages (e.g. SQL, python) and BI or data visualizations tools (
-  e.g. [Apache Superset](https://superset.apache.org/)).
+  common languages (e.g. SQL, python) and BI or data visualizations tools ( e.g.
+  [Apache Superset](https://superset.apache.org/)).
 
 ## Use cases
 
-* The **primary use case** for FHIR Data Pipes is to enable continuous
+- The **primary use case** for FHIR Data Pipes is to enable continuous
   transformation of FHIR data into analytics friendly representations to make it
   easier for developers to: build dashboards, generate reports, perform data
   science task, and create features for machine learning models.
 
-* A **secondary use case** is for piping FHIR data from a FHIR source to another
+- A **secondary use case** is for piping FHIR data from a FHIR source to another
   FHIR server e.g. for integration into a central FHIR repository.
