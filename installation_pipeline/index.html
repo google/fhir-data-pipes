@@ -18,7 +18,7 @@
       
       
       <link rel="icon" href="../assets/images/favicon.png">
-      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.6.16">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.6.18">
     
     
       
@@ -1119,13 +1119,13 @@
 </ul>
 </div>
 <h2 id="intro-to-the-etl-pipeline">Intro to the ETL Pipeline</h2>
-<p>The ETL Pipelines is a Java JAR - designed to run on
-an <a href="https://beam.apache.org/">Apache Beam</a> - that transforms data from a FHIR
+<p>The ETL Pipelines is a Java JAR - designed to run on an
+<a href="https://beam.apache.org/">Apache Beam</a> - that transforms data from a FHIR
 source (via FHIR API, JDBC or ndjson) to either
 <a href="https://parquet.apache.org">Apache Parquet files</a> for analysis or another FHIR
-store for data integration. The source code is available in
-the <a href="https://github.com/google/fhir-data-pipes/tree/master/pipelines/batch"><code>pipelines/batch</code></a>
-directory. </p>
+store for data integration. The source code is available in the
+<a href="https://github.com/google/fhir-data-pipes/tree/master/pipelines/batch"><code>pipelines/batch</code></a>
+directory.</p>
 <p><strong>Input or source options:</strong> There are three options for reading the source FHIR
 data:</p>
 <ul>
@@ -1136,12 +1136,12 @@ data:</p>
 <li><em>JDBC</em>: This mode uses the
   <a href="https://docs.oracle.com/javase/8/docs/technotes/guides/jdbc/">Java Database Connectivity (JDBC) API</a>
   to read FHIR resources directly from the database of a FHIR server. It's
-  tested
-  with <a href="https://github.com/hapifhir/hapi-fhir-jpaserver-starter#postgresql-configuration">HAPI FHIR server using PostgreSQL database</a>
+  tested with
+  <a href="https://github.com/hapifhir/hapi-fhir-jpaserver-starter#postgresql-configuration">HAPI FHIR server using PostgreSQL database</a>
   or an <a href="https://openmrs.org/">OpenMRS</a> instance using MySQL.</li>
-<li><em>ndjson</em>: Newline Delimited JSON, a file format typically created from the 
-  FHIR Bulk Export API. Reading FHIR Data in this format is not currently 
-supported. </li>
+<li><em>ndjson</em>: Newline Delimited JSON, a file format typically created from the
+  FHIR Bulk Export API. Reading FHIR Data in this format is not currently
+  supported.</li>
 </ul>
 <p><strong>Note</strong>: JDBC support beyond HAPI FHIR and OpenMRS is not currently planned.
 Our long-term approach for a generic high-throughput alternative is to use the
@@ -1214,14 +1214,10 @@ or run the pipeline with the <code>help</code> option:</p>
 and edit the values to match your database server.</p>
 <p>2: Enable JDBC mode for your source server:</p>
 <ul>
-<li>OpenMRS<ul>
+<li>OpenMRS</li>
 <li><code>jdbcModeEnabled=true</code></li>
-</ul>
-</li>
-<li>HAPI FHIR server<ul>
+<li>HAPI FHIR server</li>
 <li><code>jdbcModeHapi=true</code></li>
-</ul>
-</li>
 </ul>
 <p>3: Specify the path to your config file.</p>
 <ul>
@@ -1270,8 +1266,8 @@ field is set.</p>
 for large datasets consider using a production grade runner like
 <a href="https://beam.apache.org/documentation/runners/flink/">Flink</a>. This can be done
 by adding the parameter <code>--runner=FlinkRunner</code> (use <code>--maxParallelism</code> and
-<code>--parallelism</code> to control parallelism). This may avoid some memory
-issues of <code>DirectRunner</code>.</p>
+<code>--parallelism</code> to control parallelism). This may avoid some memory issues of
+<code>DirectRunner</code>.</p>
 <h2 id="example-configurations">Example configurations</h2>
 <p>These examples are set up to work with
 <a href="../tutorials/test_servers/">local test servers</a>.</p>
@@ -1303,15 +1299,15 @@ issues of <code>DirectRunner</code>.</p>
 <h2 id="managing-and-scheduling-the-pipeline">Managing and scheduling the Pipeline</h2>
 <p>The ETL Pipeline is designed as a stand-alone Apache Beam service. The Pipeline
 Controller module provides capabilities to help manage the Pipeline including
-scheduling full versus incremental runs. It also provides
-some <a href="./additional#monitoring-pipelines">monitoring capabilities</a>.</p>
+scheduling full versus incremental runs. It also provides some
+<a href="./additional#monitoring-pipelines">monitoring capabilities</a>.</p>
 <h2 id="how-to-query-the-data-warehouse">How to query the data warehouse</h2>
 <p>To query Parquet files, load them into a compatible data engine such as Apache
-Spark or use python in a jupyter notebook. </p>
+Spark or use python in a jupyter notebook.</p>
 <p>The <a href="../tutorials/single_machine/">"Single Machine"</a> docker compose configuration
-runs the pipeline and loads data into an Apache Spark Thrift Server for you. 
-You can connect to this Thrift Server with a database client of you choice to 
-query the transformed FHIR Data.</p>
+runs the pipeline and loads data into an Apache Spark Thrift Server for you. You
+can connect to this Thrift Server with a database client of you choice to query
+the transformed FHIR Data.</p>
 
 
 
@@ -1413,10 +1409,10 @@ query the transformed FHIR Data.</p>
     
     
       
-      <script id="__config" type="application/json">{"base": "..", "features": ["navigation.tabs.sticky", "navigation.section", "toc.follow", "navigation.top", "navigation.path", "search.suggest", "search.highlight", "content.tabs.link", "content.code.annotation", "content.code.copy", "navigation.footer"], "search": "../assets/javascripts/workers/search.d50fe291.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+      <script id="__config" type="application/json">{"base": "..", "features": ["navigation.tabs.sticky", "navigation.section", "toc.follow", "navigation.top", "navigation.path", "search.suggest", "search.highlight", "content.tabs.link", "content.code.annotation", "content.code.copy", "navigation.footer"], "search": "../assets/javascripts/workers/search.973d3a69.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
     
     
-      <script src="../assets/javascripts/bundle.50899def.min.js"></script>
+      <script src="../assets/javascripts/bundle.92b07e13.min.js"></script>
       
     
   </body>

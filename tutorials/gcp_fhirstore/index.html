@@ -14,7 +14,7 @@
       
       
       <link rel="icon" href="../../assets/images/favicon.png">
-      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.6.16">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.6.18">
     
     
       
@@ -815,56 +815,48 @@ you in creating a FHIR store and BigQuery dataset.</p>
 <p>To set up GCP project that you can use as a sink FHIR store:</p>
 <ul>
 <li>Create a new project in <a href="https://console.cloud.google.com">GCP</a>. For an
-    overview of projects, datasets and data stores check
-    <a href="https://cloud.google.com/healthcare/docs/concepts/projects-datasets-data-stores">this document</a>.</li>
+  overview of projects, datasets and data stores check
+  <a href="https://cloud.google.com/healthcare/docs/concepts/projects-datasets-data-stores">this document</a>.</li>
 <li>Enable Google Cloud Healthcare API in the project and create a Google Cloud
-    Healthcare dataset</li>
+  Healthcare dataset</li>
 <li>Create a FHIR data store in the dataset with the R4 FHIR version</li>
 <li>Enable the BigQuery API in the project and dataset with the same name in the
-    project</li>
+  project</li>
 <li>Download, install, and initialize the <code>gcloud</code> cli:
-    https://cloud.google.com/sdk/docs/quickstart</li>
+  https://cloud.google.com/sdk/docs/quickstart</li>
 <li>Make sure you can authenticate with the project using the CLI:
-    https://developers.google.com/identity/sign-in/web/sign-in<ul>
+  https://developers.google.com/identity/sign-in/web/sign-in</li>
 <li><code>$ gcloud init</code></li>
 <li><code>$ gcloud auth application-default login</code></li>
 <li>Create a service account for the project, generate a key, and save it
     securely locally</li>
-<li>Add the <code>bigquery.dataEditor</code> and <code>bigquery.jobUser</code> roles to the
-    project in the <code>IAM &amp; Admin</code>/<code>Roles</code> settings or using the cli:<ul>
-<li><code>$ gcloud projects add-iam-policy-binding openmrs-260803 --role
-    roles/bigquery.admin --member
-    serviceAccount:openmrs-fhir-analytics@openmrs-260803.iam.gserviceaccount.com</code></li>
-<li><code>$ gcloud projects add-iam-policy-binding openmrs-260803 --role
-    roles/healthcare.datasetAdmin --member
-    serviceAccount:openmrs-fhir-analytics@openmrs-260803.iam.gserviceaccount.com</code></li>
+<li>Add the <code>bigquery.dataEditor</code> and <code>bigquery.jobUser</code> roles to the project in
+    the <code>IAM &amp; Admin</code>/<code>Roles</code> settings or using the cli:<ul>
+<li><code>$ gcloud projects add-iam-policy-binding openmrs-260803 --role roles/bigquery.admin --member serviceAccount:openmrs-fhir-analytics@openmrs-260803.iam.gserviceaccount.com</code></li>
+<li><code>$ gcloud projects add-iam-policy-binding openmrs-260803 --role roles/healthcare.datasetAdmin --member serviceAccount:openmrs-fhir-analytics@openmrs-260803.iam.gserviceaccount.com</code></li>
 </ul>
 </li>
-<li>Activate the service account for your project using <code>gcloud auth
-    activate-service-account &lt;your-service-account&gt;
-    --key-file=&lt;your-key-file&gt; --project=&lt;your project&gt;</code></li>
+<li>Activate the service account for your project using
+    <code>gcloud auth activate-service-account &lt;your-service-account&gt; --key-file=&lt;your-key-file&gt; --project=&lt;your project&gt;</code></li>
 <li>Set the <code>GOOGLE_APPLICATION_CREDENTIALS</code> environment variable:
     https://cloud.google.com/docs/authentication/getting-started#setting_the_environment_variable</li>
-</ul>
-</li>
 <li>
 <p>Use the script <a href="utils/create_fhir_store.sh"><code>utils/create_fhir_store.sh</code></a> to
-    create a FHIR store in this dataset which stream the changes to the BigQuery
-    dataset as well: <code>./utils/create_fhir_store.sh PROJECT LOCATION DATASET
-    FHIR-STORE-NAME</code></p>
-<ul>
-<li><code>PROJECT</code> is your GCP project.</li>
-<li><code>LOCATION</code> is GCP location where your dataset resides, e.g.,
-    <code>us-central1</code>.</li>
+  create a FHIR store in this dataset which stream the changes to the BigQuery
+  dataset as well:
+  <code>./utils/create_fhir_store.sh PROJECT LOCATION DATASET FHIR-STORE-NAME</code></p>
+</li>
+<li>
+<p><code>PROJECT</code> is your GCP project.</p>
+</li>
+<li><code>LOCATION</code> is GCP location where your dataset resides, e.g., <code>us-central1</code>.</li>
 <li><code>DATASET</code> is the name of the dataset you created.</li>
 <li><code>FHIR-STORE-NAME</code> is what it says.</li>
 </ul>
-<p><em>Note: If you get <code>PERMISSION_DENIED</code> errors, make sure to <code>IAM &amp;
-ADMIN</code>/<code>IAM</code>/<code>Members</code> and add the <code>bigquery.dataEditor</code> and
-<code>bigquery.jobUser</code> roles to the <code>Cloud Healthcare Service Agent</code> service
-account that shows up.</em></p>
-</li>
-</ul>
+<p><em>Note: If you get <code>PERMISSION_DENIED</code> errors, make sure to
+  <code>IAM &amp; ADMIN</code>/<code>IAM</code>/<code>Members</code> and add the <code>bigquery.dataEditor</code> and
+  <code>bigquery.jobUser</code> roles to the <code>Cloud Healthcare Service Agent</code> service
+  account that shows up.</em></p>
 <p>You can run the script with no arguments to see a sample usage. After you create
 the FHIR store, its full URL would be:</p>
 <p><code>https://healthcare.googleapis.com/v1/projects/PROJECT/locations/LOCATION/datasets/DATASET/fhirStores/FHIR-STORE-NAME</code></p>
@@ -931,10 +923,10 @@ the FHIR store, its full URL would be:</p>
     
     
       
-      <script id="__config" type="application/json">{"base": "../..", "features": ["navigation.tabs.sticky", "navigation.section", "toc.follow", "navigation.top", "navigation.path", "search.suggest", "search.highlight", "content.tabs.link", "content.code.annotation", "content.code.copy", "navigation.footer"], "search": "../../assets/javascripts/workers/search.d50fe291.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+      <script id="__config" type="application/json">{"base": "../..", "features": ["navigation.tabs.sticky", "navigation.section", "toc.follow", "navigation.top", "navigation.path", "search.suggest", "search.highlight", "content.tabs.link", "content.code.annotation", "content.code.copy", "navigation.footer"], "search": "../../assets/javascripts/workers/search.973d3a69.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
     
     
-      <script src="../../assets/javascripts/bundle.50899def.min.js"></script>
+      <script src="../../assets/javascripts/bundle.92b07e13.min.js"></script>
       
     
   </body>

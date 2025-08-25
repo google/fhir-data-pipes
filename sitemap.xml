@@ -2,70 +2,70 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
     <url>
          <loc>https://example.com/analytics/</loc>
-         <lastmod>2025-08-08</lastmod>
+         <lastmod>2025-08-25</lastmod>
     </url>
     <url>
          <loc>https://example.com/analytics/additional/</loc>
-         <lastmod>2025-08-08</lastmod>
+         <lastmod>2025-08-25</lastmod>
     </url>
     <url>
          <loc>https://example.com/analytics/contributing/</loc>
-         <lastmod>2025-08-08</lastmod>
+         <lastmod>2025-08-25</lastmod>
     </url>
     <url>
          <loc>https://example.com/analytics/getting_started/</loc>
-         <lastmod>2025-08-08</lastmod>
+         <lastmod>2025-08-25</lastmod>
     </url>
     <url>
          <loc>https://example.com/analytics/installation_controller/</loc>
-         <lastmod>2025-08-08</lastmod>
+         <lastmod>2025-08-25</lastmod>
     </url>
     <url>
          <loc>https://example.com/analytics/installation_docker/</loc>
-         <lastmod>2025-08-08</lastmod>
+         <lastmod>2025-08-25</lastmod>
     </url>
     <url>
          <loc>https://example.com/analytics/installation_pipeline/</loc>
-         <lastmod>2025-08-08</lastmod>
+         <lastmod>2025-08-25</lastmod>
     </url>
     <url>
          <loc>https://example.com/analytics/release_process/</loc>
-         <lastmod>2025-08-08</lastmod>
+         <lastmod>2025-08-25</lastmod>
     </url>
     <url>
          <loc>https://example.com/analytics/support/</loc>
-         <lastmod>2025-08-08</lastmod>
+         <lastmod>2025-08-25</lastmod>
     </url>
     <url>
          <loc>https://example.com/analytics/concepts/concepts/</loc>
-         <lastmod>2025-08-08</lastmod>
+         <lastmod>2025-08-25</lastmod>
     </url>
     <url>
          <loc>https://example.com/analytics/concepts/views/</loc>
-         <lastmod>2025-08-08</lastmod>
+         <lastmod>2025-08-25</lastmod>
     </url>
     <url>
          <loc>https://example.com/analytics/tutorials/</loc>
-         <lastmod>2025-08-08</lastmod>
+         <lastmod>2025-08-25</lastmod>
     </url>
     <url>
          <loc>https://example.com/analytics/tutorials/add_dashboard/</loc>
-         <lastmod>2025-08-08</lastmod>
+         <lastmod>2025-08-25</lastmod>
     </url>
     <url>
          <loc>https://example.com/analytics/tutorials/gcp_fhirstore/</loc>
-         <lastmod>2025-08-08</lastmod>
+         <lastmod>2025-08-25</lastmod>
     </url>
     <url>
          <loc>https://example.com/analytics/tutorials/single_machine/</loc>
-         <lastmod>2025-08-08</lastmod>
+         <lastmod>2025-08-25</lastmod>
     </url>
     <url>
          <loc>https://example.com/analytics/tutorials/test_servers/</loc>
-         <lastmod>2025-08-08</lastmod>
+         <lastmod>2025-08-25</lastmod>
     </url>
     <url>
          <loc>https://example.com/analytics/tutorials/try_controller/</loc>
-         <lastmod>2025-08-08</lastmod>
+         <lastmod>2025-08-25</lastmod>
     </url>
 </urlset>
