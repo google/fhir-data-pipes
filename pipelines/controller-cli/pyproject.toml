@@ -1,0 +1,15 @@
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "controller-cli"
+version = "0.0.1"
+description = "The CLI tool for fhir-data-pipes."
+dependencies = [
+    "requests>=2.32.3",
+]
+requires-python = ">=3.9"
+
+[project.scripts]
+"controller" = "main:main"

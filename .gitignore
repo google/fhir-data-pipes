@@ -96,3 +96,4 @@ nb-configuration.xml
 ## Data-warehouse files.
 ##############################
 docker/dwh/**
+*.egg-info/
