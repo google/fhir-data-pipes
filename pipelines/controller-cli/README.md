@@ -157,6 +157,22 @@ controller <url> dwh delete --snapshot-id <snapshot id>
 first. A valid snapshot-id is the full id as shown in the list e.g.
 `dwh/controller_DEV_DWH_TIMESTAMP_2025_08_14T17_47_15_357080Z`
 
+## Testing
+
+### Running Tests
+
+This project uses `unittest` for testing. To run the test suite, ensure your
+virtual environment is active and you have installed the package as shown in the
+[Development](#development) instructions above. Then you can execute the
+following command from the project's root directory:
+
+```sh
+ python3 -m unittest tests/test_main.py
+```
+
+**Note:** update the TestControllerCLI.TEST_URL constant in tests/test_main.py
+to point to your local server if necessary.
+
 ## Formatting and Linting
 
 This project uses `black` for code formatting, `isort` for import sorting, and

@@ -201,7 +201,7 @@ def main():
     run_parser.add_argument(
         "--mode",
         "-m",
-        choices=(RUN_MODES),
+        choices=([mode.lower() for mode in RUN_MODES]),
         required=True,
         help=f"the runType argument, options are {run_modes}",
     )
