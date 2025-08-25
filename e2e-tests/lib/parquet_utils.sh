@@ -17,13 +17,13 @@ set -euo pipefail
 : "${PARQUET_TOOLS:=parquet-tools}"
 
 # Gate for "output exists" (dir contains at least one .parquet or a _SUCCESS)
-: "${WAIT_READY_TOTAL_SECS:=120}"      # total wait time before we give up (seconds)
+: "${WAIT_READY_TOTAL_SECS:=480}"      # total wait time before we give up (seconds)
 : "${WAIT_READY_SLEEP_SECS:=5}"        # poll interval (seconds)
 
 
 
 : "${WAIT_READY_RESOURCES:=Patient,patient_flat}"
-: "${PARQUET_UTILS_VERBOSE:=1}"
+export PARQUET_UTILS_VERBOSE=1
 
 
 log_pu() {  # level, message...
