@@ -899,26 +899,26 @@ transformation of data from a <a href="https://hapifhir.io/">HAPI FHIR</a> serve
 collection of Apache Parquet files. It uses FHIR Data Pipes JDBC pipeline to run
 either full or incremental transformations to a Parquet data warehouse.</p>
 <p>The FHIR Pipelines Controller only works with HAPI FHIR servers using Postgres.
-You can see
-<a href="https://github.com/hapifhir/hapi-fhir-jpaserver-starter#postgresql-configuration">an example of configuring a HAPI FHIR server to use Postgres here</a>.</p>
+You can
+see <a href="https://github.com/hapifhir/hapi-fhir-jpaserver-starter#postgresql-configuration">an example of configuring a HAPI FHIR server to use Postgres here</a>.</p>
 <p>This guide will show you how to set up the FHIR Pipelines Controller with a test
 HAPI FHIR server. It assumes you are using Linux, but should work with other
 environments with minor adjustments.</p>
 <h2 id="clone-the-fhir-data-pipes-repository">Clone the fhir-data-pipes repository</h2>
-<p>Clone the
-<a href="https://github.com/google/fhir-data-pipes">fhir-data-pipes GitHub repository</a>
+<p>Clone
+the <a href="https://github.com/google/fhir-data-pipes">fhir-data-pipes GitHub repository</a>
 using your preferred method. After cloned, open a terminal window and <code>cd</code> to
 the directory where you cloned it. Later terminal commands will assume your
 working directory is the repository root.</p>
 <h2 id="set-up-the-test-server">Set up the test server</h2>
 <p>The repository includes a <a href="https://docs.docker.com/compose/">Docker Compose</a>
 configuration to bring up a HAPI FHIR server configured to use Postgres.</p>
-<p>To set up the test server,
-<a href="https://github.com/google/fhir-data-pipes/wiki/Try-the-pipelines-using-local-test-servers">follow these instructions</a>.
+<p>To set up the test
+server, <a href="https://github.com/google/fhir-data-pipes/wiki/Try-the-pipelines-using-local-test-servers">follow these instructions</a>.
 At step two, follow the instructions for "HAPI source server with Postgres".</p>
 <h2 id="configure-the-fhir-pipelines-controller">Configure the FHIR Pipelines Controller</h2>
-<p>First, open
-<a href="https://github.com/google/fhir-data-pipes/blob/master/pipelines/controller/config/application.yaml"><code>pipelines/controller/config/application.yml</code></a>
+<p>First,
+open <a href="https://github.com/google/fhir-data-pipes/blob/master/pipelines/controller/config/application.yaml"><code>pipelines/controller/config/application.yml</code></a>
 in a text editor.</p>
 <p>Change fhirServerUrl to be:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>fhirServerUrl: &quot;http://localhost:8091/fhir&quot;
@@ -927,8 +927,8 @@ in a text editor.</p>
 remain the same. Note the value of <code>dwhRootPrefix</code>, as it will be where the
 Parquet files are written. You can also adjust this value if desired. Save and
 close the file.</p>
-<p>Next, open
-<a href="https://github.com/google/fhir-data-pipes/blob/master/pipelines/controller/config/hapi-postgres-config.json"><code>pipelines/controller/config/hapi-postgres-config.json</code></a>
+<p>Next,
+open <a href="https://github.com/google/fhir-data-pipes/blob/master/pipelines/controller/config/hapi-postgres-config.json"><code>pipelines/controller/config/hapi-postgres-config.json</code></a>
 in a text editor.</p>
 <p>Change <code>databaseHostName</code> to be:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>&quot;databaseHostName&quot; : &quot;localhost&quot;
@@ -951,8 +951,8 @@ the run to complete.</p>
 <p>This section corresponds to the settings in the <code>application.yml</code> file.</p>
 <h3 id="batch-pipeline-non-default-configurations">Batch pipeline non-default configurations</h3>
 <p>This section calls out FHIR Data Pipes batch pipeline settings that are
-different from their default values. These are also mostly derived from
-<code>application.yml</code>. Use these settings if you want to run the batch pipeline
+different from their default values. These are also mostly derived
+from <code>application.yml</code>. Use these settings if you want to run the batch pipeline
 manually.</p>
 <h2 id="query-the-dwh">Query the DWH</h2>
 <p>On your machine, look for the Parquet files created in the directory specified
