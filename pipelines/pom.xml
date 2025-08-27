@@ -52,6 +52,9 @@
     <beam.version>2.56.0</beam.version>
     <auto-value.version>1.11.0</auto-value.version>
     <lombok.version>1.18.38</lombok.version>
+    <errorprone.version>2.24.1</errorprone.version>
+    <!-- higher than this version of NullAway breaks -->
+    <nullaway.version>0.10.19</nullaway.version>
   </properties>
 
   <dependencyManagement>
@@ -396,7 +399,11 @@
               see: https://errorprone.info/docs/installation
             -->
             <arg>-XDcompilePolicy=simple</arg>
-            <arg>-Xplugin:ErrorProne -XepOpt:NullAway:AnnotatedPackages=com.google.fhir.analytics</arg>
+            <arg>--should-stop=ifError=FLOW</arg>
+            <arg>-XDaddTypeAnnotationsToSymbol=true</arg>
+            <arg>
+              -Xplugin:ErrorProne -XepOpt:NullAway:AnnotatedPackages=com.google.fhir.analytics -XepOpt:NullAway:JSpecifyMode=true
+            </arg>
             <arg>
               -J--add-exports=jdk.compiler/com.sun.tools.javac.api=ALL-UNNAMED
             </arg>
@@ -450,12 +457,12 @@
             <path>
               <groupId>com.google.errorprone</groupId>
               <artifactId>error_prone_core</artifactId>
-              <version>2.23.0</version>
+              <version>${errorprone.version}</version>
             </path>
             <path>
               <groupId>com.uber.nullaway</groupId>
               <artifactId>nullaway</artifactId>
-              <version>0.10.15</version>
+              <version>${nullaway.version}</version>
             </path>
           </annotationProcessorPaths>
         </configuration>

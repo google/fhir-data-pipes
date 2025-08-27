@@ -23,11 +23,11 @@ import org.slf4j.LoggerFactory;
 @Data
 public class Stats {
 
-  private Integer percentageCompleted = 0;
+  private int percentageCompleted = 0;
 
   private static final Logger logger = LoggerFactory.getLogger(Stats.class.getName());
-  private static final Integer MAPPED_RESOURCES_WEIGHT = 4;
-  private static final Integer PARSED_RESOURCES_WEIGHT = 1;
+  private static final int MAPPED_RESOURCES_WEIGHT = 4;
+  private static final int PARSED_RESOURCES_WEIGHT = 1;
 
   /**
    * This method is used to convert the MetricQueryResults into Stats. If the metricQueryResults is

@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2024 Google LLC
+ * Copyright 2020-2025 Google LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,6 +26,8 @@ import com.google.fhir.analytics.model.BulkExportResponse;
 import com.google.gson.Gson;
 import java.io.IOException;
 import java.io.Reader;
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.HashMap;
@@ -94,7 +96,7 @@ public class BulkExportApiClient {
    *
    * @param bulkExportStatusUrl the url of the bulk export job
    * @return BulkExportHttpResponse - the status and details of the bulk export job
-   * @throws IOException
+   * @throws IOException if the request to fetch the bulkExportStatusUrl fails
    */
   public BulkExportHttpResponse fetchBulkExportHttpResponse(String bulkExportStatusUrl)
       throws IOException {
@@ -103,7 +105,9 @@ public class BulkExportApiClient {
     httpResponseBuilder.httpStatus(httpResponse.getStatus());
     if (httpResponse.getHeaders(EXPIRES) != null && !httpResponse.getHeaders(EXPIRES).isEmpty()) {
       String expiresString = httpResponse.getHeaders(EXPIRES).get(0);
-      Date expires = new Date(expiresString);
+      DateTimeFormatter httpDateFormatter = DateTimeFormatter.RFC_1123_DATE_TIME;
+      ZonedDateTime zonedDateTime = ZonedDateTime.parse(expiresString, httpDateFormatter);
+      Date expires = Date.from(zonedDateTime.toInstant());
       httpResponseBuilder.expires(expires);
     }
     if (!CollectionUtils.isEmpty(httpResponse.getHeaders(RETRY_AFTER))) {
