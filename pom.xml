@@ -53,16 +53,7 @@
     <sonar.login>admin</sonar.login>
     <sonar.password>admin</sonar.password>
     <sonar.java.binaries>target/classes</sonar.java.binaries>
-    <jspecify.version>0.3.0</jspecify.version>
   </properties>
-  <dependencies>
-    <dependency>
-      <groupId>org.jspecify</groupId>
-      <artifactId>jspecify</artifactId>
-      <version>${jspecify.version}</version>
-      <scope>provided</scope>
-    </dependency>
-  </dependencies>
 
   <build>
     <pluginManagement>
