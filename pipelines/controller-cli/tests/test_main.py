@@ -4,7 +4,9 @@ import sys
 import unittest
 from unittest import mock
 
-from src.main import main, status
+import requests_mock
+
+from src.main import main
 
 
 class TestControllerCLI(unittest.TestCase):
@@ -12,7 +14,9 @@ class TestControllerCLI(unittest.TestCase):
     TEST_URL = "http://localhost:9004"
 
     @mock.patch.object(sys, "argv", ["controller", TEST_URL, "config"])
-    def test_command_config(self):
+    @requests_mock.Mocker()
+    def test_command_config(self, m):
+        m.get(f"{self.TEST_URL}/config", json={"message": "Mocked response data"})
         with io.StringIO() as stdout, contextlib.redirect_stdout(stdout):
             main()
             output = stdout.getvalue().strip()
@@ -20,7 +24,9 @@ class TestControllerCLI(unittest.TestCase):
         self.assertIn(f"Request url: {TestControllerCLI.TEST_URL}", output)
 
     @mock.patch.object(sys, "argv", ["controller", TEST_URL, "next"])
-    def test_command_next(self):
+    @requests_mock.Mocker()
+    def test_command_next(self, m):
+        m.get(f"{self.TEST_URL}/next", json={"message": "Mocked response data"})
         with io.StringIO() as stdout, contextlib.redirect_stdout(stdout):
             main()
             output = stdout.getvalue().strip()
@@ -28,7 +34,9 @@ class TestControllerCLI(unittest.TestCase):
         self.assertIn(f"Request url: {TestControllerCLI.TEST_URL}", output)
 
     @mock.patch.object(sys, "argv", ["controller", TEST_URL, "status"])
-    def test_command_status(self):
+    @requests_mock.Mocker()
+    def test_command_status(self, m):
+        m.get(f"{self.TEST_URL}/status", json={"message": "Mocked response data"})
         with io.StringIO() as stdout, contextlib.redirect_stdout(stdout):
             main()
             output = stdout.getvalue().strip()
@@ -38,7 +46,9 @@ class TestControllerCLI(unittest.TestCase):
     @mock.patch.object(
         sys, "argv", ["controller", TEST_URL, "run", "--mode", "incremental"]
     )
-    def test_command_run(self):
+    @requests_mock.Mocker()
+    def test_command_run(self, m):
+        m.post(f"{self.TEST_URL}/run", json={"message": "Mocked response data"})
         with io.StringIO() as stdout, contextlib.redirect_stdout(stdout):
             main()
             output = stdout.getvalue().strip()
@@ -46,7 +56,9 @@ class TestControllerCLI(unittest.TestCase):
         self.assertIn(f"Request url: {TestControllerCLI.TEST_URL}", output)
 
     @mock.patch.object(sys, "argv", ["controller", TEST_URL, "tables"])
-    def test_command_tables(self):
+    @requests_mock.Mocker()
+    def test_command_tables(self, m):
+        m.post(f"{self.TEST_URL}/tables", json={"message": "Mocked response data"})
         with io.StringIO() as stdout, contextlib.redirect_stdout(stdout):
             main()
             output = stdout.getvalue().strip()
@@ -54,7 +66,12 @@ class TestControllerCLI(unittest.TestCase):
         self.assertIn(f"Request url: {TestControllerCLI.TEST_URL}", output)
 
     @mock.patch.object(sys, "argv", ["controller", TEST_URL, "logs", "--download"])
-    def test_command_logs(self):
+    @requests_mock.Mocker()
+    def test_command_logs(self, m):
+        m.get(
+            f"{self.TEST_URL}/download-error-log",
+            json={"message": "Mocked response data"},
+        )
         with io.StringIO() as stdout, contextlib.redirect_stdout(stdout):
             main()
             output = stdout.getvalue().strip()
@@ -62,7 +79,9 @@ class TestControllerCLI(unittest.TestCase):
         self.assertIn(f"Request url: {TestControllerCLI.TEST_URL}", output)
 
     @mock.patch.object(sys, "argv", ["controller", TEST_URL, "dwh"])
-    def test_command_dwh(self):
+    @requests_mock.Mocker()
+    def test_command_dwh(self, m):
+        m.get(f"{self.TEST_URL}/dwh", json={"message": "Mocked response data"})
         with io.StringIO() as stdout, contextlib.redirect_stdout(stdout):
             main()
             output = stdout.getvalue().strip()
@@ -81,7 +100,9 @@ class TestControllerCLI(unittest.TestCase):
             "dwh/controller_DEV_DWH_TIMESTAMP_2025_08_14T17_47_15_357080Z",
         ],
     )
-    def test_command_dwh_delete(self):
+    @requests_mock.Mocker()
+    def test_command_dwh_delete(self, m):
+        m.delete(f"{self.TEST_URL}/dwh", json={"message": "Mocked response data"})
         with io.StringIO() as stdout, contextlib.redirect_stdout(stdout):
             main()
             output = stdout.getvalue().strip()

@@ -2,6 +2,7 @@
 requires = ["setuptools"]
 build-backend = "setuptools.build_meta"
 
+
 [project]
 name = "controller-cli"
 version = "0.0.1"
@@ -10,6 +11,15 @@ dependencies = [
     "requests>=2.32.3",
 ]
 requires-python = ">=3.9"
+
+
+[project.optional-dependencies]
+dev = [
+  "requests-mock",
+  "black",
+  "pylint",
+]
+
 
 [project.scripts]
 "controller" = "main:main"

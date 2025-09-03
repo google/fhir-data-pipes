@@ -162,9 +162,13 @@ first. A valid snapshot-id is the full id as shown in the list e.g.
 ### Running Tests
 
 This project uses `unittest` for testing. To run the test suite, ensure your
-virtual environment is active and you have installed the package as shown in the
-[Development](#development) instructions above. Then you can execute the
-following command from the project's root directory:
+virtual environment is active and you have installed the package as shown below:
+
+```sh
+pip install .[dev]
+```
+
+Then you can execute the following command from the project's root directory:
 
 ```sh
  python3 -m unittest tests/test_main.py
@@ -175,17 +179,16 @@ to point to your local server if necessary.
 
 ## Formatting and Linting
 
-This project uses `black` for code formatting, `isort` for import sorting, and
-`PyLint` for linting. To run these commands, you need to have installed the
-requirements in the repo's root declared in the `requirements-dev.txt` file
-_(i.e. using `pip install -r requirements-dev.txt` in the root folder's
-`venv`)_.
+This project uses `black` for code formatting, and `PyLint` for linting. To run
+these commands, you need to have installed the requirements in the repo's root
+declared in the `requirements-dev.txt` file _(i.e. using
+`pip install -r requirements-dev.txt` in the root folder's `venv`)_.
 
 Ensure you have activated your venv. You can then run the formatter and sorter
 by changing directory to the `controller-cli` folder and running:
 
 ```sh
-   black . && isort .
+   black .
 ```
 
 You can run the linter with:
