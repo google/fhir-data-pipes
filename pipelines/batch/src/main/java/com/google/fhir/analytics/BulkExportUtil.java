@@ -27,7 +27,7 @@ import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-// Utility class containing methods to operate on Bulk Export APIs in the FHIR server
+/** Utility class containing methods to operate on Bulk Export APIs in the FHIR server */
 public class BulkExportUtil {
 
   private static final Logger logger = LoggerFactory.getLogger(BulkExportUtil.class.getName());
@@ -47,11 +47,10 @@ public class BulkExportUtil {
    * @param since - the fhir resources fetched should have updated timestamp greater than this
    * @param fhirVersionEnum - the fhir version of resource types
    * @return the BulkExportResponse
-   * @throws IOException if there is an error while polling the bulk export job status from the
-   *     server
+   * @throws IOException
    */
   public BulkExportResponse triggerBulkExport(
-      List<String> resourceTypes,String since, FhirVersionEnum fhirVersionEnum)
+      List<String> resourceTypes, @Nullable String since, FhirVersionEnum fhirVersionEnum)
       throws IOException {
     Preconditions.checkState(!CollectionUtils.isEmpty(resourceTypes));
     Preconditions.checkNotNull(fhirVersionEnum);
