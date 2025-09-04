@@ -35,7 +35,7 @@ def process_response(response: str, args: argparse.Namespace):
     print("Response:")
     try:
         print(json.dumps(response, indent=4))
-    except json.JSONDecodeError as json_err:
+    except json.JSONDecodeError:
         print(response)
 
 
@@ -56,11 +56,11 @@ def _make_api_request(
             data = response.text
         return data
     except requests.exceptions.RequestException as req_err:
-        logging.error(f"An error occurred during the request: {req_err}")
+        logging.error("An error occurred during the request: %s", req_err)
     except json.JSONDecodeError as json_err:
-        logging.error(f"Failed to decode JSON response: {json_err}")
+        logging.error("Failed to decode JSON response: %s", json_err)
         print(response)
-        return None
+    return None
 
 
 def config(args: argparse.Namespace) -> str:
@@ -76,7 +76,7 @@ def config(args: argparse.Namespace) -> str:
         print(f"Error processing: {e}")
 
 
-def next(args: argparse.Namespace) -> str:
+def next_scheduled(args: argparse.Namespace) -> str:
     try:
         response = _make_api_request(HTTP_GET, f"{args.url}/next")
         process_response(response, args)
@@ -84,7 +84,7 @@ def next(args: argparse.Namespace) -> str:
         print(f"Error processing: {e}")
 
 
-def status(args: argparse.Namespace) -> str:
+def status(args: str) -> str:
     try:
         response = _make_api_request(HTTP_GET, f"{args.url}/status")
         process_response(response, args)
@@ -92,7 +92,7 @@ def status(args: argparse.Namespace) -> str:
         print(f"Error processing: {e}")
 
 
-def run(args: argparse.Namespace) -> str:
+def run(args: str) -> str:
     try:
         response = _make_api_request(
             HTTP_POST, f"{args.url}/run?runMode={args.mode.upper()}"
@@ -112,7 +112,7 @@ def tables(args: argparse.Namespace) -> str:
 
 def download_file(url: str, filename: str) -> str:
     try:
-        with requests.get(url, stream=True) as r:
+        with requests.get(url, stream=True, timeout=10) as r:
             with open(filename, "wb") as f:
                 shutil.copyfileobj(r.raw, f)
         return f"File downloaded successfully to {filename}"
@@ -136,11 +136,12 @@ def logs(args: argparse.Namespace) -> str:
 
 def delete_snapshot(args: argparse.Namespace) -> str:
     try:
-        response = requests.delete(f"{args.url}/dwh?snapshotId={args.snapshot_id}")
+        response = requests.delete(
+            f"{args.url}/dwh?snapshotId={args.snapshot_id}", timeout=10
+        )
         if response.status_code == 204:
-            return f"Snapshot deleted successfully"
-        else:
-            return f"Error deleting snapshot: Status code {response.status_code}"
+            return "Snapshot deleted successfully"
+        return f"Error deleting snapshot: Status code {response.status_code}"
     except requests.exceptions.RequestException as e:
         return f"Error deleting snapshot: {e}"
 
@@ -181,7 +182,7 @@ def main():
     config_parser.set_defaults(func=config)
 
     next_parser = subparsers.add_parser("next", help="show the next scheduled run")
-    next_parser.set_defaults(func=next)
+    next_parser.set_defaults(func=next_scheduled)
 
     status_parser = subparsers.add_parser(
         "status", help="show the status of the pipeline"
@@ -225,7 +226,7 @@ def main():
         "--snapshot-id",
         "-si",
         required=True,
-        help=f"the id of the snapshot in the format "
+        help="the id of the snapshot in the format "
         "<dwhRootPrefix><DwhFiles.TIMESTAMP_PREFIX><timestampSuffix> "
         "e.g. dwh/controller_DEV_DWH_TIMESTAMP_2025_08_14T17_47_15_357080Z",
     )
