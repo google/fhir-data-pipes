@@ -177,8 +177,8 @@ controller <url> run --mode <run mode>
 ```
 
 **Note:** To run a pipeline you must supply a run mode using the `-m` or
-`--mode` flag. The value of mode can be either of `full`, `incremental` or
-`views`. Create resource tables
+`--mode` flag. The value of mode can be one of `full`, `incremental` or `views`.
+Create resource tables
 
 ```sh
 controller <url> tables

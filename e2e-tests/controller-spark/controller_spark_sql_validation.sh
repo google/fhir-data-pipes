@@ -83,6 +83,41 @@ function print_message() {
 }
 
 #################################################
+# Function that sets up the python environment for the controller CLI.
+# It also packages the script to run as a utility command 'controller'
+#################################################
+function setup_controller_cli(){
+
+# Path to the pipeline controller-cli
+CONTROLLER_CLI_DIR="../../pipelines/controller-cli/"
+
+# Define the location for the virtual environment.
+VENV_DIR="$CONTROLLER_CLI_DIR/.venv"
+
+# Create the virtual environment if it doesn't already exist.
+if [ ! -d "$VENV_DIR" ]; then
+    echo "Virtual environment not found. Creating a new one at $VENV_DIR..."
+    python3 -m venv "$VENV_DIR"
+    echo "Virtual environment created."
+fi
+
+# Activate the virtual environment.
+source "$VENV_DIR/bin/activate"
+
+# Store the current directory path
+local current_dir=$PWD
+
+# Change to the project directory to install dependencies.
+cd "$CONTROLLER_CLI_DIR"
+
+# Install the dependencies defined in pyproject.toml and package the script.
+pip install .
+
+# Navigate back to original directory
+cd $current_dir
+}
+
+#################################################
 # Function that defines the global vars
 # Globals:
 #   HOME_PATH
@@ -113,6 +148,9 @@ function setup() {
     PIPELINE_CONTROLLER_URL='http://pipeline-controller:8080'
     THRIFTSERVER_URL='spark:10000'
   fi
+
+  #set up the pipeline controller CLI
+  setup_controller_cli
 }
 
 #######################################################################
@@ -188,10 +226,7 @@ function fhir_source_query() {
 #######################################################################
 function run_pipeline() {
   local runMode=$1
-  curl --location --request POST "${PIPELINE_CONTROLLER_URL}/run?runMode=${runMode}" \
-  --connect-timeout 5 \
-  --header 'Content-Type: application/json' \
-  --header 'Accept: */*' -v
+  controller ${PIPELINE_CONTROLLER_URL} run --mode ${runMode}
 }
 
 function wait_for_completion() {

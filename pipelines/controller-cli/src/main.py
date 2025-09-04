@@ -170,7 +170,7 @@ def main():
     subparsers = parser.add_subparsers(
         dest="command",
         help=f'{", ".join(mode for mode in COMMAND_LIST)}'
-        "are the available commands.",
+        " are the available commands.",
         required=True,
     )
 
@@ -193,6 +193,7 @@ def main():
     run_parser.add_argument(
         "--mode",
         "-m",
+        type=str.lower,
         choices=(RUN_MODES),
         required=True,
         help=f"the type of run; options are {run_modes}",
