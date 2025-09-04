@@ -224,6 +224,7 @@ function fhir_source_query() {
 #   runMode: flag to indicate whether to start full or incremental or recreate
 #     runs; should be one of "FULL", "INCREMENTAL", "VIEWS".
 #######################################################################
+
 function run_pipeline() {
   local runMode=$1
   controller ${PIPELINE_CONTROLLER_URL} run --mode ${runMode}
@@ -235,11 +236,8 @@ function wait_for_completion() {
 
   while [[ $(date -u +%s) -le ${end_time} ]]
   do
-    local pipeline_status=$(curl --location --request GET "${PIPELINE_CONTROLLER_URL}/status?" \
-    --connect-timeout 5 \
-    --header 'Content-Type: application/json' \
-    --header 'Accept: */*' -v \
-    | jq -r '.pipelineStatus')
+    local pipeline_status=$(controller "${PIPELINE_CONTROLLER_URL}" status \
+    | sed -n '/{/,/}/p' | jq -r '.pipelineStatus')
 
     if [[ "${pipeline_status}" == "RUNNING" ]]
     then
