@@ -63,7 +63,8 @@ pip install .
 ## Usage
 
 For details on useage, please check out the documentation here, see the section
-titled [Controller CLI](https://google.github.io/fhir-data-pipes/additional)
+titled
+[Controller CLI](https://google.github.io/fhir-data-pipes/additional#controller-cli)
 
 ## Testing
 
@@ -82,8 +83,8 @@ Then you can execute the following command from the project's root directory:
  python3 -m unittest tests/test_main.py
 ```
 
-**Note:** update the TestControllerCLI.TEST_URL constant in tests/test_main.py
-to point to your local server if necessary.
+**Note:** update the `TestControllerCLI.TEST_URL` constant in
+`tests/test_main.py` to point to your local server if necessary.
 
 ## Formatting and Linting
 
@@ -92,7 +93,7 @@ these commands, you need to have installed the requirements in the repo's root
 declared in the `requirements-dev.txt` file _(i.e. using
 `pip install -r requirements-dev.txt` in the root folder's `venv`)_.
 
-Ensure you have activated your venv. You can then run the formatter and sorter
+Ensure you have activated your venv. You can then run the formatter and linter
 by changing directory to the `controller-cli` folder and running:
 
 ```sh

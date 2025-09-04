@@ -27,7 +27,7 @@ RUN_MODES = ["incremental", "full", "views"]
 COMMAND_LIST = ["dwh", "next", "status", "run", "config", "logs", "tables"]
 
 
-def process_response(response: str, args: Dict[str, Any]):
+def process_response(response: str, args: argparse.Namespace):
     print(
         f"Command: {args.command} {args.subcommand if hasattr(args, 'subcommand') else ''}"
     )
@@ -63,7 +63,7 @@ def _make_api_request(
         return None
 
 
-def config(args: str) -> str:
+def config(args: argparse.Namespace) -> str:
     try:
         if args.config_name:
             response = _make_api_request(
@@ -76,7 +76,7 @@ def config(args: str) -> str:
         print(f"Error processing: {e}")
 
 
-def next(args: str) -> str:
+def next(args: argparse.Namespace) -> str:
     try:
         response = _make_api_request(HTTP_GET, f"{args.url}/next")
         process_response(response, args)
@@ -84,7 +84,7 @@ def next(args: str) -> str:
         print(f"Error processing: {e}")
 
 
-def status(args: str) -> str:
+def status(args: argparse.Namespace) -> str:
     try:
         response = _make_api_request(HTTP_GET, f"{args.url}/status")
         process_response(response, args)
@@ -92,7 +92,7 @@ def status(args: str) -> str:
         print(f"Error processing: {e}")
 
 
-def run(args: str) -> str:
+def run(args: argparse.Namespace) -> str:
     try:
         response = _make_api_request(
             HTTP_POST, f"{args.url}/run?runMode={args.mode.upper()}"
@@ -102,7 +102,7 @@ def run(args: str) -> str:
         print(f"Error processing: {e}")
 
 
-def tables(args: str) -> str:
+def tables(args: argparse.Namespace) -> str:
     try:
         response = _make_api_request(HTTP_POST, f"{args.url}/tables")
         process_response(response, args)
@@ -120,7 +120,7 @@ def download_file(url: str, filename: str) -> str:
         return f"Error downloading file: {e}"
 
 
-def logs(args: str) -> str:
+def logs(args: argparse.Namespace) -> str:
     try:
         if args.download:
             filename = args.filename if args.filename else "error.log"
@@ -134,7 +134,7 @@ def logs(args: str) -> str:
         print(f"Error processing: {e}")
 
 
-def delete_snapshot(args: str) -> str:
+def delete_snapshot(args: argparse.Namespace) -> str:
     try:
         response = requests.delete(f"{args.url}/dwh?snapshotId={args.snapshot_id}")
         if response.status_code == 204:
@@ -145,7 +145,7 @@ def delete_snapshot(args: str) -> str:
         return f"Error deleting snapshot: {e}"
 
 
-def dwh(args: str) -> str:
+def dwh(args: argparse.Namespace) -> str:
     try:
         if hasattr(args, "snapshot_id"):
             response = delete_snapshot(args)

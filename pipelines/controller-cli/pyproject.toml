@@ -15,9 +15,7 @@ requires-python = ">=3.9"
 
 [project.optional-dependencies]
 dev = [
-  "requests-mock",
-  "black",
-  "pylint",
+  "requests-mock"
 ]
 
 

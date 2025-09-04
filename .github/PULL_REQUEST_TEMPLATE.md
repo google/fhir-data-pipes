@@ -40,8 +40,9 @@ automated e2e/unit tests.
       code that was well tested you do not have to add tests)
 - [ ] I ran `mvn clean package` right before creating this pull request and
       added all formatting changes to my commit.
-- [ ] If I made any Python code changes, I ran `black .` right before creating
-      this pull request and added all formatting changes to my commit.
+- [ ] If I made any Python code changes, I ran `black .` and `pylint .` right
+      before creating this pull request and added all formatting changes to my
+      commit.
 - [ ] All new and existing **tests passed**.
 - [ ] My pull request is **based on the latest changes** of the master branch.
 
