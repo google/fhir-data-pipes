@@ -151,7 +151,7 @@ public class ViewApplicator {
       IBase r = results.get(0);
       try {
         IPrimitiveType<Boolean> booleanBase = (IPrimitiveType<Boolean>) r;
-        if (booleanBase.getValue() != Boolean.TRUE) {
+        if (!Boolean.TRUE.equals(booleanBase.getValue())) {
           return false;
         }
       } catch (ClassCastException e) {
