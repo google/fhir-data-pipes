@@ -18,6 +18,7 @@ of parameters via the command line or in the
 
 <!-- prettier-ignore-start -->
 === "Cmd line"
+
     ```java
     $ java -cp ./pipelines/batch/target/batch-bundled-0.1.0-SNAPSHOT.jar org.openmrs.analytics.FhirEtl \
         --fhirServerUrl=[FHIR_SERVER_URL] --outputParquetPath=[PATH] \
@@ -27,6 +28,7 @@ of parameters via the command line or in the
         --oidConnectUrl= [OPENID_CONNECT_URL] \
     ```
 === "application.yaml"
+
     ```
     fhirdata:
     .....
@@ -112,11 +114,16 @@ The web control panel has the following features:
 
 ## Controller CLI
 
-This is a simple command-line interface (CLI) tool that interacts with the pipeline controller. It has most of the functionality available in the pipeline Web Control Panel enabling one to run the pipelines, view configuration settings, manage the data warehouse snaphots and other pipeline operations.
+This is a simple command-line interface (CLI) tool that interacts with the
+pipeline controller. It has most of the functionality available in the pipeline
+Web Control Panel enabling one to run the pipelines, view configuration
+settings, manage the data warehouse snaphots and other pipeline operations.
 
-The CLI tool is packaged using setup tools and exposes the application via the `controller` utility command.
+The CLI tool is packaged using setup tools and exposes the application via the
+`controller` utility command.
 
-You can get the list of available commands by running with the help flags `-h` or`--help`. See sample output below.
+You can get the list of available commands by running with the help flags `-h`
+or`--help`. See sample output below.
 
 ```sh
 usage: controller [-h] url {config,next,status,run,tables,logs,dwh} ...
@@ -138,26 +145,31 @@ positional arguments:
 optional arguments:
   -h, --help            show this help message and exit
 ```
+
 Show config values
 
 ```sh
 controller <url> config
 ```
+
 Show specific config value
 
 ```sh
 controller <url> config --config-name <config key>
 ```
+
 Show the next scheduled run
 
 ```sh
 controller <url> next
 ```
+
 Show the status of the pipeline
 
 ```sh
 controller <url> status
 ```
+
 Run the pipeline
 
 ```sh
@@ -166,23 +178,25 @@ controller <url> run --mode <run mode>
 
 **Note:** To run a pipeline you must supply a run mode using the `-m` or
 `--mode` flag. The value of mode can be either of `full`, `incremental` or
-`views`.
-Create resource tables
+`views`. Create resource tables
 
 ```sh
 controller <url> tables
 ```
+
 Download error logs
 
 ```sh
 controller <url> logs --download
 ```
 
-You can pass an optional file name for the downloaded file. The default is `error.log`.
+You can pass an optional file name for the downloaded file. The default is
+`error.log`.
 
 ```sh
 controller <url> logs --download --filename <filename>
 ```
+
 Show a list of dwh snapshots
 
 ```sh

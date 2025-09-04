@@ -17,7 +17,7 @@ You can get the list of available commands by running with the help flag `-h` or
 
 ### Prerequisites
 
-Python 3.9 or later
+Python 3
 
 ### Steps
 
@@ -62,100 +62,8 @@ pip install .
 
 ## Usage
 
-After installation, you can now use the `controller` command from your terminal.
-The first positional parameter is the _url of the pipeline controller's REST
-API_. You then need to pass the commands as shown after running `controller`
-with the help command.
-
-```sh
-usage: controller [-h] url {config,next,status,run,tables,logs,dwh} ...
-
-The CLI tool for fhir-data-pipes
-
-positional arguments:
-  url                   url of the pipeline controller's REST API
-  {config,next,status,run,tables,logs,dwh}
-                        dwh, next, status, run, config, logs, tables are the available commands.
-    config              show config values
-    next                show the next scheduled run
-    status              show the status of the pipeline
-    run                 run the pipeline
-    tables              create resource tables
-    logs                show logs
-    dwh                 show a list of dwh snapshots
-
-optional arguments:
-  -h, --help            show this help message and exit
-```
-
-### Show config values
-
-```sh
-controller <url> config
-```
-
-### Show specific config value
-
-```sh
-controller <url> config --config-name <config key>
-```
-
-### Show the next scheduled run
-
-```sh
-controller <url> next
-```
-
-### Show the status of the pipeline
-
-```sh
-controller <url> status
-```
-
-### Run the pipeline
-
-```sh
-controller <url> run --mode <run mode>
-```
-
-**Note:** To run a pipeline you must supply a run mode using the `-m` or
-`--mode` flag. The value of mode can be either of `full`, `incremental` or
-`views`.
-
-### Create resource tables
-
-```sh
-controller <url> tables
-```
-
-### Download error logs
-
-```sh
-controller <url> logs --download
-```
-
-You can pass an optional file name for the downloaded file. The default is
-`error.log`.
-
-```sh
-controller <url> logs --download --filename <filename>
-```
-
-### Show a list of dwh snapshots
-
-```sh
-controller <url> dwh
-```
-
-Delete a specific snapshot
-
-```sh
-controller <url> dwh delete --snapshot-id <snapshot id>
-```
-
-**Note:** You can get the snapshot id by running the `controller <url> dwh`
-first. A valid snapshot-id is the full id as shown in the list e.g.
-`dwh/controller_DEV_DWH_TIMESTAMP_2025_08_14T17_47_15_357080Z`
+For details on useage, please check out the documentation here, see the section
+titled [Controller CLI](https://google.github.io/fhir-data-pipes/additional)
 
 ## Testing
 

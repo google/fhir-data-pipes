@@ -22,17 +22,9 @@ import requests
 HTTP_GET = "GET"
 HTTP_POST = "POST"
 
-RUN_MODES = ["INCREMENTAL", "FULL", "VIEWS"]
+RUN_MODES = ["incremental", "full", "views"]
 
-COMMAND_MAP = {
-    "DWH": "dwh",
-    "NEXT": "next",
-    "STATUS": "status",
-    "RUN": "run",
-    "CONFIG": "config",
-    "LOGS": "logs",
-    "TABLES": "tables",
-}
+COMMAND_LIST = ["dwh", "next", "status", "run", "config", "logs", "tables"]
 
 
 def process_response(response: str, args: Dict[str, Any]):
@@ -71,7 +63,7 @@ def _make_api_request(
         return None
 
 
-def config(args) -> str:
+def config(args: str) -> str:
     try:
         if args.config_name:
             response = _make_api_request(
@@ -84,7 +76,7 @@ def config(args) -> str:
         print(f"Error processing: {e}")
 
 
-def next(args) -> str:
+def next(args: str) -> str:
     try:
         response = _make_api_request(HTTP_GET, f"{args.url}/next")
         process_response(response, args)
@@ -92,7 +84,7 @@ def next(args) -> str:
         print(f"Error processing: {e}")
 
 
-def status(args) -> str:
+def status(args: str) -> str:
     try:
         response = _make_api_request(HTTP_GET, f"{args.url}/status")
         process_response(response, args)
@@ -100,7 +92,7 @@ def status(args) -> str:
         print(f"Error processing: {e}")
 
 
-def run(args) -> str:
+def run(args: str) -> str:
     try:
         response = _make_api_request(
             HTTP_POST, f"{args.url}/run?runMode={args.mode.upper()}"
@@ -110,7 +102,7 @@ def run(args) -> str:
         print(f"Error processing: {e}")
 
 
-def tables(args) -> str:
+def tables(args: str) -> str:
     try:
         response = _make_api_request(HTTP_POST, f"{args.url}/tables")
         process_response(response, args)
@@ -128,7 +120,7 @@ def download_file(url: str, filename: str) -> str:
         return f"Error downloading file: {e}"
 
 
-def logs(args) -> str:
+def logs(args: str) -> str:
     try:
         if args.download:
             filename = args.filename if args.filename else "error.log"
@@ -142,7 +134,7 @@ def logs(args) -> str:
         print(f"Error processing: {e}")
 
 
-def delete_snapshot(args) -> str:
+def delete_snapshot(args: str) -> str:
     try:
         response = requests.delete(f"{args.url}/dwh?snapshotId={args.snapshot_id}")
         if response.status_code == 204:
@@ -153,7 +145,7 @@ def delete_snapshot(args) -> str:
         return f"Error deleting snapshot: {e}"
 
 
-def dwh(args) -> str:
+def dwh(args: str) -> str:
     try:
         if hasattr(args, "snapshot_id"):
             response = delete_snapshot(args)
@@ -177,7 +169,7 @@ def main():
     )
     subparsers = parser.add_subparsers(
         dest="command",
-        help=f'{", ".join(str(value) for value in COMMAND_MAP.values())} '
+        help=f'{", ".join(mode for mode in COMMAND_LIST)}'
         "are the available commands.",
         required=True,
     )
@@ -196,14 +188,14 @@ def main():
     )
     status_parser.set_defaults(func=status)
 
-    run_modes = ", ".join(mode.lower() for mode in RUN_MODES)
+    run_modes = ", ".join(mode for mode in RUN_MODES)
     run_parser = subparsers.add_parser("run", help="run the pipeline")
     run_parser.add_argument(
         "--mode",
         "-m",
-        choices=([mode.lower() for mode in RUN_MODES]),
+        choices=(RUN_MODES),
         required=True,
-        help=f"the runType argument, options are {run_modes}",
+        help=f"the type of run; options are {run_modes}",
     )
     run_parser.set_defaults(func=run)
 
@@ -233,7 +225,8 @@ def main():
         "-si",
         required=True,
         help=f"the id of the snapshot in the format "
-        "dwh/controller_DEV_DWH_TIMESTAMP_2025_08_14T17_47_15_357080Z",
+        "<dwhRootPrefix><DwhFiles.TIMESTAMP_PREFIX><timestampSuffix> "
+        "e.g. dwh/controller_DEV_DWH_TIMESTAMP_2025_08_14T17_47_15_357080Z",
     )
     dwh_delete_parser.set_defaults(func=dwh)
 

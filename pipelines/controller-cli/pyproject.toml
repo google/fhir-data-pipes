@@ -6,7 +6,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "controller-cli"
 version = "0.0.1"
-description = "The CLI tool for fhir-data-pipes."
+description = "The CLI tool for fhir-data-pipes controller."
 dependencies = [
     "requests>=2.32.3",
 ]

@@ -11,7 +11,7 @@ from src.main import main
 
 class TestControllerCLI(unittest.TestCase):
 
-    TEST_URL = "http://localhost:9004"
+    TEST_URL = "http://pipeline-controller-api/server/"
 
     @mock.patch.object(sys, "argv", ["controller", TEST_URL, "config"])
     @requests_mock.Mocker()
