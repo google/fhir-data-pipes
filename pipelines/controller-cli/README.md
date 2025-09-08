@@ -83,9 +83,6 @@ Then you can execute the following command from the project's root directory:
  python3 -m unittest tests/test_main.py
 ```
 
-**Note:** update the `TestControllerCLI.TEST_URL` constant in
-`tests/test_main.py` to point to your local server if necessary.
-
 ## Formatting and Linting
 
 This project uses `black` for code formatting, and `PyLint` for linting. To run
