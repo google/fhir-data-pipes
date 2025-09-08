@@ -79,9 +79,8 @@ steps:
   entrypoint: /bin/bash
   args:
   - -c
-  - cd e2e-tests;
-    docker build -t ${_REPOSITORY}/e2e-tests:${_TAG} .;
-    docker build -t ${_REPOSITORY}/e2e-tests/controller-spark:${_TAG} ./controller-spark/.;
+  - docker build -t ${_REPOSITORY}/e2e-tests:${_TAG} -f e2e-tests/Dockerfile ./e2e-tests/;
+    docker build -t ${_REPOSITORY}/e2e-tests/controller-spark:${_TAG} -f e2e-tests/controller-spark/Dockerfile .;
   waitFor: ['-']
 
 - name: '${_REPOSITORY}/synthea-uploader:${_TAG}'

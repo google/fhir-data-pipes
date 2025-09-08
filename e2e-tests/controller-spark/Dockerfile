@@ -35,6 +35,8 @@ ENV HOME_DIR="/workspace/e2e-tests/controller-spark"
 ENV DWH_TYPE="PARQUET"
 ENV CONTROLLER_CLI_DIR="/workspace/pipelines/controller-cli"
 
-RUN cd ${CONTROLLER_CLI_DIR} && pip3 install .
+COPY ./pipelines/controller-cli/ ${CONTROLLER_CLI_DIR}/
+WORKDIR ${CONTROLLER_CLI_DIR}
+RUN pip3 install .
 
 ENTRYPOINT cd ${HOME_DIR}; ./controller_spark_sql_validation.sh ${HOME_DIR} ${PARQUET_SUBDIR} ${DOCKER_NETWORK} ${DWH_TYPE}
