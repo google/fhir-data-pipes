@@ -96,6 +96,12 @@
       <artifactId>commons-collections4</artifactId>
       <version>4.5.0</version>
     </dependency>
+    <dependency>
+      <groupId>org.jspecify</groupId>
+      <artifactId>jspecify</artifactId>
+      <version>1.0.0</version>
+      <scope>provided</scope>
+    </dependency>
   </dependencies>
 
   <build>
