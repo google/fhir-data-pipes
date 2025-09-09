@@ -91,9 +91,6 @@ public class PipelineManager implements ApplicationListener<ApplicationReadyEven
 
   private CronExpression cron;
 
-  // TODO expose this in the web-UI
-  private LastRunStatus lastRunStatus = LastRunStatus.NOT_RUN;
-
   private DwhRunDetails lastRunDetails;
 
   private FlinkConfiguration flinkConfiguration;
@@ -164,7 +161,6 @@ public class PipelineManager implements ApplicationListener<ApplicationReadyEven
   }
 
   private void setLastRunStatus(LastRunStatus status) {
-    lastRunStatus = status;
     if (status == LastRunStatus.SUCCESS) {
       lastRunEnd = LocalDateTime.now();
     }
@@ -373,6 +369,7 @@ public class PipelineManager implements ApplicationListener<ApplicationReadyEven
   }
 
   // Every 30 seconds, check for pipeline status and incremental pipeline schedule.
+  @SuppressWarnings("unused")
   @Scheduled(fixedDelay = 30000)
   private void checkSchedule() throws IOException {
     LocalDateTime next = getNextIncrementalTime();
@@ -407,8 +404,6 @@ public class PipelineManager implements ApplicationListener<ApplicationReadyEven
         new PipelineThread(
             options,
             this,
-            dwhFilesManager,
-            dataProperties,
             pipelineConfig,
             isRecreateViews ? RunMode.VIEWS : RunMode.FULL,
             avroConversionUtil,
@@ -484,7 +479,6 @@ public class PipelineManager implements ApplicationListener<ApplicationReadyEven
             options,
             mergerOptions,
             this,
-            dwhFilesManager,
             dataProperties,
             pipelineConfig,
             avroConversionUtil,
@@ -648,11 +642,8 @@ public class PipelineManager implements ApplicationListener<ApplicationReadyEven
   private static class PipelineThread extends Thread {
     private FhirEtlOptions options;
     private final PipelineManager manager;
-    private final DwhFilesManager dwhFilesManager;
     // This is used in the incremental mode only.
     private final ParquetMergerOptions mergerOptions;
-
-    private final DataProperties dataProperties;
 
     private final PipelineConfig pipelineConfig;
 
@@ -665,8 +656,6 @@ public class PipelineManager implements ApplicationListener<ApplicationReadyEven
     PipelineThread(
         FhirEtlOptions options,
         PipelineManager manager,
-        DwhFilesManager dwhFilesManager,
-        DataProperties dataProperties,
         PipelineConfig pipelineConfig,
         RunMode runMode,
         AvroConversionUtil avroConversionUtil,
@@ -674,8 +663,6 @@ public class PipelineManager implements ApplicationListener<ApplicationReadyEven
       Preconditions.checkArgument(options != null);
       this.options = options;
       this.manager = manager;
-      this.dwhFilesManager = dwhFilesManager;
-      this.dataProperties = dataProperties;
       this.pipelineConfig = pipelineConfig;
       this.runMode = runMode;
       this.mergerOptions = null;
@@ -688,7 +675,6 @@ public class PipelineManager implements ApplicationListener<ApplicationReadyEven
         FhirEtlOptions options,
         ParquetMergerOptions mergerOptions,
         PipelineManager manager,
-        DwhFilesManager dwhFilesManager,
         DataProperties dataProperties,
         PipelineConfig pipelineConfig,
         AvroConversionUtil avroConversionUtil,
@@ -696,9 +682,7 @@ public class PipelineManager implements ApplicationListener<ApplicationReadyEven
       Preconditions.checkArgument(options != null);
       this.options = options;
       this.manager = manager;
-      this.dwhFilesManager = dwhFilesManager;
       this.mergerOptions = mergerOptions;
-      this.dataProperties = dataProperties;
       this.pipelineConfig = pipelineConfig;
       this.avroConversionUtil = avroConversionUtil;
       this.pipelineRunnerClass = pipelineRunnerClass;
