@@ -75,27 +75,33 @@ public class PipelineManager implements ApplicationListener<ApplicationReadyEven
 
   private static final Logger logger = LoggerFactory.getLogger(PipelineManager.class.getName());
 
-  @Autowired private DataProperties dataProperties;
+  @SuppressWarnings({"NotInitialized", "unused"})
+  @Autowired
+  private DataProperties dataProperties;
 
-  @Autowired private DwhFilesManager dwhFilesManager;
+  @SuppressWarnings({"NotInitialized", "unused"})
+  @Autowired
+  private DwhFilesManager dwhFilesManager;
 
-  @Autowired private MeterRegistry meterRegistry;
+  @SuppressWarnings({"NotInitialized", "unused"})
+  @Autowired
+  private MeterRegistry meterRegistry;
 
-  private HiveTableManager hiveTableManager;
+  private HiveTableManager hiveTableManager = null;
 
-  private PipelineThread currentPipeline;
+  private PipelineThread currentPipeline = null;
 
-  private DwhFiles currentDwh;
+  private DwhFiles currentDwh = null;
 
-  private LocalDateTime lastRunEnd;
+  private LocalDateTime lastRunEnd = null;
 
-  private CronExpression cron;
+  private CronExpression cron = null;
 
-  private DwhRunDetails lastRunDetails;
+  private DwhRunDetails lastRunDetails = null;
 
-  private FlinkConfiguration flinkConfiguration;
+  private FlinkConfiguration flinkConfiguration = null;
 
-  private AvroConversionUtil avroConversionUtil;
+  private AvroConversionUtil avroConversionUtil = null;
 
   private static final String ERROR_FILE_NAME = "error.log";
   private static final String SUCCESS = "SUCCESS";
@@ -479,7 +485,6 @@ public class PipelineManager implements ApplicationListener<ApplicationReadyEven
             options,
             mergerOptions,
             this,
-            dataProperties,
             pipelineConfig,
             avroConversionUtil,
             FlinkRunner.class);
@@ -675,7 +680,6 @@ public class PipelineManager implements ApplicationListener<ApplicationReadyEven
         FhirEtlOptions options,
         ParquetMergerOptions mergerOptions,
         PipelineManager manager,
-        DataProperties dataProperties,
         PipelineConfig pipelineConfig,
         AvroConversionUtil avroConversionUtil,
         Class<? extends PipelineRunner> pipelineRunnerClass) {

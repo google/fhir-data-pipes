@@ -63,64 +63,94 @@ public class DataProperties {
     Default.String.class, Default.Integer.class, Default.Boolean.class, Default.Long.class
   };
 
+  @SuppressWarnings("NotInitialized")
   private FhirFetchMode fhirFetchMode;
 
+  @SuppressWarnings("NotInitialized")
   private String fhirServerUrl;
 
+  @SuppressWarnings("NotInitialized")
   private String dbConfig;
 
+  @SuppressWarnings("NotInitialized")
   private String dwhRootPrefix;
 
+  @SuppressWarnings("NotInitialized")
   private String incrementalSchedule;
 
+  @SuppressWarnings("NotInitialized")
   private String purgeSchedule;
 
+  @SuppressWarnings("NotInitialized")
   private int numOfDwhSnapshotsToRetain;
 
+  @SuppressWarnings("NotInitialized")
   private String resourceList;
 
+  @SuppressWarnings("NotInitialized")
   private int numThreads;
 
+  @SuppressWarnings("NotInitialized")
   private String thriftserverHiveConfig;
 
+  @SuppressWarnings("NotInitialized")
   private boolean createHiveResourceTables;
 
+  @SuppressWarnings("NotInitialized")
   private String hiveResourceViewsDir;
 
+  @SuppressWarnings("NotInitialized")
   private String viewDefinitionsDir;
 
+  @SuppressWarnings("NotInitialized")
   private boolean createParquetViews;
 
+  @SuppressWarnings("NotInitialized")
   private String sinkDbConfigPath;
 
+  @SuppressWarnings("NotInitialized")
   private String fhirServerPassword;
 
+  @SuppressWarnings("NotInitialized")
   private String fhirServerUserName;
 
+  @SuppressWarnings("NotInitialized")
   private boolean autoGenerateFlinkConfiguration;
 
+  @SuppressWarnings("NotInitialized")
   private String fhirServerOAuthTokenEndpoint;
 
+  @SuppressWarnings("NotInitialized")
   private String fhirServerOAuthClientId;
 
+  @SuppressWarnings("NotInitialized")
   private String fhirServerOAuthClientSecret;
 
+  @SuppressWarnings("NotInitialized")
   private boolean checkPatientEndpoint;
 
+  @SuppressWarnings("NotInitialized")
   private String sinkFhirServerUrl;
 
+  @SuppressWarnings("NotInitialized")
   public String sinkUserName;
 
+  @SuppressWarnings("NotInitialized")
   public String sinkPassword;
 
+  @SuppressWarnings("NotInitialized")
   private String structureDefinitionsPath;
 
+  @SuppressWarnings("NotInitialized")
   private int rowGroupSizeForParquetFiles;
 
+  @SuppressWarnings("NotInitialized")
   private FhirVersionEnum fhirVersion;
 
+  @SuppressWarnings("NotInitialized")
   private int recursiveDepth;
 
+  @SuppressWarnings("NotInitialized")
   private boolean generateParquetFiles;
 
   @PostConstruct
