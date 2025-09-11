@@ -29,6 +29,7 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.DirectoryNotEmptyException;
 import java.time.LocalDateTime;
+import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -107,7 +108,7 @@ public class DwhFilesManager {
    */
   LocalDateTime getNextPurgeTime() {
     if (lastPurgeRunEnd == null) {
-      return LocalDateTime.now();
+      return LocalDateTime.now(ZoneOffset.UTC);
     }
     return purgeCron.next(lastPurgeRunEnd);
   }
@@ -121,10 +122,10 @@ public class DwhFilesManager {
       }
       LocalDateTime next = getNextPurgeTime();
       logger.info("Last purge run was at {} next run is at {}", lastPurgeRunEnd, next);
-      if (next.compareTo(LocalDateTime.now()) <= 0) {
-        logger.info("Purge run triggered at {}", LocalDateTime.now());
+      if (next.compareTo(LocalDateTime.now(ZoneOffset.UTC)) <= 0) {
+        logger.info("Purge run triggered at {}", LocalDateTime.now(ZoneOffset.UTC));
         purgeDwhFiles();
-        logger.info("Purge run completed at {}", LocalDateTime.now());
+        logger.info("Purge run completed at {}", LocalDateTime.now(ZoneOffset.UTC));
       }
     } finally {
       releasePurgeJob();
@@ -149,7 +150,7 @@ public class DwhFilesManager {
       TreeSet<String> recentSnapshotsToBeRetained =
           getRecentSnapshots(paths, numOfDwhSnapshotsToRetain);
       deleteOlderSnapshots(paths, recentSnapshotsToBeRetained);
-      lastPurgeRunEnd = LocalDateTime.now();
+      lastPurgeRunEnd = LocalDateTime.now(ZoneOffset.UTC);
     } catch (IOException e) {
       logger.error("Error occurred while purging older snapshots", e);
     }
@@ -303,7 +304,7 @@ public class DwhFilesManager {
    *
    * @param dwhResource The DWH resource path which needs to be checked for completeness
    * @return the status of DWH completeness.
-   * @throws IOException
+   * @throws IOException if any IO errors occur.
    */
   boolean isDwhComplete(ResourceId dwhResource) throws IOException {
     ResourceId startTimestampResource =
@@ -333,7 +334,7 @@ public class DwhFilesManager {
    *
    * @param resourceId the resource to be checked
    * @return the existence status of the resource
-   * @throws IOException
+   * @throws IOException if any IO errors occur.
    */
   boolean doesFileExist(ResourceId resourceId) throws IOException {
     List<MatchResult> matchResultList =

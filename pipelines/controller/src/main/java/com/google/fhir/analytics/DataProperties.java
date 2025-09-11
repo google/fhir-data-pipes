@@ -63,94 +63,94 @@ public class DataProperties {
     Default.String.class, Default.Integer.class, Default.Boolean.class, Default.Long.class
   };
 
-  @SuppressWarnings("NotInitialized")
+  @SuppressWarnings("NullAway")
   private FhirFetchMode fhirFetchMode;
 
-  @SuppressWarnings("NotInitialized")
+  @SuppressWarnings("NullAway")
   private String fhirServerUrl;
 
-  @SuppressWarnings("NotInitialized")
+  @SuppressWarnings("NullAway")
   private String dbConfig;
 
-  @SuppressWarnings("NotInitialized")
+  @SuppressWarnings("NullAway")
   private String dwhRootPrefix;
 
-  @SuppressWarnings("NotInitialized")
+  @SuppressWarnings("NullAway")
   private String incrementalSchedule;
 
-  @SuppressWarnings("NotInitialized")
+  @SuppressWarnings("NullAway")
   private String purgeSchedule;
 
-  @SuppressWarnings("NotInitialized")
+  @SuppressWarnings("NullAway")
   private int numOfDwhSnapshotsToRetain;
 
-  @SuppressWarnings("NotInitialized")
+  @SuppressWarnings("NullAway")
   private String resourceList;
 
-  @SuppressWarnings("NotInitialized")
+  @SuppressWarnings("NullAway")
   private int numThreads;
 
-  @SuppressWarnings("NotInitialized")
+  @SuppressWarnings("NullAway")
   private String thriftserverHiveConfig;
 
-  @SuppressWarnings("NotInitialized")
+  @SuppressWarnings("NullAway")
   private boolean createHiveResourceTables;
 
-  @SuppressWarnings("NotInitialized")
+  @SuppressWarnings("NullAway")
   private String hiveResourceViewsDir;
 
-  @SuppressWarnings("NotInitialized")
+  @SuppressWarnings("NullAway")
   private String viewDefinitionsDir;
 
-  @SuppressWarnings("NotInitialized")
+  @SuppressWarnings("NullAway")
   private boolean createParquetViews;
 
-  @SuppressWarnings("NotInitialized")
+  @SuppressWarnings("NullAway")
   private String sinkDbConfigPath;
 
-  @SuppressWarnings("NotInitialized")
+  @SuppressWarnings("NullAway")
   private String fhirServerPassword;
 
-  @SuppressWarnings("NotInitialized")
+  @SuppressWarnings("NullAway")
   private String fhirServerUserName;
 
-  @SuppressWarnings("NotInitialized")
+  @SuppressWarnings("NullAway")
   private boolean autoGenerateFlinkConfiguration;
 
-  @SuppressWarnings("NotInitialized")
+  @SuppressWarnings("NullAway")
   private String fhirServerOAuthTokenEndpoint;
 
-  @SuppressWarnings("NotInitialized")
+  @SuppressWarnings("NullAway")
   private String fhirServerOAuthClientId;
 
-  @SuppressWarnings("NotInitialized")
+  @SuppressWarnings("NullAway")
   private String fhirServerOAuthClientSecret;
 
-  @SuppressWarnings("NotInitialized")
+  @SuppressWarnings("NullAway")
   private boolean checkPatientEndpoint;
 
-  @SuppressWarnings("NotInitialized")
+  @SuppressWarnings("NullAway")
   private String sinkFhirServerUrl;
 
-  @SuppressWarnings("NotInitialized")
+  @SuppressWarnings("NullAway")
   public String sinkUserName;
 
-  @SuppressWarnings("NotInitialized")
+  @SuppressWarnings("NullAway")
   public String sinkPassword;
 
-  @SuppressWarnings("NotInitialized")
+  @SuppressWarnings("NullAway")
   private String structureDefinitionsPath;
 
-  @SuppressWarnings("NotInitialized")
+  @SuppressWarnings("NullAway")
   private int rowGroupSizeForParquetFiles;
 
-  @SuppressWarnings("NotInitialized")
+  @SuppressWarnings("NullAway")
   private FhirVersionEnum fhirVersion;
 
-  @SuppressWarnings("NotInitialized")
+  @SuppressWarnings("NullAway")
   private int recursiveDepth;
 
-  @SuppressWarnings("NotInitialized")
+  @SuppressWarnings("NullAway")
   private boolean generateParquetFiles;
 
   @PostConstruct

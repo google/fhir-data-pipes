@@ -72,7 +72,7 @@ public class FlinkConfiguration {
 
   private static final String KEY_VALUE_FORMAT = "%s: %s";
 
-  @SuppressWarnings("NotInitialized")
+  @SuppressWarnings("NullAway")
   private String flinkConfDir;
 
   public String getFlinkConfDir() {

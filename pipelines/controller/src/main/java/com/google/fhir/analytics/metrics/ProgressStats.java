@@ -22,7 +22,7 @@ import lombok.ToString;
 @Getter
 @Setter
 @ToString
-@SuppressWarnings("NotInitialized")
+@SuppressWarnings("NullAway")
 public class ProgressStats {
   private String pipelineStatus;
   private Stats stats;

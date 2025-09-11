@@ -42,6 +42,7 @@ import lombok.Data;
 import org.apache.beam.sdk.io.FileSystems;
 import org.apache.beam.sdk.io.fs.ResourceId;
 import org.hl7.fhir.instance.model.api.IBaseResource;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -219,7 +220,7 @@ public class ApiController {
     return getConfigMap(name);
   }
 
-  private Map<String, String> getConfigMap(String configName) {
+  private Map<String, String> getConfigMap(@Nullable String configName) {
     List<DataProperties.ConfigFields> configParams = dataProperties.getConfigParams();
 
     Map<String, String> configMap;
@@ -238,13 +239,13 @@ public class ApiController {
   }
 
   @Data
-  public class ScheduleDto {
+  public static class ScheduleDto {
     @JsonProperty("next_run")
     private String nextRun;
   }
 
   @Data
-  public class DwhDto {
+  public static class DwhDto {
     @JsonProperty("dwh_prefix")
     private String dwhPrefix;
 
