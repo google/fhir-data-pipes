@@ -212,3 +212,18 @@ controller <url> dwh delete --snapshot-id <snapshot id>
 **Note:** You can get the snapshot id by running the `controller <url> dwh`
 first. A valid snapshot-id is the full id as shown in the list e.g.
 `dwh/controller_DEV_DWH_TIMESTAMP_2025_08_14T17_47_15_357080Z`
+
+**Note on CLI Access in Docker container:** If you are running the pipeline
+controller in a docker container as defined in ./Dockerfile e.g. such as when
+using the Single Machine docker compose configuration, you can access the CLI
+tool by running the following command from the host machine.
+
+```sh
+docker exec -it <container_id or container_name> /bin/bash
+```
+
+And then access the CLI tool as described above.
+
+```sh
+controller <url> <command> [options]
+```
