@@ -46,19 +46,24 @@ There are _3 Docker server_ configurations you can use for testing:
     to the FHIR server that you brought up using the
     [Synthea data uploader](https://github.com/google/fhir-data-pipes/blob/master/synthea-hiv/README.md#Uploader).
 
-    The uploader requires that you install the `uploader` module requirements first. You can do this by running:
+    The uploader requires that you install the `uploader` module requirements
+    first. You can do this by running:
 
     ```shell
     pip3 install -r ./synthea-hiv/uploader/requirements.txt
     ```
-    Please note, it is a good idea to first create a Python `virtualenv` before running the above command to
-    avoid conflicts with other Python packages you may have installed globally. You can do this by running:
+
+    Please note, it is a good idea to first create a Python `virtualenv` before
+    running the above command to avoid conflicts with other Python packages you
+    may have installed globally. You can do this by running:
+
     ```shell
     $ virtualenv -p python3.8 venv
     $ . ./venv/bin/activate
     ```
 
-    Then, you can run the uploader script to upload the synthetic data to the FHIR server.
+    Then, you can run the uploader script to upload the synthetic data to the
+    FHIR server.
 
     For example, to upload to the HAPI FHIR server brought up in the previous
     step, run:
