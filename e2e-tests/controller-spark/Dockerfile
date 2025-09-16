@@ -33,10 +33,9 @@ ENV PARQUET_SUBDIR="dwh"
 ENV DOCKER_NETWORK="--use_docker_network"
 ENV HOME_DIR="/workspace/e2e-tests/controller-spark"
 ENV DWH_TYPE="PARQUET"
-ENV CONTROLLER_CLI_DIR="./controller-cli"
+ENV CONTROLLER_CLI_DIR="/workspace/pipelines/controller-cli"
 
-COPY ./pipelines/controller-cli/ ${CONTROLLER_CLI_DIR}/
-WORKDIR ${CONTROLLER_CLI_DIR}
+RUN cd ${CONTROLLER_CLI_DIR}/
 RUN pip3 install .
 
 ENTRYPOINT cd ${HOME_DIR}; ./controller_spark_sql_validation.sh ${HOME_DIR} ${PARQUET_SUBDIR} ${DOCKER_NETWORK} ${DWH_TYPE}
