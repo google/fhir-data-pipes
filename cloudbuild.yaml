@@ -204,15 +204,16 @@ steps:
     waitFor: [ 'Bring up controller and Spark containers',
                'Run E2E Test for BULK_EXPORT mode with HAPI source' ]
 
-  # The controller logs don't appear in Cloud Build output because we run it in
-  # the detached mode. For debugging controller failures we can use something like
-  #  the following (and forcing the previous step to have 0 exit code).
-  # - name: 'gcr.io/cloud-builders/docker'
-  #   id: 'PRINT CONTROLLER LOGS'
-  #   entrypoint: /bin/bash
-  #   args:
-  #   - -c
-  #   - docker logs pipeline-controller
+# The controller logs don't appear in Cloud Build output because we run it in
+# the detached mode. For debugging controller failures we can use something like
+# the following (and forcing the previous step to have 0 exit code or by
+# adding allowFailure: true).
+# - name: 'gcr.io/cloud-builders/docker'
+#   id: 'PRINT CONTROLLER LOGS'
+#   entrypoint: /bin/bash
+#   args:
+#   - -c
+#   - docker logs pipeline-controller
 
   - name: 'docker/compose'
     id: 'Bring down controller and Spark containers'
