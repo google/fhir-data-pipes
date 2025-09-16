@@ -42,9 +42,21 @@ FROM eclipse-temurin:17-jdk-focal as main
 
 RUN apt-get update && apt-get install -y libjemalloc-dev
 
+# Install Python and pip and clean up apt cache
+RUN apt-get update && apt-get install -y python3 python3-pip && rm -rf /var/lib/apt/lists/*
+
 WORKDIR /app
 
 COPY --from=build /app/pipelines/controller/target/controller-bundled.jar .
+
+COPY --from=build /app/pipelines/controller-cli ./controller-cli
+
+WORKDIR ./controller-cli
+
+# Install the controller-cli script
+RUN pip3 install .
+
+WORKDIR /app
 
 COPY ./docker/config ./config
 
