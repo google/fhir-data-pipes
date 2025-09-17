@@ -51,7 +51,7 @@
     <license-maven-plugin.version>5.0.0</license-maven-plugin.version>
     <beam.version>2.56.0</beam.version>
     <auto-value.version>1.11.0</auto-value.version>
-    <lombok.version>1.18.38</lombok.version>
+    <lombok.version>1.18.40</lombok.version>
     <errorprone.version>2.41.0</errorprone.version>
     <nullaway.version>0.12.9</nullaway.version>
   </properties>
