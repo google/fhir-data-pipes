@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2024 Google LLC
+ * Copyright 2020-2025 Google LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -71,6 +71,8 @@ public class FlinkConfiguration {
   private static final int PARQUET_ROW_GROUP_INFLATION_FACTOR = 2;
 
   private static final String KEY_VALUE_FORMAT = "%s: %s";
+
+  @SuppressWarnings("NullAway")
   private String flinkConfDir;
 
   public String getFlinkConfDir() {
@@ -246,6 +248,7 @@ public class FlinkConfiguration {
     return memoryInBytes / (1024 * 1024);
   }
 
+  @SuppressWarnings("unused")
   private boolean isFlinkModeLocal(DataProperties dataProperties) {
     // TODO: Enable the pipeline for Flink non-local modes as well
     // https://github.com/google/fhir-data-pipes/issues/893

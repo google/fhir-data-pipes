@@ -37,6 +37,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Random;
 import java.util.Set;
 import java.util.Timer;
@@ -225,7 +226,7 @@ public class ParquetUtil {
     ResourceId resourceId =
         vDef == null
             ? getUniqueOutputFilePath(resourceType)
-            : getUniqueOutputFilePathView(vDef.getName());
+            : getUniqueOutputFilePathView(Objects.requireNonNull(vDef.getName()));
 
     WritableByteChannel writableByteChannel =
         org.apache.beam.sdk.io.FileSystems.create(resourceId, MimeTypes.BINARY);
@@ -272,7 +273,8 @@ public class ParquetUtil {
       }
     }
     if (!Strings.isNullOrEmpty(outputParquetViewPath)) {
-      ImmutableList<ViewDefinition> views = viewManager.getViewsForType(resource.fhirType());
+      ImmutableList<ViewDefinition> views =
+          Objects.requireNonNull(viewManager).getViewsForType(resource.fhirType());
       if (views != null) {
         for (ViewDefinition vDef : views) {
           write(resource, vDef);

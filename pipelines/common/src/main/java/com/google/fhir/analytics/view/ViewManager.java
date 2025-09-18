@@ -31,6 +31,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Stream;
 import org.jspecify.annotations.Nullable;
@@ -68,7 +69,7 @@ public class ViewManager {
     }
     for (Path p : viewPaths) {
       ViewDefinition vDef = ViewDefinition.createFromFile(p);
-      viewManager.viewMap.put(vDef.getResource(), vDef);
+      viewManager.viewMap.put(Objects.requireNonNull(vDef.getResource()), vDef);
     }
     // Checking for Duplicate View Definitions and returning the names of any duplicates found
     Collection<ViewDefinition> viewDefinitions = viewManager.viewMap.values();

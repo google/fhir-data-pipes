@@ -62,7 +62,7 @@ public class ViewDefinition {
   // We try to limit the schema generation and validation to a minimum here as we prefer this to be
   // a pure data-object. This class is instantiated only with factory methods, so it is probably
   // okay to keep the current pattern.
-  @Getter
+  @Getter @Nullable
   private ImmutableMap<String, Column> allColumns; // Initialized once in `validateAndSetUp`.
 
   // This class should only be instantiated with the `create*` factory methods.
@@ -143,6 +143,7 @@ public class ViewDefinition {
    * @return the [ordered] map of new column names and their types as string.
    * @throws ViewDefinitionException for repeated columns or other requirements not satisfied.
    */
+  @SuppressWarnings("NonApiType")
   private LinkedHashMap<String, Column> validateAndReplaceConstantsInSelects(
       @Nullable List<Select> selects, LinkedHashMap<String, Column> currentColumns)
       throws ViewDefinitionException {
@@ -157,10 +158,12 @@ public class ViewDefinition {
     return newCols;
   }
 
+  @SuppressWarnings("NonApiType")
   private static LinkedHashMap<String, Column> newTypeMap() {
     return new LinkedHashMap<>();
   }
 
+  @SuppressWarnings("NonApiType")
   private static LinkedHashMap<String, Column> unionTypeMaps(
       LinkedHashMap<String, Column> m1, LinkedHashMap<String, Column> m2) {
     LinkedHashMap<String, Column> u = new LinkedHashMap<>();
@@ -169,6 +172,7 @@ public class ViewDefinition {
     return u;
   }
 
+  @SuppressWarnings("NonApiType")
   private LinkedHashMap<String, Column> validateAndReplaceConstantsInOneSelect(
       Select select, LinkedHashMap<String, Column> currentColumns) throws ViewDefinitionException {
     LinkedHashMap<String, Column> newCols = newTypeMap();
@@ -289,7 +293,7 @@ public class ViewDefinition {
     @Nullable private String path;
     @Nullable private String name;
     @Nullable private String type;
-    @Nullable private boolean collection;
+    private boolean collection;
     @Nullable private String description;
     // The following fields are _not_ read from the ViewDefinition.
     @Nullable private String inferredType;
@@ -329,6 +333,8 @@ public class ViewDefinition {
     }
 
     /**
+     * Converts the value of this constant to a string that can be used in FHIRPath expressions.
+     *
      * @return a string that can replace this constant in FHIRPaths.
      * @throws ViewDefinitionException if zero or more than one value is defined.
      */
@@ -424,17 +430,12 @@ public class ViewDefinition {
 
   /** Coverts the given FHIR version string to a {@link FhirVersionEnum}. */
   public static FhirVersionEnum convertFhirVersion(String fhirVersion) {
-    switch (fhirVersion.substring(0, 3)) {
-      case "3.0":
-        return FhirVersionEnum.DSTU3;
-      case "4.0":
-        return FhirVersionEnum.R4;
-      case "4.3":
-        return FhirVersionEnum.R4B;
-      case "5.0":
-        return FhirVersionEnum.R5;
-      default:
-        throw new IllegalArgumentException("FHIR version not supported!");
-    }
+    return switch (fhirVersion.substring(0, 3)) {
+      case "3.0" -> FhirVersionEnum.DSTU3;
+      case "4.0" -> FhirVersionEnum.R4;
+      case "4.3" -> FhirVersionEnum.R4B;
+      case "5.0" -> FhirVersionEnum.R5;
+      default -> throw new IllegalArgumentException("FHIR version not supported!");
+    };
   }
 }
