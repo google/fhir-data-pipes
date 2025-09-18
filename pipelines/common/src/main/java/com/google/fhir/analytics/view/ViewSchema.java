@@ -30,12 +30,14 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Map.Entry;
+import java.util.Objects;
 import java.util.stream.Collectors;
 import org.apache.avro.Schema;
 import org.apache.avro.SchemaBuilder;
 import org.apache.avro.SchemaBuilder.FieldAssembler;
 import org.apache.avro.generic.GenericData;
 import org.apache.avro.generic.GenericRecord;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -54,37 +56,28 @@ public class ViewSchema {
    * @param fhirType the given FHIR type
    * @return the corresponding JDBCType; if `fhirType` is not mapped JDBCType.VARCHAR is returned.
    */
-  public static JDBCType fhirTypeToDb(String fhirType) {
+  public static JDBCType fhirTypeToDb(@Nullable String fhirType) {
     if (fhirType != null) {
-      switch (fhirType) {
-        case "boolean":
-          return JDBCType.BOOLEAN;
-        case "integer":
-        case "unsignedInt":
-          return JDBCType.INTEGER;
-        case "integer64":
-          return JDBCType.BIGINT;
-        case "decimal":
-          return JDBCType.DECIMAL;
-        case "date":
-          return JDBCType.DATE;
-        case "dateTime":
-        case "instant":
-          return JDBCType.TIMESTAMP;
-        case "time":
-          return JDBCType.TIME;
-        case "base64Binary":
-        case "canonical":
-        case "code":
-        case "id":
-        case "markdown":
-        case "oid":
-        case "string":
-        case "uri":
-        case "url":
-        case "uuid":
-          return JDBCType.VARCHAR;
-      }
+      return switch (fhirType) {
+        case "boolean" -> JDBCType.BOOLEAN;
+        case "integer", "unsignedInt" -> JDBCType.INTEGER;
+        case "integer64" -> JDBCType.BIGINT;
+        case "decimal" -> JDBCType.DECIMAL;
+        case "date" -> JDBCType.DATE;
+        case "dateTime", "instant" -> JDBCType.TIMESTAMP;
+        case "time" -> JDBCType.TIME;
+        case "base64Binary",
+            "canonical",
+            "code",
+            "id",
+            "markdown",
+            "oid",
+            "string",
+            "uri",
+            "url",
+            "uuid" -> JDBCType.VARCHAR;
+        default -> JDBCType.VARCHAR;
+      };
     }
     // This is to handle non-primitive types or when the type is not specified, we may want to
     // separate these case from string in the future.
@@ -99,7 +92,7 @@ public class ViewSchema {
    */
   public static ImmutableMap<String, JDBCType> getDbSchema(ViewDefinition view) {
     ImmutableMap.Builder<String, JDBCType> builder = ImmutableMap.builder();
-    for (Entry<String, Column> entry : view.getAllColumns().entrySet()) {
+    for (Entry<String, Column> entry : Objects.requireNonNull(view.getAllColumns()).entrySet()) {
       // This is internally guaranteed.
       Preconditions.checkState(entry.getValue() != null);
       if (entry.getValue().getType() == null && entry.getValue().getInferredType() == null) {
@@ -115,7 +108,7 @@ public class ViewSchema {
    *
    * @param rowElements the input elements of the row
    * @param statement the statement on which `set*()` methods are called to write the row elements
-   * @throws SQLException
+   * @throws SQLException if an error occurs while setting values in the statement
    */
   public static void setValueInStatement(
       ImmutableList<RowElement> rowElements, PreparedStatement statement) throws SQLException {
@@ -143,7 +136,7 @@ public class ViewSchema {
             case DATE:
             case TIMESTAMP:
             case TIME:
-              statement.setTimestamp(ind, new Timestamp(re.<Date>getPrimitive().getTime()));
+              statement.setTimestamp(ind, Timestamp.from(re.<Date>getPrimitive().toInstant()));
               break;
             case VARCHAR:
             default:
@@ -222,8 +215,8 @@ public class ViewSchema {
             }
           }
         } else {
-          if (e.getColumnInfo().isCollection() || e.getColumnInfo().getType() instanceof String) {
-            if (e.getValues() == null || e.getValues().size() < 1) {
+          if (e.getColumnInfo().isCollection() || e.getColumnInfo().getType() != null) {
+            if (e.getValues() == null || e.getValues().isEmpty()) {
               currentRecord.put(e.getColumnInfo().getName(), null);
             } else {
               // Handles View Definition Collections and converts them to Avro String Arrays
@@ -246,15 +239,16 @@ public class ViewSchema {
 
   /**
    * Creates an Avro Schema for a given View Definition. Note: This conversion should be consistent
-   * with {@see #com.cerner.bunsen.avro.converters.DefinitionToAvroVisitor}
+   * with
    *
+   * @see com.cerner.bunsen.avro.converters.DefinitionToAvroVisitor
    * @param view the input View Definition
    * @return Avro Schema
    */
   public static Schema getAvroSchema(ViewDefinition view) {
     FieldAssembler<Schema> schemaFields =
         SchemaBuilder.record(view.getName()).namespace("org.viewDefinition").fields();
-    for (Entry<String, Column> entry : view.getAllColumns().entrySet()) {
+    for (Entry<String, Column> entry : Objects.requireNonNull(view.getAllColumns()).entrySet()) {
       Preconditions.checkState(entry.getValue() != null);
       String columnType = entry.getValue().getType();
       String colName = entry.getKey();

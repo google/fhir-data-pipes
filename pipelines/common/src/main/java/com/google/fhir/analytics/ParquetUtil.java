@@ -32,15 +32,7 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.channels.Channels;
 import java.nio.channels.WritableByteChannel;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
-import java.util.Random;
-import java.util.Set;
-import java.util.Timer;
-import java.util.TimerTask;
+import java.util.*;
 import org.apache.avro.generic.GenericRecord;
 import org.apache.beam.sdk.io.fs.ResolveOptions.StandardResolveOptions;
 import org.apache.beam.sdk.io.fs.ResourceId;
@@ -225,7 +217,7 @@ public class ParquetUtil {
     ResourceId resourceId =
         vDef == null
             ? getUniqueOutputFilePath(resourceType)
-            : getUniqueOutputFilePathView(vDef.getName());
+            : getUniqueOutputFilePathView(Objects.requireNonNull(vDef.getName()));
 
     WritableByteChannel writableByteChannel =
         org.apache.beam.sdk.io.FileSystems.create(resourceId, MimeTypes.BINARY);
@@ -272,7 +264,8 @@ public class ParquetUtil {
       }
     }
     if (!Strings.isNullOrEmpty(outputParquetViewPath)) {
-      ImmutableList<ViewDefinition> views = viewManager.getViewsForType(resource.fhirType());
+      ImmutableList<ViewDefinition> views =
+          Objects.requireNonNull(viewManager).getViewsForType(resource.fhirType());
       if (views != null) {
         for (ViewDefinition vDef : views) {
           write(resource, vDef);

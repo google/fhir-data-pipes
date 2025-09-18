@@ -29,14 +29,8 @@ import com.google.fhir.analytics.view.ViewDefinition.Column;
 import com.google.fhir.analytics.view.ViewDefinition.Select;
 import com.google.fhir.analytics.view.ViewDefinition.Where;
 import com.google.gson.Gson;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.Map.Entry;
-import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -110,10 +104,10 @@ public class ViewApplicator {
    */
   public RowList apply(IBaseResource resource) throws ViewApplicationException {
     Preconditions.checkState(
-        viewDef.getResource().equals(resource.fhirType()),
-        String.format(
-            "expected resource type %s got %s",
-            viewDef.getResource(), Strings.nullToEmpty(resource.fhirType())));
+        Objects.requireNonNull(viewDef.getResource()).equals(resource.fhirType()),
+        "expected resource type %s got %s",
+        viewDef.getResource(),
+        Strings.nullToEmpty(resource.fhirType()));
     if (satisfiesWhere(resource)) {
       return applyAllSelects(resource, viewDef.getSelect());
     } else {
@@ -137,14 +131,16 @@ public class ViewApplicator {
       return true;
     }
     for (Where w : viewDef.getWhere()) {
-      List<IBase> results = evaluateFhirPath(resource, w.getPath());
+      List<IBase> results = evaluateFhirPath(resource, Objects.requireNonNull(w.getPath()));
       // Empty list is treated as false; see logic operators https://hl7.org/fhirpath/#boolean-logic
       if (results != null && results.isEmpty()) {
         return false;
       }
       if (results == null || results.size() != 1 || !results.get(0).fhirType().equals("boolean")) {
         String error =
-            String.format("The `where` FHIRPath %s did not return one boolean!", w.getPath());
+            String.format(
+                "The `where` FHIRPath %s did not return one boolean!",
+                Objects.requireNonNull(w.getPath()));
         log.error(error);
         throw new ViewApplicationException(error);
       }
@@ -181,13 +177,13 @@ public class ViewApplicator {
   }
 
   private RowList crossJoinAll(List<RowList> rowsPerSelect) throws ViewApplicationException {
-    RowList currentList = null;
+    RowList currentList = EMPTY_LIST;
     for (RowList rows : rowsPerSelect) {
       if (rows == null || rows.getRows().isEmpty()) {
         // One of the sub-lists is empty hence the whole cross-join will be empty.
         return EMPTY_LIST;
       }
-      if (currentList == null) {
+      if (currentList.isEmpty()) {
         currentList = rows;
       } else {
         currentList = currentList.crossJoin(rows);
@@ -290,11 +286,10 @@ public class ViewApplicator {
     List<RowElement> rowElements = new ArrayList<>();
     for (Column col : columns) {
       if (GET_RESOURCE_KEY.equals(col.getPath())) {
-        if (element == null || !(element instanceof IBaseResource)) {
+        if (element == null || !(element instanceof IBaseResource baseResource)) {
           throw new ViewApplicationException(
               GET_RESOURCE_KEY + " can only be applied at the root!");
         }
-        IBaseResource baseResource = (IBaseResource) element;
         rowElements.add(
             new RowElement(
                 // TODO move all type inference to a single place outside View application.
@@ -321,11 +316,11 @@ public class ViewApplicator {
           eval = evaluateFhirPath(element, fhirPathForRef);
         }
         for (IBase refElem : eval) {
-          if (!(refElem instanceof IBaseReference)) {
+          if (!(refElem instanceof IBaseReference refElemBaseReference)) {
             throw new ViewApplicationException(
                 "getReferenceKey can only be applied to Reference elements; got " + fhirPathForRef);
           }
-          IIdType ref = ((IBaseReference) refElem).getReferenceElement();
+          IIdType ref = refElemBaseReference.getReferenceElement();
           if (resType.isEmpty()) {
             refs.add(ref);
           } else {
@@ -341,7 +336,7 @@ public class ViewApplicator {
       }
       List<IBase> eval = null;
       if (element != null) {
-        eval = evaluateFhirPath(element, col.getPath());
+        eval = evaluateFhirPath(element, Objects.requireNonNull(col.getPath()));
       }
       rowElements.add(new RowElement(col, eval));
     }
@@ -364,7 +359,9 @@ public class ViewApplicator {
 
     private final ImmutableList<FlatRow> rows;
 
-    private RowList(List<FlatRow> rows, LinkedHashMap<String, Column> columnInfos) {
+    private RowList(
+        List<FlatRow> rows,
+        @SuppressWarnings("NonApiType") LinkedHashMap<String, Column> columnInfos) {
       this.rows = ImmutableList.copyOf(rows);
       this.columnInfos = ImmutableMap.copyOf(columnInfos);
     }
@@ -465,6 +462,7 @@ public class ViewApplicator {
     }
 
     // This can eventually be public, but currently it is not used outside this file.
+    @SuppressWarnings("EffectivelyPrivate")
     private static class Builder {
       private final LinkedHashMap<String, Column> columnInfos = new LinkedHashMap<>();
       private final List<FlatRow> rows = new ArrayList<>();
@@ -550,15 +548,16 @@ public class ViewApplicator {
 
   @Getter
   public static class RowElement {
-    private final List<IBase> values;
+    @Nullable private final List<IBase> values;
     private final Column columnInfo;
 
     @Override
     public String toString() {
-      return columnInfo.getName() + ":" + Arrays.toString(values.toArray());
+      return columnInfo.getName() + ":" + Arrays.toString(Objects.requireNonNull(values).toArray());
     }
 
-    public RowElement(Column columnInfo, List<IBase> values) throws ViewApplicationException {
+    public RowElement(Column columnInfo, @Nullable List<IBase> values)
+        throws ViewApplicationException {
       if (!columnInfo.isCollection() && values != null && values.size() > 1) {
         throw new ViewApplicationException(
             "A list provided for the non-collection column " + columnInfo.getName());
@@ -568,6 +567,7 @@ public class ViewApplicator {
     }
 
     // Convenience function
+    @Nullable
     public String getName() {
       return columnInfo.getName();
     }
@@ -626,9 +626,6 @@ public class ViewApplicator {
         return null;
       }
       IPrimitiveType<T> primitive = (IPrimitiveType<T>) val;
-      if (primitive == null) {
-        return null;
-      }
       return primitive.getValue();
     }
 
@@ -644,7 +641,7 @@ public class ViewApplicator {
 
     public List<String> getIdParts() {
       List<String> idParts = new ArrayList<>();
-      if (ID_TYPE.equals(columnInfo.getInferredType())) {
+      if (values != null && ID_TYPE.equals(columnInfo.getInferredType())) {
         for (IBase elem : values) {
           idParts.add(getIdString((IIdType) elem));
         }
@@ -653,8 +650,7 @@ public class ViewApplicator {
     }
 
     public boolean isIdType() {
-      return (ID_TYPE.equals(columnInfo.getInferredType()))
-          || (ID_TYPE.equals(columnInfo.getType()));
+      return ID_TYPE.equals(columnInfo.getInferredType()) || ID_TYPE.equals(columnInfo.getType());
     }
   }
 }

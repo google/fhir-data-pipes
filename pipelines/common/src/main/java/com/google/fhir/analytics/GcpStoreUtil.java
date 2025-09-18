@@ -31,6 +31,7 @@ import java.io.IOException;
 import java.net.URISyntaxException;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Objects;
 import org.apache.http.client.utils.URIBuilder;
 import org.hl7.fhir.r4.model.Bundle;
 import org.hl7.fhir.r4.model.Resource;
@@ -86,13 +87,14 @@ class GcpStoreUtil extends FhirStoreUtil {
           uri,
           bundle,
           Collections.singletonList(
-              new BearerTokenAuthInterceptor(credential.refreshAccessToken().getTokenValue())));
+              new BearerTokenAuthInterceptor(
+                  Objects.requireNonNull(credential).refreshAccessToken().getTokenValue())));
     } catch (IOException e) {
       log.error("IOException while using Google APIs: {}", e.toString(), e);
     } catch (URISyntaxException e) {
       log.error("URI syntax exception while using Google APIs: {}", e.toString(), e);
     }
-    return null;
+    return Collections.emptyList();
   }
 
   @Nullable
@@ -108,7 +110,8 @@ class GcpStoreUtil extends FhirStoreUtil {
           uri,
           resource,
           Collections.<IClientInterceptor>singletonList(
-              new BearerTokenAuthInterceptor(credential.refreshAccessToken().getTokenValue())));
+              new BearerTokenAuthInterceptor(
+                  Objects.requireNonNull(credential).refreshAccessToken().getTokenValue())));
     } catch (IOException e) {
       log.error(String.format("IOException while using Google APIs: %s", e.toString()));
     } catch (URISyntaxException e) {

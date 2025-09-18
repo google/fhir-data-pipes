@@ -24,14 +24,7 @@ import java.nio.file.FileVisitOption;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Stream;
 import org.jspecify.annotations.Nullable;
 
@@ -68,7 +61,7 @@ public class ViewManager {
     }
     for (Path p : viewPaths) {
       ViewDefinition vDef = ViewDefinition.createFromFile(p);
-      viewManager.viewMap.put(vDef.getResource(), vDef);
+      viewManager.viewMap.put(Objects.requireNonNull(vDef.getResource()), vDef);
     }
     // Checking for Duplicate View Definitions and returning the names of any duplicates found
     Collection<ViewDefinition> viewDefinitions = viewManager.viewMap.values();
