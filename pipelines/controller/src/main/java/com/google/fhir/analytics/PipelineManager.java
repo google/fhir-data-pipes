@@ -369,6 +369,8 @@ public class PipelineManager implements ApplicationListener<ApplicationReadyEven
   }
 
   /**
+   * Fetches the next scheduled time to run the incremental pipeline.
+   *
    * @return the next scheduled time to run the incremental pipeline or null iff a pipeline is
    *     currently running or no previous DWH exist.
    */
@@ -609,7 +611,7 @@ public class PipelineManager implements ApplicationListener<ApplicationReadyEven
 
   @Nullable
   private String getTimestampSuffix(String path) {
-    String[] tokens = path.split(DwhFiles.TIMESTAMP_PREFIX);
+    String[] tokens = path.split(DwhFiles.TIMESTAMP_PREFIX, -1);
     if (tokens.length < 1) return null;
     return tokens[tokens.length - 1].replaceAll("/", "");
   }
@@ -659,11 +661,11 @@ public class PipelineManager implements ApplicationListener<ApplicationReadyEven
     private FhirEtlOptions options;
     private final PipelineManager manager;
     // This is used in the incremental mode only.
-    private final ParquetMergerOptions mergerOptions;
+    @Nullable private final ParquetMergerOptions mergerOptions;
 
     private final PipelineConfig pipelineConfig;
 
-    private final RunMode runMode;
+    @Nullable private final RunMode runMode;
 
     private AvroConversionUtil avroConversionUtil;
 
@@ -673,7 +675,7 @@ public class PipelineManager implements ApplicationListener<ApplicationReadyEven
         FhirEtlOptions options,
         PipelineManager manager,
         PipelineConfig pipelineConfig,
-        RunMode runMode,
+        @Nullable RunMode runMode,
         AvroConversionUtil avroConversionUtil,
         Class<? extends PipelineRunner> pipelineRunnerClass) {
       Preconditions.checkArgument(options != null);
@@ -712,14 +714,12 @@ public class PipelineManager implements ApplicationListener<ApplicationReadyEven
           "Pipelines execution started with a new thread; number of threads is {}",
           Thread.activeCount());
       String currentDwhRoot = null;
-      FhirContext fhirContext = null;
       try {
         if (runMode != RunMode.VIEWS) {
           currentDwhRoot = options.getOutputParquetPath();
         } else {
           currentDwhRoot = options.getParquetInputDwhRoot();
         }
-        fhirContext = avroConversionUtil.getFhirContext();
 
         List<Pipeline> pipelines = FhirEtl.setupAndBuildPipelines(options, avroConversionUtil);
         if (pipelines == null || pipelines.isEmpty()) {
@@ -757,11 +757,11 @@ public class PipelineManager implements ApplicationListener<ApplicationReadyEven
             pipelineConfig.getTimestampSuffix(),
             pipelineConfig.getThriftServerParquetPath());
         manager.setLastRunStatus(LastRunStatus.SUCCESS);
-        manager.setLastRunDetails(currentDwhRoot, SUCCESS);
+        manager.setLastRunDetails(Objects.requireNonNull(currentDwhRoot), SUCCESS);
       } catch (Exception e) {
         logger.error("exception while running pipeline: ", e);
-        manager.captureError(fhirContext, currentDwhRoot, e);
-        manager.setLastRunDetails(currentDwhRoot, FAILURE);
+        manager.captureError(Objects.requireNonNull(currentDwhRoot), e);
+        manager.setLastRunDetails(Objects.requireNonNull(currentDwhRoot), FAILURE);
         manager.setLastRunStatus(LastRunStatus.FAILURE);
       } finally {
         // See https://github.com/google/fhir-data-pipes/issues/777#issuecomment-1703142297
@@ -774,7 +774,7 @@ public class PipelineManager implements ApplicationListener<ApplicationReadyEven
   }
 
   /** This method captures the given exception into a file rooted at the dwhRoot location. */
-  void captureError(FhirContext fhirContext, String dwhRoot, Exception e) {
+  void captureError(String dwhRoot, Exception e) {
     try {
       if (!Strings.isNullOrEmpty(dwhRoot)) {
         String stackTrace = ExceptionUtils.getStackTrace(e);
@@ -816,12 +816,14 @@ public class PipelineManager implements ApplicationListener<ApplicationReadyEven
     }
   }
 
+  @SuppressWarnings("NullAway")
   public enum LastRunStatus {
     NOT_RUN,
     SUCCESS,
     FAILURE
   }
 
+  @SuppressWarnings("NullAway")
   @Data
   public static class DwhRunDetails {
 

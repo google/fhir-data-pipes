@@ -38,6 +38,7 @@ public class Stats {
    * @param cumulativeMetrics total metrics of the currently running pipeline
    * @return Stats
    */
+  @Nullable
   public static Stats createStats(@Nullable CumulativeMetrics cumulativeMetrics) {
 
     if (cumulativeMetrics == null) {

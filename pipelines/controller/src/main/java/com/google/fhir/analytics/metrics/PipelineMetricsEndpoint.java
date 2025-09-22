@@ -68,6 +68,7 @@ public class PipelineMetricsEndpoint {
     }
   }
 
+  @SuppressWarnings("ImmutableEnumChecker")
   public enum TextOutputFormat implements Producible<TextOutputFormat> {
     CONTENT_TYPE_001(TextFormat.CONTENT_TYPE_001) {
       @Override

@@ -30,13 +30,7 @@ import java.io.IOException;
 import java.nio.file.DirectoryNotEmptyException;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
-import java.util.TreeSet;
+import java.util.*;
 import java.util.stream.Collectors;
 import javax.annotation.PostConstruct;
 import org.apache.beam.sdk.io.FileSystems;
@@ -45,6 +39,7 @@ import org.apache.beam.sdk.io.fs.MatchResult.Metadata;
 import org.apache.beam.sdk.io.fs.MatchResult.Status;
 import org.apache.beam.sdk.io.fs.ResolveOptions.StandardResolveOptions;
 import org.apache.beam.sdk.io.fs.ResourceId;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -65,7 +60,7 @@ public class DwhFilesManager {
 
   private CronExpression purgeCron;
 
-  private LocalDateTime lastPurgeRunEnd;
+  @Nullable private LocalDateTime lastPurgeRunEnd;
 
   private boolean isPurgeJobRunning;
 
@@ -104,6 +99,9 @@ public class DwhFilesManager {
   }
 
   /**
+   * Returns the next scheduled time to run the purge job based on the previous run time. If the
+   * purge job has never run before, then it returns the current time.
+   *
    * @return the next scheduled time to run the purge job based on the previous run time.
    */
   LocalDateTime getNextPurgeTime() {
@@ -144,7 +142,7 @@ public class DwhFilesManager {
       String prefix = getPrefix(dwhRootPrefix);
       List<ResourceId> paths =
           DwhFiles.getAllChildDirectories(baseDir).stream()
-              .filter(dir -> dir.getFilename().startsWith(prefix))
+              .filter(dir -> Objects.requireNonNull(dir.getFilename()).startsWith(prefix))
               .collect(Collectors.toList());
 
       TreeSet<String> recentSnapshotsToBeRetained =
@@ -164,7 +162,8 @@ public class DwhFilesManager {
       String prefix = getPrefix(dwhRootPrefix);
       paths =
           DwhFiles.getAllChildDirectories(baseDir).stream()
-              .filter(resourceId -> resourceId.getFilename().startsWith(prefix))
+              .filter(
+                  resourceId -> Objects.requireNonNull(resourceId.getFilename()).startsWith(prefix))
               .map(it -> baseDir + File.separatorChar + it.getFilename())
               .collect(Collectors.toList());
 
@@ -193,7 +192,8 @@ public class DwhFilesManager {
     String baseDir = getBaseDir(dwhRootPrefix);
     ResourceId resourceId =
         DwhFiles.getAllChildDirectories(baseDir).stream()
-            .filter(dir -> dir.getFilename().startsWith(getPrefix(snapshotId)))
+            .filter(
+                dir -> Objects.requireNonNull(dir.getFilename()).startsWith(getPrefix(snapshotId)))
             .findFirst()
             .orElseThrow(
                 () ->
@@ -204,6 +204,7 @@ public class DwhFilesManager {
     deleteDirectoryAndFiles(resourceId);
   }
 
+  @SuppressWarnings("NonApiType")
   private void deleteOlderSnapshots(
       List<ResourceId> allPaths, TreeSet<String> recentSnapshotsToBeRetained) throws IOException {
     for (ResourceId path : allPaths) {
@@ -219,7 +220,7 @@ public class DwhFilesManager {
    * under the subdirectories. Later the directories and the subdirectories are deleted.
    *
    * @param rootDirectory which needs to be deleted
-   * @throws IOException
+   * @throws IOException if any IO errors occur.
    */
   private void deleteDirectoryAndFiles(ResourceId rootDirectory) throws IOException {
     String fileSeparator = DwhFiles.getFileSeparatorForDwhFiles(rootDirectory.toString());
@@ -278,6 +279,7 @@ public class DwhFilesManager {
     }
   }
 
+  @SuppressWarnings("NonApiType")
   private TreeSet<String> getRecentSnapshots(List<ResourceId> paths, int numberOfSnapshotsToReturn)
       throws IOException {
     TreeSet<String> treeSet = new TreeSet<>();
@@ -289,7 +291,7 @@ public class DwhFilesManager {
       // Keep only the recent snapshots
       if (treeSet.size() < numberOfSnapshotsToReturn) {
         treeSet.add(resourceId.getFilename());
-      } else if (resourceId.getFilename().compareTo(treeSet.first()) > 0) {
+      } else if (Objects.requireNonNull(resourceId.getFilename()).compareTo(treeSet.first()) > 0) {
         treeSet.add(resourceId.getFilename());
         treeSet.pollFirst();
       }
@@ -321,7 +323,7 @@ public class DwhFilesManager {
    *
    * @param dwhResource the root path of DWH
    * @return whether the pipeline for this DWH started or not
-   * @throws IOException
+   * @throws IOException if any IO errors occur.
    */
   boolean isDwhJobStarted(ResourceId dwhResource) throws IOException {
     ResourceId startTimestampResource =
@@ -357,7 +359,7 @@ public class DwhFilesManager {
    * determined by ignoring the prefix part in the given input format <baseDir>/<prefix> for the
    * dwhRootPrefix
    *
-   * @param dwhRootPrefix
+   * @param dwhRootPrefix the dwh root prefix in the format <baseDir>/<prefix>
    * @return the base directory name
    */
   String getBaseDir(String dwhRootPrefix) {
@@ -377,7 +379,7 @@ public class DwhFilesManager {
    * name. This is determined by considering the prefix part in the given input format
    * <baseDir>/<prefix> for the dwhRootPrefix
    *
-   * @param dwhRootPrefix
+   * @param dwhRootPrefix the dwh root prefix in the format <baseDir>/<prefix>
    * @return the prefix name
    */
   String getPrefix(String dwhRootPrefix) {
@@ -404,7 +406,7 @@ public class DwhFilesManager {
   List<String> findExistingResources(String dwhRoot) throws IOException {
     Set<ResourceId> childPaths = DwhFiles.getAllChildDirectories(dwhRoot);
     Set<String> configuredSet =
-        new HashSet<>(Arrays.asList(dataProperties.getResourceList().split(",")));
+        new HashSet<>(Arrays.asList(dataProperties.getResourceList().split(",", -1)));
     return childPaths.stream()
         .map(r -> r.getFilename())
         .filter(r -> configuredSet.contains(r))
@@ -426,31 +428,27 @@ public class DwhFilesManager {
 
   private int getLastIndexOfSlash(String dwhRootPrefix) {
     CloudPath cloudPath = DwhFiles.parsePath(dwhRootPrefix);
-    int index = -1;
-    switch (cloudPath.getScheme()) {
-      case LOCAL_SCHEME:
-        index = dwhRootPrefix.lastIndexOf(File.separator);
-        break;
-      case GCS_SCHEME:
-      case S3_SCHEME:
+    return switch (cloudPath.getScheme()) {
+      case LOCAL_SCHEME -> dwhRootPrefix.lastIndexOf(File.separator);
+      case GCS_SCHEME, S3_SCHEME -> {
         // Fetch the last index position of the character '/' after the bucket name in the gcs path.
         String gcsObject = cloudPath.getObject();
         if (Strings.isNullOrEmpty(gcsObject)) {
-          break;
+          yield -1; // The original `break` provided no value to return.
         }
         int position = gcsObject.lastIndexOf("/");
         if (position == -1) {
-          index = dwhRootPrefix.lastIndexOf(gcsObject) - 1;
+          yield dwhRootPrefix.lastIndexOf(gcsObject) - 1;
         } else {
-          index = dwhRootPrefix.lastIndexOf(gcsObject) + position;
+          yield dwhRootPrefix.lastIndexOf(gcsObject) + position;
         }
-        break;
-      default:
+      }
+      default -> {
         String errorMessage =
             String.format("File system scheme=%s is not yet supported", cloudPath.getScheme());
         logger.error(errorMessage);
         throw new IllegalArgumentException(errorMessage);
-    }
-    return index;
+      }
+    };
   }
 }
