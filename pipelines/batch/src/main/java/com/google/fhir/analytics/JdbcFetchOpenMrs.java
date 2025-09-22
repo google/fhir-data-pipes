@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2023 Google LLC
+ * Copyright 2020-2025 Google LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -163,7 +163,7 @@ public class JdbcFetchOpenMrs {
       Pipeline pipeline, String tableName, String dateColumn, String activePeriod)
       throws SQLException, CannotProvideCoderException {
     Preconditions.checkArgument(!activePeriod.isEmpty());
-    String[] dateRange = activePeriod.split("_");
+    String[] dateRange = activePeriod.split("_", -1);
     Preconditions.checkArgument(dateRange.length > 0);
     String lowerConstraint = "";
     if (!dateRange[0].isEmpty()) {
@@ -259,13 +259,13 @@ public class JdbcFetchOpenMrs {
   public Map<String, List<String>> createFhirReverseMap(
       String resourceString, DatabaseConfiguration dbConfig) {
     Map<String, EventConfiguration> tableToFhirMap = dbConfig.getEventConfigurations();
-    String[] resourceList = resourceString.split(",");
+    String[] resourceList = resourceString.split(",", -1);
     Map<String, List<String>> reverseMap = new HashMap<String, List<String>>();
     for (Map.Entry<String, EventConfiguration> entry : tableToFhirMap.entrySet()) {
       Map<String, String> linkTemplate = entry.getValue().getLinkTemplates();
       for (String resource : resourceList) {
         if (linkTemplate.containsKey("fhir") && linkTemplate.get("fhir") != null) {
-          String[] resourceName = linkTemplate.get("fhir").split("/");
+          String[] resourceName = linkTemplate.get("fhir").split("/", -1);
           if (resourceName.length >= 1 && resourceName[1].equals(resource)) {
             if (reverseMap.containsKey(entry.getValue().getParentTable())) {
               List<String> resources = reverseMap.get(entry.getValue().getParentTable());

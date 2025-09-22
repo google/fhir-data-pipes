@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2024 Google LLC
+ * Copyright 2020-2025 Google LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,12 +21,14 @@ import java.io.IOException;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import org.apache.avro.generic.GenericRecord;
 import org.apache.beam.sdk.metrics.Counter;
 import org.apache.beam.sdk.metrics.Metrics;
 import org.hl7.fhir.r4.model.Bundle;
 import org.hl7.fhir.r4.model.Bundle.BundleEntryComponent;
 import org.hl7.fhir.r4.model.Resource;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -40,9 +42,9 @@ public class ProcessGenericRecords extends FetchSearchPageFn<GenericRecord> {
   private static final int BUNDLE_SIZE = 10;
 
   private String resourceType;
-  private List<Resource> cachedResources;
-  private Counter totalAvroConversionTime;
-  private Counter totalAvroConversions;
+  @Nullable private List<Resource> cachedResources;
+  @Nullable private Counter totalAvroConversionTime;
+  @Nullable private Counter totalAvroConversions;
 
   ProcessGenericRecords(FhirEtlOptions options, String resourceType) {
     super(options, "ProcessGenericRecords_" + resourceType);
@@ -92,14 +94,14 @@ public class ProcessGenericRecords extends FetchSearchPageFn<GenericRecord> {
     try {
       long startTime = System.currentTimeMillis();
       Resource resource = avroConversionUtil.convertToHapi(record, resourceType);
-      totalAvroConversionTime.inc(System.currentTimeMillis() - startTime);
-      totalAvroConversions.inc();
-      cachedResources.add(resource);
+      Objects.requireNonNull(totalAvroConversionTime).inc(System.currentTimeMillis() - startTime);
+      Objects.requireNonNull(totalAvroConversions).inc();
+      Objects.requireNonNull(cachedResources).add(resource);
       if (cachedResources.size() >= BUNDLE_SIZE) {
         processBundle(flushCachToBundle());
       }
     } catch (IllegalArgumentException e) {
-      log.error("Dropping bad record because: " + e.getMessage());
+      log.error("Dropping bad record because: {}", e.getMessage());
     }
   }
 }

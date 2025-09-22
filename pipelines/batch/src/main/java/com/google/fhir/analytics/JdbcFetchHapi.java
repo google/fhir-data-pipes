@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2024 Google LLC
+ * Copyright 2020-2025 Google LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -52,7 +52,7 @@ import org.slf4j.LoggerFactory;
 public class JdbcFetchHapi {
 
   private static final Logger log = LoggerFactory.getLogger(JdbcFetchHapi.class);
-
+  public static final String EMPTY_STRING = "";
   private DataSource jdbcSource;
 
   JdbcFetchHapi(DataSource jdbcSource) {
@@ -70,7 +70,7 @@ public class JdbcFetchHapi {
 
     public ResultSetToRowDescriptor(String resourceList) {
       this.numMappedResourcesMap = new HashMap<>();
-      List<String> resourceTypes = Arrays.asList(resourceList.split(","));
+      List<String> resourceTypes = Arrays.asList(resourceList.split(",", -1));
       for (String resourceType : resourceTypes) {
         this.numMappedResourcesMap.put(
             resourceType,
@@ -82,21 +82,19 @@ public class JdbcFetchHapi {
 
     @Override
     public HapiRowDescriptor mapRow(ResultSet resultSet) throws Exception {
-      String jsonResource = "";
-
       // TODO check for null values before accessing columns; this caused NPEs with `latest` HAPI.
-      switch (resultSet.getString("res_encoding")) {
-        case "JSON":
-          jsonResource = new String(resultSet.getBytes("res_text_vc"), Charsets.UTF_8);
-          break;
-        case "JSONC":
-          Blob blob = resultSet.getBlob("res_text");
-          jsonResource = GZipUtil.decompress(blob.getBytes(1, (int) blob.length()));
-          blob.free();
-          break;
-        case "DEL":
-          break;
-      }
+      String jsonResource =
+          switch (resultSet.getString("res_encoding")) {
+            case "JSON" -> new String(resultSet.getBytes("res_text_vc"), Charsets.UTF_8);
+            case "JSONC" -> {
+              Blob blob = resultSet.getBlob("res_text");
+              String decompressed = GZipUtil.decompress(blob.getBytes(1, (int) blob.length()));
+              blob.free();
+              yield decompressed;
+            }
+            case "DEL" -> "";
+            default -> EMPTY_STRING;
+          };
 
       String resourceId = resultSet.getString("res_id");
       String forcedId = resultSet.getString("forced_id");
@@ -104,7 +102,9 @@ public class JdbcFetchHapi {
       String lastUpdated = resultSet.getString("res_updated");
       String fhirVersion = resultSet.getString("res_version");
       String resourceVersion = resultSet.getString("res_ver");
-      numMappedResourcesMap.get(resourceType).inc();
+      numMappedResourcesMap
+          .get(resourceType)
+          .inc(); // TODO check what this line intentionally was meant to do
       return HapiRowDescriptor.create(
           resourceId,
           forcedId,
@@ -339,7 +339,7 @@ public class JdbcFetchHapi {
    */
   public Map<String, Integer> searchResourceCounts(String resourceList, String since)
       throws SQLException {
-    Set<String> resourceTypes = new HashSet<>(Arrays.asList(resourceList.split(",")));
+    Set<String> resourceTypes = new HashSet<>(Arrays.asList(resourceList.split(",", -1)));
     Map<String, Integer> resourceCountMap = new HashMap<>();
     for (String resourceType : resourceTypes) {
       StringBuilder builder = new StringBuilder();

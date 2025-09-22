@@ -25,13 +25,7 @@ import com.google.fhir.analytics.view.ViewManager;
 import com.google.fhir.analytics.view.ViewSchema;
 import java.io.IOException;
 import java.time.Instant;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import org.apache.avro.Schema;
 import org.apache.avro.generic.GenericRecord;
 import org.apache.beam.sdk.Pipeline;
@@ -202,14 +196,11 @@ public class ParquetMerger {
    * This method identifies if the record is a deleted record. For a deleted record, the meta.tag
    * would be updated with a ActionType.REMOVE during the incremental parquet file creation, the
    * same information is being reused to check if the record is deleted or not.
-   *
-   * @param record
-   * @return
    */
   private static Boolean isRecordDeleted(GenericRecord record) {
+    Preconditions.checkNotNull(record);
     Object tag = ((GenericRecord) record.get(META_KEY)).get(TAG_KEY);
-    if (tag != null && tag instanceof Collection) {
-      Collection tagCollection = (Collection) tag;
+    if (tag != null && tag instanceof Collection tagCollection) {
       if (!tagCollection.isEmpty()) {
         Iterator iterator = tagCollection.iterator();
         while (iterator.hasNext()) {
@@ -226,8 +217,10 @@ public class ParquetMerger {
     return Boolean.FALSE;
   }
 
+  @Nullable
   private static GenericRecord findLastRecord(
       Iterable<GenericRecord> genericRecords, Counter numDuplicates) {
+    Preconditions.checkNotNull(genericRecords);
     // Note we are assuming all times have the same time-zone to avoid parsing date values.
     String lastUpdated = null;
     GenericRecord lastRecord = null;
@@ -352,7 +345,7 @@ public class ParquetMerger {
       throws IOException {
     Pipeline pipeline = Pipeline.create(options);
     log.info("Merging materialized view {}", viewName);
-    ViewDefinition viewDef = viewManager.getViewDefinition(viewName);
+    ViewDefinition viewDef = Objects.requireNonNull(viewManager).getViewDefinition(viewName);
     if (viewDef != null) {
       Schema schema = ViewSchema.getAvroSchema(viewDef);
       PCollection<KV<String, CoGbkResult>> groupedRecords =
@@ -406,7 +399,8 @@ public class ParquetMerger {
                   @ProcessElement
                   public void processElement(ProcessContext c) {
                     KV<String, Iterable<GenericRecord>> e = c.element();
-                    GenericRecord lastRecord = findLastRecord(e.getValue(), numDuplicates);
+                    GenericRecord lastRecord =
+                        findLastRecord(Objects.requireNonNull(e).getValue(), numDuplicates);
                     if (!isRecordDeleted(lastRecord)) {
                       numOutputRecords.inc();
                       c.output(lastRecord);
