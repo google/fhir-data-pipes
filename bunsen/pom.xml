@@ -32,7 +32,7 @@
     <scm.url>http://github.com/cerner/bunsen/tree/master/</scm.url>
     <scm.connection>scm:git:git@github.com/cerner/bunsen.git</scm.connection>
     <python.version>3.5.3</python.version>
-    <maven-javadoc.plugin.version>3.11.3</maven-javadoc.plugin.version>
+    <maven-javadoc.plugin.version>3.12.0</maven-javadoc.plugin.version>
     <maven-project-info-reports.plugin.version>3.9.0</maven-project-info-reports.plugin.version>
     <slf4j.version>2.0.17</slf4j.version>
     <logback.version>1.5.18</logback.version>
@@ -231,7 +231,7 @@
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-javadoc-plugin</artifactId>
-          <version>3.11.3</version>
+          <version>3.12.0</version>
         </plugin>
 
         <plugin>
