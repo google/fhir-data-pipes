@@ -1,9 +1,6 @@
 [MASTER]
 ignore=tests
 extension-pkg-whitelist=pydantic
-
-[MESSAGES CONTROL]
-# Disable noisy rules
 disable=C0114,C0115,C0116,R0903
 
 [FORMAT]
