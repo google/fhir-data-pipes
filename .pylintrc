@@ -1,2 +1,15 @@
 [MASTER]
-ignore=venv,.git
+ignore=tests
+extension-pkg-whitelist=pydantic
+
+[MESSAGES CONTROL]
+
+disable=C0114, C0115, C0116, R0903, C0301, W0611, W0511
+
+[FORMAT]
+
+max-line-length=100
+
+[REPORTS]
+
+reports=no
