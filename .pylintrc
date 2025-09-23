@@ -4,7 +4,7 @@ extension-pkg-whitelist=pydantic
 
 [MESSAGES CONTROL]
 
-disable=C0114, C0115, C0116, R0903
+disable=C0114, C0115, C0116, R0903, C0301, W0611, W0511
 
 [FORMAT]
 
