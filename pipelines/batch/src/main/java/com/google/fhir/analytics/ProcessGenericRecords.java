@@ -67,7 +67,7 @@ public class ProcessGenericRecords extends FetchSearchPageFn<GenericRecord> {
 
   @Override
   public void finishBundle(FinishBundleContext context) {
-    if (!cachedResources.isEmpty()) {
+    if (cachedResources != null && !cachedResources.isEmpty()) {
       try {
         processBundle(flushCachToBundle());
       } catch (SQLException | ViewApplicationException | ProfileException | IOException e) {

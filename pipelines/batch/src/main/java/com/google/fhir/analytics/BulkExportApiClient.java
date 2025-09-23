@@ -37,6 +37,8 @@ import java.util.Optional;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.http.HttpHeaders;
+import org.hl7.fhir.dstu3.model.Parameters.ParametersParameterComponent;
+import org.hl7.fhir.dstu3.model.StringType;
 import org.hl7.fhir.instance.model.api.IBaseParameters;
 import org.hl7.fhir.r4.model.InstantType;
 import org.hl7.fhir.r4.model.Parameters;
@@ -147,16 +149,13 @@ public class BulkExportApiClient {
         // TODO: Create a common interface to handle parameters of different versions
         org.hl7.fhir.dstu3.model.Parameters dstu3Parameters =
             new org.hl7.fhir.dstu3.model.Parameters();
-        org.hl7.fhir.dstu3.model.Parameters.ParametersParameterComponent typeParameter =
-            new org.hl7.fhir.dstu3.model.Parameters.ParametersParameterComponent();
+        ParametersParameterComponent typeParameter = new ParametersParameterComponent();
         typeParameter.setName(PARAMETER_TYPE);
-        typeParameter.setValue(
-            new org.hl7.fhir.dstu3.model.StringType(String.join(",", resourceTypes)));
+        typeParameter.setValue(new StringType(String.join(",", resourceTypes)));
         dstu3Parameters.addParameter(typeParameter);
 
         if (!since.isEmpty()) {
-          org.hl7.fhir.dstu3.model.Parameters.ParametersParameterComponent sinceParameter =
-              new org.hl7.fhir.dstu3.model.Parameters.ParametersParameterComponent();
+          ParametersParameterComponent sinceParameter = new ParametersParameterComponent();
           sinceParameter.setName(PARAMETER_SINCE);
           sinceParameter.setValue(new org.hl7.fhir.dstu3.model.InstantType(since));
           dstu3Parameters.addParameter(sinceParameter);
