@@ -3,12 +3,11 @@ ignore=tests
 extension-pkg-whitelist=pydantic
 
 [MESSAGES CONTROL]
-# Disable some noisy rules for now
-disable=C0114,  # missing-module-docstring
-        C0115,  # missing-class-docstring
-        C0116,  # missing-function-docstring
-        R0903   # too-few-public-methods
+# Disable noisy rules
+disable=C0114,C0115,C0116,R0903
 
 [FORMAT]
 max-line-length=100
 
+[REPORTS]
+reports=no
