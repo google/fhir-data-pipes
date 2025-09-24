@@ -40,6 +40,7 @@ import java.util.Set;
 import org.apache.http.NameValuePair;
 import org.apache.http.client.utils.URLEncodedUtils;
 import org.hl7.fhir.r4.model.Bundle;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -54,6 +55,7 @@ public class FhirSearchUtil {
   }
 
   // TODO update all types to FHIR version independent interfaces!
+  @Nullable
   public Bundle searchByUrl(String searchUrl, int count, SummaryEnum summaryMode) {
     try {
       IGenericClient client = fetchUtil.getSourceClient();
@@ -79,7 +81,7 @@ public class FhirSearchUtil {
    * @return a Map storing the counts of each resource type
    */
   public Map<String, Integer> searchResourceCounts(String resourceList, String since) {
-    HashSet<String> resourceTypes = new HashSet<String>(Arrays.asList(resourceList.split(",")));
+    HashSet<String> resourceTypes = new HashSet<String>(Arrays.asList(resourceList.split(",", -1)));
     HashMap<String, Integer> hashMap = new HashMap<String, Integer>();
     for (String resourceType : resourceTypes) {
       try {
@@ -106,6 +108,7 @@ public class FhirSearchUtil {
     return hashMap;
   }
 
+  @Nullable
   public String getNextUrl(Bundle bundle) {
     if (bundle != null && bundle.getLink(Bundle.LINK_NEXT) != null) {
       return bundle.getLink(Bundle.LINK_NEXT).getUrl();
@@ -171,7 +174,7 @@ public class FhirSearchUtil {
     if (activePeriod.isEmpty()) {
       return Lists.newArrayList();
     }
-    String[] dateRange = activePeriod.split("_");
+    String[] dateRange = activePeriod.split("_", -1);
     if (dateRange.length != 1 && dateRange.length != 2) {
       throw new IllegalArgumentException(
           "Invalid activePeriod '"
@@ -215,7 +218,7 @@ public class FhirSearchUtil {
     Map<String, List<SearchSegmentDescriptor>> segmentMap = new HashMap<>();
 
     boolean anyResourceWithDate = false;
-    for (String resourceType : options.getResourceList().split(",")) {
+    for (String resourceType : options.getResourceList().split(",", -1)) {
       List<SearchSegmentDescriptor> segments = new ArrayList<>();
       IQuery<Bundle> searchQuery = makeQueryWithDate(resourceType, options);
       log.info(String.format("Fetching first batch of %s", resourceType));

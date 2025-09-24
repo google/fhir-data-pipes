@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2023 Google LLC
+ * Copyright 2020-2025 Google LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -59,17 +59,10 @@ class TextFormat {
     for (int i = 0; i < s.length(); i++) {
       char c = s.charAt(i);
       switch (c) {
-        case '\\':
-          writer.append("\\\\");
-          break;
-        case '\"':
-          writer.append("\\\"");
-          break;
-        case '\n':
-          writer.append("\\n");
-          break;
-        default:
-          writer.append(c);
+        case '\\' -> writer.append("\\\\");
+        case '\"' -> writer.append("\\\"");
+        case '\n' -> writer.append("\\n");
+        default -> writer.append(c);
       }
     }
   }
