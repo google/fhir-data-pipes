@@ -190,22 +190,15 @@ public class FetchUtil {
   }
 
   private Class<? extends IBaseParameters> getParameterType() {
-    switch (fhirContext.getVersion().getVersion()) {
-      case DSTU2:
-      case DSTU2_HL7ORG:
-        return org.hl7.fhir.dstu2.model.Parameters.class;
-      case DSTU3:
-        return org.hl7.fhir.dstu3.model.Parameters.class;
-      case R4:
-        return org.hl7.fhir.r4.model.Parameters.class;
-      case R4B:
-        return org.hl7.fhir.r4b.model.Parameters.class;
-      case R5:
-        return org.hl7.fhir.r5.model.Parameters.class;
-      default:
-        throw new IllegalStateException(
-            "Unexpected value: " + fhirContext.getVersion().getVersion());
-    }
+    return switch (fhirContext.getVersion().getVersion()) {
+      case DSTU2, DSTU2_HL7ORG -> org.hl7.fhir.dstu2.model.Parameters.class;
+      case DSTU3 -> org.hl7.fhir.dstu3.model.Parameters.class;
+      case R4 -> org.hl7.fhir.r4.model.Parameters.class;
+      case R4B -> org.hl7.fhir.r4b.model.Parameters.class;
+      case R5 -> org.hl7.fhir.r5.model.Parameters.class;
+      default -> throw new IllegalStateException(
+          "Unexpected value: " + fhirContext.getVersion().getVersion());
+    };
   }
 
   public IGenericClient getSourceClient() {

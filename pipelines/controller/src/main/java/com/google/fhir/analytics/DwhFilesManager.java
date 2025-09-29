@@ -425,31 +425,27 @@ public class DwhFilesManager {
 
   private int getLastIndexOfSlash(String dwhRootPrefix) {
     CloudPath cloudPath = DwhFiles.parsePath(dwhRootPrefix);
-    int index = -1;
-    switch (cloudPath.getScheme()) {
-      case LOCAL_SCHEME:
-        index = dwhRootPrefix.lastIndexOf(File.separator);
-        break;
-      case GCS_SCHEME:
-      case S3_SCHEME:
+    return switch (cloudPath.getScheme()) {
+      case LOCAL_SCHEME -> dwhRootPrefix.lastIndexOf(File.separator);
+      case GCS_SCHEME, S3_SCHEME -> {
         // Fetch the last index position of the character '/' after the bucket name in the gcs path.
         String gcsObject = cloudPath.getObject();
         if (Strings.isNullOrEmpty(gcsObject)) {
-          break;
+          yield -1; // The original `break` provided no value to return.
         }
         int position = gcsObject.lastIndexOf("/");
         if (position == -1) {
-          index = dwhRootPrefix.lastIndexOf(gcsObject) - 1;
+          yield dwhRootPrefix.lastIndexOf(gcsObject) - 1;
         } else {
-          index = dwhRootPrefix.lastIndexOf(gcsObject) + position;
+          yield dwhRootPrefix.lastIndexOf(gcsObject) + position;
         }
-        break;
-      default:
+      }
+      default -> {
         String errorMessage =
             String.format("File system scheme=%s is not yet supported", cloudPath.getScheme());
         logger.error(errorMessage);
         throw new IllegalArgumentException(errorMessage);
-    }
-    return index;
+      }
+    };
   }
 }

@@ -231,23 +231,18 @@ public class ConvertResourceFn extends FetchSearchPageFn<HapiRowDescriptor> {
 
   private String getFhirBasePackageName(String fhirVersion) {
     FhirVersionEnum fhirVersionEnum = FhirVersionEnum.forVersionString(fhirVersion);
-    switch (fhirVersionEnum) {
-      case DSTU2:
-        return org.hl7.fhir.dstu2.model.Base.class.getPackageName();
-      case DSTU2_1:
-        return org.hl7.fhir.dstu2016may.model.Base.class.getPackageName();
-      case DSTU3:
-        return org.hl7.fhir.dstu3.model.Base.class.getPackageName();
-      case R4:
-        return org.hl7.fhir.r4.model.Base.class.getPackageName();
-      case R4B:
-        return org.hl7.fhir.r4b.model.Base.class.getPackageName();
-      case R5:
-        return org.hl7.fhir.r5.model.Base.class.getPackageName();
-      default:
+    return switch (fhirVersionEnum) {
+      case DSTU2 -> org.hl7.fhir.dstu2.model.Base.class.getPackageName();
+      case DSTU2_1 -> org.hl7.fhir.dstu2016may.model.Base.class.getPackageName();
+      case DSTU3 -> org.hl7.fhir.dstu3.model.Base.class.getPackageName();
+      case R4 -> org.hl7.fhir.r4.model.Base.class.getPackageName();
+      case R4B -> org.hl7.fhir.r4b.model.Base.class.getPackageName();
+      case R5 -> org.hl7.fhir.r5.model.Base.class.getPackageName();
+      default -> {
         String errorMessage = String.format("Invalid fhir version %s", fhirVersion);
         log.error(errorMessage);
         throw new FHIRException(errorMessage);
-    }
+      }
+    };
   }
 }

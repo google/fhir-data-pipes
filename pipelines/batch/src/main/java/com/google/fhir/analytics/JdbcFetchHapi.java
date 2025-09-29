@@ -52,7 +52,6 @@ import org.slf4j.LoggerFactory;
 public class JdbcFetchHapi {
 
   private static final Logger log = LoggerFactory.getLogger(JdbcFetchHapi.class);
-
   private DataSource jdbcSource;
 
   JdbcFetchHapi(DataSource jdbcSource) {
@@ -82,21 +81,18 @@ public class JdbcFetchHapi {
 
     @Override
     public HapiRowDescriptor mapRow(ResultSet resultSet) throws Exception {
-      String jsonResource = "";
-
       // TODO check for null values before accessing columns; this caused NPEs with `latest` HAPI.
-      switch (resultSet.getString("res_encoding")) {
-        case "JSON":
-          jsonResource = new String(resultSet.getBytes("res_text_vc"), Charsets.UTF_8);
-          break;
-        case "JSONC":
-          Blob blob = resultSet.getBlob("res_text");
-          jsonResource = GZipUtil.decompress(blob.getBytes(1, (int) blob.length()));
-          blob.free();
-          break;
-        case "DEL":
-          break;
-      }
+      String jsonResource =
+          switch (resultSet.getString("res_encoding")) {
+            case "JSON" -> new String(resultSet.getBytes("res_text_vc"), Charsets.UTF_8);
+            case "JSONC" -> {
+              Blob blob = resultSet.getBlob("res_text");
+              String decompressed = GZipUtil.decompress(blob.getBytes(1, (int) blob.length()));
+              blob.free();
+              yield decompressed;
+            }
+            default -> ""; // Covers the "DEL" case as well as any unknown encoding.
+          };
 
       String resourceId = resultSet.getString("res_id");
       String forcedId = resultSet.getString("forced_id");
