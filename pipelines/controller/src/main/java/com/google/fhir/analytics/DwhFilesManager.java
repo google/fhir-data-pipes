@@ -58,6 +58,9 @@ public class DwhFilesManager {
 
   private final DataProperties dataProperties;
 
+  @SuppressWarnings(
+      "NullAway") // Suppressing warning because the field is initialized in init() and includes a
+  // Preconditions check.
   private CronExpression purgeCron;
 
   @Nullable private LocalDateTime lastPurgeRunEnd;
@@ -78,6 +81,7 @@ public class DwhFilesManager {
   @PostConstruct
   public void init() {
     purgeCron = CronExpression.parse(dataProperties.getPurgeSchedule());
+    Preconditions.checkNotNull(purgeCron);
     dwhRootPrefix = dataProperties.getDwhRootPrefix();
     Preconditions.checkState(dwhRootPrefix != null && !dwhRootPrefix.isEmpty());
     numOfDwhSnapshotsToRetain = dataProperties.getNumOfDwhSnapshotsToRetain();
@@ -119,11 +123,16 @@ public class DwhFilesManager {
         return;
       }
       LocalDateTime next = getNextPurgeTime();
-      logger.info("Last purge run was at {} next run is at {}", lastPurgeRunEnd, next);
-      if (next.compareTo(LocalDateTime.now(ZoneOffset.UTC)) <= 0) {
-        logger.info("Purge run triggered at {}", LocalDateTime.now(ZoneOffset.UTC));
-        purgeDwhFiles();
-        logger.info("Purge run completed at {}", LocalDateTime.now(ZoneOffset.UTC));
+      if (next != null) {
+
+        logger.info("Last purge run was at {} next run is at {}", lastPurgeRunEnd, next);
+        if (next.compareTo(LocalDateTime.now(ZoneOffset.UTC)) <= 0) {
+          logger.info("Purge run triggered at {}", LocalDateTime.now(ZoneOffset.UTC));
+          purgeDwhFiles();
+          logger.info("Purge run completed at {}", LocalDateTime.now(ZoneOffset.UTC));
+        }
+      } else {
+        logger.warn("Next purge time is null, please check the cron expression");
       }
     } finally {
       releasePurgeJob();
