@@ -129,7 +129,7 @@ public class BulkExportApiClient {
   }
 
   private IBaseParameters fetchBulkExportParameters(
-      FhirVersionEnum fhirVersionEnum, List<String> resourceTypes, @Nullable String since) {
+      FhirVersionEnum fhirVersionEnum, List<String> resourceTypes, String since) {
     since = Strings.nullToEmpty(since);
     return switch (fhirVersionEnum) {
       case R4 -> {
