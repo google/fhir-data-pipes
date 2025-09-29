@@ -18,6 +18,7 @@ package com.google.fhir.analytics;
 import ca.uhn.fhir.context.FhirVersionEnum;
 import ca.uhn.fhir.parser.DataFormatException;
 import com.cerner.bunsen.exception.ProfileException;
+import com.google.common.base.Splitter;
 import com.google.common.base.Strings;
 import com.google.fhir.analytics.view.ViewApplicationException;
 import java.io.IOException;
@@ -27,7 +28,6 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.time.Instant;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -70,7 +70,7 @@ public class ConvertResourceFn extends FetchSearchPageFn<HapiRowDescriptor> {
     this.totalPushTimeMillisMap = new HashMap<String, Counter>();
     // Only in the incremental mode we process deleted resources.
     this.processDeletedRecords = !Strings.isNullOrEmpty(options.getSince());
-    List<String> resourceTypes = Arrays.asList(options.getResourceList().split(",", -1));
+    List<String> resourceTypes = Splitter.on(',').splitToList(options.getResourceList());
     for (String resourceType : resourceTypes) {
       this.numFetchedResourcesMap.put(
           resourceType,

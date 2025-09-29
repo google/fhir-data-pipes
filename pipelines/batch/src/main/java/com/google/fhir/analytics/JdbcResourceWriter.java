@@ -18,6 +18,7 @@ package com.google.fhir.analytics;
 import ca.uhn.fhir.context.FhirContext;
 import ca.uhn.fhir.parser.IParser;
 import com.google.common.base.Preconditions;
+import com.google.common.base.Splitter;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
 import com.google.fhir.analytics.JdbcConnectionPools.DataSourceConfig;
@@ -125,7 +126,7 @@ public class JdbcResourceWriter {
     String viewDir = Strings.nullToEmpty(options.getViewDefinitionsDir());
     if (viewDir.isEmpty()) {
       log.info("Creating tables for each resource type.");
-      for (String resourceType : options.getResourceList().split(",", -1)) {
+      for (String resourceType : Splitter.on(',').split(options.getResourceList())) {
         String createStatement =
             String.format(
                 "CREATE TABLE IF NOT EXISTS %s (%s VARCHAR(100) NOT NULL, "
@@ -135,7 +136,7 @@ public class JdbcResourceWriter {
       }
     } else {
       ViewManager viewManager = ViewManager.createForDir(viewDir);
-      for (String resourceType : options.getResourceList().split(",", -1)) {
+      for (String resourceType : Splitter.on(',').split(options.getResourceList())) {
         ImmutableList<ViewDefinition> views = viewManager.getViewsForType(resourceType);
         if (views == null || views.isEmpty()) {
           log.warn("No views found for resource type {} in directory {}!", resourceType, viewDir);

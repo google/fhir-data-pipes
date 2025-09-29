@@ -17,6 +17,7 @@ package com.google.fhir.analytics;
 
 import ca.uhn.fhir.parser.DataFormatException;
 import com.cerner.bunsen.exception.ProfileException;
+import com.google.common.base.Splitter;
 import com.google.common.collect.Sets;
 import com.google.fhir.analytics.view.ViewApplicationException;
 import java.io.IOException;
@@ -49,7 +50,7 @@ abstract class ReadJsonFn<T> extends FetchSearchPageFn<T> {
   ReadJsonFn(FhirEtlOptions options, boolean isFileNdjson) {
     super(options, isFileNdjson ? "ReadNdjsonFiles" : "ReadJsonFiles");
     this.isFileNdjson = isFileNdjson;
-    resourceTypes = Sets.newHashSet(options.getResourceList().split(",", -1));
+    resourceTypes = Sets.newHashSet(Splitter.on(',').split(options.getResourceList()));
   }
 
   @Override

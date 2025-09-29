@@ -17,6 +17,7 @@ package com.google.fhir.analytics;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Charsets;
+import com.google.common.base.Splitter;
 import com.google.common.base.Strings;
 import java.sql.Blob;
 import java.sql.Connection;
@@ -24,7 +25,6 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -70,7 +70,7 @@ public class JdbcFetchHapi {
 
     public ResultSetToRowDescriptor(String resourceList) {
       this.numMappedResourcesMap = new HashMap<>();
-      List<String> resourceTypes = Arrays.asList(resourceList.split(",", -1));
+      List<String> resourceTypes = Splitter.on(',').splitToList(resourceList);
       for (String resourceType : resourceTypes) {
         this.numMappedResourcesMap.put(
             resourceType,
@@ -337,7 +337,7 @@ public class JdbcFetchHapi {
    */
   public Map<String, Integer> searchResourceCounts(String resourceList, String since)
       throws SQLException {
-    Set<String> resourceTypes = new HashSet<>(Arrays.asList(resourceList.split(",", -1)));
+    Set<String> resourceTypes = new HashSet<>(Splitter.on(',').splitToList(resourceList));
     Map<String, Integer> resourceCountMap = new HashMap<>();
     for (String resourceType : resourceTypes) {
       StringBuilder builder = new StringBuilder();
