@@ -18,6 +18,7 @@ package com.google.fhir.analytics;
 import ca.uhn.fhir.context.FhirContext;
 import com.cerner.bunsen.exception.ProfileException;
 import com.google.common.base.Preconditions;
+import com.google.common.base.Splitter;
 import com.google.common.base.Strings;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
@@ -289,7 +290,8 @@ public class FhirEtl {
               + " mode");
     }
     if (!options.getActivePeriod().isEmpty()) {
-      Set<String> resourceSet = Sets.newHashSet(options.getResourceList().split(","));
+      Set<String> resourceSet =
+          Sets.newHashSet(Splitter.on(',').splitToList(options.getResourceList()));
       if (resourceSet.contains("Patient")) {
         throw new IllegalArgumentException(
             "When using --activePeriod feature, 'Patient' should not be in --resourceList got: "
@@ -327,8 +329,8 @@ public class FhirEtl {
         jdbcFetchHapi.searchResourceCounts(options.getResourceList(), options.getSince());
 
     List<Pipeline> pipelines = new ArrayList<>();
-    long totalNumOfResources = 0l;
-    for (String resourceType : options.getResourceList().split(",")) {
+    long totalNumOfResources = 0L;
+    for (String resourceType : options.getResourceList().split(",", -1)) {
       int numResources = resourceCount.get(resourceType);
       if (numResources == 0) {
         continue;
@@ -380,7 +382,8 @@ public class FhirEtl {
             avroConversionUtil.getFhirContext());
     Set<String> foundResourceTypes = dwhFiles.findNonEmptyResourceDirs();
     log.info("Found Parquet files for these resource types: {}", foundResourceTypes);
-    Set<String> resourceTypes = Sets.newHashSet(options.getResourceList().split(","));
+    Set<String> resourceTypes =
+        Sets.newHashSet(Splitter.on(',').splitToList(options.getResourceList()));
     if (!resourceTypes.equals(foundResourceTypes)) {
       log.warn(
           "Found resource types {} is not equal to requested resource types {}",
@@ -419,7 +422,7 @@ public class FhirEtl {
 
     Pipeline pipeline = Pipeline.create(options);
     pipeline
-        .apply(Create.of(Arrays.asList(multiFilePattern.split(","))))
+        .apply(Create.of(Splitter.on(',').splitToList(multiFilePattern)))
         .apply(FileIO.matchAll())
         .apply(FileIO.readMatches())
         .apply(
@@ -433,7 +436,8 @@ public class FhirEtl {
     BulkExportUtil bulkExportUtil =
         createBulkExportUtil(options, avroConversionUtil.getFhirContext());
     List<String> resourceTypes =
-        Arrays.asList(options.getResourceList().split(",")).stream()
+        Splitter.on(',')
+            .splitToStream(options.getResourceList())
             .distinct()
             .collect(Collectors.toList());
     BulkExportResponse bulkExportResponse =
