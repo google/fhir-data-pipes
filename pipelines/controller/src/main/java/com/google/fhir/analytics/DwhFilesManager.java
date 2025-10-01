@@ -431,7 +431,7 @@ public class DwhFilesManager {
         // Fetch the last index position of the character '/' after the bucket name in the gcs path.
         String gcsObject = cloudPath.getObject();
         if (Strings.isNullOrEmpty(gcsObject)) {
-          yield -1; // The original `break` provided no value to return.
+          yield -1;
         }
         int position = gcsObject.lastIndexOf("/");
         if (position == -1) {

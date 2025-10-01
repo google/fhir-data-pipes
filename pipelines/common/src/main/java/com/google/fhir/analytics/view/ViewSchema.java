@@ -65,9 +65,8 @@ public class ViewSchema {
         case "date" -> JDBCType.DATE;
         case "dateTime", "instant" -> JDBCType.TIMESTAMP;
         case "time" -> JDBCType.TIME;
-        default -> JDBCType
-            .VARCHAR; // also covers base64Binary, canonical, code, id, markdown, oid, string, uri,
-          // url, uuid
+          // also covers base64Binary, canonical, code, id, markdown, oid, string, uri, url, uuid
+        default -> JDBCType.VARCHAR;
       };
     }
     // This is to handle non-primitive types or when the type is not specified, we may want to
@@ -167,9 +166,9 @@ public class ViewSchema {
                   e.getColumnInfo().getName(), e.<Boolean>getPrimitive());
               case "integer", "unsignedInt", "integer64", "decimal" -> currentRecord.put(
                   e.getColumnInfo().getName(), e.getPrimitive());
-              default -> currentRecord.put(
-                  e.getColumnInfo().getName(), e.getString()); // Also covers cases
+                // Also covers cases
                 // date,dateTime,instant,time,base64Binary,canonical,code,id,markdown,oid,string,uri,url,uuid
+              default -> currentRecord.put(e.getColumnInfo().getName(), e.getString());
             }
           }
         } else {
