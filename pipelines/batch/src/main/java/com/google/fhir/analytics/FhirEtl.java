@@ -330,7 +330,7 @@ public class FhirEtl {
 
     List<Pipeline> pipelines = new ArrayList<>();
     long totalNumOfResources = 0L;
-    for (String resourceType : options.getResourceList().split(",", -1)) {
+    for (String resourceType : Splitter.on(',').splitToList(options.getResourceList())) {
       int numResources = resourceCount.get(resourceType);
       if (numResources == 0) {
         continue;

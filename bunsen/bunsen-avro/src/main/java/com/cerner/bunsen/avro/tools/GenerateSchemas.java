@@ -5,6 +5,7 @@ import ca.uhn.fhir.context.FhirVersionEnum;
 import com.cerner.bunsen.ProfileMapperFhirContexts;
 import com.cerner.bunsen.avro.AvroConverter;
 import com.cerner.bunsen.exception.ProfileException;
+import com.google.common.base.Splitter;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -61,7 +62,8 @@ public class GenerateSchemas {
             .skip(3)
             .collect(
                 Collectors.toMap(
-                    item -> item.split(DELIMITER)[0], item -> generateContainedUrls(item)));
+                    item -> Splitter.on(DELIMITER).splitToList(item).get(0),
+                    item -> generateContainedUrls(item)));
 
     FhirContext fhirContext =
         ProfileMapperFhirContexts.getInstance()
@@ -95,8 +97,8 @@ public class GenerateSchemas {
     if (!key.contains(DELIMITER)) {
       return Collections.emptyList();
     }
-    String[] splitKey = key.split(DELIMITER);
-    String[] valList = Arrays.copyOfRange(splitKey, 1, splitKey.length);
-    return Arrays.asList(valList);
+
+    List<String> splitKey = Splitter.on(DELIMITER).splitToList(key);
+    return splitKey.subList(1, splitKey.size());
   }
 }
