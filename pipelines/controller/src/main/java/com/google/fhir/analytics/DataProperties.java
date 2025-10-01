@@ -63,64 +63,94 @@ public class DataProperties {
     Default.String.class, Default.Integer.class, Default.Boolean.class, Default.Long.class
   };
 
+  @SuppressWarnings("NullAway.Init")
   private FhirFetchMode fhirFetchMode;
 
+  @SuppressWarnings("NullAway")
   private String fhirServerUrl;
 
+  @SuppressWarnings("NullAway")
   private String dbConfig;
 
+  @SuppressWarnings("NullAway")
   private String dwhRootPrefix;
 
+  @SuppressWarnings("NullAway")
   private String incrementalSchedule;
 
+  @SuppressWarnings("NullAway")
   private String purgeSchedule;
 
+  @SuppressWarnings("NullAway")
   private int numOfDwhSnapshotsToRetain;
 
+  @SuppressWarnings("NullAway")
   private String resourceList;
 
+  @SuppressWarnings("NullAway")
   private int numThreads;
 
+  @SuppressWarnings("NullAway")
   private String thriftserverHiveConfig;
 
+  @SuppressWarnings("NullAway")
   private boolean createHiveResourceTables;
 
+  @SuppressWarnings("NullAway")
   private String hiveResourceViewsDir;
 
+  @SuppressWarnings("NullAway")
   private String viewDefinitionsDir;
 
+  @SuppressWarnings("NullAway")
   private boolean createParquetViews;
 
+  @SuppressWarnings("NullAway")
   private String sinkDbConfigPath;
 
+  @SuppressWarnings("NullAway")
   private String fhirServerPassword;
 
+  @SuppressWarnings("NullAway")
   private String fhirServerUserName;
 
+  @SuppressWarnings("NullAway")
   private boolean autoGenerateFlinkConfiguration;
 
+  @SuppressWarnings("NullAway")
   private String fhirServerOAuthTokenEndpoint;
 
+  @SuppressWarnings("NullAway")
   private String fhirServerOAuthClientId;
 
+  @SuppressWarnings("NullAway")
   private String fhirServerOAuthClientSecret;
 
+  @SuppressWarnings("NullAway")
   private boolean checkPatientEndpoint;
 
+  @SuppressWarnings("NullAway")
   private String sinkFhirServerUrl;
 
+  @SuppressWarnings("NullAway")
   public String sinkUserName;
 
+  @SuppressWarnings("NullAway")
   public String sinkPassword;
 
+  @SuppressWarnings("NullAway")
   private String structureDefinitionsPath;
 
+  @SuppressWarnings("NullAway")
   private int rowGroupSizeForParquetFiles;
 
+  @SuppressWarnings("NullAway")
   private FhirVersionEnum fhirVersion;
 
+  @SuppressWarnings("NullAway")
   private int recursiveDepth;
 
+  @SuppressWarnings("NullAway")
   private boolean generateParquetFiles;
 
   @PostConstruct
