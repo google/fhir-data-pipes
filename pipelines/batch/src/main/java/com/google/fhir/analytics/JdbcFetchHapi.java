@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2024 Google LLC
+ * Copyright 2020-2025 Google LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -104,7 +104,8 @@ public class JdbcFetchHapi {
       String lastUpdated = resultSet.getString("res_updated");
       String fhirVersion = resultSet.getString("res_version");
       String resourceVersion = resultSet.getString("res_ver");
-      numMappedResourcesMap.get(resourceType).inc();
+      if (numMappedResourcesMap.get(resourceType) != null)
+        numMappedResourcesMap.get(resourceType).inc();
       return HapiRowDescriptor.create(
           resourceId,
           forcedId,

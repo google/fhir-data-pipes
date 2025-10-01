@@ -40,6 +40,7 @@ import java.util.Set;
 import org.apache.http.NameValuePair;
 import org.apache.http.client.utils.URLEncodedUtils;
 import org.hl7.fhir.r4.model.Bundle;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -54,6 +55,7 @@ public class FhirSearchUtil {
   }
 
   // TODO update all types to FHIR version independent interfaces!
+  @Nullable
   public Bundle searchByUrl(String searchUrl, int count, SummaryEnum summaryMode) {
     try {
       IGenericClient client = fetchUtil.getSourceClient();
@@ -106,7 +108,8 @@ public class FhirSearchUtil {
     return hashMap;
   }
 
-  public String getNextUrl(Bundle bundle) {
+  @Nullable
+  public String getNextUrl(@Nullable Bundle bundle) {
     if (bundle != null && bundle.getLink(Bundle.LINK_NEXT) != null) {
       return bundle.getLink(Bundle.LINK_NEXT).getUrl();
     }
