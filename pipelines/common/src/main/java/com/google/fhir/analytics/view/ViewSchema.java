@@ -36,6 +36,7 @@ import org.apache.avro.SchemaBuilder;
 import org.apache.avro.SchemaBuilder.FieldAssembler;
 import org.apache.avro.generic.GenericData;
 import org.apache.avro.generic.GenericRecord;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -54,7 +55,7 @@ public class ViewSchema {
    * @param fhirType the given FHIR type
    * @return the corresponding JDBCType; if `fhirType` is not mapped JDBCType.VARCHAR is returned.
    */
-  public static JDBCType fhirTypeToDb(String fhirType) {
+  public static JDBCType fhirTypeToDb(@Nullable String fhirType) {
     if (fhirType != null) {
       switch (fhirType) {
         case "boolean":
@@ -98,6 +99,8 @@ public class ViewSchema {
    * @return an ordered map from column names to DB types
    */
   public static ImmutableMap<String, JDBCType> getDbSchema(ViewDefinition view) {
+    if (view.getAllColumns() == null) return ImmutableMap.of();
+
     ImmutableMap.Builder<String, JDBCType> builder = ImmutableMap.builder();
     for (Entry<String, Column> entry : view.getAllColumns().entrySet()) {
       // This is internally guaranteed.
@@ -222,8 +225,8 @@ public class ViewSchema {
             }
           }
         } else {
-          if (e.getColumnInfo().isCollection() || e.getColumnInfo().getType() instanceof String) {
-            if (e.getValues() == null || e.getValues().size() < 1) {
+          if (e.getColumnInfo().isCollection() || e.getColumnInfo().getType() != null) {
+            if (e.getValues() == null || e.getValues().isEmpty()) {
               currentRecord.put(e.getColumnInfo().getName(), null);
             } else {
               // Handles View Definition Collections and converts them to Avro String Arrays
@@ -246,14 +249,18 @@ public class ViewSchema {
 
   /**
    * Creates an Avro Schema for a given View Definition. Note: This conversion should be consistent
-   * with {@see #com.cerner.bunsen.avro.converters.DefinitionToAvroVisitor}
+   * with
    *
+   * @see com.cerner.bunsen.avro.converters.DefinitionToAvroVisitor
    * @param view the input View Definition
    * @return Avro Schema
    */
   public static Schema getAvroSchema(ViewDefinition view) {
     FieldAssembler<Schema> schemaFields =
         SchemaBuilder.record(view.getName()).namespace("org.viewDefinition").fields();
+
+    if (view.getAllColumns() == null) return schemaFields.endRecord();
+
     for (Entry<String, Column> entry : view.getAllColumns().entrySet()) {
       Preconditions.checkState(entry.getValue() != null);
       String columnType = entry.getValue().getType();

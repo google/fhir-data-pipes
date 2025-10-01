@@ -109,11 +109,12 @@ public class ViewApplicator {
    *     the errors come from errors in the ViewDefinition.
    */
   public RowList apply(IBaseResource resource) throws ViewApplicationException {
+    Preconditions.checkNotNull(viewDef.getResource());
     Preconditions.checkState(
         viewDef.getResource().equals(resource.fhirType()),
-        String.format(
-            "expected resource type %s got %s",
-            viewDef.getResource(), Strings.nullToEmpty(resource.fhirType())));
+        "expected resource type %s got %s",
+        viewDef.getResource(),
+        Strings.nullToEmpty(resource.fhirType()));
     if (satisfiesWhere(resource)) {
       return applyAllSelects(resource, viewDef.getSelect());
     } else {
@@ -137,7 +138,7 @@ public class ViewApplicator {
       return true;
     }
     for (Where w : viewDef.getWhere()) {
-      List<IBase> results = evaluateFhirPath(resource, w.getPath());
+      List<IBase> results = w.getPath() != null ? evaluateFhirPath(resource, w.getPath()) : null;
       // Empty list is treated as false; see logic operators https://hl7.org/fhirpath/#boolean-logic
       if (results != null && results.isEmpty()) {
         return false;
@@ -181,13 +182,13 @@ public class ViewApplicator {
   }
 
   private RowList crossJoinAll(List<RowList> rowsPerSelect) throws ViewApplicationException {
-    RowList currentList = null;
+    RowList currentList = EMPTY_LIST;
     for (RowList rows : rowsPerSelect) {
       if (rows == null || rows.getRows().isEmpty()) {
         // One of the sub-lists is empty hence the whole cross-join will be empty.
         return EMPTY_LIST;
       }
-      if (currentList == null) {
+      if (currentList.isEmpty()) {
         currentList = rows;
       } else {
         currentList = currentList.crossJoin(rows);
@@ -340,7 +341,7 @@ public class ViewApplicator {
         continue;
       }
       List<IBase> eval = null;
-      if (element != null) {
+      if (element != null && col.getPath() != null) {
         eval = evaluateFhirPath(element, col.getPath());
       }
       rowElements.add(new RowElement(col, eval));
@@ -550,15 +551,16 @@ public class ViewApplicator {
 
   @Getter
   public static class RowElement {
-    private final List<IBase> values;
+    @Nullable private final List<IBase> values;
     private final Column columnInfo;
 
     @Override
     public String toString() {
-      return columnInfo.getName() + ":" + Arrays.toString(values.toArray());
+      return columnInfo.getName() + ":" + Arrays.toString(values != null ? values.toArray() : null);
     }
 
-    public RowElement(Column columnInfo, List<IBase> values) throws ViewApplicationException {
+    public RowElement(Column columnInfo, @Nullable List<IBase> values)
+        throws ViewApplicationException {
       if (!columnInfo.isCollection() && values != null && values.size() > 1) {
         throw new ViewApplicationException(
             "A list provided for the non-collection column " + columnInfo.getName());
@@ -568,6 +570,7 @@ public class ViewApplicator {
     }
 
     // Convenience function
+    @Nullable
     public String getName() {
       return columnInfo.getName();
     }
@@ -626,9 +629,6 @@ public class ViewApplicator {
         return null;
       }
       IPrimitiveType<T> primitive = (IPrimitiveType<T>) val;
-      if (primitive == null) {
-        return null;
-      }
       return primitive.getValue();
     }
 
@@ -644,7 +644,7 @@ public class ViewApplicator {
 
     public List<String> getIdParts() {
       List<String> idParts = new ArrayList<>();
-      if (ID_TYPE.equals(columnInfo.getInferredType())) {
+      if (values != null && ID_TYPE.equals(columnInfo.getInferredType())) {
         for (IBase elem : values) {
           idParts.add(getIdString((IIdType) elem));
         }
@@ -653,8 +653,7 @@ public class ViewApplicator {
     }
 
     public boolean isIdType() {
-      return (ID_TYPE.equals(columnInfo.getInferredType()))
-          || (ID_TYPE.equals(columnInfo.getType()));
+      return ID_TYPE.equals(columnInfo.getInferredType()) || ID_TYPE.equals(columnInfo.getType());
     }
   }
 }
