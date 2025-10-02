@@ -29,6 +29,7 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.List;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import javax.sql.DataSource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -70,7 +71,7 @@ public class HiveTableManager {
    *     the THRIFT_CONTAINER_PARQUET_DIR directory (i.e., relative to `/dwh/`).
    * @param isResource false iff the provided `resources` list is actually ViewDefinition names; in
    *     this case the SQL statements for creating virtual views are not run.
-   * @throws SQLException
+   * @throws SQLException when there is an error with the database.
    */
   public synchronized void createResourceAndCanonicalTables(
       List<String> resources, String timestamp, String thriftServerParquetPath, boolean isResource)

@@ -33,7 +33,7 @@ import java.nio.file.NoSuchFileException;
 import java.sql.SQLException;
 import java.time.Instant;
 import java.time.LocalDateTime;
-import java.util.Collections;
+import java.time.ZoneOffset;
 import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -165,7 +165,6 @@ public class PipelineManager implements ApplicationListener<ApplicationReadyEven
   }
 
   private void setLastRunStatus(LastRunStatus status) {
-    lastRunStatus = status;
     if (status == LastRunStatus.SUCCESS) {
       lastRunEnd = LocalDateTime.now();
     }
@@ -359,10 +358,12 @@ public class PipelineManager implements ApplicationListener<ApplicationReadyEven
   }
 
   /**
+   * Fetches the next scheduled time to run the incremental pipeline.
+   *
    * @return the next scheduled time to run the incremental pipeline or null iff a pipeline is
    *     currently running or no previous DWH exist.
    */
-  LocalDateTime getNextIncrementalTime() {
+  @Nullable LocalDateTime getNextIncrementalTime() {
     if (isRunning() || lastRunEnd == null) {
       return null;
     }
@@ -374,6 +375,7 @@ public class PipelineManager implements ApplicationListener<ApplicationReadyEven
   }
 
   // Every 30 seconds, check for pipeline status and incremental pipeline schedule.
+  @SuppressWarnings("unused")
   @Scheduled(fixedDelay = 30000)
   private void checkSchedule() throws IOException {
     LocalDateTime next = getNextIncrementalTime();
@@ -408,8 +410,6 @@ public class PipelineManager implements ApplicationListener<ApplicationReadyEven
         new PipelineThread(
             options,
             this,
-            dwhFilesManager,
-            dataProperties,
             pipelineConfig,
             isRecreateViews ? RunMode.VIEWS : RunMode.FULL,
             avroConversionUtil,
@@ -482,14 +482,7 @@ public class PipelineManager implements ApplicationListener<ApplicationReadyEven
     // Creating a thread for running both pipelines, one after the other.
     currentPipeline =
         new PipelineThread(
-            options,
-            mergerOptions,
-            this,
-            dwhFilesManager,
-            dataProperties,
-            pipelineConfig,
-            avroConversionUtil,
-            FlinkRunner.class);
+            options, mergerOptions, this, pipelineConfig, avroConversionUtil, FlinkRunner.class);
     logger.info("Running incremental pipeline for DWH {} since {}", currentDwh.getRoot(), since);
     currentPipeline.start();
   }
@@ -577,7 +570,7 @@ public class PipelineManager implements ApplicationListener<ApplicationReadyEven
       Preconditions.checkState(paths != null, "Make sure DWH prefix is a valid path!");
 
       // Sort snapshots directories such that the canonical view is created for the latest one.
-      Collections.sort(paths, Comparator.comparing(ResourceId::toString));
+      paths.sort(Comparator.comparing(ResourceId::toString));
 
       // TODO: Why are we creating these tables for all paths and not just the most recent? If all
       //  are needed, why are we doing the above `sort`?

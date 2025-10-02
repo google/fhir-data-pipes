@@ -36,6 +36,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.TreeSet;
+import java.time.ZoneOffset;
 import java.util.stream.Collectors;
 import javax.annotation.PostConstruct;
 import org.apache.beam.sdk.io.FileSystems;
@@ -103,6 +104,9 @@ public class DwhFilesManager {
   }
 
   /**
+   * Returns the next scheduled time to run the purge job based on the previous run time. If the
+   * purge job has never run before, then it returns the current time.
+   *
    * @return the next scheduled time to run the purge job based on the previous run time.
    */
   LocalDateTime getNextPurgeTime() {
@@ -203,6 +207,7 @@ public class DwhFilesManager {
     deleteDirectoryAndFiles(resourceId);
   }
 
+  @SuppressWarnings("NonApiType")
   private void deleteOlderSnapshots(
       List<ResourceId> allPaths, TreeSet<String> recentSnapshotsToBeRetained) throws IOException {
     for (ResourceId path : allPaths) {
@@ -218,7 +223,7 @@ public class DwhFilesManager {
    * under the subdirectories. Later the directories and the subdirectories are deleted.
    *
    * @param rootDirectory which needs to be deleted
-   * @throws IOException
+   * @throws IOException if any IO errors occur.
    */
   private void deleteDirectoryAndFiles(ResourceId rootDirectory) throws IOException {
     String fileSeparator = DwhFiles.getFileSeparatorForDwhFiles(rootDirectory.toString());
@@ -277,6 +282,7 @@ public class DwhFilesManager {
     }
   }
 
+  @SuppressWarnings("NonApiType")
   private TreeSet<String> getRecentSnapshots(List<ResourceId> paths, int numberOfSnapshotsToReturn)
       throws IOException {
     TreeSet<String> treeSet = new TreeSet<>();
@@ -303,7 +309,7 @@ public class DwhFilesManager {
    *
    * @param dwhResource The DWH resource path which needs to be checked for completeness
    * @return the status of DWH completeness.
-   * @throws IOException
+   * @throws IOException if any IO errors occur.
    */
   boolean isDwhComplete(ResourceId dwhResource) throws IOException {
     ResourceId startTimestampResource =
@@ -320,7 +326,7 @@ public class DwhFilesManager {
    *
    * @param dwhResource the root path of DWH
    * @return whether the pipeline for this DWH started or not
-   * @throws IOException
+   * @throws IOException if any IO errors occur.
    */
   boolean isDwhJobStarted(ResourceId dwhResource) throws IOException {
     ResourceId startTimestampResource =
@@ -333,7 +339,7 @@ public class DwhFilesManager {
    *
    * @param resourceId the resource to be checked
    * @return the existence status of the resource
-   * @throws IOException
+   * @throws IOException if any IO errors occur.
    */
   boolean doesFileExist(ResourceId resourceId) throws IOException {
     List<MatchResult> matchResultList =
@@ -356,7 +362,7 @@ public class DwhFilesManager {
    * determined by ignoring the prefix part in the given input format <baseDir>/<prefix> for the
    * dwhRootPrefix
    *
-   * @param dwhRootPrefix
+   * @param dwhRootPrefix the dwh root prefix in the format <baseDir>/<prefix>
    * @return the base directory name
    */
   String getBaseDir(String dwhRootPrefix) {
@@ -376,7 +382,7 @@ public class DwhFilesManager {
    * name. This is determined by considering the prefix part in the given input format
    * <baseDir>/<prefix> for the dwhRootPrefix
    *
-   * @param dwhRootPrefix
+   * @param dwhRootPrefix the dwh root prefix in the format <baseDir>/<prefix>
    * @return the prefix name
    */
   String getPrefix(String dwhRootPrefix) {
