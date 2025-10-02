@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-FROM bitnami/spark:3.3
+FROM bitnami/spark:3.1.2-debian-10-r110
 
 ##############################################################################################
 # NOTE: This Docker image is designed to run exclusively in Cloud Build environment.
