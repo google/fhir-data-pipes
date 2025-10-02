@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2024 Google LLC
+ * Copyright 2020-2025 Google LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,10 +40,12 @@ public class ProcessGenericRecords extends FetchSearchPageFn<GenericRecord> {
   private static final int BUNDLE_SIZE = 10;
 
   private String resourceType;
+
   private List<Resource> cachedResources;
   private Counter totalAvroConversionTime;
   private Counter totalAvroConversions;
 
+  @SuppressWarnings("NullAway.Init")
   ProcessGenericRecords(FhirEtlOptions options, String resourceType) {
     super(options, "ProcessGenericRecords_" + resourceType);
     this.resourceType = resourceType;
@@ -65,7 +67,7 @@ public class ProcessGenericRecords extends FetchSearchPageFn<GenericRecord> {
 
   @Override
   public void finishBundle(FinishBundleContext context) {
-    if (!cachedResources.isEmpty()) {
+    if (cachedResources != null && !cachedResources.isEmpty()) {
       try {
         processBundle(flushCachToBundle());
       } catch (SQLException | ViewApplicationException | ProfileException | IOException e) {
@@ -99,7 +101,7 @@ public class ProcessGenericRecords extends FetchSearchPageFn<GenericRecord> {
         processBundle(flushCachToBundle());
       }
     } catch (IllegalArgumentException e) {
-      log.error("Dropping bad record because: " + e.getMessage());
+      log.error("Dropping bad record because: {}", e.getMessage());
     }
   }
 }

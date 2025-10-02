@@ -202,14 +202,11 @@ public class ParquetMerger {
    * This method identifies if the record is a deleted record. For a deleted record, the meta.tag
    * would be updated with a ActionType.REMOVE during the incremental parquet file creation, the
    * same information is being reused to check if the record is deleted or not.
-   *
-   * @param record
-   * @return
    */
   private static Boolean isRecordDeleted(GenericRecord record) {
+    Preconditions.checkNotNull(record);
     Object tag = ((GenericRecord) record.get(META_KEY)).get(TAG_KEY);
-    if (tag != null && tag instanceof Collection) {
-      Collection tagCollection = (Collection) tag;
+    if (tag != null && tag instanceof Collection tagCollection) {
       if (!tagCollection.isEmpty()) {
         Iterator iterator = tagCollection.iterator();
         while (iterator.hasNext()) {
@@ -226,8 +223,10 @@ public class ParquetMerger {
     return Boolean.FALSE;
   }
 
+  @Nullable
   private static GenericRecord findLastRecord(
       Iterable<GenericRecord> genericRecords, Counter numDuplicates) {
+    Preconditions.checkNotNull(genericRecords);
     // Note we are assuming all times have the same time-zone to avoid parsing date values.
     String lastUpdated = null;
     GenericRecord lastRecord = null;
@@ -243,7 +242,7 @@ public class ParquetMerger {
     if (numRec > 1) {
       numDuplicates.inc();
     }
-    if (numRec > 2) {
+    if (numRec > 2 && lastRecord != null && lastRecord.get(ID_KEY) != null) {
       log.warn("Record with ID {} repeated more than twice!", lastRecord.get(ID_KEY));
     }
     return lastRecord;
@@ -352,7 +351,7 @@ public class ParquetMerger {
       throws IOException {
     Pipeline pipeline = Pipeline.create(options);
     log.info("Merging materialized view {}", viewName);
-    ViewDefinition viewDef = viewManager.getViewDefinition(viewName);
+    ViewDefinition viewDef = viewManager != null ? viewManager.getViewDefinition(viewName) : null;
     if (viewDef != null) {
       Schema schema = ViewSchema.getAvroSchema(viewDef);
       PCollection<KV<String, CoGbkResult>> groupedRecords =
@@ -406,10 +405,21 @@ public class ParquetMerger {
                   @ProcessElement
                   public void processElement(ProcessContext c) {
                     KV<String, Iterable<GenericRecord>> e = c.element();
-                    GenericRecord lastRecord = findLastRecord(e.getValue(), numDuplicates);
-                    if (!isRecordDeleted(lastRecord)) {
-                      numOutputRecords.inc();
-                      c.output(lastRecord);
+                    if (e != null) {
+                      GenericRecord lastRecord = findLastRecord(e.getValue(), numDuplicates);
+                      if (lastRecord != null) {
+                        if (!isRecordDeleted(lastRecord)) {
+                          numOutputRecords.inc();
+                          c.output(lastRecord);
+                        }
+                      } else {
+                        log.warn(
+                            "Null last record found for resource type {} with id {}",
+                            type,
+                            e.getKey());
+                      }
+                    } else {
+                      log.warn("Null element found in grouped records for resource type {}", type);
                     }
                   }
                 }));
