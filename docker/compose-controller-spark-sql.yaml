@@ -83,7 +83,7 @@ services:
         condition: service_healthy
 
   spark-master:
-    image: docker.io/bitnami/spark:3.1.2-debian-10-r110
+    image: docker.io/bitnamilegacy/spark:3.3.3
     container_name: spark-master
     environment:
       - SPARK_MODE=master
@@ -113,7 +113,7 @@ services:
       timeout: 60s
 
   spark-worker:
-    image: docker.io/bitnami/spark:3.1.2-debian-10-r110
+    image: docker.io/bitnamilegacy/spark:3.3.3
     container_name: spark-worker
     depends_on:
       spark-master:
@@ -132,7 +132,7 @@ services:
       - default
 
   thriftserver:
-    image: docker.io/bitnami/spark:3.1.2-debian-10-r110
+    image: docker.io/bitnamilegacy/spark:3.3.3
     container_name: spark-thriftserver
     depends_on:
       spark-master:
