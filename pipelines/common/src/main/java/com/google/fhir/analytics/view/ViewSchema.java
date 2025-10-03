@@ -36,6 +36,7 @@ import org.apache.avro.SchemaBuilder;
 import org.apache.avro.SchemaBuilder.FieldAssembler;
 import org.apache.avro.generic.GenericData;
 import org.apache.avro.generic.GenericRecord;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -54,37 +55,19 @@ public class ViewSchema {
    * @param fhirType the given FHIR type
    * @return the corresponding JDBCType; if `fhirType` is not mapped JDBCType.VARCHAR is returned.
    */
-  public static JDBCType fhirTypeToDb(String fhirType) {
+  public static JDBCType fhirTypeToDb(@Nullable String fhirType) {
     if (fhirType != null) {
-      switch (fhirType) {
-        case "boolean":
-          return JDBCType.BOOLEAN;
-        case "integer":
-        case "unsignedInt":
-          return JDBCType.INTEGER;
-        case "integer64":
-          return JDBCType.BIGINT;
-        case "decimal":
-          return JDBCType.DECIMAL;
-        case "date":
-          return JDBCType.DATE;
-        case "dateTime":
-        case "instant":
-          return JDBCType.TIMESTAMP;
-        case "time":
-          return JDBCType.TIME;
-        case "base64Binary":
-        case "canonical":
-        case "code":
-        case "id":
-        case "markdown":
-        case "oid":
-        case "string":
-        case "uri":
-        case "url":
-        case "uuid":
-          return JDBCType.VARCHAR;
-      }
+      return switch (fhirType) {
+        case "boolean" -> JDBCType.BOOLEAN;
+        case "integer", "unsignedInt" -> JDBCType.INTEGER;
+        case "integer64" -> JDBCType.BIGINT;
+        case "decimal" -> JDBCType.DECIMAL;
+        case "date" -> JDBCType.DATE;
+        case "dateTime", "instant" -> JDBCType.TIMESTAMP;
+        case "time" -> JDBCType.TIME;
+          // also covers base64Binary, canonical, code, id, markdown, oid, string, uri, url, uuid
+        default -> JDBCType.VARCHAR;
+      };
     }
     // This is to handle non-primitive types or when the type is not specified, we may want to
     // separate these case from string in the future.
@@ -128,27 +111,13 @@ public class ViewSchema {
           statement.setString(ind, re.getString());
         } else {
           switch (fhirTypeToDb(re.getColumnInfo().getType())) {
-            case BOOLEAN:
-              statement.setBoolean(ind, re.getPrimitive());
-              break;
-            case INTEGER:
-              statement.setInt(ind, re.getPrimitive());
-              break;
-            case BIGINT:
-              statement.setLong(ind, re.getPrimitive());
-              break;
-            case DECIMAL:
-              statement.setBigDecimal(ind, re.getPrimitive());
-              break;
-            case DATE:
-            case TIMESTAMP:
-            case TIME:
-              statement.setTimestamp(ind, new Timestamp(re.<Date>getPrimitive().getTime()));
-              break;
-            case VARCHAR:
-            default:
-              statement.setString(ind, re.getString());
-              break;
+            case BOOLEAN -> statement.setBoolean(ind, re.getPrimitive());
+            case INTEGER -> statement.setInt(ind, re.getPrimitive());
+            case BIGINT -> statement.setLong(ind, re.getPrimitive());
+            case DECIMAL -> statement.setBigDecimal(ind, re.getPrimitive());
+            case DATE, TIMESTAMP, TIME -> statement.setTimestamp(
+                ind, Timestamp.from(re.<Date>getPrimitive().toInstant()));
+            default -> statement.setString(ind, re.getString()); // Also covers case VARCHAR
           }
         }
       } else {
@@ -193,32 +162,13 @@ public class ViewSchema {
             String elementType =
                 e.getColumnInfo().getType() == null ? "any" : e.getColumnInfo().getType();
             switch (elementType) {
-              case "boolean":
-                currentRecord.put(e.getColumnInfo().getName(), e.<Boolean>getPrimitive());
-                break;
-              case "integer":
-              case "unsignedInt":
-              case "integer64":
-              case "decimal":
-                currentRecord.put(e.getColumnInfo().getName(), e.getPrimitive());
-                break;
-              case "date":
-              case "dateTime":
-              case "instant":
-              case "time":
-              case "base64Binary":
-              case "canonical":
-              case "code":
-              case "id":
-              case "markdown":
-              case "oid":
-              case "string":
-              case "uri":
-              case "url":
-              case "uuid":
-              default:
-                currentRecord.put(e.getColumnInfo().getName(), e.getString());
-                break;
+              case "boolean" -> currentRecord.put(
+                  e.getColumnInfo().getName(), e.<Boolean>getPrimitive());
+              case "integer", "unsignedInt", "integer64", "decimal" -> currentRecord.put(
+                  e.getColumnInfo().getName(), e.getPrimitive());
+                // Also covers cases
+                // date,dateTime,instant,time,base64Binary,canonical,code,id,markdown,oid,string,uri,url,uuid
+              default -> currentRecord.put(e.getColumnInfo().getName(), e.getString());
             }
           }
         } else {
