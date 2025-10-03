@@ -20,6 +20,7 @@ import static com.google.fhir.analytics.DwhFiles.LOCAL_SCHEME;
 import static com.google.fhir.analytics.DwhFiles.S3_SCHEME;
 
 import com.google.common.base.Preconditions;
+import com.google.common.base.Splitter;
 import com.google.common.base.Strings;
 import com.google.common.collect.Iterables;
 import com.google.fhir.analytics.DwhFiles.CloudPath;
@@ -30,7 +31,6 @@ import java.io.IOException;
 import java.nio.file.DirectoryNotEmptyException;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
@@ -403,7 +403,7 @@ public class DwhFilesManager {
   List<String> findExistingResources(String dwhRoot) throws IOException {
     Set<ResourceId> childPaths = DwhFiles.getAllChildDirectories(dwhRoot);
     Set<String> configuredSet =
-        new HashSet<>(Arrays.asList(dataProperties.getResourceList().split(",")));
+        new HashSet<>(Splitter.on(',').splitToList(dataProperties.getResourceList()));
     return childPaths.stream()
         .map(r -> r.getFilename())
         .filter(r -> configuredSet.contains(r))

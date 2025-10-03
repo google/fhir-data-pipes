@@ -40,6 +40,7 @@ import com.google.api.client.http.GenericUrl;
 import com.google.api.client.http.javanet.NetHttpTransport;
 import com.google.api.client.json.gson.GsonFactory;
 import com.google.common.base.Preconditions;
+import com.google.common.base.Splitter;
 import com.google.common.base.Strings;
 import java.io.IOException;
 import java.time.Instant;
@@ -130,10 +131,9 @@ public class FetchUtil {
   @Nullable
   public Resource fetchFhirResource(String resourceUrl) {
     // Parse resourceUrl
-    // TODO: replace `split` with safer options: https://errorprone.info/bugpattern/StringSplitter
-    String[] sepUrl = resourceUrl.split("/");
-    String resourceId = sepUrl[sepUrl.length - 1];
-    String resourceType = sepUrl[sepUrl.length - 2];
+    List<String> sepUrl = Splitter.on('/').splitToList(resourceUrl);
+    String resourceId = sepUrl.get(sepUrl.size() - 1);
+    String resourceType = sepUrl.get(sepUrl.size() - 2);
     return fetchFhirResource(resourceType, resourceId);
   }
 
