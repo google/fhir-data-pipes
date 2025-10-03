@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2023 Google LLC
+ * Copyright 2020-2025 Google LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@ package com.google.fhir.analytics;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
+import com.google.common.base.Splitter;
 import com.google.common.collect.Lists;
 import com.google.fhir.analytics.model.DatabaseConfiguration;
 import com.google.fhir.analytics.model.EventConfiguration;
@@ -163,15 +164,15 @@ public class JdbcFetchOpenMrs {
       Pipeline pipeline, String tableName, String dateColumn, String activePeriod)
       throws SQLException, CannotProvideCoderException {
     Preconditions.checkArgument(!activePeriod.isEmpty());
-    String[] dateRange = activePeriod.split("_");
-    Preconditions.checkArgument(dateRange.length > 0);
+    List<String> dateRange = Splitter.on('_').splitToList(activePeriod);
+    Preconditions.checkArgument(dateRange.size() > 0);
     String lowerConstraint = "";
-    if (!dateRange[0].isEmpty()) {
-      lowerConstraint = String.format("%s > '%s'", dateColumn, dateRange[0]);
+    if (!dateRange.get(0).isEmpty()) {
+      lowerConstraint = String.format("%s > '%s'", dateColumn, dateRange.get(0));
     }
     String upperConstraint = "";
-    if (dateRange.length > 1 && !dateRange[1].isEmpty()) {
-      upperConstraint = String.format("%s <= '%s'", dateColumn, dateRange[1]);
+    if (dateRange.size() > 1 && !dateRange.get(1).isEmpty()) {
+      upperConstraint = String.format("%s <= '%s'", dateColumn, dateRange.get(1));
     }
     String constraint = "";
     if (!lowerConstraint.isEmpty() && !upperConstraint.isEmpty()) {
@@ -259,27 +260,27 @@ public class JdbcFetchOpenMrs {
   public Map<String, List<String>> createFhirReverseMap(
       String resourceString, DatabaseConfiguration dbConfig) {
     Map<String, EventConfiguration> tableToFhirMap = dbConfig.getEventConfigurations();
-    String[] resourceList = resourceString.split(",");
+    List<String> resourceList = Splitter.on(',').splitToList(resourceString);
     Map<String, List<String>> reverseMap = new HashMap<String, List<String>>();
     for (Map.Entry<String, EventConfiguration> entry : tableToFhirMap.entrySet()) {
       Map<String, String> linkTemplate = entry.getValue().getLinkTemplates();
       for (String resource : resourceList) {
         if (linkTemplate.containsKey("fhir") && linkTemplate.get("fhir") != null) {
-          String[] resourceName = linkTemplate.get("fhir").split("/");
-          if (resourceName.length >= 1 && resourceName[1].equals(resource)) {
+          List<String> resourceName = Splitter.on('/').splitToList(linkTemplate.get("fhir"));
+          if (resourceName.size() >= 1 && resourceName.get(1).equals(resource)) {
             if (reverseMap.containsKey(entry.getValue().getParentTable())) {
               List<String> resources = reverseMap.get(entry.getValue().getParentTable());
-              resources.add(resourceName[1]);
+              resources.add(resourceName.get(1));
             } else {
               List<String> resources = new ArrayList<String>();
-              resources.add(resourceName[1]);
+              resources.add(resourceName.get(1));
               reverseMap.put(entry.getValue().getParentTable(), resources);
             }
           }
         }
       }
     }
-    if (reverseMap.size() < resourceList.length) {
+    if (reverseMap.size() < resourceList.size()) {
       log.error(
           "Some of the passed FHIR resources are not mapped to any table, please check the config");
     }

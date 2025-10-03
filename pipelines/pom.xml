@@ -51,7 +51,7 @@
     <license-maven-plugin.version>5.0.0</license-maven-plugin.version>
     <beam.version>2.56.0</beam.version>
     <auto-value.version>1.11.0</auto-value.version>
-    <lombok.version>1.18.38</lombok.version>
+    <lombok.version>1.18.40</lombok.version>
     <errorprone.version>2.41.0</errorprone.version>
     <nullaway.version>0.12.9</nullaway.version>
   </properties>
@@ -269,7 +269,7 @@
         </plugin>
         <plugin>
           <artifactId>maven-surefire-plugin</artifactId>
-          <version>3.5.3</version>
+          <version>3.5.4</version>
         </plugin>
         <!--
            Configures `mvn package` to produce a bundled jar ("fat jar") for runners
@@ -277,7 +277,7 @@
          -->
         <plugin>
           <artifactId>maven-shade-plugin</artifactId>
-          <version>3.6.0</version>
+          <version>3.6.1</version>
         </plugin>
         <plugin>
           <artifactId>maven-jar-plugin</artifactId>
@@ -375,10 +375,6 @@
       <plugin>
         <groupId>com.mycila</groupId>
         <artifactId>license-maven-plugin</artifactId>
-      </plugin>
-      <plugin>
-        <groupId>com.diffplug.spotless</groupId>
-        <artifactId>spotless-maven-plugin</artifactId>
       </plugin>
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>

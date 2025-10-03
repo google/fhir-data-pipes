@@ -92,6 +92,7 @@ nb-configuration.xml
 .ipynb_checkpoints/
 **.pyc
 **__pycache__**
+*.egg-info/
 ##############################
 ## Data-warehouse files.
 ##############################
