@@ -131,15 +131,16 @@ public class BulkExportApiClient {
   private IBaseParameters fetchBulkExportParameters(
       FhirVersionEnum fhirVersionEnum, List<String> resourceTypes, String since) {
     since = Strings.nullToEmpty(since);
-    switch (fhirVersionEnum) {
-      case R4:
+    return switch (fhirVersionEnum) {
+      case R4 -> {
         Parameters r4Parameters = new Parameters();
         r4Parameters.addParameter(PARAMETER_TYPE, String.join(",", resourceTypes));
         if (!since.isEmpty()) {
           r4Parameters.addParameter(PARAMETER_SINCE, new InstantType(since));
         }
-        return r4Parameters;
-      case DSTU3:
+        yield r4Parameters;
+      }
+      case DSTU3 -> {
         // TODO: Create a common interface to handle parameters of different versions
         org.hl7.fhir.dstu3.model.Parameters dstu3Parameters =
             new org.hl7.fhir.dstu3.model.Parameters();
@@ -154,11 +155,11 @@ public class BulkExportApiClient {
           sinceParameter.setValue(new org.hl7.fhir.dstu3.model.InstantType(since));
           dstu3Parameters.addParameter(sinceParameter);
         }
-        return dstu3Parameters;
-      default:
-        throw new IllegalArgumentException(
-            String.format("Fhir Version not supported yet for bulk export : %s", fhirVersionEnum));
-    }
+        yield dstu3Parameters;
+      }
+      default -> throw new IllegalArgumentException(
+          String.format("Fhir Version not supported yet for bulk export : %s", fhirVersionEnum));
+    };
   }
 
   private boolean isStatusSuccessful(int httpStatusCode) {
