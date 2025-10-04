@@ -20,6 +20,7 @@ import static com.google.fhir.analytics.DwhFiles.LOCAL_SCHEME;
 import static com.google.fhir.analytics.DwhFiles.S3_SCHEME;
 
 import com.google.common.base.Preconditions;
+import com.google.common.base.Splitter;
 import com.google.common.base.Strings;
 import com.google.common.collect.Iterables;
 import com.google.fhir.analytics.DwhFiles.CloudPath;
@@ -31,7 +32,6 @@ import java.nio.file.DirectoryNotEmptyException;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
@@ -421,7 +421,7 @@ public class DwhFilesManager {
   List<String> findExistingResources(String dwhRoot) throws IOException {
     Set<ResourceId> childPaths = DwhFiles.getAllChildDirectories(dwhRoot);
     Set<String> configuredSet =
-        new HashSet<>(Arrays.asList(dataProperties.getResourceList().split(",")));
+        new HashSet<>(Splitter.on(',').splitToList(dataProperties.getResourceList()));
     return childPaths.stream()
         .map(r -> r.getFilename())
         .filter(r -> configuredSet.contains(r))
@@ -443,31 +443,27 @@ public class DwhFilesManager {
 
   private int getLastIndexOfSlash(String dwhRootPrefix) {
     CloudPath cloudPath = DwhFiles.parsePath(dwhRootPrefix);
-    int index = -1;
-    switch (cloudPath.getScheme()) {
-      case LOCAL_SCHEME:
-        index = dwhRootPrefix.lastIndexOf(File.separator);
-        break;
-      case GCS_SCHEME:
-      case S3_SCHEME:
+    return switch (cloudPath.getScheme()) {
+      case LOCAL_SCHEME -> dwhRootPrefix.lastIndexOf(File.separator);
+      case GCS_SCHEME, S3_SCHEME -> {
         // Fetch the last index position of the character '/' after the bucket name in the gcs path.
         String gcsObject = cloudPath.getObject();
         if (Strings.isNullOrEmpty(gcsObject)) {
-          break;
+          yield -1;
         }
         int position = gcsObject.lastIndexOf("/");
         if (position == -1) {
-          index = dwhRootPrefix.lastIndexOf(gcsObject) - 1;
+          yield dwhRootPrefix.lastIndexOf(gcsObject) - 1;
         } else {
-          index = dwhRootPrefix.lastIndexOf(gcsObject) + position;
+          yield dwhRootPrefix.lastIndexOf(gcsObject) + position;
         }
-        break;
-      default:
+      }
+      default -> {
         String errorMessage =
             String.format("File system scheme=%s is not yet supported", cloudPath.getScheme());
         logger.error(errorMessage);
         throw new IllegalArgumentException(errorMessage);
-    }
-    return index;
+      }
+    };
   }
 }
