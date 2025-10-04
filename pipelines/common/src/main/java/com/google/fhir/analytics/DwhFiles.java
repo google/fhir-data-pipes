@@ -568,18 +568,16 @@ public class DwhFiles {
    */
   public static String getFileSeparatorForDwhFiles(String dwhRootPrefix) {
     CloudPath cloudPath = parsePath(dwhRootPrefix);
-    switch (cloudPath.getScheme()) {
-      case LOCAL_SCHEME:
-        return File.separator;
-      case GCS_SCHEME:
-      case S3_SCHEME:
-        return "/";
-      default:
+    return switch (cloudPath.getScheme()) {
+      case LOCAL_SCHEME -> File.separator;
+      case GCS_SCHEME, S3_SCHEME -> "/";
+      default -> {
         String errorMessage =
             String.format("File system scheme=%s is not yet supported", cloudPath.getScheme());
         log.error(errorMessage);
         throw new IllegalArgumentException(errorMessage);
-    }
+      }
+    };
   }
 
   /** This method returns the {@code path} by appending the {@code fileseparator} if required. */

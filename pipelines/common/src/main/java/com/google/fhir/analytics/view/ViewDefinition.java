@@ -424,17 +424,12 @@ public class ViewDefinition {
 
   /** Coverts the given FHIR version string to a {@link FhirVersionEnum}. */
   public static FhirVersionEnum convertFhirVersion(String fhirVersion) {
-    switch (fhirVersion.substring(0, 3)) {
-      case "3.0":
-        return FhirVersionEnum.DSTU3;
-      case "4.0":
-        return FhirVersionEnum.R4;
-      case "4.3":
-        return FhirVersionEnum.R4B;
-      case "5.0":
-        return FhirVersionEnum.R5;
-      default:
-        throw new IllegalArgumentException("FHIR version not supported!");
-    }
+    return switch (fhirVersion.substring(0, 3)) {
+      case "3.0" -> FhirVersionEnum.DSTU3;
+      case "4.0" -> FhirVersionEnum.R4;
+      case "4.3" -> FhirVersionEnum.R4B;
+      case "5.0" -> FhirVersionEnum.R5;
+      default -> throw new IllegalArgumentException("FHIR version not supported!");
+    };
   }
 }

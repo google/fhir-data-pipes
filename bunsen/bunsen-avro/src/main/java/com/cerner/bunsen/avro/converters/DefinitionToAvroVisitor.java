@@ -22,6 +22,7 @@ import com.cerner.bunsen.definitions.StructureField;
 import com.cerner.bunsen.exception.ProfileException;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
+import com.google.common.base.Splitter;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableMap;
 import java.math.BigDecimal;
@@ -774,10 +775,9 @@ public class DefinitionToAvroVisitor implements DefinitionVisitor<HapiConverter<
 
     String localPart = extensionUrl.substring(extensionUrl.lastIndexOf('/') + 1);
 
-    String[] parts = localPart.split("[-|_]");
-
     String recordName =
-        Arrays.stream(parts)
+        Splitter.onPattern("[-|_]")
+            .splitToStream(localPart)
             .map(part -> part.substring(0, 1).toUpperCase() + part.substring(1))
             .collect(Collectors.joining());
 

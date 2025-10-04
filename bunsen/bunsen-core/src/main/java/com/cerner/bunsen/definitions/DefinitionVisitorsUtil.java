@@ -1,7 +1,7 @@
 package com.cerner.bunsen.definitions;
 
+import com.google.common.base.Splitter;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Deque;
 import java.util.Iterator;
 import java.util.List;
@@ -27,8 +27,8 @@ public class DefinitionVisitorsUtil {
    * @return a converted {@link String}
    */
   public static String recordNameFor(String elementPath) {
-
-    return Arrays.stream(elementPath.split("\\."))
+    return Splitter.onPattern("\\.")
+        .splitToStream(elementPath)
         .map(StringUtils::capitalize)
         .reduce(String::concat)
         .get();
