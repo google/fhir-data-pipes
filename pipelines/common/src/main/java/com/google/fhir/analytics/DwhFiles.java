@@ -439,7 +439,7 @@ public class DwhFiles {
     }
 
     List<ResourceId> destResourceIdList = new ArrayList<>();
-    sourceResourceIdList.stream()
+    sourceResourceIdList
         .forEach(
             resourceId -> {
               ResourceId destResourceId =

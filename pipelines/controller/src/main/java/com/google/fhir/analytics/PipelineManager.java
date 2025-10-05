@@ -33,7 +33,6 @@ import java.nio.file.NoSuchFileException;
 import java.sql.SQLException;
 import java.time.Instant;
 import java.time.LocalDateTime;
-import java.time.ZoneOffset;
 import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -410,6 +409,8 @@ public class PipelineManager implements ApplicationListener<ApplicationReadyEven
         new PipelineThread(
             options,
             this,
+            dwhFilesManager,
+            dataProperties,
             pipelineConfig,
             isRecreateViews ? RunMode.VIEWS : RunMode.FULL,
             avroConversionUtil,
@@ -482,7 +483,14 @@ public class PipelineManager implements ApplicationListener<ApplicationReadyEven
     // Creating a thread for running both pipelines, one after the other.
     currentPipeline =
         new PipelineThread(
-            options, mergerOptions, this, pipelineConfig, avroConversionUtil, FlinkRunner.class);
+            options,
+            mergerOptions,
+            this,
+            dwhFilesManager,
+            dataProperties,
+            pipelineConfig,
+            avroConversionUtil,
+            FlinkRunner.class);
     logger.info("Running incremental pipeline for DWH {} since {}", currentDwh.getRoot(), since);
     currentPipeline.start();
   }
@@ -727,7 +735,7 @@ public class PipelineManager implements ApplicationListener<ApplicationReadyEven
             EtlUtils.runMultiplePipelinesWithTimestamp(pipelines, options);
         // Remove the metrics of the previous pipeline and register the new metrics
         manager.removePipelineMetrics();
-        pipelineResults.stream()
+        pipelineResults
             .forEach(pipelineResult -> manager.publishPipelineMetrics(pipelineResult.metrics()));
         if (runMode == RunMode.VIEWS) {
           // Nothing more is needed to be done as we do not recreate a new DWH in this mode.
@@ -743,7 +751,7 @@ public class PipelineManager implements ApplicationListener<ApplicationReadyEven
           logger.info("Merger options are {}", mergerOptions);
           List<PipelineResult> mergerPipelineResults =
               EtlUtils.runMultipleMergerPipelinesWithTimestamp(mergerPipelines, mergerOptions);
-          mergerPipelineResults.stream()
+          mergerPipelineResults
               .forEach(pipelineResult -> manager.publishPipelineMetrics(pipelineResult.metrics()));
           manager.updateDwh(currentDwhRoot);
         }

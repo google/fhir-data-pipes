@@ -36,7 +36,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.TreeSet;
-import java.time.ZoneOffset;
 import java.util.stream.Collectors;
 import javax.annotation.PostConstruct;
 import org.apache.beam.sdk.io.FileSystems;
