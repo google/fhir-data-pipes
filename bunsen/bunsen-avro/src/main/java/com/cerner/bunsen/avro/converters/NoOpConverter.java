@@ -8,10 +8,12 @@ import com.cerner.bunsen.exception.ProfileException;
 import org.apache.avro.Schema;
 import org.apache.avro.Schema.Type;
 import org.hl7.fhir.instance.model.api.IBase;
+import org.jspecify.annotations.Nullable;
 
 public class NoOpConverter extends HapiConverter<Schema> {
 
   @Override
+  @Nullable // Superclass returns non-nullable, should we return something instead of null?
   public Object fromHapi(Object input) {
     return null;
   }
@@ -27,6 +29,7 @@ public class NoOpConverter extends HapiConverter<Schema> {
     public void setField(IBase parentObject, BaseRuntimeChildDefinition fieldToSet, Object value) {}
 
     @Override
+    @Nullable
     public IBase toHapi(Object input) {
       return null;
     }

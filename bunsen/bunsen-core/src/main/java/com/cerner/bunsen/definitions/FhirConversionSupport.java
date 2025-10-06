@@ -69,7 +69,7 @@ public abstract class FhirConversionSupport implements Serializable {
 
     try {
 
-      return (FhirConversionSupport) fhirSupportClass.newInstance();
+      return (FhirConversionSupport) fhirSupportClass.getDeclaredConstructor().newInstance();
 
     } catch (Exception exception) {
 

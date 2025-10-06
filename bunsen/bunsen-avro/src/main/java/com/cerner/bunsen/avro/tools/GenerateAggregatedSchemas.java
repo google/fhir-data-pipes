@@ -75,6 +75,7 @@ public class GenerateAggregatedSchemas {
     return params;
   }
 
+  @SuppressWarnings("NullAway") // We have preconditions to check for nulls
   private static void generateAggregatedSchemas(
       FhirVersionEnum fhirVersionEnum,
       String structureDefinitionsPath,
@@ -97,6 +98,15 @@ public class GenerateAggregatedSchemas {
       List<String> resourceTypeURLs =
           ProfileMapperFhirContexts.getInstance()
               .getMappedProfilesForResource(FhirVersionEnum.R4, resourceType);
+      if (resourceTypeURLs == null || resourceTypeURLs.isEmpty()) {
+        System.out.printf(
+            "No profiles found for resourceType=%s, skipping schema generation for this"
+                + " resourceType%n",
+            resourceType);
+        continue; // TODO confirm if we need to throw a new ProfileException exception here instead
+        // of skipping
+      }
+
       AvroConverter aggregatedConverter =
           AvroConverter.forResources(fhirContext, resourceTypeURLs, 1);
       createOutputFile(resourceType, aggregatedConverter.getSchema(), outputDir);

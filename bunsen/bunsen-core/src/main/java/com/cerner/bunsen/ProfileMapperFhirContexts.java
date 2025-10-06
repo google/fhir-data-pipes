@@ -22,8 +22,13 @@ public class ProfileMapperFhirContexts {
   private static final Logger logger =
       LoggerFactory.getLogger(ProfileMapperFhirContexts.class.getName());
   private final Map<FhirVersionEnum, FhirContextData> fhirContextMappings;
+
+  @SuppressWarnings(
+      "NullAway.Init") // This is initialized/used via the singleton pattern getInstance method.
   private static ProfileMapperFhirContexts instance;
-  private ProfileMappingProvider profileMappingProvider;
+
+  @SuppressWarnings("NullAway") // This is initialized in the private constructor.
+  private final ProfileMappingProvider profileMappingProvider;
 
   private ProfileMapperFhirContexts() {
     this.fhirContextMappings = Maps.newHashMap();
@@ -111,6 +116,7 @@ public class ProfileMapperFhirContexts {
    * @return the list of profile urls
    * @throws ProfileException if the FhirContext is not initialised for the given fhirVersion
    */
+  @Nullable
   public List<String> getMappedProfilesForResource(FhirVersionEnum fhirVersion, String resourceType)
       throws ProfileException {
     FhirContextData fhirContextData = fhirContextMappings.get(fhirVersion);

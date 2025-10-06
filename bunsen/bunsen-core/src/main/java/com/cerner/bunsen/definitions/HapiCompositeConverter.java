@@ -14,6 +14,7 @@ import org.hl7.fhir.instance.model.api.IBase;
 import org.hl7.fhir.instance.model.api.IBaseExtension;
 import org.hl7.fhir.instance.model.api.IBaseHasExtensions;
 import org.hl7.fhir.instance.model.api.IBaseHasModifierExtensions;
+import org.jspecify.annotations.Nullable;
 
 /**
  * Partial converter implementation for composite structures.
@@ -46,6 +47,7 @@ public abstract class HapiCompositeConverter<T> extends HapiConverter<T> {
         IBase parentObject, BaseRuntimeChildDefinition fieldToSet, Object sourceObject) {}
 
     @Override
+    @Nullable // TODO superclass returns non nullable, do we ignore?
     public IBase toHapi(Object input) {
       return null;
     }
@@ -134,11 +136,11 @@ public abstract class HapiCompositeConverter<T> extends HapiConverter<T> {
   }
 
   protected HapiCompositeConverter(
-      String elementType,
+      @Nullable String elementType, // TODO should we make these non-null with Precondition checks?
       List<StructureField<HapiConverter<T>>> children,
       T structType,
       FhirConversionSupport fhirSupport,
-      String extensionUrl) {
+      @Nullable String extensionUrl) {
     // A composite type should have at least one child.
     Preconditions.checkArgument(!children.isEmpty());
     this.elementType = elementType;

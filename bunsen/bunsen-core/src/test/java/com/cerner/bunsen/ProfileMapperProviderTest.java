@@ -22,14 +22,16 @@ public class ProfileMapperProviderTest {
     Map<String, List<String>> profileMapping =
         profileMappingProvider.loadStructureDefinitions(fhirContext, null);
     assertThat(profileMapping.get("Patient"), Matchers.notNullValue());
+    List<String> patientList = profileMapping.get("Patient");
     assertThat(
-        profileMapping.get("Patient").toArray(),
+        patientList != null ? patientList.toArray() : null,
         Matchers.equalTo(
             Arrays.asList("http://hl7.org/fhir/StructureDefinition/Patient").toArray()));
 
     assertThat(profileMapping.get("Observation"), Matchers.notNullValue());
+    List<String> observationList = profileMapping.get("Observation");
     assertThat(
-        profileMapping.get("Observation").toArray(),
+        observationList != null ? observationList.toArray() : null,
         Matchers.equalTo(
             Arrays.asList("http://hl7.org/fhir/StructureDefinition/Observation").toArray()));
   }
@@ -43,14 +45,16 @@ public class ProfileMapperProviderTest {
             fhirContext, "classpath:/r4-us-core-definitions");
 
     assertThat(profileMapping.get("Patient"), Matchers.notNullValue());
+    List<String> patientList = profileMapping.get("Patient");
     assertThat(
-        profileMapping.get("Patient").toArray(),
+        patientList != null ? patientList.toArray() : null,
         Matchers.arrayContainingInAnyOrder(R4UsCoreProfileData.US_CORE_PATIENT_PROFILES.toArray()));
 
     // Observation profile is not overloaded since no custom profile was defined
     assertThat(profileMapping.get("Observation"), Matchers.notNullValue());
+    List<String> observationList = profileMapping.get("Observation");
     assertThat(
-        profileMapping.get("Observation").toArray(),
+        observationList != null ? observationList.toArray() : null,
         Matchers.arrayContainingInAnyOrder(
             R4UsCoreProfileData.US_CORE_OBSERVATION_PROFILES.toArray()));
   }
@@ -65,14 +69,15 @@ public class ProfileMapperProviderTest {
 
     assertThat(profileMapping.get("Patient"), Matchers.notNullValue());
     assertThat(
-        profileMapping.get("Patient").toArray(),
+        profileMapping.get("Patient") != null ? profileMapping.get("Patient").toArray() : null,
         Matchers.arrayContainingInAnyOrder(R4UsCoreProfileData.US_CORE_PATIENT_PROFILES.toArray()));
 
     // Observation profile is not overloaded since no custom profile was defined
     assertThat(profileMapping.get("Observation"), Matchers.notNullValue());
-    ;
+    List<String> observationList = profileMapping.get("Observation");
+
     assertThat(
-        profileMapping.get("Observation").toArray(),
+        observationList != null ? observationList.toArray() : null,
         Matchers.arrayContainingInAnyOrder(
             Stu3UsCoreProfileData.US_CORE_OBSERVATION_PROFILES.toArray()));
   }

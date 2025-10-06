@@ -31,7 +31,7 @@ public class DefinitionVisitorsUtil {
     return Arrays.stream(elementPath.split("\\."))
         .map(StringUtils::capitalize)
         .reduce(String::concat)
-        .get();
+        .orElse("");
   }
 
   /**

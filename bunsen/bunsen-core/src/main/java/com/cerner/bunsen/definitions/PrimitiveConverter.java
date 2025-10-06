@@ -70,7 +70,8 @@ public abstract class PrimitiveConverter<T> extends HapiConverter<T> {
     if (!(input instanceof IPrimitiveType)) {
       return "";
     }
-    return fromHapi((IPrimitiveType) input);
+    Object result = fromHapi((IPrimitiveType) input);
+    return result != null ? result : "";
   }
 
   @Override

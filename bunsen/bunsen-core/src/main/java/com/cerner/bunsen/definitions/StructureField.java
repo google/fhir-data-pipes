@@ -1,5 +1,7 @@
 package com.cerner.bunsen.definitions;
 
+import org.jspecify.annotations.Nullable;
+
 /**
  * This is a container for a field in a FHIR composite type that defines the field, its FHIR
  * property, and a transformed result produced by the visitor itself.
@@ -31,9 +33,9 @@ public class StructureField<T> {
    * @param visitorResult the result of the visitor.
    */
   public StructureField(
-      String propertyName,
+      @Nullable String propertyName,
       String fieldName,
-      String extensionUrl,
+      @Nullable String extensionUrl,
       boolean isModifier,
       boolean isChoice,
       T visitorResult) {

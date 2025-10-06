@@ -22,6 +22,7 @@ import org.apache.avro.Schema.Field;
 import org.apache.avro.generic.IndexedRecord;
 import org.apache.commons.collections4.CollectionUtils;
 import org.hl7.fhir.instance.model.api.IBaseResource;
+import org.jspecify.annotations.Nullable;
 
 /** Converter to change HAPI objects into Avro structures and vice versa. */
 public class AvroConverter {
@@ -241,6 +242,7 @@ public class AvroConverter {
    *
    * @return the FHIR type of the resource being converted.
    */
+  @Nullable
   public String getResourceType() {
     return hapiToAvroConverter.getElementType();
   }
