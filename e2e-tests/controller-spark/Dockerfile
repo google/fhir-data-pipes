@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-FROM bitnami/spark:3.3
+FROM bitnamilegacy/spark:4.0.0
 
 ##############################################################################################
 # NOTE: This Docker image is designed to run exclusively in Cloud Build environment.
