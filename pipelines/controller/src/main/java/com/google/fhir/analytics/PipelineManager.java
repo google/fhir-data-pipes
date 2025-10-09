@@ -33,6 +33,7 @@ import java.nio.file.NoSuchFileException;
 import java.sql.SQLException;
 import java.time.Instant;
 import java.time.LocalDateTime;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -71,42 +72,41 @@ import org.springframework.stereotype.Component;
  */
 @EnableScheduling
 @Component
+// The fields in this class are Spring managed via the @Autowired and/or @PostConstruct annotation
+// method (hence these suppress annotations).
+@SuppressWarnings("NullAway.Init")
 public class PipelineManager implements ApplicationListener<ApplicationReadyEvent> {
 
   private static final Logger logger = LoggerFactory.getLogger(PipelineManager.class.getName());
 
-  @SuppressWarnings({"NullAway", "unused"})
+  // The unused suppression is to avoid warnings for the fields which are injected by Spring, see
+  // @PostConstruct annotation method initDwhStatus()
+  @SuppressWarnings("unused")
   @Autowired
   private DataProperties dataProperties;
 
-  @SuppressWarnings({"NullAway", "unused"})
+  @SuppressWarnings("unused")
   @Autowired
   private DwhFilesManager dwhFilesManager;
 
-  @SuppressWarnings({"NullAway", "unused"})
+  @SuppressWarnings("unused")
   @Autowired
   private MeterRegistry meterRegistry;
 
-  @SuppressWarnings("NullAway")
   private HiveTableManager hiveTableManager;
 
-  @SuppressWarnings("NullAway")
   private PipelineThread currentPipeline;
 
   @Nullable private DwhFiles currentDwh;
 
   @Nullable private LocalDateTime lastRunEnd;
 
-  @SuppressWarnings("NullAway")
   private CronExpression cron;
 
-  @SuppressWarnings("NullAway")
   private DwhRunDetails lastRunDetails;
 
-  @SuppressWarnings("NullAway")
   private FlinkConfiguration flinkConfiguration;
 
-  @SuppressWarnings("NullAway")
   private AvroConversionUtil avroConversionUtil;
 
   private static final String ERROR_FILE_NAME = "error.log";
@@ -208,9 +208,10 @@ public class PipelineManager implements ApplicationListener<ApplicationReadyEven
               .filter(dir -> dir.getFilename() != null && dir.getFilename().startsWith(prefix))
               .collect(Collectors.toList());
 
+      String pathFileName;
       for (ResourceId path : paths) {
-        if (path.getFilename() != null
-            && !path.getFilename().startsWith(prefix + DwhFiles.TIMESTAMP_PREFIX)) {
+        pathFileName = path.getFilename();
+        if (pathFileName != null && !pathFileName.startsWith(prefix + DwhFiles.TIMESTAMP_PREFIX)) {
           // This is not necessarily an error; the user may want to bootstrap from an already
           // created DWH outside the control-panel framework, e.g., by running the batch pipeline
           // directly.
@@ -220,18 +221,24 @@ public class PipelineManager implements ApplicationListener<ApplicationReadyEven
               prefix,
               DwhFiles.TIMESTAMP_PREFIX);
         }
-        if (lastDwh != null && (lastDwh.isEmpty() || lastDwh.compareTo(path.getFilename()) < 0)) {
-          logger.debug("Found a more recent DWH {}", path.getFilename());
-          lastDwh = path.getFilename();
+        if (pathFileName != null) {
+          if (lastDwh.isEmpty() || lastDwh.compareTo(pathFileName) < 0) {
+            logger.debug("Found a more recent DWH {}", pathFileName);
+            lastDwh = pathFileName;
+          }
         }
+
         // Do not consider if the DWH is not completely created earlier.
         if (!dwhFilesManager.isDwhComplete(path)) {
           continue;
         }
-        if (lastCompletedDwh != null
-            && (lastCompletedDwh.isEmpty() || lastCompletedDwh.compareTo(path.getFilename()) < 0)) {
-          logger.debug("Found a more recent completed DWH {}", path.getFilename());
-          lastCompletedDwh = path.getFilename();
+        if (pathFileName != null) {
+          if (lastCompletedDwh.isEmpty() || lastCompletedDwh.compareTo(pathFileName) < 0) {
+            logger.debug("Found a more recent completed DWH {}", pathFileName);
+            lastCompletedDwh = pathFileName;
+          }
+        } else {
+          lastCompletedDwh = "";
         }
       }
     } catch (IOException e) {
@@ -588,7 +595,7 @@ public class PipelineManager implements ApplicationListener<ApplicationReadyEven
               .collect(Collectors.toList());
 
       // Sort snapshots directories such that the canonical view is created for the latest one.
-      paths.sort(Comparator.comparing(ResourceId::toString));
+      Collections.sort(paths, Comparator.comparing(ResourceId::toString));
 
       // TODO: Why are we creating these tables for all paths and not just the most recent? If all
       //  are needed, why are we doing the above `sort`?
@@ -765,8 +772,8 @@ public class PipelineManager implements ApplicationListener<ApplicationReadyEven
         manager.setLastRunDetails(currentDwhRoot, SUCCESS);
       } catch (Exception e) {
         logger.error("exception while running pipeline: ", e);
-        manager.captureError(currentDwhRoot != null ? currentDwhRoot : "", e);
-        manager.setLastRunDetails(currentDwhRoot != null ? currentDwhRoot : "", FAILURE);
+        manager.captureError(currentDwhRoot, e);
+        manager.setLastRunDetails(currentDwhRoot, FAILURE);
         manager.setLastRunStatus(LastRunStatus.FAILURE);
       } finally {
         // See https://github.com/google/fhir-data-pipes/issues/777#issuecomment-1703142297
@@ -779,12 +786,14 @@ public class PipelineManager implements ApplicationListener<ApplicationReadyEven
   }
 
   /** This method captures the given exception into a file rooted at the dwhRoot location. */
-  void captureError(String dwhRoot, Exception e) {
+  void captureError(@Nullable String dwhRoot, Exception e) {
     try {
       if (!Strings.isNullOrEmpty(dwhRoot)) {
         String stackTrace = ExceptionUtils.getStackTrace(e);
         DwhFiles.overwriteFile(
             dwhRoot, ERROR_FILE_NAME, stackTrace.getBytes(StandardCharsets.UTF_8));
+      } else {
+        logger.warn("DWH root is null or empty; cannot capture error");
       }
     } catch (IOException ex) {
       logger.error("Error while capturing error to a file", ex);
@@ -792,7 +801,7 @@ public class PipelineManager implements ApplicationListener<ApplicationReadyEven
   }
 
   /** Sets the details of the last pipeline run with the given dwhRoot as the snapshot location. */
-  void setLastRunDetails(String dwhRoot, String status) {
+  void setLastRunDetails(@Nullable String dwhRoot, String status) {
     if (!Strings.isNullOrEmpty(dwhRoot)) {
       // TODO for `status`, use an enum instead of String.
       DwhRunDetails dwhRunDetails = new DwhRunDetails();
@@ -825,14 +834,12 @@ public class PipelineManager implements ApplicationListener<ApplicationReadyEven
     }
   }
 
-  @SuppressWarnings("NullAway")
   public enum LastRunStatus {
     NOT_RUN,
     SUCCESS,
     FAILURE
   }
 
-  @SuppressWarnings("NullAway")
   @Data
   public static class DwhRunDetails {
 

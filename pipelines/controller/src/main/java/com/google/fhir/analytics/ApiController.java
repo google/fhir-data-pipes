@@ -246,7 +246,7 @@ public class ApiController {
     private String nextRun;
   }
 
-  @SuppressWarnings("NullAway")
+  @SuppressWarnings("NullAway.Init")
   @Data
   public static class DwhDto {
     @JsonProperty("dwh_prefix")

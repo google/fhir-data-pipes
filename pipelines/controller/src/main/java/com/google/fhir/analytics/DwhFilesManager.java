@@ -64,9 +64,9 @@ public class DwhFilesManager {
 
   private final DataProperties dataProperties;
 
-  @SuppressWarnings(
-      "NullAway") // Suppressing warning because the field is initialized in init() and includes a
-  // Preconditions check.
+  // Suppressing warning because the field is initialized in init() and includes a Preconditions
+  // check.
+  @SuppressWarnings("NullAway.Init")
   private CronExpression purgeCron;
 
   @Nullable private LocalDateTime lastPurgeRunEnd;
