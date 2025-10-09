@@ -198,9 +198,8 @@ public class ViewSchema {
 
   /**
    * Creates an Avro Schema for a given View Definition. Note: This conversion should be consistent
-   * with
+   * with {@link com.cerner.bunsen.avro.converters.DefinitionToAvroVisitor}
    *
-   * @see com.cerner.bunsen.avro.converters.DefinitionToAvroVisitor
    * @param view the input View Definition
    * @return Avro Schema
    */

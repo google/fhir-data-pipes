@@ -556,7 +556,9 @@ public class ViewApplicator {
 
     @Override
     public String toString() {
-      return columnInfo.getName() + ":" + Arrays.toString(values != null ? values.toArray() : null);
+      return columnInfo.getName()
+          + ":"
+          + (values != null ? Arrays.toString(values.toArray()) : "null");
     }
 
     public RowElement(Column columnInfo, @Nullable List<IBase> values)
