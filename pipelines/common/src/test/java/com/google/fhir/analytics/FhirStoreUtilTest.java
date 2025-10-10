@@ -111,6 +111,7 @@ public class FhirStoreUtilTest {
     assertThat(fhirStoreUtil, Matchers.<FhirStoreUtil>instanceOf(GcpStoreUtil.class));
   }
 
+  @SuppressWarnings("NullAway")
   @Test
   public void testUploadResource() {
     MethodOutcome result = fhirStoreUtil.uploadResource(patient);

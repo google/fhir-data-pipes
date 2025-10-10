@@ -131,6 +131,7 @@ public class AvroConversionUtilTest {
     assertThat(recordList.size(), equalTo(6));
   }
 
+  @SuppressWarnings("NullAway")
   @Test
   public void generateRecordForPatient() throws ProfileException {
     AvroConversionUtil avroConversionUtil =
@@ -147,6 +148,7 @@ public class AvroConversionUtilTest {
     assertThat((String) address.get("city"), equalTo("Waterloo"));
   }
 
+  @SuppressWarnings("NullAway")
   @Test
   public void convertObservationWithBigDecimalValue() throws IOException, ProfileException {
     AvroConversionUtil avroConversionUtil =

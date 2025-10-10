@@ -34,6 +34,7 @@ import org.mockito.junit.MockitoJUnitRunner;
 @RunWith(MockitoJUnitRunner.class)
 public class ViewDefinitionTest {
 
+  @SuppressWarnings("NullAway")
   @Test
   public void createFromJson() throws IOException, ViewDefinitionException {
     String viewJson =
@@ -57,6 +58,7 @@ public class ViewDefinitionTest {
     assertThat(viewDef.getSelect().get(1).getColumn().get(3).getPath(), equalTo("postalCode"));
   }
 
+  @SuppressWarnings("NullAway")
   @Test
   public void createFromJsonUnion() throws IOException, ViewDefinitionException {
     String viewJson =
@@ -122,6 +124,7 @@ public class ViewDefinitionTest {
     assertThat(schema.get("multiple_birth"), equalTo(JDBCType.INTEGER));
   }
 
+  @SuppressWarnings("NullAway")
   @Test
   public void createFromJsonWhereAndConstant() throws IOException, ViewDefinitionException {
     String viewJson =

@@ -133,6 +133,7 @@ public class JdbcFetchOpenMrsTest {
     testPipeline.run();
   }
 
+  @SuppressWarnings("NullAway")
   @Test
   public void testCreateFhirReverseMap() throws Exception {
     Map<String, List<String>> reverseMap =

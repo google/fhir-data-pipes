@@ -135,6 +135,7 @@ public class FhirSearchUtilTest {
   }
 
   @Test
+  @SuppressWarnings("NullAway")
   public void testCreateSegments() {
     FhirEtlOptions options = PipelineOptionsFactory.as(FhirEtlOptions.class);
     options.setResourceList("Patient");
@@ -144,6 +145,7 @@ public class FhirSearchUtilTest {
     assertThat(segmentMap.get("Patient").size(), equalTo(4));
   }
 
+  @SuppressWarnings("NullAway")
   @Test
   public void testCreateSegmentsWithSince() {
     FhirEtlOptions options = PipelineOptionsFactory.as(FhirEtlOptions.class);

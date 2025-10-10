@@ -71,6 +71,7 @@ public class ReadJsonFromFileTest {
     readJsonFromFileFn.teardown();
   }
 
+  @SuppressWarnings("NullAway")
   @Test
   public void testProcessBundleUrnRef()
       throws IOException, SQLException, ViewApplicationException, ProfileException {
@@ -96,6 +97,7 @@ public class ReadJsonFromFileTest {
   }
 
   @Test
+  @SuppressWarnings("NullAway")
   public void testProcessBundleRelativeRef()
       throws IOException, SQLException, ViewApplicationException, ProfileException {
     setUp(false);

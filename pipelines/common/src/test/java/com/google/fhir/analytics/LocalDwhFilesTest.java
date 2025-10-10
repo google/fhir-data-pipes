@@ -56,6 +56,7 @@ public class LocalDwhFilesTest {
     assertThat(dwhFiles.getResourcePath("Patient").toString(), equalTo("C:\\tmp\\Patient\\"));
   }
 
+  @SuppressWarnings("NullAway")
   @Test
   public void getIncrementalRunPathTest() throws IOException {
     Assume.assumeFalse(SystemUtils.IS_OS_WINDOWS);
@@ -74,6 +75,7 @@ public class LocalDwhFilesTest {
     assertThat(latestIncrementalRunPath.toString(), equalTo(incrementalRunPath2.toString()));
   }
 
+  @SuppressWarnings("NullAway")
   @Test
   public void getViewsPathTest() throws IOException {
     Assume.assumeFalse(SystemUtils.IS_OS_WINDOWS);

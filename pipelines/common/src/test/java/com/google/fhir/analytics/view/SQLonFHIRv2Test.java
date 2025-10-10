@@ -85,6 +85,7 @@ public class SQLonFHIRv2Test {
           // TODO the error condition here does not seem right.
           "validate.wrong type in forEach");
 
+  @SuppressWarnings("NullAway")
   @Test
   public void runAllTests() throws IOException {
     Map<String, AllTestResults> allTestResults = new LinkedHashMap<>();
@@ -145,7 +146,8 @@ public class SQLonFHIRv2Test {
             assertThat("No exceptions were thrown", expectedRows != null);
             assertThat(
                 String.format(
-                    "Number of rows does not match %d vs %d", totalRows, expectedRows.getNumRows()),
+                    "Number of rows does not match %d vs %d",
+                    totalRows, expectedRows != null ? expectedRows.getNumRows() : 0),
                 totalRows == expectedRows.getNumRows());
           } catch (ViewApplicationException | ViewDefinitionException e) {
             assertThat(
@@ -200,9 +202,9 @@ public class SQLonFHIRv2Test {
     @SuppressWarnings({"NullAway.Init", "UnusedVariable"})
     private static class Result {
       final boolean passed;
-      final String reason;
+      @Nullable final String reason;
 
-      private Result(boolean passed, String reason) {
+      private Result(boolean passed, @Nullable String reason) {
         this.passed = passed;
         this.reason = reason;
       }
