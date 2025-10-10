@@ -52,11 +52,17 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
 @EnableConfigurationProperties(value = DataProperties.class)
 public class CloudDwhFilesManagerTest {
 
-  @Mock private GcsUtil mockGcsUtil;
+  @SuppressWarnings("NullAway.Init")
+  @Mock
+  private GcsUtil mockGcsUtil;
+
   private AutoCloseable closeable;
 
   @Autowired private DataProperties dataProperties;
 
+  // Suppressing because of mockGcsUtil which is a mock object, initialization is via @Mock
+  // annotation
+  @SuppressWarnings("NullAway.Init")
   @BeforeEach
   public void setUp() {
     closeable = MockitoAnnotations.openMocks(this);
