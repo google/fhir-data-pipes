@@ -651,7 +651,7 @@ public class DefinitionToAvroVisitor implements DefinitionVisitor<HapiConverter<
     }
 
     @Override
-    @Nullable
+    @Nullable // TODO superclass returns non-nullable
     public Object fromHapi(Object input) {
       String uri = ((IPrimitiveType) input).getValueAsString();
 
@@ -763,7 +763,7 @@ public class DefinitionToAvroVisitor implements DefinitionVisitor<HapiConverter<
   }
 
   @Override
-  @Nullable
+  @Nullable // TODO superclass returns non-nullable
   public HapiConverter<Schema> visitParentExtension(
       String elementName,
       String extensionUrl,

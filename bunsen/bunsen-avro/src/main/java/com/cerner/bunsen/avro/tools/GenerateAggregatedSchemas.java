@@ -17,6 +17,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 import org.apache.avro.Schema;
+import org.jspecify.annotations.Nullable;
 
 /** This class can be used to generate aggregated avro schemas for the FHIR profile extensions. */
 public class GenerateAggregatedSchemas {
@@ -75,11 +76,10 @@ public class GenerateAggregatedSchemas {
     return params;
   }
 
-  @SuppressWarnings("NullAway") // We have preconditions to check for nulls
   private static void generateAggregatedSchemas(
-      FhirVersionEnum fhirVersionEnum,
-      String structureDefinitionsPath,
-      List<String> resourceTypes,
+      @Nullable FhirVersionEnum fhirVersionEnum,
+      @Nullable String structureDefinitionsPath,
+      @Nullable List<String> resourceTypes,
       String outputDir)
       throws ProfileException, IOException {
     Preconditions.checkNotNull(fhirVersionEnum, String.format("%s cannot be empty", FHIR_VERSION));
