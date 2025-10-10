@@ -206,7 +206,8 @@ steps:
 
 # The controller logs don't appear in Cloud Build output because we run it in
 # the detached mode. For debugging controller failures we can use something like
-#  the following (and forcing the previous step to have 0 exit code).
+# the following (and forcing the previous step to have 0 exit code or by
+# adding allowFailure: true).
 # - name: 'gcr.io/cloud-builders/docker'
 #   id: 'PRINT CONTROLLER LOGS'
 #   entrypoint: /bin/bash

@@ -18,6 +18,7 @@ package com.google.fhir.analytics;
 import ca.uhn.fhir.context.FhirContext;
 import com.cerner.bunsen.exception.ProfileException;
 import com.google.common.base.Preconditions;
+import com.google.common.base.Splitter;
 import com.google.common.base.Strings;
 import com.google.fhir.analytics.metrics.CumulativeMetrics;
 import com.google.fhir.analytics.metrics.PipelineMetrics;
@@ -36,7 +37,6 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
-import javax.annotation.Nullable;
 import javax.annotation.PostConstruct;
 import lombok.Data;
 import org.apache.beam.runners.flink.FlinkPipelineOptions;
@@ -53,6 +53,7 @@ import org.apache.beam.sdk.metrics.MetricResult;
 import org.apache.beam.sdk.metrics.MetricResults;
 import org.apache.beam.sdk.options.PipelineOptionsFactory;
 import org.apache.commons.lang3.exception.ExceptionUtils;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -599,9 +600,9 @@ public class PipelineManager implements ApplicationListener<ApplicationReadyEven
 
   @Nullable
   private String getTimestampSuffix(String path) {
-    String[] tokens = path.split(DwhFiles.TIMESTAMP_PREFIX);
-    if (tokens.length < 1) return null;
-    return tokens[tokens.length - 1].replaceAll("/", "");
+    List<String> tokens = Splitter.on(DwhFiles.TIMESTAMP_PREFIX).splitToList(path);
+    if (tokens.isEmpty()) return null;
+    return tokens.get(tokens.size() - 1).replaceAll("/", "");
   }
 
   private void createHiveTablesIfNeeded(
