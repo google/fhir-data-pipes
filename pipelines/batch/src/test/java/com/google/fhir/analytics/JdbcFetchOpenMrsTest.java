@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2024 Google LLC
+ * Copyright 2020-2025 Google LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,20 +15,17 @@
  */
 package com.google.fhir.analytics;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import static org.mockito.Mockito.withSettings;
 
-import ca.uhn.fhir.context.FhirContext;
-import ca.uhn.fhir.parser.IParser;
 import com.cerner.bunsen.exception.ProfileException;
-import com.google.common.io.Resources;
 import com.google.fhir.analytics.model.DatabaseConfiguration;
 import java.beans.PropertyVetoException;
 import java.io.File;
 import java.io.IOException;
-import java.net.URL;
-import java.nio.charset.StandardCharsets;
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -39,18 +36,14 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import javax.sql.DataSource;
-import junit.framework.TestCase;
 import org.apache.beam.sdk.coders.CannotProvideCoderException;
 import org.apache.beam.sdk.io.jdbc.JdbcIO;
-import org.apache.beam.sdk.options.PipelineOptionsFactory;
 import org.apache.beam.sdk.testing.PAssert;
 import org.apache.beam.sdk.testing.TestPipeline;
 import org.apache.beam.sdk.transforms.Create;
 import org.apache.beam.sdk.values.PCollection;
 import org.apache.commons.dbcp2.PoolingDataSource;
 import org.apache.commons.io.FileUtils;
-import org.hl7.fhir.r4.model.Encounter;
-import org.hl7.fhir.r4.model.Resource;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -59,15 +52,9 @@ import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnitRunner;
 
 @RunWith(MockitoJUnitRunner.class)
-public class JdbcFetchOpenMrsTest extends TestCase {
-
-  private String resourceStr;
+public class JdbcFetchOpenMrsTest {
 
   @Rule public transient TestPipeline testPipeline = TestPipeline.create();
-
-  private Resource resource;
-
-  private FhirContext fhirContext;
 
   private JdbcFetchOpenMrs jdbcFetchUtil;
 
@@ -79,17 +66,6 @@ public class JdbcFetchOpenMrsTest extends TestCase {
 
   @Before
   public void setup() throws IOException, PropertyVetoException, ProfileException {
-    URL url = Resources.getResource("encounter.json");
-    resourceStr = Resources.toString(url, StandardCharsets.UTF_8);
-    this.fhirContext = FhirContext.forR4Cached();
-    IParser parser = fhirContext.newJsonParser();
-    resource = parser.parseResource(Encounter.class, resourceStr);
-
-    String[] args = {
-      "--fhirSinkPath=", "--fhirServerUrl=http://localhost:8099/openmrs/ws/fhir2/R4"
-    };
-    FhirEtlOptions options =
-        PipelineOptionsFactory.fromArgs(args).withValidation().as(FhirEtlOptions.class);
     dbConfig =
         DatabaseConfiguration.createConfigFromFile("../../utils/dbz_event_to_fhir_config.json");
 
@@ -116,7 +92,7 @@ public class JdbcFetchOpenMrsTest extends TestCase {
     expectedMap.put(201, 201);
     expectedMap.put(101, 200);
     expectedMap.put(1, 100);
-    assertEquals(idRanges, expectedMap);
+    assertEquals(expectedMap, idRanges);
   }
 
   @Test
@@ -162,8 +138,8 @@ public class JdbcFetchOpenMrsTest extends TestCase {
     Map<String, List<String>> reverseMap =
         jdbcFetchUtil.createFhirReverseMap("Patient,Person,Encounter,Observation", dbConfig);
 
-    assertEquals(reverseMap.size(), 4);
-    assertEquals(reverseMap.get("person").size(), 2);
+    assertEquals(4, reverseMap.size());
+    assertEquals(2, reverseMap.get("person").size());
     assertTrue(reverseMap.get("person").contains("Patient"));
     assertTrue(reverseMap.get("person").contains("Person"));
     assertTrue(reverseMap.get("encounter").contains("Encounter"));
@@ -173,7 +149,7 @@ public class JdbcFetchOpenMrsTest extends TestCase {
 
   @Test
   public void testFetchAllUuidUtilonEmptyTable() throws SQLException, CannotProvideCoderException {
-    JdbcFetchOpenMrs mockedJdbcFetchUtil = mock(JdbcFetchOpenMrs.class);
+    JdbcFetchOpenMrs mockedJdbcFetchUtil;
     Statement mockedStatement = mock(Statement.class);
     ResultSet mockedResultSet = mock(ResultSet.class);
     mockedJdbcFetchUtil = new JdbcFetchOpenMrs(mockedDataSource);

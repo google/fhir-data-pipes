@@ -40,6 +40,7 @@ import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
+@SuppressWarnings("NullAway.Init")
 @RunWith(MockitoJUnitRunner.class)
 public class ReadJsonFromFileTest {
 
@@ -47,7 +48,7 @@ public class ReadJsonFromFileTest {
 
   @Mock private FileIO.ReadableFile fileMock;
 
-  private Bundle capturedBundle;
+  @Nullable private Bundle capturedBundle;
 
   public void setUp(boolean isFileNdjson) throws SQLException, ProfileException {
     String[] args = {"--outputParquetPath=SOME_PATH"};

@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2024 Google LLC
+ * Copyright 2020-2025 Google LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -51,6 +51,7 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
+@SuppressWarnings("NullAway.Init")
 @RunWith(MockitoJUnitRunner.class)
 public class FhirSearchUtilTest {
 
