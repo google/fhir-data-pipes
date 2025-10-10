@@ -33,6 +33,7 @@ import org.mockito.Answers;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+@SuppressWarnings("NullAway.Init")
 @ExtendWith(MockitoExtension.class)
 public class FetchUtilTest {
 
@@ -49,6 +50,9 @@ public class FetchUtilTest {
 
   FetchUtil fetchUtil;
 
+  // Suppressing because fhirContext.getRestfulClientFactory() is a false positive for
+  // DirectInvocationOnMock
+  @SuppressWarnings("DirectInvocationOnMock")
   @BeforeEach
   public void setUp() throws Exception {
     fetchUtil =
