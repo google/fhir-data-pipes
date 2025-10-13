@@ -211,7 +211,10 @@ public class PipelineManager implements ApplicationListener<ApplicationReadyEven
       String pathFileName;
       for (ResourceId path : paths) {
         pathFileName = path.getFilename();
-        if (pathFileName != null && !pathFileName.startsWith(prefix + DwhFiles.TIMESTAMP_PREFIX)) {
+
+        if (pathFileName == null) continue;
+
+        if (!pathFileName.startsWith(prefix + DwhFiles.TIMESTAMP_PREFIX)) {
           // This is not necessarily an error; the user may want to bootstrap from an already
           // created DWH outside the control-panel framework, e.g., by running the batch pipeline
           // directly.
@@ -221,57 +224,49 @@ public class PipelineManager implements ApplicationListener<ApplicationReadyEven
               prefix,
               DwhFiles.TIMESTAMP_PREFIX);
         }
-        if (pathFileName != null) {
-          if (lastDwh.isEmpty() || lastDwh.compareTo(pathFileName) < 0) {
-            logger.debug("Found a more recent DWH {}", pathFileName);
-            lastDwh = pathFileName;
-          }
+
+        if (lastDwh.isEmpty() || lastDwh.compareTo(pathFileName) < 0) {
+          logger.debug("Found a more recent DWH {}", pathFileName);
+          lastDwh = pathFileName;
         }
 
         // Do not consider if the DWH is not completely created earlier.
         if (!dwhFilesManager.isDwhComplete(path)) {
           continue;
         }
-        if (pathFileName != null) {
-          if (lastCompletedDwh.isEmpty() || lastCompletedDwh.compareTo(pathFileName) < 0) {
-            logger.debug("Found a more recent completed DWH {}", pathFileName);
-            lastCompletedDwh = pathFileName;
-          }
-        } else {
-          lastCompletedDwh = "";
+
+        if (lastCompletedDwh.isEmpty() || lastCompletedDwh.compareTo(pathFileName) < 0) {
+          logger.debug("Found a more recent completed DWH {}", pathFileName);
+          lastCompletedDwh = pathFileName;
         }
       }
     } catch (IOException e) {
       logger.error("IOException while initializing DWH: ", e);
       throw new RuntimeException(e);
     }
-    if (lastCompletedDwh != null) {
-      if (lastCompletedDwh.isEmpty()) {
-        logger.info("No DWH found; it should be created by running a full pipeline");
-        currentDwh = null;
-        lastRunEnd = null;
-      } else {
-        logger.info("Initializing with most recent DWH {}", lastCompletedDwh);
-        try {
-          ResourceId resourceId =
-              FileSystems.matchNewResource(baseDir, true)
-                  .resolve(lastCompletedDwh, StandardResolveOptions.RESOLVE_DIRECTORY);
-          String currentDwhRoot = resourceId.toString();
-          // TODO: If there are errors from the last VIEW run, expose them in the UI.
-          currentDwh =
-              DwhFiles.forRootWithLatestViewPath(
-                  currentDwhRoot, avroConversionUtil.getFhirContext());
-          // There exists a DWH from before, so we set the scheduler to continue updating the DWH.
-          lastRunEnd = LocalDateTime.now();
-        } catch (IOException e) {
-          logger.error("IOException while initializing DWH: ", e);
-          throw new RuntimeException(e);
-        }
-      }
+    if (lastCompletedDwh.isEmpty()) {
+      logger.info("No DWH found; it should be created by running a full pipeline");
+      currentDwh = null;
+      lastRunEnd = null;
     } else {
-      logger.warn(" No completed DWH found");
+      logger.info("Initializing with most recent DWH {}", lastCompletedDwh);
+      try {
+        ResourceId resourceId =
+            FileSystems.matchNewResource(baseDir, true)
+                .resolve(lastCompletedDwh, StandardResolveOptions.RESOLVE_DIRECTORY);
+        String currentDwhRoot = resourceId.toString();
+        // TODO: If there are errors from the last VIEW run, expose them in the UI.
+        currentDwh =
+            DwhFiles.forRootWithLatestViewPath(currentDwhRoot, avroConversionUtil.getFhirContext());
+        // There exists a DWH from before, so we set the scheduler to continue updating the DWH.
+        lastRunEnd = LocalDateTime.now();
+      } catch (IOException e) {
+        logger.error("IOException while initializing DWH: ", e);
+        throw new RuntimeException(e);
+      }
     }
-    if (lastDwh != null && !lastDwh.isEmpty()) {
+
+    if (!lastDwh.isEmpty()) {
       initialiseLastRunDetails(baseDir, lastDwh);
     }
   }

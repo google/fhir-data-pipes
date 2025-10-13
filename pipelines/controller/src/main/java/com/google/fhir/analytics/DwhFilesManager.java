@@ -129,7 +129,7 @@ public class DwhFilesManager {
       LocalDateTime next = getNextPurgeTime();
       if (next != null) {
         logger.info("Last purge run was at {} next run is at {}", lastPurgeRunEnd, next);
-        if (!next.isAfter(LocalDateTime.now(ZoneOffset.UTC))) {
+        if (next.isBefore(LocalDateTime.now(ZoneOffset.UTC))) {
           logger.info("Purge run triggered at {}", LocalDateTime.now(ZoneOffset.UTC));
           purgeDwhFiles();
           logger.info("Purge run completed at {}", LocalDateTime.now(ZoneOffset.UTC));
