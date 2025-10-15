@@ -143,8 +143,8 @@ disable=R,
         wrong-import-order,
         xrange-builtin,
         zip-builtin-not-iterating,
-        missing-module-docstring,
-        missing-class-docstring,
+        missing-module-docstring, # Added to disable rule C0114, disables module docstring warnings
+        missing-class-docstring, # Added to disable rule C0115, disables class docstring warnings
 
 
 [REPORTS]
