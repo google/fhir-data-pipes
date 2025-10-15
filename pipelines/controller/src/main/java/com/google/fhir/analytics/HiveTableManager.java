@@ -29,6 +29,7 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.List;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import javax.sql.DataSource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -128,20 +129,21 @@ public class HiveTableManager {
     if (viewsDir.isEmpty()) {
       return;
     }
-    List<Path> viewPaths = null;
-    try {
+    List<Path> viewPaths;
+    try (Stream<Path> stream = Files.list(Paths.get(viewsDir))) {
       viewPaths =
-          Files.list(Paths.get(viewsDir))
+          stream
               .filter(
-                  p ->
-                      p.getFileName().toString().startsWith(resource)
-                          && p.getFileName().toString().endsWith(".sql"))
-              .collect(Collectors.toList());
+                  path ->
+                      path.getFileName().toString().startsWith(resource)
+                          && path.getFileName().toString().endsWith(".sql"))
+              .toList();
+
     } catch (IOException e) {
       logger.error("Cannot get the list of files in {}", viewsDir, e);
       return;
     }
-    if (viewPaths == null || viewPaths.isEmpty()) {
+    if (viewPaths.isEmpty()) {
       logger.warn("No view files found for resource {} in {}", resource, viewsDir);
       return;
     }
