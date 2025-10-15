@@ -30,6 +30,7 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.DirectoryNotEmptyException;
 import java.time.LocalDateTime;
+import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
@@ -44,6 +45,7 @@ import org.apache.beam.sdk.io.fs.MatchResult.Metadata;
 import org.apache.beam.sdk.io.fs.MatchResult.Status;
 import org.apache.beam.sdk.io.fs.ResolveOptions.StandardResolveOptions;
 import org.apache.beam.sdk.io.fs.ResourceId;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -62,9 +64,12 @@ public class DwhFilesManager {
 
   private final DataProperties dataProperties;
 
+  // Suppressing warning because the field is initialized in init() and includes a Preconditions
+  // check.
+  @SuppressWarnings("NullAway.Init")
   private CronExpression purgeCron;
 
-  private LocalDateTime lastPurgeRunEnd;
+  @Nullable private LocalDateTime lastPurgeRunEnd;
 
   private boolean isPurgeJobRunning;
 
@@ -74,6 +79,7 @@ public class DwhFilesManager {
 
   private static final Logger logger = LoggerFactory.getLogger(DwhFilesManager.class.getName());
 
+  @SuppressWarnings("NullAway.Init")
   @Autowired
   public DwhFilesManager(DataProperties dataProperties) {
     this.dataProperties = dataProperties;
@@ -82,6 +88,7 @@ public class DwhFilesManager {
   @PostConstruct
   public void init() {
     purgeCron = CronExpression.parse(dataProperties.getPurgeSchedule());
+    Preconditions.checkNotNull(purgeCron);
     dwhRootPrefix = dataProperties.getDwhRootPrefix();
     Preconditions.checkState(dwhRootPrefix != null && !dwhRootPrefix.isEmpty());
     numOfDwhSnapshotsToRetain = dataProperties.getNumOfDwhSnapshotsToRetain();
@@ -105,9 +112,9 @@ public class DwhFilesManager {
   /**
    * @return the next scheduled time to run the purge job based on the previous run time.
    */
-  LocalDateTime getNextPurgeTime() {
+  @Nullable LocalDateTime getNextPurgeTime() {
     if (lastPurgeRunEnd == null) {
-      return LocalDateTime.now();
+      return LocalDateTime.now(ZoneOffset.UTC);
     }
     return purgeCron.next(lastPurgeRunEnd);
   }
@@ -120,11 +127,15 @@ public class DwhFilesManager {
         return;
       }
       LocalDateTime next = getNextPurgeTime();
-      logger.info("Last purge run was at {} next run is at {}", lastPurgeRunEnd, next);
-      if (next.compareTo(LocalDateTime.now()) <= 0) {
-        logger.info("Purge run triggered at {}", LocalDateTime.now());
-        purgeDwhFiles();
-        logger.info("Purge run completed at {}", LocalDateTime.now());
+      if (next != null) {
+        logger.info("Last purge run was at {} next run is at {}", lastPurgeRunEnd, next);
+        if (next.isBefore(LocalDateTime.now(ZoneOffset.UTC))) {
+          logger.info("Purge run triggered at {}", LocalDateTime.now(ZoneOffset.UTC));
+          purgeDwhFiles();
+          logger.info("Purge run completed at {}", LocalDateTime.now(ZoneOffset.UTC));
+        }
+      } else {
+        logger.warn("Next purge time is null, please check the cron expression");
       }
     } finally {
       releasePurgeJob();
@@ -143,7 +154,7 @@ public class DwhFilesManager {
       String prefix = getPrefix(dwhRootPrefix);
       List<ResourceId> paths =
           DwhFiles.getAllChildDirectories(baseDir).stream()
-              .filter(dir -> dir.getFilename().startsWith(prefix))
+              .filter(dir -> dir.getFilename() != null && dir.getFilename().startsWith(prefix))
               .collect(Collectors.toList());
 
       TreeSet<String> recentSnapshotsToBeRetained =
@@ -163,7 +174,10 @@ public class DwhFilesManager {
       String prefix = getPrefix(dwhRootPrefix);
       paths =
           DwhFiles.getAllChildDirectories(baseDir).stream()
-              .filter(resourceId -> resourceId.getFilename().startsWith(prefix))
+              .filter(
+                  resourceId ->
+                      resourceId.getFilename() != null
+                          && resourceId.getFilename().startsWith(prefix))
               .map(it -> baseDir + File.separatorChar + it.getFilename())
               .collect(Collectors.toList());
 
@@ -192,7 +206,10 @@ public class DwhFilesManager {
     String baseDir = getBaseDir(dwhRootPrefix);
     ResourceId resourceId =
         DwhFiles.getAllChildDirectories(baseDir).stream()
-            .filter(dir -> dir.getFilename().startsWith(getPrefix(snapshotId)))
+            .filter(
+                dir ->
+                    dir.getFilename() != null
+                        && dir.getFilename().startsWith(getPrefix(snapshotId)))
             .findFirst()
             .orElseThrow(
                 () ->
@@ -288,7 +305,8 @@ public class DwhFilesManager {
       // Keep only the recent snapshots
       if (treeSet.size() < numberOfSnapshotsToReturn) {
         treeSet.add(resourceId.getFilename());
-      } else if (resourceId.getFilename().compareTo(treeSet.first()) > 0) {
+      } else if (resourceId.getFilename() != null
+          && resourceId.getFilename().compareTo(treeSet.first()) > 0) {
         treeSet.add(resourceId.getFilename());
         treeSet.pollFirst();
       }
