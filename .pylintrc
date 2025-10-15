@@ -22,6 +22,7 @@
 [MAIN]
 
 # Files or directories to be skipped. They should be base names, not paths.
+#Added venv and .git to the ignore list.
 ignore=third_party,venv,.git
 
 # Files or directories matching the regex patterns are skipped. The regex
@@ -64,6 +65,9 @@ confidence=
 # --enable=similarities". If you want to run only the classes checker, but have
 # no Warning level messages displayed, use"--disable=all --enable=classes
 # --disable=W"
+
+# Added missing-module-docstring to disable rule C0114, disables module docstring warnings
+# Added missing-class-docstring to disable rule C0115, disables class docstring warnings
 disable=R,
         abstract-method,
         apply-builtin,
@@ -143,8 +147,8 @@ disable=R,
         wrong-import-order,
         xrange-builtin,
         zip-builtin-not-iterating,
-        missing-module-docstring, # Added to disable rule C0114, disables module docstring warnings
-        missing-class-docstring, # Added to disable rule C0115, disables class docstring warnings
+        missing-module-docstring,
+        missing-class-docstring,
 
 
 [REPORTS]
@@ -257,6 +261,7 @@ generated-members=
 [FORMAT]
 
 # Maximum number of characters on a single line.
+# Changed the default from 80 to 88 to match Black's default line length.
 max-line-length=88
 
 # TODO(https://github.com/pylint-dev/pylint/issues/3352): Direct pylint to exempt
