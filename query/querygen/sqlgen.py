@@ -8,8 +8,11 @@ from sqlalchemy import engine, text
 from . import PRINT_CLOSE_CONCEPTS, PRINT_FINAL_PROMPT, PRINT_MODEL_RESPONSE
 from .column_sampler import ColumnSampler
 from .db_description import DbDescription
-from .terminology_indexer import (CLOSE_CONCEPT_DISTANCE_THRESHOLD,
-                                  MAX_CLOSE_CONCEPTS, TerminologyIndexer)
+from .terminology_indexer import (
+    CLOSE_CONCEPT_DISTANCE_THRESHOLD,
+    MAX_CLOSE_CONCEPTS,
+    TerminologyIndexer,
+)
 
 _SQL_START_TOKEN = "--- BEGIN"
 _SQL_END_TOKEN = "--- END"
