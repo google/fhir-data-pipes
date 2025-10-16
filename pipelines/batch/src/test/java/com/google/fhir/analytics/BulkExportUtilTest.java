@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2024 Google LLC
+ * Copyright 2020-2025 Google LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.equalTo;
 
 import ca.uhn.fhir.context.FhirVersionEnum;
+import com.google.common.base.Preconditions;
 import com.google.fhir.analytics.model.BulkExportHttpResponse;
 import com.google.fhir.analytics.model.BulkExportResponse;
 import com.google.fhir.analytics.model.BulkExportResponse.Output;
@@ -36,13 +37,16 @@ import org.mockito.junit.MockitoJUnitRunner;
 
 @RunWith(MockitoJUnitRunner.class)
 public class BulkExportUtilTest {
-
-  @Mock private BulkExportApiClient bulkExportApiClient;
+  // Initialization handled by Mockito's @Mock annotation
+  @SuppressWarnings("NullAway.Init")
+  @Mock
+  private BulkExportApiClient bulkExportApiClient;
 
   private BulkExportUtil bulkExportUtil;
 
   @Before
   public void setup() throws IOException {
+    Preconditions.checkNotNull(bulkExportApiClient);
     bulkExportUtil = new BulkExportUtil(bulkExportApiClient);
   }
 
