@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2024 Google LLC
+ * Copyright 2020-2025 Google LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -71,6 +71,8 @@ public class FlinkConfiguration {
   private static final int PARQUET_ROW_GROUP_INFLATION_FACTOR = 2;
 
   private static final String KEY_VALUE_FORMAT = "%s: %s";
+
+  @SuppressWarnings("NullAway.Init")
   private String flinkConfDir;
 
   public String getFlinkConfDir() {

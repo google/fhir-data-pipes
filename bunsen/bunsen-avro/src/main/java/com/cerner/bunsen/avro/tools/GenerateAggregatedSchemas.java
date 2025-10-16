@@ -6,16 +6,15 @@ import com.cerner.bunsen.ProfileMapperFhirContexts;
 import com.cerner.bunsen.avro.AvroConverter;
 import com.cerner.bunsen.exception.ProfileException;
 import com.google.common.base.Preconditions;
+import com.google.common.base.Splitter;
 import com.google.common.base.Strings;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 import org.apache.avro.Schema;
 
 /** This class can be used to generate aggregated avro schemas for the FHIR profile extensions. */
@@ -40,7 +39,7 @@ public class GenerateAggregatedSchemas {
       String resourceTypesString = pairs.get(RESOURCE_TYPES);
       List<String> resourceTypes = new ArrayList<>();
       if (!Strings.isNullOrEmpty(resourceTypesString)) {
-        resourceTypes = Arrays.stream(resourceTypesString.split(",")).collect(Collectors.toList());
+        resourceTypes = Splitter.on(',').splitToList(resourceTypesString);
       }
       String outputDir = pairs.get(OUTPUT_DIR);
       generateAggregatedSchemas(
@@ -65,12 +64,12 @@ public class GenerateAggregatedSchemas {
   private static Map<String, String> convertArgsToPairs(String[] args) {
     HashMap<String, String> params = new HashMap<>();
     for (String arg : args) {
-      String[] splitFromEqual = arg.split("=");
-      if (splitFromEqual.length != 2) {
+      List<String> splitFromEqual = Splitter.on('=').splitToList(arg);
+      if (splitFromEqual.size() != 2) {
         throw new IllegalArgumentException(
             String.format("Invalid key=value params, pair: %s is invalid", arg));
       }
-      params.put(splitFromEqual[0], splitFromEqual[1]);
+      params.put(splitFromEqual.get(0), splitFromEqual.get(1));
     }
     return params;
   }

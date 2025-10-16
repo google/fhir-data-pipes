@@ -44,6 +44,10 @@ import org.springframework.stereotype.Component;
  * are created from these parameters. As all Spring configurations, these can be configured through
  * a config file, command line arguments, Java properties, or environment variables.
  */
+
+// This is a Spring configuration properties class which is initialized by Spring (hence the
+// suppress annotation).
+@SuppressWarnings("NullAway.Init")
 @ConfigurationProperties("fhirdata")
 @Getter
 @Setter
