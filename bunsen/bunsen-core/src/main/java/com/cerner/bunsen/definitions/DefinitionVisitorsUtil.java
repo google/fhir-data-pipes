@@ -92,7 +92,12 @@ public class DefinitionVisitorsUtil {
     return fullPath.stream().collect(Collectors.joining("."));
   }
 
-  /** Creates a canonical element name from the element path. */
+  /**
+   * Creates a canonical element name from the element path.
+   *
+   * @param elementPath the element path
+   * @return canonical element name
+   */
   public static String elementName(String elementPath) {
 
     String suffix = elementPath.substring(elementPath.lastIndexOf('.') + 1);

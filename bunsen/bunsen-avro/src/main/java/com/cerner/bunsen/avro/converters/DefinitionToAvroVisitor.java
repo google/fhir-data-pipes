@@ -30,13 +30,13 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Collectors;
 import org.apache.avro.JsonProperties;
 import org.apache.avro.Schema;
 import org.apache.avro.Schema.Field;
-import org.apache.avro.Schema.Type;
 import org.apache.avro.generic.GenericData;
 import org.apache.avro.generic.IndexedRecord;
 import org.apache.avro.specific.SpecificData;
@@ -55,18 +55,18 @@ public class DefinitionToAvroVisitor implements DefinitionVisitor<HapiConverter<
   private final int recursiveDepth;
 
   private static final HapiConverter<Schema> STRING_CONVERTER =
-      new StringConverter<>(Schema.create(Type.STRING));
+      new StringConverter<>(Schema.create(Schema.Type.STRING));
 
   private static final HapiConverter<Schema> ID_CONVERTER =
-      new IdConverter<>(Schema.create(Type.STRING));
+      new IdConverter<>(Schema.create(Schema.Type.STRING));
 
   private static final HapiConverter<Schema> ENUM_CONVERTER =
-      new EnumConverter<>(Schema.create(Type.STRING));
+      new EnumConverter<>(Schema.create(Schema.Type.STRING));
 
   private static final HapiConverter<Schema> DATE_CONVERTER =
-      new StringConverter<>(Schema.create(Type.STRING));
+      new StringConverter<>(Schema.create(Schema.Type.STRING));
 
-  private static final Schema BOOLEAN_SCHEMA = Schema.create(Type.BOOLEAN);
+  private static final Schema BOOLEAN_SCHEMA = Schema.create(Schema.Type.BOOLEAN);
 
   private static final HapiConverter<Schema> BOOLEAN_CONVERTER =
       new PrimitiveConverter<Schema>("Boolean") {
@@ -77,7 +77,7 @@ public class DefinitionToAvroVisitor implements DefinitionVisitor<HapiConverter<
         }
       };
 
-  private static final Schema INTEGER_SCHEMA = Schema.create(Type.INT);
+  private static final Schema INTEGER_SCHEMA = Schema.create(Schema.Type.INT);
 
   private static final HapiConverter<Schema> INTEGER_CONVERTER =
       new PrimitiveConverter<Schema>("Integer") {
@@ -88,7 +88,7 @@ public class DefinitionToAvroVisitor implements DefinitionVisitor<HapiConverter<
         }
       };
 
-  private static final Schema DOUBLE_SCHEMA = Schema.create(Type.DOUBLE);
+  private static final Schema DOUBLE_SCHEMA = Schema.create(Schema.Type.DOUBLE);
 
   private static final String ID_TYPE = "id";
 
@@ -114,6 +114,7 @@ public class DefinitionToAvroVisitor implements DefinitionVisitor<HapiConverter<
           }
         }
 
+        @Override
         protected Object fromHapi(IPrimitiveType primitive) {
           Object value = primitive.getValue();
           Preconditions.checkState(value instanceof BigDecimal);
@@ -444,16 +445,11 @@ public class DefinitionToAvroVisitor implements DefinitionVisitor<HapiConverter<
   private static class MultiValuedToAvroConverter extends HapiConverter<Schema>
       implements MultiValueConverter {
 
-    private class MultiValuedtoHapiConverter implements HapiFieldSetter {
-
-      private final BaseRuntimeElementDefinition elementDefinition;
+    private static class MultiValuedtoHapiConverter implements HapiFieldSetter {
 
       private final HapiObjectConverter elementToHapiConverter;
 
-      MultiValuedtoHapiConverter(
-          BaseRuntimeElementDefinition elementDefinition,
-          HapiObjectConverter elementToHapiConverter) {
-        this.elementDefinition = elementDefinition;
+      MultiValuedtoHapiConverter(HapiObjectConverter elementToHapiConverter) {
         this.elementToHapiConverter = elementToHapiConverter;
       }
 
@@ -509,7 +505,7 @@ public class DefinitionToAvroVisitor implements DefinitionVisitor<HapiConverter<
       HapiObjectConverter rowToHapiConverter =
           (HapiObjectConverter) elementConverter.toHapiConverter(elementDefinition);
 
-      return new MultiValuedtoHapiConverter(elementDefinition, rowToHapiConverter);
+      return new MultiValuedtoHapiConverter(rowToHapiConverter);
     }
 
     @Override
@@ -555,7 +551,7 @@ public class DefinitionToAvroVisitor implements DefinitionVisitor<HapiConverter<
     return TYPE_TO_CONVERTER.get(realType);
   }
 
-  private static final Schema NULL_SCHEMA = Schema.create(Type.NULL);
+  private static final Schema NULL_SCHEMA = Schema.create(Schema.Type.NULL);
 
   /** Makes a given schema nullable. */
   private static Schema nullable(Schema schema) {
@@ -660,7 +656,7 @@ public class DefinitionToAvroVisitor implements DefinitionVisitor<HapiConverter<
 
     @Override
     public Schema getDataType() {
-      return Schema.create(Type.STRING);
+      return Schema.create(Schema.Type.STRING);
     }
 
     @Override
@@ -778,7 +774,7 @@ public class DefinitionToAvroVisitor implements DefinitionVisitor<HapiConverter<
     String recordName =
         Splitter.onPattern("[-|_]")
             .splitToStream(localPart)
-            .map(part -> part.substring(0, 1).toUpperCase() + part.substring(1))
+            .map(part -> part.substring(0, 1).toUpperCase(Locale.ROOT) + part.substring(1))
             .collect(Collectors.joining());
 
     String fullName = recordNamespace + "." + recordName;

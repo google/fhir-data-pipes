@@ -13,8 +13,6 @@ import org.hl7.fhir.r4.model.CanonicalType;
 import org.hl7.fhir.r4.model.ElementDefinition;
 import org.hl7.fhir.r4.model.StructureDefinition;
 import org.jspecify.annotations.NonNull;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 // TODO: A significant part of this is similar to Stu3StructureDefinitions which we should refactor.
 // This is non-trivial because FHIR ElementDefinition objects do not share the same interface for
@@ -22,8 +20,6 @@ import org.slf4j.LoggerFactory;
 
 /** {@link StructureDefinitions} implementation for FHIR R4. */
 public class R4StructureDefinitions extends StructureDefinitions {
-
-  private static final Logger log = LoggerFactory.getLogger(R4StructureDefinitions.class);
 
   private static final FhirConversionSupport CONVERSION_SUPPORT = new R4FhirConversionSupport();
 

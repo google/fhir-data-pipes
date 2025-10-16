@@ -18,6 +18,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import org.apache.avro.Protocol;
 import org.apache.avro.Schema;
 import org.apache.avro.compiler.specific.SpecificCompiler;
@@ -525,11 +526,15 @@ public class R4AvroConverterUsCoreTest {
     compiler.compileToDestination(null, generatedCodePath.toFile());
 
     // Check that java files were created as expected.
-    Set<String> javaFiles =
-        Files.find(generatedCodePath, 10, (path, basicFileAttributes) -> true)
-            .map(path -> generatedCodePath.relativize(path))
-            .map(Object::toString)
-            .collect(Collectors.toSet());
+    Set<String> javaFiles;
+    try (Stream<Path> stream =
+        Files.find(generatedCodePath, 10, (path, basicFileAttributes) -> true)) {
+      javaFiles =
+          stream
+              .map(generatedCodePath::relativize)
+              .map(Object::toString)
+              .collect(Collectors.toSet());
+    }
 
     String fileSeparator = File.separator;
     List<String> filesToBeVerified =

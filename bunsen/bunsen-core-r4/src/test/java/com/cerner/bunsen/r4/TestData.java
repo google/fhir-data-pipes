@@ -1,6 +1,7 @@
 package com.cerner.bunsen.r4;
 
 import com.google.common.collect.ImmutableList;
+import java.time.Instant;
 import java.util.Date;
 import java.util.List;
 import org.hl7.fhir.r4.model.Address;
@@ -343,9 +344,8 @@ public class TestData {
 
     medication.addIngredient(ingredientComponent);
 
-    Reference itemReference = new Reference("test-item-reference");
-
     /* TODO update for R4
+    Reference itemReference = new Reference("test-item-reference");
     MedicationPackageContentComponent medicationPackageContentComponent =
         new MedicationPackageContentComponent();
     medicationPackageContentComponent.setItem(itemReference);
@@ -420,7 +420,7 @@ public class TestData {
                         .setCode("PPRF")
                         .setDisplay("primary performer"))
                 .setText("primary performer"))
-        .setPeriod(new Period().setStart(new Date()));
+        .setPeriod(new Period().setStart(Date.from(Instant.now())));
     encounter.addParticipant(participantComponent);
     return encounter;
   }

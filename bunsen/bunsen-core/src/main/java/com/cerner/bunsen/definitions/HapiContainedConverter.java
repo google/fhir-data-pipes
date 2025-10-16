@@ -39,7 +39,7 @@ public abstract class HapiContainedConverter<T> extends HapiConverter<T> {
   protected abstract Object createContained(Object[] contained);
 
   /** Represents the association of a contained element to its type. */
-  protected final class ContainerEntry {
+  protected static final class ContainerEntry {
 
     private final String elementType;
     private final Object element;
