@@ -26,6 +26,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.sql.SQLException;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
@@ -121,7 +122,7 @@ public class ConvertResourceFn extends FetchSearchPageFn<HapiRowDescriptor> {
       // deleted
       resource = createNewFhirResource(element.fhirVersion(), resourceType);
       ActionType removeAction = ActionType.REMOVE;
-      meta.setLastUpdated(new Date());
+      meta.setLastUpdated(Date.from(Instant.now()));
       meta.addTag(
           new Coding(removeAction.getSystem(), removeAction.toCode(), removeAction.getDisplay()));
     } else {
@@ -213,10 +214,10 @@ public class ConvertResourceFn extends FetchSearchPageFn<HapiRowDescriptor> {
     try {
       // TODO create tests for this method and different versions of FHIR; casting to R4 resource
       //  does not seem right!
-      return (Resource)
-          Class.forName(getFhirBasePackageName(fhirVersion) + "." + resourceType)
-              .getConstructor()
-              .newInstance();
+      return Class.forName(getFhirBasePackageName(fhirVersion) + "." + resourceType)
+          .asSubclass(Resource.class)
+          .getConstructor()
+          .newInstance();
     } catch (InstantiationException
         | IllegalAccessException
         | ClassNotFoundException

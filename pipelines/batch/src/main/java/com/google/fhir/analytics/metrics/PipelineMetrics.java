@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2023 Google LLC
+ * Copyright 2020-2025 Google LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,10 +27,6 @@ public interface PipelineMetrics {
   /** Clears all the metrics */
   void clearAllMetrics();
 
-  /**
-   * Sets the total number of resources
-   *
-   * @param totalNumOfResources
-   */
+  /** Sets the total number of resources */
   void setTotalNumOfResources(long totalNumOfResources);
 }
