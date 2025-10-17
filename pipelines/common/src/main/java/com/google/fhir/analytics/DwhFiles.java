@@ -133,7 +133,7 @@ public class DwhFiles {
    *     it is usually "under" `dwhRoot`.
    * @param fhirContext
    */
-  private DwhFiles(String dwhRoot, String viewRoot, FhirContext fhirContext) {
+  private DwhFiles(String dwhRoot, @Nullable String viewRoot, FhirContext fhirContext) {
     Preconditions.checkArgument(!Strings.isNullOrEmpty(dwhRoot));
     this.dwhRoot = dwhRoot;
     this.fhirContext = fhirContext;
@@ -150,7 +150,7 @@ public class DwhFiles {
     return forRoot(dwhRoot, null, fhirContext);
   }
 
-  static DwhFiles forRoot(String dwhRoot, String viewRoot, FhirContext fhirContext) {
+  static DwhFiles forRoot(String dwhRoot, @Nullable String viewRoot, FhirContext fhirContext) {
     return new DwhFiles(dwhRoot, viewRoot, fhirContext);
   }
 
@@ -438,11 +438,13 @@ public class DwhFiles {
     sourceResourceIdList.stream()
         .forEach(
             resourceId -> {
-              ResourceId destResourceId =
-                  FileSystems.matchNewResource(destDwh, true)
-                      .resolve(dirName, StandardResolveOptions.RESOLVE_DIRECTORY)
-                      .resolve(resourceId.getFilename(), StandardResolveOptions.RESOLVE_FILE);
-              destResourceIdList.add(destResourceId);
+              if (resourceId.getFilename() != null) {
+                ResourceId destResourceId =
+                    FileSystems.matchNewResource(destDwh, true)
+                        .resolve(dirName, StandardResolveOptions.RESOLVE_DIRECTORY)
+                        .resolve(resourceId.getFilename(), StandardResolveOptions.RESOLVE_FILE);
+                destResourceIdList.add(destResourceId);
+              }
             });
     FileSystems.copy(sourceResourceIdList, destResourceIdList);
   }
