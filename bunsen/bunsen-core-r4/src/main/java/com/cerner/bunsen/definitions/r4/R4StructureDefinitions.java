@@ -13,6 +13,7 @@ import org.hl7.fhir.r4.model.CanonicalType;
 import org.hl7.fhir.r4.model.ElementDefinition;
 import org.hl7.fhir.r4.model.StructureDefinition;
 import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -138,6 +139,7 @@ public class R4StructureDefinitions extends StructureDefinitions {
     }
 
     @Override
+    @Nullable
     public String getFixedPrimitiveValue() {
       if (elementDefinition.getFixed() == null) {
         return null;
@@ -160,6 +162,7 @@ public class R4StructureDefinitions extends StructureDefinitions {
     }
 
     @Override
+    @Nullable
     public String getFirstTypeProfile() {
       List<CanonicalType> profiles = elementDefinition.getTypeFirstRep().getProfile();
       if (profiles == null || profiles.isEmpty()) {

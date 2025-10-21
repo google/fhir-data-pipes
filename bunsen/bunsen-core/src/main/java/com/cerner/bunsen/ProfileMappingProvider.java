@@ -93,16 +93,19 @@ class ProfileMappingProvider {
     Map<String, List<String>> resourceProfileMap = new HashMap<>();
     List<IBaseResource> defaultDefinitions =
         context.getValidationSupport().fetchAllStructureDefinitions();
-    for (IBaseResource definition : defaultDefinitions) {
-      support.addStructureDefinition(definition);
-      // Links the profile only if the definition belongs to a base resource. The default
-      // definitions loaded could be a StructureDefinition, Extension element, CapabilityStatement,
-      // ValueSet etc., hence this check is necessary.
-      if (isABaseResource(context, definition)) {
-        RuntimeResourceDefinition resourceDefinition = context.getResourceDefinition(definition);
-        String type = fetchProperty("type", resourceDefinition, definition);
-        String url = fetchProperty("url", resourceDefinition, definition);
-        resourceProfileMap.computeIfAbsent(type, list -> new ArrayList<>()).add(url);
+    if (defaultDefinitions != null) {
+      for (IBaseResource definition : defaultDefinitions) {
+        support.addStructureDefinition(definition);
+        // Links the profile only if the definition belongs to a base resource. The default
+        // definitions loaded could be a StructureDefinition, Extension element,
+        // CapabilityStatement,
+        // ValueSet etc., hence this check is necessary.
+        if (isABaseResource(context, definition)) {
+          RuntimeResourceDefinition resourceDefinition = context.getResourceDefinition(definition);
+          String type = fetchProperty("type", resourceDefinition, definition);
+          String url = fetchProperty("url", resourceDefinition, definition);
+          resourceProfileMap.computeIfAbsent(type, list -> new ArrayList<>()).add(url);
+        }
       }
     }
     context.setValidationSupport(support);
@@ -235,6 +238,7 @@ class ProfileMappingProvider {
     }
   }
 
+  @Nullable
   private String fetchProperty(
       String property, RuntimeResourceDefinition resourceDefinition, IBaseResource definition) {
     Optional<IBase> propertyValue =
@@ -253,8 +257,8 @@ class ProfileMappingProvider {
       String type = fetchProperty("type", resourceDefinition, definition);
       String baseDefinition = fetchProperty("baseDefinition", resourceDefinition, definition);
       if (fhirContext.getResourceTypes().contains(type)
-          && baseDefinition.equalsIgnoreCase(
-              "http://hl7.org/fhir/StructureDefinition/DomainResource")) {
+          && "http://hl7.org/fhir/StructureDefinition/DomainResource"
+              .equalsIgnoreCase(baseDefinition)) {
         return true;
       }
     }

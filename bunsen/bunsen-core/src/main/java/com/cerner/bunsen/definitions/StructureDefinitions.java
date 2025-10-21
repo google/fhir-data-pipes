@@ -118,6 +118,7 @@ public abstract class StructureDefinitions {
   /**
    * Find the definition from the definitions list, whose path starts with the given referencedType
    */
+  @Nullable
   private IElementDefinition getParentDefinition(
       String referencedType, List<IElementDefinition> definitions) {
     return definitions.stream()
@@ -126,7 +127,7 @@ public abstract class StructureDefinitions {
         .orElse(null);
   }
 
-  private <T> List<StructureField<T>> singleField(String elementName, T result) {
+  private <T> List<StructureField<T>> singleField(String elementName, @Nullable T result) {
     if (result == null) {
       return Collections.emptyList();
     }
@@ -266,6 +267,8 @@ public abstract class StructureDefinitions {
    * with max of zero), or have multiple values (for elements that generate fields with additional
    * data in siblings.)
    */
+  // TODO perform a deep review of this method's code and the implication of various nullability
+  // check approaches
   private <T> List<StructureField<T>> elementToFields(
       DefinitionVisitor<T> visitor,
       IStructureDefinition rootDefinition,
@@ -338,9 +341,10 @@ public abstract class StructureDefinitions {
               visitor.visitChoice(elementName, choiceTypes));
       return Collections.singletonList(field);
     } else if (!element.getMax().equals("1")) {
-      if (getDefinition(element) != null) {
+
+      IStructureDefinition definition = getDefinition(element);
+      if (definition != null) {
         // Handle defined data types.
-        IStructureDefinition definition = getDefinition(element);
         T type = transform(visitor, element, definition, stack);
         return singleField(elementName, visitor.visitMultiValued(elementName, type));
       } else {
@@ -371,10 +375,11 @@ public abstract class StructureDefinitions {
 
     } else if (getDefinition(element) != null) {
 
+      IStructureDefinition definition = getDefinition(element);
+
       // TODO refactor this and the similar block above for handling defined data types.
       // Handle defined data types.
-      IStructureDefinition definition = getDefinition(element);
-      T type = transform(visitor, element, definition, stack);
+      T type = definition != null ? transform(visitor, element, definition, stack) : null;
       return singleField(DefinitionVisitorsUtil.elementName(element.getPath()), type);
     } else {
 
