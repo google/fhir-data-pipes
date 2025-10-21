@@ -18,6 +18,7 @@ package com.google.fhir.analytics;
 import ca.uhn.fhir.context.FhirVersionEnum;
 import ca.uhn.fhir.parser.DataFormatException;
 import com.cerner.bunsen.exception.ProfileException;
+import com.google.common.base.Splitter;
 import com.google.common.base.Strings;
 import com.google.fhir.analytics.view.ViewApplicationException;
 import java.io.IOException;
@@ -26,7 +27,6 @@ import java.sql.SQLException;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -69,7 +69,7 @@ public class ConvertResourceFn extends FetchSearchPageFn<HapiRowDescriptor> {
     this.totalPushTimeMillisMap = new HashMap<String, Counter>();
     // Only in the incremental mode we process deleted resources.
     this.processDeletedRecords = !Strings.isNullOrEmpty(options.getSince());
-    List<String> resourceTypes = Arrays.asList(options.getResourceList().split(","));
+    List<String> resourceTypes = Splitter.on(',').splitToList(options.getResourceList());
     for (String resourceType : resourceTypes) {
       this.numFetchedResourcesMap.put(
           resourceType,
@@ -236,23 +236,18 @@ public class ConvertResourceFn extends FetchSearchPageFn<HapiRowDescriptor> {
 
   private String getFhirBasePackageName(String fhirVersion) {
     FhirVersionEnum fhirVersionEnum = FhirVersionEnum.forVersionString(fhirVersion);
-    switch (fhirVersionEnum) {
-      case DSTU2:
-        return org.hl7.fhir.dstu2.model.Base.class.getPackageName();
-      case DSTU2_1:
-        return org.hl7.fhir.dstu2016may.model.Base.class.getPackageName();
-      case DSTU3:
-        return org.hl7.fhir.dstu3.model.Base.class.getPackageName();
-      case R4:
-        return org.hl7.fhir.r4.model.Base.class.getPackageName();
-      case R4B:
-        return org.hl7.fhir.r4b.model.Base.class.getPackageName();
-      case R5:
-        return org.hl7.fhir.r5.model.Base.class.getPackageName();
-      default:
+    return switch (fhirVersionEnum) {
+      case DSTU2 -> org.hl7.fhir.dstu2.model.Base.class.getPackageName();
+      case DSTU2_1 -> org.hl7.fhir.dstu2016may.model.Base.class.getPackageName();
+      case DSTU3 -> org.hl7.fhir.dstu3.model.Base.class.getPackageName();
+      case R4 -> org.hl7.fhir.r4.model.Base.class.getPackageName();
+      case R4B -> org.hl7.fhir.r4b.model.Base.class.getPackageName();
+      case R5 -> org.hl7.fhir.r5.model.Base.class.getPackageName();
+      default -> {
         String errorMessage = String.format("Invalid fhir version %s", fhirVersion);
         log.error(errorMessage);
         throw new FHIRException(errorMessage);
-    }
+      }
+    };
   }
 }
