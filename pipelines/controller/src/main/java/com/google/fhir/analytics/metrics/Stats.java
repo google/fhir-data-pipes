@@ -35,9 +35,10 @@ public class Stats {
    * weightage for each step is a rough approximation derived based on the time taken for that step
    * as compared to the other steps.
    *
-   * @param cumulativeMetrics
+   * @param cumulativeMetrics total metrics of the currently running pipeline
    * @return Stats
    */
+  @Nullable
   public static Stats createStats(@Nullable CumulativeMetrics cumulativeMetrics) {
 
     if (cumulativeMetrics == null) {

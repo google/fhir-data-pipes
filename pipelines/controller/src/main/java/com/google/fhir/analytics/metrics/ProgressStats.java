@@ -18,11 +18,12 @@ package com.google.fhir.analytics.metrics;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
+import org.jspecify.annotations.Nullable;
 
 @Getter
 @Setter
 @ToString
 public class ProgressStats {
-  private String pipelineStatus;
-  private Stats stats;
+  @Nullable private String pipelineStatus;
+  @Nullable private Stats stats;
 }

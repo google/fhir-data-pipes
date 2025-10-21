@@ -71,6 +71,8 @@ public class FlinkConfiguration {
   private static final int PARQUET_ROW_GROUP_INFLATION_FACTOR = 2;
 
   private static final String KEY_VALUE_FORMAT = "%s: %s";
+
+  @SuppressWarnings("NullAway.Init")
   private String flinkConfDir;
 
   public String getFlinkConfDir() {
