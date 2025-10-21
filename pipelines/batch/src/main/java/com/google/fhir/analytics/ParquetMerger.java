@@ -333,6 +333,8 @@ public class ParquetMerger {
     }
     if ((!dwhViews1.isEmpty() || !dwhViews2.isEmpty())
         && !Strings.isNullOrEmpty(options.getViewDefinitionsDir())) {
+      // ViewManager is guaranteed to be non-null here, adding Precondition for NullAway
+      Preconditions.checkNotNull(viewManager);
       for (String viewName : dwhViews1) {
         if (!dwhViews2.contains(viewName)) {
           continue;
@@ -351,11 +353,11 @@ public class ParquetMerger {
       DwhFiles dwhFiles2,
       DwhFiles mergedDwhFiles,
       String viewName,
-      @Nullable ViewManager viewManager)
+      ViewManager viewManager)
       throws IOException {
     Pipeline pipeline = Pipeline.create(options);
     log.info("Merging materialized view {}", viewName);
-    ViewDefinition viewDef = viewManager != null ? viewManager.getViewDefinition(viewName) : null;
+    ViewDefinition viewDef = viewManager.getViewDefinition(viewName);
     if (viewDef != null) {
       Schema schema = ViewSchema.getAvroSchema(viewDef);
       PCollection<KV<String, CoGbkResult>> groupedRecords =
