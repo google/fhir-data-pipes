@@ -133,9 +133,8 @@ public class ConvertResourceFn extends FetchSearchPageFn<HapiRowDescriptor> {
         return;
       }
     }
-    if (totalParseTimeMillisMap.get(resourceType) != null)
-      totalParseTimeMillisMap.get(resourceType).inc(System.currentTimeMillis() - startTime);
-    if (forcedId == null || forcedId.equals("")) {
+    incrementElapsedTimeCounter(totalParseTimeMillisMap, resourceType, startTime);
+    if (forcedId == null || forcedId.isEmpty()) {
       resource.setId(resourceId);
     } else {
       resource.setId(forcedId);
@@ -148,8 +147,7 @@ public class ConvertResourceFn extends FetchSearchPageFn<HapiRowDescriptor> {
     if (parquetUtil != null) {
       startTime = System.currentTimeMillis();
       parquetUtil.write(resource);
-      if (totalGenerateTimeMillisMap.get(resourceType) != null)
-        totalGenerateTimeMillisMap.get(resourceType).inc(System.currentTimeMillis() - startTime);
+      incrementElapsedTimeCounter(totalGenerateTimeMillisMap, resourceType, startTime);
     }
     if (!sinkPath.isEmpty()) {
       startTime = System.currentTimeMillis();
@@ -159,8 +157,7 @@ public class ConvertResourceFn extends FetchSearchPageFn<HapiRowDescriptor> {
         fhirStoreUtil.uploadResource(resource);
       }
 
-      if (totalPushTimeMillisMap.get(resourceType) != null)
-        totalPushTimeMillisMap.get(resourceType).inc(System.currentTimeMillis() - startTime);
+      incrementElapsedTimeCounter(totalPushTimeMillisMap, resourceType, startTime);
     }
     if (sinkDbConfig != null) {
       if (isResourceDeleted) {
@@ -231,6 +228,14 @@ public class ConvertResourceFn extends FetchSearchPageFn<HapiRowDescriptor> {
           String.format("Failed to instantiate new FHIR resource of type %s", resourceType);
       log.error(errorMessage, e);
       throw new FHIRException(errorMessage, e);
+    }
+  }
+
+  private void incrementElapsedTimeCounter(
+      HashMap<String, Counter> counterMap, String resourceType, long startTime) {
+    Counter counter = counterMap.get(resourceType);
+    if (counter != null) {
+      counter.inc(System.currentTimeMillis() - startTime);
     }
   }
 

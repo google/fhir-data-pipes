@@ -273,7 +273,7 @@ public class ParquetUtil {
     }
     if (!Strings.isNullOrEmpty(outputParquetViewPath)) {
       ImmutableList<ViewDefinition> views = viewManager.getViewsForType(resource.fhirType());
-      if (views != null) {
+      if (!views.isEmpty()) {
         for (ViewDefinition vDef : views) {
           write(resource, vDef);
         }

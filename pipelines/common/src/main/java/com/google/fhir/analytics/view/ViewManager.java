@@ -99,10 +99,9 @@ public class ViewManager {
     return viewNameMap.get(viewName);
   }
 
-  @Nullable
   public ImmutableList<ViewDefinition> getViewsForType(String resourceType) {
     if (!viewMap.containsKey(resourceType)) {
-      return null;
+      return ImmutableList.of();
     }
     return ImmutableList.copyOf(viewMap.get(resourceType));
   }

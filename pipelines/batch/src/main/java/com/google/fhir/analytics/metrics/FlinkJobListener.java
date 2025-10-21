@@ -40,7 +40,7 @@ public class FlinkJobListener implements JobListener {
     if (flinkPipelineMetrics != null && jobClient != null) {
       flinkPipelineMetrics.addJobClient(jobClient);
     } else {
-      logger.error("FlinkPipelineMetrics instance or jobClient instance is null");
+      logger.warn("FlinkPipelineMetrics instance or jobClient instance is null");
     }
   }
 

@@ -41,7 +41,8 @@ public class ProcessGenericRecords extends FetchSearchPageFn<GenericRecord> {
 
   private String resourceType;
 
-  private List<Resource> cachedResources;
+  // Beam also re-initializes these during setup, re-initialized here to make NullAway happy.
+  private List<Resource> cachedResources = new ArrayList<>();
   private Counter totalAvroConversionTime;
   private Counter totalAvroConversions;
 
@@ -67,7 +68,7 @@ public class ProcessGenericRecords extends FetchSearchPageFn<GenericRecord> {
 
   @Override
   public void finishBundle(FinishBundleContext context) {
-    if (cachedResources != null && !cachedResources.isEmpty()) {
+    if (!cachedResources.isEmpty()) {
       try {
         processBundle(flushCachToBundle());
       } catch (SQLException | ViewApplicationException | ProfileException | IOException e) {

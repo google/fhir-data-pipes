@@ -137,7 +137,7 @@ public class JdbcResourceWriter {
       ViewManager viewManager = ViewManager.createForDir(viewDir);
       for (String resourceType : Splitter.on(',').split(options.getResourceList())) {
         ImmutableList<ViewDefinition> views = viewManager.getViewsForType(resourceType);
-        if (views == null || views.isEmpty()) {
+        if (views.isEmpty()) {
           log.warn("No views found for resource type {} in directory {}!", resourceType, viewDir);
         } else {
           for (ViewDefinition vDef : views) {
@@ -205,7 +205,7 @@ public class JdbcResourceWriter {
       deleteRowsById(jdbcDataSource, resourceType, id);
     } else {
       ImmutableList<ViewDefinition> views = viewManager.getViewsForType(resourceType);
-      if (views != null) {
+      if (!views.isEmpty()) {
         for (ViewDefinition vDef : views) {
           if (Strings.isNullOrEmpty(vDef.getName())) {
             throw new SQLException("Field `name` in ViewDefinition is not defined.");
@@ -238,7 +238,7 @@ public class JdbcResourceWriter {
       }
     } else {
       ImmutableList<ViewDefinition> views = viewManager.getViewsForType(resource.fhirType());
-      if (views != null) {
+      if (!views.isEmpty()) {
         for (ViewDefinition vDef : views) {
           if (Strings.isNullOrEmpty(vDef.getName())) {
             throw new SQLException("Field `name` in ViewDefinition is not defined.");

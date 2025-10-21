@@ -242,8 +242,12 @@ public class ParquetMerger {
     if (numRec > 1) {
       numDuplicates.inc();
     }
-    if (numRec > 2 && lastRecord != null && lastRecord.get(ID_KEY) != null) {
-      log.warn("Record with ID {} repeated more than twice!", lastRecord.get(ID_KEY));
+    if (numRec
+        > 2) { // NullAway complains of lastRecord possibly being null here. It is guaranteed for
+      // numRec>1
+      Object lastRecordIdKey = lastRecord != null ? lastRecord.get(ID_KEY) : null;
+      if (lastRecordIdKey != null)
+        log.warn("Record with ID {} repeated more than twice!", lastRecordIdKey);
     }
     return lastRecord;
   }

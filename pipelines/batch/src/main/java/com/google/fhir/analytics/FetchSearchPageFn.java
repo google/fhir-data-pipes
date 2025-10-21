@@ -129,6 +129,7 @@ abstract class FetchSearchPageFn<T> extends DoFn<T, KV<String, Integer>> {
 
   protected AvroConversionUtil avroConversionUtil;
 
+  // Suppressing NullAway warning because all final fields are initialized in the constructor.
   @SuppressWarnings("NullAway.Init")
   FetchSearchPageFn(FhirEtlOptions options, String stageIdentifier) {
     this.outputParquetViewPath = options.getOutputParquetViewPath();

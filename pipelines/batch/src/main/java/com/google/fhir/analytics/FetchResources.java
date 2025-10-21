@@ -106,7 +106,10 @@ public class FetchResources
     // StartBundle; we don't need to `synchronized` access of it because each instance of the DoFn
     // class is accessed by a single thread.
     // https://beam.apache.org/documentation/programming-guide/#user-code-thread-compatibility
-    private Map<String, Integer> patientCount = Maps.newHashMap();
+
+    // Suppressing warning as this is initialized in StartBundle.
+    @SuppressWarnings("NullAway")
+    private Map<String, Integer> patientCount = null;
 
     SearchFn(FhirEtlOptions options, String stageIdentifier) {
       super(options, stageIdentifier);
