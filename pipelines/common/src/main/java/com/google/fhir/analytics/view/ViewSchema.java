@@ -174,7 +174,7 @@ public class ViewSchema {
             }
           }
         } else {
-          if (e.getColumnInfo().isCollection() || e.getColumnInfo().getType() != null) {
+          if (e.getColumnInfo().isCollection()) {
             if (e.getValues() == null || e.getValues().isEmpty()) {
               currentRecord.put(e.getColumnInfo().getName(), null);
             } else {
