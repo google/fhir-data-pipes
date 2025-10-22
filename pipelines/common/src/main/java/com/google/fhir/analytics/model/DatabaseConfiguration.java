@@ -29,6 +29,7 @@ import lombok.Setter;
 
 @Getter
 @Setter
+@SuppressWarnings("NullAway")
 public class DatabaseConfiguration {
 
   // General configuration parameters that needs to be exposed beyond Debezium.

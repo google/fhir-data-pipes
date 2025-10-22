@@ -26,10 +26,12 @@ import com.google.gson.JsonSerializationContext;
 import com.google.gson.JsonSerializer;
 import java.lang.reflect.Type;
 import java.util.Date;
+import org.jspecify.annotations.Nullable;
 
 public class JsonDateCodec implements JsonSerializer<Date>, JsonDeserializer<Date> {
 
   @Override
+  @Nullable
   public JsonElement serialize(
       Date date, Type type, JsonSerializationContext jsonSerializationContext) {
     if (date != null) {
@@ -39,6 +41,7 @@ public class JsonDateCodec implements JsonSerializer<Date>, JsonDeserializer<Dat
   }
 
   @Override
+  @Nullable
   public Date deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context)
       throws JsonParseException {
     if (json != null && !json.isJsonNull()) {

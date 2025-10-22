@@ -21,6 +21,7 @@ import lombok.Setter;
 
 @Getter
 @Setter
+@SuppressWarnings("NullAway")
 public class EventConfiguration {
   private boolean enabled;
   private String title;

@@ -62,7 +62,7 @@ public class ViewDefinition {
   // We try to limit the schema generation and validation to a minimum here as we prefer this to be
   // a pure data-object. This class is instantiated only with factory methods, so it is probably
   // okay to keep the current pattern.
-  @Getter
+  @Getter @Nullable
   private ImmutableMap<String, Column> allColumns; // Initialized once in `validateAndSetUp`.
 
   // This class should only be instantiated with the `create*` factory methods.
@@ -293,7 +293,7 @@ public class ViewDefinition {
     @Nullable private String path;
     @Nullable private String name;
     @Nullable private String type;
-    @Nullable private boolean collection;
+    private boolean collection;
     @Nullable private String description;
     // The following fields are _not_ read from the ViewDefinition.
     @Nullable private String inferredType;
