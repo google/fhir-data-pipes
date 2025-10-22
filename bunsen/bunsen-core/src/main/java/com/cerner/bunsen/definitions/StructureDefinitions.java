@@ -414,7 +414,7 @@ public abstract class StructureDefinitions {
     QualifiedPath qualifiedPath = new QualifiedPath(rootDefinition.getUrl(), element.getPath());
 
     if (shouldTerminateRecursive(visitor, qualifiedPath, stack)) {
-      return Collections.emptyList();
+      return new ArrayList<>();
     } else {
       stack.push(qualifiedPath);
 
