@@ -64,6 +64,8 @@ public class GcsDwhFilesTest {
   @Mock private GcsUtil mockGcsUtil;
   private AutoCloseable closeable;
 
+  // Initialization handled by JUnit's @BeforeEach annotated method
+  @SuppressWarnings("NullAway.Init")
   @BeforeEach
   public void setUp() {
     closeable = MockitoAnnotations.openMocks(this);

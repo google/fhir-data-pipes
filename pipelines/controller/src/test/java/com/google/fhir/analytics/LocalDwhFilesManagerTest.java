@@ -28,7 +28,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.Instant;
 import java.util.List;
-import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import org.apache.beam.sdk.io.FileSystems;
 import org.apache.beam.sdk.io.fs.ResourceId;
 import org.apache.commons.io.FileUtils;
@@ -54,7 +54,10 @@ public class LocalDwhFilesManagerTest {
 
   private DwhFilesManager dwhFilesManager;
 
-  @TempDir public Path testPath;
+  // We are suppressing here as the testPath is initialized by JUnit at runtime.
+  @SuppressWarnings("NullAway.Init")
+  @TempDir
+  public Path testPath;
 
   @BeforeEach
   public void setUp() {
@@ -77,9 +80,9 @@ public class LocalDwhFilesManagerTest {
     dwhFilesManager.checkPurgeScheduleAndTrigger();
     // Check if the number of the snapshots remaining after the purge job is equal to the
     // configured retain number
-    assertThat(
-        Files.list(rootDir).collect(Collectors.toList()).size(),
-        equalTo(dataProperties.getNumOfDwhSnapshotsToRetain()));
+    try (Stream<Path> stream = Files.list(rootDir)) {
+      assertThat(stream.toList().size(), equalTo(dataProperties.getNumOfDwhSnapshotsToRetain()));
+    }
   }
 
   @Test
@@ -210,12 +213,6 @@ public class LocalDwhFilesManagerTest {
         () -> {
           dwhFilesManager.getPrefix("prefix");
         });
-  }
-
-  @Test
-  public void testDeleteDwhSnapshotFilesForNullSnapshotId() {
-    Assertions.assertThrows(
-        IllegalStateException.class, () -> dwhFilesManager.deleteDwhSnapshotFiles(null));
   }
 
   @Test

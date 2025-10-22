@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2024 Google LLC
+ * Copyright 2020-2025 Google LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -46,9 +46,15 @@ public class FetchSearchPageFnTest {
 
   private FhirContext fhirContext;
 
-  @Mock private ParquetUtil mockParquetUtil;
+  // Initialization handled by Mockito's @Mock annotation
+  @SuppressWarnings("NullAway.Init")
+  @Mock
+  private ParquetUtil mockParquetUtil;
 
-  @Captor private ArgumentCaptor<Bundle> bundleCaptor;
+  // Initialization handled by Mockito's @Captor annotation
+  @SuppressWarnings("NullAway.Init")
+  @Captor
+  private ArgumentCaptor<Bundle> bundleCaptor;
 
   @Before
   public void setUp() throws SQLException, PropertyVetoException, ProfileException {
