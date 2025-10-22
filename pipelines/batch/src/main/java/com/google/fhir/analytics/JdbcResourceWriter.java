@@ -39,6 +39,7 @@ import java.sql.SQLException;
 import java.util.stream.Collectors;
 import javax.sql.DataSource;
 import org.hl7.fhir.r4.model.Resource;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -53,7 +54,7 @@ public class JdbcResourceWriter {
 
   private static final String ID_COLUMN = "id";
 
-  private final ViewManager viewManager;
+  @Nullable private final ViewManager viewManager;
 
   private final IParser parser;
 
@@ -136,16 +137,16 @@ public class JdbcResourceWriter {
       ViewManager viewManager = ViewManager.createForDir(viewDir);
       for (String resourceType : Splitter.on(',').split(options.getResourceList())) {
         ImmutableList<ViewDefinition> views = viewManager.getViewsForType(resourceType);
-        if (views == null || views.isEmpty()) {
+        if (views.isEmpty()) {
           log.warn("No views found for resource type {} in directory {}!", resourceType, viewDir);
         } else {
           for (ViewDefinition vDef : views) {
             if (Strings.isNullOrEmpty(vDef.getName())) {
               throw new ViewDefinitionException("Field `name` in ViewDefinition is not defined.");
             }
-            if (vDef.getAllColumns().get(ID_COLUMN) == null
-                || !ViewApplicator.GET_RESOURCE_KEY.equals(
-                    vDef.getAllColumns().get(ID_COLUMN).getPath())) {
+            ViewDefinition.Column idColumn =
+                vDef.getAllColumns() != null ? vDef.getAllColumns().get(ID_COLUMN) : null;
+            if (idColumn == null || !ViewApplicator.GET_RESOURCE_KEY.equals(idColumn.getPath())) {
               throw new ViewDefinitionException(
                   String.format(
                       "To write view '%s' to DB, there should be a column '%s' with path '%s'.",
@@ -197,18 +198,22 @@ public class JdbcResourceWriter {
    *
    * @param resourceType the type of resource to be deleted
    * @param id the id of the resource to be deleted
-   * @throws SQLException
+   * @throws SQLException if a database access error occurs
    */
   public void deleteResourceById(String resourceType, String id) throws SQLException {
     if (viewManager == null) {
       deleteRowsById(jdbcDataSource, resourceType, id);
     } else {
       ImmutableList<ViewDefinition> views = viewManager.getViewsForType(resourceType);
-      for (ViewDefinition vDef : views) {
-        if (Strings.isNullOrEmpty(vDef.getName())) {
-          throw new SQLException("Field `name` in ViewDefinition is not defined.");
+      if (!views.isEmpty()) {
+        for (ViewDefinition vDef : views) {
+          if (Strings.isNullOrEmpty(vDef.getName())) {
+            throw new SQLException("Field `name` in ViewDefinition is not defined.");
+          }
+          deleteRowsById(jdbcDataSource, vDef.getName(), id);
         }
-        deleteRowsById(jdbcDataSource, vDef.getName(), id);
+      } else {
+        log.warn("No views found for resource type {}!", resourceType);
       }
     }
   }
@@ -233,7 +238,7 @@ public class JdbcResourceWriter {
       }
     } else {
       ImmutableList<ViewDefinition> views = viewManager.getViewsForType(resource.fhirType());
-      if (views != null) {
+      if (!views.isEmpty()) {
         for (ViewDefinition vDef : views) {
           if (Strings.isNullOrEmpty(vDef.getName())) {
             throw new SQLException("Field `name` in ViewDefinition is not defined.");
