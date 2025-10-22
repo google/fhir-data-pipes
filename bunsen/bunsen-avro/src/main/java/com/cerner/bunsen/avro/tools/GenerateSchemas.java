@@ -8,6 +8,7 @@ import com.cerner.bunsen.exception.ProfileException;
 import com.google.common.base.Splitter;
 import java.io.File;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.util.Arrays;
 import java.util.Collections;
@@ -80,7 +81,7 @@ public class GenerateSchemas {
     protocol.setTypes(schemas);
 
     try {
-      Files.write(outputFile.toPath(), protocol.toString(true).getBytes());
+      Files.write(outputFile.toPath(), protocol.toString(true).getBytes(StandardCharsets.UTF_8));
     } catch (IOException exception) {
       System.out.println("Unable to write file " + outputFile.getPath());
       exception.printStackTrace();

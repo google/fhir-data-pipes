@@ -81,6 +81,8 @@ public class ViewSchema {
    * @return an ordered map from column names to DB types
    */
   public static ImmutableMap<String, JDBCType> getDbSchema(ViewDefinition view) {
+    if (view.getAllColumns() == null) return ImmutableMap.of();
+
     ImmutableMap.Builder<String, JDBCType> builder = ImmutableMap.builder();
     for (Entry<String, Column> entry : view.getAllColumns().entrySet()) {
       // This is internally guaranteed.
@@ -172,8 +174,8 @@ public class ViewSchema {
             }
           }
         } else {
-          if (e.getColumnInfo().isCollection() || e.getColumnInfo().getType() instanceof String) {
-            if (e.getValues() == null || e.getValues().size() < 1) {
+          if (e.getColumnInfo().isCollection()) {
+            if (e.getValues() == null || e.getValues().isEmpty()) {
               currentRecord.put(e.getColumnInfo().getName(), null);
             } else {
               // Handles View Definition Collections and converts them to Avro String Arrays
@@ -196,7 +198,7 @@ public class ViewSchema {
 
   /**
    * Creates an Avro Schema for a given View Definition. Note: This conversion should be consistent
-   * with {@see #com.cerner.bunsen.avro.converters.DefinitionToAvroVisitor}
+   * with {@link com.cerner.bunsen.avro.converters.DefinitionToAvroVisitor}
    *
    * @param view the input View Definition
    * @return Avro Schema
@@ -204,6 +206,9 @@ public class ViewSchema {
   public static Schema getAvroSchema(ViewDefinition view) {
     FieldAssembler<Schema> schemaFields =
         SchemaBuilder.record(view.getName()).namespace("org.viewDefinition").fields();
+
+    if (view.getAllColumns() == null) return schemaFields.endRecord();
+
     for (Entry<String, Column> entry : view.getAllColumns().entrySet()) {
       Preconditions.checkState(entry.getValue() != null);
       String columnType = entry.getValue().getType();
