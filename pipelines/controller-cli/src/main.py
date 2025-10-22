@@ -29,8 +29,7 @@ COMMAND_LIST = ["dwh", "next", "status", "run", "config", "logs", "tables"]
 
 def process_response(response: str, args: argparse.Namespace):
     print(
-        f"Command: {args.command} "
-        f"{args.subcommand if hasattr(args, 'subcommand') else ''}"
+        f"Command: {args.command} {args.subcommand if hasattr(args, 'subcommand') else ''}"
     )
     print(f"Request url: {args.url}")
     print("Response:")
@@ -45,7 +44,7 @@ def _make_api_request(
 ) -> Optional[Dict[str, Any]]:
     try:
         if verb == HTTP_POST:
-            response = requests.post(url, params=params, json={}, timeout=5)
+            response = requests.post(url, json={}, timeout=5)
         else:
             response = requests.get(url, params=params, timeout=5)
 
@@ -85,7 +84,7 @@ def next_scheduled(args: argparse.Namespace) -> str:
         print(f"Error processing: {e}")
 
 
-def status(args: str) -> str:
+def status(args: argparse.Namespace) -> str:
     try:
         response = _make_api_request(HTTP_GET, f"{args.url}/status")
         process_response(response, args)
@@ -93,11 +92,10 @@ def status(args: str) -> str:
         print(f"Error processing: {e}")
 
 
-def run(args: str) -> str:
+def run(args: argparse.Namespace) -> str:
     try:
-        response = _make_api_request(
-            HTTP_POST, f"{args.url}/run?runMode={args.mode.upper()}"
-        )
+        params = {"runMode": args.mode.upper()}
+        response = _make_api_request(HTTP_POST, f"{args.url}/run", params=params)
         process_response(response, args)
     except requests.exceptions.RequestException as e:
         print(f"Error processing: {e}")
@@ -178,10 +176,7 @@ def main():
 
     config_parser = subparsers.add_parser("config", help="show config values")
     config_parser.add_argument(
-        "--config-name",
-        "-cn",
-        required=False,
-        help="name of the configuration key",
+        "--config-name", "-cn", required=False, help="name of the configuration key"
     )
     config_parser.set_defaults(func=config)
 
