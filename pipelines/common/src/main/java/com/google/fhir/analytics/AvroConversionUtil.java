@@ -164,10 +164,11 @@ public class AvroConversionUtil {
     AvroConverter converter = getConverter(resourceType);
     IBaseResource resource = converter.avroToResource(record);
     // TODO: fix this for other FHIR versions: https://github.com/google/fhir-data-pipes/issues/400
-    if (!(resource instanceof Resource)) {
+    if (resource instanceof Resource res) {
+      return res;
+    } else {
       throw new IllegalArgumentException("Cannot convert input record to resource!");
     }
-    return (Resource) resource;
   }
 
   /**

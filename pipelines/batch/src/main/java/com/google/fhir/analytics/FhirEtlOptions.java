@@ -214,21 +214,25 @@ public interface FhirEtlOptions extends BasePipelineOptions {
   void setActivePeriod(String value);
 
   @Description(
-      "Fetch only FHIR resources that were updated after the given timestamp."
-          + "The date format follows the dateTime format in the FHIR standard, without time-zone:\n"
-          + "https://www.hl7.org/fhir/datatypes.html#dateTime\n"
-          + "This feature is currently implemented only for HAPI JDBC mode.")
+      """
+          Fetch only FHIR resources that were updated after the given timestamp.
+          The date format follows the dateTime format in the FHIR standard, without time-zone:
+          https://www.hl7.org/fhir/datatypes.html#dateTime
+          This feature is currently implemented only for HAPI JDBC mode.
+          """)
   @Default.String("")
   String getSince();
 
   void setSince(String value);
 
   @Description(
-      "Path to the sink database config; if not set, no sink DB is used.\n"
-          + "If viewDefinitionsDir is set, the output tables will be the generated views\n"
-          + "(the `name` field value will be used as the table name); if not, one table\n"
-          + "per resource type is created with the JSON content of a resource and its\n"
-          + "`id` column for each row.")
+      """
+          Path to the sink database config; if not set, no sink DB is used.
+          If viewDefinitionsDir is set, the output tables will be the generated views
+          (the `name` field value will be used as the table name); if not, one table
+          per resource type is created with the JSON content of a resource and its
+          `id` column for each row.
+          """)
   @Default.String("")
   String getSinkDbConfigPath();
 
