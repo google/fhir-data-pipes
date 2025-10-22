@@ -45,7 +45,7 @@ def _make_api_request(
 ) -> Optional[Dict[str, Any]]:
     try:
         if verb == HTTP_POST:
-            response = requests.post(url, json={}, timeout=5)
+            response = requests.post(url, params=params, json={}, timeout=5)
         else:
             response = requests.get(url, params=params, timeout=5)
 
