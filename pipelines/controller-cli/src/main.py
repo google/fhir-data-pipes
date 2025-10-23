@@ -43,10 +43,14 @@ def _make_api_request(
     verb: str, url: str, params: Optional[Dict[str, Any]] = None
 ) -> Optional[Dict[str, Any]]:
     try:
+        headers = {"Content-Type": "application/json", "Accept": "*/*"}
+
         if verb == HTTP_POST:
-            response = requests.post(url, json={}, timeout=5)
+            response = requests.post(
+                url, json={}, params=params, headers=headers, timeout=5
+            )
         else:
-            response = requests.get(url, params=params, timeout=5)
+            response = requests.get(url, params=params, headers=headers, timeout=5)
 
         response.raise_for_status()
 
