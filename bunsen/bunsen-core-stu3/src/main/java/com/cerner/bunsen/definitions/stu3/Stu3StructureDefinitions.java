@@ -12,13 +12,9 @@ import org.hl7.fhir.dstu3.model.StructureDefinition;
 import org.hl7.fhir.instance.model.api.IBaseResource;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /** {@link StructureDefinitions} implementation for FHIR STU3. */
 public class Stu3StructureDefinitions extends StructureDefinitions {
-
-  private static final Logger log = LoggerFactory.getLogger(Stu3StructureDefinitions.class);
 
   private static final FhirConversionSupport CONVERSION_SUPPORT = new Stu3FhirConversionSupport();
 
