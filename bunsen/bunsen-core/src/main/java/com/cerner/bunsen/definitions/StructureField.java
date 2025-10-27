@@ -10,11 +10,11 @@ import org.jspecify.annotations.Nullable;
  */
 public class StructureField<T> {
 
-  private final String propertyName;
+  @Nullable private final String propertyName;
 
   private final String fieldName;
 
-  private final String extensionUrl;
+  @Nullable private final String extensionUrl;
 
   private final boolean isChoice;
 
@@ -51,8 +51,9 @@ public class StructureField<T> {
   /**
    * The FHIR property name for the field.
    *
-   * @return the FHIR property name.
+   * @return the FHIR property name or null if none is set.
    */
+  @Nullable
   public String propertyName() {
 
     return propertyName;
@@ -75,6 +76,7 @@ public class StructureField<T> {
    *
    * @return the URL for the extension, or null if it is not an extension.
    */
+  @Nullable
   public String extensionUrl() {
 
     return extensionUrl;
@@ -133,7 +135,7 @@ public class StructureField<T> {
    * @return the StructField for the given extension.
    */
   public static <T> StructureField<T> extension(
-      String fieldName, String extensionUrl, boolean isModifier, T visitorResult) {
+      String fieldName, @Nullable String extensionUrl, boolean isModifier, T visitorResult) {
     return new StructureField<>(null, fieldName, extensionUrl, isModifier, false, visitorResult);
   }
 }

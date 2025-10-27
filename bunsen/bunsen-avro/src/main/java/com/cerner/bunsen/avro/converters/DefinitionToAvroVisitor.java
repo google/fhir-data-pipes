@@ -761,16 +761,10 @@ public class DefinitionToAvroVisitor implements DefinitionVisitor<HapiConverter<
   }
 
   @Override
-  @Nullable // TODO superclass returns non-nullable
   public HapiConverter<Schema> visitParentExtension(
       String elementName,
       String extensionUrl,
       List<StructureField<HapiConverter<Schema>>> children) {
-
-    // Ignore extension fields that don't have declared content for now.
-    if (children.isEmpty()) {
-      return null;
-    }
 
     String recordNamespace = DefinitionVisitorsUtil.namespaceFor(basePackage, extensionUrl);
 

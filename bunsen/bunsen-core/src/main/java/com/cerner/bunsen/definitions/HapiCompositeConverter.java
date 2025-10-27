@@ -23,13 +23,13 @@ import org.jspecify.annotations.Nullable;
  */
 public abstract class HapiCompositeConverter<T> extends HapiConverter<T> {
 
-  private final String elementType;
+  @Nullable private final String elementType;
 
   private final List<StructureField<HapiConverter<T>>> children;
 
   protected final T structType;
 
-  private final String extensionUrl;
+  @Nullable private final String extensionUrl;
 
   protected final FhirConversionSupport fhirSupport;
 
@@ -47,7 +47,6 @@ public abstract class HapiCompositeConverter<T> extends HapiConverter<T> {
         IBase parentObject, BaseRuntimeChildDefinition fieldToSet, Object sourceObject) {}
 
     @Override
-    @Nullable // TODO superclass returns non nullable, do we ignore?
     public IBase toHapi(Object input) {
       return null;
     }

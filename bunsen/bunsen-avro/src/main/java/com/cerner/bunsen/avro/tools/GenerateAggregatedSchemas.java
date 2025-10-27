@@ -79,7 +79,7 @@ public class GenerateAggregatedSchemas {
       @Nullable FhirVersionEnum fhirVersionEnum,
       @Nullable String structureDefinitionsPath,
       @Nullable List<String> resourceTypes,
-      String outputDir)
+      @Nullable String outputDir)
       throws ProfileException, IOException {
     Preconditions.checkNotNull(fhirVersionEnum, "%s cannot be empty", FHIR_VERSION);
     Preconditions.checkNotNull(

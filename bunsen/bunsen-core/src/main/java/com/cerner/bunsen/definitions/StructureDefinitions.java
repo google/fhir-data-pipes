@@ -212,7 +212,7 @@ public abstract class StructureDefinitions {
       IStructureDefinition rootDefinition,
       String sliceName,
       Deque<QualifiedPath> stack,
-      String url,
+      @Nullable String url,
       List<IElementDefinition> extensionDefinitions,
       IElementDefinition extensionRoot) {
 
@@ -236,6 +236,11 @@ public abstract class StructureDefinitions {
         childFields.addAll(childField);
       }
 
+      // Ignore extension fields that have null url or don't have declared content for now.
+      if (url == null || children.isEmpty()) {
+        return Collections.emptyList();
+      }
+
       T result = visitor.visitParentExtension(sliceName, url, childFields);
 
       if (result == null) {
@@ -251,6 +256,9 @@ public abstract class StructureDefinitions {
       // FIXME: get the extension URL.
       Optional<IElementDefinition> urlElement =
           children.stream().filter(e -> e.getPath().endsWith("url")).findFirst();
+
+      if (valueElement.isEmpty() || urlElement.isEmpty()) return Collections.emptyList();
+
       String extensionUrl = urlElement.get().getFixedPrimitiveValue();
       List<StructureField<T>> childField =
           elementToFields(visitor, rootDefinition, valueElement.get(), extensionDefinitions, stack);
@@ -346,7 +354,9 @@ public abstract class StructureDefinitions {
       if (definition != null) {
         // Handle defined data types.
         T type = transform(visitor, element, definition, stack);
-        return singleField(elementName, visitor.visitMultiValued(elementName, type));
+        return type == null
+            ? Collections.emptyList()
+            : singleField(elementName, visitor.visitMultiValued(elementName, type));
       } else {
         List<StructureField<T>> childElements =
             transformChildren(visitor, rootDefinition, snapshotDefinitions, stack, element);

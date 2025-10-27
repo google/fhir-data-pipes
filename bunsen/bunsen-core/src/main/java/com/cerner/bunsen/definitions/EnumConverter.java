@@ -1,7 +1,6 @@
 package com.cerner.bunsen.definitions;
 
 import org.hl7.fhir.instance.model.api.IPrimitiveType;
-import org.jspecify.annotations.Nullable;
 
 public class EnumConverter<T> extends StringConverter<T> {
 
@@ -26,9 +25,8 @@ public class EnumConverter<T> extends StringConverter<T> {
   }
 
   @Override
-  @Nullable // TODO superclass returns non-nullable, should we return empty string instead of null?
   protected Object fromHapi(IPrimitiveType primitive) {
 
-    return "?".equals(primitive.getValueAsString()) ? null : primitive.getValueAsString();
+    return "?".equals(primitive.getValueAsString()) ? "" : primitive.getValueAsString();
   }
 }
