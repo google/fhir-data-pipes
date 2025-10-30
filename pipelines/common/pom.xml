@@ -56,13 +56,13 @@
     <dependency>
       <groupId>com.google.auth</groupId>
       <artifactId>google-auth-library-oauth2-http</artifactId>
-      <version>1.39.0</version>
+      <version>1.40.0</version>
     </dependency>
 
     <dependency>
       <groupId>com.google.apis</groupId>
       <artifactId>google-api-services-healthcare</artifactId>
-      <version>v1-rev20250904-2.0.0</version>
+      <version>v1-rev20251001-2.0.0</version>
     </dependency>
 
     <dependency>
@@ -134,7 +134,7 @@
     <dependency>
       <groupId>org.apache.avro</groupId>
       <artifactId>avro</artifactId>
-      <version>1.12.0</version>
+      <version>1.12.1</version>
     </dependency>
 
     <!-- Keep the version of the `parquet-avro` artifact consistent with the transitive
@@ -151,7 +151,7 @@
     <dependency>
       <groupId>org.apache.hadoop</groupId>
       <artifactId>hadoop-mapreduce-client-app</artifactId>
-      <version>3.4.1</version>
+      <version>3.4.2</version>
       <exclusions>
         <exclusion>
           <groupId>org.slf4j</groupId>
@@ -260,7 +260,7 @@
     <dependency>
       <groupId>org.mockito</groupId>
       <artifactId>mockito-junit-jupiter</artifactId>
-      <version>5.19.0</version>
+      <version>5.20.0</version>
       <scope>test</scope>
     </dependency>
   </dependencies>
