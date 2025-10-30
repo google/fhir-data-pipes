@@ -13,6 +13,7 @@ import org.hl7.fhir.r4.model.CanonicalType;
 import org.hl7.fhir.r4.model.ElementDefinition;
 import org.hl7.fhir.r4.model.StructureDefinition;
 import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 
 // TODO: A significant part of this is similar to Stu3StructureDefinitions which we should refactor.
 // This is non-trivial because FHIR ElementDefinition objects do not share the same interface for
@@ -134,6 +135,7 @@ public class R4StructureDefinitions extends StructureDefinitions {
     }
 
     @Override
+    @Nullable
     public String getFixedPrimitiveValue() {
       if (elementDefinition.getFixed() == null) {
         return null;
@@ -156,6 +158,7 @@ public class R4StructureDefinitions extends StructureDefinitions {
     }
 
     @Override
+    @Nullable
     public String getFirstTypeProfile() {
       List<CanonicalType> profiles = elementDefinition.getTypeFirstRep().getProfile();
       if (profiles == null || profiles.isEmpty()) {

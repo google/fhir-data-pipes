@@ -44,6 +44,7 @@ import org.apache.avro.specific.SpecificData;
 import org.apache.commons.lang3.StringUtils;
 import org.hl7.fhir.instance.model.api.IBase;
 import org.hl7.fhir.instance.model.api.IPrimitiveType;
+import org.jspecify.annotations.Nullable;
 
 public class DefinitionToAvroVisitor implements DefinitionVisitor<HapiConverter<Schema>> {
 
@@ -170,7 +171,7 @@ public class DefinitionToAvroVisitor implements DefinitionVisitor<HapiConverter<
     private final GenericData avroData = SpecificData.get();
 
     CompositeToAvroConverter(
-        String elementType,
+        @Nullable String elementType,
         List<StructureField<HapiConverter<Schema>>> children,
         Schema structType,
         FhirConversionSupport fhirSupport) {
@@ -178,11 +179,11 @@ public class DefinitionToAvroVisitor implements DefinitionVisitor<HapiConverter<
     }
 
     CompositeToAvroConverter(
-        String elementType,
+        @Nullable String elementType,
         List<StructureField<HapiConverter<Schema>>> children,
         Schema structType,
         FhirConversionSupport fhirSupport,
-        String extensionUrl) {
+        @Nullable String extensionUrl) {
 
       super(elementType, children, structType, fhirSupport, extensionUrl);
     }
@@ -630,6 +631,7 @@ public class DefinitionToAvroVisitor implements DefinitionVisitor<HapiConverter<
         IBase parentObject, BaseRuntimeChildDefinition fieldToSet, Object sparkObject) {}
 
     @Override
+    @Nullable // TODO superclass returns non-nullable
     public IBase toHapi(Object input) {
       return null;
     }
@@ -647,6 +649,7 @@ public class DefinitionToAvroVisitor implements DefinitionVisitor<HapiConverter<
     }
 
     @Override
+    @Nullable // TODO superclass returns non-nullable
     public Object fromHapi(Object input) {
       String uri = ((IPrimitiveType) input).getValueAsString();
 
@@ -763,11 +766,6 @@ public class DefinitionToAvroVisitor implements DefinitionVisitor<HapiConverter<
       String extensionUrl,
       List<StructureField<HapiConverter<Schema>>> children) {
 
-    // Ignore extension fields that don't have declared content for now.
-    if (children.isEmpty()) {
-      return null;
-    }
-
     String recordNamespace = DefinitionVisitorsUtil.namespaceFor(basePackage, extensionUrl);
 
     String localPart = extensionUrl.substring(extensionUrl.lastIndexOf('/') + 1);
@@ -856,7 +854,7 @@ public class DefinitionToAvroVisitor implements DefinitionVisitor<HapiConverter<
       String namespace,
       List<StructureField<HapiConverter<Schema>>> children,
       FhirConversionSupport fhirSupport,
-      String extensionUrl) {
+      @Nullable String extensionUrl) {
 
     List<Field> fields =
         children.stream()
