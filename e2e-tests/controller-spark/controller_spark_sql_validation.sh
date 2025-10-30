@@ -197,11 +197,14 @@ function wait_for_completion() {
 
   while [[ $(date -u +%s) -le ${end_time} ]]
   do
-    local pipeline_status=$(controller "${PIPELINE_CONTROLLER_URL}" status \
-    | sed -n '/{/,/}/p' | jq -r '.pipelineStatus')
+    local controller_output
+    controller_output=$(controller "${PIPELINE_CONTROLLER_URL}" status 2>/dev/null | sed -n '/{/,/}/p')
+    local pipeline_status=""
+    if [[ -n "${controller_output}" ]]; then
+      pipeline_status=$(echo "${controller_output}" | jq -r '.pipelineStatus // ""')
+    fi
 
-    if [[ "${pipeline_status}" == "RUNNING" ]]
-    then
+    if [[ "${pipeline_status}" == "RUNNING" ]]; then
       sleep 5
     else
       break
