@@ -188,7 +188,7 @@ function fhir_source_query() {
 #######################################################################
 function run_pipeline() {
   local runMode=$1
-  controller ${PIPELINE_CONTROLLER_URL} run --mode ${runMode}
+  controller "${PIPELINE_CONTROLLER_URL}" run --mode "${runMode}"
 }
 
 function wait_for_completion() {
