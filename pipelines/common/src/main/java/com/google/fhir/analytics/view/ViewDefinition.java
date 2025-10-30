@@ -143,6 +143,7 @@ public class ViewDefinition {
    * @return the [ordered] map of new column names and their types as string.
    * @throws ViewDefinitionException for repeated columns or other requirements not satisfied.
    */
+  @SuppressWarnings("NonApiType")
   private LinkedHashMap<String, Column> validateAndReplaceConstantsInSelects(
       @Nullable List<Select> selects, LinkedHashMap<String, Column> currentColumns)
       throws ViewDefinitionException {
@@ -157,10 +158,12 @@ public class ViewDefinition {
     return newCols;
   }
 
+  @SuppressWarnings("NonApiType")
   private static LinkedHashMap<String, Column> newTypeMap() {
     return new LinkedHashMap<>();
   }
 
+  @SuppressWarnings("NonApiType")
   private static LinkedHashMap<String, Column> unionTypeMaps(
       LinkedHashMap<String, Column> m1, LinkedHashMap<String, Column> m2) {
     LinkedHashMap<String, Column> u = new LinkedHashMap<>();
@@ -169,6 +172,7 @@ public class ViewDefinition {
     return u;
   }
 
+  @SuppressWarnings("NonApiType")
   private LinkedHashMap<String, Column> validateAndReplaceConstantsInOneSelect(
       Select select, LinkedHashMap<String, Column> currentColumns) throws ViewDefinitionException {
     LinkedHashMap<String, Column> newCols = newTypeMap();
@@ -329,6 +333,8 @@ public class ViewDefinition {
     }
 
     /**
+     * Converts the value of this constant to a string that can be used in FHIRPath expressions.
+     *
      * @return a string that can replace this constant in FHIRPaths.
      * @throws ViewDefinitionException if zero or more than one value is defined.
      */

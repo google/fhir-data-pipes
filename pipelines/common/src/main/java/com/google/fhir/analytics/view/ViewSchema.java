@@ -100,7 +100,7 @@ public class ViewSchema {
    *
    * @param rowElements the input elements of the row
    * @param statement the statement on which `set*()` methods are called to write the row elements
-   * @throws SQLException
+   * @throws SQLException if an error occurs while setting values in the statement
    */
   public static void setValueInStatement(
       ImmutableList<RowElement> rowElements, PreparedStatement statement) throws SQLException {

@@ -184,8 +184,8 @@ public class FhirStoreUtil {
         }
 
         Resource outcome = responseComponent.getOutcome();
-        if (outcome instanceof IBaseOperationOutcome) {
-          methodOutcome.setOperationOutcome((IBaseOperationOutcome) outcome);
+        if (outcome instanceof IBaseOperationOutcome operationOutcome) {
+          methodOutcome.setOperationOutcome(operationOutcome);
         }
 
         responses.add(methodOutcome);

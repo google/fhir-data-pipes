@@ -17,15 +17,12 @@ package com.google.fhir.analytics.metrics;
 
 import lombok.Data;
 import org.jspecify.annotations.Nullable;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 @Data
 public class Stats {
 
   private Integer percentageCompleted = 0;
 
-  private static final Logger logger = LoggerFactory.getLogger(Stats.class.getName());
   private static final Integer MAPPED_RESOURCES_WEIGHT = 4;
   private static final Integer PARSED_RESOURCES_WEIGHT = 1;
 
