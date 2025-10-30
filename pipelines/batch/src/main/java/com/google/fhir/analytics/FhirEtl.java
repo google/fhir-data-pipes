@@ -57,6 +57,7 @@ import org.apache.beam.sdk.values.KV;
 import org.apache.beam.sdk.values.PCollection;
 import org.apache.beam.sdk.values.PCollectionList;
 import org.apache.commons.collections.CollectionUtils;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -142,6 +143,7 @@ public class FhirEtl {
     }
   }
 
+  @Nullable
   private static List<Pipeline> buildFhirSearchPipeline(
       FhirEtlOptions options, AvroConversionUtil avroConversionUtil) throws ProfileException {
     FhirSearchUtil fhirSearchUtil =
@@ -316,6 +318,7 @@ public class FhirEtl {
   }
 
   // TODO: Implement active period feature for JDBC mode with a HAPI source server (issue #278).
+  @Nullable
   private static List<Pipeline> buildHapiJdbcPipeline(FhirEtlOptions options)
       throws SQLException, IOException {
     Preconditions.checkArgument(!Strings.isNullOrEmpty(options.getFhirDatabaseConfigPath()));
@@ -331,7 +334,8 @@ public class FhirEtl {
     List<Pipeline> pipelines = new ArrayList<>();
     long totalNumOfResources = 0L;
     for (String resourceType : Splitter.on(',').splitToList(options.getResourceList())) {
-      int numResources = resourceCount.get(resourceType);
+      int numResources =
+          resourceCount.get(resourceType) != null ? resourceCount.get(resourceType) : 0;
       if (numResources == 0) {
         continue;
       }
@@ -513,6 +517,7 @@ public class FhirEtl {
    * @param options the pipeline options to be used.
    * @return the created Pipeline instance or null if nothing needs to be done.
    */
+  @Nullable
   static List<Pipeline> setupAndBuildPipelines(
       FhirEtlOptions options, AvroConversionUtil avroConversionUtil)
       throws IOException, SQLException, ViewDefinitionException, ProfileException {
@@ -553,7 +558,11 @@ public class FhirEtl {
             options.getStructureDefinitionsPath(),
             options.getRecursiveDepth());
     List<Pipeline> pipelines = setupAndBuildPipelines(options, avroConversionUtil);
-    EtlUtils.runMultiplePipelinesWithTimestamp(pipelines, options);
+    if (pipelines != null) {
+      EtlUtils.runMultiplePipelinesWithTimestamp(pipelines, options);
+    } else {
+      log.info("No work needs to be done!");
+    }
 
     log.info("DONE!");
   }
