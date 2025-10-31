@@ -199,7 +199,7 @@ function wait_for_completion() {
   do
     local controller_output
     controller_output=$(controller "${PIPELINE_CONTROLLER_URL}" status 2>/dev/null | sed -n '/{/,/}/p')
-    local pipeline_status=""
+    local pipeline_status="{}"
     if [[ -n "${controller_output}" ]]; then
       pipeline_status=$(echo "${controller_output}" | jq -r '.pipelineStatus // ""')
     fi
