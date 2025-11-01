@@ -187,18 +187,24 @@ function fhir_source_query() {
 #     runs; should be one of "FULL", "INCREMENTAL", "VIEWS".
 #######################################################################
 function run_pipeline() {
+  print_message "DEBUG LOG :: RUNNING PIPELINE_CONTROLLER_URL"
   local runMode=$1
   controller "${PIPELINE_CONTROLLER_URL}" run --mode "${runMode}"
+  print_message "DEBUG LOG :: END RUNNING PIPELINE_CONTROLLER_URL"
 }
 
 function wait_for_completion() {
   local runtime="15 minute"
   local end_time=$(date -ud "$runtime" +%s)
 
+  print_message "DEBUG LOG :: WAIT FOR COMPLETION OF PIPELINE, end_time = ${end_time}"
+
   while [[ $(date -u +%s) -le ${end_time} ]]
   do
+    print_message "DEBUG LOG :: WAIT FOR COMPLETION OF PIPELINE INSIDE LOOP"
     local controller_output
     controller_output=$(controller "${PIPELINE_CONTROLLER_URL}" status 2>/dev/null | sed -n '/{/,/}/p')
+    print_message "DEBUG LOG :: WFC PIPELINE LOOP, CONTROLLER OUTPUT = ${controller_output}"
     local pipeline_status=""
     sleep 5
     if [[ -n "${controller_output}" ]]; then
@@ -206,11 +212,14 @@ function wait_for_completion() {
                                   \"pipelineStatus\": \"IDLE\",
                                   \"stats\": null
                               }" | jq -r '.pipelineStatus // ""')
+      print_message "DEBUG LOG :: WFC PIPELINE LOOP, PIPELINE STATUS= ${pipeline_status}"
     fi
 
     if [[ "${pipeline_status}" == "RUNNING" ]]; then
+      print_message "DEBUG LOG :: WFC PIPELINE LOOP, SLEEPING FOR 5 SECONDS"
       sleep 5
     else
+      print_message "DEBUG LOG :: WFC PIPELINE LOOP, BREAKING OUT OF LOOP"
       break
     fi
   done
