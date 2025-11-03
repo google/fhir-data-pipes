@@ -34,7 +34,6 @@ import java.nio.channels.Channels;
 import java.nio.channels.ReadableByteChannel;
 import java.time.LocalDateTime;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -75,10 +74,10 @@ public class ApiController {
   @Autowired private DwhFilesManager dwhFilesManager;
 
   @PostMapping("/run")
-  public ResponseEntity<Map<String,String>> runBatch(
+  public ResponseEntity<String> runBatch(
       @RequestParam(name = "runMode", required = true) String runMode) {
     if (pipelineManager.isRunning()) {
-      return new ResponseEntity<>(Collections.singletonMap("message","Another pipeline is running."), HttpStatus.INTERNAL_SERVER_ERROR);
+      return new ResponseEntity<>("Another pipeline is running.", HttpStatus.INTERNAL_SERVER_ERROR);
     }
     logger.info("Received request to start the pipeline ...");
     try {
@@ -97,9 +96,9 @@ public class ApiController {
     } catch (Exception e) {
       logger.error("Error in starting the pipeline", e);
       return new ResponseEntity<>(
-              Collections.singletonMap("message","An unknown error has occurred."), HttpStatus.INTERNAL_SERVER_ERROR);
+          "An unknown error has occurred.", HttpStatus.INTERNAL_SERVER_ERROR);
     }
-    return new ResponseEntity<>(Collections.singletonMap("message", SUCCESS), HttpStatus.OK);
+    return new ResponseEntity<>(SUCCESS, HttpStatus.OK);
   }
 
   @GetMapping("/status")
