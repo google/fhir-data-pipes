@@ -12,8 +12,8 @@ import org.jspecify.annotations.Nullable;
 
 public class NoOpConverter extends HapiConverter<Schema> {
 
+  @Nullable
   @Override
-  @Nullable // TODO Superclass returns non-nullable, should we return something instead of null?
   public Object fromHapi(Object input) {
     return null;
   }
@@ -28,8 +28,8 @@ public class NoOpConverter extends HapiConverter<Schema> {
     @Override
     public void setField(IBase parentObject, BaseRuntimeChildDefinition fieldToSet, Object value) {}
 
+    @Nullable
     @Override
-    @Nullable // TODO superclass returns non-nullable
     public IBase toHapi(Object input) {
       return null;
     }

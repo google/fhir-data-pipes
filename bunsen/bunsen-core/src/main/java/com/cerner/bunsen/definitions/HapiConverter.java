@@ -40,7 +40,7 @@ public abstract class HapiConverter<T> {
      * @param input the object to convert
      * @return the HAPI equivalent.
      */
-    IBase toHapi(Object input);
+    @Nullable IBase toHapi(Object input);
   }
 
   /**
@@ -57,6 +57,7 @@ public abstract class HapiConverter<T> {
    * @param input a HAPI object.
    * @return the data model-specific equivalent.
    */
+  @Nullable
   public abstract Object fromHapi(Object input);
 
   /**

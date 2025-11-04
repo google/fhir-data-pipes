@@ -257,9 +257,11 @@ public abstract class StructureDefinitions {
       Optional<IElementDefinition> urlElement =
           children.stream().filter(e -> e.getPath().endsWith("url")).findFirst();
 
-      if (valueElement.isEmpty() || urlElement.isEmpty()) return Collections.emptyList();
-
+      if (urlElement.isEmpty()) return Collections.emptyList();
       String extensionUrl = urlElement.get().getFixedPrimitiveValue();
+
+      if (valueElement.isEmpty() || extensionUrl == null) return Collections.emptyList();
+
       List<StructureField<T>> childField =
           elementToFields(visitor, rootDefinition, valueElement.get(), extensionDefinitions, stack);
       T result =

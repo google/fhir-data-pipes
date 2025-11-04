@@ -106,7 +106,10 @@ public abstract class HapiContainedConverter<T> extends HapiConverter<T> {
       IBase composite = (IBase) containedList.get(valueIndex);
       StructureField<HapiConverter<T>> schemaEntry = contained.get(composite.fhirType());
 
-      if (schemaEntry != null) values[valueIndex] = schemaEntry.result().fromHapi(composite);
+      if (schemaEntry != null) {
+        Object value = schemaEntry.result().fromHapi(composite);
+        if (value != null) values[valueIndex] = value;
+      }
     }
 
     return createContained(values);

@@ -211,6 +211,7 @@ public class AvroConverter {
    * @param resource the FHIR resource
    * @return the record.
    */
+  @Nullable
   public IndexedRecord resourceToAvro(IBaseResource resource) {
 
     return (IndexedRecord) hapiToAvroConverter.fromHapi(resource);
@@ -222,6 +223,7 @@ public class AvroConverter {
    * @param record the record
    * @return the FHIR resource.
    */
+  @Nullable
   public IBaseResource avroToResource(IndexedRecord record) {
 
     return (IBaseResource) avroToHapiConverter.toHapi(record);

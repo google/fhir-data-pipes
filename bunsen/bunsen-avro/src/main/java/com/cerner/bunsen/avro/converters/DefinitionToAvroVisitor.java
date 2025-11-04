@@ -630,8 +630,8 @@ public class DefinitionToAvroVisitor implements DefinitionVisitor<HapiConverter<
     public void setField(
         IBase parentObject, BaseRuntimeChildDefinition fieldToSet, Object sparkObject) {}
 
+    @Nullable
     @Override
-    @Nullable // TODO superclass returns non-nullable
     public IBase toHapi(Object input) {
       return null;
     }
@@ -648,8 +648,8 @@ public class DefinitionToAvroVisitor implements DefinitionVisitor<HapiConverter<
       this.prefix = prefix;
     }
 
+    @Nullable
     @Override
-    @Nullable // TODO superclass returns non-nullable
     public Object fromHapi(Object input) {
       String uri = ((IPrimitiveType) input).getValueAsString();
 
@@ -848,7 +848,7 @@ public class DefinitionToAvroVisitor implements DefinitionVisitor<HapiConverter<
   }
 
   private static HapiCompositeConverter createCompositeConverter(
-      String elementType,
+      @Nullable String elementType,
       String recordName,
       String doc,
       String namespace,
