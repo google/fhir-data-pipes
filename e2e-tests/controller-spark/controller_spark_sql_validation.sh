@@ -137,18 +137,18 @@ function query_fhir_server(){
 
   curl -L -X GET -u hapi:hapi --connect-timeout 5 --header 'Cache-Control: no-cache' --max-time 20 "${server_url}/fhir/Patient${query_param}"
 
-  curl -L -X GET -u hapi:hapi --connect-timeout 5 --header 'Cache-Control: no-cache' --max-time 20 \
-  "${server_url}/fhir/Patient${query_param}" 2>/dev/null \
+  curl --silent --show-error --fail-with-body -L -X GET -u hapi:hapi --connect-timeout 5 --header 'Cache-Control: no-cache' --max-time 20 \
+  "${server_url}/fhir/Patient${query_param}" \
   >"${HOME_PATH}/${PARQUET_SUBDIR}/${patient_json_file}"
 
   print_message "Write Patients into File"
 
-  curl -L -X GET -u hapi:hapi --connect-timeout 5 --header 'Cache-Control: no-cache' --max-time 20 \
-  "${server_url}/fhir/Encounter${query_param}" 2>/dev/null \
+  curl --silent --show-error --fail-with-body -L -X GET -u hapi:hapi --connect-timeout 5 --header 'Cache-Control: no-cache' --max-time 20 \
+  "${server_url}/fhir/Encounter${query_param}" \
   >"${HOME_PATH}/${PARQUET_SUBDIR}/${encounter_json_file}"
 
-  curl -L -X GET -u hapi:hapi --connect-timeout 5 --header 'Cache-Control: no-cache' --max-time 20 \
-  "${server_url}/fhir/Observation${query_param}" 2>/dev/null\
+  curl --silent --show-error --fail-with-body -L -X GET -u hapi:hapi --connect-timeout 5 --header 'Cache-Control: no-cache' --max-time 20 \
+  "${server_url}/fhir/Observation${query_param}" \
   >"${HOME_PATH}/${PARQUET_SUBDIR}/${obs_json_file}"
 
   print_message "Write Observation into File"
@@ -212,7 +212,7 @@ function wait_for_completion() {
                                   \"pipelineStatus\": \"IDLE\",
                                   \"stats\": null
                               }" | jq -r '.pipelineStatus // ""')
-      print_message "DEBUG LOG :: WFC PIPELINE LOOP, PIPELINE STATUS= ${pipeline_status}"
+      print_message "DEBUG LOG :: WFC PIPELINE LOOP, PIPELINE STATUS=${pipeline_status}"
     fi
 
     if [[ "${pipeline_status}" == "RUNNING" ]]; then
