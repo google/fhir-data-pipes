@@ -130,42 +130,64 @@ public class R4AvroConverterUsCoreTest {
         AvroConverter.forResources(
             fhirContext, R4UsCoreProfileData.US_CORE_OBSERVATION_PROFILES, 1);
 
-    avroObservation = (Record) observationConverter.resourceToAvro(testObservation);
+    Record record = (Record) observationConverter.resourceToAvro(testObservation);
+    Assert.assertNotNull(record);
+    avroObservation = record;
 
-    testObservationDecoded = (Observation) observationConverter.avroToResource(avroObservation);
+    Observation observation = (Observation) observationConverter.avroToResource(avroObservation);
+    Assert.assertNotNull(observation);
+    testObservationDecoded = observation;
 
-    avroObservationNullStatus =
+    Record testObsNullStatusRecord =
         (Record) observationConverter.resourceToAvro(testObservationNullStatus);
+    Assert.assertNotNull(testObsNullStatusRecord);
+    avroObservationNullStatus = testObsNullStatusRecord;
 
-    testObservationDecodedNullStatus =
+    Observation observationNullStatus =
         (Observation) observationConverter.avroToResource(avroObservationNullStatus);
+    Assert.assertNotNull(observationNullStatus);
+    testObservationDecodedNullStatus = observationNullStatus;
 
     AvroConverter taskConverter = AvroConverter.forResource(fhirContext, "Task", 1);
 
-    avroTask = (Record) taskConverter.resourceToAvro(testTask);
+    Record testTaskRecord = (Record) taskConverter.resourceToAvro(testTask);
+    Assert.assertNotNull(testTaskRecord);
+    avroTask = testTaskRecord;
 
-    testTaskDecoded = (Task) taskConverter.avroToResource(avroTask);
+    Task task = (Task) taskConverter.avroToResource(avroTask);
+    Assert.assertNotNull(task);
+    testTaskDecoded = task;
 
     AvroConverter patientConverter =
         AvroConverter.forResources(fhirContext, R4UsCoreProfileData.US_CORE_PATIENT_PROFILES, 1);
 
-    avroPatient = (Record) patientConverter.resourceToAvro(testPatient);
+    Record testPatientRecord = (Record) patientConverter.resourceToAvro(testPatient);
+    Assert.assertNotNull(testPatientRecord);
+    avroPatient = testPatientRecord;
 
-    testPatientDecoded = (Patient) patientConverter.avroToResource(avroPatient);
+    Patient patient = (Patient) patientConverter.avroToResource(avroPatient);
+    Assert.assertNotNull(patient);
+    testPatientDecoded = patient;
 
     AvroConverter conditionConverter =
         AvroConverter.forResources(fhirContext, R4UsCoreProfileData.US_CORE_CONDITION_PROFILES, 1);
 
-    avroCondition = (Record) conditionConverter.resourceToAvro(testCondition);
+    Record testConditionRecord = (Record) conditionConverter.resourceToAvro(testCondition);
+    Assert.assertNotNull(testConditionRecord);
+    avroCondition = testConditionRecord;
 
-    testConditionDecoded = (Condition) conditionConverter.avroToResource(avroCondition);
+    Condition condition = (Condition) conditionConverter.avroToResource(avroCondition);
+    Assert.assertNotNull(condition);
+    testConditionDecoded = condition;
 
     AvroConverter medicationConverter =
         AvroConverter.forResources(fhirContext, R4UsCoreProfileData.US_CORE_MEDICATION_PROFILES, 1);
 
-    Record avroMedication = (Record) medicationConverter.resourceToAvro(testMedicationOne);
-
-    testMedicationDecoded = (Medication) medicationConverter.avroToResource(avroMedication);
+    Record testMedicationRecord = (Record) medicationConverter.resourceToAvro(testMedicationOne);
+    Assert.assertNotNull(testMedicationRecord);
+    Medication medication = (Medication) medicationConverter.avroToResource(testMedicationRecord);
+    Assert.assertNotNull(medication);
+    testMedicationDecoded = medication;
 
     // TODO: Contained resources are not supported yet for multiple profiles
     AvroConverter medicationRequestConverter =
@@ -175,25 +197,39 @@ public class R4AvroConverterUsCoreTest {
             Arrays.asList(TestData.US_CORE_MEDICATION, TestData.PROVENANCE),
             1);
 
-    avroMedicationRequest =
+    Record testMedicationRequestRecord =
         (Record) medicationRequestConverter.resourceToAvro(testMedicationRequest);
+    Assert.assertNotNull(testMedicationRequestRecord);
+    avroMedicationRequest = testMedicationRequestRecord;
 
-    testMedicationRequestDecoded =
+    MedicationRequest medicationRequest =
         (MedicationRequest) medicationRequestConverter.avroToResource(avroMedicationRequest);
+    Assert.assertNotNull(medicationRequest);
+    testMedicationRequestDecoded = medicationRequest;
 
     AvroConverter encounterConverter =
         AvroConverter.forResources(fhirContext, R4UsCoreProfileData.US_CORE_ENCOUNTER_PROFILES, 1);
-    avroEncounter = (Record) encounterConverter.resourceToAvro(testEncounter);
-    testEncounterDecoded = (Encounter) encounterConverter.avroToResource(avroEncounter);
+    Record testEncounterRecord = (Record) encounterConverter.resourceToAvro(testEncounter);
+    Assert.assertNotNull(testEncounterRecord);
+    avroEncounter = testEncounterRecord;
+    Encounter encounter = (Encounter) encounterConverter.avroToResource(avroEncounter);
+    Assert.assertNotNull(encounter);
+    testEncounterDecoded = encounter;
 
     AvroConverter questionnaireResponseConverter =
         AvroConverter.forResources(
             fhirContext, R4UsCoreProfileData.US_CORE_QUESTIONNAIRE_RESPONSE_PROFILES, 1);
-    avroQuestionnaireResponse =
+
+    Record questionnaireResponseRecord =
         (Record) questionnaireResponseConverter.resourceToAvro(testQuestionnaireResponse);
-    testQuestionnaireResponseDecoded =
+    Assert.assertNotNull(questionnaireResponseRecord);
+    avroQuestionnaireResponse = questionnaireResponseRecord;
+
+    QuestionnaireResponse questionnaireResponse =
         (QuestionnaireResponse)
             questionnaireResponseConverter.avroToResource(avroQuestionnaireResponse);
+    Assert.assertNotNull(questionnaireResponse);
+    testQuestionnaireResponseDecoded = questionnaireResponse;
   }
 
   @Test
