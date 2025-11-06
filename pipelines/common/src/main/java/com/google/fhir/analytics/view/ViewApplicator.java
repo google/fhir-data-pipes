@@ -291,11 +291,10 @@ public class ViewApplicator {
     List<RowElement> rowElements = new ArrayList<>();
     for (Column col : columns) {
       if (GET_RESOURCE_KEY.equals(col.getPath())) {
-        if (element == null || !(element instanceof IBaseResource)) {
+        if (element == null || !(element instanceof IBaseResource baseResource)) {
           throw new ViewApplicationException(
               GET_RESOURCE_KEY + " can only be applied at the root!");
         }
-        IBaseResource baseResource = (IBaseResource) element;
         rowElements.add(
             new RowElement(
                 // TODO move all type inference to a single place outside View application.
@@ -322,11 +321,11 @@ public class ViewApplicator {
           eval = evaluateFhirPath(element, fhirPathForRef);
         }
         for (IBase refElem : eval) {
-          if (!(refElem instanceof IBaseReference)) {
+          if (!(refElem instanceof IBaseReference refElemBaseReference)) {
             throw new ViewApplicationException(
                 "getReferenceKey can only be applied to Reference elements; got " + fhirPathForRef);
           }
-          IIdType ref = ((IBaseReference) refElem).getReferenceElement();
+          IIdType ref = refElemBaseReference.getReferenceElement();
           if (resType.isEmpty()) {
             refs.add(ref);
           } else {
@@ -365,7 +364,9 @@ public class ViewApplicator {
 
     private final ImmutableList<FlatRow> rows;
 
-    private RowList(List<FlatRow> rows, LinkedHashMap<String, Column> columnInfos) {
+    private RowList(
+        List<FlatRow> rows,
+        @SuppressWarnings("NonApiType") LinkedHashMap<String, Column> columnInfos) {
       this.rows = ImmutableList.copyOf(rows);
       this.columnInfos = ImmutableMap.copyOf(columnInfos);
     }
@@ -466,6 +467,7 @@ public class ViewApplicator {
     }
 
     // This can eventually be public, but currently it is not used outside this file.
+    @SuppressWarnings("EffectivelyPrivate")
     private static class Builder {
       private final LinkedHashMap<String, Column> columnInfos = new LinkedHashMap<>();
       private final List<FlatRow> rows = new ArrayList<>();
