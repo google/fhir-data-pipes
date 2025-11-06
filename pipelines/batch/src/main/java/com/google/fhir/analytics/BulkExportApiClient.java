@@ -26,6 +26,8 @@ import com.google.fhir.analytics.model.BulkExportResponse;
 import com.google.gson.Gson;
 import java.io.IOException;
 import java.io.Reader;
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.HashMap;
@@ -95,7 +97,7 @@ public class BulkExportApiClient {
    *
    * @param bulkExportStatusUrl the url of the bulk export job
    * @return BulkExportHttpResponse - the status and details of the bulk export job
-   * @throws IOException
+   * @throws IOException in case of any error while fetching the status of bulk export job
    */
   public BulkExportHttpResponse fetchBulkExportHttpResponse(String bulkExportStatusUrl)
       throws IOException {
@@ -104,12 +106,14 @@ public class BulkExportApiClient {
     httpResponseBuilder.httpStatus(httpResponse.getStatus());
     if (httpResponse.getHeaders(EXPIRES) != null && !httpResponse.getHeaders(EXPIRES).isEmpty()) {
       String expiresString = httpResponse.getHeaders(EXPIRES).get(0);
-      Date expires = new Date(expiresString);
+      DateTimeFormatter formatter = DateTimeFormatter.RFC_1123_DATE_TIME;
+      ZonedDateTime zonedDateTime = ZonedDateTime.parse(expiresString, formatter);
+      Date expires = Date.from(zonedDateTime.toInstant());
       httpResponseBuilder.expires(expires);
     }
     if (!CollectionUtils.isEmpty(httpResponse.getHeaders(RETRY_AFTER))) {
       String retryHeaderString = httpResponse.getHeaders(RETRY_AFTER).get(0);
-      httpResponseBuilder.retryAfter(Integer.valueOf(retryHeaderString));
+      httpResponseBuilder.retryAfter(Integer.parseInt(retryHeaderString));
     }
     if (!CollectionUtils.isEmpty(httpResponse.getHeaders(X_PROGRESS))) {
       String xProgress = httpResponse.getHeaders(X_PROGRESS).get(0);

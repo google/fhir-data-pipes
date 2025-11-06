@@ -133,9 +133,7 @@ public class FhirEtl {
     PCollection<KV<String, Integer>> flattenedPatients =
         patientIdList.apply(Flatten.pCollections());
     PCollection<KV<String, Integer>> mergedPatients = flattenedPatients.apply(Sum.integersPerKey());
-    final String patientType = "Patient";
-    FetchPatients fetchPatients =
-        new FetchPatients(options, avroConversionUtil.getResourceSchema(patientType));
+    FetchPatients fetchPatients = new FetchPatients(options);
     mergedPatients.apply(fetchPatients);
     for (String resourceType : patientAssociatedResources) {
       FetchPatientHistory fetchPatientHistory = new FetchPatientHistory(options, resourceType);
