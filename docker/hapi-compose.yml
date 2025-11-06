@@ -25,7 +25,7 @@ services:
       POSTGRES_USER: 'admin'
       POSTGRES_PASSWORD: 'admin'
     volumes:
-      - hapi-fhir-db:/var/lib/postgresql/data
+      - hapi-fhir-db:/var/lib/postgresql
     networks:
       - cloudbuild
       - default
