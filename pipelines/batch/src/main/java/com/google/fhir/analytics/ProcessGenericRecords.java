@@ -40,10 +40,13 @@ public class ProcessGenericRecords extends FetchSearchPageFn<GenericRecord> {
   private static final int BUNDLE_SIZE = 10;
 
   private String resourceType;
-  private List<Resource> cachedResources;
+
+  // Beam also re-initializes these during setup, re-initialized here to make NullAway happy.
+  private List<Resource> cachedResources = new ArrayList<>();
   private Counter totalAvroConversionTime;
   private Counter totalAvroConversions;
 
+  @SuppressWarnings("NullAway.Init")
   ProcessGenericRecords(FhirEtlOptions options, String resourceType) {
     super(options, "ProcessGenericRecords_" + resourceType);
     this.resourceType = resourceType;
@@ -99,7 +102,7 @@ public class ProcessGenericRecords extends FetchSearchPageFn<GenericRecord> {
         processBundle(flushCachToBundle());
       }
     } catch (IllegalArgumentException e) {
-      log.error("Dropping bad record because: " + e.getMessage());
+      log.error("Dropping bad record because: {}", e.getMessage());
     }
   }
 }

@@ -21,6 +21,7 @@ import ca.uhn.fhir.context.ParserOptions;
 import ca.uhn.fhir.parser.IParser;
 import com.cerner.bunsen.exception.ProfileException;
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import com.google.fhir.analytics.JdbcConnectionPools.DataSourceConfig;
 import com.google.fhir.analytics.model.DatabaseConfiguration;
@@ -128,6 +129,9 @@ abstract class FetchSearchPageFn<T> extends DoFn<T, KV<String, Integer>> {
 
   protected AvroConversionUtil avroConversionUtil;
 
+  // Suppressing NullAway warning because all fields are initialized before being used, either in
+  // the constructor on in the @Setup method.
+  @SuppressWarnings("NullAway.Init")
   FetchSearchPageFn(FhirEtlOptions options, String stageIdentifier) {
     this.outputParquetViewPath = options.getOutputParquetViewPath();
     this.sinkPath = options.getFhirSinkPath();
@@ -220,6 +224,7 @@ abstract class FetchSearchPageFn<T> extends DoFn<T, KV<String, Integer>> {
             oAuthClientSecret,
             checkPatientEndpoint,
             fhirContext);
+    Preconditions.checkNotNull(fetchUtil);
     fhirSearchUtil = new FhirSearchUtil(fetchUtil);
     // TODO remove generateParquetFiles and instead rely on not setting outputParquetPath.
     if (generateParquetFiles
@@ -291,12 +296,12 @@ abstract class FetchSearchPageFn<T> extends DoFn<T, KV<String, Integer>> {
     totalFetchTimeMillis.inc(millis);
   }
 
-  protected void processBundle(Bundle bundle)
+  protected void processBundle(@Nullable Bundle bundle)
       throws IOException, SQLException, ViewApplicationException, ProfileException {
     this.processBundle(bundle, null);
   }
 
-  protected void processBundle(Bundle bundle, @Nullable Set<String> resourceTypes)
+  protected void processBundle(@Nullable Bundle bundle, @Nullable Set<String> resourceTypes)
       throws IOException, SQLException, ViewApplicationException, ProfileException {
     if (bundle != null && bundle.getEntry() != null) {
       numFetchedResources.inc(bundle.getEntry().size());

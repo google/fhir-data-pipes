@@ -134,20 +134,21 @@ public class ConvertResourceFn extends FetchSearchPageFn<HapiRowDescriptor> {
         return;
       }
     }
-    totalParseTimeMillisMap.get(resourceType).inc(System.currentTimeMillis() - startTime);
-    if (forcedId == null || forcedId.equals("")) {
+    incrementElapsedTimeCounter(totalParseTimeMillisMap, resourceType, startTime);
+    if (forcedId == null || forcedId.isEmpty()) {
       resource.setId(resourceId);
     } else {
       resource.setId(forcedId);
     }
     resource.setMeta(meta);
 
-    numFetchedResourcesMap.get(resourceType).inc(1);
+    if (numFetchedResourcesMap.get(resourceType) != null)
+      numFetchedResourcesMap.get(resourceType).inc(1);
 
     if (parquetUtil != null) {
       startTime = System.currentTimeMillis();
       parquetUtil.write(resource);
-      totalGenerateTimeMillisMap.get(resourceType).inc(System.currentTimeMillis() - startTime);
+      incrementElapsedTimeCounter(totalGenerateTimeMillisMap, resourceType, startTime);
     }
     if (!sinkPath.isEmpty()) {
       startTime = System.currentTimeMillis();
@@ -156,7 +157,8 @@ public class ConvertResourceFn extends FetchSearchPageFn<HapiRowDescriptor> {
       } else {
         fhirStoreUtil.uploadResource(resource);
       }
-      totalPushTimeMillisMap.get(resourceType).inc(System.currentTimeMillis() - startTime);
+
+      incrementElapsedTimeCounter(totalPushTimeMillisMap, resourceType, startTime);
     }
     if (sinkDbConfig != null) {
       if (isResourceDeleted) {
@@ -227,6 +229,14 @@ public class ConvertResourceFn extends FetchSearchPageFn<HapiRowDescriptor> {
           String.format("Failed to instantiate new FHIR resource of type %s", resourceType);
       log.error(errorMessage, e);
       throw new FHIRException(errorMessage, e);
+    }
+  }
+
+  private void incrementElapsedTimeCounter(
+      HashMap<String, Counter> counterMap, String resourceType, long startTime) {
+    Counter counter = counterMap.get(resourceType);
+    if (counter != null) {
+      counter.inc(System.currentTimeMillis() - startTime);
     }
   }
 

@@ -42,6 +42,7 @@ import org.hl7.fhir.dstu3.model.StringType;
 import org.hl7.fhir.instance.model.api.IBaseParameters;
 import org.hl7.fhir.r4.model.InstantType;
 import org.hl7.fhir.r4.model.Parameters;
+import org.jspecify.annotations.Nullable;
 
 /**
  * This class contains methods to trigger and fetch the details of bulk export api on the FHIR
@@ -66,7 +67,7 @@ public class BulkExportApiClient {
    * @return the absolute url via which the status and details of the job can be fetched
    */
   public String triggerBulkExportJob(
-      List<String> resourceTypes, String since, FhirVersionEnum fhirVersionEnum) {
+      List<String> resourceTypes, @Nullable String since, FhirVersionEnum fhirVersionEnum) {
     Map<String, List<String>> headers = new HashMap<>();
     headers.put(HttpHeaders.ACCEPT, Arrays.asList("application/fhir+ndjson"));
     headers.put("Prefer", Arrays.asList("respond-async"));
@@ -133,7 +134,7 @@ public class BulkExportApiClient {
   }
 
   private IBaseParameters fetchBulkExportParameters(
-      FhirVersionEnum fhirVersionEnum, List<String> resourceTypes, String since) {
+      FhirVersionEnum fhirVersionEnum, List<String> resourceTypes, @Nullable String since) {
     since = Strings.nullToEmpty(since);
     return switch (fhirVersionEnum) {
       case R4 -> {
