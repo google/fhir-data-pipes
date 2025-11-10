@@ -137,18 +137,18 @@ function query_fhir_server(){
 
   curl -L -X GET -u hapi:hapi --connect-timeout 5 --header 'Cache-Control: no-cache' --max-time 20 "${server_url}/fhir/Patient${query_param}"
 
-  curl --silent --show-error --fail-with-body -L -X GET -u hapi:hapi --connect-timeout 5 --header 'Cache-Control: no-cache' --max-time 20 \
-  "${server_url}/fhir/Patient${query_param}" \
+  curl -L -X GET -u hapi:hapi --connect-timeout 5 --header 'Cache-Control: no-cache' --max-time 20 \
+  "${server_url}/fhir/Patient${query_param}" 2>/dev/null \
   >"${HOME_PATH}/${PARQUET_SUBDIR}/${patient_json_file}"
 
   print_message "Write Patients into File"
 
-  curl --silent --show-error --fail-with-body -L -X GET -u hapi:hapi --connect-timeout 5 --header 'Cache-Control: no-cache' --max-time 20 \
-  "${server_url}/fhir/Encounter${query_param}" \
+  curl -L -X GET -u hapi:hapi --connect-timeout 5 --header 'Cache-Control: no-cache' --max-time 20 \
+  "${server_url}/fhir/Encounter${query_param}" 2>/dev/null \
   >"${HOME_PATH}/${PARQUET_SUBDIR}/${encounter_json_file}"
 
-  curl --silent --show-error --fail-with-body -L -X GET -u hapi:hapi --connect-timeout 5 --header 'Cache-Control: no-cache' --max-time 20 \
-  "${server_url}/fhir/Observation${query_param}" \
+  curl -L -X GET -u hapi:hapi --connect-timeout 5 --header 'Cache-Control: no-cache' --max-time 20 \
+  "${server_url}/fhir/Observation${query_param}" 2>/dev/null\
   >"${HOME_PATH}/${PARQUET_SUBDIR}/${obs_json_file}"
 
   print_message "Write Observation into File"
@@ -187,39 +187,24 @@ function fhir_source_query() {
 #     runs; should be one of "FULL", "INCREMENTAL", "VIEWS".
 #######################################################################
 function run_pipeline() {
-  print_message "DEBUG LOG :: RUNNING PIPELINE_CONTROLLER_URL"
   local runMode=$1
   controller "${PIPELINE_CONTROLLER_URL}" run --mode "${runMode}"
-  print_message "DEBUG LOG :: END RUNNING PIPELINE_CONTROLLER_URL"
 }
 
 function wait_for_completion() {
   local runtime="15 minute"
   local end_time=$(date -ud "$runtime" +%s)
 
-  print_message "DEBUG LOG :: WAIT FOR COMPLETION OF PIPELINE, end_time = ${end_time}"
-
   while [[ $(date -u +%s) -le ${end_time} ]]
   do
-    print_message "DEBUG LOG :: WAIT FOR COMPLETION OF PIPELINE INSIDE LOOP"
-    local controller_output
-    controller_output=$(controller "${PIPELINE_CONTROLLER_URL}" status 2>/dev/null | sed -n '/{/,/}/p')
-    print_message "DEBUG LOG :: WFC PIPELINE LOOP, CONTROLLER OUTPUT = ${controller_output}"
-    local pipeline_status=""
-    sleep 5
-    if [[ -n "${controller_output}" ]]; then
-      pipeline_status=$(echo "{
-                                  \"pipelineStatus\": \"IDLE\",
-                                  \"stats\": null
-                              }" | jq -r '.pipelineStatus // ""')
-      print_message "DEBUG LOG :: WFC PIPELINE LOOP, PIPELINE STATUS=${pipeline_status}"
-    fi
+    local pipeline_status=$(controller "${PIPELINE_CONTROLLER_URL}" status \
+    | sed -n '/^{$/,/^}$/p' | jq -r '.pipelineStatus // ""')
 
-    if [[ "${pipeline_status}" == "RUNNING" ]]; then
-      print_message "DEBUG LOG :: WFC PIPELINE LOOP, SLEEPING FOR 5 SECONDS"
+    if [[ "${pipeline_status}" == "RUNNING" ]]
+    then
       sleep 5
     else
-      print_message "DEBUG LOG :: WFC PIPELINE LOOP, BREAKING OUT OF LOOP"
+      print_message "wait_for_completion LOOP ending with STATUS=${pipeline_status}"
       break
     fi
   done
