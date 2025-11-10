@@ -33,7 +33,6 @@ import java.nio.file.NoSuchFileException;
 import java.sql.SQLException;
 import java.time.Instant;
 import java.time.LocalDateTime;
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -376,6 +375,8 @@ public class PipelineManager implements ApplicationListener<ApplicationReadyEven
   }
 
   /**
+   * Fetches the next scheduled time to run the incremental pipeline.
+   *
    * @return the next scheduled time to run the incremental pipeline or null iff a pipeline is
    *     currently running or no previous DWH exist.
    */
@@ -391,6 +392,7 @@ public class PipelineManager implements ApplicationListener<ApplicationReadyEven
   }
 
   // Every 30 seconds, check for pipeline status and incremental pipeline schedule.
+  @SuppressWarnings("unused")
   @Scheduled(fixedDelay = 30000)
   private void checkSchedule() throws IOException {
     LocalDateTime next = getNextIncrementalTime();
@@ -590,7 +592,7 @@ public class PipelineManager implements ApplicationListener<ApplicationReadyEven
               .collect(Collectors.toList());
 
       // Sort snapshots directories such that the canonical view is created for the latest one.
-      Collections.sort(paths, Comparator.comparing(ResourceId::toString));
+      paths.sort(Comparator.comparing(ResourceId::toString));
 
       // TODO: Why are we creating these tables for all paths and not just the most recent? If all
       //  are needed, why are we doing the above `sort`?
@@ -739,7 +741,7 @@ public class PipelineManager implements ApplicationListener<ApplicationReadyEven
             EtlUtils.runMultiplePipelinesWithTimestamp(pipelines, options);
         // Remove the metrics of the previous pipeline and register the new metrics
         manager.removePipelineMetrics();
-        pipelineResults.stream()
+        pipelineResults
             .forEach(pipelineResult -> manager.publishPipelineMetrics(pipelineResult.metrics()));
         if (runMode == RunMode.VIEWS) {
           // Nothing more is needed to be done as we do not recreate a new DWH in this mode.
@@ -755,7 +757,7 @@ public class PipelineManager implements ApplicationListener<ApplicationReadyEven
           logger.info("Merger options are {}", mergerOptions);
           List<PipelineResult> mergerPipelineResults =
               EtlUtils.runMultipleMergerPipelinesWithTimestamp(mergerPipelines, mergerOptions);
-          mergerPipelineResults.stream()
+          mergerPipelineResults
               .forEach(pipelineResult -> manager.publishPipelineMetrics(pipelineResult.metrics()));
           manager.updateDwh(currentDwhRoot);
         }
