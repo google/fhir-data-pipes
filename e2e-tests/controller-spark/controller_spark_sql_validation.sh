@@ -192,10 +192,12 @@ function run_pipeline() {
 }
 
 function wait_for_completion() {
-  local runtime="15 minute"
-  local end_time=$(date -ud "$runtime" +%s)
+  local runtime_minutes=15
+  local runtime_seconds=$((runtime_minutes * 60))
+  local start_time=$(date +%s)
+  local end_time=$((start_time + runtime_seconds))
 
-  while [[ $(date -u +%s) -le ${end_time} ]]
+  while [[ $(date +%s) -le ${end_time} ]]
   do
     local pipeline_status=$(controller "${PIPELINE_CONTROLLER_URL}" status \
     | sed -n '/^{$/,/^}$/p' | jq -r '.pipelineStatus // ""')
