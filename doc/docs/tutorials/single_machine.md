@@ -14,7 +14,7 @@ To learn how the Pipelines Controller works on its own, try out the
 - A source [HAPI FHIR server](https://hapifhir.io/) configured to
   [use Postgres as its database](https://github.com/hapifhir/hapi-fhir-jpaserver-starter#postgresql-configuration)
   - If you don't have a server, use a
-    [local test server](https://github.com/google/fhir-data-pipes/wiki/Try-the-pipelines-using-local-test-servers)
+    [local test server](https://google.github.io/fhir-data-pipes/tutorials/test_servers/)
     by following the instructions to bring up a source HAPI FHIR server with
     Postgres
 - [Docker](https://www.docker.com/)
@@ -80,7 +80,7 @@ For documentation of all config parameters, see
 [here](https://github.com/google/fhir-data-pipes/blob/master/pipelines/controller/config/application.yaml).
 
 **Note:** If you are using the
-[local test servers](https://github.com/google/fhir-data-pipes/wiki/Try-the-pipelines-using-local-test-servers),
+[local test servers](https://google.github.io/fhir-data-pipes/tutorials/test_servers/),
 things should work with the default values. If not, use the IP address of the
 Docker default bridge network. To find it, run the following command and use the
 "Gateway" value:
