@@ -197,6 +197,10 @@ function wait_for_completion() {
 
   while [[ $(date -u +%s) -le ${end_time} ]]
   do
+    # Here we extract only the JSON part of the output from controller 'status'
+    # command as there could be some logging info printed before the JSON output.
+    # We use 'sed' to get the lines between the first '{' and the last '}' and
+    # then pipe it to jq for parsing.
     local pipeline_status=$(controller "${PIPELINE_CONTROLLER_URL}" status \
     | sed -n '/^{$/,/^}$/p' | jq -r '.pipelineStatus // ""')
 
