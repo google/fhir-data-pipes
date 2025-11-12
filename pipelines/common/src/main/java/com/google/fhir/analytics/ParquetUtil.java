@@ -222,10 +222,13 @@ public class ParquetUtil {
    */
   private synchronized WriterWithCache createWriter(
       String resourceType, @Nullable ViewDefinition vDef) throws IOException, ProfileException {
-    ResourceId resourceId =
-        vDef == null
-            ? getUniqueOutputFilePath(resourceType)
-            : getUniqueOutputFilePathView(vDef.getName());
+    ResourceId resourceId;
+    if (vDef == null) {
+      resourceId = getUniqueOutputFilePath(resourceType);
+    } else {
+      Preconditions.checkNotNull(vDef.getName());
+      resourceId = getUniqueOutputFilePathView(vDef.getName());
+    }
 
     WritableByteChannel writableByteChannel =
         org.apache.beam.sdk.io.FileSystems.create(resourceId, MimeTypes.BINARY);
@@ -271,9 +274,9 @@ public class ParquetUtil {
         writer.write(record);
       }
     }
-    if (!Strings.isNullOrEmpty(outputParquetViewPath)) {
+    if (viewManager != null && !Strings.isNullOrEmpty(outputParquetViewPath)) {
       ImmutableList<ViewDefinition> views = viewManager.getViewsForType(resource.fhirType());
-      if (views != null) {
+      if (!views.isEmpty()) {
         for (ViewDefinition vDef : views) {
           write(resource, vDef);
         }

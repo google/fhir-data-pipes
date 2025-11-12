@@ -22,6 +22,7 @@ import com.cerner.bunsen.definitions.StructureField;
 import com.cerner.bunsen.exception.ProfileException;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
+import com.google.common.base.Splitter;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableMap;
 import java.math.BigDecimal;
@@ -29,6 +30,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Collectors;
@@ -113,6 +115,7 @@ public class DefinitionToAvroVisitor implements DefinitionVisitor<HapiConverter<
           }
         }
 
+        @Override
         protected Object fromHapi(IPrimitiveType primitive) {
           Object value = primitive.getValue();
           Preconditions.checkState(value instanceof BigDecimal);
@@ -209,7 +212,7 @@ public class DefinitionToAvroVisitor implements DefinitionVisitor<HapiConverter<
     @Override
     protected boolean isMultiValued(Schema schema) {
 
-      return schema.getType().equals(Schema.Type.ARRAY);
+      return schema.getType().equals(Type.ARRAY);
     }
 
     @Override
@@ -443,16 +446,11 @@ public class DefinitionToAvroVisitor implements DefinitionVisitor<HapiConverter<
   private static class MultiValuedToAvroConverter extends HapiConverter<Schema>
       implements MultiValueConverter {
 
-    private class MultiValuedtoHapiConverter implements HapiFieldSetter {
-
-      private final BaseRuntimeElementDefinition elementDefinition;
+    private static class MultiValuedtoHapiConverter implements HapiFieldSetter {
 
       private final HapiObjectConverter elementToHapiConverter;
 
-      MultiValuedtoHapiConverter(
-          BaseRuntimeElementDefinition elementDefinition,
-          HapiObjectConverter elementToHapiConverter) {
-        this.elementDefinition = elementDefinition;
+      MultiValuedtoHapiConverter(HapiObjectConverter elementToHapiConverter) {
         this.elementToHapiConverter = elementToHapiConverter;
       }
 
@@ -508,7 +506,7 @@ public class DefinitionToAvroVisitor implements DefinitionVisitor<HapiConverter<
       HapiObjectConverter rowToHapiConverter =
           (HapiObjectConverter) elementConverter.toHapiConverter(elementDefinition);
 
-      return new MultiValuedtoHapiConverter(elementDefinition, rowToHapiConverter);
+      return new MultiValuedtoHapiConverter(rowToHapiConverter);
     }
 
     @Override
@@ -774,11 +772,10 @@ public class DefinitionToAvroVisitor implements DefinitionVisitor<HapiConverter<
 
     String localPart = extensionUrl.substring(extensionUrl.lastIndexOf('/') + 1);
 
-    String[] parts = localPart.split("[-|_]");
-
     String recordName =
-        Arrays.stream(parts)
-            .map(part -> part.substring(0, 1).toUpperCase() + part.substring(1))
+        Splitter.onPattern("[-|_]")
+            .splitToStream(localPart)
+            .map(part -> part.substring(0, 1).toUpperCase(Locale.ROOT) + part.substring(1))
             .collect(Collectors.joining());
 
     String fullName = recordNamespace + "." + recordName;
