@@ -15,6 +15,7 @@ import argparse
 import json
 import logging
 import shutil
+import sys
 from typing import Any, Dict, Optional
 
 import requests
@@ -300,12 +301,14 @@ def main():
 
     args = parser.parse_args()
 
-    handler = logging.StreamHandler()
-    handler.setFormatter(logging.Formatter("%(asctime)s - %(levelname)s - %(message)s"))
+    handler = logging.StreamHandler(sys.stdout)
     if args.verbose:
+        formatter = logging.Formatter("%(asctime)s - %(levelname)s - %(message)s")
         logger.setLevel(logging.DEBUG)
     else:
+        formatter = logging.Formatter("%(message)s")
         logger.setLevel(logging.INFO)
+    handler.setFormatter(formatter)
     logger.addHandler(handler)
 
     args.func(args)

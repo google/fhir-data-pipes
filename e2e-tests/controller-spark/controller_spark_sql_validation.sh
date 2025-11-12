@@ -207,7 +207,7 @@ function wait_for_completion() {
     local json_extracted=$(echo "${controller_output}" | perl -0777 -ne 'if (/\{(?:[^{}]*|(?R))*\}/s) { print "$&\n" }')
     print_message "Extracted JSON: ${json_extracted}"
 
-    local pipeline_status=$(echo "${json_extracted}" | jq -r '.pipelineStatus // ""')
+    local pipeline_status=$(echo "${json_extracted}" | jq -r '.pipelineStatus // "UNKNOWN"')
     print_message "Pipeline status: ${pipeline_status}"
 
     if [[ "${pipeline_status}" == "RUNNING" ]]
