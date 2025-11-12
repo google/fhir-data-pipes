@@ -24,6 +24,7 @@ import ca.uhn.fhir.rest.gclient.ReferenceClientParam;
 import ca.uhn.fhir.rest.param.DateRangeParam;
 import ca.uhn.fhir.rest.server.exceptions.InvalidRequestException;
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Splitter;
 import com.google.common.base.Strings;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
@@ -31,7 +32,6 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -40,6 +40,7 @@ import java.util.Set;
 import org.apache.http.NameValuePair;
 import org.apache.http.client.utils.URLEncodedUtils;
 import org.hl7.fhir.r4.model.Bundle;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -54,6 +55,7 @@ public class FhirSearchUtil {
   }
 
   // TODO update all types to FHIR version independent interfaces!
+  @Nullable
   public Bundle searchByUrl(String searchUrl, int count, SummaryEnum summaryMode) {
     try {
       IGenericClient client = fetchUtil.getSourceClient();
@@ -79,7 +81,7 @@ public class FhirSearchUtil {
    * @return a Map storing the counts of each resource type
    */
   public Map<String, Integer> searchResourceCounts(String resourceList, String since) {
-    HashSet<String> resourceTypes = new HashSet<String>(Arrays.asList(resourceList.split(",")));
+    HashSet<String> resourceTypes = new HashSet<String>(Splitter.on(',').splitToList(resourceList));
     HashMap<String, Integer> hashMap = new HashMap<String, Integer>();
     for (String resourceType : resourceTypes) {
       try {
@@ -106,7 +108,8 @@ public class FhirSearchUtil {
     return hashMap;
   }
 
-  public String getNextUrl(Bundle bundle) {
+  @Nullable
+  public String getNextUrl(@Nullable Bundle bundle) {
     if (bundle != null && bundle.getLink(Bundle.LINK_NEXT) != null) {
       return bundle.getLink(Bundle.LINK_NEXT).getUrl();
     }
@@ -171,8 +174,8 @@ public class FhirSearchUtil {
     if (activePeriod.isEmpty()) {
       return Lists.newArrayList();
     }
-    String[] dateRange = activePeriod.split("_");
-    if (dateRange.length != 1 && dateRange.length != 2) {
+    List<String> dateRange = Splitter.on('_').splitToList(activePeriod);
+    if (dateRange.size() != 1 && dateRange.size() != 2) {
       throw new IllegalArgumentException(
           "Invalid activePeriod '"
               + activePeriod
@@ -215,7 +218,7 @@ public class FhirSearchUtil {
     Map<String, List<SearchSegmentDescriptor>> segmentMap = new HashMap<>();
 
     boolean anyResourceWithDate = false;
-    for (String resourceType : options.getResourceList().split(",")) {
+    for (String resourceType : Splitter.on(',').split(options.getResourceList())) {
       List<SearchSegmentDescriptor> segments = new ArrayList<>();
       IQuery<Bundle> searchQuery = makeQueryWithDate(resourceType, options);
       log.info(String.format("Fetching first batch of %s", resourceType));
