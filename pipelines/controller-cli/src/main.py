@@ -29,7 +29,8 @@ COMMAND_LIST = ["dwh", "next", "status", "run", "config", "logs", "tables"]
 
 def process_response(response: str, args: argparse.Namespace):
     print(
-        f"Command: {args.command} {args.subcommand if hasattr(args, 'subcommand') else ''}"
+        f"Command: {args.command} "
+        f"{args.subcommand if hasattr(args, 'subcommand') else ''}"
     )
     print(f"Request url: {args.url}")
     print("Response:")
@@ -177,7 +178,10 @@ def main():
 
     config_parser = subparsers.add_parser("config", help="show config values")
     config_parser.add_argument(
-        "--config-name", "-cn", required=False, help="name of the configuration key"
+        "--config-name",
+        "-cn",
+        required=False,
+        help="name of the configuration key",
     )
     config_parser.set_defaults(func=config)
 

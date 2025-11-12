@@ -59,16 +59,11 @@ public class ViewManager {
     List<Path> viewPaths = new ArrayList<>();
     try (Stream<Path> paths =
         Files.walk(Paths.get(viewDefinitionsDir), FileVisitOption.FOLLOW_LINKS)) {
-      paths
-          .filter(f -> f.toString().endsWith(JSON_EXT))
-          .forEach(
-              f -> {
-                viewPaths.add(f);
-              });
+      paths.filter(f -> f.toString().endsWith(JSON_EXT)).forEach(f -> viewPaths.add(f));
     }
     for (Path p : viewPaths) {
       ViewDefinition vDef = ViewDefinition.createFromFile(p);
-      viewManager.viewMap.put(vDef.getResource(), vDef);
+      if (vDef.getResource() != null) viewManager.viewMap.put(vDef.getResource(), vDef);
     }
     // Checking for Duplicate View Definitions and returning the names of any duplicates found
     Collection<ViewDefinition> viewDefinitions = viewManager.viewMap.values();
@@ -99,10 +94,9 @@ public class ViewManager {
     return viewNameMap.get(viewName);
   }
 
-  @Nullable
   public ImmutableList<ViewDefinition> getViewsForType(String resourceType) {
     if (!viewMap.containsKey(resourceType)) {
-      return null;
+      return ImmutableList.of();
     }
     return ImmutableList.copyOf(viewMap.get(resourceType));
   }

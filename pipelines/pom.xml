@@ -51,9 +51,9 @@
     <license-maven-plugin.version>5.0.0</license-maven-plugin.version>
     <beam.version>2.56.0</beam.version>
     <auto-value.version>1.11.0</auto-value.version>
-    <lombok.version>1.18.40</lombok.version>
+    <lombok.version>1.18.42</lombok.version>
     <errorprone.version>2.41.0</errorprone.version>
-    <nullaway.version>0.12.9</nullaway.version>
+    <nullaway.version>0.12.10</nullaway.version>
   </properties>
 
   <dependencyManagement>
@@ -361,7 +361,7 @@
         <plugin>
           <groupId>org.codehaus.mojo</groupId>
           <artifactId>exec-maven-plugin</artifactId>
-          <version>3.5.1</version>
+          <version>3.6.2</version>
         </plugin>
       </plugins>
     </pluginManagement>
@@ -396,7 +396,7 @@
             <arg>-XDcompilePolicy=simple</arg>
             <arg>--should-stop=ifError=FLOW</arg>
             <arg>
-              -Xplugin:ErrorProne -XepOpt:NullAway:AnnotatedPackages=com.google.fhir.analytics -XepOpt:NullAway:JSpecifyMode=true -XepOpt:NullAway:CheckOptionalEmptiness=true
+              -Xplugin:ErrorProne -XepOpt:NullAway:AnnotatedPackages=com.google.fhir.analytics -XepExcludedPaths:.*/target/generated-sources/.* -XepOpt:NullAway:JSpecifyMode=true -XepOpt:NullAway:CheckOptionalEmptiness=true
             </arg>
             <arg>
               -J--add-exports=jdk.compiler/com.sun.tools.javac.api=ALL-UNNAMED
