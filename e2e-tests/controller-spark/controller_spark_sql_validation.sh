@@ -204,7 +204,7 @@ function wait_for_completion() {
     local controller_output=$(controller "${PIPELINE_CONTROLLER_URL}" status)
     print_message "Controller output: ${controller_output}"
 
-    local json_extracted=$(echo "${controller_output}" | perl -0777 -ne 'if (/\{(?:[^{}]*|(?R))*\}/s) { print "$&\n" }')
+    local json_extracted=$(echo "${controller_output}" | sed -n '/^{$/,/^}$/ {;p;/^}$/ {;n;p;};}')
     print_message "Extracted JSON: ${json_extracted}"
 
     local pipeline_status=$(echo "${json_extracted}" | jq -r '.pipelineStatus // "UNKNOWN"')
