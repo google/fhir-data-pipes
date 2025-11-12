@@ -47,7 +47,8 @@ public class BulkExportUtil {
    * @param since - the fhir resources fetched should have updated timestamp greater than this
    * @param fhirVersionEnum - the fhir version of resource types
    * @return the BulkExportResponse
-   * @throws IOException
+   * @throws IOException in case of any error while triggering or fetching the status of bulk export
+   *     job
    */
   public BulkExportResponse triggerBulkExport(
       List<String> resourceTypes, @Nullable String since, FhirVersionEnum fhirVersionEnum)

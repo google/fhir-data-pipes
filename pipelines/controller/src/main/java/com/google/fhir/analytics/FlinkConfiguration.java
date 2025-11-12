@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2024 Google LLC
+ * Copyright 2020-2025 Google LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,8 +19,8 @@ import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import com.google.fhir.analytics.metrics.FlinkJobListener;
 import java.io.BufferedWriter;
-import java.io.FileWriter;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -71,6 +71,8 @@ public class FlinkConfiguration {
   private static final int PARQUET_ROW_GROUP_INFLATION_FACTOR = 2;
 
   private static final String KEY_VALUE_FORMAT = "%s: %s";
+
+  @SuppressWarnings("NullAway.Init")
   private String flinkConfDir;
 
   public String getFlinkConfDir() {
@@ -91,7 +93,7 @@ public class FlinkConfiguration {
    * in failure based on the JVM Heap memory values.
    *
    * @param dataProperties the application properties
-   * @throws IOException
+   * @throws IOException if any error occurs during file operations
    */
   void initialiseFlinkConfiguration(DataProperties dataProperties) throws IOException {
     boolean isFlinkModelLocal = isFlinkModeLocal(dataProperties);
@@ -134,7 +136,8 @@ public class FlinkConfiguration {
       throws IOException {
     long networkMemoryMax = calculateNetworkMemoryMax(dataProperties);
     validateDirectMemoryMax(networkMemoryMax, MemorySize.parseBytes(DEFAULT_MANAGED_MEMORY_SIZE));
-    try (BufferedWriter writer = new BufferedWriter(new FileWriter(filePath.toString()))) {
+    try (BufferedWriter writer =
+        Files.newBufferedWriter(Paths.get(filePath.toString()), StandardCharsets.UTF_8)) {
       logger.info("Network memory : {}", networkMemoryMax);
       writer.write(
           String.format(
@@ -146,8 +149,7 @@ public class FlinkConfiguration {
               TaskManagerOptions.MANAGED_MEMORY_SIZE.key(),
               DEFAULT_MANAGED_MEMORY_SIZE));
       writer.newLine();
-      writer.write(
-          String.format(KEY_VALUE_FORMAT, DeploymentOptions.ATTACHED.key(), Boolean.FALSE));
+      writer.write(String.format(KEY_VALUE_FORMAT, DeploymentOptions.ATTACHED.key(), false));
       writer.newLine();
       writer.write(
           String.format(
@@ -246,6 +248,7 @@ public class FlinkConfiguration {
     return memoryInBytes / (1024 * 1024);
   }
 
+  @SuppressWarnings("unused")
   private boolean isFlinkModeLocal(DataProperties dataProperties) {
     // TODO: Enable the pipeline for Flink non-local modes as well
     // https://github.com/google/fhir-data-pipes/issues/893
