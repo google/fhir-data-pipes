@@ -369,6 +369,5 @@ images:
 logsBucket: "gs://cloud-build-gh-logs"
 timeout: '2h'
 options:
-  #machineType: 'N1_HIGHCPU_32'
   pool:
     name: 'projects/cloud-build-fhir/locations/us-central1/workerPools/fhir-data-pipes-pool-e2s32mem128'
