@@ -300,12 +300,13 @@ def main():
 
     args = parser.parse_args()
 
+    handler = logging.StreamHandler()
+    handler.setFormatter(logging.Formatter("%(asctime)s - %(levelname)s - %(message)s"))
     if args.verbose:
-        logging.basicConfig(
-            level=logging.DEBUG, format="%(asctime)s - %(levelname)s - %(message)s"
-        )
+        logger.setLevel(logging.DEBUG)
     else:
-        logging.basicConfig(level=logging.INFO, format="%(message)s")
+        logger.setLevel(logging.INFO)
+    logger.addHandler(handler)
 
     args.func(args)
 
