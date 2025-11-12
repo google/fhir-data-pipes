@@ -192,7 +192,7 @@ function run_pipeline() {
 }
 
 function wait_for_completion() {
-  local runtime="15 minute"
+  local runtime="25 minute"
   local end_time=$(date -ud "$runtime" +%s)
 
   while [[ $(date -u +%s) -le ${end_time} ]]
@@ -202,7 +202,7 @@ function wait_for_completion() {
     # We use 'sed' to get the lines between the first '{' and the last '}' and
     # then pipe it to jq for parsing.
     local pipeline_status=$(controller "${PIPELINE_CONTROLLER_URL}" status \
-    | sed -n '/^{$/,/^}$/p' | jq -r '.pipelineStatus // ""')
+    | perl -0777 -ne 'if (/\{(?:[^{}]*|(?R))*\}/s) { print "$&\n" }' | jq -r '.pipelineStatus // ""')
 
     if [[ "${pipeline_status}" == "RUNNING" ]]
     then
