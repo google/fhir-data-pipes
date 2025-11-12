@@ -201,8 +201,14 @@ function wait_for_completion() {
     # command as there could be some logging info printed before the JSON output.
     # We use 'sed' to get the lines between the first '{' and the last '}' and
     # then pipe it to jq for parsing.
-    local pipeline_status=$(controller "${PIPELINE_CONTROLLER_URL}" status \
-    | perl -0777 -ne 'if (/\{(?:[^{}]*|(?R))*\}/s) { print "$&\n" }' | jq -r '.pipelineStatus // ""')
+    local controller_output=$(controller "${PIPELINE_CONTROLLER_URL}" status)
+    print_message "Controller output: ${controller_output}"
+
+    local json_extracted=$(echo "${controller_output}" | perl -0777 -ne 'if (/\{(?:[^{}]*|(?R))*\}/s) { print "$&\n" }')
+    print_message "Extracted JSON: ${json_extracted}"
+
+    local pipeline_status=$(echo "${json_extracted}" | jq -r '.pipelineStatus // ""')
+    print_message "Pipeline status: ${pipeline_status}"
 
     if [[ "${pipeline_status}" == "RUNNING" ]]
     then
