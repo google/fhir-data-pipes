@@ -188,28 +188,25 @@ function fhir_source_query() {
 #######################################################################
 function run_pipeline() {
   local runMode=$1
-  curl --location --request POST "${PIPELINE_CONTROLLER_URL}/run?runMode=${runMode}" \
-  --connect-timeout 5 \
-  --header 'Content-Type: application/json' \
-  --header 'Accept: */*' -v
+  controller "${PIPELINE_CONTROLLER_URL}" run --mode "${runMode}"
 }
 
 function wait_for_completion() {
-  local runtime="15 minute"
-  local end_time=$(date -ud "$runtime" +%s)
+  local runtime_minutes=15
+  local runtime_seconds=$((runtime_minutes * 60))
+  local start_time=$(date +%s)
+  local end_time=$((start_time + runtime_seconds))
 
-  while [[ $(date -u +%s) -le ${end_time} ]]
+  while [[ $(date +%s) -le ${end_time} ]]
   do
-    local pipeline_status=$(curl --location --request GET "${PIPELINE_CONTROLLER_URL}/status?" \
-    --connect-timeout 5 \
-    --header 'Content-Type: application/json' \
-    --header 'Accept: */*' -v \
-    | jq -r '.pipelineStatus')
+    local pipeline_status=$(controller "${PIPELINE_CONTROLLER_URL}" status \
+    | sed -n '/^{$/,/^}$/p' | jq -r '.pipelineStatus // ""')
 
     if [[ "${pipeline_status}" == "RUNNING" ]]
     then
       sleep 5
     else
+      print_message "wait_for_completion LOOP ending with STATUS=${pipeline_status}"
       break
     fi
   done
