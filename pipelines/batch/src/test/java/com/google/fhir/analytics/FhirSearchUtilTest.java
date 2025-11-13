@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2024 Google LLC
+ * Copyright 2020-2025 Google LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -51,6 +51,7 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
+@SuppressWarnings("NullAway.Init")
 @RunWith(MockitoJUnitRunner.class)
 public class FhirSearchUtilTest {
 
@@ -134,6 +135,7 @@ public class FhirSearchUtilTest {
   }
 
   @Test
+  @SuppressWarnings("NullAway")
   public void testCreateSegments() {
     FhirEtlOptions options = PipelineOptionsFactory.as(FhirEtlOptions.class);
     options.setResourceList("Patient");
@@ -143,6 +145,7 @@ public class FhirSearchUtilTest {
     assertThat(segmentMap.get("Patient").size(), equalTo(4));
   }
 
+  @SuppressWarnings("NullAway")
   @Test
   public void testCreateSegmentsWithSince() {
     FhirEtlOptions options = PipelineOptionsFactory.as(FhirEtlOptions.class);
