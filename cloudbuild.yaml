@@ -40,12 +40,21 @@ steps:
   waitFor: ['-']
 
 - name: 'gcr.io/cloud-builders/docker'
+  id: 'Build E2E Image'
+  entrypoint: /bin/bash
+  args:
+    - -c
+    - docker build -t ${_REPOSITORY}/e2e-tests:${_TAG} -f e2e-tests/Dockerfile ./e2e-tests/;
+      docker build -t ${_REPOSITORY}/e2e-tests/controller-spark:${_TAG} -f e2e-tests/controller-spark/Dockerfile .;
+  waitFor: ['-']
+
+- name: '${_REPOSITORY}/e2e-tests:${_TAG}'
   id: 'Wait for the initial Servers Start'
   entrypoint: /bin/bash
   args:
     - -c
-    - e2e-tests/wait_for_start.sh --HAPI_SERVER_URLS=http://hapi-server:8080,http://sink-server-search:8080,http://sink-server-jdbc:8080
-  waitFor: ['Launch HAPI Source Server', 'Launch Sink Server Search', 'Launch Sink Server JDBC']
+    - /workspace/e2e-tests/wait_for_start.sh --HAPI_SERVER_URLS=http://hapi-server:8080,http://sink-server-search:8080,http://sink-server-jdbc:8080
+  waitFor: ['Launch HAPI Source Server', 'Launch Sink Server Search', 'Launch Sink Server JDBC', 'Build E2E Image']
 
 # Note license checking will fail on Cloud Build because of .git dependencies
 # and there is not much point updating license headers at this stage anyway.
@@ -74,15 +83,6 @@ steps:
   - cd /uploader; python -m unittest discover  -p '*_test.py'
   waitFor: ['Build Uploader Image']
 
-- name: 'gcr.io/cloud-builders/docker'
-  id: 'Build E2E Image'
-  entrypoint: /bin/bash
-  args:
-  - -c
-  - docker build -t ${_REPOSITORY}/e2e-tests:${_TAG} -f e2e-tests/Dockerfile ./e2e-tests/;
-    docker build -t ${_REPOSITORY}/e2e-tests/controller-spark:${_TAG} -f e2e-tests/controller-spark/Dockerfile .;
-  waitFor: ['-']
-
 - name: '${_REPOSITORY}/synthea-uploader:${_TAG}'
   id: 'Upload to HAPI'
   env:
@@ -91,6 +91,15 @@ steps:
     - FHIR_ENDPOINT=http://hapi-server:8080/fhir
     - CORES=--cores 8
   waitFor: ['Run Uploader Unit Tests', 'Wait for the initial Servers Start']
+
+# This step is needed because HAPI sometime returns a stale number of resources.
+- name: '${_REPOSITORY}/e2e-tests:${_TAG}'
+  id: 'Wait for resource count'
+  entrypoint: /bin/bash
+  args:
+    - -c
+    - /workspace/e2e-tests/wait_for_start.sh --HAPI_SERVER_URLS=http://hapi-server:8080 --resource_count=Patient:79
+  waitFor: ['Upload to HAPI', 'Build E2E Image']
 
 - name: 'gcr.io/cloud-builders/docker'
   id: 'Build Pipeline Images'
@@ -110,7 +119,7 @@ steps:
   - SINK_PATH=http://sink-server-search:8080/fhir
   - SINK_USERNAME=hapi
   - SINK_PASSWORD=hapi
-  waitFor: ['Build Pipeline Images', 'Upload to HAPI']
+  waitFor: ['Build Pipeline Images', 'Wait for resource count']
 
 - name: '${_REPOSITORY}/e2e-tests:${_TAG}'
   id: 'Run E2E Test for FHIR-search mode with HAPI source'
@@ -134,7 +143,7 @@ steps:
     - PARQUET_PATH=/workspace/e2e-tests/JDBC_HAPI
     - OUTPUT_PARQUET_VIEW_PATH=/workspace/e2e-tests/JDBC_HAPI/VIEWS_TIMESTAMP_1
     - JDBC_FETCH_SIZE=1000
-  waitFor: ['Build Pipeline Images', 'Upload to HAPI']
+  waitFor: ['Build Pipeline Images', 'Wait for resource count']
 
 - name: '${_REPOSITORY}/e2e-tests:${_TAG}'
   id: 'Run E2E Test for JDBC mode with HAPI source'
@@ -277,13 +286,13 @@ steps:
   waitFor: [ 'Turn down FHIR Sink Server JDBC',
              'Run E2E Test for BULK_EXPORT mode with HAPI source' ]
 
-- name: 'gcr.io/cloud-builders/docker'
+- name: '${_REPOSITORY}/e2e-tests:${_TAG}'
   id: 'Wait for Servers Start'
   entrypoint: /bin/bash
   args:
   - -c
-  - e2e-tests/wait_for_start.sh --HAPI_SERVER_URLS=http://sink-server-for-openmrs:8080 --OPENMRS_SERVER_URLS=http://openmrs:8080
-  waitFor: ['Launch OpenMRS Server and HAPI FHIR Sink Server for OpenMRS']
+  - /workspace/e2e-tests/wait_for_start.sh --HAPI_SERVER_URLS=http://sink-server-for-openmrs:8080 --OPENMRS_SERVER_URLS=http://openmrs:8080
+  waitFor: ['Launch OpenMRS Server and HAPI FHIR Sink Server for OpenMRS', 'Build E2E Image']
 
 - name: '${_REPOSITORY}/synthea-uploader:${_TAG}'
   id: 'Upload to OpenMRS'

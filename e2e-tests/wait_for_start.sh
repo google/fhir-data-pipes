@@ -20,7 +20,10 @@
 #
 # Example usage:
 #   ./wait_for_start.sh --HAPI_SERVER_URLS=http://hapi-server1:8080,http://hapi-server2:8080 --OPENMRS_SERVER_URLS=http://openmrs:8080
-#   The above example waits for two hapi servers and one openmrs server to start
+#     The above example waits for two hapi servers and one openmrs server to start
+#   ./wait_for_start.sh --HAPI_SERVER_URLS=http://hapi-server1:8080,http://hapi-server2:8080 --resource_count=Patient:54
+#     The above example waits for two hapi servers to start; it also checks resource count to match the
+#     expected value. This feature in only implemented for HAPI servers (because of count update delay they have).
 
 #################################################
 # Set the global variables
@@ -36,8 +39,17 @@ while [ $# -gt 0 ]; do
     --OPENMRS_SERVER_URLS=*)
       OPENMRS_SERVER_URLS="${1#*=}"
       ;;
+    --resource_count=*)
+      count_arg="${1#*=}"
+      EXPECTED_RESOURCE=${count_arg%:*}
+      EXPECTED_COUNT=${count_arg#*:}
+      if [[ -z "${EXPECTED_RESOURCE}" || -z "${EXPECTED_COUNT}" ]]; then
+        print "ERROR: --resource_count arg should have type:count format, e.g., Patient:10"
+        exit 1
+      fi
+      ;;
     *)
-      printf "Error: Invalid argument %s" "$1"
+      printf "ERROR: Invalid argument %s" "$1"
       exit 1
   esac
   shift
@@ -51,6 +63,7 @@ function wait_for_servers_to_start() {
     IFS=',' read -r -a array <<< "$HAPI_SERVER_URLS"
     for url in "${array[@]}"
     do
+      echo "Checking ${url}"
       hapi_server_check "$url"
     done
   fi
@@ -59,6 +72,7 @@ function wait_for_servers_to_start() {
     IFS=',' read -r -a array <<< "$OPENMRS_SERVER_URLS"
     for url in "${array[@]}"
     do
+      echo "Checking ${url}"
      openmrs_server_check "$url/openmrs/ws/fhir2/R4"
     done
   fi
@@ -91,16 +105,21 @@ function openmrs_server_check() {
 # Function to check if HAPI server completed initialization
 #################################################
 function hapi_server_check() {
+  res_type=${EXPECTED_RESOURCE:-"Patient"}
   fhir_server_start_wait_time=0
-  fhir_server_status_code=$(curl -o /dev/null --head -w "%{http_code}" -L -X GET \
+  fhir_server_status_code=$(curl -o /tmp/fhir_output.json -w "%{http_code}" -L -X GET \
   -u hapi:hapi --connect-timeout 5 --max-time 20 \
-  ${1}/fhir/Observation 2>/dev/null)
-  until [[ ${fhir_server_status_code} -eq 200 ]]; do
+  "${1}/fhir/${res_type}?_summary=count&_total=accurate" 2>/dev/null)
+  res_count=$(jq '.total' /tmp/fhir_output.json)
+  echo "status_code: ${fhir_server_status_code} res_count: ${res_count} expected: ${EXPECTED_COUNT:-"${res_count}"}"
+  until [[ ${fhir_server_status_code} -eq 200 && ${res_count} -eq ${EXPECTED_COUNT:-"${res_count}"} ]]; do
     sleep 30s
     echo "WAITING FOR FHIR SERVER TO START"
-    fhir_server_status_code=$(curl -o /dev/null --head -w "%{http_code}" -L -X GET \
+    fhir_server_status_code=$(curl -o /tmp/fhir_output.json -w "%{http_code}" -L -X GET \
       -u hapi:hapi --connect-timeout 5 --max-time 20 \
-      ${1}/fhir/Observation 2>/dev/null)
+      "${1}/fhir/${res_type}?_summary=count&_total=accurate" 2>/dev/null)
+    res_count=$(jq '.total' /tmp/fhir_output.json)
+    echo "status_code: ${fhir_server_status_code} res_count: ${res_count}"
     ((fhir_server_start_wait_time += 1))
     if [[ $fhir_server_start_wait_time == 20 ]]; then
       echo "TERMINATING AS FHIR SERVER TOOK TOO LONG TO START"
