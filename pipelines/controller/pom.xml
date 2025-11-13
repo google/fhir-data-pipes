@@ -186,7 +186,7 @@
     <dependency>
       <groupId>com.squareup.okhttp3</groupId>
       <artifactId>mockwebserver</artifactId>
-      <version>4.12.0</version>
+      <version>5.3.0</version>
       <scope>test</scope>
     </dependency>
     <!-- This will make sure that the Junit 4 test cases will also be run along with Junit 5 test
