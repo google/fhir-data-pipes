@@ -97,3 +97,4 @@ nb-configuration.xml
 ## Data-warehouse files.
 ##############################
 docker/dwh/**
+e2e-tests/controller-spark/dwh/**
