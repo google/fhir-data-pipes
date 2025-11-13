@@ -8,9 +8,11 @@ import com.cerner.bunsen.exception.ProfileException;
 import org.apache.avro.Schema;
 import org.apache.avro.Schema.Type;
 import org.hl7.fhir.instance.model.api.IBase;
+import org.jspecify.annotations.Nullable;
 
 public class NoOpConverter extends HapiConverter<Schema> {
 
+  @Nullable
   @Override
   public Object fromHapi(Object input) {
     return null;
@@ -26,6 +28,7 @@ public class NoOpConverter extends HapiConverter<Schema> {
     @Override
     public void setField(IBase parentObject, BaseRuntimeChildDefinition fieldToSet, Object value) {}
 
+    @Nullable
     @Override
     public IBase toHapi(Object input) {
       return null;
