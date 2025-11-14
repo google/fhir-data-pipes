@@ -63,7 +63,6 @@ function wait_for_servers_to_start() {
     IFS=',' read -r -a array <<< "$HAPI_SERVER_URLS"
     for url in "${array[@]}"
     do
-      echo "Checking ${url}"
       hapi_server_check "$url"
     done
   fi
@@ -72,7 +71,6 @@ function wait_for_servers_to_start() {
     IFS=',' read -r -a array <<< "$OPENMRS_SERVER_URLS"
     for url in "${array[@]}"
     do
-      echo "Checking ${url}"
      openmrs_server_check "$url/openmrs/ws/fhir2/R4"
     done
   fi
@@ -82,6 +80,7 @@ function wait_for_servers_to_start() {
 # Function to check if fhir server completed initialization
 #################################################
 function openmrs_server_check() {
+  echo "Checking ${1}/Patient"
   openmrs_start_wait_time=0
   contenttype=$(curl -o /dev/null --head -w "%{content_type}\n" -X GET -u admin:Admin123 \
       --connect-timeout 5 --max-time 20 ${1}/Patient \
@@ -106,18 +105,18 @@ function openmrs_server_check() {
 #################################################
 function hapi_server_check() {
   res_type=${EXPECTED_RESOURCE:-"Patient"}
+  query_url="${1}/fhir/${res_type}?_count=100&_total=accurate&_summary=data"
+  echo "Checking ${query_url}"
   fhir_server_start_wait_time=0
   fhir_server_status_code=$(curl -o /tmp/fhir_output.json -w "%{http_code}" -L -X GET \
-  -u hapi:hapi --connect-timeout 5 --max-time 20 \
-  "${1}/fhir/${res_type}?_summary=count&_total=accurate" 2>/dev/null)
+  -u hapi:hapi --connect-timeout 5 --max-time 20 "${query_url}" 2>/dev/null)
   res_count=$(jq '.total' /tmp/fhir_output.json)
   echo "status_code: ${fhir_server_status_code} res_count: ${res_count} expected: ${EXPECTED_COUNT:-"${res_count}"}"
   until [[ ${fhir_server_status_code} -eq 200 && ${res_count} -eq ${EXPECTED_COUNT:-"${res_count}"} ]]; do
     sleep 30s
     echo "WAITING FOR FHIR SERVER TO START"
     fhir_server_status_code=$(curl -o /tmp/fhir_output.json -w "%{http_code}" -L -X GET \
-      -u hapi:hapi --connect-timeout 5 --max-time 20 \
-      "${1}/fhir/${res_type}?_summary=count&_total=accurate" 2>/dev/null)
+      -u hapi:hapi --connect-timeout 5 --max-time 20 "${query_url}" 2>/dev/null)
     res_count=$(jq '.total' /tmp/fhir_output.json)
     echo "status_code: ${fhir_server_status_code} res_count: ${res_count}"
     ((fhir_server_start_wait_time += 1))
