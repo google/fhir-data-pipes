@@ -15,6 +15,7 @@
  */
 package com.google.fhir.analytics;
 
+import ca.uhn.fhir.rest.api.CacheControlDirective;
 import ca.uhn.fhir.rest.api.SearchTotalModeEnum;
 import ca.uhn.fhir.rest.api.SummaryEnum;
 import ca.uhn.fhir.rest.client.api.IGenericClient;
@@ -33,7 +34,6 @@ import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -65,6 +65,7 @@ public class FhirSearchUtil {
               .byUrl(searchUrl)
               .count(count)
               .summaryMode(summaryMode)
+              .cacheControl(CacheControlDirective.noCache())
               .returnBundle(Bundle.class)
               .execute();
       return result;
@@ -72,40 +73,6 @@ public class FhirSearchUtil {
       log.error("Failed to search for url: " + searchUrl + " ;  " + "Exception: " + e);
     }
     return null;
-  }
-
-  /**
-   * Searches for the total number of resources for each resource type
-   *
-   * @param resourceList the resource types to be processed
-   * @return a Map storing the counts of each resource type
-   */
-  public Map<String, Integer> searchResourceCounts(String resourceList, String since) {
-    HashSet<String> resourceTypes = new HashSet<String>(Splitter.on(',').splitToList(resourceList));
-    HashMap<String, Integer> hashMap = new HashMap<String, Integer>();
-    for (String resourceType : resourceTypes) {
-      try {
-        String searchUrl = resourceType + "?";
-        IGenericClient client = fetchUtil.getSourceClient();
-        IQuery<Bundle> query =
-            client
-                .search()
-                .byUrl(searchUrl)
-                .summaryMode(SummaryEnum.COUNT)
-                .returnBundle(Bundle.class);
-        if (since != null && !since.isEmpty()) {
-          query.lastUpdated(new DateRangeParam(since, null));
-        }
-        Bundle result = query.execute();
-        hashMap.put(resourceType, result.getTotal());
-        log.info("Number of {} resources = {}", resourceType, result.getTotal());
-      } catch (Exception e) {
-        log.error("Failed to search for resource: " + resourceType + " ;  " + "Exception: " + e);
-        throw e;
-      }
-    }
-
-    return hashMap;
   }
 
   @Nullable
@@ -167,6 +134,9 @@ public class FhirSearchUtil {
         .totalMode(SearchTotalModeEnum.ACCURATE)
         .count(count)
         .summaryMode(SummaryEnum.DATA)
+        // This is to make sure we get the most up-to-date results, see:
+        // https://hapifhir.io/hapi-fhir/docs/server_jpa/configuration.html#search-result-caching
+        .cacheControl(CacheControlDirective.noCache())
         .returnBundle(Bundle.class);
   }
 
@@ -283,6 +253,7 @@ public class FhirSearchUtil {
               .forResource(resourceType)
               .count(0)
               .summaryMode(SummaryEnum.DATA)
+              .cacheControl(CacheControlDirective.noCache())
               .returnBundle(Bundle.class);
       // Try with a test ID and a random date to see whether the server can handle the search query.
       query =
@@ -312,6 +283,7 @@ public class FhirSearchUtil {
             .forResource(resourceType)
             .count(count)
             .summaryMode(SummaryEnum.DATA)
+            .cacheControl(CacheControlDirective.noCache())
             .returnBundle(Bundle.class);
     query =
         query
