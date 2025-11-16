@@ -1,9 +1,10 @@
+import os
+
+import pandas as pd
 from google import genai
 from google.genai.types import EmbedContentConfig
-import pandas as pd
-from sqlalchemy import engine
-from sqlalchemy import MetaData, Table, Column, Integer, String
-import os
+from sqlalchemy import Column, Integer, MetaData, String, Table, engine
+
 from . import PRINT_CLOSE_CONCEPTS
 
 CLOSE_CONCEPT_DISTANCE_THRESHOLD = 0.7
@@ -20,10 +21,10 @@ class TerminologyIndexer:
         """
         self._target_db = engine.create_engine(target_db_url)
         self._vec_db = engine.create_engine(pg_vector_db_url)
-        if not os.environ['GOOGLE_CLOUD_PROJECT']:
-            raise RuntimeError('Env variable GOOGLE_CLOUD_PROJECT is not set!')
-        if not os.environ['GOOGLE_CLOUD_LOCATION']:
-            raise RuntimeError('Env variable GOOGLE_CLOUD_LOCATION is not set!')
+        if not os.environ["GOOGLE_CLOUD_PROJECT"]:
+            raise RuntimeError("Env variable GOOGLE_CLOUD_PROJECT is not set!")
+        if not os.environ["GOOGLE_CLOUD_LOCATION"]:
+            raise RuntimeError("Env variable GOOGLE_CLOUD_LOCATION is not set!")
         self._client = genai.Client()
 
     def extract_and_embed_all_codes(self, conf):
@@ -47,20 +48,22 @@ class TerminologyIndexer:
         the `code_vector` table. The value for other columns come from `config`.
         """
         metadata_core = MetaData()
-        code_vector_table = Table('code_vector', metadata_core, autoload_with=self._vec_db)
+        code_vector_table = Table(
+            "code_vector", metadata_core, autoload_with=self._vec_db
+        )
 
         with self._vec_db.connect() as connection:
-            print(f'processing {config}')
+            print(f"processing {config}")
             for index, row in codes_df.iterrows():
-                code = row['code']
-                sys = row['sys']
+                code = row["code"]
+                sys = row["sys"]
                 # TODO: This should be fetched from a terminology server instead.
-                display = row['display']
+                display = row["display"]
                 # Ignore null values.
                 if not code or not display:
                     continue
                 if index % 100 == 0:
-                    print('item: {} code: {} display: {}'.format(index, code, display))
+                    print("item: {} code: {} display: {}".format(index, code, display))
                 embedding = self.embed(display)
                 # We don't use simple INSERT string statements to avoid issues with escaping values.
                 insert_statement = code_vector_table.insert().values(
@@ -68,10 +71,10 @@ class TerminologyIndexer:
                     system=sys,
                     display=display,
                     embedding=embedding,
-                    table_name=config['table_name'],
-                    code_column_name=config['code_column'],
-                    system_column_name=config['system_column'],
-                    display_column_name=config['display_column']
+                    table_name=config["table_name"],
+                    code_column_name=config["code_column"],
+                    system_column_name=config["system_column"],
+                    display_column_name=config["display_column"],
                 )
                 connection.execute(insert_statement)
                 connection.commit()
@@ -88,13 +91,15 @@ class TerminologyIndexer:
         )
         return response.embeddings[0].values
 
-    def close_concepts(self,
-                       query_concept: str,
-                       threshold: float = CLOSE_CONCEPT_DISTANCE_THRESHOLD,
-                       max_close: int = MAX_CLOSE_CONCEPTS,
-                       table_name: str = None) -> pd.DataFrame:
+    def close_concepts(
+        self,
+        query_concept: str,
+        threshold: float = CLOSE_CONCEPT_DISTANCE_THRESHOLD,
+        max_close: int = MAX_CLOSE_CONCEPTS,
+        table_name: str = None,
+    ) -> pd.DataFrame:
         query_embedding = self.embed(query_concept)
-        table_cond = f"AND table_name='{table_name}'" if table_name != None else ''
+        table_cond = f"AND table_name='{table_name}'" if table_name != None else ""
         df = pd.read_sql_query(
             sql=f"""
             SELECT code, system, display, table_name, code_column_name, embedding, embedding <#> '{query_embedding}' AS inner

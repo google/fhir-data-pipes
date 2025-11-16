@@ -14,12 +14,21 @@
 
 FROM maven:3.8.7-eclipse-temurin-17-focal
 
+##############################################################################################
+# NOTE: This Docker image is designed to run exclusively in Cloud Build environment.
+# Where the entire repository is automatically mounted at /workspace.
+# Scripts (pipeline_validation.sh, lib/parquet_utils.sh)
+# and JARs (parquet-tools-1.11.1.jar) are accessed directly from the mounted repository
+# at runtime, so we do **NOT** COPY them into the image.
+#
+# If you ever need to run this image **outside** Cloud Build, you must bind-mount the repo
+# to /workspace or manually copy the required files into the container.
+##############################################################################################
+
 RUN apt-get update && apt-get install -y jq  python3.8 python3-pip
 RUN update-alternatives --install /usr/bin/python3 python3 /usr/bin/python3.8 1
 RUN pip3 install virtualenv google-auth requests
 
-COPY pipeline_validation.sh pipeline_validation.sh
-COPY controller-spark/parquet-tools-1.11.1.jar  parquet-tools-1.11.1.jar
 ENV PARQUET_SUBDIR="NON_JDBC"
 ENV FHIR_JSON_SUBDIR="FHIR_JSON"
 ENV DOCKER_NETWORK="--use_docker_network"

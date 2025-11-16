@@ -51,7 +51,9 @@
     <license-maven-plugin.version>5.0.0</license-maven-plugin.version>
     <beam.version>2.56.0</beam.version>
     <auto-value.version>1.11.0</auto-value.version>
-    <lombok.version>1.18.38</lombok.version>
+    <lombok.version>1.18.42</lombok.version>
+    <errorprone.version>2.42.0</errorprone.version>
+    <nullaway.version>0.12.10</nullaway.version>
   </properties>
 
   <dependencyManagement>
@@ -263,11 +265,11 @@
         </plugin>
         <plugin>
           <artifactId>maven-compiler-plugin</artifactId>
-          <version>3.14.0</version>
+          <version>3.14.1</version>
         </plugin>
         <plugin>
           <artifactId>maven-surefire-plugin</artifactId>
-          <version>3.5.3</version>
+          <version>3.5.4</version>
         </plugin>
         <!--
            Configures `mvn package` to produce a bundled jar ("fat jar") for runners
@@ -275,7 +277,7 @@
          -->
         <plugin>
           <artifactId>maven-shade-plugin</artifactId>
-          <version>3.6.0</version>
+          <version>3.6.1</version>
         </plugin>
         <plugin>
           <artifactId>maven-jar-plugin</artifactId>
@@ -359,7 +361,7 @@
         <plugin>
           <groupId>org.codehaus.mojo</groupId>
           <artifactId>exec-maven-plugin</artifactId>
-          <version>3.5.1</version>
+          <version>3.6.2</version>
         </plugin>
       </plugins>
     </pluginManagement>
@@ -373,10 +375,6 @@
       <plugin>
         <groupId>com.mycila</groupId>
         <artifactId>license-maven-plugin</artifactId>
-      </plugin>
-      <plugin>
-        <groupId>com.diffplug.spotless</groupId>
-        <artifactId>spotless-maven-plugin</artifactId>
       </plugin>
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
@@ -396,7 +394,10 @@
               see: https://errorprone.info/docs/installation
             -->
             <arg>-XDcompilePolicy=simple</arg>
-            <arg>-Xplugin:ErrorProne -XepOpt:NullAway:AnnotatedPackages=com.google.fhir.analytics</arg>
+            <arg>--should-stop=ifError=FLOW</arg>
+            <arg>
+              -Xplugin:ErrorProne -XepOpt:NullAway:AnnotatedPackages=com.google.fhir.analytics -XepExcludedPaths:.*/target/generated-sources/.* -XepOpt:NullAway:JSpecifyMode=true -XepOpt:NullAway:CheckOptionalEmptiness=true
+            </arg>
             <arg>
               -J--add-exports=jdk.compiler/com.sun.tools.javac.api=ALL-UNNAMED
             </arg>
@@ -450,12 +451,12 @@
             <path>
               <groupId>com.google.errorprone</groupId>
               <artifactId>error_prone_core</artifactId>
-              <version>2.23.0</version>
+              <version>${errorprone.version}</version>
             </path>
             <path>
               <groupId>com.uber.nullaway</groupId>
               <artifactId>nullaway</artifactId>
-              <version>0.10.15</version>
+              <version>${nullaway.version}</version>
             </path>
           </annotationProcessorPaths>
         </configuration>

@@ -30,6 +30,13 @@
     <!-- This module is only for collecting all coverage data, see:
       https://github.com/jacoco/jacoco/wiki/MavenMultiModule -->
     <module>coverage</module>
+    <module>doc</module>
+    <module>docker</module>
+    <module>dwh</module>
+    <module>e2e-tests</module>
+    <module>query</module>
+    <module>synthea-hiv</module>
+    <module>utils</module>
   </modules>
 
   <properties>
@@ -55,94 +62,12 @@
           <!-- for code coverage -->
           <groupId>org.jacoco</groupId>
           <artifactId>jacoco-maven-plugin</artifactId>
-          <version>0.8.13</version>
+          <version>0.8.14</version>
           <executions>
             <execution>
               <goals>
                 <goal>prepare-agent</goal>
               </goals>
-            </execution>
-          </executions>
-        </plugin>
-
-        <!-- Code formatter -->
-        <plugin>
-          <groupId>com.diffplug.spotless</groupId>
-          <artifactId>spotless-maven-plugin</artifactId>
-          <version>2.45.0</version>
-          <configuration>
-            <pom>
-              <sortPom>
-                <expandEmptyElements>false</expandEmptyElements>
-              </sortPom>
-              <trimTrailingWhitespace/>
-              <endWithNewline/>
-              <indent>
-                <spaces>true</spaces>
-              </indent>
-            </pom>
-            <formats>
-              <!-- you can define as many formats as you want, each is independent -->
-              <format>
-                <!-- define the files to apply to -->
-                <includes>
-                  <include>**/*.sh</include>
-                  <include>**/*.xml</include>
-                  <include>.gitignore</include>
-                </includes>
-                <!-- ignore build files -->
-                <excludes>
-                  <exclude>.idea/**</exclude>
-                  <exclude>.settings/**</exclude>
-                  <exclude>**/target/**</exclude>
-                  <exclude>bin/**</exclude>
-                  <exclude>tmp/**</exclude>
-                </excludes>
-                <trimTrailingWhitespace/>
-                <endWithNewline/>
-                <indent>
-                  <spaces>true</spaces>
-                </indent>
-              </format>
-              <format>
-                <includes>
-                  <include>**/*.md</include>
-                </includes>
-                <excludes>
-                  <exclude>**/target/**</exclude>
-                </excludes>
-                <prettier>
-                  <!-- Formatter that Spotless supports and can format Markdown:
-                       https://github.com/diffplug/spotless/tree/main/plugin-maven#prettier
-                     Only Spotless-supported formatter that can be configured to
-                     force line wrap -->
-                  <config>
-                    <proseWrap>always</proseWrap>
-                  </config>
-                </prettier>
-              </format>
-            </formats>
-            <!-- define a language-specific format -->
-            <java>
-              <importOrder/>
-              <!-- standard import order -->
-
-              <removeUnusedImports/>
-
-              <!-- apply a specific flavor of google-java-format and reflow long strings -->
-              <googleJavaFormat>
-                <version>1.17.0</version>
-                <style>GOOGLE</style>
-                <reflowLongStrings>true</reflowLongStrings>
-              </googleJavaFormat>
-            </java>
-          </configuration>
-          <executions>
-            <execution>
-              <goals>
-                <goal>apply</goal>
-              </goals>
-              <phase>compile</phase>
             </execution>
           </executions>
         </plugin>
@@ -153,6 +78,88 @@
       <plugin>
         <groupId>org.jacoco</groupId>
         <artifactId>jacoco-maven-plugin</artifactId>
+      </plugin>
+
+      <!-- Code formatter -->
+      <plugin>
+        <groupId>com.diffplug.spotless</groupId>
+        <artifactId>spotless-maven-plugin</artifactId>
+        <version>3.0.0</version>
+        <configuration>
+          <pom>
+            <sortPom>
+              <expandEmptyElements>false</expandEmptyElements>
+            </sortPom>
+            <trimTrailingWhitespace/>
+            <endWithNewline/>
+            <indent>
+              <spaces>true</spaces>
+            </indent>
+          </pom>
+          <formats>
+            <!-- you can define as many formats as you want, each is independent -->
+            <format>
+              <!-- define the files to apply to -->
+              <includes>
+                <include>**/*.sh</include>
+                <include>**/*.xml</include>
+                <include>.gitignore</include>
+              </includes>
+              <!-- ignore build files -->
+              <excludes>
+                <exclude>.idea/**</exclude>
+                <exclude>.settings/**</exclude>
+                <exclude>**/target/**</exclude>
+                <exclude>bin/**</exclude>
+                <exclude>tmp/**</exclude>
+              </excludes>
+              <trimTrailingWhitespace/>
+              <endWithNewline/>
+              <indent>
+                <spaces>true</spaces>
+              </indent>
+            </format>
+            <format>
+              <includes>
+                <include>**/*.md</include>
+              </includes>
+              <excludes>
+                <exclude>**/target/**</exclude>
+              </excludes>
+              <prettier>
+                <!-- Formatter that Spotless supports and can format Markdown:
+                     https://github.com/diffplug/spotless/tree/main/plugin-maven#prettier
+                   Only Spotless-supported formatter that can be configured to
+                   force line wrap -->
+                <config>
+                  <proseWrap>always</proseWrap>
+                </config>
+              </prettier>
+            </format>
+          </formats>
+          <!-- define a language-specific format -->
+          <java>
+            <importOrder/>
+            <!-- standard import order -->
+
+            <removeUnusedImports/>
+
+            <!-- apply a specific flavor of google-java-format and reflow long strings -->
+            <googleJavaFormat>
+              <version>1.17.0</version>
+              <style>GOOGLE</style>
+              <reflowLongStrings>true</reflowLongStrings>
+            </googleJavaFormat>
+          </java>
+        </configuration>
+        <executions>
+          <execution>
+            <goals>
+              <goal>apply</goal>
+            </goals>
+            <phase>compile</phase>
+          </execution>
+        </executions>
       </plugin>
     </plugins>
 

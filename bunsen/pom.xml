@@ -26,16 +26,18 @@
   <properties>
     <compile.source>11</compile.source>
     <hapi.fhir.version>7.6.1</hapi.fhir.version>
-    <avro.version>1.12.0</avro.version>
+    <avro.version>1.12.1</avro.version>
     <junit.version>4.13.2</junit.version>
     <hamcrest.version>3.0</hamcrest.version>
     <scm.url>http://github.com/cerner/bunsen/tree/master/</scm.url>
     <scm.connection>scm:git:git@github.com/cerner/bunsen.git</scm.connection>
     <python.version>3.5.3</python.version>
-    <maven-javadoc.plugin.version>3.11.2</maven-javadoc.plugin.version>
+    <maven-javadoc.plugin.version>3.12.0</maven-javadoc.plugin.version>
     <maven-project-info-reports.plugin.version>3.9.0</maven-project-info-reports.plugin.version>
     <slf4j.version>2.0.17</slf4j.version>
     <logback.version>1.5.18</logback.version>
+    <errorprone.version>2.41.0</errorprone.version>
+    <nullaway.version>0.12.9</nullaway.version>
   </properties>
 
   <modules>
@@ -96,6 +98,12 @@
       <artifactId>commons-collections4</artifactId>
       <version>4.5.0</version>
     </dependency>
+    <dependency>
+      <groupId>org.jspecify</groupId>
+      <artifactId>jspecify</artifactId>
+      <version>1.0.0</version>
+      <scope>provided</scope>
+    </dependency>
   </dependencies>
 
   <build>
@@ -131,7 +139,66 @@
         <configuration>
           <showDeprecation>true</showDeprecation>
           <showWarnings>true</showWarnings>
-          <release>${compile.source}</release>
+
+          <source>${compile.source}</source>
+          <target>${compile.source}</target>
+          <fork>true</fork>
+          <compilerArgs>
+            <arg>--add-exports=jdk.compiler/com.sun.tools.javac.api=ALL-UNNAMED</arg>
+            <!-- Enabling ErrorProne;
+              see: https://errorprone.info/docs/installation
+            -->
+            <arg>-XDcompilePolicy=simple</arg>
+            <arg>--should-stop=ifError=FLOW</arg>
+            <arg>
+              -Xplugin:ErrorProne -XepOpt:NullAway:AnnotatedPackages=com.cerner.bunsen, -XepOpt:NullAway:JSpecifyMode=true -XepOpt:NullAway:CheckOptionalEmptiness=true
+            </arg>
+            <arg>
+              -J--add-exports=jdk.compiler/com.sun.tools.javac.api=ALL-UNNAMED
+            </arg>
+            <arg>
+              -J--add-exports=jdk.compiler/com.sun.tools.javac.file=ALL-UNNAMED
+            </arg>
+            <arg>
+              -J--add-exports=jdk.compiler/com.sun.tools.javac.main=ALL-UNNAMED
+            </arg>
+            <arg>
+              -J--add-exports=jdk.compiler/com.sun.tools.javac.model=ALL-UNNAMED
+            </arg>
+            <arg>
+              -J--add-exports=jdk.compiler/com.sun.tools.javac.parser=ALL-UNNAMED
+            </arg>
+            <arg>
+              -J--add-exports=jdk.compiler/com.sun.tools.javac.processing=ALL-UNNAMED
+            </arg>
+            <arg>
+              -J--add-exports=jdk.compiler/com.sun.tools.javac.tree=ALL-UNNAMED
+            </arg>
+            <arg>
+              -J--add-exports=jdk.compiler/com.sun.tools.javac.util=ALL-UNNAMED
+            </arg>
+            <arg>
+              -J--add-opens=jdk.compiler/com.sun.tools.javac.code=ALL-UNNAMED
+            </arg>
+            <arg>
+              -J--add-opens=jdk.compiler/com.sun.tools.javac.comp=ALL-UNNAMED
+            </arg>
+          </compilerArgs>
+          <annotationProcessorPaths>
+            <!-- TODO: Check if we can avoid these paths; see here for why:
+              https://errorprone.info/docs/installation#using-error-prone-together-with-other-annotation-processors
+            -->
+            <path>
+              <groupId>com.google.errorprone</groupId>
+              <artifactId>error_prone_core</artifactId>
+              <version>${errorprone.version}</version>
+            </path>
+            <path>
+              <groupId>com.uber.nullaway</groupId>
+              <artifactId>nullaway</artifactId>
+              <version>${nullaway.version}</version>
+            </path>
+          </annotationProcessorPaths>
         </configuration>
       </plugin>
 
@@ -181,12 +248,6 @@
           </execution>
         </executions>
       </plugin>
-
-      <plugin>
-        <groupId>com.diffplug.spotless</groupId>
-        <artifactId>spotless-maven-plugin</artifactId>
-      </plugin>
-
     </plugins>
 
     <pluginManagement>
@@ -211,18 +272,18 @@
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-compiler-plugin</artifactId>
-          <version>3.14.0</version>
+          <version>3.14.1</version>
         </plugin>
 
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-shade-plugin</artifactId>
-          <version>3.6.0</version>
+          <version>3.6.1</version>
         </plugin>
 
         <plugin>
           <artifactId>maven-release-plugin</artifactId>
-          <version>3.1.1</version>
+          <version>3.2.0</version>
           <configuration>
               <tagNameFormat>@{project.version}</tagNameFormat>
           </configuration>
@@ -231,7 +292,7 @@
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-javadoc-plugin</artifactId>
-          <version>3.11.2</version>
+          <version>3.12.0</version>
         </plugin>
 
         <plugin>
@@ -280,13 +341,13 @@
 
         <plugin>
           <artifactId>maven-dependency-plugin</artifactId>
-          <version>3.8.1</version>
+          <version>3.9.0</version>
         </plugin>
 
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-scm-plugin</artifactId>
-          <version>2.1.0</version>
+          <version>2.2.1</version>
         </plugin>
 
         <plugin>
@@ -315,13 +376,13 @@
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-surefire-plugin</artifactId>
-          <version>3.5.3</version>
+          <version>3.5.4</version>
         </plugin>
 
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-surefire-report-plugin</artifactId>
-          <version>3.5.3</version>
+          <version>3.5.4</version>
         </plugin>
 
         <plugin>
@@ -599,7 +660,7 @@
       <dependency>
         <groupId> org.apache.hadoop</groupId>
         <artifactId>hadoop-client</artifactId>
-        <version>3.4.1</version>
+        <version>3.4.2</version>
       </dependency>
 
     </dependencies>

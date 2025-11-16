@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2024 Google LLC
+ * Copyright 2020-2025 Google LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package com.google.fhir.analytics;
 import ca.uhn.fhir.context.FhirContext;
 import ca.uhn.fhir.parser.IParser;
 import com.google.common.base.Preconditions;
+import com.google.common.base.Splitter;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
 import com.google.fhir.analytics.JdbcConnectionPools.DataSourceConfig;
@@ -38,6 +39,7 @@ import java.sql.SQLException;
 import java.util.stream.Collectors;
 import javax.sql.DataSource;
 import org.hl7.fhir.r4.model.Resource;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -52,7 +54,7 @@ public class JdbcResourceWriter {
 
   private static final String ID_COLUMN = "id";
 
-  private final ViewManager viewManager;
+  @Nullable private final ViewManager viewManager;
 
   private final IParser parser;
 
@@ -123,7 +125,7 @@ public class JdbcResourceWriter {
     String viewDir = Strings.nullToEmpty(options.getViewDefinitionsDir());
     if (viewDir.isEmpty()) {
       log.info("Creating tables for each resource type.");
-      for (String resourceType : options.getResourceList().split(",")) {
+      for (String resourceType : Splitter.on(',').split(options.getResourceList())) {
         String createStatement =
             String.format(
                 "CREATE TABLE IF NOT EXISTS %s (%s VARCHAR(100) NOT NULL, "
@@ -133,18 +135,18 @@ public class JdbcResourceWriter {
       }
     } else {
       ViewManager viewManager = ViewManager.createForDir(viewDir);
-      for (String resourceType : options.getResourceList().split(",")) {
+      for (String resourceType : Splitter.on(',').split(options.getResourceList())) {
         ImmutableList<ViewDefinition> views = viewManager.getViewsForType(resourceType);
-        if (views == null || views.isEmpty()) {
+        if (views.isEmpty()) {
           log.warn("No views found for resource type {} in directory {}!", resourceType, viewDir);
         } else {
           for (ViewDefinition vDef : views) {
             if (Strings.isNullOrEmpty(vDef.getName())) {
               throw new ViewDefinitionException("Field `name` in ViewDefinition is not defined.");
             }
-            if (vDef.getAllColumns().get(ID_COLUMN) == null
-                || !ViewApplicator.GET_RESOURCE_KEY.equals(
-                    vDef.getAllColumns().get(ID_COLUMN).getPath())) {
+            ViewDefinition.Column idColumn =
+                vDef.getAllColumns() != null ? vDef.getAllColumns().get(ID_COLUMN) : null;
+            if (idColumn == null || !ViewApplicator.GET_RESOURCE_KEY.equals(idColumn.getPath())) {
               throw new ViewDefinitionException(
                   String.format(
                       "To write view '%s' to DB, there should be a column '%s' with path '%s'.",
@@ -196,18 +198,22 @@ public class JdbcResourceWriter {
    *
    * @param resourceType the type of resource to be deleted
    * @param id the id of the resource to be deleted
-   * @throws SQLException
+   * @throws SQLException if a database access error occurs
    */
   public void deleteResourceById(String resourceType, String id) throws SQLException {
     if (viewManager == null) {
       deleteRowsById(jdbcDataSource, resourceType, id);
     } else {
       ImmutableList<ViewDefinition> views = viewManager.getViewsForType(resourceType);
-      for (ViewDefinition vDef : views) {
-        if (Strings.isNullOrEmpty(vDef.getName())) {
-          throw new SQLException("Field `name` in ViewDefinition is not defined.");
+      if (!views.isEmpty()) {
+        for (ViewDefinition vDef : views) {
+          if (Strings.isNullOrEmpty(vDef.getName())) {
+            throw new SQLException("Field `name` in ViewDefinition is not defined.");
+          }
+          deleteRowsById(jdbcDataSource, vDef.getName(), id);
         }
-        deleteRowsById(jdbcDataSource, vDef.getName(), id);
+      } else {
+        log.warn("No views found for resource type {}!", resourceType);
       }
     }
   }
@@ -232,7 +238,7 @@ public class JdbcResourceWriter {
       }
     } else {
       ImmutableList<ViewDefinition> views = viewManager.getViewsForType(resource.fhirType());
-      if (views != null) {
+      if (!views.isEmpty()) {
         for (ViewDefinition vDef : views) {
           if (Strings.isNullOrEmpty(vDef.getName())) {
             throw new SQLException("Field `name` in ViewDefinition is not defined.");

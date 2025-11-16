@@ -16,8 +16,8 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
+import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 
 /** Abstract base class to visit FHIR structure definitions. */
 public abstract class StructureDefinitions {
@@ -414,7 +414,7 @@ public abstract class StructureDefinitions {
     QualifiedPath qualifiedPath = new QualifiedPath(rootDefinition.getUrl(), element.getPath());
 
     if (shouldTerminateRecursive(visitor, qualifiedPath, stack)) {
-      return Collections.emptyList();
+      return new ArrayList<>();
     } else {
       stack.push(qualifiedPath);
 
@@ -599,7 +599,7 @@ public abstract class StructureDefinitions {
    * @throws IllegalArgumentException if the structure definition cannot be found for the given
    *     resourceUrl.
    */
-  @Nonnull
+  @NonNull
   protected abstract IStructureDefinition getStructureDefinition(String resourceUrl)
       throws IllegalArgumentException;
 

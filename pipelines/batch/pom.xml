@@ -35,14 +35,14 @@
 
   <properties>
     <hamcrest.version>3.0</hamcrest.version>
-    <jackson.version>2.19.1</jackson.version>
+    <jackson.version>2.20.1</jackson.version>
     <pubsub.version>v1-rev20220904-2.0.0</pubsub.version>
     <spark.version>2.4.8</spark.version>
-    <maven-surefire-plugin.version>3.5.3</maven-surefire-plugin.version>
+    <maven-surefire-plugin.version>3.5.4</maven-surefire-plugin.version>
     <nemo.version>0.1</nemo.version>
     <flink.artifact.name>beam-runners-flink-1.14</flink.artifact.name>
-    <mysql.driver.version>9.3.0</mysql.driver.version>
-    <postgresql.version>42.7.7</postgresql.version>
+    <mysql.driver.version>9.5.0</mysql.driver.version>
+    <postgresql.version>42.7.8</postgresql.version>
 
   </properties>
 
@@ -67,7 +67,7 @@
     <dependency>
       <groupId>org.apache.avro</groupId>
       <artifactId>avro</artifactId>
-      <version>1.12.0</version>
+      <version>1.12.1</version>
     </dependency>
 
     <!--JDBC specific dependencies-->

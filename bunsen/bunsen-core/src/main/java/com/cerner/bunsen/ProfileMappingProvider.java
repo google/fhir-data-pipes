@@ -29,11 +29,12 @@ import java.util.Optional;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 import java.util.stream.Collectors;
-import javax.annotation.Nullable;
+import java.util.stream.Stream;
 import org.hl7.fhir.common.hapi.validation.support.PrePopulatedValidationSupport;
 import org.hl7.fhir.instance.model.api.IBase;
 import org.hl7.fhir.instance.model.api.IBaseResource;
 import org.hl7.fhir.instance.model.api.IPrimitiveType;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -186,14 +187,12 @@ class ProfileMappingProvider {
   private List<IBaseResource> getResourcesFromPath(IParser parser, String pathName)
       throws IOException {
     Path path = Paths.get(pathName);
-    List<Path> paths = Files.walk(path).collect(Collectors.toList());
-    List<Path> definitionPaths = new ArrayList<>();
-    paths.stream()
-        .filter(f -> f.toString().endsWith(JSON_EXT))
-        .forEach(
-            f -> {
-              definitionPaths.add(f);
-            });
+    List<Path> definitionPaths;
+    try (Stream<Path> walkStream = Files.walk(path)) {
+      definitionPaths =
+          walkStream.filter(f -> f.toString().endsWith(JSON_EXT)).collect(Collectors.toList());
+    }
+
     List<IBaseResource> baseResources = new ArrayList<>();
     for (Path definitionPath : definitionPaths) {
       baseResources.add(getResource(parser, definitionPath));
@@ -230,7 +229,8 @@ class ProfileMappingProvider {
 
   private static IBaseResource getResource(IParser jsonParser, InputStream inputStream)
       throws IOException {
-    try (Reader reader = new BufferedReader(new InputStreamReader(inputStream))) {
+    try (Reader reader =
+        new BufferedReader(new InputStreamReader(inputStream, StandardCharsets.UTF_8))) {
       return jsonParser.parseResource(reader);
     }
   }

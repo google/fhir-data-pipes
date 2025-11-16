@@ -18,6 +18,7 @@ package com.google.fhir.analytics;
 import ca.uhn.fhir.context.FhirContext;
 import com.cerner.bunsen.exception.ProfileException;
 import com.google.common.base.Preconditions;
+import com.google.common.base.Splitter;
 import com.google.common.base.Strings;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
@@ -56,6 +57,7 @@ import org.apache.beam.sdk.values.KV;
 import org.apache.beam.sdk.values.PCollection;
 import org.apache.beam.sdk.values.PCollectionList;
 import org.apache.commons.collections.CollectionUtils;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -131,9 +133,7 @@ public class FhirEtl {
     PCollection<KV<String, Integer>> flattenedPatients =
         patientIdList.apply(Flatten.pCollections());
     PCollection<KV<String, Integer>> mergedPatients = flattenedPatients.apply(Sum.integersPerKey());
-    final String patientType = "Patient";
-    FetchPatients fetchPatients =
-        new FetchPatients(options, avroConversionUtil.getResourceSchema(patientType));
+    FetchPatients fetchPatients = new FetchPatients(options);
     mergedPatients.apply(fetchPatients);
     for (String resourceType : patientAssociatedResources) {
       FetchPatientHistory fetchPatientHistory = new FetchPatientHistory(options, resourceType);
@@ -141,6 +141,7 @@ public class FhirEtl {
     }
   }
 
+  @Nullable
   private static List<Pipeline> buildFhirSearchPipeline(
       FhirEtlOptions options, AvroConversionUtil avroConversionUtil) throws ProfileException {
     FhirSearchUtil fhirSearchUtil =
@@ -289,7 +290,8 @@ public class FhirEtl {
               + " mode");
     }
     if (!options.getActivePeriod().isEmpty()) {
-      Set<String> resourceSet = Sets.newHashSet(options.getResourceList().split(","));
+      Set<String> resourceSet =
+          Sets.newHashSet(Splitter.on(',').splitToList(options.getResourceList()));
       if (resourceSet.contains("Patient")) {
         throw new IllegalArgumentException(
             "When using --activePeriod feature, 'Patient' should not be in --resourceList got: "
@@ -314,6 +316,7 @@ public class FhirEtl {
   }
 
   // TODO: Implement active period feature for JDBC mode with a HAPI source server (issue #278).
+  @Nullable
   private static List<Pipeline> buildHapiJdbcPipeline(FhirEtlOptions options)
       throws SQLException, IOException {
     Preconditions.checkArgument(!Strings.isNullOrEmpty(options.getFhirDatabaseConfigPath()));
@@ -327,9 +330,10 @@ public class FhirEtl {
         jdbcFetchHapi.searchResourceCounts(options.getResourceList(), options.getSince());
 
     List<Pipeline> pipelines = new ArrayList<>();
-    long totalNumOfResources = 0l;
-    for (String resourceType : options.getResourceList().split(",")) {
-      int numResources = resourceCount.get(resourceType);
+    long totalNumOfResources = 0L;
+    for (String resourceType : Splitter.on(',').splitToList(options.getResourceList())) {
+      int numResources =
+          resourceCount.get(resourceType) != null ? resourceCount.get(resourceType) : 0;
       if (numResources == 0) {
         continue;
       }
@@ -380,7 +384,8 @@ public class FhirEtl {
             avroConversionUtil.getFhirContext());
     Set<String> foundResourceTypes = dwhFiles.findNonEmptyResourceDirs();
     log.info("Found Parquet files for these resource types: {}", foundResourceTypes);
-    Set<String> resourceTypes = Sets.newHashSet(options.getResourceList().split(","));
+    Set<String> resourceTypes =
+        Sets.newHashSet(Splitter.on(',').splitToList(options.getResourceList()));
     if (!resourceTypes.equals(foundResourceTypes)) {
       log.warn(
           "Found resource types {} is not equal to requested resource types {}",
@@ -419,7 +424,7 @@ public class FhirEtl {
 
     Pipeline pipeline = Pipeline.create(options);
     pipeline
-        .apply(Create.of(Arrays.asList(multiFilePattern.split(","))))
+        .apply(Create.of(Splitter.on(',').splitToList(multiFilePattern)))
         .apply(FileIO.matchAll())
         .apply(FileIO.readMatches())
         .apply(
@@ -433,7 +438,8 @@ public class FhirEtl {
     BulkExportUtil bulkExportUtil =
         createBulkExportUtil(options, avroConversionUtil.getFhirContext());
     List<String> resourceTypes =
-        Arrays.asList(options.getResourceList().split(",")).stream()
+        Splitter.on(',')
+            .splitToStream(options.getResourceList())
             .distinct()
             .collect(Collectors.toList());
     BulkExportResponse bulkExportResponse =
@@ -509,6 +515,7 @@ public class FhirEtl {
    * @param options the pipeline options to be used.
    * @return the created Pipeline instance or null if nothing needs to be done.
    */
+  @Nullable
   static List<Pipeline> setupAndBuildPipelines(
       FhirEtlOptions options, AvroConversionUtil avroConversionUtil)
       throws IOException, SQLException, ViewDefinitionException, ProfileException {
@@ -549,7 +556,11 @@ public class FhirEtl {
             options.getStructureDefinitionsPath(),
             options.getRecursiveDepth());
     List<Pipeline> pipelines = setupAndBuildPipelines(options, avroConversionUtil);
-    EtlUtils.runMultiplePipelinesWithTimestamp(pipelines, options);
+    if (pipelines != null) {
+      EtlUtils.runMultiplePipelinesWithTimestamp(pipelines, options);
+    } else {
+      log.info("No work needs to be done!");
+    }
 
     log.info("DONE!");
   }

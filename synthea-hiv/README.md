@@ -21,8 +21,8 @@ docker run  -it   -v "$(pwd)"/output:/synthea-hiv/output \
 
 Setting `POPULATION` to the number of patients you want to generate.
 
-The [`sample_data`](sample_data) folder contains sample data from running
-the generator.
+The [`sample_data`](sample_data) folder contains sample data from running the
+generator.
 
 ## Uploader
 
@@ -100,7 +100,7 @@ example of how a Submodule looks:
 
 ## Limitations
 
-* Synthea only accepts [LOINC](https://loinc.org/) and
+- Synthea only accepts [LOINC](https://loinc.org/) and
   [SNOMED-CT](https://www.snomed.org/) as codes and value codes. OpenMRS works
   with [CIEL](https://research.columbia.edu/covid/mapping/COVIDdictionary)
   codes. To get around this, even though the JSON files in the
@@ -109,16 +109,16 @@ example of how a Submodule looks:
   regardless of whether the flag `convert_to_openmrs` is specified or not when
   uploading.
 
-* Due to [this](https://github.com/moby/moby/issues/2259) issue in Docker, the
+- Due to [this](https://github.com/moby/moby/issues/2259) issue in Docker, the
   outputted directories and files generated will be owned by `root`, not your
   user. When deleting the directories/files without `sudo` or admin privileges,
   you will get permission denied.
 
-* The OpenMRS FHIR Module does not yet support uploading Bundles. To circumvent
+- The OpenMRS FHIR Module does not yet support uploading Bundles. To circumvent
   this, the uploader splits each Bundle into the individual Patient, Encounters,
   and Observations resources before uploading.
 
-* Running the uploader more than once will lead to duplicates in the GCP FHIR
+- Running the uploader more than once will lead to duplicates in the GCP FHIR
   Store. All requests are sent as POST, which means a server-generated ID will
   be used to identify the patient. If the same patient bundle is uploaded, a new
   ID will be generated each time. OpenMRS does not have this limitation as each
