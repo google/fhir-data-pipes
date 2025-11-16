@@ -439,17 +439,16 @@ public class DwhFiles {
     }
 
     List<ResourceId> destResourceIdList = new ArrayList<>();
-    sourceResourceIdList
-        .forEach(
-            resourceId -> {
-              if (resourceId.getFilename() != null) {
-                ResourceId destResourceId =
-                    FileSystems.matchNewResource(destDwh, true)
-                        .resolve(dirName, StandardResolveOptions.RESOLVE_DIRECTORY)
-                        .resolve(resourceId.getFilename(), StandardResolveOptions.RESOLVE_FILE);
-                destResourceIdList.add(destResourceId);
-              }
-            });
+    sourceResourceIdList.forEach(
+        resourceId -> {
+          if (resourceId.getFilename() != null) {
+            ResourceId destResourceId =
+                FileSystems.matchNewResource(destDwh, true)
+                    .resolve(dirName, StandardResolveOptions.RESOLVE_DIRECTORY)
+                    .resolve(resourceId.getFilename(), StandardResolveOptions.RESOLVE_FILE);
+            destResourceIdList.add(destResourceId);
+          }
+        });
     FileSystems.copy(sourceResourceIdList, destResourceIdList);
   }
 
