@@ -15,6 +15,7 @@ import argparse
 import json
 import logging
 import shutil
+import sys
 from typing import Any, Dict, Optional
 
 import requests
@@ -26,41 +27,83 @@ RUN_MODES = ["incremental", "full", "views"]
 
 COMMAND_LIST = ["dwh", "next", "status", "run", "config", "logs", "tables"]
 
+logger = logging.getLogger(__name__)
+
 
 def process_response(response: str, args: argparse.Namespace):
-    print(
-        f"Command: {args.command} "
-        f"{args.subcommand if hasattr(args, 'subcommand') else ''}"
+    command_str = (
+        f"{args.command} "
+        f"{args.subcommand if hasattr(args, 'subcommand') else ''}".strip()
     )
-    print(f"Request url: {args.url}")
-    print("Response:")
+    logger.info(f"Command: {command_str}")
+    logger.info(f"Request url: {args.url}")
+    logger.info("Response:")
     try:
-        print(json.dumps(response, indent=4))
+        logger.info(json.dumps(response, indent=4))
     except json.JSONDecodeError:
-        print(response)
+        logger.info(response)
 
 
 def _make_api_request(
     verb: str, url: str, params: Optional[Dict[str, Any]] = None
 ) -> Optional[Dict[str, Any]]:
+    logger.debug(f"Making API request: {verb} {url}")
+    logger.debug(f"Request parameters: {params}")
     try:
+        headers = {"Content-Type": "application/json", "Accept": "*/*"}
+        logger.debug(f"Request headers: {headers}")
+
         if verb == HTTP_POST:
-            response = requests.post(url, json={}, timeout=5)
+            logger.debug("Executing POST request with empty JSON body")
+            response = requests.post(
+                url, json={}, params=params, headers=headers, timeout=5
+            )
         else:
-            response = requests.get(url, params=params, timeout=5)
+            logger.debug("Executing GET request")
+            response = requests.get(url, params=params, headers=headers, timeout=5)
 
-        response.raise_for_status()
+        logger.info(f"Response status code: {response.status_code}")
+        logger.debug(f"Response headers: {dict(response.headers)}")
 
-        if response.headers.get("Content-Type", "").startswith("application/json"):
+        if not response.ok:
+            logger.error(f"HTTP error response received: {response.status_code}")
+            logger.debug(f"Response headers: {dict(response.headers)}")
+
+            try:
+                error_content_type = response.headers.get("Content-Type", "")
+                if error_content_type.startswith("application/json"):
+                    error_data = response.json()
+                    logger.error("Error response body (JSON): ")
+                    logger.error(f"{json.dumps(error_data, indent=2)}")
+                else:
+                    error_text = response.text
+                    logger.error(f"Error response body (text): {error_text}")
+            except json.JSONDecodeError as parse_err:
+                logger.error(f"Could not parse error response body: {parse_err}")
+                logger.error(f"Raw error response: {response.content}")
+
+            response.raise_for_status()
+
+        logger.debug("Status check passed")
+
+        content_type = response.headers.get("Content-Type", "")
+
+        if content_type.startswith("application/json"):
             data = response.json()
+            logger.debug("Parsed JSON response successfully")
         else:
             data = response.text
+            logger.debug(f"Response is plain text, length: {len(data)}")
+
+        logger.debug("API request completed successfully")
         return data
+    except requests.exceptions.HTTPError as http_err:
+        logger.error(f"HTTP error occurred: {http_err}")
     except requests.exceptions.RequestException as req_err:
-        logging.error("An error occurred during the request: %s", req_err)
+        logger.error(f"An error occurred during the request: {req_err}")
     except json.JSONDecodeError as json_err:
-        logging.error("Failed to decode JSON response: %s", json_err)
-        print(response)
+        logger.error(f"Failed to decode JSON response: {json_err}")
+        logger.error(response)
     return None
 
 
@@ -74,7 +117,7 @@ def config(args: argparse.Namespace) -> str:
             response = _make_api_request(HTTP_GET, f"{args.url}/config")
         process_response(response, args)
     except requests.exceptions.RequestException as e:
-        print(f"Error processing: {e}")
+        logger.error(f"Error processing: {e}")
 
 
 def next_scheduled(args: argparse.Namespace) -> str:
@@ -82,25 +125,46 @@ def next_scheduled(args: argparse.Namespace) -> str:
         response = _make_api_request(HTTP_GET, f"{args.url}/next")
         process_response(response, args)
     except requests.exceptions.RequestException as e:
-        print(f"Error processing: {e}")
+        logger.error(f"Error processing: {e}")
 
 
-def status(args: str) -> str:
+def status(args: argparse.Namespace) -> str:
     try:
         response = _make_api_request(HTTP_GET, f"{args.url}/status")
         process_response(response, args)
     except requests.exceptions.RequestException as e:
-        print(f"Error processing: {e}")
+        logger.error(f"Error processing: {e}")
 
 
-def run(args: str) -> str:
+def run(args: argparse.Namespace) -> str:
+    logger.info("=" * 50)
+    logger.info("Executing 'run' command - starting pipeline run")
+    logger.info(f"Run mode: {args.mode}")
+    logger.info(f"Target URL: {args.url}")
+    logger.info("=" * 50)
+
     try:
-        response = _make_api_request(
-            HTTP_POST, f"{args.url}/run?runMode={args.mode.upper()}"
-        )
+        params = {"runMode": args.mode.upper()}
+        logger.debug(f"Request parameters: {params}")
+        logger.debug(f"Initiating pipeline run with mode: {args.mode.upper()}")
+
+        response = _make_api_request(HTTP_POST, f"{args.url}/run", params=params)
+
+        if response:
+            logger.info("Pipeline run request successful")
+            logger.debug(f"Response data: {response}")
+        else:
+            logger.warning("Pipeline run request returned no response")
+
         process_response(response, args)
+        logger.info("Run command completed successfully")
+        logger.info("=" * 50)
     except requests.exceptions.RequestException as e:
-        print(f"Error processing: {e}")
+        logger.error("=" * 50)
+        logger.error(f"Error in run command: {e}")
+        logger.error(f"Failed to execute pipeline run with mode: {args.mode}")
+        logger.error("=" * 50)
+        logger.error(f"Error processing: {e}")
 
 
 def tables(args: argparse.Namespace) -> str:
@@ -108,7 +172,7 @@ def tables(args: argparse.Namespace) -> str:
         response = _make_api_request(HTTP_POST, f"{args.url}/tables")
         process_response(response, args)
     except requests.exceptions.RequestException as e:
-        print(f"Error processing: {e}")
+        logger.error(f"Error processing: {e}")
 
 
 def download_file(url: str, filename: str) -> str:
@@ -128,11 +192,11 @@ def logs(args: argparse.Namespace) -> str:
             response = download_file(f"{args.url}/download-error-log", filename)
             process_response(response, args)
         else:
-            print(
+            logger.info(
                 "You can use the tail command to watch the {DWH_ROOT}/error.log file."
             )
     except requests.exceptions.RequestException as e:
-        print(f"Error processing: {e}")
+        logger.error(f"Error processing: {e}")
 
 
 def delete_snapshot(args: argparse.Namespace) -> str:
@@ -155,11 +219,10 @@ def dwh(args: argparse.Namespace) -> str:
             response = _make_api_request(HTTP_GET, f"{args.url}/dwh")
         process_response(response, args)
     except requests.exceptions.RequestException as e:
-        print(f"Error processing: {e}")
+        logger.error(f"Error processing: {e}")
 
 
 def main():
-    logging.basicConfig(level=logging.INFO)
     parser = argparse.ArgumentParser(
         description="The CLI tool for fhir-data-pipes",
         formatter_class=argparse.RawTextHelpFormatter,
@@ -168,6 +231,9 @@ def main():
         "url",
         type=str,
         help="url of the pipeline controller's REST API",
+    )
+    parser.add_argument(
+        "--verbose", "-v", action="store_true", help="Enable verbose output"
     )
     subparsers = parser.add_subparsers(
         dest="command",
@@ -178,10 +244,7 @@ def main():
 
     config_parser = subparsers.add_parser("config", help="show config values")
     config_parser.add_argument(
-        "--config-name",
-        "-cn",
-        required=False,
-        help="name of the configuration key",
+        "--config-name", "-cn", required=False, help="name of the configuration key"
     )
     config_parser.set_defaults(func=config)
 
@@ -237,6 +300,17 @@ def main():
     dwh_delete_parser.set_defaults(func=dwh)
 
     args = parser.parse_args()
+
+    handler = logging.StreamHandler(sys.stdout)
+    if args.verbose:
+        formatter = logging.Formatter("%(asctime)s - %(levelname)s - %(message)s")
+        logger.setLevel(logging.DEBUG)
+    else:
+        formatter = logging.Formatter("%(message)s")
+        logger.setLevel(logging.INFO)
+    handler.setFormatter(formatter)
+    logger.addHandler(handler)
+
     args.func(args)
 
 

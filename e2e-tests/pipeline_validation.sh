@@ -217,28 +217,28 @@ function test_parquet_sink() {
     obs_view_expect=284379
   fi
 
-  print_message "Counting number of patients, encounters and obs sinked to parquet files"
+  print_message "Counting number of patients, encounters and obs in parquet files"
 
   local total_patients_streamed
   total_patients_streamed=$(retry_rowcount \
           "${HOME_PATH}/${PARQUET_SUBDIR}/Patient/" \
           "${TOTAL_TEST_PATIENTS}" \
           "${PARQUET_TOOLS_JAR}") || true
-  print_message "Total patients synced to Parquet ---> ${total_patients_streamed}"
+  print_message "Total patients in parquet ---> ${total_patients_streamed}"
 
   local total_encounters_streamed
   total_encounters_streamed=$(retry_rowcount \
           "${HOME_PATH}/${PARQUET_SUBDIR}/Encounter/" \
           "${TOTAL_TEST_ENCOUNTERS}" \
            "${PARQUET_TOOLS_JAR}") || true
-  print_message "Total encounters synced to Parquet ---> ${total_encounters_streamed}"
+  print_message "Total encounters in parquet ---> ${total_encounters_streamed}"
 
   local total_obs_streamed
   total_obs_streamed=$(retry_rowcount \
           "${HOME_PATH}/${PARQUET_SUBDIR}/Observation/" \
           "${TOTAL_TEST_OBS}" \
            "${PARQUET_TOOLS_JAR}") || true
-  print_message "Total obs synced to Parquet ---> ${total_obs_streamed}"
+  print_message "Total obs in parquet ---> ${total_obs_streamed}"
 
   if [[ -z ${STREAMING} ]]; then
     print_message "Parquet Sink Test Non-Streaming mode"
@@ -248,21 +248,21 @@ function test_parquet_sink() {
           "${HOME_PATH}/${PARQUET_SUBDIR}/VIEWS_TIMESTAMP_*/patient_flat/" \
           "${patient_view_expect}" \
           "${PARQUET_TOOLS_JAR}") || true
-    print_message "Total patient-flat rows synced ---> ${total_patient_flat}"
+    print_message "Total patient-flat rows in parquet ---> ${total_patient_flat}"
 
     local total_encounter_flat
     total_encounter_flat=$(retry_rowcount \
           "${HOME_PATH}/${PARQUET_SUBDIR}/VIEWS_TIMESTAMP_*/encounter_flat/" \
           "${TOTAL_TEST_ENCOUNTERS}" \
            "${PARQUET_TOOLS_JAR}") || true
-     print_message "Total encounter-flat rows synced ---> ${total_encounter_flat}"
+     print_message "Total encounter-flat rows in parquet ---> ${total_encounter_flat}"
 
     local total_obs_flat
     total_obs_flat=$(retry_rowcount \
           "${HOME_PATH}/${PARQUET_SUBDIR}/VIEWS_TIMESTAMP_*/observation_flat/" \
           "${obs_view_expect}" \
           "${PARQUET_TOOLS_JAR}") || true
-    print_message "Total observation-flat rows synced ---> ${total_obs_flat}"
+    print_message "Total observation-flat rows in parquet ---> ${total_obs_flat}"
   fi
 
   # Success criteria
@@ -335,19 +335,19 @@ function test_fhir_sink() {
   curl -L -X GET -u hapi:hapi --connect-timeout 5 --max-time 20 \
     "${SINK_FHIR_SERVER_URL}/fhir/Observation${enc_obs_query_param}" 2>/dev/null >>"${HOME_PATH}/${FHIR_JSON_SUBDIR}/fhir/obs.json"
 
-  print_message "Counting number of patients, encounters and obs sinked to fhir files"
+  print_message "Counting number of patients, encounters and obs in sink fhir files"
 
   local total_patients_sinked_fhir
   total_patients_sinked_fhir=$(jq '.total' "${HOME_PATH}/${FHIR_JSON_SUBDIR}/fhir/patients.json")
-  print_message "Total patients sinked to fhir ---> ${total_patients_sinked_fhir}"
+  print_message "Total patients in sink server ---> ${total_patients_sinked_fhir}"
 
   local total_encounters_sinked_fhir
   total_encounters_sinked_fhir=$(jq '.total' "${HOME_PATH}/${FHIR_JSON_SUBDIR}/fhir/encounters.json")
-  print_message "Total encounters sinked to fhir ---> ${total_encounters_sinked_fhir}"
+  print_message "Total encounters in sink server ---> ${total_encounters_sinked_fhir}"
 
   local total_obs_sinked_fhir
   total_obs_sinked_fhir=$(jq '.total' "${HOME_PATH}/${FHIR_JSON_SUBDIR}/fhir/obs.json")
-  print_message "Total observations sinked to fhir ---> ${total_obs_sinked_fhir}"
+  print_message "Total observations in sink server ---> ${total_obs_sinked_fhir}"
 
   if [[ "${total_patients_sinked_fhir}" == "${TOTAL_TEST_PATIENTS}" && "${total_encounters_sinked_fhir}" \
         == "${TOTAL_TEST_ENCOUNTERS}" && "${total_obs_sinked_fhir}" == "${TOTAL_TEST_OBS}" ]] \
