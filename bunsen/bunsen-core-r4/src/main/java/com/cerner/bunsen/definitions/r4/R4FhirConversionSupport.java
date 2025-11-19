@@ -28,7 +28,7 @@ public class R4FhirConversionSupport extends FhirConversionSupport {
 
     if (children == null) {
 
-      return null;
+      return Map.of();
     } else {
 
       // Some FHIR resources produce duplicate properties in the children,

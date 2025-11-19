@@ -45,11 +45,15 @@ public class Stu3AvroConverterCustomProfileTest {
     AvroConverter converterBunsenTestProfilePatient =
         AvroConverter.forResources(fhirContext, patientProfiles, 1);
 
-    avroBunsenTestProfilePatient =
+    Record testBunsenTestProfilePatientRecord =
         (Record) converterBunsenTestProfilePatient.resourceToAvro(testBunsenTestProfilePatient);
+    Assert.assertNotNull(testBunsenTestProfilePatientRecord);
+    avroBunsenTestProfilePatient = testBunsenTestProfilePatientRecord;
 
-    testBunsenTestProfilePatientDecoded =
+    Patient patient =
         (Patient) converterBunsenTestProfilePatient.avroToResource(avroBunsenTestProfilePatient);
+    Assert.assertNotNull(patient);
+    testBunsenTestProfilePatientDecoded = patient;
   }
 
   @Test

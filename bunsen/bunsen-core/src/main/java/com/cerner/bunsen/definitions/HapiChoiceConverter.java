@@ -81,7 +81,8 @@ public abstract class HapiChoiceConverter<T> extends HapiConverter<T> {
 
         HapiConverter converter = choiceEntry.getValue();
 
-        values[valueIndex] = converter.fromHapi(input);
+        Object value = converter.fromHapi(input);
+        if (value != null) values[valueIndex] = value;
       }
     }
 
