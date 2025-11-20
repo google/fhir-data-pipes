@@ -56,10 +56,10 @@ nav:
     - 'Deploy the "Controller Module"' : 'installation_controller.md'
     - 'Deploy the "Pipelines"' : 'installation_pipeline.md'
   - Tutorials:
-    - tutorials/index.md
-    - Set up local test servers : tutorials/test_servers.md
-    - Single Machine Deployment:  tutorials/single_machine.md
-    - Visualize Parquet DWH with Apache Superset: tutorials/add_dashboard.md
+    - Content : tutorials/index.md
+    - Step 1 - Set up local test servers(Data) : tutorials/test_servers.md
+    - Step 2 - Single Machine Deployment(Pipeline):  tutorials/single_machine.md
+    - Step 3 - Visualize Parquet DWH with Apache Superset: tutorials/add_dashboard.md
   - Additional Topics: 'additional.md'
   - Community:
     - 'Support' : 'support.md'
