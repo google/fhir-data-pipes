@@ -741,8 +741,8 @@ public class PipelineManager implements ApplicationListener<ApplicationReadyEven
             EtlUtils.runMultiplePipelinesWithTimestamp(pipelines, options);
         // Remove the metrics of the previous pipeline and register the new metrics
         manager.removePipelineMetrics();
-        pipelineResults
-            .forEach(pipelineResult -> manager.publishPipelineMetrics(pipelineResult.metrics()));
+        pipelineResults.forEach(
+            pipelineResult -> manager.publishPipelineMetrics(pipelineResult.metrics()));
         if (runMode == RunMode.VIEWS) {
           // Nothing more is needed to be done as we do not recreate a new DWH in this mode.
           // TODO record timing info and other details in this case.
@@ -757,8 +757,8 @@ public class PipelineManager implements ApplicationListener<ApplicationReadyEven
           logger.info("Merger options are {}", mergerOptions);
           List<PipelineResult> mergerPipelineResults =
               EtlUtils.runMultipleMergerPipelinesWithTimestamp(mergerPipelines, mergerOptions);
-          mergerPipelineResults
-              .forEach(pipelineResult -> manager.publishPipelineMetrics(pipelineResult.metrics()));
+          mergerPipelineResults.forEach(
+              pipelineResult -> manager.publishPipelineMetrics(pipelineResult.metrics()));
           manager.updateDwh(currentDwhRoot);
         }
         manager.createHiveTablesIfNeeded(

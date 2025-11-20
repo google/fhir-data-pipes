@@ -28,6 +28,7 @@ import static org.mockito.Mockito.when;
 
 import ca.uhn.fhir.context.FhirContext;
 import ca.uhn.fhir.parser.IParser;
+import ca.uhn.fhir.rest.api.CacheControlDirective;
 import ca.uhn.fhir.rest.api.SearchTotalModeEnum;
 import ca.uhn.fhir.rest.api.SummaryEnum;
 import ca.uhn.fhir.rest.client.api.IGenericClient;
@@ -96,6 +97,7 @@ public class FhirSearchUtilTest {
     when(query.count(anyInt())).thenReturn(query);
     when(query.totalMode(any(SearchTotalModeEnum.class))).thenReturn(query);
     when(query.summaryMode(any(SummaryEnum.class))).thenReturn(query);
+    when(query.cacheControl(any(CacheControlDirective.class))).thenReturn(query);
     when(query.returnBundle(any())).thenReturn(query);
     when(query.execute()).thenReturn(bundle);
   }
