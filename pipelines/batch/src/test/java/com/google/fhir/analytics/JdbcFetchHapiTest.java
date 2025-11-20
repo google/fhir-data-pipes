@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2023 Google LLC
+ * Copyright 2020-2025 Google LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,8 +17,9 @@ package com.google.fhir.analytics;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 
-import com.google.fhir.analytics.model.DatabaseConfiguration;
 import java.beans.PropertyVetoException;
 import java.io.IOException;
 import java.sql.Connection;
@@ -28,7 +29,6 @@ import java.sql.SQLException;
 import java.util.List;
 import java.util.Map;
 import javax.sql.DataSource;
-import junit.framework.TestCase;
 import org.apache.beam.sdk.options.PipelineOptionsFactory;
 import org.apache.beam.sdk.testing.TestPipeline;
 import org.junit.Before;
@@ -40,25 +40,28 @@ import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnitRunner;
 
 @RunWith(MockitoJUnitRunner.class)
-public class JdbcFetchHapiTest extends TestCase {
+public class JdbcFetchHapiTest {
 
   @Rule public transient TestPipeline testPipeline = TestPipeline.create();
 
-  @Mock private DataSource mockedDataSource;
+  // Initialization handled by Mockito's @Mock annotation
+  @SuppressWarnings("NullAway.Init")
+  @Mock
+  private DataSource mockedDataSource;
 
-  @Mock private ResultSet resultSet;
+  // Initialization handled by Mockito's @Mock annotation
+  @SuppressWarnings("NullAway.Init")
+  @Mock
+  private ResultSet resultSet;
 
   private FhirEtlOptions options;
 
   private JdbcFetchHapi jdbcFetchHapi;
 
-  private DatabaseConfiguration dbConfig;
-
   @Before
   public void setup() throws IOException, PropertyVetoException {
     String[] args = {"--jdbcModeHapi=true", "--jdbcMaxPoolSize=48", "--jdbcFetchSize=10000"};
     options = PipelineOptionsFactory.fromArgs(args).withValidation().as(FhirEtlOptions.class);
-    dbConfig = DatabaseConfiguration.createConfigFromFile("../../utils/hapi-postgres-config.json");
     jdbcFetchHapi = new JdbcFetchHapi(mockedDataSource);
   }
 
@@ -71,10 +74,10 @@ public class JdbcFetchHapiTest extends TestCase {
 
     // Verify the total number of query parameters and the content of the query parameters is
     // correct
-    assertEquals(queryParameterList.size(), 101);
-    assertEquals(queryParameterList.get(0).resourceType(), "Observation");
-    assertEquals(queryParameterList.get(0).numBatches(), 101);
-    assertEquals(queryParameterList.get(0).batchId(), 0);
+    assertEquals(101, queryParameterList.size());
+    assertEquals("Observation", queryParameterList.get(0).resourceType());
+    assertEquals(101, queryParameterList.get(0).numBatches());
+    assertEquals(0, queryParameterList.get(0).batchId());
   }
 
   @Test
@@ -90,12 +93,12 @@ public class JdbcFetchHapiTest extends TestCase {
         new JdbcFetchHapi.ResultSetToRowDescriptor(options.getResourceList()).mapRow(resultSet);
 
     assertNotNull(rowDescriptor);
-    assertEquals(rowDescriptor.resourceId(), "101");
-    assertEquals(rowDescriptor.resourceType(), "Encounter");
-    assertEquals(rowDescriptor.resourceVersion(), "1");
-    assertEquals(rowDescriptor.lastUpdated(), "2002-03-12 10:09:20");
-    assertEquals(rowDescriptor.fhirVersion(), "R4");
-    assertEquals(rowDescriptor.jsonResource(), "");
+    assertEquals("101", rowDescriptor.resourceId());
+    assertEquals("Encounter", rowDescriptor.resourceType());
+    assertEquals("1", rowDescriptor.resourceVersion());
+    assertEquals("2002-03-12 10:09:20", rowDescriptor.lastUpdated());
+    assertEquals("R4", rowDescriptor.fhirVersion());
+    assertEquals("", rowDescriptor.jsonResource());
   }
 
   @Test

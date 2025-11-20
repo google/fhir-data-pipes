@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2024 Google LLC
+ * Copyright 2020-2025 Google LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,6 +40,7 @@ import org.mockito.ArgumentMatchers;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+@SuppressWarnings("NullAway.Init")
 @ExtendWith(MockitoExtension.class)
 public class FhirStoreUtilTest {
 
@@ -110,6 +111,7 @@ public class FhirStoreUtilTest {
     assertThat(fhirStoreUtil, Matchers.<FhirStoreUtil>instanceOf(GcpStoreUtil.class));
   }
 
+  @SuppressWarnings("NullAway")
   @Test
   public void testUploadResource() {
     MethodOutcome result = fhirStoreUtil.uploadResource(patient);
