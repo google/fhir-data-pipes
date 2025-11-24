@@ -50,7 +50,7 @@
     <jcommander.version>1.82</jcommander.version>
     <license-maven-plugin.version>5.0.0</license-maven-plugin.version>
     <beam.version>2.56.0</beam.version>
-    <auto-value.version>1.11.0</auto-value.version>
+    <auto-value.version>1.11.1</auto-value.version>
     <lombok.version>1.18.42</lombok.version>
     <errorprone.version>2.42.0</errorprone.version>
     <nullaway.version>0.12.10</nullaway.version>
