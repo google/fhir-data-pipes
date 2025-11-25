@@ -192,15 +192,23 @@ function run_pipeline() {
 }
 
 function wait_for_completion() {
-  local runtime_minutes=15
-  local runtime_seconds=$((runtime_minutes * 60))
-  local start_time=$(date +%s)
-  local end_time=$((start_time + runtime_seconds))
+  local runtime="25 minute"
+  local end_time=$(date -ud "$runtime" +%s)
 
-  while [[ $(date +%s) -le ${end_time} ]]
+  while [[ $(date -u +%s) -le ${end_time} ]]
   do
-    local pipeline_status=$(controller "${PIPELINE_CONTROLLER_URL}" status \
-    | sed -n '/^{$/,/^}$/p' | jq -r '.pipelineStatus // ""')
+    # Here we extract only the JSON part of the output from controller 'status'
+    # command as there could be some logging info printed before the JSON output.
+    # We use 'sed' to get the lines between the first '{' and the last '}' and
+    # then pipe it to jq for parsing.
+    local controller_output=$(controller "${PIPELINE_CONTROLLER_URL}" status)
+    print_message "Controller output: ${controller_output}"
+
+    local json_extracted=$(echo "${controller_output}" | sed -n '/^{$/,/^}$/ {;p;/^}$/ {;n;p;};}')
+    print_message "Extracted JSON: ${json_extracted}"
+
+    local pipeline_status=$(echo "${json_extracted}" | jq -r '.pipelineStatus // "UNKNOWN"')
+    print_message "Pipeline status: ${pipeline_status}"
 
     if [[ "${pipeline_status}" == "RUNNING" ]]
     then

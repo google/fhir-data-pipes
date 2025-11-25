@@ -131,7 +131,7 @@ public class DwhFiles {
    * @param dwhRoot the root of the DWH
    * @param viewRoot the root of the view dir under DWH; note this should be an absolute path, but
    *     it is usually "under" `dwhRoot`.
-   * @param fhirContext
+   * @param fhirContext the FHIR Context of the FHIR version we are working with.
    */
   private DwhFiles(String dwhRoot, @Nullable String viewRoot, FhirContext fhirContext) {
     Preconditions.checkArgument(!Strings.isNullOrEmpty(dwhRoot));
@@ -199,8 +199,10 @@ public class DwhFiles {
   }
 
   /**
-   * @param resourceType the type of the FHIR resources
-   * @return The file pattern for Parquet files of `resourceType` in this DWH.
+   * Returns the file-pattern for all Parquet files of a specific resource type.
+   *
+   * @param resourceType the type of the FHIR resources {@return The file pattern for Parquet files
+   *     of `resourceType` in this DWH.}
    */
   public String getResourceFilePattern(String resourceType) {
     return String.format(
@@ -221,14 +223,14 @@ public class DwhFiles {
   /**
    * Returns all the child directories under the given base directory which are 1-level deep. Note
    * in many cloud/distributed file-systems, we do not have "directories"; there are only buckets
-   * and files in those buckets. We use file-seprators (e.g., `/`) to simulate the concept of
+   * and files in those buckets. We use file-separators (e.g., `/`) to simulate the concept of
    * directories. So for example, this method returns an empty set if `baseDir` is `bucket/test` and
    * the only file in that bucket is `bucket/test/dir1/dir2/file.txt`. If `baseDir` is
    * `bucket/test/dir1`, in the above example, `dir2` is returned.
    *
    * @param baseDir the path under which "directories" are looked for.
    * @return The list of all child directories under the base directory
-   * @throws IOException
+   * @throws IOException if there is an error accessing the base directory
    */
   static Set<ResourceId> getAllChildDirectories(String baseDir) throws IOException {
     return getAllChildDirectories(baseDir, "");
@@ -241,8 +243,8 @@ public class DwhFiles {
    *
    * @param baseDir the baseDir of the DWH
    * @param commonPrefix the prefix of directories under `baseDir` that we are looking for
-   * @return the list of found directory names.
-   * @throws IOException
+   * @return the set of found directory names.
+   * @throws IOException if there is an error accessing the base directory
    */
   static Set<ResourceId> getAllChildDirectories(String baseDir, String commonPrefix)
       throws IOException {
@@ -280,7 +282,7 @@ public class DwhFiles {
    *
    * @param commonPrefix the common prefix for the timestamped directories to search.
    * @return the latest directory with the `commonPrefix`.
-   * @throws IOException
+   * @throws IOException if there is an error accessing the dwhRoot directory
    */
   @Nullable
   private static ResourceId getLatestPath(String dwhRoot, String commonPrefix) throws IOException {
@@ -300,6 +302,8 @@ public class DwhFiles {
   }
 
   /**
+   * Gets the latest incremental-run path under the given DWH root.
+   *
    * @return the current incremental run path if one found; null otherwise.
    */
   @Nullable
@@ -435,17 +439,16 @@ public class DwhFiles {
     }
 
     List<ResourceId> destResourceIdList = new ArrayList<>();
-    sourceResourceIdList.stream()
-        .forEach(
-            resourceId -> {
-              if (resourceId.getFilename() != null) {
-                ResourceId destResourceId =
-                    FileSystems.matchNewResource(destDwh, true)
-                        .resolve(dirName, StandardResolveOptions.RESOLVE_DIRECTORY)
-                        .resolve(resourceId.getFilename(), StandardResolveOptions.RESOLVE_FILE);
-                destResourceIdList.add(destResourceId);
-              }
-            });
+    sourceResourceIdList.forEach(
+        resourceId -> {
+          if (resourceId.getFilename() != null) {
+            ResourceId destResourceId =
+                FileSystems.matchNewResource(destDwh, true)
+                    .resolve(dirName, StandardResolveOptions.RESOLVE_DIRECTORY)
+                    .resolve(resourceId.getFilename(), StandardResolveOptions.RESOLVE_FILE);
+            destResourceIdList.add(destResourceId);
+          }
+        });
     FileSystems.copy(sourceResourceIdList, destResourceIdList);
   }
 
@@ -580,7 +583,7 @@ public class DwhFiles {
     };
   }
 
-  /** This method returns the {@code path} by appending the {@code fileseparator} if required. */
+  /** This method returns the {@code path} by appending the {@code fileSeparator} if required. */
   public static String getPathEndingWithFileSeparator(String path, String fileSeparator) {
     Preconditions.checkNotNull(path);
     Preconditions.checkNotNull(fileSeparator);

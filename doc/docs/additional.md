@@ -126,7 +126,7 @@ You can get the list of available commands by running with the help flags `-h`
 or`--help`. See sample output below.
 
 ```sh
-usage: controller [-h] url {config,next,status,run,tables,logs,dwh} ...
+usage: controller [-h] [--verbose] url {config,next,status,run,tables,logs,dwh} ...
 
 The CLI tool for fhir-data-pipes
 
@@ -144,6 +144,7 @@ positional arguments:
 
 optional arguments:
   -h, --help            show this help message and exit
+  -v, --verbose         Enable verbose output
 ```
 
 Show config values
