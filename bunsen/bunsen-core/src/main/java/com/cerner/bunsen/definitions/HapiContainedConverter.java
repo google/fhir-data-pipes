@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import org.hl7.fhir.instance.model.api.IBase;
+import org.jspecify.annotations.Nullable;
 
 /**
  * Partial converter implementation for contained structures. Contained converters are distinct from
@@ -36,7 +37,7 @@ public abstract class HapiContainedConverter<T> extends HapiConverter<T> {
    * @param contained the entries to be contained.
    * @return the Resource Container.
    */
-  protected abstract Object createContained(Object[] contained);
+  protected abstract Object createContained(@Nullable Object[] contained);
 
   /** Represents the association of a contained element to its type. */
   protected static final class ContainerEntry {
@@ -99,17 +100,14 @@ public abstract class HapiContainedConverter<T> extends HapiConverter<T> {
 
     List containedList = (List) input;
 
-    Object[] values = new Object[containedList.size()];
+    @Nullable Object[] values = new Object[containedList.size()];
 
     for (int valueIndex = 0; valueIndex < containedList.size(); ++valueIndex) {
 
       IBase composite = (IBase) containedList.get(valueIndex);
       StructureField<HapiConverter<T>> schemaEntry = contained.get(composite.fhirType());
 
-      if (schemaEntry != null) {
-        Object value = schemaEntry.result().fromHapi(composite);
-        if (value != null) values[valueIndex] = value;
-      }
+      values[valueIndex] = schemaEntry != null ? schemaEntry.result().fromHapi(composite) : null;
     }
 
     return createContained(values);
