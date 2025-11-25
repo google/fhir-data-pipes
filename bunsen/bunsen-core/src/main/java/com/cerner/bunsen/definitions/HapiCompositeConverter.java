@@ -35,7 +35,7 @@ public abstract class HapiCompositeConverter<T> extends HapiConverter<T> {
 
   protected abstract Object getChild(Object composite, int index);
 
-  protected abstract Object createComposite(Object[] children);
+  protected abstract Object createComposite(@Nullable Object[] children);
 
   protected abstract boolean isMultiValued(T schemaType);
 
@@ -155,7 +155,7 @@ public abstract class HapiCompositeConverter<T> extends HapiConverter<T> {
 
     IBase composite = (IBase) input;
 
-    Object[] values = new Object[children.size()];
+    @Nullable Object[] values = new Object[children.size()];
 
     int valueIndex = 0;
     Iterator<StructureField<HapiConverter<T>>> schemaIterator = children.iterator();
@@ -170,15 +170,13 @@ public abstract class HapiCompositeConverter<T> extends HapiConverter<T> {
       // for meta element and if not then the field is going to be meta element.
       if (schemaEntry.fieldName().equals("id")) {
         // Id element.
-        Object value = schemaEntry.result().fromHapi(((IAnyResource) composite).getIdElement());
-        if (value != null) values[0] = value;
+        values[0] = schemaEntry.result().fromHapi(((IAnyResource) composite).getIdElement());
         valueIndex++;
 
         schemaEntry = schemaIterator.next();
       }
       // Meta element.
-      Object value = schemaEntry.result().fromHapi(((IAnyResource) composite).getMeta());
-      if (value != null) values[valueIndex++] = value;
+      values[valueIndex++] = schemaEntry.result().fromHapi(((IAnyResource) composite).getMeta());
     }
 
     Map<String, List> properties = fhirSupport.compositeValues(composite);
@@ -203,12 +201,10 @@ public abstract class HapiCompositeConverter<T> extends HapiConverter<T> {
 
         if (isMultiValued(converter.getDataType())) {
 
-          Object value = schemaEntry.result().fromHapi(propertyValues);
-          if (value != null) values[valueIndex] = value;
+          values[valueIndex] = schemaEntry.result().fromHapi(propertyValues);
 
         } else {
-          Object value = schemaEntry.result().fromHapi(propertyValues.get(0));
-          if (value != null) values[valueIndex] = value;
+          values[valueIndex] = schemaEntry.result().fromHapi(propertyValues.get(0));
         }
       } else if (converter.extensionUrl() != null) {
 
@@ -244,8 +240,7 @@ public abstract class HapiCompositeConverter<T> extends HapiConverter<T> {
                 .collect(Collectors.toList());
 
         if (extensionList.size() > 0) {
-          Object value = schemaEntry.result().fromHapi(extensionList);
-          if (value != null) values[valueIndex] = value;
+          values[valueIndex] = schemaEntry.result().fromHapi(extensionList);
         }
       }
     }
