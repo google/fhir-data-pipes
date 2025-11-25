@@ -23,11 +23,12 @@ public class ProfileMapperFhirContexts {
       LoggerFactory.getLogger(ProfileMapperFhirContexts.class.getName());
   private final Map<FhirVersionEnum, FhirContextData> fhirContextMappings;
 
-  @SuppressWarnings(
-      "NullAway.Init") // This is initialized/used via the singleton pattern getInstance method.
+  // This is initialized/used via the singleton pattern getInstance method.
+  @SuppressWarnings("NullAway.Init")
   private static ProfileMapperFhirContexts instance;
 
-  @SuppressWarnings("NullAway") // This is initialized in the private constructor.
+  // This is initialized in the private constructor.
+  @SuppressWarnings("NullAway")
   private final ProfileMappingProvider profileMappingProvider;
 
   private ProfileMapperFhirContexts() {

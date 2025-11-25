@@ -128,8 +128,8 @@ public class Stu3StructureDefinitions extends StructureDefinitions {
       return elementDefinition.getIsModifier();
     }
 
-    @Override
     @Nullable
+    @Override
     public String getFixedPrimitiveValue() {
       if (elementDefinition.getFixed() == null) {
         return null;
@@ -146,6 +146,7 @@ public class Stu3StructureDefinitions extends StructureDefinitions {
           .collect(Collectors.toList());
     }
 
+    @Nullable
     @Override
     public String getFirstTypeProfile() {
       return elementDefinition.getTypeFirstRep().getProfile();

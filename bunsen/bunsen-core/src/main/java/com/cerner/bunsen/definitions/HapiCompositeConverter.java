@@ -136,7 +136,7 @@ public abstract class HapiCompositeConverter<T> extends HapiConverter<T> {
   }
 
   protected HapiCompositeConverter(
-      @Nullable String elementType, // TODO should we make these non-null with Precondition checks?
+      @Nullable String elementType,
       List<StructureField<HapiConverter<T>>> children,
       T structType,
       FhirConversionSupport fhirSupport,
