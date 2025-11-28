@@ -10,6 +10,7 @@ import java.util.Objects;
 import org.hl7.fhir.instance.model.api.IBase;
 import org.hl7.fhir.instance.model.api.IBaseDatatype;
 import org.hl7.fhir.instance.model.api.IBaseExtension;
+import org.jspecify.annotations.Nullable;
 
 /**
  * Converter implementation for extension leaf primitives.
@@ -79,6 +80,7 @@ public class LeafExtensionConverter<T> extends HapiConverter<T> {
     this.valueConverter = valueConverter;
   }
 
+  @Nullable
   @Override
   public Object fromHapi(Object input) {
 

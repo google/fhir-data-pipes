@@ -7,12 +7,13 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 import org.hl7.fhir.instance.model.api.IBase;
+import org.jspecify.annotations.Nullable;
 
 public abstract class HapiChoiceConverter<T> extends HapiConverter<T> {
 
   protected abstract Object getChild(Object composite, int index);
 
-  protected abstract Object createComposite(Object[] children);
+  protected abstract Object createComposite(@Nullable Object[] children);
 
   private final Map<String, HapiConverter<T>> choiceTypes;
 
@@ -66,7 +67,7 @@ public abstract class HapiChoiceConverter<T> extends HapiConverter<T> {
 
     String fhirType = fhirSupport.fhirType((IBase) input);
 
-    Object[] values = new Object[choiceTypes.size()];
+    @Nullable Object[] values = new Object[choiceTypes.size()];
 
     Iterator<Map.Entry<String, HapiConverter<T>>> schemaIterator =
         choiceTypes.entrySet().iterator();

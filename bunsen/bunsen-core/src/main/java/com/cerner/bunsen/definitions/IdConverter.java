@@ -2,6 +2,7 @@ package com.cerner.bunsen.definitions;
 
 import org.hl7.fhir.instance.model.api.IIdType;
 import org.hl7.fhir.instance.model.api.IPrimitiveType;
+import org.jspecify.annotations.Nullable;
 
 public class IdConverter<T> extends StringConverter<T> {
 
@@ -9,6 +10,7 @@ public class IdConverter<T> extends StringConverter<T> {
     super(dataType);
   }
 
+  @Nullable
   @Override
   protected Object fromHapi(IPrimitiveType primitive) {
     // We do this hack to work around the issue that `id` has type `System.String` in R4 (not `id`).
