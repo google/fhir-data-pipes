@@ -149,7 +149,7 @@ public class ParquetUtilTest {
     rootPath = Files.createTempDirectory("PARQUET_TEST");
     parquetUtil =
         new ParquetUtil(
-            FhirVersionEnum.R4, "", rootPath.toString(), "", "", null, 0, 0, "", 1, false);
+            FhirVersionEnum.R4, "", rootPath.toString(), "", "", "", 0, 0, "", 1, false);
     IParser parser = avroConversionUtil.getFhirContext().newJsonParser();
     Bundle bundle = parser.parseResource(Bundle.class, observationBundle);
     for (Bundle.BundleEntryComponent entry : bundle.getEntry()) {
@@ -179,7 +179,7 @@ public class ParquetUtilTest {
     rootPath = Files.createTempDirectory("PARQUET_TEST");
     parquetUtil =
         new ParquetUtil(
-            FhirVersionEnum.R4, "", rootPath.toString(), "", "", null, 1, 0, "", 1, false);
+            FhirVersionEnum.R4, "", rootPath.toString(), "", "", "", 1, 0, "", 1, false);
     IParser parser = avroConversionUtil.getFhirContext().newJsonParser();
     Bundle bundle = parser.parseResource(Bundle.class, observationBundle);
     for (Bundle.BundleEntryComponent entry : bundle.getEntry()) {
@@ -222,17 +222,7 @@ public class ParquetUtilTest {
     final int rowGroupSize = approximateMemSizeOfOneObservarion * 90;
     parquetUtil =
         new ParquetUtil(
-            FhirVersionEnum.R4,
-            "",
-            rootPath.toString(),
-            "",
-            "",
-            null,
-            0,
-            rowGroupSize,
-            "",
-            1,
-            false);
+            FhirVersionEnum.R4, "", rootPath.toString(), "", "", "", 0, rowGroupSize, "", 1, false);
     IParser parser = avroConversionUtil.getFhirContext().newJsonParser();
     Bundle bundle = parser.parseResource(Bundle.class, observationBundle);
     // There are 6 resources in the bundle, so we write 17*6 (>100) resources, such that the page
@@ -310,7 +300,7 @@ public class ParquetUtilTest {
     rootPath = Files.createTempDirectory("PARQUET_TEST");
     parquetUtil =
         new ParquetUtil(
-            FhirVersionEnum.R4, "", rootPath.toString(), "", "", null, 0, 0, "", 1, false);
+            FhirVersionEnum.R4, "", rootPath.toString(), "", "", "", 0, 0, "", 1, false);
     String observationStr =
         Resources.toString(
             Resources.getResource("observation_decimal.json"), StandardCharsets.UTF_8);
@@ -326,7 +316,7 @@ public class ParquetUtilTest {
     rootPath = Files.createTempDirectory("PARQUET_TEST");
     parquetUtil =
         new ParquetUtil(
-            FhirVersionEnum.R4, "", rootPath.toString(), "", "", null, 0, 0, "", 1, false);
+            FhirVersionEnum.R4, "", rootPath.toString(), "", "", "", 0, 0, "", 1, false);
     String observationBundleStr =
         Resources.toString(
             Resources.getResource("observation_decimal_bundle.json"), StandardCharsets.UTF_8);
@@ -342,7 +332,7 @@ public class ParquetUtilTest {
     rootPath = Files.createTempDirectory("PARQUET_TEST");
     parquetUtil =
         new ParquetUtil(
-            FhirVersionEnum.R4, "", rootPath.toString(), "", "", null, 0, 0, "", 1, false);
+            FhirVersionEnum.R4, "", rootPath.toString(), "", "", "", 0, 0, "", 1, false);
 
     String patientStr =
         Resources.toString(Resources.getResource("patient_bundle.json"), StandardCharsets.UTF_8);
@@ -374,7 +364,7 @@ public class ParquetUtilTest {
             rootPath.toString(),
             "",
             "",
-            null,
+            "",
             0,
             0,
             "",
