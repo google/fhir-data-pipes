@@ -73,7 +73,6 @@ public class ReadJsonFromFileTest {
     readJsonFromFileFn.teardown();
   }
 
-  // SuppressWarnings added to ignore testcase NullAway warnings.
   @SuppressWarnings("NullAway")
   @Test
   public void testProcessBundleUrnRef()
@@ -101,7 +100,6 @@ public class ReadJsonFromFileTest {
 
   // SuppressWarnings added to ignore capturedBundle NullAway warnings whose value is provided by
   // setUp method.
-  // SuppressWarnings added to ignore testcase NullAway warnings.
   @SuppressWarnings("NullAway")
   @Test
   public void testProcessBundleRelativeRef()

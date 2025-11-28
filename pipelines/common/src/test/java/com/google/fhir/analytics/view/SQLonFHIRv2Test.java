@@ -85,7 +85,6 @@ public class SQLonFHIRv2Test {
           // TODO the error condition here does not seem right.
           "validate.wrong type in forEach");
 
-  // SuppressWarnings added to ignore testcase NullAway warnings.
   @SuppressWarnings("NullAway")
   @Test
   public void runAllTests() throws IOException {

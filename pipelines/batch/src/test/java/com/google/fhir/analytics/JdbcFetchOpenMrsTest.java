@@ -133,7 +133,6 @@ public class JdbcFetchOpenMrsTest {
     testPipeline.run();
   }
 
-  // SuppressWarnings added to ignore testcase NullAway warnings.
   @SuppressWarnings("NullAway")
   @Test
   public void testCreateFhirReverseMap() throws Exception {

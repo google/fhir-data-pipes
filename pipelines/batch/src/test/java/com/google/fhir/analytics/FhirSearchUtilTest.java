@@ -44,7 +44,6 @@ import java.util.List;
 import java.util.Map;
 import org.apache.beam.sdk.options.PipelineOptionsFactory;
 import org.hl7.fhir.r4.model.Bundle;
-import org.junit.Assert;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -110,10 +109,11 @@ public class FhirSearchUtilTest {
     assertThat(baseUrl, equalTo(BASE_URL + "?" + PAGE_URL_PARAM));
   }
 
+  @SuppressWarnings("NullAway")
   @Test
   public void testSearchForResource() {
     Bundle actualBundle = fhirSearchUtil.searchByUrl(SEARCH_URL, 10, SummaryEnum.DATA);
-    Assert.assertNotNull(actualBundle);
+    assertThat(actualBundle, notNullValue());
     assertThat(actualBundle.equalsDeep(bundle), equalTo(true));
   }
 
@@ -139,7 +139,6 @@ public class FhirSearchUtilTest {
     assertThat(nextUrl, nullValue());
   }
 
-  // SuppressWarnings added to ignore testcase NullAway warnings.
   @SuppressWarnings("NullAway")
   @Test
   public void testCreateSegments() {
@@ -151,7 +150,6 @@ public class FhirSearchUtilTest {
     assertThat(segmentMap.get("Patient").size(), equalTo(4));
   }
 
-  // SuppressWarnings added to ignore testcase NullAway warnings.
   @SuppressWarnings("NullAway")
   @Test
   public void testCreateSegmentsWithSince() {

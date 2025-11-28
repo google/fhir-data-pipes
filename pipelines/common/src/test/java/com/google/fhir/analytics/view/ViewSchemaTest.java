@@ -135,7 +135,6 @@ public class ViewSchemaTest {
     assertThat(schema.getField("obs_date").toString(), notNullValue());
   }
 
-  // SuppressWarnings added to ignore testcase NullAway warnings.
   @SuppressWarnings("NullAway")
   @Test
   public void setValueInRecordPatientTest()
@@ -172,7 +171,6 @@ public class ViewSchemaTest {
     assertThat(record.get(colNames[7]), equalTo(val7));
   }
 
-  // SuppressWarnings added to ignore testcase NullAway warnings.
   @SuppressWarnings("NullAway")
   @Test
   public void setValueInRecordObservationTest()
@@ -219,7 +217,6 @@ public class ViewSchemaTest {
    * @see com.google.fhir.analytics.view.ViewSchema#setValueInRecord(RowList, ViewDefinition)
    */
   @Test
-  // SuppressWarnings added to ignore testcase NullAway warnings.
   @SuppressWarnings("NullAway")
   public void setValueInRecordCollectionTest()
       throws IOException, ViewApplicationException, ViewDefinitionException {

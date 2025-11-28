@@ -56,7 +56,6 @@ public class LocalDwhFilesTest {
     assertThat(dwhFiles.getResourcePath("Patient").toString(), equalTo("C:\\tmp\\Patient\\"));
   }
 
-  // SuppressWarnings added to ignore testcase NullAway warnings.
   @SuppressWarnings("NullAway")
   @Test
   public void getIncrementalRunPathTest() throws IOException {
@@ -76,7 +75,6 @@ public class LocalDwhFilesTest {
     assertThat(latestIncrementalRunPath.toString(), equalTo(incrementalRunPath2.toString()));
   }
 
-  // SuppressWarnings added to ignore testcase NullAway warnings.
   @SuppressWarnings("NullAway")
   @Test
   public void getViewsPathTest() throws IOException {
