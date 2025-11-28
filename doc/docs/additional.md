@@ -126,7 +126,7 @@ You can get the list of available commands by running with the help flags `-h`
 or`--help`. See sample output below.
 
 ```sh
-usage: controller [-h] url {config,next,status,run,tables,logs,dwh} ...
+usage: controller [-h] [--verbose] url {config,next,status,run,tables,logs,dwh} ...
 
 The CLI tool for fhir-data-pipes
 
@@ -144,6 +144,7 @@ positional arguments:
 
 optional arguments:
   -h, --help            show this help message and exit
+  -v, --verbose         Enable verbose output
 ```
 
 Show config values
@@ -213,17 +214,11 @@ controller <url> dwh delete --snapshot-id <snapshot id>
 first. A valid snapshot-id is the full id as shown in the list e.g.
 `dwh/controller_DEV_DWH_TIMESTAMP_2025_08_14T17_47_15_357080Z`
 
-**Note on CLI Access in Docker container:** If you are running the pipeline
-controller in a docker container as defined in ./Dockerfile e.g. such as when
-using the Single Machine docker compose configuration, you can access the CLI
-tool by running the following command from the host machine.
+**Note on CLI Access with Docker ** If you are running the pipeline controller
+in a docker container as defined in ./Dockerfile e.g. such as when using the
+Single Machine docker compose configuration, you can access the CLI tool by
+running the following command from the host machine.
 
 ```sh
-docker exec -it <container_id or container_name> /bin/bash
-```
-
-And then access the CLI tool as described above.
-
-```sh
-controller <url> <command> [options]
+docker exec <container_id or container_name> controller <url> <command> [options]
 ```
