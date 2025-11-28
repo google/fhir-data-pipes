@@ -139,8 +139,9 @@ public class FhirSearchUtilTest {
     assertThat(nextUrl, nullValue());
   }
 
-  @Test
+  // SuppressWarnings added to ignore testcase NullAway warnings.
   @SuppressWarnings("NullAway")
+  @Test
   public void testCreateSegments() {
     FhirEtlOptions options = PipelineOptionsFactory.as(FhirEtlOptions.class);
     options.setResourceList("Patient");
