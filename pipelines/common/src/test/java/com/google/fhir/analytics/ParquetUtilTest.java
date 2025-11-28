@@ -32,7 +32,6 @@ import java.nio.file.*;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import org.apache.beam.sdk.io.fs.ResourceId;
 import org.apache.hadoop.conf.Configuration;
@@ -69,6 +68,8 @@ public class ParquetUtilTest {
 
   @TempDir File temporaryFolder;
 
+  // Initialization handled by JUnit @BeforeEach annotation
+  @SuppressWarnings("NullAway.Init")
   @BeforeEach
   public void setup() throws IOException, ProfileException {
     File rootFolder = new File(temporaryFolder, PARQUET_ROOT);
@@ -156,7 +157,7 @@ public class ParquetUtilTest {
     }
     parquetUtil.flushAllWritersAndStopTimer();
     String fileSeparator = DwhFiles.getFileSeparatorForDwhFiles(rootPath.toString());
-    Stream<Path> files =
+    try (Stream<Path> stream =
         Files.list(rootPath.resolve("Observation"))
             .filter(
                 f ->
@@ -166,8 +167,10 @@ public class ParquetUtilTest {
                                 + fileSeparator
                                 + "Observation"
                                 + fileSeparator
-                                + "Observation_output-"));
-    assertThat(files.count(), equalTo(1L));
+                                + "Observation_output-"))) {
+      List<Path> files = stream.toList();
+      assertThat(files.size(), equalTo(1));
+    }
   }
 
   @Test
@@ -185,18 +188,21 @@ public class ParquetUtilTest {
     }
     parquetUtil.flushAllWritersAndStopTimer();
     String fileSeparator = DwhFiles.getFileSeparatorForDwhFiles(rootPath.toString());
-    Stream<Path> files =
-        Files.list(rootPath.resolve("Observation"))
-            .filter(
-                f ->
-                    f.toString()
-                        .startsWith(
-                            rootPath.toString()
-                                + fileSeparator
-                                + "Observation"
-                                + fileSeparator
-                                + "Observation_output-"));
-    assertThat(files.count(), equalTo(6L));
+    try (Stream<Path> fileStream = Files.list(rootPath.resolve("Observation"))) {
+      long filesCount =
+          fileStream
+              .filter(
+                  f ->
+                      f.toString()
+                          .startsWith(
+                              rootPath.toString()
+                                  + fileSeparator
+                                  + "Observation"
+                                  + fileSeparator
+                                  + "Observation_output-"))
+              .count();
+      assertThat(filesCount, equalTo(6L));
+    }
   }
 
   /**
@@ -228,20 +234,23 @@ public class ParquetUtilTest {
     }
     parquetUtil.flushAllWritersAndStopTimer();
     String fileSeparator = DwhFiles.getFileSeparatorForDwhFiles(rootPath.toString());
-    List<Path> files =
-        Files.list(rootPath.resolve("Observation"))
-            .filter(
-                f ->
-                    f.toString()
-                        .startsWith(
-                            rootPath.toString()
-                                + fileSeparator
-                                + "Observation"
-                                + fileSeparator
-                                + "Observation_output-"))
-            .collect(Collectors.toList());
-    // We expect only one file to be created.
-    assertThat(files.size(), equalTo(1));
+    List<Path> files;
+    try (var fileStream = Files.list(rootPath.resolve("Observation"))) {
+      files =
+          fileStream
+              .filter(
+                  f ->
+                      f.toString()
+                          .startsWith(
+                              rootPath.toString()
+                                  + fileSeparator
+                                  + "Observation"
+                                  + fileSeparator
+                                  + "Observation_output-"))
+              .toList();
+      // We expect only one file to be created.
+      assertThat(files.size(), equalTo(1));
+    }
     HadoopInputFile file =
         HadoopInputFile.fromPath(
             new org.apache.hadoop.fs.Path(files.get(0).toUri()), new Configuration());
@@ -263,18 +272,22 @@ public class ParquetUtilTest {
     }
     parquetUtil.flushAllWritersAndStopTimer();
 
-    Stream<Path> files =
-        Files.list(viewRootPath.resolve("observation_flat"))
-            .filter(
-                f ->
-                    f.toString()
-                        .startsWith(
-                            viewRootPath.toString()
-                                + fileSeparator
-                                + "observation_flat"
-                                + fileSeparator
-                                + "TEST_observation_flat_output-"));
-    assertThat(files.count(), equalTo(1L));
+    try (Stream<Path> files = Files.list(viewRootPath.resolve("observation_flat"))) {
+
+      long filesCount =
+          files
+              .filter(
+                  f ->
+                      f.toString()
+                          .startsWith(
+                              viewRootPath.toString()
+                                  + fileSeparator
+                                  + "observation_flat"
+                                  + fileSeparator
+                                  + "TEST_observation_flat_output-"))
+              .count();
+      assertThat(filesCount, equalTo(1L));
+    }
   }
 
   /**

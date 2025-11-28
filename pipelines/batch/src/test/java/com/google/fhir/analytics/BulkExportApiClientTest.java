@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2024 Google LLC
+ * Copyright 2020-2025 Google LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,8 +34,11 @@ import com.google.gson.Gson;
 import java.io.IOException;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
+import java.time.Instant;
+import java.time.ZoneOffset;
+import java.time.format.DateTimeFormatter;
+import java.time.temporal.TemporalAccessor;
 import java.util.Arrays;
-import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import org.apache.http.HttpResponse;
@@ -52,9 +55,13 @@ import org.mockito.junit.MockitoJUnitRunner;
 
 @RunWith(MockitoJUnitRunner.class)
 public class BulkExportApiClientTest {
+  // Initialization handled by Mockito's @Mock annotation
+  @SuppressWarnings("NullAway.Init")
+  @Mock
+  private FetchUtil fetchUtil;
 
-  @Mock private FetchUtil fetchUtil;
-
+  // Initialization and set up handled by JUnit's @Before annotated method
+  @SuppressWarnings("NullAway.Init")
   private BulkExportApiClient bulkExportApiClient;
 
   @Before
@@ -110,8 +117,12 @@ public class BulkExportApiClientTest {
 
     assertThat(bulkExportHttpResponse.httpStatus(), equalTo(HttpStatus.SC_OK));
     assertThat(bulkExportHttpResponse.retryAfter(), equalTo(120));
+
+    DateTimeFormatter formatter = DateTimeFormatter.RFC_1123_DATE_TIME.withZone(ZoneOffset.UTC);
+    TemporalAccessor temporalAccessor = formatter.parse("Mon, 22 Jul 2019 23:59:59 GMT");
     assertThat(
-        bulkExportHttpResponse.expires(), equalTo(new Date("Mon, 22 Jul 2019 23:59:59 GMT")));
+        bulkExportHttpResponse.expires().toInstant(), equalTo(Instant.from(temporalAccessor)));
+
     Gson gson = new Gson();
     assertThat(
         bulkExportHttpResponse.bulkExportResponse(),

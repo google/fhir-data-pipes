@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2024 Google LLC
+ * Copyright 2020-2025 Google LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -131,6 +131,7 @@ public class AvroConversionUtilTest {
     assertThat(recordList.size(), equalTo(6));
   }
 
+  @SuppressWarnings("NullAway")
   @Test
   public void generateRecordForPatient() throws ProfileException {
     AvroConversionUtil avroConversionUtil =
@@ -147,6 +148,7 @@ public class AvroConversionUtilTest {
     assertThat((String) address.get("city"), equalTo("Waterloo"));
   }
 
+  @SuppressWarnings("NullAway")
   @Test
   public void convertObservationWithBigDecimalValue() throws IOException, ProfileException {
     AvroConversionUtil avroConversionUtil =
@@ -227,7 +229,7 @@ public class AvroConversionUtilTest {
     IBaseResource baseResourceDecoded = avroConverter.avroToResource(avroRecord);
 
     IParser jsonParser = avroConversionUtil.getFhirContext().newJsonParser();
-    String string1 = (jsonParser.encodeResourceToString(baseResource));
+    String string1 = jsonParser.encodeResourceToString(baseResource);
     String string2 = jsonParser.encodeResourceToString(baseResourceDecoded);
 
     assertThat(string1.equals(string2), Matchers.equalTo(Boolean.TRUE));
