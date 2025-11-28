@@ -40,6 +40,7 @@ import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
+// Initialization handled by Mockito's @Mock annotation
 @SuppressWarnings("NullAway.Init")
 @RunWith(MockitoJUnitRunner.class)
 public class ReadJsonFromFileTest {
@@ -58,7 +59,8 @@ public class ReadJsonFromFileTest {
         new ReadJsonFn.FromFile(options, isFileNdjson) {
 
           @Override
-          protected void processBundle(Bundle bundle, @Nullable Set<String> resourceTypes) {
+          protected void processBundle(
+              @Nullable Bundle bundle, @Nullable Set<String> resourceTypes) {
             capturedBundle = bundle;
           }
         };
@@ -71,6 +73,7 @@ public class ReadJsonFromFileTest {
     readJsonFromFileFn.teardown();
   }
 
+  // SuppressWarnings added to ignore testcase NullAway warnings.
   @SuppressWarnings("NullAway")
   @Test
   public void testProcessBundleUrnRef()
@@ -96,8 +99,11 @@ public class ReadJsonFromFileTest {
         equalTo("urn:uuid:2b442f5f-4f54-75ae-977b-1388db732966"));
   }
 
-  @Test
+  // SuppressWarnings added to ignore capturedBundle NullAway warnings whose value is provided by
+  // setUp method.
+  // SuppressWarnings added to ignore testcase NullAway warnings.
   @SuppressWarnings("NullAway")
+  @Test
   public void testProcessBundleRelativeRef()
       throws IOException, SQLException, ViewApplicationException, ProfileException {
     setUp(false);

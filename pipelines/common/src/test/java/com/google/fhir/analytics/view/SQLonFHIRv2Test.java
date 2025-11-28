@@ -85,6 +85,7 @@ public class SQLonFHIRv2Test {
           // TODO the error condition here does not seem right.
           "validate.wrong type in forEach");
 
+  // SuppressWarnings added to ignore testcase NullAway warnings.
   @SuppressWarnings("NullAway")
   @Test
   public void runAllTests() throws IOException {
@@ -261,12 +262,12 @@ public class SQLonFHIRv2Test {
           Object myValue = myRow.get(e.getName());
           if (myValue instanceof JsonArray myList) {
             List<IBase> otherList = e.getValues();
-            if (myList.size() != otherList.size()) {
+            if (myList.size() != (otherList != null ? otherList.size() : 0)) {
               matches = false;
               break;
             }
             for (int i = 0; i < myList.size(); i++) {
-              if (!typeSafeMatch(myList.get(i), otherList.get(i))) {
+              if (otherList == null || !typeSafeMatch(myList.get(i), otherList.get(i))) {
                 matches = false;
                 break;
               }

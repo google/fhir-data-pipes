@@ -131,6 +131,7 @@ public class AvroConversionUtilTest {
     assertThat(recordList.size(), equalTo(6));
   }
 
+  // SuppressWarnings added to ignore testcase NullAway warnings.
   @SuppressWarnings("NullAway")
   @Test
   public void generateRecordForPatient() throws ProfileException {
@@ -148,6 +149,7 @@ public class AvroConversionUtilTest {
     assertThat((String) address.get("city"), equalTo("Waterloo"));
   }
 
+  // SuppressWarnings added to ignore testcase NullAway warnings.
   @SuppressWarnings("NullAway")
   @Test
   public void convertObservationWithBigDecimalValue() throws IOException, ProfileException {

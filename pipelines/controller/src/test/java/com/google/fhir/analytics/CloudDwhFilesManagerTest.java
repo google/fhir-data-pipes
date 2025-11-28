@@ -52,6 +52,7 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
 @EnableConfigurationProperties(value = DataProperties.class)
 public class CloudDwhFilesManagerTest {
 
+  // Initialization handled by Mockito's @Mock annotation
   @SuppressWarnings("NullAway.Init")
   @Mock
   private GcsUtil mockGcsUtil;

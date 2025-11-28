@@ -42,6 +42,7 @@ import org.mockito.Captor;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
+// Initialization handled by Mockito's @Mock annotation
 @SuppressWarnings("NullAway.Init")
 @RunWith(MockitoJUnitRunner.class)
 public class JdbcResourceWriterTest {

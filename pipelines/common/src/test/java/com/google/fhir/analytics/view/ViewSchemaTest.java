@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2024 Google LLC
+ * Copyright 2020-2025 Google LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -135,6 +135,8 @@ public class ViewSchemaTest {
     assertThat(schema.getField("obs_date").toString(), notNullValue());
   }
 
+  // SuppressWarnings added to ignore testcase NullAway warnings.
+  @SuppressWarnings("NullAway")
   @Test
   public void setValueInRecordPatientTest()
       throws IOException, ViewApplicationException, ViewDefinitionException {
@@ -170,6 +172,8 @@ public class ViewSchemaTest {
     assertThat(record.get(colNames[7]), equalTo(val7));
   }
 
+  // SuppressWarnings added to ignore testcase NullAway warnings.
+  @SuppressWarnings("NullAway")
   @Test
   public void setValueInRecordObservationTest()
       throws IOException, ViewApplicationException, ViewDefinitionException {
@@ -215,6 +219,8 @@ public class ViewSchemaTest {
    * @see com.google.fhir.analytics.view.ViewSchema#setValueInRecord(RowList, ViewDefinition)
    */
   @Test
+  // SuppressWarnings added to ignore testcase NullAway warnings.
+  @SuppressWarnings("NullAway")
   public void setValueInRecordCollectionTest()
       throws IOException, ViewApplicationException, ViewDefinitionException {
 

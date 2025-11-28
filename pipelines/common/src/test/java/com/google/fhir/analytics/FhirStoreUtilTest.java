@@ -111,6 +111,7 @@ public class FhirStoreUtilTest {
     assertThat(fhirStoreUtil, Matchers.<FhirStoreUtil>instanceOf(GcpStoreUtil.class));
   }
 
+  // SuppressWarnings added to ignore testcase NullAway warnings.
   @SuppressWarnings("NullAway")
   @Test
   public void testUploadResource() {

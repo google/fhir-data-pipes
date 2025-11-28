@@ -44,6 +44,7 @@ import java.util.List;
 import java.util.Map;
 import org.apache.beam.sdk.options.PipelineOptionsFactory;
 import org.hl7.fhir.r4.model.Bundle;
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -52,6 +53,7 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
+// Initialization handled by Mockito's @Mock annotation
 @SuppressWarnings("NullAway.Init")
 @RunWith(MockitoJUnitRunner.class)
 public class FhirSearchUtilTest {
@@ -111,6 +113,7 @@ public class FhirSearchUtilTest {
   @Test
   public void testSearchForResource() {
     Bundle actualBundle = fhirSearchUtil.searchByUrl(SEARCH_URL, 10, SummaryEnum.DATA);
+    Assert.assertNotNull(actualBundle);
     assertThat(actualBundle.equalsDeep(bundle), equalTo(true));
   }
 
@@ -147,6 +150,7 @@ public class FhirSearchUtilTest {
     assertThat(segmentMap.get("Patient").size(), equalTo(4));
   }
 
+  // SuppressWarnings added to ignore testcase NullAway warnings.
   @SuppressWarnings("NullAway")
   @Test
   public void testCreateSegmentsWithSince() {
