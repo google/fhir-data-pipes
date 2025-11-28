@@ -277,8 +277,6 @@ public abstract class StructureDefinitions {
    * with max of zero), or have multiple values (for elements that generate fields with additional
    * data in siblings.)
    */
-  // TODO perform a deep review of this method's code and the implication of various nullability
-  // check approaches
   private <T> List<StructureField<T>> elementToFields(
       DefinitionVisitor<T> visitor,
       IStructureDefinition rootDefinition,

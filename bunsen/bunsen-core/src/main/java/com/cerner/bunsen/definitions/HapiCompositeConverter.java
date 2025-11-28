@@ -217,8 +217,7 @@ public abstract class HapiCompositeConverter<T> extends HapiConverter<T> {
         for (IBaseExtension extension : extensions) {
 
           if (converter.extensionUrl().equals(extension.getUrl())) {
-            Object value = schemaEntry.result().fromHapi(extension);
-            if (value != null) values[valueIndex] = value;
+            values[valueIndex] = schemaEntry.result().fromHapi(extension);
           }
         }
 
