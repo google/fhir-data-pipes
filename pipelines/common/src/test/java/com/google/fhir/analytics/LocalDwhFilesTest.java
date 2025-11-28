@@ -16,8 +16,7 @@
 package com.google.fhir.analytics;
 
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.equalTo;
-import static org.hamcrest.Matchers.startsWith;
+import static org.hamcrest.Matchers.*;
 
 import ca.uhn.fhir.context.FhirContext;
 import com.google.common.io.Resources;
@@ -33,7 +32,6 @@ import java.nio.file.Paths;
 import java.time.Instant;
 import java.util.List;
 import java.util.Set;
-import java.util.stream.Collectors;
 import org.apache.beam.sdk.io.FileSystems;
 import org.apache.beam.sdk.io.fs.ResolveOptions.StandardResolveOptions;
 import org.apache.beam.sdk.io.fs.ResourceId;
@@ -58,6 +56,7 @@ public class LocalDwhFilesTest {
     assertThat(dwhFiles.getResourcePath("Patient").toString(), equalTo("C:\\tmp\\Patient\\"));
   }
 
+  @SuppressWarnings("NullAway")
   @Test
   public void getIncrementalRunPathTest() throws IOException {
     Assume.assumeFalse(SystemUtils.IS_OS_WINDOWS);
@@ -71,11 +70,12 @@ public class LocalDwhFilesTest {
         incrementalRunPath2.resolve("file2.txt", StandardResolveOptions.RESOLVE_FILE);
     FileSystems.create(file2, "test");
     // making sure that the last incremental path is returned
-    assertThat(
-        DwhFiles.getLatestIncrementalRunPath(instance.getRoot()).toString(),
-        equalTo(incrementalRunPath2.toString()));
+    ResourceId latestIncrementalRunPath = DwhFiles.getLatestIncrementalRunPath(instance.getRoot());
+    assertThat(latestIncrementalRunPath, notNullValue());
+    assertThat(latestIncrementalRunPath.toString(), equalTo(incrementalRunPath2.toString()));
   }
 
+  @SuppressWarnings("NullAway")
   @Test
   public void getViewsPathTest() throws IOException {
     Assume.assumeFalse(SystemUtils.IS_OS_WINDOWS);
@@ -88,8 +88,9 @@ public class LocalDwhFilesTest {
     ResourceId file2 = viewPath2.resolve("file2.txt", StandardResolveOptions.RESOLVE_FILE);
     FileSystems.create(file2, "test");
     // making sure that the last incremental path is returned
-    assertThat(
-        DwhFiles.getLatestViewsPath(instance.getRoot()).toString(), equalTo(viewPath2.toString()));
+    ResourceId latestViewPath = DwhFiles.getLatestViewsPath(instance.getRoot());
+    assertThat(latestViewPath, org.hamcrest.Matchers.notNullValue());
+    assertThat(latestViewPath.toString(), equalTo(viewPath2.toString()));
   }
 
   @Test
@@ -198,11 +199,17 @@ public class LocalDwhFilesTest {
     Path destPath = Files.createTempDirectory("DWH_DEST_TEST");
     DwhFiles.copyDirToDwh(instance.getRoot(), "Patient", destPath.toString());
 
-    List<Path> destFiles = Files.list(destPath).collect(Collectors.toList());
+    List<Path> destFiles;
+    try (var stream = Files.list(destPath)) {
+      destFiles = stream.toList();
+    }
     assertThat(destFiles.size(), equalTo(1));
     assertThat(destFiles.get(0).toString(), equalTo(destPath.resolve("Patient").toString()));
 
-    List<Path> destChildFiles = Files.list(destFiles.get(0)).collect(Collectors.toList());
+    List<Path> destChildFiles;
+    try (var stream = Files.list(destFiles.get(0))) {
+      destChildFiles = stream.toList();
+    }
     assertThat(destChildFiles.size(), equalTo(1));
     assertThat(
         destChildFiles.get(0).toString(),
@@ -236,7 +243,10 @@ public class LocalDwhFilesTest {
 
     DwhFiles.writeTimestampFile(root.toString(), DwhFiles.TIMESTAMP_FILE_START);
 
-    List<Path> destFiles = Files.list(root).collect(Collectors.toList());
+    List<Path> destFiles;
+    try (var stream = Files.list(root)) {
+      destFiles = stream.toList();
+    }
     assertThat(destFiles.size(), equalTo(1));
     assertThat(
         destFiles.get(0).toString(), equalTo(root.resolve("timestamp_start.txt").toString()));
