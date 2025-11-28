@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2023 Google LLC
+ * Copyright 2020-2025 Google LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 
 import java.util.stream.Stream;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
@@ -48,6 +49,7 @@ class StatsTest {
     CumulativeMetrics cumulativeMetrics =
         new CumulativeMetrics(totalNoOfResources, noOfFetchedResources, noOfMappedResources);
     Stats stats = Stats.createStats(cumulativeMetrics);
+    Assertions.assertNotNull(stats);
     assertThat(stats.getPercentageCompleted(), equalTo(expectedPercentageCompletion));
   }
 }

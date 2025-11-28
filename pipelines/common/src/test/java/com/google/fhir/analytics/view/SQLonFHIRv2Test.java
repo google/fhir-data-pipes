@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2024 Google LLC
+ * Copyright 2020-2025 Google LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -48,13 +48,14 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
-import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import org.apache.commons.io.IOUtils;
 import org.hl7.fhir.instance.model.api.IBase;
 import org.hl7.fhir.instance.model.api.IBaseDecimalDatatype;
 import org.hl7.fhir.instance.model.api.IBaseResource;
 import org.hl7.fhir.instance.model.api.IIdType;
 import org.hl7.fhir.instance.model.api.IPrimitiveType;
+import org.jspecify.annotations.Nullable;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.junit.MockitoJUnitRunner;
@@ -84,15 +85,16 @@ public class SQLonFHIRv2Test {
           // TODO the error condition here does not seem right.
           "validate.wrong type in forEach");
 
+  @SuppressWarnings("NullAway")
   @Test
   public void runAllTests() throws IOException {
     Map<String, AllTestResults> allTestResults = new LinkedHashMap<>();
     String testsRoot = Resources.getResource("sql-on-fhir-v2-tests").getPath();
     Path testsPath = Paths.get(testsRoot);
-    List<Path> testFiles =
-        Files.walk(testsPath)
-            .filter(f -> f.getFileName().toString().endsWith(".json"))
-            .collect(Collectors.toList());
+    List<Path> testFiles;
+    try (Stream<Path> stream = Files.walk(testsPath)) {
+      testFiles = stream.filter(f -> f.getFileName().toString().endsWith(".json")).toList();
+    }
     Gson gson = new Gson();
     for (Path p : testFiles) {
       String jsonContent = "";
@@ -131,17 +133,21 @@ public class SQLonFHIRv2Test {
             ViewApplicator applicator = new ViewApplicator(test.view);
             int totalRows = 0;
             for (IBaseResource resource : resources) {
-              if (!test.view.getResource().equals(resource.fhirType())) continue;
+              if (test.view.getResource() != null
+                  && !test.view.getResource().equals(resource.fhirType())) continue;
               RowList rowList = applicator.apply(resource);
               for (FlatRow row : rowList.getRows()) {
-                assertThat("Row not found; index " + totalRows, expectedRows.hasRow(row));
+                assertThat(
+                    "Row not found; index " + totalRows,
+                    expectedRows != null && expectedRows.hasRow(row));
                 totalRows++;
               }
             }
             assertThat("No exceptions were thrown", expectedRows != null);
             assertThat(
                 String.format(
-                    "Number of rows does not match %d vs %d", totalRows, expectedRows.getNumRows()),
+                    "Number of rows does not match %d vs %d",
+                    totalRows, expectedRows != null ? expectedRows.getNumRows() : 0),
                 totalRows == expectedRows.getNumRows());
           } catch (ViewApplicationException | ViewDefinitionException e) {
             assertThat(
@@ -162,12 +168,13 @@ public class SQLonFHIRv2Test {
       }
     }
     File tempFile = File.createTempFile("sql-on-fhir-v2-test-result-", ".json");
-    try (FileWriter writer = new FileWriter(tempFile)) {
+    try (FileWriter writer = new FileWriter(tempFile, StandardCharsets.UTF_8)) {
       Gson writerGson = new GsonBuilder().setPrettyPrinting().disableHtmlEscaping().create();
       writerGson.toJson(allTestResults, writer);
     }
   }
 
+  @SuppressWarnings("NullAway.Init")
   private static class TestDef {
     String title;
     List<String> fhirVersion;
@@ -175,6 +182,7 @@ public class SQLonFHIRv2Test {
     List<SingleTest> tests;
   }
 
+  @SuppressWarnings("NullAway.Init")
   private static class SingleTest {
     String title;
     ViewDefinition view;
@@ -182,15 +190,21 @@ public class SQLonFHIRv2Test {
     Boolean expectError;
   }
 
+  // Suppressing UnusedVariable because this is just a data class used by runAllTests() to serialize
+  // to file
+  @SuppressWarnings({"NullAway.Init", "UnusedVariable"})
   private static class SingleTestResult {
     final String name;
     final Result result;
 
+    // Suppressing UnusedVariable because this is just a data class used by runAllTests() to
+    // serialize to file
+    @SuppressWarnings({"NullAway.Init", "UnusedVariable"})
     private static class Result {
       final boolean passed;
-      final String reason;
+      @Nullable final String reason;
 
-      private Result(boolean passed, String reason) {
+      private Result(boolean passed, @Nullable String reason) {
         this.passed = passed;
         this.reason = reason;
       }
@@ -207,6 +221,9 @@ public class SQLonFHIRv2Test {
     }
   }
 
+  // Suppressing UnusedVariable because this is just a data class used by runAllTests() to
+  // serialize to file
+  @SuppressWarnings("UnusedVariable")
   private static class AllTestResults {
     List<SingleTestResult> tests;
 
@@ -218,7 +235,7 @@ public class SQLonFHIRv2Test {
   private static class ExpectedRows {
     private final List<Map<String, Object>> rows;
 
-    public ExpectedRows(List<JsonObject> jsonArray) {
+    private ExpectedRows(List<JsonObject> jsonArray) {
       rows = new ArrayList<>();
       for (JsonObject jsonObject : jsonArray) {
         Map<String, Object> row = new HashMap<>();
@@ -233,7 +250,7 @@ public class SQLonFHIRv2Test {
       return rows.size();
     }
 
-    public boolean hasRow(FlatRow row) {
+    private boolean hasRow(FlatRow row) {
       for (Map<String, Object> myRow : rows) {
         boolean matches = true;
         for (RowElement e : row.getElements()) {
@@ -244,12 +261,12 @@ public class SQLonFHIRv2Test {
           Object myValue = myRow.get(e.getName());
           if (myValue instanceof JsonArray myList) {
             List<IBase> otherList = e.getValues();
-            if (myList.size() != otherList.size()) {
+            if (myList.size() != (otherList != null ? otherList.size() : 0)) {
               matches = false;
               break;
             }
             for (int i = 0; i < myList.size(); i++) {
-              if (!typeSafeMatch(myList.get(i), otherList.get(i))) {
+              if (otherList == null || !typeSafeMatch(myList.get(i), otherList.get(i))) {
                 matches = false;
                 break;
               }
@@ -275,7 +292,7 @@ public class SQLonFHIRv2Test {
       return false;
     }
 
-    private boolean typeSafeMatch(Object expected, IBase actual) {
+    private boolean typeSafeMatch(Object expected, @Nullable IBase actual) {
       if (actual == null) return false;
       if (expected.equals(actual)) return true;
       // TODO add other types as required by tests.
@@ -283,16 +300,16 @@ public class SQLonFHIRv2Test {
         if (!(expected instanceof JsonPrimitive expectedPrimitive)) {
           return false;
         }
-        if (actual instanceof IIdType) {
-          return ((IIdType) actual).getIdPart().equals(expectedPrimitive.getAsString());
+        if (actual instanceof IIdType actualIIdType) {
+          return actualIIdType.getIdPart().equals(expectedPrimitive.getAsString());
         }
-        if (actual instanceof IBaseDecimalDatatype) {
+        if (actual instanceof IBaseDecimalDatatype actualIBaseDecimalDatatype) {
           BigDecimal expectedBigDecimal = null;
           if (expectedPrimitive.isNumber()) {
             expectedBigDecimal = expectedPrimitive.getAsBigDecimal();
           }
           return (expectedBigDecimal != null)
-              && ((IBaseDecimalDatatype) actual).getValue().compareTo(expectedBigDecimal) == 0;
+              && actualIBaseDecimalDatatype.getValue().compareTo(expectedBigDecimal) == 0;
         }
         String stringValue = ((IPrimitiveType<?>) actual).getValueAsString();
         return stringValue.equals(expectedPrimitive.getAsString());
