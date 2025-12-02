@@ -39,14 +39,17 @@ def process_response(response: str, args: argparse.Namespace):
     logger.info(f"Request url: {args.url}")
     logger.info("Response:")
     try:
-        logger.info(json.dumps(response, indent=4))
-    except json.JSONDecodeError:
+        if isinstance(response, dict):
+            logger.info(json.dumps(response, indent=4))
+        else:
+            logger.info(response)
+    except TypeError:
         logger.info(response)
 
 
 def _make_api_request(
     verb: str, url: str, params: Optional[Dict[str, Any]] = None
-) -> Optional[Dict[str, Any]]:
+) -> str:
     logger.debug(f"Making API request: {verb} {url}")
     logger.debug(f"Request parameters: {params}")
     try:
@@ -103,11 +106,10 @@ def _make_api_request(
         logger.error(f"An error occurred during the request: {req_err}")
     except json.JSONDecodeError as json_err:
         logger.error(f"Failed to decode JSON response: {json_err}")
-        logger.error(response)
-    return None
+    return "API REQUEST FAILED"
 
 
-def config(args: argparse.Namespace) -> str:
+def config(args: argparse.Namespace) -> None:
     try:
         if args.config_name:
             response = _make_api_request(
@@ -120,7 +122,7 @@ def config(args: argparse.Namespace) -> str:
         logger.error(f"Error processing: {e}")
 
 
-def next_scheduled(args: argparse.Namespace) -> str:
+def next_scheduled(args: argparse.Namespace) -> None:
     try:
         response = _make_api_request(HTTP_GET, f"{args.url}/next")
         process_response(response, args)
@@ -128,7 +130,7 @@ def next_scheduled(args: argparse.Namespace) -> str:
         logger.error(f"Error processing: {e}")
 
 
-def status(args: argparse.Namespace) -> str:
+def status(args: argparse.Namespace) -> None:
     try:
         response = _make_api_request(HTTP_GET, f"{args.url}/status")
         process_response(response, args)
@@ -136,7 +138,7 @@ def status(args: argparse.Namespace) -> str:
         logger.error(f"Error processing: {e}")
 
 
-def run(args: argparse.Namespace) -> str:
+def run(args: argparse.Namespace) -> None:
     logger.info("=" * 50)
     logger.info("Executing 'run' command - starting pipeline run")
     logger.info(f"Run mode: {args.mode}")
@@ -164,10 +166,9 @@ def run(args: argparse.Namespace) -> str:
         logger.error(f"Error in run command: {e}")
         logger.error(f"Failed to execute pipeline run with mode: {args.mode}")
         logger.error("=" * 50)
-        logger.error(f"Error processing: {e}")
 
 
-def tables(args: argparse.Namespace) -> str:
+def tables(args: argparse.Namespace) -> None:
     try:
         response = _make_api_request(HTTP_POST, f"{args.url}/tables")
         process_response(response, args)
@@ -185,11 +186,11 @@ def download_file(url: str, filename: str) -> str:
         return f"Error downloading file: {e}"
 
 
-def logs(args: argparse.Namespace) -> str:
+def logs(args: argparse.Namespace) -> None:
     try:
         if args.download:
             filename = args.filename if args.filename else "error.log"
-            response = download_file(f"{args.url}/download-error-log", filename)
+            response: str = download_file(f"{args.url}/download-error-log", filename)
             process_response(response, args)
         else:
             logger.info(
@@ -211,7 +212,7 @@ def delete_snapshot(args: argparse.Namespace) -> str:
         return f"Error deleting snapshot: {e}"
 
 
-def dwh(args: argparse.Namespace) -> str:
+def dwh(args: argparse.Namespace) -> None:
     try:
         if hasattr(args, "snapshot_id"):
             response = delete_snapshot(args)
