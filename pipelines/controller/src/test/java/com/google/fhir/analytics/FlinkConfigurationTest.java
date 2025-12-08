@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2024 Google LLC
+ * Copyright 2020-2025 Google LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -71,7 +71,7 @@ public class FlinkConfigurationTest {
   }
 
   private static long getNetworkMemory(int numThreads) {
-    return (int) (Math.pow((numThreads + 1), 2))
+    return ((long) Math.pow((numThreads + 1), 2))
         * NUMBER_OF_RESHUFFLES
         * TaskManagerOptions.MEMORY_SEGMENT_SIZE.defaultValue().getBytes();
   }
