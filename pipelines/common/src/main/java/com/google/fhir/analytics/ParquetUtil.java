@@ -109,7 +109,7 @@ public class ParquetUtil {
       String outputParquetFilePath,
       String inputParquetFilePath,
       String viewDefinitionsDir,
-      @Nullable String outputParquetViewPath,
+      String outputParquetViewPath,
       int secondsToFlush,
       int rowGroupSize,
       String namePrefix,
