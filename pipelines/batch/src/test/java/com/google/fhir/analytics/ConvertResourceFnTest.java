@@ -85,7 +85,7 @@ public class ConvertResourceFnTest {
         Resources.toString(Resources.getResource("patient.json"), StandardCharsets.UTF_8);
     HapiRowDescriptor element =
         HapiRowDescriptor.create(
-            "123", null, "Patient", "2020-09-19 12:09:23", "R4", "1", patientResourceStr);
+            "123", "", "Patient", "2020-09-19 12:09:23", "R4", "1", patientResourceStr);
     convertResourceFn.writeResource(element);
 
     // Verify the resource is sent to the writer.
