@@ -24,6 +24,8 @@ import org.junit.Test;
  * <p>TODO: Refactor this and the R43AvroConverterCustomProfileTest.java to move the duplicate code
  * into a common class and add only relevant cases here
  */
+// Suppressing NullAway warnings for test code
+@SuppressWarnings("NullAway")
 public class Stu3AvroConverterCustomProfileTest {
 
   private static final Patient testBunsenTestProfilePatient =
@@ -45,15 +47,11 @@ public class Stu3AvroConverterCustomProfileTest {
     AvroConverter converterBunsenTestProfilePatient =
         AvroConverter.forResources(fhirContext, patientProfiles, 1);
 
-    Record testBunsenTestProfilePatientRecord =
+    avroBunsenTestProfilePatient =
         (Record) converterBunsenTestProfilePatient.resourceToAvro(testBunsenTestProfilePatient);
-    Assert.assertNotNull(testBunsenTestProfilePatientRecord);
-    avroBunsenTestProfilePatient = testBunsenTestProfilePatientRecord;
 
-    Patient patient =
+    testBunsenTestProfilePatientDecoded =
         (Patient) converterBunsenTestProfilePatient.avroToResource(avroBunsenTestProfilePatient);
-    Assert.assertNotNull(patient);
-    testBunsenTestProfilePatientDecoded = patient;
   }
 
   @Test

@@ -24,6 +24,9 @@ import org.junit.jupiter.api.Test;
  * This class tests the user-defined structure definitions which should also follow the HL7 FHIR
  * specifications. These are additional test cases beyond the regular US Core Profiles tests.
  */
+
+// Suppressing NullAway warnings for test code
+@SuppressWarnings("NullAway")
 public class R4AvroConverterCustomProfileTest {
 
   private static final Patient testBunsenTestProfilePatient =
@@ -54,15 +57,11 @@ public class R4AvroConverterCustomProfileTest {
     AvroConverter converterBunsenTestProfilePatient =
         AvroConverter.forResources(fhirContext, patientProfiles, 1);
 
-    Record testBunsenTestProfilePatientRecord =
+    avroBunsenTestProfilePatient =
         (Record) converterBunsenTestProfilePatient.resourceToAvro(testBunsenTestProfilePatient);
-    assertNotNull(testBunsenTestProfilePatientRecord);
-    avroBunsenTestProfilePatient = testBunsenTestProfilePatientRecord;
 
-    Patient patient =
+    testBunsenTestProfilePatientDecoded =
         (Patient) converterBunsenTestProfilePatient.avroToResource(avroBunsenTestProfilePatient);
-    assertNotNull(patient);
-    testBunsenTestProfilePatientDecoded = patient;
   }
 
   @Test
