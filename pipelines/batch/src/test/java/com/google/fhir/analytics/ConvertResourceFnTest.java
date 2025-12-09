@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2024 Google LLC
+ * Copyright 2020-2025 Google LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -44,6 +44,8 @@ import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnitRunner;
 
+// Initialization handled by Mockito's annotations
+@SuppressWarnings("NullAway.Init")
 @RunWith(MockitoJUnitRunner.class)
 public class ConvertResourceFnTest {
 
@@ -83,7 +85,7 @@ public class ConvertResourceFnTest {
         Resources.toString(Resources.getResource("patient.json"), StandardCharsets.UTF_8);
     HapiRowDescriptor element =
         HapiRowDescriptor.create(
-            "123", null, "Patient", "2020-09-19 12:09:23", "R4", "1", patientResourceStr);
+            "123", "", "Patient", "2020-09-19 12:09:23", "R4", "1", patientResourceStr);
     convertResourceFn.writeResource(element);
 
     // Verify the resource is sent to the writer.

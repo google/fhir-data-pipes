@@ -52,6 +52,8 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
+// Initialization handled by Mockito's @Mock annotation
+@SuppressWarnings("NullAway.Init")
 @RunWith(MockitoJUnitRunner.class)
 public class FhirSearchUtilTest {
 
@@ -107,9 +109,11 @@ public class FhirSearchUtilTest {
     assertThat(baseUrl, equalTo(BASE_URL + "?" + PAGE_URL_PARAM));
   }
 
+  @SuppressWarnings("NullAway")
   @Test
   public void testSearchForResource() {
     Bundle actualBundle = fhirSearchUtil.searchByUrl(SEARCH_URL, 10, SummaryEnum.DATA);
+    assertThat(actualBundle, notNullValue());
     assertThat(actualBundle.equalsDeep(bundle), equalTo(true));
   }
 
@@ -135,6 +139,7 @@ public class FhirSearchUtilTest {
     assertThat(nextUrl, nullValue());
   }
 
+  @SuppressWarnings("NullAway")
   @Test
   public void testCreateSegments() {
     FhirEtlOptions options = PipelineOptionsFactory.as(FhirEtlOptions.class);
@@ -145,6 +150,7 @@ public class FhirSearchUtilTest {
     assertThat(segmentMap.get("Patient").size(), equalTo(4));
   }
 
+  @SuppressWarnings("NullAway")
   @Test
   public void testCreateSegmentsWithSince() {
     FhirEtlOptions options = PipelineOptionsFactory.as(FhirEtlOptions.class);

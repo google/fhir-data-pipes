@@ -15,6 +15,7 @@ import org.junit.Test;
 
 public class ProfileMapperProviderTest {
 
+  @SuppressWarnings("NullAway")
   @Test
   public void testIfOnlyBaseProfilesAreMapped() throws ProfileException {
     ProfileMappingProvider profileMappingProvider = new ProfileMappingProvider();
@@ -36,6 +37,7 @@ public class ProfileMapperProviderTest {
             Arrays.asList("http://hl7.org/fhir/StructureDefinition/Observation").toArray()));
   }
 
+  @SuppressWarnings("NullAway")
   @Test
   public void testIfUsCoreR4ProfilesAreMapped() throws ProfileException {
     ProfileMappingProvider profileMappingProvider = new ProfileMappingProvider();
@@ -59,6 +61,7 @@ public class ProfileMapperProviderTest {
             R4UsCoreProfileData.US_CORE_OBSERVATION_PROFILES.toArray()));
   }
 
+  @SuppressWarnings("NullAway")
   @Test
   public void testIfUsCoreStu3ProfilesAreMapped() throws ProfileException {
     ProfileMappingProvider profileMappingProvider = new ProfileMappingProvider();
@@ -75,7 +78,6 @@ public class ProfileMapperProviderTest {
     // Observation profile is not overloaded since no custom profile was defined
     assertThat(profileMapping.get("Observation"), Matchers.notNullValue());
     List<String> observationList = profileMapping.get("Observation");
-
     assertThat(
         observationList != null ? observationList.toArray() : null,
         Matchers.arrayContainingInAnyOrder(
