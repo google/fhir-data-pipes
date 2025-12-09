@@ -192,10 +192,12 @@ function run_pipeline() {
 }
 
 function wait_for_completion() {
-  local runtime="25 minute"
-  local end_time=$(date -ud "$runtime" +%s)
+  local runtime_minutes=25
+  local runtime_seconds=$((runtime_minutes * 60))
+  local start_time=$(date +%s)
+  local end_time=$((start_time + runtime_seconds))
 
-  while [[ $(date -u +%s) -le ${end_time} ]]
+  while [[ $(date +%s) -le ${end_time} ]]
   do
     # Here we extract only the JSON part of the output from controller 'status'
     # command as there could be some logging info printed before the JSON output.
