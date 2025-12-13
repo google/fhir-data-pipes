@@ -46,6 +46,8 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 // TODO refactor the shared code with `Stu3AvroConverterUsCoreTest`.
+// Suppressing NullAway warnings for test code
+@SuppressWarnings("NullAway")
 public class R4AvroConverterUsCoreTest {
 
   private static final Observation testObservation = TestData.newObservation();

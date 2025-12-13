@@ -42,6 +42,8 @@ import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
+// Suppressing NullAway warnings for test code
+@SuppressWarnings("NullAway")
 public class Stu3AvroConverterUsCoreTest {
 
   private static final Observation testObservation = TestData.newObservation();

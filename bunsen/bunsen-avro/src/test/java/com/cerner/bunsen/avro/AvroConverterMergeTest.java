@@ -115,8 +115,10 @@ public class AvroConverterMergeTest {
     Patient patient =
         (Patient)
             loadResource(fhirContext, "/r4-us-core-resources/patient_us_core.json", Patient.class);
-    IndexedRecord avroRecord = patientConverter.resourceToAvro(patient);
-    Patient patientDecoded = (Patient) patientConverter.avroToResource(avroRecord);
+    IndexedRecord patientRecord = patientConverter.resourceToAvro(patient);
+    Assert.assertNotNull(patientRecord);
+    Patient patientDecoded = (Patient) patientConverter.avroToResource(patientRecord);
+    Assert.assertNotNull(patientDecoded);
     Assert.assertTrue(
         patient.equalsDeep(
             (Base) TestUtil.encodeThenParse(patientDecoded, Patient.class, fhirContext)));
@@ -137,9 +139,11 @@ public class AvroConverterMergeTest {
                 fhirContext,
                 "/stu3-us-core-resources/patient_us_core.json",
                 org.hl7.fhir.dstu3.model.Patient.class);
-    IndexedRecord avroRecord = patientConverter.resourceToAvro(patient);
+    IndexedRecord patientRecord = patientConverter.resourceToAvro(patient);
+    Assert.assertNotNull(patientRecord);
     org.hl7.fhir.dstu3.model.Patient patientDecoded =
-        (org.hl7.fhir.dstu3.model.Patient) patientConverter.avroToResource(avroRecord);
+        (org.hl7.fhir.dstu3.model.Patient) patientConverter.avroToResource(patientRecord);
+    Assert.assertNotNull(patientDecoded);
     patientDecoded.setId(patient.getId());
     // TODO : The text field is not properly copied to the decoded object back, hence manually
     // copying it, check here for details https://github.com/google/fhir-data-pipes/issues/1014
