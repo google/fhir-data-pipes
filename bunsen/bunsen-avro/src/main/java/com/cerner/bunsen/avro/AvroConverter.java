@@ -75,6 +75,7 @@ public class AvroConverter {
     RuntimeResourceDefinition[] resources =
         new RuntimeResourceDefinition[1 + containedResourceTypeUrls.size()];
 
+    Preconditions.checkNotNull(converter.getElementType(), "Converter must have an element type");
     resources[0] = context.getResourceDefinition(converter.getElementType());
 
     for (int i = 0; i < containedResourceTypeUrls.size(); i++) {
