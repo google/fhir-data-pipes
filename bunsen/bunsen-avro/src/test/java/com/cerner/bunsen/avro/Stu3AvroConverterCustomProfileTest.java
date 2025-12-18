@@ -24,6 +24,8 @@ import org.junit.Test;
  * <p>TODO: Refactor this and the R43AvroConverterCustomProfileTest.java to move the duplicate code
  * into a common class and add only relevant cases here
  */
+// Suppressing NullAway warnings for test code
+@SuppressWarnings("NullAway")
 public class Stu3AvroConverterCustomProfileTest {
 
   private static final Patient testBunsenTestProfilePatient =
