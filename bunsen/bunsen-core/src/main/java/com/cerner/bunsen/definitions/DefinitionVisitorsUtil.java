@@ -31,7 +31,7 @@ public class DefinitionVisitorsUtil {
         .splitToStream(elementPath)
         .map(StringUtils::capitalize)
         .reduce(String::concat)
-        .get();
+        .orElse("");
   }
 
   /**
