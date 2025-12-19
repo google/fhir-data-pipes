@@ -209,16 +209,16 @@ public class R4AvroConverterUsCoreTest {
             (Double)
                 ((Record) ((Record) avroObservation.get("value")).get("quantity")).get("value"));
 
-    Assert.assertEquals(originalDecimal.compareTo(avroDecimal), 0);
+    Assert.assertEquals(0, originalDecimal.compareTo(avroDecimal));
 
     Assert.assertEquals(
-        originalDecimal.compareTo(((Quantity) testObservationDecoded.getValue()).getValue()), 0);
+        0, originalDecimal.compareTo(((Quantity) testObservationDecoded.getValue()).getValue()));
   }
 
   @Test
   public void testTaskConversion() {
     Assert.assertEquals(testTask.getInput().size(), testTaskDecoded.getInput().size());
-    Assert.assertEquals(testTask.getInput().size(), 1);
+    Assert.assertEquals(1, testTask.getInput().size());
     Assert.assertEquals(
         testTask.getInput().get(0).getType().getCoding().get(0).getSystem(),
         testTaskDecoded.getInput().get(0).getType().getCoding().get(0).getSystem());
@@ -362,7 +362,7 @@ public class R4AvroConverterUsCoreTest {
     Identifier identifier = testPatientDecoded.getManagingOrganization().getIdentifier();
 
     Assert.assertNotNull(identifier);
-    Assert.assertEquals(identifier.getAssigner().getReference(), "Organization/234");
+    Assert.assertEquals("Organization/234", identifier.getAssigner().getReference());
   }
 
   @Test

@@ -163,7 +163,7 @@ public class DwhFilesManager {
       TreeSet<String> recentSnapshotsToBeRetained =
           getRecentSnapshots(paths, numOfDwhSnapshotsToRetain);
       deleteOlderSnapshots(paths, recentSnapshotsToBeRetained);
-      lastPurgeRunEnd = LocalDateTime.now();
+      lastPurgeRunEnd = LocalDateTime.now(ZoneOffset.UTC);
     } catch (IOException e) {
       logger.error("Error occurred while purging older snapshots", e);
     }

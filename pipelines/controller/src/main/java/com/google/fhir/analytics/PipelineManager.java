@@ -33,6 +33,7 @@ import java.nio.file.NoSuchFileException;
 import java.sql.SQLException;
 import java.time.Instant;
 import java.time.LocalDateTime;
+import java.time.ZoneOffset;
 import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -174,7 +175,7 @@ public class PipelineManager implements ApplicationListener<ApplicationReadyEven
 
   private void setLastRunStatus(LastRunStatus status) {
     if (status == LastRunStatus.SUCCESS) {
-      lastRunEnd = LocalDateTime.now();
+      lastRunEnd = LocalDateTime.now(ZoneOffset.UTC);
     }
   }
 
@@ -258,7 +259,7 @@ public class PipelineManager implements ApplicationListener<ApplicationReadyEven
         currentDwh =
             DwhFiles.forRootWithLatestViewPath(currentDwhRoot, avroConversionUtil.getFhirContext());
         // There exists a DWH from before, so we set the scheduler to continue updating the DWH.
-        lastRunEnd = LocalDateTime.now();
+        lastRunEnd = LocalDateTime.now(ZoneOffset.UTC);
       } catch (IOException e) {
         logger.error("IOException while initializing DWH: ", e);
         throw new RuntimeException(e);
@@ -400,8 +401,8 @@ public class PipelineManager implements ApplicationListener<ApplicationReadyEven
       return;
     }
     logger.info("Last run was at {} next run is at {}", lastRunEnd, next);
-    if (next.compareTo(LocalDateTime.now()) < 0) {
-      logger.info("Incremental run triggered at {}", LocalDateTime.now());
+    if (next.compareTo(LocalDateTime.now(ZoneOffset.UTC)) < 0) {
+      logger.info("Incremental run triggered at {}", LocalDateTime.now(ZoneOffset.UTC));
       runIncrementalPipeline();
     }
   }
