@@ -98,8 +98,9 @@
             <arg>--add-exports=java.base/jdk.internal.misc=ALL-UNNAMED</arg>
             <arg>-XDcompilePolicy=simple</arg>
             <arg>--should-stop=ifError=FLOW</arg>
+            <arg>-Werror</arg>
             <arg>
-              -Xplugin:ErrorProne -XepOpt:NullAway:AnnotatedPackages=${nullaway.annotatedPackages} -XepExcludedPaths:${nullaway.excludedPaths} -XepOpt:NullAway:JSpecifyMode=true -XepOpt:NullAway:CheckOptionalEmptiness=true
+              -Xplugin:ErrorProne -XepAllErrorsAsWarnings -XepOpt:NullAway:AnnotatedPackages=${nullaway.annotatedPackages} -XepExcludedPaths:${nullaway.excludedPaths} -XepOpt:NullAway:JSpecifyMode=true -XepOpt:NullAway:CheckOptionalEmptiness=true
             </arg>
             <arg>
               -J--add-exports=jdk.compiler/com.sun.tools.javac.api=ALL-UNNAMED
