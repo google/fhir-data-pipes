@@ -34,7 +34,7 @@ jobs:
           pip install black pylint pyright
           if [ -f "requirements-dev.txt" ]; then pip install -r requirements-dev.txt; fi
           if [ -f "${{ matrix.project.path }}/requirements.txt" ]; then pip install -r ${{ matrix.project.path }}/requirements.txt; fi
-          if [ -f "${{ matrix.project.path }}/pyproject.toml" ]; then pip install -e ${{ matrix.project.path }}; fi
+          if [ -f "${{ matrix.project.path }}/pyproject.toml" ]; then pip install -e ${{ matrix.project.path }}[dev]; fi
 
       - name: Run Black Check
         run: black --check --diff ${{ matrix.project.path }}
