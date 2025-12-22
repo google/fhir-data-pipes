@@ -31,7 +31,7 @@ export _TAG=local
 export _REPOSITORY=fhir-analytics
 ```
 
-## Step-by-step local reproduction
+## Initial Setup
 
 ### 1. Start shared services
 
@@ -114,13 +114,7 @@ cause JDBC connection pool errors with the HAPI FHIR server. Reducing the number
 of cores using the `--cores` flag should help at the cost of increasing the time
 to upload the data.
 
-### 4. Build the e2e controller/spark image
-
-```bash
-docker build -t ${_REPOSITORY}/e2e-tests/controller-spark:${_TAG} -f e2e-tests/controller-spark/Dockerfile .
-```
-
-### 5. Build and run the batch pipeline
+### 4. Build and run the batch pipeline
 
 **Note:** this step is only needed if the E2E is failing in the batch pipeline
 step; otherwise skip.
@@ -148,14 +142,7 @@ docker run --rm \
   ${_REPOSITORY}/batch-pipeline:${_TAG}
 ```
 
-**Note:** The /workspace/e2e-tests/FHIR_SEARCH_HAPI/VIEWS_TIMESTAMP_1 folder is
-hardcoded as the output path for the parquet views and subsequent runs may
-overwrite the content. Make sure to clean it up between runs if needed.
-
-Repeat equivalent runs for JDBC mode, Bulk Export mode, and OpenMRS flows by
-applying the same env vars/cloud build steps from `cloudbuild.yaml`.
-
-### 6. Run e2e tests
+### 5. Run e2e tests
 
 **Note:** Only run this step if the E2E tests are failing; otherwise skip.
 
@@ -177,31 +164,215 @@ locally, you can run the equivalent script directly:
 ./e2e-tests/pipeline_validation.sh e2e-tests/ FHIR_SEARCH_HAPI FHIR_SEARCH_HAPI_JSON http://localhost:9001/fhir
 ```
 
-Repeat for each mode (JDBC, Bulk Export e.t.c) using the matching environment
-variables from the original `cloudbuild.yaml`.
+## JDBC Mode
 
-### 7. Clean up containers
+**Note:** Only run this section if debugging JDBC mode; otherwise skip.
 
-When finished, bring everything down to avoid port conflicts:
+### 1. Run batch pipeline for JDBC mode
+
+Run the JDBC mode job against HAPI:
+
+```bash
+docker run --rm \
+  -e JDBC_MODE_ENABLED=true \
+  -e JDBC_MODE_HAPI=true \
+  -e FHIR_SERVER_URL=http://localhost:9001/fhir \
+  -e SINK_PATH=http://localhost:9002/fhir \
+  -e SINK_USERNAME=hapi -e SINK_PASSWORD=hapi \
+  -e FHIR_DATABASE_CONFIG_PATH=/workspace/utils/hapi-postgres-config.json \
+  -e PARQUET_PATH=/workspace/e2e-tests/JDBC_HAPI \
+  -e OUTPUT_PARQUET_VIEW_PATH=/workspace/e2e-tests/JDBC_HAPI/VIEWS_TIMESTAMP_1 \
+  -e JDBC_FETCH_SIZE=1000 \
+  -v $(pwd):/workspace \
+  --network host \
+  ${_REPOSITORY}/batch-pipeline:${_TAG}
+```
+
+### 2. Run e2e tests for JDBC mode
+
+```bash
+./e2e-tests/pipeline_validation.sh e2e-tests/ JDBC_HAPI JDBC_HAPI_FHIR_JSON http://localhost:9002/fhir
+```
+
+## Bulk Export Mode
+
+**Note:** Only run this section if debugging Bulk Export mode; otherwise skip.
+
+### 1. Run batch pipeline for Bulk Export mode
+
+```bash
+docker run --rm \
+  -e FHIR_FETCH_MODE=BULK_EXPORT \
+  -e FHIR_SERVER_URL=http://localhost:9001/fhir \
+  -e PARQUET_PATH=/workspace/e2e-tests/BULK_EXPORT \
+  -e OUTPUT_PARQUET_VIEW_PATH=/workspace/e2e-tests/BULK_EXPORT/VIEWS_TIMESTAMP_1 \
+  -v $(pwd):/workspace \
+  --network host \
+  ${_REPOSITORY}/batch-pipeline:${_TAG}
+```
+
+### 2. Run e2e tests for Bulk Export mode
+
+```bash
+./e2e-tests/pipeline_validation.sh e2e-tests/ BULK_EXPORT BULK_EXPORT_FHIR_JSON
+```
+
+## Controller and Spark Mode
+
+**Note:** Only run this section if debugging Controller and Spark mode;
+otherwise skip.
+
+### 1. Turn down sink servers
 
 ```bash
 docker compose -f docker/sink-compose.yml -p sink-server-search down -v
 docker compose -f docker/sink-compose.yml -p sink-server-jdbc down -v
-docker compose -f docker/hapi-compose.yml -p hapi-compose down -v
 ```
 
-Also stop the controller/spark Compose services and other environment-specific
-stacks as needed.
+### 2. Create views database
 
-### 8. Additional steps
+The `views` database is used for creating flat views from ViewDefinitions.
 
-Inspect `cloudbuild.yaml` to discover any additional `run` steps you wish to
-reproduce locally (e.g., `dwh/validate_indicators.sh`, controller tests, OpenMRS
-flows).
+```bash
+docker run --rm --network host postgres psql -U admin -d postgres -h localhost -p 5432 -c 'CREATE DATABASE views;'
+```
 
-## Conclusion
+### 3. Build the e2e controller/spark image
 
-By following these steps, you can reproduce the main parts of `cloudbuild.yaml`
-locally and iterate on fixes without waiting for Cloud Build. Adjust the script
-sequence to match your debugging focus, and optionally wrap common sections in
-reusable shell scripts.
+```bash
+docker build -t ${_REPOSITORY}/e2e-tests/controller-spark:${_TAG} -f e2e-tests/controller-spark/Dockerfile .
+```
+
+### 4. Bring up controller and Spark containers
+
+```bash
+PIPELINE_CONFIG=/workspace/docker/config DWH_ROOT=/workspace/e2e-tests/controller-spark/dwh docker compose -f docker/compose-controller-spark-sql-single.yaml up --force-recreate -d
+```
+
+### 5. Run e2e test for controller and Spark
+
+```bash
+docker run --rm -v $(pwd):/workspace ${_REPOSITORY}/e2e-tests/controller-spark:${_TAG}
+```
+
+### 6. Bring down controller and Spark containers
+
+```bash
+docker compose -f docker/compose-controller-spark-sql-single.yaml down -v
+```
+
+## FHIR to FHIR Sync Mode
+
+**Note:** Only run this section if debugging FHIR to FHIR sync mode; otherwise
+skip.
+
+### 1. Launch HAPI FHIR Sink Server for controller
+
+```bash
+SINK_SERVER_NAME=sink-server-controller SINK_SERVER_PORT=9001 docker compose -f docker/sink-compose.yml -p sink-server up --force-recreate -d
+```
+
+### 2. Bring up pipeline controller for FHIR to FHIR sync
+
+```bash
+PIPELINE_CONFIG=/workspace/docker/config DWH_ROOT=/workspace/e2e-tests/controller-spark/dwh FHIRDATA_SINKFHIRSERVERURL=http://localhost:9001/fhir FHIRDATA_GENERATEPARQUETFILES=false FHIRDATA_CREATEHIVERESOURCETABLES=false FHIRDATA_CREATEPARQUETVIEWS=false FHIRDATA_SINKDBCONFIGPATH= docker compose -f docker/compose-controller-spark-sql-single.yaml up --force-recreate --no-deps -d pipeline-controller
+```
+
+### 3. Run e2e test for FHIR to FHIR sync
+
+```bash
+docker run --rm -e DWH_TYPE=FHIR -v $(pwd):/workspace ${_REPOSITORY}/e2e-tests/controller-spark:${_TAG}
+```
+
+### 4. Bring down pipeline controller and sink
+
+```bash
+docker compose -f docker/compose-controller-spark-sql-single.yaml down -v
+docker compose -f docker/sink-compose.yml -p sink-server down -v
+```
+
+## OpenMRS Mode
+
+**Note:** Only run this section if debugging OpenMRS mode; otherwise skip.
+
+### 1. Launch OpenMRS Server and HAPI FHIR Sink Server for OpenMRS
+
+```bash
+SINK_SERVER_NAME=sink-server-for-openmrs SINK_SERVER_PORT=9002 docker compose -f docker/openmrs-compose.yaml -f docker/sink-compose.yml -p openmrs-project up --force-recreate --remove-orphans -d
+```
+
+### 2. Upload to OpenMRS
+
+```bash
+python3 ./synthea-hiv/uploader/main.py OpenMRS http://localhost:8080/openmrs/ws/fhir2/R4 --convert_to_openmrs --input_dir ./synthea-hiv/sample_data
+```
+
+### 3. Run batch pipeline for FHIR-search mode with OpenMRS source
+
+```bash
+docker run --rm \
+  -e PARQUET_PATH=/workspace/e2e-tests/FHIR_SEARCH_OPENMRS \
+  -e OUTPUT_PARQUET_VIEW_PATH=/workspace/e2e-tests/FHIR_SEARCH_OPENMRS/VIEWS_TIMESTAMP_1 \
+  -e SINK_PATH=http://localhost:9002/fhir \
+  -e SINK_USERNAME=hapi -e SINK_PASSWORD=hapi \
+  -v $(pwd):/workspace \
+  --network host \
+  ${_REPOSITORY}/batch-pipeline:${_TAG}
+```
+
+### 4. Run e2e test for FHIR-search mode with OpenMRS source
+
+```bash
+./e2e-tests/pipeline_validation.sh e2e-tests/ FHIR_SEARCH_OPENMRS FHIR_SEARCH_OPENMRS_JSON http://localhost:9002/fhir --openmrs
+```
+
+### 5. Run batch pipeline for JDBC mode with OpenMRS source
+
+```bash
+docker run --rm \
+  -e JDBC_MODE_ENABLED=true \
+  -e PARQUET_PATH=/workspace/e2e-tests/JDBC_OPENMRS \
+  -e OUTPUT_PARQUET_VIEW_PATH=/workspace/e2e-tests/JDBC_OPENMRS/VIEWS_TIMESTAMP_1 \
+  -e SINK_PATH=http://localhost:9002/fhir \
+  -e SINK_USERNAME=hapi -e SINK_PASSWORD=hapi \
+  -e FHIR_DATABASE_CONFIG_PATH=/workspace/utils/dbz_event_to_fhir_config.json \
+  -v $(pwd):/workspace \
+  --network host \
+  ${_REPOSITORY}/batch-pipeline:${_TAG}
+```
+
+### 6. Run e2e test for JDBC mode with OpenMRS source
+
+```bash
+./e2e-tests/pipeline_validation.sh e2e-tests/ JDBC_OPENMRS JDBC_OPENMRS_FHIR_JSON http://localhost:9002/fhir --openmrs
+```
+
+### 7. Test indicators
+
+```bash
+cd dwh
+./validate_indicators.sh
+cd ..
+```
+
+### 8. Turn down OpenMRS and sink servers
+
+```bash
+docker compose -f docker/openmrs-compose.yaml -f docker/sink-compose.yml -p openmrs-project down
+```
+
+### 9. Turn down HAPI source server
+
+```bash
+docker compose -f docker/hapi-compose.yml down
+```
+
+## Final Clean Up
+
+### 1. Clean up remaining containers
+
+After running the desired sections, ensure all containers are stopped to avoid
+port conflicts.
+
+Stop any remaining controller/spark Compose services and other
+environment-specific stacks as needed.
