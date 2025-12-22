@@ -55,7 +55,7 @@
     <sonar.java.binaries>target/classes</sonar.java.binaries>
     <lombok.version>1.18.42</lombok.version>
     <errorprone.version>2.42.0</errorprone.version>
-    <nullaway.version>0.12.10</nullaway.version>
+    <nullaway.version>0.12.15</nullaway.version>
     <auto-value.version>1.11.1</auto-value.version>
     <mockito.version>5.2.0</mockito.version>
     <nullaway.annotatedPackages>com.google.fhir.analytics</nullaway.annotatedPackages>
