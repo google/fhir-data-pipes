@@ -11,10 +11,6 @@ jobs:
         project:
           - name: "Controller CLI"
             path: "pipelines/controller-cli"
-          - name: "Synthea Generator"
-            path: "synthea-hiv/generator"
-          - name: "Synthea Uploader"
-            path: "synthea-hiv/uploader"
 
     name: Check ${{ matrix.project.name }}
 
