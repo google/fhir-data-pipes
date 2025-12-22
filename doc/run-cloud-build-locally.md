@@ -1,18 +1,20 @@
 # Running `cloudbuild.yaml` Locally with Docker
 
-`cloudbuild-local` is deprecated; however you can still iterate on the
+`cloud-build-local` is deprecated; however you can still iterate on the
 `cloudbuild.yaml` steps by running them manually using Docker and the same
 tooling that Cloud Build uses. This document provides a lightweight, repeatable
 workflow for running the CI pipeline locally while being able to iterate
 quickly.
 
+**Note:** Depending on what stage of the build is failing for your PR, you can
+bring up only services that are relevant to that stage.
+
 ## Prerequisites
 
-- Docker Desktop (with `docker compose`) installed and running.
+- Docker installed (including `docker compose`); one way of achieving this is to
+  install Docker Desktop.
 - A local JDK 17 + Maven 3.8.x for the Maven build steps.
-- `python3` (for `synthea-uploader` unit tests) and `python -m unittest`
-  available on `$PATH`.
-- Access to the workspace root (same directory that holds `cloudbuild.yaml`).
+- The GitHub repo is checked out locally.
 
 ## Environment setup
 
@@ -28,10 +30,6 @@ docker network create cloudbuild
 export _TAG=local
 export _REPOSITORY=fhir-analytics
 ```
-
-3. If you need to mirror the GCP `gcloud` network configuration (Docker Compose
-   services talk to each other by name), run all commands inside this directory
-   so the Compose files resolve relative paths correctly.
 
 ## Step-by-step local reproduction
 
@@ -69,39 +67,42 @@ c13ad0618e65   hapiproject/hapi:latest   "java --class-path /…"   2 minutes ag
 mvn --no-transfer-progress -e -T 2C install -Dlicense.skip=true -Dspotless.apply.skip=true
 ```
 
-### 3. Upload sample synthetic data to HAPI stored in
+### 3. Upload sample synthetic data to HAPI
 
+Upload sample synthetic data to HAPI stored in
 [sample_data](https://github.com/google/fhir-data-pipes/blob/master/synthea-hiv/sample_data)
 to the FHIR server that you brought up using the
 [Synthea data uploader](https://github.com/google/fhir-data-pipes/blob/master/synthea-hiv/README.md#Uploader).
 
-The uploader requires that you install the `uploader` module requirements first.
-You can do this by running:
+The uploader requires that you install the `uploader` module requirements.
+
+It is a good idea to first create a Python `virtualenv` before running the
+installation command to avoid conflicts with other Python packages you may have
+installed globally.
+
+If you use `virtualenv` then you can do it by running:
+
+```bash
+$ virtualenv -p python3 venv
+$ . ./venv/bin/activate
+```
+
+or if you use the python standard library `venv` module, you can do it by
+running:
+
+```bash
+$ python3 -m venv venv
+$ source ./venv/bin/activate
+```
+
+Then, you can then install the requirements with:
 
 ```bash
 pip3 install -r ./synthea-hiv/uploader/requirements.txt
 ```
 
-Please note, it is a good idea to first create a Python `virtualenv` before
-running the above command to avoid conflicts with other Python packages you may
-have installed globally. You can do this by running:
-
-```bash
-$ virtualenv -p python3.8 venv
-$ . ./venv/bin/activate
-```
-
-If you had this already set up, just activate your existing virtualenv.
-
-```bash
-$ workon venv
-```
-
-Then, you can run the uploader script to upload the synthetic data to the FHIR
-server.
-
-For example, to upload to the HAPI FHIR server brought up in the previous step,
-run:
+Run the uploader script to upload the synthetic data to the HAPI FHIR server
+brought up in the previous step with:
 
 ```bash
 python3 ./synthea-hiv/uploader/main.py HAPI http://localhost:9001/fhir \
@@ -121,8 +122,11 @@ docker build -t ${_REPOSITORY}/e2e-tests/controller-spark:${_TAG} -f e2e-tests/c
 
 ### 5. Build and run the batch pipeline
 
-Use the Maven-built image (or rebuild with `pipelines/batch/docker` if you
-change it):
+**Note:** this step is only needed if the E2E is failing in the batch pipeline
+step; otherwise skip.
+
+Run this command to build Pipeline images (or reuse a previously built image)
+with:
 
 ```bash
 cd pipelines/batch
@@ -144,12 +148,18 @@ docker run --rm \
   ${_REPOSITORY}/batch-pipeline:${_TAG}
 ```
 
+**Note:** The /workspace/e2e-tests/FHIR_SEARCH_HAPI/VIEWS_TIMESTAMP_1 folder is
+hardcoded as the output path for the parquet views and subsequent runs may
+overwrite the content. Make sure to clean it up between runs if needed.
+
 Repeat equivalent runs for JDBC mode, Bulk Export mode, and OpenMRS flows by
 applying the same env vars/cloud build steps from `cloudbuild.yaml`.
 
 ### 6. Run e2e tests
 
-Execute the HAPI search test:
+**Note:** Only run this step if the E2E tests are failing; otherwise skip.
+
+Execute the HAPI search test. On the cloud build, this is done via a Docker run:
 
 ```bash
   docker run --rm -e PARQUET_SUBDIR=FHIR_SEARCH_HAPI   \
@@ -161,14 +171,14 @@ Execute the HAPI search test:
     ${_REPOSITORY}/e2e-tests:${_TAG}
 ```
 
-or just the script directly:
+locally, you can run the equivalent script directly:
 
 ```bash
 ./e2e-tests/pipeline_validation.sh e2e-tests/ FHIR_SEARCH_HAPI FHIR_SEARCH_HAPI_JSON http://localhost:9001/fhir
 ```
 
-Repeat for each mode (JDBC, Bulk Export, controller/spark, OpenMRS) using the
-matching environment variables from the original `cloudbuild.yaml`.
+Repeat for each mode (JDBC, Bulk Export e.t.c) using the matching environment
+variables from the original `cloudbuild.yaml`.
 
 ### 7. Clean up containers
 
