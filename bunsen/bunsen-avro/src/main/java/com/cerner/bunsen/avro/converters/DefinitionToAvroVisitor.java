@@ -36,7 +36,6 @@ import java.util.Objects;
 import java.util.stream.Collectors;
 import org.apache.avro.JsonProperties;
 import org.apache.avro.Schema;
-import org.apache.avro.Schema.Field;
 import org.apache.avro.generic.GenericData;
 import org.apache.avro.generic.IndexedRecord;
 import org.apache.avro.specific.SpecificData;
@@ -399,7 +398,7 @@ public class DefinitionToAvroVisitor implements DefinitionVisitor<HapiConverter<
         IndexedRecord containedRecord = (IndexedRecord) avroData.newRecord(null, containerType);
         String recordName = ((IndexedRecord) containedEntry).getSchema().getName();
 
-        List<Field> fields = containerType.getFields();
+        List<Schema.Field> fields = containerType.getFields();
 
         int containedPosition = -1;
 
@@ -417,7 +416,9 @@ public class DefinitionToAvroVisitor implements DefinitionVisitor<HapiConverter<
 
         if (containedPosition == -1) {
           String fieldNames =
-              containerType.getFields().stream().map(Field::name).collect(Collectors.joining(", "));
+              containerType.getFields().stream()
+                  .map(Schema.Field::name)
+                  .collect(Collectors.joining(", "));
 
           throw new IllegalArgumentException(
               "Expected a field to exist in the Contained List"
@@ -569,13 +570,13 @@ public class DefinitionToAvroVisitor implements DefinitionVisitor<HapiConverter<
     String recordName = DefinitionVisitorsUtil.recordNameFor(elementPath);
     String recordNamespace = DefinitionVisitorsUtil.namespaceFor(basePackage, elementTypeUrl);
 
-    List<Field> fields =
+    List<Schema.Field> fields =
         contained.values().stream()
             .map(
                 containedEntry -> {
                   String doc = "Field for FHIR property " + containedEntry.propertyName();
 
-                  return new Field(
+                  return new Schema.Field(
                       containedEntry.fieldName(),
                       nullable(containedEntry.result().getDataType()),
                       doc,
@@ -736,11 +737,11 @@ public class DefinitionToAvroVisitor implements DefinitionVisitor<HapiConverter<
 
       fieldsWithReferences.addAll(children);
 
-      List<Field> fields =
+      List<Schema.Field> fields =
           fieldsWithReferences.stream()
               .map(
                   entry ->
-                      new Field(
+                      new Schema.Field(
                           entry.fieldName(),
                           nullable(entry.result().getDataType()),
                           "Reference field",
@@ -781,11 +782,11 @@ public class DefinitionToAvroVisitor implements DefinitionVisitor<HapiConverter<
 
     if (converter == null) {
 
-      List<Field> fields =
+      List<Schema.Field> fields =
           children.stream()
               .map(
                   entry ->
-                      new Field(
+                      new Schema.Field(
                           entry.fieldName(),
                           nullable(entry.result().getDataType()),
                           "Doc here",
@@ -855,7 +856,7 @@ public class DefinitionToAvroVisitor implements DefinitionVisitor<HapiConverter<
       FhirConversionSupport fhirSupport,
       @Nullable String extensionUrl) {
 
-    List<Field> fields =
+    List<Schema.Field> fields =
         children.stream()
             .map(
                 (StructureField<HapiConverter<Schema>> field) -> {
@@ -866,7 +867,7 @@ public class DefinitionToAvroVisitor implements DefinitionVisitor<HapiConverter<
                               ? "Extension field for " + field.extensionUrl()
                               : "Field for FHIR property " + field.propertyName();
 
-                  return new Field(
+                  return new Schema.Field(
                       field.fieldName(),
                       nullable(field.result().getDataType()),
                       desc,
@@ -884,7 +885,7 @@ public class DefinitionToAvroVisitor implements DefinitionVisitor<HapiConverter<
       String namespace,
       FhirConversionSupport fhirSupport) {
 
-    List<Field> fields = createChoiceFields(choiceTypes);
+    List<Schema.Field> fields = createChoiceFields(choiceTypes);
     String fieldTypesString = createChoiceFieldTypesName(choiceTypes);
 
     Schema schema =
@@ -897,13 +898,14 @@ public class DefinitionToAvroVisitor implements DefinitionVisitor<HapiConverter<
     return new HapiChoiceToAvroConverter(choiceTypes, schema, fhirSupport);
   }
 
-  private static List<Field> createChoiceFields(Map<String, HapiConverter<Schema>> choiceTypes) {
+  private static List<Schema.Field> createChoiceFields(
+      Map<String, HapiConverter<Schema>> choiceTypes) {
     return choiceTypes.entrySet().stream()
         .map(
             entry -> {
               // Ensure first character of the field is lower case.
               String fieldName = lowercase(entry.getKey());
-              return new Field(
+              return new Schema.Field(
                   fieldName,
                   nullable(entry.getValue().getDataType()),
                   "Choice field",

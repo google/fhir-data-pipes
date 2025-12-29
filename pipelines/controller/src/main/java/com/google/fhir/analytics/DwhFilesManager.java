@@ -117,7 +117,7 @@ public class DwhFilesManager {
    */
   @Nullable LocalDateTime getNextPurgeTime() {
     if (lastPurgeRunEnd == null) {
-      return LocalDateTime.now(ZoneOffset.UTC);
+      return DwhFilesManager.getCurrentTime();
     }
     return purgeCron.next(lastPurgeRunEnd);
   }
@@ -132,10 +132,10 @@ public class DwhFilesManager {
       LocalDateTime next = getNextPurgeTime();
       if (next != null) {
         logger.info("Last purge run was at {} next run is at {}", lastPurgeRunEnd, next);
-        if (next.isBefore(LocalDateTime.now(ZoneOffset.UTC))) {
-          logger.info("Purge run triggered at {}", LocalDateTime.now(ZoneOffset.UTC));
+        if (next.isBefore(DwhFilesManager.getCurrentTime())) {
+          logger.info("Purge run triggered at {}", DwhFilesManager.getCurrentTime());
           purgeDwhFiles();
-          logger.info("Purge run completed at {}", LocalDateTime.now(ZoneOffset.UTC));
+          logger.info("Purge run completed at {}", DwhFilesManager.getCurrentTime());
         }
       } else {
         logger.warn("Next purge time is null, please check the cron expression");
@@ -163,7 +163,7 @@ public class DwhFilesManager {
       TreeSet<String> recentSnapshotsToBeRetained =
           getRecentSnapshots(paths, numOfDwhSnapshotsToRetain);
       deleteOlderSnapshots(paths, recentSnapshotsToBeRetained);
-      lastPurgeRunEnd = LocalDateTime.now(ZoneOffset.UTC);
+      lastPurgeRunEnd = DwhFilesManager.getCurrentTime();
     } catch (IOException e) {
       logger.error("Error occurred while purging older snapshots", e);
     }
@@ -470,5 +470,9 @@ public class DwhFilesManager {
         throw new IllegalArgumentException(errorMessage);
       }
     };
+  }
+
+  public static LocalDateTime getCurrentTime() {
+    return LocalDateTime.now(ZoneOffset.UTC);
   }
 }
