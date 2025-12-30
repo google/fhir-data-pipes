@@ -33,7 +33,7 @@ logger = logging.getLogger(__name__)
 def process_response(response: str, args: argparse.Namespace):
     command_str = (
         f"{args.command} "
-        f"{args.subcommand if hasattr(args, 'subcommand') else ''}".strip()
+        f"""{args.subcommand if hasattr(args, "subcommand") else ""}""".strip()
     )
     logger.info(f"Command: {command_str}")
     logger.info(f"Request url: {args.url}")
