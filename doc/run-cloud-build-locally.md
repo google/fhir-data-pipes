@@ -40,9 +40,19 @@ Start the HAPI source and both sink servers the same way Cloud Build does:
 ```bash
 docker compose -f docker/hapi-compose.yml -p hapi-compose up --force-recreate --remove-orphans -d
 
-SINK_SERVER_NAME=sink-server-search SINK_SERVER_PORT=9001 docker compose -f docker/sink-compose.yml -p sink-server-search up --force-recreate --remove-orphans -d
+SINK_SERVER_NAME=sink-server-search \
+SINK_SERVER_PORT=9001 \
+docker compose \
+  -f docker/sink-compose.yml \
+  -p sink-server-search \
+  up --force-recreate --remove-orphans -d
 
-SINK_SERVER_NAME=sink-server-jdbc SINK_SERVER_PORT=9002 docker compose -f docker/sink-compose.yml -p sink-server-jdbc up --force-recreate --remove-orphans -d
+SINK_SERVER_NAME=sink-server-jdbc \
+SINK_SERVER_PORT=9002 \
+docker compose \
+  -f docker/sink-compose.yml \
+  -p sink-server-jdbc \
+  up --force-recreate --remove-orphans -d
 ```
 
 Wait for the servers to become ready and confirm via the command:
@@ -84,7 +94,7 @@ If you use `virtualenv` then you can do it by running:
 
 ```bash
 $ virtualenv -p python3 venv
-$ . ./venv/bin/activate
+$ source ./venv/bin/activate
 ```
 
 or if you use the python standard library `venv` module, you can do it by
@@ -95,7 +105,7 @@ $ python3 -m venv venv
 $ source ./venv/bin/activate
 ```
 
-Then, you can then install the requirements with:
+Then, you can install the requirements with:
 
 ```bash
 pip3 install -r ./synthea-hiv/uploader/requirements.txt
@@ -142,9 +152,13 @@ docker run --rm \
   ${_REPOSITORY}/batch-pipeline:${_TAG}
 ```
 
+**Note:** Running may overwrite previous data in the PARQUET_PATH and
+OUTPUT_PARQUET_VIEW_PATH folders.
+
 ### 5. Run e2e tests
 
-**Note:** Only run this step if the E2E tests are failing; otherwise skip.
+**Note:** Only run this step if the E2E tests for this stage are failing;
+otherwise skip.
 
 Execute the HAPI search test. On the cloud build, this is done via a Docker run:
 
@@ -237,7 +251,7 @@ The `views` database is used for creating flat views from ViewDefinitions.
 docker run --rm --network host postgres psql -U admin -d postgres -h localhost -p 5432 -c 'CREATE DATABASE views;'
 ```
 
-### 3. Build the e2e controller/spark image
+### 3. Build the controller/spark image
 
 ```bash
 docker build -t ${_REPOSITORY}/e2e-tests/controller-spark:${_TAG} -f e2e-tests/controller-spark/Dockerfile .
@@ -246,7 +260,11 @@ docker build -t ${_REPOSITORY}/e2e-tests/controller-spark:${_TAG} -f e2e-tests/c
 ### 4. Bring up controller and Spark containers
 
 ```bash
-PIPELINE_CONFIG=/workspace/docker/config DWH_ROOT=/workspace/e2e-tests/controller-spark/dwh docker compose -f docker/compose-controller-spark-sql-single.yaml up --force-recreate -d
+PIPELINE_CONFIG=/workspace/docker/config \
+DWH_ROOT=/workspace/e2e-tests/controller-spark/dwh \
+docker compose \
+  -f docker/compose-controller-spark-sql-single.yaml \
+  up --force-recreate -d
 ```
 
 ### 5. Run e2e test for controller and Spark
@@ -256,6 +274,9 @@ docker run --rm -v $(pwd):/workspace ${_REPOSITORY}/e2e-tests/controller-spark:$
 ```
 
 ### 6. Bring down controller and Spark containers
+
+When you are done with debugging the controller-spark issues, you can bring
+those containers down.
 
 ```bash
 docker compose -f docker/compose-controller-spark-sql-single.yaml down -v
@@ -269,13 +290,30 @@ skip.
 ### 1. Launch HAPI FHIR Sink Server for controller
 
 ```bash
-SINK_SERVER_NAME=sink-server-controller SINK_SERVER_PORT=9001 docker compose -f docker/sink-compose.yml -p sink-server up --force-recreate -d
+SINK_SERVER_NAME=sink-server-controller \
+SINK_SERVER_PORT=9001 \
+docker compose \
+  -f docker/sink-compose.yml \
+  -p sink-server \
+  up --force-recreate -d
 ```
 
 ### 2. Bring up pipeline controller for FHIR to FHIR sync
 
+**Note:** You can use the controller from the previous step if you have it
+running
+
 ```bash
-PIPELINE_CONFIG=/workspace/docker/config DWH_ROOT=/workspace/e2e-tests/controller-spark/dwh FHIRDATA_SINKFHIRSERVERURL=http://localhost:9001/fhir FHIRDATA_GENERATEPARQUETFILES=false FHIRDATA_CREATEHIVERESOURCETABLES=false FHIRDATA_CREATEPARQUETVIEWS=false FHIRDATA_SINKDBCONFIGPATH= docker compose -f docker/compose-controller-spark-sql-single.yaml up --force-recreate --no-deps -d pipeline-controller
+PIPELINE_CONFIG=/workspace/docker/config \
+DWH_ROOT=/workspace/e2e-tests/controller-spark/dwh \
+FHIRDATA_SINKFHIRSERVERURL=http://localhost:9001/fhir \
+FHIRDATA_GENERATEPARQUETFILES=false \
+FHIRDATA_CREATEHIVERESOURCETABLES=false \
+FHIRDATA_CREATEPARQUETVIEWS=false \
+FHIRDATA_SINKDBCONFIGPATH= \
+docker compose \
+  -f docker/compose-controller-spark-sql-single.yaml \
+  up --force-recreate --no-deps -d pipeline-controller
 ```
 
 ### 3. Run e2e test for FHIR to FHIR sync
@@ -298,13 +336,21 @@ docker compose -f docker/sink-compose.yml -p sink-server down -v
 ### 1. Launch OpenMRS Server and HAPI FHIR Sink Server for OpenMRS
 
 ```bash
-SINK_SERVER_NAME=sink-server-for-openmrs SINK_SERVER_PORT=9002 docker compose -f docker/openmrs-compose.yaml -f docker/sink-compose.yml -p openmrs-project up --force-recreate --remove-orphans -d
+SINK_SERVER_NAME=sink-server-for-openmrs \
+SINK_SERVER_PORT=9002 \
+docker compose \
+  -f docker/openmrs-compose.yaml \
+  -f docker/sink-compose.yml \
+  -p openmrs-project \
+  up --force-recreate --remove-orphans -d
 ```
 
 ### 2. Upload to OpenMRS
 
 ```bash
-python3 ./synthea-hiv/uploader/main.py OpenMRS http://localhost:8080/openmrs/ws/fhir2/R4 --convert_to_openmrs --input_dir ./synthea-hiv/sample_data
+python3 ./synthea-hiv/uploader/main.py OpenMRS \
+http://localhost:8080/openmrs/ws/fhir2/R4 --convert_to_openmrs \
+--input_dir ./synthea-hiv/sample_data --input_dir ./synthea-hiv/sample_data
 ```
 
 ### 3. Run batch pipeline for FHIR-search mode with OpenMRS source
@@ -323,7 +369,10 @@ docker run --rm \
 ### 4. Run e2e test for FHIR-search mode with OpenMRS source
 
 ```bash
-./e2e-tests/pipeline_validation.sh e2e-tests/ FHIR_SEARCH_OPENMRS FHIR_SEARCH_OPENMRS_JSON http://localhost:9002/fhir --openmrs
+./e2e-tests/pipeline_validation.sh e2e-tests/ \
+  FHIR_SEARCH_OPENMRS \
+  FHIR_SEARCH_OPENMRS_JSON \
+  http://localhost:9002/fhir --openmrs
 ```
 
 ### 5. Run batch pipeline for JDBC mode with OpenMRS source
@@ -344,7 +393,12 @@ docker run --rm \
 ### 6. Run e2e test for JDBC mode with OpenMRS source
 
 ```bash
-./e2e-tests/pipeline_validation.sh e2e-tests/ JDBC_OPENMRS JDBC_OPENMRS_FHIR_JSON http://localhost:9002/fhir --openmrs
+./e2e-tests/pipeline_validation.sh \
+  e2e-tests/ \
+  JDBC_OPENMRS \
+  JDBC_OPENMRS_FHIR_JSON \
+  http://localhost:9002/fhir \
+  --openmrs
 ```
 
 ### 7. Test indicators
