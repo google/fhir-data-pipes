@@ -174,7 +174,7 @@ public class PipelineManager implements ApplicationListener<ApplicationReadyEven
 
   private void setLastRunStatus(LastRunStatus status) {
     if (status == LastRunStatus.SUCCESS) {
-      lastRunEnd = LocalDateTime.now();
+      lastRunEnd = DwhFilesManager.getCurrentTime();
     }
   }
 
@@ -258,7 +258,7 @@ public class PipelineManager implements ApplicationListener<ApplicationReadyEven
         currentDwh =
             DwhFiles.forRootWithLatestViewPath(currentDwhRoot, avroConversionUtil.getFhirContext());
         // There exists a DWH from before, so we set the scheduler to continue updating the DWH.
-        lastRunEnd = LocalDateTime.now();
+        lastRunEnd = DwhFilesManager.getCurrentTime();
       } catch (IOException e) {
         logger.error("IOException while initializing DWH: ", e);
         throw new RuntimeException(e);
@@ -400,8 +400,8 @@ public class PipelineManager implements ApplicationListener<ApplicationReadyEven
       return;
     }
     logger.info("Last run was at {} next run is at {}", lastRunEnd, next);
-    if (next.compareTo(LocalDateTime.now()) < 0) {
-      logger.info("Incremental run triggered at {}", LocalDateTime.now());
+    if (next.compareTo(DwhFilesManager.getCurrentTime()) < 0) {
+      logger.info("Incremental run triggered at {}", DwhFilesManager.getCurrentTime());
       runIncrementalPipeline();
     }
   }
