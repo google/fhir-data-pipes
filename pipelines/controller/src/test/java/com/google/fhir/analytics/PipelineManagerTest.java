@@ -35,31 +35,25 @@ import org.mockito.MockedStatic;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.scheduling.support.CronExpression;
 
+@SuppressWarnings("NullAway")
 @ExtendWith(MockitoExtension.class)
 public class PipelineManagerTest {
 
-  private DataProperties dataProperties;
-
-  private DwhFilesManager dwhFilesManager;
-
-  private MeterRegistry meterRegistry;
-
   private PipelineManager pipelineManager;
 
-  private LocalDateTime lastRunEndTimestamp = LocalDateTime.of(2025, 12, 29, 10, 0);
+  private final LocalDateTime lastRunEndTimestamp = LocalDateTime.of(2025, 12, 29, 10, 0);
 
   @BeforeEach
-  @SuppressWarnings("NullAway")
   void setUp() throws Exception {
-    dataProperties = mock(DataProperties.class);
-    dwhFilesManager = mock(DwhFilesManager.class);
-    meterRegistry = mock(MeterRegistry.class);
+    DataProperties dataProperties = mock(DataProperties.class);
+    DwhFilesManager dwhFilesManager = mock(DwhFilesManager.class);
+    MeterRegistry meterRegistry = mock(MeterRegistry.class);
     pipelineManager = new PipelineManager();
     setField("dataProperties", dataProperties);
     setField("dwhFilesManager", dwhFilesManager);
     setField("meterRegistry", meterRegistry);
     setField("cron", CronExpression.parse("0 * * * * *")); // every minute
-    setField("lastRunEnd", lastRunEndTimestamp); // not running
+    setField("lastRunEnd", lastRunEndTimestamp);
     setField("currentPipeline", null); // not running
   }
 
@@ -126,7 +120,6 @@ public class PipelineManagerTest {
   }
 
   @Test
-  @SuppressWarnings("NullAway")
   public void testGetNextIncrementalTimeWhenNoPreviousRun() throws Exception {
     // Set lastRunEnd to null to simulate no previous run
     setField("lastRunEnd", (LocalDateTime) null);
