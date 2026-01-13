@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2025 Google LLC
+ * Copyright 2020-2026 Google LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@ package com.google.fhir.analytics;
 
 import ca.uhn.fhir.context.FhirContext;
 import com.cerner.bunsen.exception.ProfileException;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Splitter;
 import com.google.common.base.Strings;
@@ -394,7 +395,8 @@ public class PipelineManager implements ApplicationListener<ApplicationReadyEven
   // Every 30 seconds, check for pipeline status and incremental pipeline schedule.
   @SuppressWarnings("unused")
   @Scheduled(fixedDelay = 30000)
-  private void checkSchedule() throws IOException {
+  @VisibleForTesting
+  void checkSchedule() throws IOException {
     LocalDateTime next = getNextIncrementalTime();
     if (next == null) {
       return;

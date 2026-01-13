@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2025 Google LLC
+ * Copyright 2020-2026 Google LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,8 +25,6 @@ import static org.mockito.Mockito.mockStatic;
 
 import io.micrometer.core.instrument.MeterRegistry;
 import java.lang.reflect.Field;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
 import java.time.LocalDateTime;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -70,24 +68,31 @@ public class PipelineManagerTest {
     try (MockedStatic<DwhFilesManager> mockedDwh = mockStatic(DwhFilesManager.class)) {
       mockedDwh.when(DwhFilesManager::getCurrentTime).thenReturn(currentTime);
 
-      assertThrows(
-          InvocationTargetException.class,
-          () -> {
-            // Call checkSchedule via reflection
-            Method checkScheduleMethod = PipelineManager.class.getDeclaredMethod("checkSchedule");
-            checkScheduleMethod.setAccessible(true);
-            checkScheduleMethod.invoke(pipelineManager);
+      IllegalStateException illegalStateException =
+          assertThrows(
+              IllegalStateException.class,
+              () -> {
+                // We have wrapped in assertThrows because runIncrementalPipeline throws due to
+                // unmocked
+                // dependencies
+                pipelineManager.checkSchedule();
 
-            // The incremental pipeline should be triggered since current time is after next time
-            // Note: In a real scenario, currentPipeline would be set, but in test,
-            // runIncrementalPipeline
-            // will fail due to unmocked dependencies
-            // The log message "Incremental run triggered" indicates the triggering logic worked
+                // The incremental pipeline should be triggered since current time is after next
+                // time
+                // Note: In a real scenario, currentPipeline would be set, but in test,
+                // runIncrementalPipeline
+                // will fail due to unmocked dependencies
+                // The log message "Incremental run triggered" indicates the triggering logic worked
+                // For this test, we assert that the exception message is as expected. We can only
+                // get that message if the pipeline was triggered, i.e. runIncrementalPipeline() was
+                // invoked.
 
-            // We have wrapped in assertThrows because runIncrementalPipeline throws due to unmocked
-            // dependencies
+              });
 
-          });
+      assertThat(
+          illegalStateException.getMessage(),
+          equalTo(
+              "cannot start the incremental pipeline while there are no DWHs; run full pipeline"));
     }
   }
 
@@ -99,16 +104,11 @@ public class PipelineManagerTest {
     try (MockedStatic<DwhFilesManager> mockedDwh = mockStatic(DwhFilesManager.class)) {
       mockedDwh.when(DwhFilesManager::getCurrentTime).thenReturn(currentTime);
 
-      Method checkScheduleMethod = PipelineManager.class.getDeclaredMethod("checkSchedule");
-      checkScheduleMethod.setAccessible(true);
-      checkScheduleMethod.invoke(pipelineManager);
+      pipelineManager.checkSchedule();
 
       // The incremental pipeline should not be triggered since current time is before next time
-      // Assert that currentPipeline remains null
-      Field currentPipelineField = PipelineManager.class.getDeclaredField("currentPipeline");
-      currentPipelineField.setAccessible(true);
-      Object currentPipeline = currentPipelineField.get(pipelineManager);
-      assertThat(currentPipeline, is(nullValue()));
+      // Assert that currentPipeline is not running
+      assertThat(pipelineManager.isRunning(), is(false));
     }
   }
 
