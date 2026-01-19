@@ -139,6 +139,42 @@ public class FhirSearchUtilTest {
     assertThat(nextUrl, nullValue());
   }
 
+  @Test
+  public void testHapiDecodesPercentEncodedUrlInBundle() {
+    // Repro: Bundle JSON with %22 (encoded quote) gets decoded by HAPI parser
+    String bundleStr =
+            "{ \"resourceType\": \"Bundle\",\n"
+                    + "    \"type\": \"searchset\",\n"
+                    + "    \"link\": [\n"
+                    + "        {\n"
+                    + "            \"relation\": \"next\",\n"
+                    + "            \"url\": \"http://example.com/Patient?name=%22test%22\"\n"
+                    + "        }\n"
+                    + "    ]\n"
+                    + "}";
+    IParser parser = fhirContext.newJsonParser();
+    Bundle parsedBundle = parser.parseResource(Bundle.class, bundleStr);
+
+    String nextUrl = fhirSearchUtil.getNextUrl(parsedBundle);
+    // HAPI decodes %22 to literal " - this is the bug premise
+    assertThat(nextUrl, equalTo("http://example.com/Patient?name=\"test\""));
+  }
+
+  @Test
+  public void testSearchByUrlReEncodesQueryParams() {
+    // URL with decoded quote (as would come from parsed Bundle)
+    String decodedUrl = "Patient?name=\"test\"";
+    String expectedEncodedUrl = "Patient?name=%22test%22";
+
+    when(untypedQuery.byUrl(expectedEncodedUrl)).thenReturn(query);
+
+    fhirSearchUtil.searchByUrl(decodedUrl, 10, SummaryEnum.DATA);
+
+    ArgumentCaptor<String> urlCaptor = ArgumentCaptor.forClass(String.class);
+    verify(untypedQuery).byUrl(urlCaptor.capture());
+    assertThat(urlCaptor.getValue(), equalTo(expectedEncodedUrl));
+  }
+
   @SuppressWarnings("NullAway")
   @Test
   public void testCreateSegments() {
