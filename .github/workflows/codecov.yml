@@ -17,7 +17,7 @@ jobs:
     - name: Run tests and collect coverage
       run: mvn -B test
     - name: Upload coverage to Codecov
-      uses: codecov/codecov-action@v4
+      uses: codecov/codecov-action@v5
       env:
         # To find this token, and how it is stored in the repo, see:
         # https://docs.codecov.com/docs/adding-the-codecov-token
