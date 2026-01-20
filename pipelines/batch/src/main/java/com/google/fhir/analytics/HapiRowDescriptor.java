@@ -32,7 +32,7 @@ abstract class HapiRowDescriptor implements Serializable {
 
   static HapiRowDescriptor create(
       String resourceId,
-      String forcedId,
+      @Nullable String forcedId,
       String resourceType,
       String lastUpdated,
       String fhirVersion,
