@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2025 Google LLC
+ * Copyright 2020-2026 Google LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@ package com.google.fhir.analytics;
 
 import ca.uhn.fhir.context.FhirContext;
 import com.cerner.bunsen.exception.ProfileException;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Splitter;
 import com.google.common.base.Strings;
@@ -81,16 +82,13 @@ public class PipelineManager implements ApplicationListener<ApplicationReadyEven
   // The unused suppression is to avoid warnings for the fields which are injected by Spring, see
   // @PostConstruct annotation method initDwhStatus()
   @SuppressWarnings("unused")
-  @Autowired
-  private DataProperties dataProperties;
+  private final DataProperties dataProperties;
 
   @SuppressWarnings("unused")
-  @Autowired
-  private DwhFilesManager dwhFilesManager;
+  private final DwhFilesManager dwhFilesManager;
 
   @SuppressWarnings("unused")
-  @Autowired
-  private MeterRegistry meterRegistry;
+  private final MeterRegistry meterRegistry;
 
   private HiveTableManager hiveTableManager;
 
@@ -113,7 +111,15 @@ public class PipelineManager implements ApplicationListener<ApplicationReadyEven
   private static final String FAILURE = "FAILURE";
   private static final String FAILED_TO_START = "FAILED_TO_START";
 
-  static enum RunMode {
+  @Autowired
+  public PipelineManager(
+      DataProperties dataProperties, DwhFilesManager dwhFilesManager, MeterRegistry meterRegistry) {
+    this.dataProperties = dataProperties;
+    this.dwhFilesManager = dwhFilesManager;
+    this.meterRegistry = meterRegistry;
+  }
+
+  enum RunMode {
     INCREMENTAL,
     FULL,
     VIEWS,
@@ -174,7 +180,7 @@ public class PipelineManager implements ApplicationListener<ApplicationReadyEven
 
   private void setLastRunStatus(LastRunStatus status) {
     if (status == LastRunStatus.SUCCESS) {
-      lastRunEnd = LocalDateTime.now();
+      lastRunEnd = dwhFilesManager.getCurrentTime();
     }
   }
 
@@ -258,7 +264,7 @@ public class PipelineManager implements ApplicationListener<ApplicationReadyEven
         currentDwh =
             DwhFiles.forRootWithLatestViewPath(currentDwhRoot, avroConversionUtil.getFhirContext());
         // There exists a DWH from before, so we set the scheduler to continue updating the DWH.
-        lastRunEnd = LocalDateTime.now();
+        lastRunEnd = dwhFilesManager.getCurrentTime();
       } catch (IOException e) {
         logger.error("IOException while initializing DWH: ", e);
         throw new RuntimeException(e);
@@ -394,14 +400,15 @@ public class PipelineManager implements ApplicationListener<ApplicationReadyEven
   // Every 30 seconds, check for pipeline status and incremental pipeline schedule.
   @SuppressWarnings("unused")
   @Scheduled(fixedDelay = 30000)
-  private void checkSchedule() throws IOException {
+  @VisibleForTesting
+  void checkSchedule() throws IOException {
     LocalDateTime next = getNextIncrementalTime();
     if (next == null) {
       return;
     }
     logger.info("Last run was at {} next run is at {}", lastRunEnd, next);
-    if (next.compareTo(LocalDateTime.now()) < 0) {
-      logger.info("Incremental run triggered at {}", LocalDateTime.now());
+    if (next.compareTo(dwhFilesManager.getCurrentTime()) < 0) {
+      logger.info("Incremental run triggered at {}", dwhFilesManager.getCurrentTime());
       runIncrementalPipeline();
     }
   }
