@@ -472,7 +472,7 @@ public class DwhFilesManager {
     };
   }
 
-  public static LocalDateTime getCurrentTime() {
+  public LocalDateTime getCurrentTime() {
     return LocalDateTime.now(ZoneOffset.UTC);
   }
 }
