@@ -140,8 +140,8 @@ public class FhirSearchUtilTest {
   }
 
   @Test
-  public void testHapiDecodesPercentEncodedUrlInBundle() {
-    // Repro: Bundle JSON with %22 (encoded quote) gets decoded by HAPI parser
+  public void testHapiPreservesPercentEncodedUrlInBundle() {
+    // Bundle JSON with %22 (encoded quote) stays encoded after HAPI parsing
     String bundleStr =
             "{ \"resourceType\": \"Bundle\",\n"
                     + "    \"type\": \"searchset\",\n"
@@ -156,8 +156,7 @@ public class FhirSearchUtilTest {
     Bundle parsedBundle = parser.parseResource(Bundle.class, bundleStr);
 
     String nextUrl = fhirSearchUtil.getNextUrl(parsedBundle);
-    // HAPI decodes %22 to literal " - this is the bug premise
-    assertThat(nextUrl, equalTo("http://example.com/Patient?name=\"test\""));
+    assertThat(nextUrl, equalTo("http://example.com/Patient?name=%22test%22"));
   }
 
   @Test
@@ -173,6 +172,29 @@ public class FhirSearchUtilTest {
     ArgumentCaptor<String> urlCaptor = ArgumentCaptor.forClass(String.class);
     verify(untypedQuery).byUrl(urlCaptor.capture());
     assertThat(urlCaptor.getValue(), equalTo(expectedEncodedUrl));
+  }
+
+  @Test
+  public void testEnsureQueryParamsArePercentEncodedPreservesQueryStructure() {
+    String url = "Patient?name=\"test\"&already=%22done%22&flag&empty=#fragment";
+    String expected = "Patient?name=%22test%22&already=%22done%22&flag&empty=#fragment";
+
+    String actual = fhirSearchUtil.ensureQueryParamsArePercentEncoded(url);
+
+    assertThat(actual, equalTo(expected));
+  }
+
+  @Test
+  public void testSearchByUrlDoesNotDoubleEncodeAlreadyEncodedValue() {
+    String encodedUrl = "Patient?name=%22test%22";
+
+    when(untypedQuery.byUrl(encodedUrl)).thenReturn(query);
+
+    fhirSearchUtil.searchByUrl(encodedUrl, 10, SummaryEnum.DATA);
+
+    ArgumentCaptor<String> urlCaptor = ArgumentCaptor.forClass(String.class);
+    verify(untypedQuery).byUrl(urlCaptor.capture());
+    assertThat(urlCaptor.getValue(), equalTo(encodedUrl));
   }
 
   @SuppressWarnings("NullAway")

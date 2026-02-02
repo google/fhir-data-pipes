@@ -24,6 +24,7 @@ import ca.uhn.fhir.rest.gclient.IQuery;
 import ca.uhn.fhir.rest.gclient.ReferenceClientParam;
 import ca.uhn.fhir.rest.param.DateRangeParam;
 import ca.uhn.fhir.rest.server.exceptions.InvalidRequestException;
+import ca.uhn.fhir.util.UrlUtil;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Splitter;
 import com.google.common.base.Strings;
@@ -59,10 +60,11 @@ public class FhirSearchUtil {
   public Bundle searchByUrl(String searchUrl, int count, SummaryEnum summaryMode) {
     try {
       IGenericClient client = fetchUtil.getSourceClient();
+      String encodedSearchUrl = ensureQueryParamsArePercentEncoded(searchUrl);
       Bundle result =
           client
               .search()
-              .byUrl(searchUrl)
+              .byUrl(encodedSearchUrl)
               .count(count)
               .summaryMode(summaryMode)
               .cacheControl(CacheControlDirective.noCache())
@@ -81,6 +83,56 @@ public class FhirSearchUtil {
       return bundle.getLink(Bundle.LINK_NEXT).getUrl();
     }
     return null;
+  }
+
+  @VisibleForTesting
+  String ensureQueryParamsArePercentEncoded(String url) {
+    int queryStart = url.indexOf('?');
+    if (queryStart < 0) {
+      return url;
+    }
+
+    int fragmentStart = url.indexOf('#', queryStart + 1);
+    String fragment = fragmentStart >= 0 ? url.substring(fragmentStart) : "";
+    String query =
+        url.substring(queryStart + 1, fragmentStart >= 0 ? fragmentStart : url.length());
+    if (query.isEmpty()) {
+      return url;
+    }
+
+    StringBuilder encodedQuery = new StringBuilder();
+    boolean firstParam = true;
+    for (String parameter : Splitter.on('&').split(query)) {
+      if (!firstParam) {
+        encodedQuery.append('&');
+      }
+      firstParam = false;
+
+      int equalsIndex = parameter.indexOf('=');
+      if (equalsIndex < 0) {
+        encodedQuery.append(parameter);
+        continue;
+      }
+
+      String key = parameter.substring(0, equalsIndex);
+      String value = parameter.substring(equalsIndex + 1);
+      encodedQuery
+          .append(key)
+          .append('=')
+          .append(escapeQueryToken(value));
+    }
+    return url.substring(0, queryStart + 1) + encodedQuery + fragment;
+  }
+
+  private String escapeQueryToken(String token) {
+    String normalizedToken = token;
+    try {
+      // Preserve literal '+' while normalizing already-encoded values (e.g. %22).
+      normalizedToken = UrlUtil.unescape(token.replace("+", "%2B"));
+    } catch (IllegalArgumentException e) {
+      // Keep malformed percent-encoding as-is and still escape unsafe chars.
+    }
+    return UrlUtil.escapeUrlParam(normalizedToken);
   }
 
   @VisibleForTesting
