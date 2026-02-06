@@ -64,6 +64,7 @@ public class FetchUtilTest {
             "someOAuthClient",
             "someOAuthSecret",
             true,
+            false,
             fhirContext);
 
     doNothing().when(clientFactory).setSocketTimeout(any(Integer.class));

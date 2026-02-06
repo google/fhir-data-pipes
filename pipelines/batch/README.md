@@ -76,6 +76,7 @@ These parameters are used regardless of other pipeline options.
   See also
   [A note about Beam runners](pipelines/batch/README.md#a-note-about-beam-runners).
   Default: `DirectRunner`
+- `quietMode` - When true, suppresses noisy pipeline INFO logs. Default: `false`
 
 ### FHIR-Search input parameters
 
