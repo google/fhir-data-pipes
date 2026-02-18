@@ -127,6 +127,10 @@ public class DataProperties {
 
   private boolean generateParquetFiles;
 
+  private String sourceNdjsonFilePatternList;
+
+  private String sourceJsonFilePatternList;
+
   @PostConstruct
   void validateProperties() {
     CronExpression.parse(incrementalSchedule);
@@ -134,12 +138,26 @@ public class DataProperties {
         FhirFetchMode.FHIR_SEARCH.equals(fhirFetchMode)
             || FhirFetchMode.BULK_EXPORT.equals(fhirFetchMode)
             || FhirFetchMode.HAPI_JDBC.equals(fhirFetchMode)
-            || FhirFetchMode.OPENMRS_JDBC.equals(fhirFetchMode),
-        "fhirFetchMode should be one of FHIR_SEARCH || BULK_EXPORT || HAPI_JDBC || OPENMRS_JDBC for"
-            + " the controller application");
-    Preconditions.checkArgument(
-        !Strings.isNullOrEmpty(fhirServerUrl) || !Strings.isNullOrEmpty(dbConfig),
-        "At least one of fhirServerUrl or dbConfig should be set!");
+            || FhirFetchMode.OPENMRS_JDBC.equals(fhirFetchMode)
+            || FhirFetchMode.NDJSON.equals(fhirFetchMode)
+            || FhirFetchMode.JSON.equals(fhirFetchMode),
+        "fhirFetchMode should be one of FHIR_SEARCH || BULK_EXPORT || HAPI_JDBC || OPENMRS_JDBC ||"
+            + " NDJSON || JSON for the controller application");
+
+    // Validate that appropriate input sources are configured based on fetch mode
+    if (FhirFetchMode.NDJSON.equals(fhirFetchMode)) {
+      Preconditions.checkArgument(
+          !Strings.isNullOrEmpty(sourceNdjsonFilePatternList),
+          "sourceNdjsonFilePatternList is required when fhirFetchMode is NDJSON");
+    } else if (FhirFetchMode.JSON.equals(fhirFetchMode)) {
+      Preconditions.checkArgument(
+          !Strings.isNullOrEmpty(sourceJsonFilePatternList),
+          "sourceJsonFilePatternList is required when fhirFetchMode is JSON");
+    } else {
+      Preconditions.checkArgument(
+          !Strings.isNullOrEmpty(fhirServerUrl) || !Strings.isNullOrEmpty(dbConfig),
+          "At least one of fhirServerUrl or dbConfig should be set!");
+    }
 
     Preconditions.checkArgument(
         !Strings.isNullOrEmpty(dwhRootPrefix), "dwhRootPrefix is required!");
@@ -193,8 +211,19 @@ public class DataProperties {
   PipelineConfig createBatchOptions() {
     FhirEtlOptions options = PipelineOptionsFactory.as(FhirEtlOptions.class);
     options.setFhirFetchMode(fhirFetchMode);
-    logger.info("Converting options for fhirServerUrl {} and dbConfig {}", fhirServerUrl, dbConfig);
-    if (!Strings.isNullOrEmpty(dbConfig)) {
+    logger.info(
+        "Converting options for fhirServerUrl {}, dbConfig {}, sourceNdjsonFilePatternList {},"
+            + " sourceJsonFilePatternList {}",
+        fhirServerUrl,
+        dbConfig,
+        sourceNdjsonFilePatternList,
+        sourceJsonFilePatternList);
+
+    if (FhirFetchMode.NDJSON.equals(fhirFetchMode)) {
+      options.setSourceNdjsonFilePatternList(Strings.nullToEmpty(sourceNdjsonFilePatternList));
+    } else if (FhirFetchMode.JSON.equals(fhirFetchMode)) {
+      options.setSourceJsonFilePatternList(Strings.nullToEmpty(sourceJsonFilePatternList));
+    } else if (!Strings.isNullOrEmpty(dbConfig)) {
       // TODO add OpenMRS support too; it should be easy but we want to make it explicit, such that
       //  if accidentally both `dbConfig` and `fhirServerUrl` are set, OpenMRS is not assumed.
       options.setJdbcModeHapi(true);
@@ -268,6 +297,9 @@ public class DataProperties {
         new ConfigFields("fhirdata.resourceList", resourceList, "", ""),
         new ConfigFields("fhirdata.numThreads", String.valueOf(numThreads), "", ""),
         new ConfigFields("fhirdata.dbConfig", dbConfig, "", ""),
+        new ConfigFields(
+            "fhirdata.sourceNdjsonFilePatternList", sourceNdjsonFilePatternList, "", ""),
+        new ConfigFields("fhirdata.sourceJsonFilePatternList", sourceJsonFilePatternList, "", ""),
         new ConfigFields("fhirdata.viewDefinitionsDir", viewDefinitionsDir, "", ""),
         new ConfigFields("fhirdata.sinkDbConfigPath", sinkDbConfigPath, "", ""),
         new ConfigFields("fhirdata.fhirSinkPath", sinkFhirServerUrl, "", ""),

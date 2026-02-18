@@ -1,0 +1,109 @@
+#
+# Copyright 2020-2025 Google LLC
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+
+# Example configuration for using NDJSON files as input source.
+# This configuration demonstrates how to use a directory of NDJSON files
+# as the data source instead of querying a FHIR server or database.
+
+fhirdata:
+  # Set the mode to NDJSON to read from NDJSON files
+  fhirFetchMode: "NDJSON"
+
+  # Comma-separated list of file patterns for input NDJSON files.
+  # Examples:
+  #   - Single directory: "/path/to/ndjson/*.ndjson"
+  #   - Multiple directories: "/path/to/dir1/*.ndjson,/path/to/dir2/*.ndjson"
+  #   - Specific files: "/path/to/file1.ndjson,/path/to/file2.ndjson"
+  #   - Cloud storage: "gs://my-bucket/fhir-data/*.ndjson" or "s3://my-bucket/fhir-data/*.ndjson"
+  #
+  # Each NDJSON file should contain FHIR resources formatted as:
+  # - One Bundle resource per file (preferred), OR
+  # - One resource per line with no whitespace, separated by newlines
+  sourceNdjsonFilePatternList: "/path/to/ndjson/*.ndjson"
+
+  # The path to output Parquet files to. The last portion of the
+  # path is used as a prefix for naming the directory that contains
+  # per-resource directories and a timestamp will be added.
+  dwhRootPrefix: "dwh/ndjson_DWH"
+
+  # Whether to generate Parquet Files or not.
+  generateParquetFiles: true
+
+  # The schedule for automatic incremental pipeline runs.
+  # Note: NDJSON mode does not support incremental runs in the same way as
+  # FHIR server modes, as it reads static files. You may want to disable
+  # scheduled runs and trigger them manually when new NDJSON files are available.
+  incrementalSchedule: "0 0 * * * *"
+
+  # The schedule for automatic DWH snapshot purging.
+  purgeSchedule: "0 30 * * * *"
+
+  # The number of DWH snapshots to retain when the purge job runs.
+  numOfDwhSnapshotsToRetain: 2
+
+  # The comma-separated list of FHIR resources to process.
+  # Only resources of these types will be extracted from the NDJSON files.
+  resourceList: "Patient,Encounter,Observation,Condition,Practitioner,Location,Organization"
+
+  # The parallelism to be used for a pipeline job.
+  numThreads: 1
+
+  # Auto-generate Flink configuration
+  autoGenerateFlinkConfiguration: true
+
+  # Whether resource tables should be automatically created on a Hive/Spark server.
+  createHiveResourceTables: false
+
+  # Path to Hive/Spark server configuration (required if createHiveResourceTables is true)
+  thriftserverHiveConfig: "config/thriftserver-hive-config.json"
+
+  # Path to directory containing view definitions for each resource type.
+  hiveResourceViewsDir: "config/views"
+
+  # Directory path containing structure definition files for custom profiles.
+  structureDefinitionsPath: "classpath:/r4-us-core-definitions"
+
+  # FHIR version (R4 or DSTU3)
+  fhirVersion: "R4"
+
+  # Parquet row group size (32MB default)
+  rowGroupSizeForParquetFiles: 33554432
+
+  # Location from which ViewDefinition resources are read and applied
+  viewDefinitionsDir: "config/views"
+
+  # Whether to generate Parquet materialized views
+  createParquetViews: true
+
+  # Optional: Configuration file for sink database
+  # If set, views will be materialized and written to this database
+  #sinkDbConfigPath: "config/hapi-postgres-config_local_views.json"
+
+  # Optional: Base URL of sink FHIR server
+  # If set, processed resources will be sent to this FHIR server
+  #sinkFhirServerUrl: "http://localhost:8098/fhir"
+  #sinkUserName: "hapi"
+  #sinkPassword: "hapi123"
+
+  # Maximum depth for traversing StructureDefinitions in Parquet schema generation
+  recursiveDepth: 1
+
+# Enable spring boot actuator endpoints
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus,pipeline-metrics

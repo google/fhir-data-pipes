@@ -9,6 +9,19 @@ The JDBC mode of FHIR Pipelines Controller only works with HAPI FHIR servers.
 You can see
 [an example of configuring a HAPI FHIR server to use Postgres here](https://github.com/hapifhir/hapi-fhir-jpaserver-starter#postgresql-configuration).
 
+## Input Modes
+
+The FHIR Pipelines Controller supports multiple input modes:
+
+- **FHIR_SEARCH**: Fetch data from a FHIR server using the FHIR Search API
+- **BULK_EXPORT**: Fetch data using the FHIR Bulk Data Export API
+- **HAPI_JDBC**: Read directly from a HAPI FHIR server database via JDBC
+- **OPENMRS_JDBC**: Read directly from an OpenMRS database via JDBC
+- **NDJSON**: Process FHIR resources from NDJSON files (see [NDJSON Input Guide](NDJSON_INPUT.md))
+- **JSON**: Process FHIR resources from JSON Bundle files
+
+For detailed information on using NDJSON or JSON files as input, see the [NDJSON Input Guide](NDJSON_INPUT.md).
+
 ## Usage
 
 ### Setup
