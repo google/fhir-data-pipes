@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2024 Google LLC
+ * Copyright 2020-2025 Google LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,6 +29,7 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.List;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import javax.sql.DataSource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -62,15 +63,18 @@ public class HiveTableManager {
    * resource and also updates the "canonical table", i.e., the table name with no timestamp, to
    * point to the given set of files.
    *
-   * @param resources list of resources such as Patient, Observation, and Encounter; the directories
-   *     corresponding to these resources are assumed to exist and have valid Parquet files.
+   * @param resources list of resources or view names such as Patient, Observation, patient_flat;
+   *     the directories corresponding to these resources/views are assumed to exist and have valid
+   *     Parquet files.
    * @param timestamp Timestamp suffix to be used in table name.
    * @param thriftServerParquetPath location of parquet files in Thrift Server; this is relative to
-   *     the THRIFT_CONTAINER_PARQUET_DIR directory.
-   * @throws SQLException
+   *     the THRIFT_CONTAINER_PARQUET_DIR directory (i.e., relative to `/dwh/`).
+   * @param isResource false iff the provided `resources` list is actually ViewDefinition names; in
+   *     this case the SQL statements for creating virtual views are not run.
+   * @throws SQLException when there is an error with the database.
    */
   public synchronized void createResourceAndCanonicalTables(
-      List<String> resources, String timestamp, String thriftServerParquetPath)
+      List<String> resources, String timestamp, String thriftServerParquetPath, boolean isResource)
       throws SQLException {
     if (resources == null || resources.isEmpty()) {
       return;
@@ -78,8 +82,10 @@ public class HiveTableManager {
 
     try (Connection connection = dataSource.getConnection()) {
       for (String resource : resources) {
-        createTablesForResource(connection, resource, timestamp, thriftServerParquetPath);
-        createViews(connection, resource);
+        createTablesForResourceOrView(connection, resource, timestamp, thriftServerParquetPath);
+        if (isResource) {
+          createViews(connection, resource);
+        }
       }
     }
   }
@@ -92,7 +98,7 @@ public class HiveTableManager {
    * thriftServerParquetPath is the exact path for parquet files and resource shall be the
    * respective resource name e.g. Patient
    */
-  private synchronized void createTablesForResource(
+  private synchronized void createTablesForResourceOrView(
       Connection connection, String resource, String timestamp, String thriftServerParquetPath)
       throws SQLException {
 
@@ -123,20 +129,21 @@ public class HiveTableManager {
     if (viewsDir.isEmpty()) {
       return;
     }
-    List<Path> viewPaths = null;
-    try {
+    List<Path> viewPaths;
+    try (Stream<Path> stream = Files.list(Paths.get(viewsDir))) {
       viewPaths =
-          Files.list(Paths.get(viewsDir))
+          stream
               .filter(
-                  p ->
-                      p.getFileName().toString().startsWith(resource)
-                          && p.getFileName().toString().endsWith(".sql"))
-              .collect(Collectors.toList());
+                  path ->
+                      path.getFileName().toString().startsWith(resource)
+                          && path.getFileName().toString().endsWith(".sql"))
+              .toList();
+
     } catch (IOException e) {
       logger.error("Cannot get the list of files in {}", viewsDir, e);
       return;
     }
-    if (viewPaths == null || viewPaths.isEmpty()) {
+    if (viewPaths.isEmpty()) {
       logger.warn("No view files found for resource {} in {}", resource, viewsDir);
       return;
     }

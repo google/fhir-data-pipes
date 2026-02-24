@@ -32,7 +32,6 @@ import java.nio.file.*;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import org.apache.beam.sdk.io.fs.ResourceId;
 import org.apache.hadoop.conf.Configuration;
@@ -54,6 +53,9 @@ public class ParquetUtilTest {
 
   private static final String PARQUET_ROOT = "parquet_root";
 
+  // This does not have to be a sub-dir of PARQUET_ROOT; ParquetUtil should be able to handle both.
+  private static final String PARQUET_VIEW_ROOT = "parquet_view_root";
+
   private String observationBundle;
 
   private ParquetUtil parquetUtil;
@@ -62,13 +64,21 @@ public class ParquetUtilTest {
 
   private Path rootPath;
 
+  private Path viewRootPath;
+
   @TempDir File temporaryFolder;
 
+  // Initialization handled by JUnit @BeforeEach annotation
+  @SuppressWarnings("NullAway.Init")
   @BeforeEach
   public void setup() throws IOException, ProfileException {
     File rootFolder = new File(temporaryFolder, PARQUET_ROOT);
     rootPath = Paths.get(rootFolder.getPath());
     Files.createDirectories(rootPath);
+    File viewFolder = new File(temporaryFolder, PARQUET_VIEW_ROOT);
+    viewRootPath = Paths.get(viewFolder.getPath());
+    Files.createDirectories(viewRootPath);
+    String viewDefPath = Resources.getResource("parquet-util-view-test").getFile();
     AvroConversionUtil.initializeAvroConverters();
 
     observationBundle =
@@ -78,7 +88,18 @@ public class ParquetUtilTest {
     avroConversionUtil = AvroConversionUtil.getInstance(FhirVersionEnum.R4, "", 1);
     parquetUtil =
         new ParquetUtil(
-            FhirVersionEnum.R4, "", rootPath.toString(), "", false, 0, 0, "TEST_", 1, false);
+            FhirVersionEnum.R4,
+            "",
+            rootPath.toString(),
+            // TODO add unit-tests for empty rootPath and non-empty input root.
+            "",
+            viewDefPath,
+            viewRootPath.toString(),
+            0,
+            0,
+            "TEST_",
+            1,
+            false);
   }
 
   @Test
@@ -100,7 +121,7 @@ public class ParquetUtilTest {
     ResourceId bestFile = parquetUtil.getUniqueOutputFilePathView("patient_flat");
     String fileSeparator = DwhFiles.getFileSeparatorForDwhFiles(rootPath.toString());
 
-    String path = rootPath.toString() + fileSeparator + "patient_flat" + fileSeparator;
+    String path = viewRootPath.toString() + fileSeparator + "patient_flat" + fileSeparator;
     path = path.replaceAll(Matcher.quoteReplacement("\\"), Matcher.quoteReplacement("\\\\"));
     String patternToBeMatched =
         path
@@ -127,15 +148,16 @@ public class ParquetUtilTest {
   public void createSingleOutput() throws IOException, ProfileException, ViewApplicationException {
     rootPath = Files.createTempDirectory("PARQUET_TEST");
     parquetUtil =
-        new ParquetUtil(FhirVersionEnum.R4, "", rootPath.toString(), "", false, 0, 0, "", 1, false);
+        new ParquetUtil(
+            FhirVersionEnum.R4, "", rootPath.toString(), "", "", "", 0, 0, "", 1, false);
     IParser parser = avroConversionUtil.getFhirContext().newJsonParser();
     Bundle bundle = parser.parseResource(Bundle.class, observationBundle);
     for (Bundle.BundleEntryComponent entry : bundle.getEntry()) {
       parquetUtil.write(entry.getResource());
     }
-    parquetUtil.closeAllWriters();
+    parquetUtil.flushAllWritersAndStopTimer();
     String fileSeparator = DwhFiles.getFileSeparatorForDwhFiles(rootPath.toString());
-    Stream<Path> files =
+    try (Stream<Path> stream =
         Files.list(rootPath.resolve("Observation"))
             .filter(
                 f ->
@@ -145,8 +167,10 @@ public class ParquetUtilTest {
                                 + fileSeparator
                                 + "Observation"
                                 + fileSeparator
-                                + "Observation_output-"));
-    assertThat(files.count(), equalTo(1L));
+                                + "Observation_output-"))) {
+      List<Path> files = stream.toList();
+      assertThat(files.size(), equalTo(1));
+    }
   }
 
   @Test
@@ -154,27 +178,31 @@ public class ParquetUtilTest {
       throws IOException, InterruptedException, ProfileException, ViewApplicationException {
     rootPath = Files.createTempDirectory("PARQUET_TEST");
     parquetUtil =
-        new ParquetUtil(FhirVersionEnum.R4, "", rootPath.toString(), "", false, 1, 0, "", 1, false);
+        new ParquetUtil(
+            FhirVersionEnum.R4, "", rootPath.toString(), "", "", "", 1, 0, "", 1, false);
     IParser parser = avroConversionUtil.getFhirContext().newJsonParser();
     Bundle bundle = parser.parseResource(Bundle.class, observationBundle);
     for (Bundle.BundleEntryComponent entry : bundle.getEntry()) {
       parquetUtil.write(entry.getResource());
       TimeUnit.SECONDS.sleep(2); // A better way to test this is to inject a mocked `Timer`.
     }
-    parquetUtil.closeAllWriters();
+    parquetUtil.flushAllWritersAndStopTimer();
     String fileSeparator = DwhFiles.getFileSeparatorForDwhFiles(rootPath.toString());
-    Stream<Path> files =
-        Files.list(rootPath.resolve("Observation"))
-            .filter(
-                f ->
-                    f.toString()
-                        .startsWith(
-                            rootPath.toString()
-                                + fileSeparator
-                                + "Observation"
-                                + fileSeparator
-                                + "Observation_output-"));
-    assertThat(files.count(), equalTo(7L));
+    try (Stream<Path> fileStream = Files.list(rootPath.resolve("Observation"))) {
+      long filesCount =
+          fileStream
+              .filter(
+                  f ->
+                      f.toString()
+                          .startsWith(
+                              rootPath.toString()
+                                  + fileSeparator
+                                  + "Observation"
+                                  + fileSeparator
+                                  + "Observation_output-"))
+              .count();
+      assertThat(filesCount, equalTo(6L));
+    }
   }
 
   /**
@@ -194,7 +222,7 @@ public class ParquetUtilTest {
     final int rowGroupSize = approximateMemSizeOfOneObservarion * 90;
     parquetUtil =
         new ParquetUtil(
-            FhirVersionEnum.R4, "", rootPath.toString(), "", false, 0, rowGroupSize, "", 1, false);
+            FhirVersionEnum.R4, "", rootPath.toString(), "", "", "", 0, rowGroupSize, "", 1, false);
     IParser parser = avroConversionUtil.getFhirContext().newJsonParser();
     Bundle bundle = parser.parseResource(Bundle.class, observationBundle);
     // There are 6 resources in the bundle, so we write 17*6 (>100) resources, such that the page
@@ -204,22 +232,25 @@ public class ParquetUtilTest {
         parquetUtil.write(entry.getResource());
       }
     }
-    parquetUtil.closeAllWriters();
+    parquetUtil.flushAllWritersAndStopTimer();
     String fileSeparator = DwhFiles.getFileSeparatorForDwhFiles(rootPath.toString());
-    List<Path> files =
-        Files.list(rootPath.resolve("Observation"))
-            .filter(
-                f ->
-                    f.toString()
-                        .startsWith(
-                            rootPath.toString()
-                                + fileSeparator
-                                + "Observation"
-                                + fileSeparator
-                                + "Observation_output-"))
-            .collect(Collectors.toList());
-    // We expect only one file to be created.
-    assertThat(files.size(), equalTo(1));
+    List<Path> files;
+    try (var fileStream = Files.list(rootPath.resolve("Observation"))) {
+      files =
+          fileStream
+              .filter(
+                  f ->
+                      f.toString()
+                          .startsWith(
+                              rootPath.toString()
+                                  + fileSeparator
+                                  + "Observation"
+                                  + fileSeparator
+                                  + "Observation_output-"))
+              .toList();
+      // We expect only one file to be created.
+      assertThat(files.size(), equalTo(1));
+    }
     HadoopInputFile file =
         HadoopInputFile.fromPath(
             new org.apache.hadoop.fs.Path(files.get(0).toUri()), new Configuration());
@@ -232,33 +263,31 @@ public class ParquetUtilTest {
   @Test
   public void createOutputViewToParquet()
       throws IOException, ProfileException, ViewApplicationException, ViewDefinitionException {
-    rootPath = Files.createTempDirectory("PARQUET_TEST");
     String fileSeparator = DwhFiles.getFileSeparatorForDwhFiles(rootPath.toString());
-    String path = Resources.getResource("parquet-util-view-test").getFile();
-    parquetUtil =
-        new ParquetUtil(
-            FhirVersionEnum.R4, "", rootPath.toString(), path, true, 0, 0, "", 1, false);
-
     IParser parser = avroConversionUtil.getFhirContext().newJsonParser();
 
     Bundle bundle = parser.parseResource(Bundle.class, observationBundle);
     for (Bundle.BundleEntryComponent entry : bundle.getEntry()) {
       parquetUtil.write(entry.getResource());
     }
-    parquetUtil.closeAllWriters();
+    parquetUtil.flushAllWritersAndStopTimer();
 
-    Stream<Path> files =
-        Files.list(rootPath.resolve("observation_flat"))
-            .filter(
-                f ->
-                    f.toString()
-                        .startsWith(
-                            rootPath.toString()
-                                + fileSeparator
-                                + "observation_flat"
-                                + fileSeparator
-                                + "observation_flat_output-"));
-    assertThat(files.count(), equalTo(1L));
+    try (Stream<Path> files = Files.list(viewRootPath.resolve("observation_flat"))) {
+
+      long filesCount =
+          files
+              .filter(
+                  f ->
+                      f.toString()
+                          .startsWith(
+                              viewRootPath.toString()
+                                  + fileSeparator
+                                  + "observation_flat"
+                                  + fileSeparator
+                                  + "TEST_observation_flat_output-"))
+              .count();
+      assertThat(filesCount, equalTo(1L));
+    }
   }
 
   /**
@@ -270,7 +299,8 @@ public class ParquetUtilTest {
       throws IOException, ProfileException, ViewApplicationException {
     rootPath = Files.createTempDirectory("PARQUET_TEST");
     parquetUtil =
-        new ParquetUtil(FhirVersionEnum.R4, "", rootPath.toString(), "", false, 0, 0, "", 1, false);
+        new ParquetUtil(
+            FhirVersionEnum.R4, "", rootPath.toString(), "", "", "", 0, 0, "", 1, false);
     String observationStr =
         Resources.toString(
             Resources.getResource("observation_decimal.json"), StandardCharsets.UTF_8);
@@ -285,7 +315,8 @@ public class ParquetUtilTest {
       throws IOException, ProfileException, ViewApplicationException {
     rootPath = Files.createTempDirectory("PARQUET_TEST");
     parquetUtil =
-        new ParquetUtil(FhirVersionEnum.R4, "", rootPath.toString(), "", false, 0, 0, "", 1, false);
+        new ParquetUtil(
+            FhirVersionEnum.R4, "", rootPath.toString(), "", "", "", 0, 0, "", 1, false);
     String observationBundleStr =
         Resources.toString(
             Resources.getResource("observation_decimal_bundle.json"), StandardCharsets.UTF_8);
@@ -300,7 +331,8 @@ public class ParquetUtilTest {
       throws IOException, ProfileException, ViewApplicationException {
     rootPath = Files.createTempDirectory("PARQUET_TEST");
     parquetUtil =
-        new ParquetUtil(FhirVersionEnum.R4, "", rootPath.toString(), "", false, 0, 0, "", 1, false);
+        new ParquetUtil(
+            FhirVersionEnum.R4, "", rootPath.toString(), "", "", "", 0, 0, "", 1, false);
 
     String patientStr =
         Resources.toString(Resources.getResource("patient_bundle.json"), StandardCharsets.UTF_8);
@@ -315,7 +347,7 @@ public class ParquetUtilTest {
     Bundle bundle2 = parser2.parseResource(Bundle.class, patientUsCoreStr);
     parquetUtil.writeRecords(bundle2, null);
 
-    parquetUtil.closeAllWriters();
+    parquetUtil.flushAllWritersAndStopTimer();
   }
 
   @Test
@@ -331,7 +363,8 @@ public class ParquetUtilTest {
             "classpath:/r4-us-core-definitions",
             rootPath.toString(),
             "",
-            false,
+            "",
+            "",
             0,
             0,
             "",
@@ -346,7 +379,7 @@ public class ParquetUtilTest {
         parser.parseResource(QuestionnaireResponse.class, questionnaireResponseStr);
     parquetUtil.write(questionnaireResponse);
 
-    parquetUtil.closeAllWriters();
+    parquetUtil.flushAllWritersAndStopTimer();
     AvroConversionUtil.deRegisterMappingsFor(FhirVersionEnum.R4);
   }
 }

@@ -15,6 +15,7 @@
  */
 package com.google.fhir.analytics;
 
+import ca.uhn.fhir.rest.api.CacheControlDirective;
 import ca.uhn.fhir.rest.api.SearchTotalModeEnum;
 import ca.uhn.fhir.rest.api.SummaryEnum;
 import ca.uhn.fhir.rest.client.api.IGenericClient;
@@ -24,6 +25,7 @@ import ca.uhn.fhir.rest.gclient.ReferenceClientParam;
 import ca.uhn.fhir.rest.param.DateRangeParam;
 import ca.uhn.fhir.rest.server.exceptions.InvalidRequestException;
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Splitter;
 import com.google.common.base.Strings;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
@@ -31,16 +33,14 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import org.apache.http.NameValuePair;
 import org.apache.http.client.utils.URLEncodedUtils;
 import org.hl7.fhir.r4.model.Bundle;
-import org.hl7.fhir.r4.model.CapabilityStatement;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -55,6 +55,7 @@ public class FhirSearchUtil {
   }
 
   // TODO update all types to FHIR version independent interfaces!
+  @Nullable
   public Bundle searchByUrl(String searchUrl, int count, SummaryEnum summaryMode) {
     try {
       IGenericClient client = fetchUtil.getSourceClient();
@@ -64,6 +65,7 @@ public class FhirSearchUtil {
               .byUrl(searchUrl)
               .count(count)
               .summaryMode(summaryMode)
+              .cacheControl(CacheControlDirective.noCache())
               .returnBundle(Bundle.class)
               .execute();
       return result;
@@ -73,41 +75,8 @@ public class FhirSearchUtil {
     return null;
   }
 
-  /**
-   * Searches for the total number of resources for each resource type
-   *
-   * @param resourceList the resource types to be processed
-   * @return a Map storing the counts of each resource type
-   */
-  public Map<String, Integer> searchResourceCounts(String resourceList, String since) {
-    HashSet<String> resourceTypes = new HashSet<String>(Arrays.asList(resourceList.split(",")));
-    HashMap<String, Integer> hashMap = new HashMap<String, Integer>();
-    for (String resourceType : resourceTypes) {
-      try {
-        String searchUrl = resourceType + "?";
-        IGenericClient client = fetchUtil.getSourceClient();
-        IQuery<Bundle> query =
-            client
-                .search()
-                .byUrl(searchUrl)
-                .summaryMode(SummaryEnum.COUNT)
-                .returnBundle(Bundle.class);
-        if (since != null && !since.isEmpty()) {
-          query.lastUpdated(new DateRangeParam(since, null));
-        }
-        Bundle result = query.execute();
-        hashMap.put(resourceType, result.getTotal());
-        log.info("Number of {} resources = {}", resourceType, result.getTotal());
-      } catch (Exception e) {
-        log.error("Failed to search for resource: " + resourceType + " ;  " + "Exception: " + e);
-        throw e;
-      }
-    }
-
-    return hashMap;
-  }
-
-  public String getNextUrl(Bundle bundle) {
+  @Nullable
+  public String getNextUrl(@Nullable Bundle bundle) {
     if (bundle != null && bundle.getLink(Bundle.LINK_NEXT) != null) {
       return bundle.getLink(Bundle.LINK_NEXT).getUrl();
     }
@@ -165,6 +134,9 @@ public class FhirSearchUtil {
         .totalMode(SearchTotalModeEnum.ACCURATE)
         .count(count)
         .summaryMode(SummaryEnum.DATA)
+        // This is to make sure we get the most up-to-date results, see:
+        // https://hapifhir.io/hapi-fhir/docs/server_jpa/configuration.html#search-result-caching
+        .cacheControl(CacheControlDirective.noCache())
         .returnBundle(Bundle.class);
   }
 
@@ -172,8 +144,8 @@ public class FhirSearchUtil {
     if (activePeriod.isEmpty()) {
       return Lists.newArrayList();
     }
-    String[] dateRange = activePeriod.split("_");
-    if (dateRange.length != 1 && dateRange.length != 2) {
+    List<String> dateRange = Splitter.on('_').splitToList(activePeriod);
+    if (dateRange.size() != 1 && dateRange.size() != 2) {
       throw new IllegalArgumentException(
           "Invalid activePeriod '"
               + activePeriod
@@ -216,7 +188,7 @@ public class FhirSearchUtil {
     Map<String, List<SearchSegmentDescriptor>> segmentMap = new HashMap<>();
 
     boolean anyResourceWithDate = false;
-    for (String resourceType : options.getResourceList().split(",")) {
+    for (String resourceType : Splitter.on(',').split(options.getResourceList())) {
       List<SearchSegmentDescriptor> segments = new ArrayList<>();
       IQuery<Bundle> searchQuery = makeQueryWithDate(resourceType, options);
       log.info(String.format("Fetching first batch of %s", resourceType));
@@ -281,6 +253,7 @@ public class FhirSearchUtil {
               .forResource(resourceType)
               .count(0)
               .summaryMode(SummaryEnum.DATA)
+              .cacheControl(CacheControlDirective.noCache())
               .returnBundle(Bundle.class);
       // Try with a test ID and a random date to see whether the server can handle the search query.
       query =
@@ -310,23 +283,12 @@ public class FhirSearchUtil {
             .forResource(resourceType)
             .count(count)
             .summaryMode(SummaryEnum.DATA)
+            .cacheControl(CacheControlDirective.noCache())
             .returnBundle(Bundle.class);
     query =
         query
             .where(new ReferenceClientParam("patient").hasId(patientId))
             .where(new DateClientParam("date").beforeOrEquals().second(lastDate));
     return query.execute();
-  }
-
-  /**
-   * Validates if a connection can be established to the FHIR server by executing a search query.
-   */
-  void testFhirConnection() {
-    log.info("Validating FHIR connection");
-    IGenericClient client = fetchUtil.getSourceClient();
-    // The query is executed and checked for any errors during the connection, the result is ignored
-    // TODO: A similar metadata check is done internally in the client code; we should avoid one.
-    client.capabilities().ofType(CapabilityStatement.class).execute();
-    log.info("Validating FHIR connection successful");
   }
 }

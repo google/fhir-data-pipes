@@ -1,4 +1,4 @@
-CREATE OR REPLACE VIEW MedicationRequest_flat AS
+CREATE OR REPLACE VIEW MedicationRequest_flat_view AS
 SELECT M.id AS id, M.subject.patientId AS patient_id,
   M.encounter.encounterId AS encounter_id, M.status,
   MSC.system AS statusReason_sys, MSC.code AS statusReason_code,

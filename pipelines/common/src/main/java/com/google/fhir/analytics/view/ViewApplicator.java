@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2024 Google LLC
+ * Copyright 2020-2025 Google LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,7 +40,6 @@ import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
-import javax.annotation.Nullable;
 import lombok.Builder;
 import lombok.Getter;
 import org.hl7.fhir.dstu3.hapi.fluentpath.FhirPathDstu3;
@@ -52,6 +51,7 @@ import org.hl7.fhir.instance.model.api.IPrimitiveType;
 import org.hl7.fhir.r4.hapi.fluentpath.FhirPathR4;
 import org.hl7.fhir.r4b.hapi.fhirpath.FhirPathR4B;
 import org.hl7.fhir.r5.hapi.fhirpath.FhirPathR5;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -109,11 +109,12 @@ public class ViewApplicator {
    *     the errors come from errors in the ViewDefinition.
    */
   public RowList apply(IBaseResource resource) throws ViewApplicationException {
+    Preconditions.checkNotNull(viewDef.getResource());
     Preconditions.checkState(
         viewDef.getResource().equals(resource.fhirType()),
-        String.format(
-            "expected resource type %s got %s",
-            viewDef.getResource(), Strings.nullToEmpty(resource.fhirType())));
+        "expected resource type %s got %s",
+        viewDef.getResource(),
+        Strings.nullToEmpty(resource.fhirType()));
     if (satisfiesWhere(resource)) {
       return applyAllSelects(resource, viewDef.getSelect());
     } else {
@@ -137,7 +138,7 @@ public class ViewApplicator {
       return true;
     }
     for (Where w : viewDef.getWhere()) {
-      List<IBase> results = evaluateFhirPath(resource, w.getPath());
+      List<IBase> results = w.getPath() != null ? evaluateFhirPath(resource, w.getPath()) : null;
       // Empty list is treated as false; see logic operators https://hl7.org/fhirpath/#boolean-logic
       if (results != null && results.isEmpty()) {
         return false;
@@ -151,7 +152,7 @@ public class ViewApplicator {
       IBase r = results.get(0);
       try {
         IPrimitiveType<Boolean> booleanBase = (IPrimitiveType<Boolean>) r;
-        if (booleanBase.getValue() != Boolean.TRUE) {
+        if (!Boolean.TRUE.equals(booleanBase.getValue())) {
           return false;
         }
       } catch (ClassCastException e) {
@@ -167,8 +168,11 @@ public class ViewApplicator {
    * Note `element` can be null in which case the output would have a single row with the name of
    * all columns and all values being null.
    */
-  private RowList applyAllSelects(@Nullable IBase element, List<Select> selectList)
+  private RowList applyAllSelects(@Nullable IBase element, @Nullable List<Select> selectList)
       throws ViewApplicationException {
+    if (selectList == null) {
+      return EMPTY_LIST;
+    }
     List<RowList> rowsPerSelect = new ArrayList<>();
     for (Select s : selectList) {
       rowsPerSelect.add(applySelect(element, s));
@@ -178,13 +182,13 @@ public class ViewApplicator {
   }
 
   private RowList crossJoinAll(List<RowList> rowsPerSelect) throws ViewApplicationException {
-    RowList currentList = null;
+    RowList currentList = EMPTY_LIST;
     for (RowList rows : rowsPerSelect) {
       if (rows == null || rows.getRows().isEmpty()) {
         // One of the sub-lists is empty hence the whole cross-join will be empty.
         return EMPTY_LIST;
       }
-      if (currentList == null) {
+      if (currentList.isEmpty()) {
         currentList = rows;
       } else {
         currentList = currentList.crossJoin(rows);
@@ -287,11 +291,10 @@ public class ViewApplicator {
     List<RowElement> rowElements = new ArrayList<>();
     for (Column col : columns) {
       if (GET_RESOURCE_KEY.equals(col.getPath())) {
-        if (element == null || !(element instanceof IBaseResource)) {
+        if (element == null || !(element instanceof IBaseResource baseResource)) {
           throw new ViewApplicationException(
               GET_RESOURCE_KEY + " can only be applied at the root!");
         }
-        IBaseResource baseResource = (IBaseResource) element;
         rowElements.add(
             new RowElement(
                 // TODO move all type inference to a single place outside View application.
@@ -318,11 +321,11 @@ public class ViewApplicator {
           eval = evaluateFhirPath(element, fhirPathForRef);
         }
         for (IBase refElem : eval) {
-          if (!(refElem instanceof IBaseReference)) {
+          if (!(refElem instanceof IBaseReference refElemBaseReference)) {
             throw new ViewApplicationException(
                 "getReferenceKey can only be applied to Reference elements; got " + fhirPathForRef);
           }
-          IIdType ref = ((IBaseReference) refElem).getReferenceElement();
+          IIdType ref = refElemBaseReference.getReferenceElement();
           if (resType.isEmpty()) {
             refs.add(ref);
           } else {
@@ -337,7 +340,7 @@ public class ViewApplicator {
         continue;
       }
       List<IBase> eval = null;
-      if (element != null) {
+      if (element != null && col.getPath() != null) {
         eval = evaluateFhirPath(element, col.getPath());
       }
       rowElements.add(new RowElement(col, eval));
@@ -361,7 +364,9 @@ public class ViewApplicator {
 
     private final ImmutableList<FlatRow> rows;
 
-    private RowList(List<FlatRow> rows, LinkedHashMap<String, Column> columnInfos) {
+    private RowList(
+        List<FlatRow> rows,
+        @SuppressWarnings("NonApiType") LinkedHashMap<String, Column> columnInfos) {
       this.rows = ImmutableList.copyOf(rows);
       this.columnInfos = ImmutableMap.copyOf(columnInfos);
     }
@@ -462,6 +467,7 @@ public class ViewApplicator {
     }
 
     // This can eventually be public, but currently it is not used outside this file.
+    @SuppressWarnings("EffectivelyPrivate")
     private static class Builder {
       private final LinkedHashMap<String, Column> columnInfos = new LinkedHashMap<>();
       private final List<FlatRow> rows = new ArrayList<>();
@@ -547,15 +553,18 @@ public class ViewApplicator {
 
   @Getter
   public static class RowElement {
-    private final List<IBase> values;
+    @Nullable private final List<IBase> values;
     private final Column columnInfo;
 
     @Override
     public String toString() {
-      return columnInfo.getName() + ":" + Arrays.toString(values.toArray());
+      return columnInfo.getName()
+          + ":"
+          + (values != null ? Arrays.toString(values.toArray()) : "null");
     }
 
-    public RowElement(Column columnInfo, List<IBase> values) throws ViewApplicationException {
+    public RowElement(Column columnInfo, @Nullable List<IBase> values)
+        throws ViewApplicationException {
       if (!columnInfo.isCollection() && values != null && values.size() > 1) {
         throw new ViewApplicationException(
             "A list provided for the non-collection column " + columnInfo.getName());
@@ -565,6 +574,7 @@ public class ViewApplicator {
     }
 
     // Convenience function
+    @Nullable
     public String getName() {
       return columnInfo.getName();
     }
@@ -623,9 +633,6 @@ public class ViewApplicator {
         return null;
       }
       IPrimitiveType<T> primitive = (IPrimitiveType<T>) val;
-      if (primitive == null) {
-        return null;
-      }
       return primitive.getValue();
     }
 
@@ -641,7 +648,7 @@ public class ViewApplicator {
 
     public List<String> getIdParts() {
       List<String> idParts = new ArrayList<>();
-      if (ID_TYPE.equals(columnInfo.getInferredType())) {
+      if (values != null && ID_TYPE.equals(columnInfo.getInferredType())) {
         for (IBase elem : values) {
           idParts.add(getIdString((IIdType) elem));
         }
@@ -650,8 +657,7 @@ public class ViewApplicator {
     }
 
     public boolean isIdType() {
-      return (ID_TYPE.equals(columnInfo.getInferredType()))
-          || (ID_TYPE.equals(columnInfo.getType()));
+      return ID_TYPE.equals(columnInfo.getInferredType()) || ID_TYPE.equals(columnInfo.getType());
     }
   }
 }

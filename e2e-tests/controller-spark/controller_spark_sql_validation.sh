@@ -20,6 +20,13 @@
 
 set -e
 
+# -------------------------------------------------------------------
+# Shared helper for robust Parquet row-count with retry/back-off
+# -------------------------------------------------------------------
+source "$(dirname "$0")/../lib/parquet_utils.sh"
+
+PARQUET_TOOLS_JAR=""
+
 #################################################
 # Prints the usage
 #################################################
@@ -99,6 +106,7 @@ function setup() {
   SINK_FHIR_SERVER_URL='http://localhost:8098'
   PIPELINE_CONTROLLER_URL='http://localhost:8090'
   THRIFTSERVER_URL='localhost:10001'
+  PARQUET_TOOLS_JAR="${HOME_PATH}/parquet-tools-1.11.1.jar"
   if [[ $3 = "--use_docker_network" ]]; then
     SOURCE_FHIR_SERVER_URL='http://hapi-server:8080'
     SINK_FHIR_SERVER_URL='http://sink-server-controller:8080'
@@ -180,28 +188,35 @@ function fhir_source_query() {
 #######################################################################
 function run_pipeline() {
   local runMode=$1
-  curl --location --request POST "${PIPELINE_CONTROLLER_URL}/run?runMode=${runMode}" \
-  --connect-timeout 5 \
-  --header 'Content-Type: application/json' \
-  --header 'Accept: */*' -v
+  controller "${PIPELINE_CONTROLLER_URL}" run --mode "${runMode}"
 }
 
 function wait_for_completion() {
-  local runtime="15 minute"
-  local end_time=$(date -ud "$runtime" +%s)
+  local runtime_minutes=25
+  local runtime_seconds=$((runtime_minutes * 60))
+  local start_time=$(date +%s)
+  local end_time=$((start_time + runtime_seconds))
 
-  while [[ $(date -u +%s) -le $end_time ]]
+  while [[ $(date +%s) -le ${end_time} ]]
   do
-    local pipeline_status=$(curl --location --request GET "${PIPELINE_CONTROLLER_URL}/status?" \
-    --connect-timeout 5 \
-    --header 'Content-Type: application/json' \
-    --header 'Accept: */*' -v \
-    | jq -r '.pipelineStatus')
+    # Here we extract only the JSON part of the output from controller 'status'
+    # command as there could be some logging info printed before the JSON output.
+    # We use 'sed' to get the lines between the first '{' and the last '}' and
+    # then pipe it to jq for parsing.
+    local controller_output=$(controller "${PIPELINE_CONTROLLER_URL}" status)
+    print_message "Controller output: ${controller_output}"
+
+    local json_extracted=$(echo "${controller_output}" | sed -n '/^{$/,/^}$/ {;p;/^}$/ {;n;p;};}')
+    print_message "Extracted JSON: ${json_extracted}"
+
+    local pipeline_status=$(echo "${json_extracted}" | jq -r '.pipelineStatus // "UNKNOWN"')
+    print_message "Pipeline status: ${pipeline_status}"
 
     if [[ "${pipeline_status}" == "RUNNING" ]]
     then
       sleep 5
     else
+      print_message "wait_for_completion LOOP ending with STATUS=${pipeline_status}"
       break
     fi
   done
@@ -223,7 +238,7 @@ function wait_for_completion() {
 function check_parquet() {
   local isIncremental=$1
   local output="${HOME_PATH}/${PARQUET_SUBDIR}"
-  TOTAL_VIEW_PATIENTS=106
+  TOTAL_VIEW_PATIENTS=528
 
   if [[ "${isIncremental}" == "true" ]]
   then
@@ -232,31 +247,57 @@ function check_parquet() {
     # the second is for the merge step of the incremental run. The second
     # directory has one more patient, hence the new totals.
     TOTAL_TEST_PATIENTS=$((2*TOTAL_TEST_PATIENTS + 1))
-    TOTAL_VIEW_PATIENTS=$((2*TOTAL_VIEW_PATIENTS + 1))
+    TOTAL_VIEW_PATIENTS=1060
     TOTAL_TEST_ENCOUNTERS=$((2*TOTAL_TEST_ENCOUNTERS))
     TOTAL_TEST_OBS=$((2*TOTAL_TEST_OBS))
   fi
 
   # check whether output directory has received parquet files.
-  if [[ "$(ls -A $output)" ]]
+  if [[ "$(ls -A "${output}")" ]]
   then
-    local total_patients=$(java -Xms16g -Xmx16g -jar ./parquet-tools-1.11.1.jar rowcount \
-    "${output}/*/Patient/" | awk '{print $3}')
-    local total_encounters=$(java -Xms16g -Xmx16g -jar ./parquet-tools-1.11.1.jar rowcount \
-    "${output}/*/Encounter/" | awk '{print $3}')
-    local total_observations=$(java -Xms16g -Xmx16g -jar ./parquet-tools-1.11.1.jar rowcount \
-    "${output}/*/Observation/" | awk '{print $3}')
+    # ------------------------------------------------------------------
+    # Row-counts with retry (shared helper)
+    # ------------------------------------------------------------------
+    local total_patients
+    total_patients=$(retry_rowcount \
+      "${output}/*/Patient/" \
+      "${TOTAL_TEST_PATIENTS}" \
+      "${PARQUET_TOOLS_JAR}") || true
 
-    local total_patient_flat=$(java -Xms16g -Xmx16g -jar ./parquet-tools-1.11.1.jar rowcount \
-    "${output}/*/patient_flat/" | awk '{print $3}')
-    local total_encounter_flat=$(java -Xms16g -Xmx16g -jar ./parquet-tools-1.11.1.jar rowcount \
-    "${output}/*/encounter_flat/" | awk '{print $3}')
-    local total_obs_flat=$(java -Xms16g -Xmx16g -jar ./parquet-tools-1.11.1.jar rowcount \
-     "${output}/*/observation_flat/" | awk '{print $3}')
+    local total_encounters
+    total_encounters=$(retry_rowcount \
+      "${output}/*/Encounter/" \
+      "${TOTAL_TEST_ENCOUNTERS}" \
+      "${PARQUET_TOOLS_JAR}") || true
 
-    print_message "Total patients: $total_patients"
-    print_message "Total encounters: $total_encounters"
-    print_message "Total observations: $total_observations"
+    local total_observations
+    total_observations=$(retry_rowcount \
+      "${output}/*/Observation/" \
+      "${TOTAL_TEST_OBS}" \
+      "${PARQUET_TOOLS_JAR}") || true
+
+    local total_patient_flat
+    total_patient_flat=$(retry_rowcount \
+      "${output}/*/VIEWS_TIMESTAMP_*/patient_flat/" \
+      "${TOTAL_VIEW_PATIENTS}" \
+      "${PARQUET_TOOLS_JAR}") || true
+
+    local total_encounter_flat
+    total_encounter_flat=$(retry_rowcount \
+      "${output}/*/VIEWS_TIMESTAMP_*/encounter_flat/" \
+      "${TOTAL_TEST_ENCOUNTERS}" \
+      "${PARQUET_TOOLS_JAR}") || true
+
+    local total_obs_flat
+    total_obs_flat=$(retry_rowcount \
+      "${output}/*/VIEWS_TIMESTAMP_*/observation_flat/" \
+      "${TOTAL_TEST_OBS}" \
+      "${PARQUET_TOOLS_JAR}") || true
+    # ------------------------------------------------------------------
+
+    print_message "Total patients: ${total_patients}"
+    print_message "Total encounters: ${total_encounters}"
+    print_message "Total observations: ${total_observations}"
 
     print_message "Total patient flat rows: ${total_patient_flat}"
     print_message "Total encounter flat rows: ${total_encounter_flat}"
@@ -271,12 +312,12 @@ function check_parquet() {
             print_message "Pipeline transformation successfully completed."
     else
             print_message "Mismatch in count of records"
-            print_message "Actual total patients: $total_patients, expected total: $TOTAL_TEST_PATIENTS"
-            print_message "Actual total encounters: $total_encounters, expected total: $TOTAL_TEST_ENCOUNTERS"
-            print_message "Total observations: $total_observations, expected total: $TOTAL_TEST_OBS"
-            print_message "Actual total materialized view patients: $total_patient_flat, expected total: $TOTAL_VIEW_PATIENTS"
-            print_message "Actual total materialized view encounters: $total_encounter_flat, expected total: $TOTAL_TEST_ENCOUNTERS"
-            print_message "Actual total materialized view observations: $total_obs_flat, expected total: $TOTAL_TEST_OBS"
+            print_message "Actual total patients: ${total_patients}, expected total: ${TOTAL_TEST_PATIENTS}"
+            print_message "Actual total encounters: ${total_encounters}, expected total: ${TOTAL_TEST_ENCOUNTERS}"
+            print_message "Total observations: ${total_observations}, expected total: ${TOTAL_TEST_OBS}"
+            print_message "Actual total materialized view patients: ${total_patient_flat}, expected total: ${TOTAL_VIEW_PATIENTS}"
+            print_message "Actual total materialized view encounters: ${total_encounter_flat}, expected total: ${TOTAL_TEST_ENCOUNTERS}"
+            print_message "Actual total materialized view observations: ${total_obs_flat}, expected total: ${TOTAL_TEST_OBS}"
             exit 2
     fi
   else
@@ -292,7 +333,7 @@ function check_parquet() {
 #   PARQUET_SUBDIR
 #######################################################################
 function clear() {
-  rm -rf $HOME_PATH/$PARQUET_SUBDIR/*.json
+  rm -rf "${HOME_PATH}/${PARQUET_SUBDIR}"/*.json
 }
 
 #######################################################################
@@ -348,8 +389,10 @@ function validate_resource_tables() {
   --outputformat=csv2 >>hive_resource_tables.csv
 
   # Check for snapshot tables.
-  if [[ $(grep patient_ hive_resource_tables.csv) && $(grep encounter_ hive_resource_tables.csv) \
-      && $(grep observation_ hive_resource_tables.csv) ]]
+  if [[ $(grep patient_ hive_resource_tables.csv) \
+      && $(grep encounter_ hive_resource_tables.csv) \
+      && $(grep observation_ hive_resource_tables.csv) \
+      && $(grep patient_flat_ hive_resource_tables.csv) ]]
   then
     print_message "Snapshot tables creation verified successfully."
   else
@@ -358,8 +401,10 @@ function validate_resource_tables() {
   fi
 
   # Check for canonical tables.
-  if [[ $(grep -w patient hive_resource_tables.csv) && $(grep -w encounter hive_resource_tables.csv) \
-      && $(grep -w observation hive_resource_tables.csv) ]]
+  if [[ $(grep -w patient hive_resource_tables.csv) \
+      && $(grep -w encounter hive_resource_tables.csv) \
+      && $(grep -w observation hive_resource_tables.csv) \
+      && $(grep -w patient_flat hive_resource_tables.csv) ]]
   then
     print_message "Canonical tables creation verified successfully."
   else

@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2024 Google LLC
+ * Copyright 2020-2025 Google LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,6 +23,7 @@ import java.io.Serializable;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import javax.sql.DataSource;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -35,7 +36,7 @@ public class JdbcConnectionPools {
 
   static final int MIN_CONNECTIONS = 3;
 
-  private static JdbcConnectionPools instance = null;
+  @Nullable private static JdbcConnectionPools instance = null;
 
   private final ConcurrentMap<DataSourceConfig, DataSource> dataSources = new ConcurrentHashMap<>();
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2024 Google LLC
+ * Copyright 2020-2025 Google LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,15 +20,18 @@ import static com.google.fhir.analytics.DwhFiles.LOCAL_SCHEME;
 import static com.google.fhir.analytics.DwhFiles.S3_SCHEME;
 
 import com.google.common.base.Preconditions;
+import com.google.common.base.Splitter;
 import com.google.common.base.Strings;
 import com.google.common.collect.Iterables;
 import com.google.fhir.analytics.DwhFiles.CloudPath;
+import com.google.fhir.analytics.view.ViewDefinitionException;
+import com.google.fhir.analytics.view.ViewManager;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.DirectoryNotEmptyException;
 import java.time.LocalDateTime;
+import java.time.ZoneOffset;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
@@ -42,6 +45,7 @@ import org.apache.beam.sdk.io.fs.MatchResult.Metadata;
 import org.apache.beam.sdk.io.fs.MatchResult.Status;
 import org.apache.beam.sdk.io.fs.ResolveOptions.StandardResolveOptions;
 import org.apache.beam.sdk.io.fs.ResourceId;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -60,9 +64,12 @@ public class DwhFilesManager {
 
   private final DataProperties dataProperties;
 
+  // Suppressing warning because the field is initialized in init() and includes a Preconditions
+  // check.
+  @SuppressWarnings("NullAway.Init")
   private CronExpression purgeCron;
 
-  private LocalDateTime lastPurgeRunEnd;
+  @Nullable private LocalDateTime lastPurgeRunEnd;
 
   private boolean isPurgeJobRunning;
 
@@ -72,6 +79,7 @@ public class DwhFilesManager {
 
   private static final Logger logger = LoggerFactory.getLogger(DwhFilesManager.class.getName());
 
+  @SuppressWarnings("NullAway.Init")
   @Autowired
   public DwhFilesManager(DataProperties dataProperties) {
     this.dataProperties = dataProperties;
@@ -80,6 +88,7 @@ public class DwhFilesManager {
   @PostConstruct
   public void init() {
     purgeCron = CronExpression.parse(dataProperties.getPurgeSchedule());
+    Preconditions.checkNotNull(purgeCron);
     dwhRootPrefix = dataProperties.getDwhRootPrefix();
     Preconditions.checkState(dwhRootPrefix != null && !dwhRootPrefix.isEmpty());
     numOfDwhSnapshotsToRetain = dataProperties.getNumOfDwhSnapshotsToRetain();
@@ -101,11 +110,14 @@ public class DwhFilesManager {
   }
 
   /**
+   * Returns the next scheduled time to run the purge job based on the previous run time. If the
+   * purge job has never run before, then it returns the current time.
+   *
    * @return the next scheduled time to run the purge job based on the previous run time.
    */
-  LocalDateTime getNextPurgeTime() {
+  @Nullable LocalDateTime getNextPurgeTime() {
     if (lastPurgeRunEnd == null) {
-      return LocalDateTime.now();
+      return LocalDateTime.now(ZoneOffset.UTC);
     }
     return purgeCron.next(lastPurgeRunEnd);
   }
@@ -118,11 +130,15 @@ public class DwhFilesManager {
         return;
       }
       LocalDateTime next = getNextPurgeTime();
-      logger.info("Last purge run was at {} next run is at {}", lastPurgeRunEnd, next);
-      if (next.compareTo(LocalDateTime.now()) <= 0) {
-        logger.info("Purge run triggered at {}", LocalDateTime.now());
-        purgeDwhFiles();
-        logger.info("Purge run completed at {}", LocalDateTime.now());
+      if (next != null) {
+        logger.info("Last purge run was at {} next run is at {}", lastPurgeRunEnd, next);
+        if (next.isBefore(LocalDateTime.now(ZoneOffset.UTC))) {
+          logger.info("Purge run triggered at {}", LocalDateTime.now(ZoneOffset.UTC));
+          purgeDwhFiles();
+          logger.info("Purge run completed at {}", LocalDateTime.now(ZoneOffset.UTC));
+        }
+      } else {
+        logger.warn("Next purge time is null, please check the cron expression");
       }
     } finally {
       releasePurgeJob();
@@ -141,7 +157,7 @@ public class DwhFilesManager {
       String prefix = getPrefix(dwhRootPrefix);
       List<ResourceId> paths =
           DwhFiles.getAllChildDirectories(baseDir).stream()
-              .filter(dir -> dir.getFilename().startsWith(prefix))
+              .filter(dir -> dir.getFilename() != null && dir.getFilename().startsWith(prefix))
               .collect(Collectors.toList());
 
       TreeSet<String> recentSnapshotsToBeRetained =
@@ -153,6 +169,61 @@ public class DwhFilesManager {
     }
   }
 
+  /** This method will scan the DWH base directory and return DWH snapshots. */
+  public List<String> listDwhSnapshots() {
+    List<String> paths = new ArrayList<>();
+    try {
+      String baseDir = getBaseDir(dwhRootPrefix);
+      String prefix = getPrefix(dwhRootPrefix);
+      paths =
+          DwhFiles.getAllChildDirectories(baseDir).stream()
+              .filter(
+                  resourceId ->
+                      resourceId.getFilename() != null
+                          && resourceId.getFilename().startsWith(prefix))
+              .map(it -> baseDir + File.separatorChar + it.getFilename())
+              .collect(Collectors.toList());
+
+    } catch (IOException e) {
+      logger.error("Error occurred while retrieving snapshots", e);
+    }
+    return paths;
+  }
+
+  /**
+   * This method will scan the DWH base directory to check for a DWH snapshots that matches the
+   * provided name. Any incomplete snapshots will not be purged by this job and will have to be
+   * manually verified and acted upon.
+   *
+   * @param snapshotId the snapshot id which needs to be purged and should start with the
+   *     dwhRootPrefix format <baseDir>/<prefix>
+   */
+  public void deleteDwhSnapshotFiles(String snapshotId) throws IOException {
+    Preconditions.checkState(
+        !Strings.isNullOrEmpty(snapshotId), "snapshot id should not be null or empty");
+    Preconditions.checkState(
+        snapshotId.trim().startsWith(dwhRootPrefix),
+        "Invalid prefix for the snapshot id. It should start with the dwhRootPrefix: "
+            + dwhRootPrefix);
+
+    String baseDir = getBaseDir(dwhRootPrefix);
+    ResourceId resourceId =
+        DwhFiles.getAllChildDirectories(baseDir).stream()
+            .filter(
+                dir ->
+                    dir.getFilename() != null
+                        && dir.getFilename().startsWith(getPrefix(snapshotId)))
+            .findFirst()
+            .orElseThrow(
+                () ->
+                    new IllegalArgumentException(
+                        "File not found for Snapshot with id: " + snapshotId));
+
+    logger.info("Deleting snapshot " + snapshotId);
+    deleteDirectoryAndFiles(resourceId);
+  }
+
+  @SuppressWarnings("NonApiType")
   private void deleteOlderSnapshots(
       List<ResourceId> allPaths, TreeSet<String> recentSnapshotsToBeRetained) throws IOException {
     for (ResourceId path : allPaths) {
@@ -168,7 +239,7 @@ public class DwhFilesManager {
    * under the subdirectories. Later the directories and the subdirectories are deleted.
    *
    * @param rootDirectory which needs to be deleted
-   * @throws IOException
+   * @throws IOException if any IO errors occur.
    */
   private void deleteDirectoryAndFiles(ResourceId rootDirectory) throws IOException {
     String fileSeparator = DwhFiles.getFileSeparatorForDwhFiles(rootDirectory.toString());
@@ -227,6 +298,7 @@ public class DwhFilesManager {
     }
   }
 
+  @SuppressWarnings("NonApiType")
   private TreeSet<String> getRecentSnapshots(List<ResourceId> paths, int numberOfSnapshotsToReturn)
       throws IOException {
     TreeSet<String> treeSet = new TreeSet<>();
@@ -238,7 +310,8 @@ public class DwhFilesManager {
       // Keep only the recent snapshots
       if (treeSet.size() < numberOfSnapshotsToReturn) {
         treeSet.add(resourceId.getFilename());
-      } else if (resourceId.getFilename().compareTo(treeSet.first()) > 0) {
+      } else if (resourceId.getFilename() != null
+          && resourceId.getFilename().compareTo(treeSet.first()) > 0) {
         treeSet.add(resourceId.getFilename());
         treeSet.pollFirst();
       }
@@ -253,7 +326,7 @@ public class DwhFilesManager {
    *
    * @param dwhResource The DWH resource path which needs to be checked for completeness
    * @return the status of DWH completeness.
-   * @throws IOException
+   * @throws IOException if any IO errors occur.
    */
   boolean isDwhComplete(ResourceId dwhResource) throws IOException {
     ResourceId startTimestampResource =
@@ -264,11 +337,26 @@ public class DwhFilesManager {
   }
 
   /**
+   * Checks if the pipeline corresponding to creation of the given DWH started, i.e., the start
+   * timestamp file is found there. This is useful to differentiate a case where the pipeline
+   * initialization fails, and it does not even reach the step to create the start timestamp.
+   *
+   * @param dwhResource the root path of DWH
+   * @return whether the pipeline for this DWH started or not
+   * @throws IOException if any IO errors occur.
+   */
+  boolean isDwhJobStarted(ResourceId dwhResource) throws IOException {
+    ResourceId startTimestampResource =
+        dwhResource.resolve(DwhFiles.TIMESTAMP_FILE_START, StandardResolveOptions.RESOLVE_FILE);
+    return doesFileExist(startTimestampResource);
+  }
+
+  /**
    * This method checks if the given resource exists in the file system or not
    *
    * @param resourceId the resource to be checked
    * @return the existence status of the resource
-   * @throws IOException
+   * @throws IOException if any IO errors occur.
    */
   boolean doesFileExist(ResourceId resourceId) throws IOException {
     List<MatchResult> matchResultList =
@@ -291,7 +379,7 @@ public class DwhFilesManager {
    * determined by ignoring the prefix part in the given input format <baseDir>/<prefix> for the
    * dwhRootPrefix
    *
-   * @param dwhRootPrefix
+   * @param dwhRootPrefix the dwh root prefix in the format <baseDir>/<prefix>
    * @return the base directory name
    */
   String getBaseDir(String dwhRootPrefix) {
@@ -311,7 +399,7 @@ public class DwhFilesManager {
    * name. This is determined by considering the prefix part in the given input format
    * <baseDir>/<prefix> for the dwhRootPrefix
    *
-   * @param dwhRootPrefix
+   * @param dwhRootPrefix the dwh root prefix in the format <baseDir>/<prefix>
    * @return the prefix name
    */
   String getPrefix(String dwhRootPrefix) {
@@ -338,40 +426,49 @@ public class DwhFilesManager {
   List<String> findExistingResources(String dwhRoot) throws IOException {
     Set<ResourceId> childPaths = DwhFiles.getAllChildDirectories(dwhRoot);
     Set<String> configuredSet =
-        new HashSet<>(Arrays.asList(dataProperties.getResourceList().split(",")));
+        new HashSet<>(Splitter.on(',').splitToList(dataProperties.getResourceList()));
     return childPaths.stream()
         .map(r -> r.getFilename())
         .filter(r -> configuredSet.contains(r))
         .collect(Collectors.toList());
   }
 
+  List<String> findExistingViews(String viewRoot, String viewDefinitionsDir)
+      throws IOException, ViewDefinitionException {
+    Set<ResourceId> childPaths = DwhFiles.getAllChildDirectories(viewRoot);
+    // The reason viewManager is recreated (instead of creating it once in the constructor)
+    // is that the content of viewDefinitionsDir may change while controller is running.
+    // This function is not expected to be called frequently o.w., we should improve performance.
+    ViewManager viewManager = ViewManager.createForDir(viewDefinitionsDir);
+    return childPaths.stream()
+        .map(r -> r.getFilename())
+        .filter(r -> viewManager.getViewDefinition(r) != null)
+        .collect(Collectors.toList());
+  }
+
   private int getLastIndexOfSlash(String dwhRootPrefix) {
     CloudPath cloudPath = DwhFiles.parsePath(dwhRootPrefix);
-    int index = -1;
-    switch (cloudPath.getScheme()) {
-      case LOCAL_SCHEME:
-        index = dwhRootPrefix.lastIndexOf(File.separator);
-        break;
-      case GCS_SCHEME:
-      case S3_SCHEME:
+    return switch (cloudPath.getScheme()) {
+      case LOCAL_SCHEME -> dwhRootPrefix.lastIndexOf(File.separator);
+      case GCS_SCHEME, S3_SCHEME -> {
         // Fetch the last index position of the character '/' after the bucket name in the gcs path.
         String gcsObject = cloudPath.getObject();
         if (Strings.isNullOrEmpty(gcsObject)) {
-          break;
+          yield -1;
         }
         int position = gcsObject.lastIndexOf("/");
         if (position == -1) {
-          index = dwhRootPrefix.lastIndexOf(gcsObject) - 1;
+          yield dwhRootPrefix.lastIndexOf(gcsObject) - 1;
         } else {
-          index = dwhRootPrefix.lastIndexOf(gcsObject) + position;
+          yield dwhRootPrefix.lastIndexOf(gcsObject) + position;
         }
-        break;
-      default:
+      }
+      default -> {
         String errorMessage =
             String.format("File system scheme=%s is not yet supported", cloudPath.getScheme());
         logger.error(errorMessage);
         throw new IllegalArgumentException(errorMessage);
-    }
-    return index;
+      }
+    };
   }
 }

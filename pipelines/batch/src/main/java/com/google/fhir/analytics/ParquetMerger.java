@@ -32,7 +32,6 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
-import javax.annotation.Nullable;
 import org.apache.avro.Schema;
 import org.apache.avro.generic.GenericRecord;
 import org.apache.beam.sdk.Pipeline;
@@ -56,6 +55,7 @@ import org.apache.beam.sdk.values.PCollection;
 import org.apache.beam.sdk.values.TupleTag;
 import org.apache.parquet.hadoop.metadata.CompressionCodecName;
 import org.hl7.fhir.r4.model.codesystems.ActionType;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -96,13 +96,13 @@ public class ParquetMerger {
     // reshuffle operations by one.
     PCollection<ReadableFile> inputFiles1 =
         pipeline
-            .apply(Create.of(getParquetFilePaths(viewName, Arrays.asList(dwh1))))
+            .apply(Create.of(getParquetFilePaths(viewName, Arrays.asList(dwh1), true)))
             .apply(FileIO.matchAll())
             .apply(FileIO.readMatches());
 
     PCollection<ReadableFile> inputFiles2 =
         pipeline
-            .apply(Create.of(getParquetFilePaths(viewName, Arrays.asList(dwh2))))
+            .apply(Create.of(getParquetFilePaths(viewName, Arrays.asList(dwh2), true)))
             .apply(FileIO.matchAll())
             .apply(FileIO.readMatches());
 
@@ -148,7 +148,7 @@ public class ParquetMerger {
     // reshuffle operations by one.
     PCollection<ReadableFile> inputFiles =
         pipeline
-            .apply(Create.of(getParquetFilePaths(resourceType, dwhFilesList)))
+            .apply(Create.of(getParquetFilePaths(resourceType, dwhFilesList, false)))
             .apply(FileIO.matchAll())
             .apply(FileIO.readMatches());
 
@@ -180,11 +180,15 @@ public class ParquetMerger {
   }
 
   private static List<String> getParquetFilePaths(
-      String resourceType, List<DwhFiles> dwhFilesList) {
+      String resourceTypeOrViewName, List<DwhFiles> dwhFilesList, boolean isView) {
     List<String> parquetFilePaths = new ArrayList<>();
     if (dwhFilesList != null && !dwhFilesList.isEmpty()) {
       for (DwhFiles dwhFiles : dwhFilesList) {
-        parquetFilePaths.add(dwhFiles.getFilePattern(resourceType));
+        if (isView) {
+          parquetFilePaths.add(dwhFiles.getViewFilePattern(resourceTypeOrViewName));
+        } else {
+          parquetFilePaths.add(dwhFiles.getResourceFilePattern(resourceTypeOrViewName));
+        }
       }
     }
     return parquetFilePaths;
@@ -198,14 +202,11 @@ public class ParquetMerger {
    * This method identifies if the record is a deleted record. For a deleted record, the meta.tag
    * would be updated with a ActionType.REMOVE during the incremental parquet file creation, the
    * same information is being reused to check if the record is deleted or not.
-   *
-   * @param record
-   * @return
    */
   private static Boolean isRecordDeleted(GenericRecord record) {
+    Preconditions.checkNotNull(record);
     Object tag = ((GenericRecord) record.get(META_KEY)).get(TAG_KEY);
-    if (tag != null && tag instanceof Collection) {
-      Collection tagCollection = (Collection) tag;
+    if (tag != null && tag instanceof Collection tagCollection) {
       if (!tagCollection.isEmpty()) {
         Iterator iterator = tagCollection.iterator();
         while (iterator.hasNext()) {
@@ -222,8 +223,10 @@ public class ParquetMerger {
     return Boolean.FALSE;
   }
 
+  @Nullable
   private static GenericRecord findLastRecord(
       Iterable<GenericRecord> genericRecords, Counter numDuplicates) {
+    Preconditions.checkNotNull(genericRecords);
     // Note we are assuming all times have the same time-zone to avoid parsing date values.
     String lastUpdated = null;
     GenericRecord lastRecord = null;
@@ -239,8 +242,11 @@ public class ParquetMerger {
     if (numRec > 1) {
       numDuplicates.inc();
     }
+    // NullAway complains of lastRecord possibly being null here. It is guaranteed for numRec>1
     if (numRec > 2) {
-      log.warn("Record with ID {} repeated more than twice!", lastRecord.get(ID_KEY));
+      Object lastRecordIdKey = lastRecord != null ? lastRecord.get(ID_KEY) : null;
+      if (lastRecordIdKey != null)
+        log.warn("Record with ID {} repeated more than twice!", lastRecordIdKey);
     }
     return lastRecord;
   }
@@ -260,9 +266,21 @@ public class ParquetMerger {
     String dwh1 = options.getDwh1();
     String dwh2 = options.getDwh2();
     String mergedDwh = options.getMergedDwh();
-    DwhFiles dwhFiles1 = DwhFiles.forRoot(dwh1, avroConversionUtil.getFhirContext());
-    DwhFiles dwhFiles2 = DwhFiles.forRoot(dwh2, avroConversionUtil.getFhirContext());
-    DwhFiles mergedDwhFiles = DwhFiles.forRoot(mergedDwh, avroConversionUtil.getFhirContext());
+
+    // We are creating a new DWH, so we need a new view path under it. Instead of adding more flags
+    // for the location of view paths, we assume that they follow `DwhFiles` conventions. We also
+    // don't need to check if parquet view-generation is enabled because if it is not, we won't
+    // find any views in the two input DWHs.
+    String mergedDwhViewPath = DwhFiles.newViewsPath(mergedDwh).toString();
+    // We don't know the path of this merged view path outside ParquetMerger, hence we write the
+    // start timestamp file here.
+    DwhFiles.writeTimestampFile(mergedDwhViewPath.toString(), DwhFiles.TIMESTAMP_FILE_START);
+    DwhFiles dwhFiles1 =
+        DwhFiles.forRootWithLatestViewPath(dwh1, avroConversionUtil.getFhirContext());
+    DwhFiles dwhFiles2 =
+        DwhFiles.forRootWithLatestViewPath(dwh2, avroConversionUtil.getFhirContext());
+    DwhFiles mergedDwhFiles =
+        DwhFiles.forRoot(mergedDwh, mergedDwhViewPath, avroConversionUtil.getFhirContext());
 
     Set<String> resourceTypes1 = dwhFiles1.findNonEmptyResourceDirs();
     Set<String> resourceTypes2 = dwhFiles2.findNonEmptyResourceDirs();
@@ -281,10 +299,20 @@ public class ParquetMerger {
       }
       dwhViews1 = dwhFiles1.findNonEmptyViewDirs(viewManager);
       dwhViews2 = dwhFiles2.findNonEmptyViewDirs(viewManager);
-      copyDistinctResources(dwhViews1, dwhViews2, dwhFiles1, dwhFiles2, mergedDwhFiles);
+      copyDistinctResources(
+          dwhViews1,
+          dwhViews2,
+          dwhFiles1.getViewRoot().toString(),
+          dwhFiles2.getViewRoot().toString(),
+          mergedDwhFiles.getViewRoot().toString());
     }
 
-    copyDistinctResources(resourceTypes1, resourceTypes2, dwhFiles1, dwhFiles2, mergedDwhFiles);
+    copyDistinctResources(
+        resourceTypes1,
+        resourceTypes2,
+        dwhFiles1.getRoot(),
+        dwhFiles2.getRoot(),
+        mergedDwhFiles.getRoot());
     List<Pipeline> pipelines = new ArrayList<>();
     for (String type : resourceTypes1) {
       if (!resourceTypes2.contains(type)) {
@@ -304,6 +332,8 @@ public class ParquetMerger {
     }
     if ((!dwhViews1.isEmpty() || !dwhViews2.isEmpty())
         && !Strings.isNullOrEmpty(options.getViewDefinitionsDir())) {
+      // ViewManager is guaranteed to be non-null here, adding Precondition for NullAway
+      Preconditions.checkNotNull(viewManager);
       for (String viewName : dwhViews1) {
         if (!dwhViews2.contains(viewName)) {
           continue;
@@ -322,7 +352,7 @@ public class ParquetMerger {
       DwhFiles dwhFiles2,
       DwhFiles mergedDwhFiles,
       String viewName,
-      @Nullable ViewManager viewManager)
+      ViewManager viewManager)
       throws IOException {
     Pipeline pipeline = Pipeline.create(options);
     log.info("Merging materialized view {}", viewName);
@@ -353,8 +383,7 @@ public class ParquetMerger {
                         }
                       }))
               .setCoder(AvroCoder.of(schema));
-      writeToParquetSink(
-          options, merged, schema, mergedDwhFiles.getResourcePath(viewName).toString());
+      writeToParquetSink(options, merged, schema, mergedDwhFiles.getViewPath(viewName).toString());
     }
     return pipeline;
   }
@@ -381,10 +410,21 @@ public class ParquetMerger {
                   @ProcessElement
                   public void processElement(ProcessContext c) {
                     KV<String, Iterable<GenericRecord>> e = c.element();
-                    GenericRecord lastRecord = findLastRecord(e.getValue(), numDuplicates);
-                    if (!isRecordDeleted(lastRecord)) {
-                      numOutputRecords.inc();
-                      c.output(lastRecord);
+                    if (e != null) {
+                      GenericRecord lastRecord = findLastRecord(e.getValue(), numDuplicates);
+                      if (lastRecord != null) {
+                        if (!isRecordDeleted(lastRecord)) {
+                          numOutputRecords.inc();
+                          c.output(lastRecord);
+                        }
+                      } else {
+                        log.warn(
+                            "Null last record found for resource type {} with id {}",
+                            type,
+                            e.getKey());
+                      }
+                    } else {
+                      log.warn("Null element found in grouped records for resource type {}", type);
                     }
                   }
                 }));
@@ -414,13 +454,13 @@ public class ParquetMerger {
   }
 
   public static void copyDistinctResources(
-      Set<String> types1, Set<String> types2, DwhFiles dwh1, DwhFiles dwh2, DwhFiles mergedDwh)
+      Set<String> dirs1, Set<String> dirs2, String dwh1, String dwh2, String mergedDwh)
       throws IOException {
-    for (String type : Sets.difference(types1, types2)) {
-      dwh1.copyResourcesToDwh(type, mergedDwh);
+    for (String dir : Sets.difference(dirs1, dirs2)) {
+      DwhFiles.copyDirToDwh(dwh1, dir, mergedDwh);
     }
-    for (String type : Sets.difference(types2, types1)) {
-      dwh2.copyResourcesToDwh(type, mergedDwh);
+    for (String dir : Sets.difference(dirs2, dirs1)) {
+      DwhFiles.copyDirToDwh(dwh2, dir, mergedDwh);
     }
   }
 
@@ -456,8 +496,7 @@ public class ParquetMerger {
     }
 
     List<Pipeline> pipelines = createMergerPipelines(options, avroConversionUtil);
-    EtlUtils.runMultipleMergerPipelinesWithTimestamp(
-        pipelines, options, avroConversionUtil.getFhirContext());
+    EtlUtils.runMultipleMergerPipelinesWithTimestamp(pipelines, options);
     log.info("DONE!");
   }
 }

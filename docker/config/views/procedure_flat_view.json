@@ -40,6 +40,11 @@
           "path": "performed.ofType(Period).end",
           "name": "period_end",
           "type": "dateTime"
+        },
+        {
+          "path": "performed.ofType(dateTime)",
+          "name": "performed_time",
+          "type": "dateTime"
         }
       ]
     },
@@ -48,11 +53,15 @@
       "column": [
         {
           "path": "code",
-          "name": "code"
+          "name": "code_code"
         },
         {
           "path": "system",
-          "name": "system"
+          "name": "code_sys"
+        },
+        {
+          "path": "display",
+          "name": "code_display"
         }
       ]
     }

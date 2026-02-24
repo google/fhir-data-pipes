@@ -23,7 +23,20 @@ import org.apache.beam.sdk.options.Validation.Required;
 public interface FhirEtlOptions extends BasePipelineOptions {
 
   @Description(
-      "Mode through which the FHIR resources have to be fetched from the source FHIR server")
+      "Mode through which the FHIR resources have to be fetched from the source FHIR server. "
+          + "Supported modes are:\n"
+          + "  FHIR_SEARCH: Reads resources through the FIHR Search API; "
+          + "--fhirServerUrl should be set in this mode.\n"
+          + "  PARQUET: Reads resources from input Parquet files; this is only intended for "
+          + "regenerating flat views or syncing resources with an external FHIR server.\n"
+          + "  JSON: Reads resources from input JSON files; --sourceJsonFilePattern should be set "
+          + "in this mode.\n"
+          + "  NDJSON: Reads resources from input ndjson files; --sourceNdjsonFilePattern "
+          + "should be set in this mode.\n"
+          + "  BULK_EXPORT: Reads resources through the FIHR Bulk Export API; "
+          + "--fhirServerUrl should be set in this mode.\n"
+          + "  HAPI_JDBC: Reads resources through a direct JDBC connection to the database of a "
+          + "HAPI server; --fhirDatabaseConfigPath should be set in this mode.\n")
   @Default.Enum("FHIR_SEARCH")
   FhirFetchMode getFhirFetchMode();
 
@@ -35,6 +48,13 @@ public interface FhirEtlOptions extends BasePipelineOptions {
   String getFhirServerUrl();
 
   void setFhirServerUrl(String value);
+
+  @Description("Whether to check the /Patient endpoint with a count query at the start-up.")
+  @Required
+  @Default.Boolean(true)
+  Boolean getCheckPatientEndpoint();
+
+  void setCheckPatientEndpoint(Boolean value);
 
   @Description("Comma separated list of resource to fetch, e.g., 'Patient,Encounter,Observation'.")
   @Default.String("Patient,Encounter,Observation")
@@ -194,21 +214,25 @@ public interface FhirEtlOptions extends BasePipelineOptions {
   void setActivePeriod(String value);
 
   @Description(
-      "Fetch only FHIR resources that were updated after the given timestamp."
-          + "The date format follows the dateTime format in the FHIR standard, without time-zone:\n"
-          + "https://www.hl7.org/fhir/datatypes.html#dateTime\n"
-          + "This feature is currently implemented only for HAPI JDBC mode.")
+      """
+          Fetch only FHIR resources that were updated after the given timestamp.
+          The date format follows the dateTime format in the FHIR standard, without time-zone:
+          https://www.hl7.org/fhir/datatypes.html#dateTime
+          This feature is currently implemented only for HAPI JDBC mode.
+          """)
   @Default.String("")
   String getSince();
 
   void setSince(String value);
 
   @Description(
-      "Path to the sink database config; if not set, no sink DB is used.\n"
-          + "If viewDefinitionsDir is set, the output tables will be the generated views\n"
-          + "(the `name` field value will be used as the table name); if not, one table\n"
-          + "per resource type is created with the JSON content of a resource and its\n"
-          + "`id` column for each row.")
+      """
+          Path to the sink database config; if not set, no sink DB is used.
+          If viewDefinitionsDir is set, the output tables will be the generated views
+          (the `name` field value will be used as the table name); if not, one table
+          per resource type is created with the JSON content of a resource and its
+          `id` column for each row.
+          """)
   @Default.String("")
   String getSinkDbConfigPath();
 
@@ -223,11 +247,12 @@ public interface FhirEtlOptions extends BasePipelineOptions {
   void setRecreateSinkTables(Boolean value);
 
   @Description(
-      "If set, flat Parquet files corresponding to input ViewDefinition are created as well.")
-  @Default.Boolean(false)
-  Boolean isCreateParquetViews();
+      "If set, flat Parquet files corresponding to input ViewDefinition are created and written\n"
+          + "in this directory. Each view will be in a sub-directory based on its `name` field.")
+  @Default.String("")
+  String getOutputParquetViewPath();
 
-  void setCreateParquetViews(Boolean value);
+  void setOutputParquetViewPath(String value);
 
   @Description(
       "The path to the data-warehouse directory of Parquet files to be read. The content of this "

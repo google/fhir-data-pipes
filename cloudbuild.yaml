@@ -79,9 +79,8 @@ steps:
   entrypoint: /bin/bash
   args:
   - -c
-  - cd e2e-tests;
-    docker build -t ${_REPOSITORY}/e2e-tests:${_TAG} .;
-    docker build -t ${_REPOSITORY}/e2e-tests/controller-spark:${_TAG} ./controller-spark/.;
+  - docker build -t ${_REPOSITORY}/e2e-tests:${_TAG} -f e2e-tests/Dockerfile ./e2e-tests/;
+    docker build -t ${_REPOSITORY}/e2e-tests/controller-spark:${_TAG} -f e2e-tests/controller-spark/Dockerfile .;
   waitFor: ['-']
 
 - name: '${_REPOSITORY}/synthea-uploader:${_TAG}'
@@ -107,6 +106,7 @@ steps:
   env:
   - FHIR_SERVER_URL=http://hapi-server:8080/fhir
   - PARQUET_PATH=/workspace/e2e-tests/FHIR_SEARCH_HAPI
+  - OUTPUT_PARQUET_VIEW_PATH=/workspace/e2e-tests/FHIR_SEARCH_HAPI/VIEWS_TIMESTAMP_1
   - SINK_PATH=http://sink-server-search:8080/fhir
   - SINK_USERNAME=hapi
   - SINK_PASSWORD=hapi
@@ -132,6 +132,7 @@ steps:
     - SINK_PASSWORD=hapi
     - FHIR_DATABASE_CONFIG_PATH=/workspace/utils/hapi-postgres-config.json
     - PARQUET_PATH=/workspace/e2e-tests/JDBC_HAPI
+    - OUTPUT_PARQUET_VIEW_PATH=/workspace/e2e-tests/JDBC_HAPI/VIEWS_TIMESTAMP_1
     - JDBC_FETCH_SIZE=1000
   waitFor: ['Build Pipeline Images', 'Upload to HAPI']
 
@@ -150,6 +151,7 @@ steps:
     - FHIR_FETCH_MODE=BULK_EXPORT
     - FHIR_SERVER_URL=http://hapi-server:8080/fhir
     - PARQUET_PATH=/workspace/e2e-tests/BULK_EXPORT
+    - OUTPUT_PARQUET_VIEW_PATH=/workspace/e2e-tests/BULK_EXPORT/VIEWS_TIMESTAMP_1
   waitFor: ['Run E2E Test for JDBC mode with HAPI source']
 
 - name: '${_REPOSITORY}/e2e-tests:${_TAG}'
@@ -200,16 +202,18 @@ steps:
   id: 'Run E2E Test for Dockerized Controller and Spark Thriftserver'
   waitFor: [ 'Bring up controller and Spark containers',
              'Run E2E Test for BULK_EXPORT mode with HAPI source' ]
+#  allowFailure: true
 
 # The controller logs don't appear in Cloud Build output because we run it in
 # the detached mode. For debugging controller failures we can use something like
-#  the following (and forcing the previous step to have 0 exit code).
-# - name: 'gcr.io/cloud-builders/docker'
-#   id: 'PRINT CONTROLLER LOGS'
-#   entrypoint: /bin/bash
-#   args:
-#   - -c
-#   - docker logs pipeline-controller
+# the following (and forcing the previous step to have 0 exit code or by
+# adding allowFailure: true).
+#- name: 'gcr.io/cloud-builders/docker'
+#  id: 'PRINT CONTROLLER LOGS'
+#  entrypoint: /bin/bash
+#  args:
+#  - -c
+#  - docker logs pipeline-controller
 
 - name: 'docker/compose'
   id: 'Bring down controller and Spark containers'
@@ -294,6 +298,7 @@ steps:
   id: 'Run Batch Pipeline FHIR-search mode with OpenMRS source'
   env:
     - PARQUET_PATH=/workspace/e2e-tests/FHIR_SEARCH_OPENMRS
+    - OUTPUT_PARQUET_VIEW_PATH=/workspace/e2e-tests/FHIR_SEARCH_OPENMRS/VIEWS_TIMESTAMP_1
     - SINK_PATH=http://sink-server-for-openmrs:8080/fhir
     - SINK_USERNAME=hapi
     - SINK_PASSWORD=hapi
@@ -314,6 +319,7 @@ steps:
   env:
     - JDBC_MODE_ENABLED=true
     - PARQUET_PATH=/workspace/e2e-tests/JDBC_OPENMRS
+    - OUTPUT_PARQUET_VIEW_PATH=/workspace/e2e-tests/JDBC_OPENMRS/VIEWS_TIMESTAMP_1
     - SINK_PATH=http://sink-server-for-openmrs:8080/fhir
     - SINK_USERNAME=hapi
     - SINK_PASSWORD=hapi
@@ -363,4 +369,5 @@ images:
 logsBucket: "gs://cloud-build-gh-logs"
 timeout: '2h'
 options:
-  machineType: 'N1_HIGHCPU_32'
+  pool:
+    name: 'projects/cloud-build-fhir/locations/us-central1/workerPools/fhir-data-pipes-pool-e2s32mem128'

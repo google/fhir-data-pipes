@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2024 Google LLC
+ * Copyright 2020-2025 Google LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,6 +33,7 @@ import org.mockito.Answers;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+@SuppressWarnings("NullAway.Init")
 @ExtendWith(MockitoExtension.class)
 public class FetchUtilTest {
 
@@ -49,6 +50,9 @@ public class FetchUtilTest {
 
   FetchUtil fetchUtil;
 
+  // Suppressing because fhirContext.getRestfulClientFactory() is a false positive for
+  // DirectInvocationOnMock
+  @SuppressWarnings("DirectInvocationOnMock")
   @BeforeEach
   public void setUp() throws Exception {
     fetchUtil =
@@ -59,6 +63,7 @@ public class FetchUtilTest {
             "someOAuthEndpoint",
             "someOAuthClient",
             "someOAuthSecret",
+            true,
             fhirContext);
 
     doNothing().when(clientFactory).setSocketTimeout(any(Integer.class));

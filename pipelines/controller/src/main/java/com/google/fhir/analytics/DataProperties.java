@@ -44,6 +44,10 @@ import org.springframework.stereotype.Component;
  * are created from these parameters. As all Spring configurations, these can be configured through
  * a config file, command line arguments, Java properties, or environment variables.
  */
+
+// This is a Spring configuration properties class which is initialized by Spring (hence the
+// suppress annotation).
+@SuppressWarnings("NullAway.Init")
 @ConfigurationProperties("fhirdata")
 @Getter
 @Setter
@@ -104,6 +108,8 @@ public class DataProperties {
   private String fhirServerOAuthClientId;
 
   private String fhirServerOAuthClientSecret;
+
+  private boolean checkPatientEndpoint;
 
   private String sinkFhirServerUrl;
 
@@ -167,6 +173,9 @@ public class DataProperties {
         dwhRoot);
     options.setFhirFetchMode(FhirFetchMode.PARQUET);
     options.setParquetInputDwhRoot(dwhRoot);
+    if (createParquetViews) {
+      options.setOutputParquetViewPath(DwhFiles.newViewsPath(dwhRoot).toString());
+    }
     options.setViewDefinitionsDir(viewDefinitionsDir);
     options.setSinkDbConfigPath(sinkDbConfigPath);
     options.setRecreateSinkTables(true);
@@ -174,6 +183,9 @@ public class DataProperties {
     options.setFhirVersion(fhirVersion);
     if (rowGroupSizeForParquetFiles > 0) {
       options.setRowGroupSizeForParquetFiles(rowGroupSizeForParquetFiles);
+    }
+    if (resourceList != null) {
+      options.setResourceList(resourceList);
     }
     return addFlinkOptions(options).build();
   }
@@ -194,11 +206,11 @@ public class DataProperties {
       options.setFhirServerOAuthTokenEndpoint(Strings.nullToEmpty(fhirServerOAuthTokenEndpoint));
       options.setFhirServerOAuthClientId(Strings.nullToEmpty(fhirServerOAuthClientId));
       options.setFhirServerOAuthClientSecret(Strings.nullToEmpty(fhirServerOAuthClientSecret));
+      options.setCheckPatientEndpoint(checkPatientEndpoint);
     }
     if (resourceList != null) {
       options.setResourceList(resourceList);
     }
-    options.setCreateParquetViews(createParquetViews);
     options.setViewDefinitionsDir(Strings.nullToEmpty(viewDefinitionsDir));
     options.setSinkDbConfigPath(Strings.nullToEmpty(sinkDbConfigPath));
     options.setStructureDefinitionsPath(Strings.nullToEmpty(structureDefinitionsPath));
@@ -216,9 +228,14 @@ public class DataProperties {
 
     // Using underscore for suffix as hyphens are discouraged in hive table names.
     String timestampSuffix = DwhFiles.safeTimestampSuffix();
-    options.setOutputParquetPath(dwhRootPrefix + DwhFiles.TIMESTAMP_PREFIX + timestampSuffix);
+    String newDwhRoot = dwhRootPrefix + DwhFiles.TIMESTAMP_PREFIX + timestampSuffix;
+    options.setOutputParquetPath(newDwhRoot);
 
     options.setGenerateParquetFiles(generateParquetFiles);
+
+    if (createParquetViews) {
+      options.setOutputParquetViewPath(DwhFiles.newViewsPath(newDwhRoot).toString());
+    }
 
     PipelineConfig.PipelineConfigBuilder pipelineConfigBuilder = addFlinkOptions(options);
 

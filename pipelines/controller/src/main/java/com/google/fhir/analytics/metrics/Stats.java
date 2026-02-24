@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2023 Google LLC
+ * Copyright 2020-2025 Google LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,17 +15,14 @@
  */
 package com.google.fhir.analytics.metrics;
 
-import javax.annotation.Nullable;
 import lombok.Data;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.jspecify.annotations.Nullable;
 
 @Data
 public class Stats {
 
   private Integer percentageCompleted = 0;
 
-  private static final Logger logger = LoggerFactory.getLogger(Stats.class.getName());
   private static final Integer MAPPED_RESOURCES_WEIGHT = 4;
   private static final Integer PARSED_RESOURCES_WEIGHT = 1;
 
@@ -38,9 +35,10 @@ public class Stats {
    * weightage for each step is a rough approximation derived based on the time taken for that step
    * as compared to the other steps.
    *
-   * @param cumulativeMetrics
+   * @param cumulativeMetrics total metrics of the currently running pipeline
    * @return Stats
    */
+  @Nullable
   public static Stats createStats(@Nullable CumulativeMetrics cumulativeMetrics) {
 
     if (cumulativeMetrics == null) {

@@ -21,9 +21,19 @@
           "name": "gender"
         },
         {
-          "path": "deceased",
-          "name": "deceased",
+          "path": "birthDate",
+          "name": "birth_date",
+          "type": "date"
+        },
+        {
+          "path": "deceased.ofType(boolean)",
+          "name": "is_deceased",
           "type": "boolean"
+        },
+        {
+          "path": "deceased.ofType(dateTime)",
+          "name": "deceased_time",
+          "type": "dateTime"
         },
         {
           "path": "managingOrganization.getReferenceKey(Organization)",
@@ -59,6 +69,19 @@
           ]
         }
       ]
+    },
+    {
+      "column": [
+        {
+          "path": "value",
+          "name": "identifier_value"
+        },
+        {
+          "path": "system",
+          "name": "identifier_sys"
+        }
+      ],
+      "forEachOrNull": "identifier"
     }
   ],
   "name": "patient_flat",

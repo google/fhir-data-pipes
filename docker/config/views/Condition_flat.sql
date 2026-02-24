@@ -1,4 +1,4 @@
-CREATE OR REPLACE VIEW Condition_flat AS
+CREATE OR REPLACE VIEW Condition_flat_view AS
 SELECT C.id AS id, C.subject.patientId AS patient_id,
   C.encounter.encounterId AS encounter_id, CCC.system, CCC.code,
   CCatC.code AS category, CClC.code AS clinical_status,

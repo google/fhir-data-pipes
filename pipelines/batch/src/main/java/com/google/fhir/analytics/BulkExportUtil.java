@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2024 Google LLC
+ * Copyright 2020-2025 Google LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,9 +21,9 @@ import com.google.fhir.analytics.model.BulkExportHttpResponse;
 import com.google.fhir.analytics.model.BulkExportResponse;
 import java.io.IOException;
 import java.util.List;
-import javax.annotation.Nullable;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.http.HttpStatus;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -47,7 +47,8 @@ public class BulkExportUtil {
    * @param since - the fhir resources fetched should have updated timestamp greater than this
    * @param fhirVersionEnum - the fhir version of resource types
    * @return the BulkExportResponse
-   * @throws IOException
+   * @throws IOException in case of any error while triggering or fetching the status of bulk export
+   *     job
    */
   public BulkExportResponse triggerBulkExport(
       List<String> resourceTypes, @Nullable String since, FhirVersionEnum fhirVersionEnum)

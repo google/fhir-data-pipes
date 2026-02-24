@@ -43,14 +43,13 @@
     <bunsen.version>0.5.14-SNAPSHOT</bunsen.version>
     <junit.version>4.13.2</junit.version>
     <slf4j.version>2.0.17</slf4j.version>
-    <logback.version>1.5.18</logback.version>
+    <logback.version>1.5.31</logback.version>
     <hapi.fhir.version>7.6.1</hapi.fhir.version>
     <hamcrest.version>3.0</hamcrest.version>
     <mockito.version>5.2.0</mockito.version>
     <jcommander.version>1.82</jcommander.version>
-    <license-maven-plugin.version>4.6</license-maven-plugin.version>
+    <license-maven-plugin.version>5.0.0</license-maven-plugin.version>
     <beam.version>2.56.0</beam.version>
-    <auto-value.version>1.11.0</auto-value.version>
   </properties>
 
   <dependencyManagement>
@@ -189,7 +188,7 @@
     <dependency>
       <groupId>org.projectlombok</groupId>
       <artifactId>lombok</artifactId>
-      <version>1.18.36</version>
+      <version>${lombok.version}</version>
     </dependency>
 
     <dependency>
@@ -230,13 +229,19 @@
     <dependency>
       <groupId>com.fasterxml.jackson.core</groupId>
       <artifactId>jackson-core</artifactId>
-      <version>2.18.3</version>
+      <version>2.21.0</version>
     </dependency>
 
     <dependency>
       <groupId>org.apache.commons</groupId>
       <artifactId>commons-collections4</artifactId>
-      <version>4.4</version>
+      <version>4.5.0</version>
+    </dependency>
+
+    <dependency>
+      <groupId>org.jspecify</groupId>
+      <artifactId>jspecify</artifactId>
+      <version>1.0.0</version>
     </dependency>
   </dependencies>
 
@@ -247,20 +252,20 @@
         <!-- clean lifecycle, see https://maven.apache.org/ref/current/maven-core/lifecycles.html#clean_Lifecycle -->
         <plugin>
           <artifactId>maven-clean-plugin</artifactId>
-          <version>3.4.1</version>
+          <version>3.5.0</version>
         </plugin>
         <!-- default lifecycle, jar packaging: see https://maven.apache.org/ref/current/maven-core/default-bindings.html#Plugin_bindings_for_jar_packaging -->
         <plugin>
           <artifactId>maven-resources-plugin</artifactId>
-          <version>3.3.1</version>
+          <version>3.4.0</version>
         </plugin>
         <plugin>
           <artifactId>maven-compiler-plugin</artifactId>
-          <version>3.14.0</version>
+          <version>3.15.0</version>
         </plugin>
         <plugin>
           <artifactId>maven-surefire-plugin</artifactId>
-          <version>3.5.3</version>
+          <version>3.5.4</version>
         </plugin>
         <!--
            Configures `mvn package` to produce a bundled jar ("fat jar") for runners
@@ -268,11 +273,11 @@
          -->
         <plugin>
           <artifactId>maven-shade-plugin</artifactId>
-          <version>3.6.0</version>
+          <version>3.6.1</version>
         </plugin>
         <plugin>
           <artifactId>maven-jar-plugin</artifactId>
-          <version>3.4.2</version>
+          <version>3.5.0</version>
         </plugin>
         <plugin>
           <artifactId>maven-install-plugin</artifactId>
@@ -352,7 +357,7 @@
         <plugin>
           <groupId>org.codehaus.mojo</groupId>
           <artifactId>exec-maven-plugin</artifactId>
-          <version>3.5.0</version>
+          <version>3.6.3</version>
         </plugin>
       </plugins>
     </pluginManagement>
@@ -368,23 +373,16 @@
         <artifactId>license-maven-plugin</artifactId>
       </plugin>
       <plugin>
-        <groupId>com.diffplug.spotless</groupId>
-        <artifactId>spotless-maven-plugin</artifactId>
-      </plugin>
-      <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-compiler-plugin</artifactId>
         <configuration>
           <source>17</source>
           <target>17</target>
+          <fork>true</fork>
           <!-- To retain parameter names for compiled classes, this is needed for Spring framework
             with versions >= 6.1. See https://github.com/spring-projects/spring-framework/wiki/Upgrading-to-Spring-Framework-6.x#parameter-name-retention
             for the details -->
           <parameters>true</parameters>
-          <compilerArgs>
-            <!-- Enable access to the packages at compile time -->
-            <arg>--add-exports=java.base/jdk.internal.misc=ALL-UNNAMED</arg>
-          </compilerArgs>
         </configuration>
       </plugin>
       <plugin>
@@ -392,9 +390,11 @@
         <artifactId>maven-surefire-plugin</artifactId>
         <configuration>
           <!-- Enable access to the packages at run time -->
-          <argLine>@{argLine} --add-opens=java.base/jdk.internal.misc=ALL-UNNAMED</argLine>
+          <!-- For illegal-access, see: https://github.com/google/error-prone/issues/1157#issuecomment-769289564 -->
+          <argLine>@{argLine} --add-opens=java.base/jdk.internal.misc=ALL-UNNAMED  --illegal-access=permit</argLine>
         </configuration>
       </plugin>
+
     </plugins>
   </build>
 

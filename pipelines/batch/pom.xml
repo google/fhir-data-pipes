@@ -35,14 +35,14 @@
 
   <properties>
     <hamcrest.version>3.0</hamcrest.version>
-    <jackson.version>2.18.3</jackson.version>
+    <jackson.version>2.21.0</jackson.version>
     <pubsub.version>v1-rev20220904-2.0.0</pubsub.version>
     <spark.version>2.4.8</spark.version>
-    <maven-surefire-plugin.version>3.5.3</maven-surefire-plugin.version>
+    <maven-surefire-plugin.version>3.5.4</maven-surefire-plugin.version>
     <nemo.version>0.1</nemo.version>
     <flink.artifact.name>beam-runners-flink-1.14</flink.artifact.name>
-    <mysql.driver.version>8.0.16</mysql.driver.version>
-    <postgresql.version>42.7.5</postgresql.version>
+    <mysql.driver.version>9.6.0</mysql.driver.version>
+    <postgresql.version>42.7.9</postgresql.version>
 
   </properties>
 
@@ -67,14 +67,14 @@
     <dependency>
       <groupId>org.apache.avro</groupId>
       <artifactId>avro</artifactId>
-      <version>1.12.0</version>
+      <version>1.12.1</version>
     </dependency>
 
     <!--JDBC specific dependencies-->
 
     <dependency>
-      <groupId>mysql</groupId>
-      <artifactId>mysql-connector-java</artifactId>
+      <groupId>com.mysql</groupId>
+      <artifactId>mysql-connector-j</artifactId>
       <version>${mysql.driver.version}</version>
       <!-- We need to exclude this to avoid the clash with the same dependency under the artifact
       org.apache.beam:beam-sdks-java-io-google-cloud-platform so that it does not end up in

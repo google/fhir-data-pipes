@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2023 Google LLC
+ * Copyright 2020-2025 Google LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,6 +27,7 @@ import com.google.api.services.healthcare.v1.CloudHealthcare;
 import com.google.api.services.healthcare.v1.CloudHealthcareScopes;
 import com.google.auth.http.HttpCredentialsAdapter;
 import com.google.auth.oauth2.GoogleCredentials;
+import com.google.common.base.Preconditions;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.util.Collection;
@@ -34,6 +35,7 @@ import java.util.Collections;
 import org.apache.http.client.utils.URIBuilder;
 import org.hl7.fhir.r4.model.Bundle;
 import org.hl7.fhir.r4.model.Resource;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -53,13 +55,17 @@ class GcpStoreUtil extends FhirStoreUtil {
 
   private static final Logger log = LoggerFactory.getLogger(GcpStoreUtil.class);
 
-  private GoogleCredentials credential = null;
+  // TODO replace this with local variables returned by `createClient()`; this does not need
+  //  to be an instance variable.
+  @SuppressWarnings("NullAway.Init") // initialized in createClient() with Preconditions check
+  private GoogleCredentials credential;
 
   protected GcpStoreUtil(String sinkUrl, IRestfulClientFactory clientFactory) {
     super(sinkUrl, "", "", clientFactory);
   }
 
   @Override
+  @Nullable
   public MethodOutcome uploadResource(Resource resource) {
     try {
       updateFhirResource(sinkUrl, resource);
@@ -88,9 +94,10 @@ class GcpStoreUtil extends FhirStoreUtil {
     } catch (URISyntaxException e) {
       log.error("URI syntax exception while using Google APIs: {}", e.toString(), e);
     }
-    return null;
+    return Collections.emptyList();
   }
 
+  @Nullable
   protected MethodOutcome updateFhirResource(String fhirStoreName, Resource resource) {
     try {
       // Initialize the client, which will be used to interact with the service.
@@ -118,6 +125,8 @@ class GcpStoreUtil extends FhirStoreUtil {
     credential =
         GoogleCredentials.getApplicationDefault()
             .createScoped(Collections.singleton(CloudHealthcareScopes.CLOUD_PLATFORM));
+
+    Preconditions.checkNotNull(credential);
 
     // Create a HttpRequestInitializer, which will provide a baseline configuration to all requests.
     HttpRequestInitializer requestInitializer =

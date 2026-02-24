@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2023 Google LLC
+ * Copyright 2020-2025 Google LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,11 +15,11 @@
  */
 package com.google.fhir.analytics.metrics;
 
-import javax.annotation.Nullable;
 import org.apache.beam.runners.flink.FlinkRunner;
 import org.apache.flink.api.common.JobExecutionResult;
 import org.apache.flink.core.execution.JobClient;
 import org.apache.flink.core.execution.JobListener;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -37,7 +37,11 @@ public class FlinkJobListener implements JobListener {
     logger.info("Submitting the job with ID {} ", this);
     FlinkPipelineMetrics flinkPipelineMetrics =
         (FlinkPipelineMetrics) PipelineMetricsProvider.getPipelineMetrics(FlinkRunner.class);
-    flinkPipelineMetrics.addJobClient(jobClient);
+    if (flinkPipelineMetrics != null && jobClient != null) {
+      flinkPipelineMetrics.addJobClient(jobClient);
+    } else {
+      logger.warn("FlinkPipelineMetrics instance or jobClient instance is null");
+    }
   }
 
   @Override
@@ -56,6 +60,7 @@ public class FlinkJobListener implements JobListener {
         jobExecutionResult);
     FlinkPipelineMetrics flinkPipelineMetrics =
         (FlinkPipelineMetrics) PipelineMetricsProvider.getPipelineMetrics(FlinkRunner.class);
-    flinkPipelineMetrics.removeJobClient(jobExecutionResult.getJobID().toHexString());
+    if (flinkPipelineMetrics != null)
+      flinkPipelineMetrics.removeJobClient(jobExecutionResult.getJobID().toHexString());
   }
 }

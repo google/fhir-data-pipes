@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2024 Google LLC
+ * Copyright 2020-2025 Google LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,10 +17,10 @@ package com.google.fhir.analytics;
 
 import ca.uhn.fhir.context.FhirContext;
 import ca.uhn.fhir.parser.DataFormatException;
-import com.google.api.client.util.Sets;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import com.google.common.collect.Iterables;
+import com.google.common.collect.Sets;
 import com.google.fhir.analytics.view.ViewManager;
 import java.io.BufferedReader;
 import java.io.File;
@@ -43,7 +43,6 @@ import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
-import javax.annotation.Nullable;
 import lombok.Getter;
 import org.apache.beam.sdk.extensions.gcp.util.gcsfs.GcsPath;
 import org.apache.beam.sdk.io.FileSystems;
@@ -53,12 +52,26 @@ import org.apache.beam.sdk.io.fs.MatchResult.Status;
 import org.apache.beam.sdk.io.fs.ResolveOptions.StandardResolveOptions;
 import org.apache.beam.sdk.io.fs.ResourceId;
 import org.apache.beam.sdk.util.MimeTypes;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
  * The interface for working with the data-warehouse files. This is where all file-structure logic
  * should be implemented. This should support different file-systems, including distributed ones.
+ *
+ * <p>The general structure of DWH files is as follows (note in some distributed file systems there
+ * is no notion of "directory", we just use the term to refer to segments between `/`):
+ *
+ * <ul>
+ *   <li>Let's say the root path is DWH_ROOT
+ *   <li>Parquet files for each FHIR resource type, e.g., Patient, go under DWH_ROOT/Patient.
+ *   <li>For a set of resource Parquet files, we may regenerate views multiple times (e.g., after
+ *       editing ViewDefinition files); each view set goes under a separate "dir" starting with
+ *       VIEWS_, e.g., for a view called `patient_flat` we may have
+ *       DWH_ROOT/VIEWS_TIMESTAMP_1/patient_flat and DWH_ROOT/VIEWS_TIMESTAMP_2/patient_flat.
+ *   <li>For each incremental run, we create a new DWH_ROOT/incremental_run_TIMESTAMP "dir".
+ * </ul>
  */
 public class DwhFiles {
 
@@ -71,7 +84,9 @@ public class DwhFiles {
   public static final String TIMESTAMP_FILE_BULK_TRANSACTION_TIME =
       "timestamp_bulk_transaction_time.txt";
 
-  private static final String INCREMENTAL_DIR = "incremental_run";
+  private static final String VIEW_DIR_PREFIX = "VIEWS";
+
+  private static final String INCREMENTAL_DIR_PREFIX = "incremental_run";
 
   static final String TIMESTAMP_PREFIX = "_TIMESTAMP_";
 
@@ -86,6 +101,8 @@ public class DwhFiles {
   private final String dwhRoot;
 
   private final FhirContext fhirContext;
+
+  private final String viewRoot;
 
   /**
    * In order to interpret the file paths correctly the {@code dwhRoot} has to be represented in one
@@ -111,17 +128,37 @@ public class DwhFiles {
    *   <li>gs://TestBucket/TestRoot/SamplePrefix
    * </ul>
    *
-   * @param dwhRoot
-   * @param fhirContext
+   * @param dwhRoot the root of the DWH
+   * @param viewRoot the root of the view dir under DWH; note this should be an absolute path, but
+   *     it is usually "under" `dwhRoot`.
+   * @param fhirContext the FHIR Context of the FHIR version we are working with.
    */
-  DwhFiles(String dwhRoot, FhirContext fhirContext) {
+  private DwhFiles(String dwhRoot, @Nullable String viewRoot, FhirContext fhirContext) {
     Preconditions.checkArgument(!Strings.isNullOrEmpty(dwhRoot));
     this.dwhRoot = dwhRoot;
     this.fhirContext = fhirContext;
+    if (Strings.isNullOrEmpty(viewRoot)) {
+      // If viewRoot is not provided, we create a new one; with this we make sure that a sane
+      // value is set for this.viewRoot; this makes the logic of this class simpler.
+      this.viewRoot = newTimestampedPath(dwhRoot, VIEW_DIR_PREFIX).toString();
+    } else {
+      this.viewRoot = viewRoot;
+    }
   }
 
   static DwhFiles forRoot(String dwhRoot, FhirContext fhirContext) {
-    return new DwhFiles(dwhRoot, fhirContext);
+    return forRoot(dwhRoot, null, fhirContext);
+  }
+
+  static DwhFiles forRoot(String dwhRoot, @Nullable String viewRoot, FhirContext fhirContext) {
+    return new DwhFiles(dwhRoot, viewRoot, fhirContext);
+  }
+
+  static DwhFiles forRootWithLatestViewPath(String dwhRoot, FhirContext fhirContext)
+      throws IOException {
+    ResourceId latestViewPath = DwhFiles.getLatestViewsPath(dwhRoot);
+    String lastViewPath = latestViewPath == null ? null : latestViewPath.toString();
+    return new DwhFiles(dwhRoot, lastViewPath, fhirContext);
   }
 
   public static String safeTimestampSuffix() {
@@ -130,6 +167,10 @@ public class DwhFiles {
 
   public String getRoot() {
     return dwhRoot;
+  }
+
+  public String getViewRoot() {
+    return viewRoot;
   }
 
   /**
@@ -144,28 +185,69 @@ public class DwhFiles {
   }
 
   /**
-   * @param resourceType the type of the FHIR resources
-   * @return The file pattern for Parquet files of `resourceType` in this DWH.
+   * Similar to `getResourcePath` but returns the path for the given view. It is important to use
+   * this version for views because there might be multiple view "dirs" under the same DWH root.
+   *
+   * @param viewName the name of the view
+   * @return the path to the view dir
    */
-  public String getFilePattern(String resourceType) {
+  public ResourceId getViewPath(String viewName) {
+    // Note we cannot assume any view "dir" or even the DWH root already exists; also note the
+    // concept of "directory" is not well-defined on some cloud file-systems.
+    return FileSystems.matchNewResource(viewRoot, true)
+        .resolve(viewName, StandardResolveOptions.RESOLVE_DIRECTORY);
+  }
+
+  /**
+   * Returns the file-pattern for all Parquet files of a specific resource type.
+   *
+   * @param resourceType the type of the FHIR resources {@return The file pattern for Parquet files
+   *     of `resourceType` in this DWH.}
+   */
+  public String getResourceFilePattern(String resourceType) {
     return String.format(
         "%s*%s", getResourcePath(resourceType).toString(), ParquetUtil.PARQUET_EXTENSION);
+  }
+
+  /**
+   * Similar to getResourceFilePattern but for views.
+   *
+   * @param viewName the name of the view (should match that in the ViewDefinition)
+   * @return The file pattern for Parquet files of `viewName` in this DWH.
+   */
+  public String getViewFilePattern(String viewName) {
+    return String.format("%s*%s", getViewPath(viewName).toString(), ParquetUtil.PARQUET_EXTENSION);
   }
 
   // TODO: Move this to a util class and make it non-static.
   /**
    * Returns all the child directories under the given base directory which are 1-level deep. Note
    * in many cloud/distributed file-systems, we do not have "directories"; there are only buckets
-   * and files in those buckets. We use file-seprators (e.g., `/`) to simulate the concept of
+   * and files in those buckets. We use file-separators (e.g., `/`) to simulate the concept of
    * directories. So for example, this method returns an empty set if `baseDir` is `bucket/test` and
    * the only file in that bucket is `bucket/test/dir1/dir2/file.txt`. If `baseDir` is
    * `bucket/test/dir1`, in the above example, `dir2` is returned.
    *
    * @param baseDir the path under which "directories" are looked for.
    * @return The list of all child directories under the base directory
-   * @throws IOException
+   * @throws IOException if there is an error accessing the base directory
    */
   static Set<ResourceId> getAllChildDirectories(String baseDir) throws IOException {
+    return getAllChildDirectories(baseDir, "");
+  }
+
+  /**
+   * Similar to the version with no `commonPrefix` with the difference that returns only directory
+   * names that start with {baseDir}/{commonPrefix}*. This is more efficient and should be preferred
+   * when there is a known common-prefix we are looking for.
+   *
+   * @param baseDir the baseDir of the DWH
+   * @param commonPrefix the prefix of directories under `baseDir` that we are looking for
+   * @return the set of found directory names.
+   * @throws IOException if there is an error accessing the base directory
+   */
+  static Set<ResourceId> getAllChildDirectories(String baseDir, String commonPrefix)
+      throws IOException {
     String fileSeparator = getFileSeparatorForDwhFiles(baseDir);
     // Avoid using ResourceId.resolve(..) method to resolve the files when the path contains glob
     // expressions with multiple special characters like **, */* etc as this api only supports
@@ -174,10 +256,11 @@ public class DwhFiles {
     List<MatchResult> matchResultList =
         FileSystems.match(
             List.of(
-                getPathEndingWithFileSeparator(baseDir, fileSeparator)
-                    + "*"
-                    + fileSeparator
-                    + "*"));
+                String.format(
+                    "%s%s*%s*",
+                    getPathEndingWithFileSeparator(baseDir, fileSeparator),
+                    commonPrefix,
+                    fileSeparator)));
     Set<ResourceId> childDirectories = new HashSet<>();
     for (MatchResult matchResult : matchResultList) {
       if (matchResult.status() == Status.OK && !matchResult.metadata().isEmpty()) {
@@ -195,20 +278,37 @@ public class DwhFiles {
   }
 
   /**
-   * Also see {@link #newIncrementalRunPath()}
+   * This function and {@link #newTimestampedPath(String, String)} complement each other.
    *
-   * @return the current incremental run path if one found; null otherwise.
+   * @param commonPrefix the common prefix for the timestamped directories to search.
+   * @return the latest directory with the `commonPrefix`.
+   * @throws IOException if there is an error accessing the dwhRoot directory
    */
   @Nullable
-  public ResourceId getLatestIncrementalRunPath() throws IOException {
-    List<ResourceId> dirs =
-        getAllChildDirectories(getRoot()).stream()
-            .filter(dir -> dir.getFilename().contains(INCREMENTAL_DIR + TIMESTAMP_PREFIX))
-            .collect(Collectors.toList());
+  private static ResourceId getLatestPath(String dwhRoot, String commonPrefix) throws IOException {
+    List<ResourceId> dirs = new ArrayList<>();
+    dirs.addAll(getAllChildDirectories(dwhRoot, commonPrefix));
     if (dirs.isEmpty()) return null;
 
     Collections.sort(dirs, Comparator.comparing(ResourceId::toString));
     return dirs.get(dirs.size() - 1);
+  }
+
+  private static ResourceId newTimestampedPath(String dwhRoot, String commonPrefix) {
+    return FileSystems.matchNewResource(dwhRoot, true)
+        .resolve(
+            String.format("%s%s%s", commonPrefix, TIMESTAMP_PREFIX, safeTimestampSuffix()),
+            StandardResolveOptions.RESOLVE_DIRECTORY);
+  }
+
+  /**
+   * Gets the latest incremental-run path under the given DWH root.
+   *
+   * @return the current incremental run path if one found; null otherwise.
+   */
+  @Nullable
+  public static ResourceId getLatestIncrementalRunPath(String dwhRoot) throws IOException {
+    return getLatestPath(dwhRoot, INCREMENTAL_DIR_PREFIX);
   }
 
   /**
@@ -218,10 +318,29 @@ public class DwhFiles {
    * @return a new incremental run path based on the current timestamp.
    */
   public ResourceId newIncrementalRunPath() {
-    return FileSystems.matchNewResource(getRoot(), true)
-        .resolve(
-            String.format("%s%s%s", INCREMENTAL_DIR, TIMESTAMP_PREFIX, safeTimestampSuffix()),
-            StandardResolveOptions.RESOLVE_DIRECTORY);
+    return newTimestampedPath(getRoot(), INCREMENTAL_DIR_PREFIX);
+  }
+
+  /**
+   * Similar to {@link #getLatestIncrementalRunPath(String)} but for views sub-dir.
+   *
+   * @return the current views path if one found; null otherwise.
+   */
+  @Nullable
+  public static ResourceId getLatestViewsPath(String dwhRoot) throws IOException {
+    return getLatestPath(dwhRoot, VIEW_DIR_PREFIX);
+  }
+
+  /**
+   * This returns a new views sud-dir path based on the current timestamp. Note that views are
+   * generated from main FHIR resources, hence we put this view directory under the DWH root; there
+   * might be multiple views sets under the same DWH root (e.g., when we regenerate).
+   *
+   * @param dwhRoot the given root of DWH.
+   * @return the path to the view sub-dir under `dwhRoot` to be used for a new run.
+   */
+  public static ResourceId newViewsPath(String dwhRoot) {
+    return newTimestampedPath(dwhRoot, VIEW_DIR_PREFIX);
   }
 
   public Set<String> findNonEmptyResourceDirs() throws IOException {
@@ -233,8 +352,7 @@ public class DwhFiles {
   }
 
   /**
-   * This method returns the list of non-empty directories which contains at least one file under
-   * it.
+   * Returns the list of non-empty directories which contains at least one file under it.
    *
    * @param viewManager Used to verify if non-empty directory is a valid View Definition. If null,
    *     the views returned will be valid FHIR Resource Types. Otherwise, the views will be valid
@@ -247,11 +365,12 @@ public class DwhFiles {
     //  response. This issue https://github.com/google/fhir-data-pipes/issues/288 helps in
     //  maintaining the number of file to an optimum value.
     String fileType = viewManager == null ? "Resource types" : "Views";
-    String fileSeparator = getFileSeparatorForDwhFiles(dwhRoot);
+    String searchRoot = viewManager == null ? dwhRoot : viewRoot;
+    String fileSeparator = getFileSeparatorForDwhFiles(searchRoot);
     List<MatchResult> matchedChildResultList =
         FileSystems.match(
             List.of(
-                getPathEndingWithFileSeparator(dwhRoot, fileSeparator)
+                getPathEndingWithFileSeparator(searchRoot, fileSeparator)
                     + "*"
                     + fileSeparator
                     + "*"));
@@ -262,8 +381,8 @@ public class DwhFiles {
           fileSet.add(metadata.resourceId().getCurrentDirectory().getFilename());
         }
       } else if (matchResult.status() == Status.ERROR) {
-        log.error("Error matching {} under {} ", fileType, dwhRoot);
-        throw new IOException(String.format("Error matching %s under %s", fileType, dwhRoot));
+        log.error("Error matching {} under {} ", fileType, searchRoot);
+        throw new IOException(String.format("Error matching %s under %s", fileType, searchRoot));
       }
     }
 
@@ -282,7 +401,7 @@ public class DwhFiles {
         }
       }
     }
-    log.info("{} under {} are {}", fileType, dwhRoot, typeSet);
+    log.info("{} under {} are {}", fileType, searchRoot, typeSet);
     return typeSet;
   }
 
@@ -290,16 +409,18 @@ public class DwhFiles {
    * This method copies all the files under the directory (getRoot() + resourceType) into the
    * destination DwhFiles under the similar directory.
    *
-   * @param resourceType The resource or view directory to be copied
-   * @param destDwh The output Dwh to copy files to
+   * @param srcDwh the source DWH to copy files from
+   * @param dirName the resource or view "directory" (under `srcDwh`) to be copied
+   * @param destDwh the output DWH to copy files to
    */
-  public void copyResourcesToDwh(String resourceType, DwhFiles destDwh) throws IOException {
-    String fileSeparator = getFileSeparatorForDwhFiles(dwhRoot);
+  public static void copyDirToDwh(String srcDwh, String dirName, String destDwh)
+      throws IOException {
+    String fileSeparator = getFileSeparatorForDwhFiles(srcDwh);
     List<MatchResult> sourceMatchResultList =
         FileSystems.match(
             List.of(
-                getPathEndingWithFileSeparator(dwhRoot, fileSeparator)
-                    + resourceType
+                getPathEndingWithFileSeparator(srcDwh, fileSeparator)
+                    + dirName
                     + fileSeparator
                     + "*"));
     List<ResourceId> sourceResourceIdList = new ArrayList<>();
@@ -318,25 +439,27 @@ public class DwhFiles {
     }
 
     List<ResourceId> destResourceIdList = new ArrayList<>();
-    sourceResourceIdList.stream()
-        .forEach(
-            resourceId -> {
-              ResourceId destResourceId =
-                  FileSystems.matchNewResource(destDwh.getRoot(), true)
-                      .resolve(resourceType, StandardResolveOptions.RESOLVE_DIRECTORY)
-                      .resolve(resourceId.getFilename(), StandardResolveOptions.RESOLVE_FILE);
-              destResourceIdList.add(destResourceId);
-            });
+    sourceResourceIdList.forEach(
+        resourceId -> {
+          if (resourceId.getFilename() != null) {
+            ResourceId destResourceId =
+                FileSystems.matchNewResource(destDwh, true)
+                    .resolve(dirName, StandardResolveOptions.RESOLVE_DIRECTORY)
+                    .resolve(resourceId.getFilename(), StandardResolveOptions.RESOLVE_FILE);
+            destResourceIdList.add(destResourceId);
+          }
+        });
     FileSystems.copy(sourceResourceIdList, destResourceIdList);
   }
 
-  public void writeTimestampFile(String fileName) throws IOException {
-    writeTimestampFile(Instant.now(), fileName);
+  public static void writeTimestampFile(String dwhRoot, String fileName) throws IOException {
+    writeTimestampFile(dwhRoot, Instant.now(), fileName);
   }
 
-  public void writeTimestampFile(Instant instant, String fileName) throws IOException {
+  public static void writeTimestampFile(String dwhRoot, Instant instant, String fileName)
+      throws IOException {
     ResourceId resourceId =
-        FileSystems.matchNewResource(getRoot(), true)
+        FileSystems.matchNewResource(dwhRoot, true)
             .resolve(fileName, StandardResolveOptions.RESOLVE_FILE);
     List<MatchResult> matches = FileSystems.matchResources(Collections.singletonList(resourceId));
     MatchResult matchResult = Iterables.getOnlyElement(matches);
@@ -345,7 +468,7 @@ public class DwhFiles {
       String errorMessage =
           String.format(
               "Attempting to write to the timestamp file %s which already exists",
-              getRoot() + "/" + fileName);
+              dwhRoot + "/" + fileName);
       log.error(errorMessage);
       throw new FileAlreadyExistsException(errorMessage);
     } else if (matchResult.status() == Status.NOT_FOUND) {
@@ -357,15 +480,19 @@ public class DwhFiles {
       String errorMessage =
           String.format(
               "Error matching file spec %s: status %s",
-              getRoot() + "/" + fileName, matchResult.status());
+              dwhRoot + "/" + fileName, matchResult.status());
       log.error(errorMessage);
       throw new IOException(errorMessage);
     }
   }
 
   public Instant readTimestampFile(String fileName) throws IOException {
+    return readTimestampFile(getRoot(), fileName);
+  }
+
+  public static Instant readTimestampFile(String dwhRoot, String fileName) throws IOException {
     ResourceId resourceId =
-        FileSystems.matchNewResource(getRoot(), true)
+        FileSystems.matchNewResource(dwhRoot, true)
             .resolve(fileName, StandardResolveOptions.RESOLVE_FILE);
     List<String> result = new ArrayList<>();
     ReadableByteChannel channel = FileSystems.open(resourceId);
@@ -379,7 +506,7 @@ public class DwhFiles {
     }
     if (result.isEmpty()) {
       String errorMessage =
-          String.format("The timestamp file %s is empty", getRoot() + "/" + fileName);
+          String.format("The timestamp file %s is empty", dwhRoot + "/" + fileName);
       log.error(errorMessage);
       throw new IllegalStateException(errorMessage);
     }
@@ -387,9 +514,9 @@ public class DwhFiles {
   }
 
   /** Checks if the given file exists in the data-warehouse at the root location */
-  public boolean doesTimestampFileExist(String fileName) throws IOException {
+  public static boolean doesTimestampFileExist(String dwhRoot, String fileName) throws IOException {
     ResourceId resourceId =
-        FileSystems.matchNewResource(getRoot(), true)
+        FileSystems.matchNewResource(dwhRoot, true)
             .resolve(fileName, StandardResolveOptions.RESOLVE_FILE);
     List<MatchResult> matchResultList =
         FileSystems.matchResources(Collections.singletonList(resourceId));
@@ -406,9 +533,10 @@ public class DwhFiles {
     }
   }
 
-  public void overwriteFile(String fileName, byte[] content) throws IOException {
+  public static void overwriteFile(String dwhRoot, String fileName, byte[] content)
+      throws IOException {
     ResourceId resourceId =
-        FileSystems.matchNewResource(getRoot(), true)
+        FileSystems.matchNewResource(dwhRoot, true)
             .resolve(fileName, StandardResolveOptions.RESOLVE_FILE);
 
     List<MatchResult> matches = FileSystems.matchResources(Collections.singletonList(resourceId));
@@ -416,7 +544,7 @@ public class DwhFiles {
 
     if (matchResult.status() == Status.OK) {
       String warnMessage =
-          String.format("Overwriting the existing file %s", getRoot() + "/" + fileName);
+          String.format("Overwriting the existing file %s", dwhRoot + "/" + fileName);
       log.warn(warnMessage);
       FileSystems.delete(List.of(resourceId));
     }
@@ -429,7 +557,7 @@ public class DwhFiles {
       String errorMessage =
           String.format(
               "Error matching file spec %s: status %s",
-              getRoot() + "/" + fileName, matchResult.status());
+              dwhRoot + "/" + fileName, matchResult.status());
       log.error(errorMessage);
       throw new IOException(errorMessage);
     }
@@ -443,21 +571,19 @@ public class DwhFiles {
    */
   public static String getFileSeparatorForDwhFiles(String dwhRootPrefix) {
     CloudPath cloudPath = parsePath(dwhRootPrefix);
-    switch (cloudPath.getScheme()) {
-      case LOCAL_SCHEME:
-        return File.separator;
-      case GCS_SCHEME:
-      case S3_SCHEME:
-        return "/";
-      default:
+    return switch (cloudPath.getScheme()) {
+      case LOCAL_SCHEME -> File.separator;
+      case GCS_SCHEME, S3_SCHEME -> "/";
+      default -> {
         String errorMessage =
             String.format("File system scheme=%s is not yet supported", cloudPath.getScheme());
         log.error(errorMessage);
         throw new IllegalArgumentException(errorMessage);
-    }
+      }
+    };
   }
 
-  /** This method returns the {@code path} by appending the {@code fileseparator} if required. */
+  /** This method returns the {@code path} by appending the {@code fileSeparator} if required. */
   public static String getPathEndingWithFileSeparator(String path, String fileSeparator) {
     Preconditions.checkNotNull(path);
     Preconditions.checkNotNull(fileSeparator);

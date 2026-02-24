@@ -54,7 +54,7 @@ For the server to route to :
 `Host: 172.17.0.1` (Docker Bridge Ip address), `Port: 8098` (Port for the Hapi fhir server) .
 ```
 
-see section *Using Docker compose* to fire up the Hapi fhir server and openmrs.
+see section _Using Docker compose_ to fire up the Hapi fhir server and openmrs.
 \
 Note that Openhim listens to client requests at `port:5001` by default.
 
@@ -76,20 +76,6 @@ mvn compile exec:java -pl batch \
     --fhirSinkPath=http://localhost:5001/fhir \
     --sinkUserName=hapi --sinkPassword=Admin123 \
     --fhirServerUserName=admin --fhirServerPassword=Admin123 "
-```
-
-for streaming
-
-```
-mvn compile exec:java -pl streaming-binlog \
-  -Dexec.args="--databaseHostName=localhost \
-  --databasePort=3306 --databaseUser=root --databasePassword=debezium\
-  --databaseServerName=mysql --databaseSchema=openmrs --databaseServerId=77 \
-  --fhirServerUserName=admin --fhirServerPassword=Admin123 \
-  --fhirServerUrl=http://localhost:8099/openmrs/ws/fhir2/R4 \
-  --fhirSinkPath=http://localhost:5001/fhir \
-  --sinkUserName=hapi --sinkPassword=Admin123 \
-  --outputParquetPath=/tmp/"
 ```
 
 You can track all the transactions in the OpenHIM instance Under the Tab

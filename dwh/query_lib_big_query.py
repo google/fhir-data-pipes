@@ -15,10 +15,9 @@
 """Module that implements Query Engine for BigQuery."""
 import typing as tp
 
+import base
 import pandas as pd
 from google.cloud import bigquery
-
-import base
 
 _DATE_VALUE_SEPARATOR = ","
 
@@ -77,15 +76,11 @@ class BigQueryPatientQuery(base.PatientQuery):
         {sample_count}
     """
 
-        where_clause = self._construct_encounter_constraint(
-            self._enc_constraint
-        )
+        where_clause = self._construct_encounter_constraint(self._enc_constraint)
         sql = sql_template.format(
             data_set=bq_dataset,
             where=where_clause,
-            sample_count=""
-            if sample_count is None
-            else "LIMIT " + str(sample_count),
+            sample_count="" if sample_count is None else "LIMIT " + str(sample_count),
         )
         return sql
 
@@ -177,9 +172,7 @@ class BigQueryPatientQuery(base.PatientQuery):
             code_coding_system=code_coding_system_str,
             value_codeable_coding_system=value_codeable_coding_system_str,
             all_obs_constraints=all_obs_constraints,
-            sample_count=""
-            if sample_count is None
-            else " LIMIT " + str(sample_count),
+            sample_count="" if sample_count is None else " LIMIT " + str(sample_count),
             encounter_where_clause=self._construct_encounter_constraint(
                 self._enc_constraint
             ),
@@ -248,9 +241,7 @@ class BigQueryPatientQuery(base.PatientQuery):
                 patient_obs_enc[dest_col] = patient_obs_enc[source_col].apply(
                     lambda x: None if x is None else x.split(",")[1]
                 )
-            patient_obs_enc.drop(
-                columns=[col[1] for col in col_map], inplace=True
-            )
+            patient_obs_enc.drop(columns=[col[1] for col in col_map], inplace=True)
             return patient_obs_enc
 
     @staticmethod
@@ -270,18 +261,14 @@ class BigQueryPatientQuery(base.PatientQuery):
             )
         clause_type_system = None
         if enc_constraint.type_system:
-            clause_type_system = "C.system = '{}'".format(
-                enc_constraint.type_system
-            )
+            clause_type_system = "C.system = '{}'".format(enc_constraint.type_system)
         clause_type_codes = None
         if enc_constraint.type_code:
             clause_type_codes = "C.code in ({})".format(
                 _build_in_list_with_quotes(enc_constraint.type_code)
             )
         where_clause = " and ".join(
-            x
-            for x in [clause_location_id, clause_type_system, clause_type_codes]
-            if x
+            x for x in [clause_location_id, clause_type_system, clause_type_codes] if x
         )
         if where_clause:
             return " where {} ".format(where_clause)
@@ -304,29 +291,21 @@ class BigQueryPatientQuery(base.PatientQuery):
     def _construct_obs_constraint(self, obs_constraint: base.ObsConstraints):
         """Build obs criteria."""
         conditions = [
-            self._time_constraint(
-                obs_constraint.min_time, obs_constraint.max_time
-            )
+            self._time_constraint(obs_constraint.min_time, obs_constraint.max_time)
         ]
         conditions.append(' OC.code = "{}" '.format(obs_constraint.code))
         # We don't need to filter coding.system as it is already done in
         # flattening.
         if obs_constraint.values:
-            codes_str = ",".join(
-                ['"{}"'.format(v) for v in obs_constraint.values]
-            )
+            codes_str = ",".join(['"{}"'.format(v) for v in obs_constraint.values])
             conditions.append("OVC.code IN ({})".format(codes_str))
         elif obs_constraint.min_value or obs_constraint.max_value:
             if obs_constraint.min_value:
                 conditions.append(
-                    " O.value.quantity.value >= {} ".format(
-                        obs_constraint.min_value
-                    )
+                    " O.value.quantity.value >= {} ".format(obs_constraint.min_value)
                 )
             if obs_constraint.max_value:
                 conditions.append(
-                    " O.value.quantity.value <= {} ".format(
-                        obs_constraint.max_value
-                    )
+                    " O.value.quantity.value <= {} ".format(obs_constraint.max_value)
                 )
         return "({})".format(" AND ".join(conditions))

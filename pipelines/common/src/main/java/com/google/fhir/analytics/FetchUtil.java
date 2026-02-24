@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2024 Google LLC
+ * Copyright 2020-2025 Google LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,8 @@ import ca.uhn.fhir.context.FhirContext;
 import ca.uhn.fhir.rest.api.EncodingEnum;
 import ca.uhn.fhir.rest.api.MethodOutcome;
 import ca.uhn.fhir.rest.api.RequestTypeEnum;
+import ca.uhn.fhir.rest.api.SearchTotalModeEnum;
+import ca.uhn.fhir.rest.api.SummaryEnum;
 import ca.uhn.fhir.rest.client.api.IClientInterceptor;
 import ca.uhn.fhir.rest.client.api.IGenericClient;
 import ca.uhn.fhir.rest.client.api.IHttpClient;
@@ -30,6 +32,7 @@ import ca.uhn.fhir.rest.client.interceptor.BearerTokenAuthInterceptor;
 import ca.uhn.fhir.rest.client.interceptor.LoggingInterceptor;
 import ca.uhn.fhir.rest.gclient.IOperationUntyped;
 import ca.uhn.fhir.rest.gclient.IOperationUntypedWithInput;
+import ca.uhn.fhir.rest.gclient.IQuery;
 import com.google.api.client.auth.oauth2.ClientCredentialsTokenRequest;
 import com.google.api.client.auth.oauth2.TokenResponse;
 import com.google.api.client.http.BasicAuthentication;
@@ -37,6 +40,7 @@ import com.google.api.client.http.GenericUrl;
 import com.google.api.client.http.javanet.NetHttpTransport;
 import com.google.api.client.json.gson.GsonFactory;
 import com.google.common.base.Preconditions;
+import com.google.common.base.Splitter;
 import com.google.common.base.Strings;
 import java.io.IOException;
 import java.time.Instant;
@@ -44,7 +48,11 @@ import java.util.List;
 import java.util.Map;
 import org.hl7.fhir.instance.model.api.IBaseParameters;
 import org.hl7.fhir.instance.model.api.IBaseResource;
+import org.hl7.fhir.r4.model.Bundle;
+import org.hl7.fhir.r4.model.CapabilityStatement;
+import org.hl7.fhir.r4.model.Patient;
 import org.hl7.fhir.r4.model.Resource;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -57,17 +65,17 @@ public class FetchUtil {
 
   private final String sourceUser;
 
-  private final String sourcePw;
-
   private final String oAuthTokenEndpoint;
 
   private final String oAuthClientId;
 
   private final String oAuthClientSecret;
 
+  private final boolean checkPatientEndpoint;
+
   private final FhirContext fhirContext;
 
-  private final IClientInterceptor authInterceptor;
+  @Nullable private final IClientInterceptor authInterceptor;
 
   FetchUtil(
       String sourceFhirUrl,
@@ -76,13 +84,14 @@ public class FetchUtil {
       String oAuthTokenEndpoint,
       String oAuthClientId,
       String oAuthClientSecret,
+      boolean checkPatientEndpoint,
       FhirContext fhirContext) {
     this.fhirUrl = sourceFhirUrl;
     this.sourceUser = Strings.nullToEmpty(sourceUser);
-    this.sourcePw = Strings.nullToEmpty(sourcePw);
     this.oAuthTokenEndpoint = Strings.nullToEmpty(oAuthTokenEndpoint);
     this.oAuthClientId = Strings.nullToEmpty(oAuthClientId);
     this.oAuthClientSecret = Strings.nullToEmpty(oAuthClientSecret);
+    this.checkPatientEndpoint = checkPatientEndpoint;
     this.fhirContext = fhirContext;
     Preconditions.checkState(
         this.oAuthTokenEndpoint.isEmpty()
@@ -95,12 +104,15 @@ public class FetchUtil {
           new ClientCredentialsAuthInterceptor(
               oAuthTokenEndpoint, oAuthClientId, oAuthClientSecret);
     } else if (!this.sourceUser.isEmpty()) {
+      log.info("Using Basic authentication for user ", this.sourceUser);
       authInterceptor = new BasicAuthInterceptor(this.sourceUser, sourcePw);
     } else {
+      log.info("No FHIR-server authentication is configured.");
       authInterceptor = null;
     }
   }
 
+  @Nullable
   public Resource fetchFhirResource(String resourceType, String resourceId) {
     try {
       // Create client
@@ -116,11 +128,12 @@ public class FetchUtil {
     }
   }
 
+  @Nullable
   public Resource fetchFhirResource(String resourceUrl) {
     // Parse resourceUrl
-    String[] sepUrl = resourceUrl.split("/");
-    String resourceId = sepUrl[sepUrl.length - 1];
-    String resourceType = sepUrl[sepUrl.length - 2];
+    List<String> sepUrl = Splitter.on('/').splitToList(resourceUrl);
+    String resourceId = sepUrl.get(sepUrl.size() - 1);
+    String resourceType = sepUrl.get(sepUrl.size() - 2);
     return fetchFhirResource(resourceType, resourceId);
   }
 
@@ -177,22 +190,15 @@ public class FetchUtil {
   }
 
   private Class<? extends IBaseParameters> getParameterType() {
-    switch (fhirContext.getVersion().getVersion()) {
-      case DSTU2:
-      case DSTU2_HL7ORG:
-        return org.hl7.fhir.dstu2.model.Parameters.class;
-      case DSTU3:
-        return org.hl7.fhir.dstu3.model.Parameters.class;
-      case R4:
-        return org.hl7.fhir.r4.model.Parameters.class;
-      case R4B:
-        return org.hl7.fhir.r4b.model.Parameters.class;
-      case R5:
-        return org.hl7.fhir.r5.model.Parameters.class;
-      default:
-        throw new IllegalStateException(
-            "Unexpected value: " + fhirContext.getVersion().getVersion());
-    }
+    return switch (fhirContext.getVersion().getVersion()) {
+      case DSTU2, DSTU2_HL7ORG -> org.hl7.fhir.dstu2.model.Parameters.class;
+      case DSTU3 -> org.hl7.fhir.dstu3.model.Parameters.class;
+      case R4 -> org.hl7.fhir.r4.model.Parameters.class;
+      case R4B -> org.hl7.fhir.r4b.model.Parameters.class;
+      case R5 -> org.hl7.fhir.r5.model.Parameters.class;
+      default -> throw new IllegalStateException(
+          "Unexpected value: " + fhirContext.getVersion().getVersion());
+    };
   }
 
   public IGenericClient getSourceClient() {
@@ -243,6 +249,31 @@ public class FetchUtil {
   }
 
   /**
+   * Validates if a connection can be established to the FHIR server by executing a search query.
+   */
+  public void testFhirConnection() {
+    log.info("Validating FHIR connection");
+    IGenericClient client = getSourceClient();
+    // The query is executed and checked for any errors during the connection, the result is ignored
+    // TODO: A similar metadata check is done internally in the client code; we should avoid one.
+    client.capabilities().ofType(CapabilityStatement.class).execute();
+    if (checkPatientEndpoint) {
+      // CapabilityStatement (/metadata) does not test the auth config, hence this check.
+      log.info("Validating /Patient endpoint.");
+      IQuery<Bundle> query =
+          client
+              .search()
+              .forResource(Patient.class)
+              .summaryMode(SummaryEnum.COUNT)
+              .totalMode(SearchTotalModeEnum.ACCURATE)
+              .returnBundle(Bundle.class);
+      // The query is executed to check for any errors during the connection, the result is ignored.
+      query.execute();
+    }
+    log.info("Validating FHIR connection successful");
+  }
+
+  /**
    * A simple class for fetching OAuth tokens through the client_credential grant flow and injecting
    * them to FHIR API calls. Instances of this class are thread-safe and should be shared between
    * threads for better performance and to reduce the load on the token endpoint.
@@ -254,8 +285,8 @@ public class FetchUtil {
     private final String tokenEndpoint;
     private final String clientId;
     private final String clientSecret;
-    private TokenResponse tokenResponse;
-    private Instant nextRefresh;
+    @Nullable private TokenResponse tokenResponse;
+    @Nullable private Instant nextRefresh;
 
     ClientCredentialsAuthInterceptor(String tokenEndpoint, String clientId, String clientSecret) {
       Preconditions.checkNotNull(tokenEndpoint);
@@ -268,7 +299,7 @@ public class FetchUtil {
 
     @Override
     public synchronized String getToken() {
-      if (nextRefresh == null || Instant.now().isAfter(nextRefresh)) {
+      if (tokenResponse == null || nextRefresh == null || Instant.now().isAfter(nextRefresh)) {
         try {
           log.debug("Fetching a new OAuth token; old refresh: {}", nextRefresh);
           tokenResponse = requestAccessToken();
@@ -290,7 +321,7 @@ public class FetchUtil {
       theRequest.addHeader("Authorization", "Bearer " + getToken());
     }
 
-    TokenResponse requestAccessToken() throws IOException {
+    private TokenResponse requestAccessToken() throws IOException {
       TokenResponse response =
           new ClientCredentialsTokenRequest(
                   new NetHttpTransport(), new GsonFactory(), new GenericUrl(tokenEndpoint))
