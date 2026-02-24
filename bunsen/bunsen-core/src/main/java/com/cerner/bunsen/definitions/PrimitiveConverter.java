@@ -7,6 +7,7 @@ import com.google.common.base.Preconditions;
 import java.util.Objects;
 import org.hl7.fhir.instance.model.api.IBase;
 import org.hl7.fhir.instance.model.api.IPrimitiveType;
+import org.jspecify.annotations.Nullable;
 
 public abstract class PrimitiveConverter<T> extends HapiConverter<T> {
 
@@ -57,10 +58,12 @@ public abstract class PrimitiveConverter<T> extends HapiConverter<T> {
     primitive.setValue(input);
   }
 
+  @Nullable
   protected Object fromHapi(IPrimitiveType primitive) {
     return primitive.getValue();
   }
 
+  @Nullable
   @Override
   public Object fromHapi(Object input) {
     // TODO: remove this hack! It is added to address this bug:

@@ -85,16 +85,24 @@ Then you can execute the following command from the project's root directory:
 
 ## Formatting and Linting
 
-This project uses `black` for code formatting, and `PyLint` for linting. To run
-these commands, you need to have installed the requirements in the repo's root
-declared in the `requirements-dev.txt` file _(i.e. navigating to the root and
-using `pip install -r requirements-dev.txt` in the root folder's `venv`)_.
+This project uses `black` for code formatting, `Pylint` for linting, and
+`Pyright` for static type checking. To run these commands, you need to have
+installed the requirements in the repo's root declared in the
+`requirements-dev.txt` file _(i.e. navigating to the root and using
+`pip install -r requirements-dev.txt` in the root folder's `venv`)_.
 
-Ensure you have activated your venv. You can then run the formatter and linter
-by changing directory to the `controller-cli` folder and running:
+Ensure you have activated your venv. You can then run the tools by running:
+
+The formatter:
 
 ```sh
-   black .
+   black pipelines/controller-cli
+```
+
+The type checker:
+
+```sh
+   pyright pipelines/controller-cli
 ```
 
 You can run the linter with:

@@ -4,6 +4,7 @@ import ca.uhn.fhir.context.BaseRuntimeChildDefinition;
 import ca.uhn.fhir.context.BaseRuntimeElementDefinition;
 import com.cerner.bunsen.exception.ProfileException;
 import org.hl7.fhir.instance.model.api.IBase;
+import org.jspecify.annotations.Nullable;
 
 /**
  * Base class for converting HAPI resources to an alternative object model, such as Spark rows or
@@ -39,7 +40,7 @@ public abstract class HapiConverter<T> {
      * @param input the object to convert
      * @return the HAPI equivalent.
      */
-    IBase toHapi(Object input);
+    @Nullable IBase toHapi(Object input);
   }
 
   /**
@@ -56,6 +57,7 @@ public abstract class HapiConverter<T> {
    * @param input a HAPI object.
    * @return the data model-specific equivalent.
    */
+  @Nullable
   public abstract Object fromHapi(Object input);
 
   /**
@@ -70,6 +72,7 @@ public abstract class HapiConverter<T> {
    *
    * @return extension URL if the field is an extension, null otherwise.
    */
+  @Nullable
   public String extensionUrl() {
     return null;
   }
@@ -80,6 +83,7 @@ public abstract class HapiConverter<T> {
    *
    * @return FHIR type of the element to be converted.
    */
+  @Nullable
   public String getElementType() {
     return null;
   }
