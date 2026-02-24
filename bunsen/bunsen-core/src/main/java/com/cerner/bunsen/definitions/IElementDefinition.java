@@ -1,7 +1,7 @@
 package com.cerner.bunsen.definitions;
 
 import java.util.List;
-import javax.annotation.Nullable;
+import org.jspecify.annotations.Nullable;
 
 /**
  * This is the minimal interface that is needed from ElementDefinition for doing the type structure
@@ -36,8 +36,7 @@ public interface IElementDefinition {
   boolean getIsModifier();
 
   // TODO remove this once we properly handle extension URL extraction.
-  @Nullable
-  String getFixedPrimitiveValue();
+  @Nullable String getFixedPrimitiveValue();
 
   /**
    * See return below.
@@ -55,6 +54,5 @@ public interface IElementDefinition {
    *
    * @return first profile or null if this element has no profiles
    */
-  @Nullable
-  String getFirstTypeProfile();
+  @Nullable String getFirstTypeProfile();
 }

@@ -1,7 +1,7 @@
 package com.cerner.bunsen.definitions;
 
+import com.google.common.base.Splitter;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Deque;
 import java.util.Iterator;
 import java.util.List;
@@ -27,11 +27,11 @@ public class DefinitionVisitorsUtil {
    * @return a converted {@link String}
    */
   public static String recordNameFor(String elementPath) {
-
-    return Arrays.stream(elementPath.split("\\."))
+    return Splitter.onPattern("\\.")
+        .splitToStream(elementPath)
         .map(StringUtils::capitalize)
         .reduce(String::concat)
-        .get();
+        .orElse("");
   }
 
   /**
@@ -92,7 +92,12 @@ public class DefinitionVisitorsUtil {
     return fullPath.stream().collect(Collectors.joining("."));
   }
 
-  /** Creates a canonical element name from the element path. */
+  /**
+   * Creates a canonical element name from the element path.
+   *
+   * @param elementPath the element path
+   * @return canonical element name
+   */
   public static String elementName(String elementPath) {
 
     String suffix = elementPath.substring(elementPath.lastIndexOf('.') + 1);

@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import org.hl7.fhir.instance.model.api.IBase;
+import org.jspecify.annotations.Nullable;
 
 /**
  * Partial converter implementation for contained structures. Contained converters are distinct from
@@ -36,10 +37,10 @@ public abstract class HapiContainedConverter<T> extends HapiConverter<T> {
    * @param contained the entries to be contained.
    * @return the Resource Container.
    */
-  protected abstract Object createContained(Object[] contained);
+  protected abstract Object createContained(@Nullable Object[] contained);
 
   /** Represents the association of a contained element to its type. */
-  protected final class ContainerEntry {
+  protected static final class ContainerEntry {
 
     private final String elementType;
     private final Object element;
@@ -78,9 +79,11 @@ public abstract class HapiContainedConverter<T> extends HapiConverter<T> {
       for (ContainerEntry containedEntry : containedEntries) {
 
         String containedElementType = containedEntry.getElementType();
-        IBase resource = contained.get(containedElementType).toHapi(containedEntry.getElement());
+        if (contained.get(containedElementType) != null) {
+          IBase resource = contained.get(containedElementType).toHapi(containedEntry.getElement());
 
-        fieldToSet.getMutator().addValue(parentObject, resource);
+          fieldToSet.getMutator().addValue(parentObject, resource);
+        }
       }
     }
   }
@@ -97,14 +100,14 @@ public abstract class HapiContainedConverter<T> extends HapiConverter<T> {
 
     List containedList = (List) input;
 
-    Object[] values = new Object[containedList.size()];
+    @Nullable Object[] values = new Object[containedList.size()];
 
     for (int valueIndex = 0; valueIndex < containedList.size(); ++valueIndex) {
 
       IBase composite = (IBase) containedList.get(valueIndex);
       StructureField<HapiConverter<T>> schemaEntry = contained.get(composite.fhirType());
 
-      values[valueIndex] = schemaEntry.result().fromHapi(composite);
+      values[valueIndex] = schemaEntry != null ? schemaEntry.result().fromHapi(composite) : null;
     }
 
     return createContained(values);

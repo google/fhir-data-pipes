@@ -14,6 +14,7 @@ import org.hl7.fhir.instance.model.api.IBase;
 import org.hl7.fhir.instance.model.api.IBaseExtension;
 import org.hl7.fhir.instance.model.api.IBaseHasExtensions;
 import org.hl7.fhir.instance.model.api.IBaseHasModifierExtensions;
+import org.jspecify.annotations.Nullable;
 
 /**
  * Partial converter implementation for composite structures.
@@ -22,19 +23,19 @@ import org.hl7.fhir.instance.model.api.IBaseHasModifierExtensions;
  */
 public abstract class HapiCompositeConverter<T> extends HapiConverter<T> {
 
-  private final String elementType;
+  @Nullable private final String elementType;
 
   private final List<StructureField<HapiConverter<T>>> children;
 
   protected final T structType;
 
-  private final String extensionUrl;
+  @Nullable private final String extensionUrl;
 
   protected final FhirConversionSupport fhirSupport;
 
   protected abstract Object getChild(Object composite, int index);
 
-  protected abstract Object createComposite(Object[] children);
+  protected abstract Object createComposite(@Nullable Object[] children);
 
   protected abstract boolean isMultiValued(T schemaType);
 
@@ -45,6 +46,7 @@ public abstract class HapiCompositeConverter<T> extends HapiConverter<T> {
     public void setField(
         IBase parentObject, BaseRuntimeChildDefinition fieldToSet, Object sourceObject) {}
 
+    @Nullable
     @Override
     public IBase toHapi(Object input) {
       return null;
@@ -134,11 +136,11 @@ public abstract class HapiCompositeConverter<T> extends HapiConverter<T> {
   }
 
   protected HapiCompositeConverter(
-      String elementType,
+      @Nullable String elementType,
       List<StructureField<HapiConverter<T>>> children,
       T structType,
       FhirConversionSupport fhirSupport,
-      String extensionUrl) {
+      @Nullable String extensionUrl) {
     // A composite type should have at least one child.
     Preconditions.checkArgument(!children.isEmpty());
     this.elementType = elementType;
@@ -153,7 +155,7 @@ public abstract class HapiCompositeConverter<T> extends HapiConverter<T> {
 
     IBase composite = (IBase) input;
 
-    Object[] values = new Object[children.size()];
+    @Nullable Object[] values = new Object[children.size()];
 
     int valueIndex = 0;
     Iterator<StructureField<HapiConverter<T>>> schemaIterator = children.iterator();
@@ -202,7 +204,6 @@ public abstract class HapiCompositeConverter<T> extends HapiConverter<T> {
           values[valueIndex] = schemaEntry.result().fromHapi(propertyValues);
 
         } else {
-
           values[valueIndex] = schemaEntry.result().fromHapi(propertyValues.get(0));
         }
       } else if (converter.extensionUrl() != null) {
@@ -215,8 +216,7 @@ public abstract class HapiCompositeConverter<T> extends HapiConverter<T> {
 
         for (IBaseExtension extension : extensions) {
 
-          if (extension.getUrl().equals(converter.extensionUrl())) {
-
+          if (converter.extensionUrl().equals(extension.getUrl())) {
             values[valueIndex] = schemaEntry.result().fromHapi(extension);
           }
         }
@@ -234,7 +234,8 @@ public abstract class HapiCompositeConverter<T> extends HapiConverter<T> {
 
         final List<? extends IBaseExtension> extensionList =
             extensions.stream()
-                .filter(extension -> extension.getUrl().equals(extensionUrl))
+                .filter(
+                    extension -> extensionUrl != null && extensionUrl.equals(extension.getUrl()))
                 .collect(Collectors.toList());
 
         if (extensionList.size() > 0) {
@@ -372,11 +373,13 @@ public abstract class HapiCompositeConverter<T> extends HapiConverter<T> {
     return structType;
   }
 
+  @Nullable
   @Override
   public String extensionUrl() {
     return extensionUrl;
   }
 
+  @Nullable
   @Override
   public String getElementType() {
     return elementType;

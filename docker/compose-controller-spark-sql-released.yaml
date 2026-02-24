@@ -71,7 +71,7 @@ services:
         condition: service_healthy
 
   spark:
-    image: docker.io/bitnami/spark:3.3
+    image: docker.io/bitnamilegacy/spark:4.0.0
     container_name: spark-thriftserver
     command:
       - sbin/start-thriftserver.sh

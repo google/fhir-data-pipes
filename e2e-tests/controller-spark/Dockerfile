@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-FROM bitnami/spark:3.3
+FROM bitnamilegacy/spark:4.0.0
 
 ##############################################################################################
 # NOTE: This Docker image is designed to run exclusively in Cloud Build environment.
@@ -33,5 +33,10 @@ ENV PARQUET_SUBDIR="dwh"
 ENV DOCKER_NETWORK="--use_docker_network"
 ENV HOME_DIR="/workspace/e2e-tests/controller-spark"
 ENV DWH_TYPE="PARQUET"
+ENV CONTROLLER_CLI_DIR="./controller-cli"
+
+COPY ./pipelines/controller-cli/ ${CONTROLLER_CLI_DIR}/
+WORKDIR ${CONTROLLER_CLI_DIR}
+RUN pip3 install .
 
 ENTRYPOINT cd ${HOME_DIR}; ./controller_spark_sql_validation.sh ${HOME_DIR} ${PARQUET_SUBDIR} ${DOCKER_NETWORK} ${DWH_TYPE}

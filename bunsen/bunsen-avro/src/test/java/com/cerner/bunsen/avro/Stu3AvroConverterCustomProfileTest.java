@@ -24,6 +24,8 @@ import org.junit.Test;
  * <p>TODO: Refactor this and the R43AvroConverterCustomProfileTest.java to move the duplicate code
  * into a common class and add only relevant cases here
  */
+// Suppressing NullAway warnings for test code
+@SuppressWarnings("NullAway")
 public class Stu3AvroConverterCustomProfileTest {
 
   private static final Patient testBunsenTestProfilePatient =
@@ -147,8 +149,6 @@ public class Stu3AvroConverterCustomProfileTest {
 
     Assert.assertEquals(expected1, decodedIntegerField1);
     Assert.assertEquals(expected2, decodedIntegerField2);
-
-    final List<Record> nestedExtList = (List<Record>) avroBunsenTestProfilePatient.get("nestedExt");
   }
 
   @Test
@@ -265,9 +265,9 @@ public class Stu3AvroConverterCustomProfileTest {
     final List<Record> codeableConceptsList1 = (List<Record>) nestedExt1.get("codeableConceptExt");
     final List<Record> codeableConceptsList2 = (List<Record>) nestedExt2.get("codeableConceptExt");
 
-    Assert.assertEquals(text1, textList1.get(0));
-    Assert.assertEquals(text2, textList1.get(1));
-    Assert.assertEquals(text3, textList2.get(0));
+    Assert.assertEquals(text1, textList1.get(0).toString());
+    Assert.assertEquals(text2, textList1.get(1).toString());
+    Assert.assertEquals(text3, textList2.get(0).toString());
 
     Assert.assertEquals(
         codeableConcept1.getCoding().get(0).getCode(),

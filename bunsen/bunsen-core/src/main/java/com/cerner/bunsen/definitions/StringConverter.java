@@ -1,6 +1,7 @@
 package com.cerner.bunsen.definitions;
 
 import org.hl7.fhir.instance.model.api.IPrimitiveType;
+import org.jspecify.annotations.Nullable;
 
 public class StringConverter<T> extends PrimitiveConverter<T> {
 
@@ -22,6 +23,7 @@ public class StringConverter<T> extends PrimitiveConverter<T> {
     primitive.setValueAsString(input.toString());
   }
 
+  @Nullable
   @Override
   protected Object fromHapi(IPrimitiveType primitive) {
     return primitive.getValueAsString();

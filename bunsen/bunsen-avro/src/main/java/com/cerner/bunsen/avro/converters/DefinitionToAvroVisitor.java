@@ -22,6 +22,7 @@ import com.cerner.bunsen.definitions.StructureField;
 import com.cerner.bunsen.exception.ProfileException;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
+import com.google.common.base.Splitter;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableMap;
 import java.math.BigDecimal;
@@ -29,6 +30,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Collectors;
@@ -42,6 +44,7 @@ import org.apache.avro.specific.SpecificData;
 import org.apache.commons.lang3.StringUtils;
 import org.hl7.fhir.instance.model.api.IBase;
 import org.hl7.fhir.instance.model.api.IPrimitiveType;
+import org.jspecify.annotations.Nullable;
 
 public class DefinitionToAvroVisitor implements DefinitionVisitor<HapiConverter<Schema>> {
 
@@ -113,6 +116,7 @@ public class DefinitionToAvroVisitor implements DefinitionVisitor<HapiConverter<
           }
         }
 
+        @Override
         protected Object fromHapi(IPrimitiveType primitive) {
           Object value = primitive.getValue();
           Preconditions.checkState(value instanceof BigDecimal);
@@ -167,7 +171,7 @@ public class DefinitionToAvroVisitor implements DefinitionVisitor<HapiConverter<
     private final GenericData avroData = SpecificData.get();
 
     CompositeToAvroConverter(
-        String elementType,
+        @Nullable String elementType,
         List<StructureField<HapiConverter<Schema>>> children,
         Schema structType,
         FhirConversionSupport fhirSupport) {
@@ -175,11 +179,11 @@ public class DefinitionToAvroVisitor implements DefinitionVisitor<HapiConverter<
     }
 
     CompositeToAvroConverter(
-        String elementType,
+        @Nullable String elementType,
         List<StructureField<HapiConverter<Schema>>> children,
         Schema structType,
         FhirConversionSupport fhirSupport,
-        String extensionUrl) {
+        @Nullable String extensionUrl) {
 
       super(elementType, children, structType, fhirSupport, extensionUrl);
     }
@@ -209,7 +213,7 @@ public class DefinitionToAvroVisitor implements DefinitionVisitor<HapiConverter<
     @Override
     protected boolean isMultiValued(Schema schema) {
 
-      return schema.getType().equals(Schema.Type.ARRAY);
+      return schema.getType().equals(Type.ARRAY);
     }
 
     @Override
@@ -443,16 +447,11 @@ public class DefinitionToAvroVisitor implements DefinitionVisitor<HapiConverter<
   private static class MultiValuedToAvroConverter extends HapiConverter<Schema>
       implements MultiValueConverter {
 
-    private class MultiValuedtoHapiConverter implements HapiFieldSetter {
-
-      private final BaseRuntimeElementDefinition elementDefinition;
+    private static class MultiValuedtoHapiConverter implements HapiFieldSetter {
 
       private final HapiObjectConverter elementToHapiConverter;
 
-      MultiValuedtoHapiConverter(
-          BaseRuntimeElementDefinition elementDefinition,
-          HapiObjectConverter elementToHapiConverter) {
-        this.elementDefinition = elementDefinition;
+      MultiValuedtoHapiConverter(HapiObjectConverter elementToHapiConverter) {
         this.elementToHapiConverter = elementToHapiConverter;
       }
 
@@ -508,7 +507,7 @@ public class DefinitionToAvroVisitor implements DefinitionVisitor<HapiConverter<
       HapiObjectConverter rowToHapiConverter =
           (HapiObjectConverter) elementConverter.toHapiConverter(elementDefinition);
 
-      return new MultiValuedtoHapiConverter(elementDefinition, rowToHapiConverter);
+      return new MultiValuedtoHapiConverter(rowToHapiConverter);
     }
 
     @Override
@@ -631,6 +630,7 @@ public class DefinitionToAvroVisitor implements DefinitionVisitor<HapiConverter<
     public void setField(
         IBase parentObject, BaseRuntimeChildDefinition fieldToSet, Object sparkObject) {}
 
+    @Nullable
     @Override
     public IBase toHapi(Object input) {
       return null;
@@ -648,6 +648,7 @@ public class DefinitionToAvroVisitor implements DefinitionVisitor<HapiConverter<
       this.prefix = prefix;
     }
 
+    @Nullable
     @Override
     public Object fromHapi(Object input) {
       String uri = ((IPrimitiveType) input).getValueAsString();
@@ -765,20 +766,14 @@ public class DefinitionToAvroVisitor implements DefinitionVisitor<HapiConverter<
       String extensionUrl,
       List<StructureField<HapiConverter<Schema>>> children) {
 
-    // Ignore extension fields that don't have declared content for now.
-    if (children.isEmpty()) {
-      return null;
-    }
-
     String recordNamespace = DefinitionVisitorsUtil.namespaceFor(basePackage, extensionUrl);
 
     String localPart = extensionUrl.substring(extensionUrl.lastIndexOf('/') + 1);
 
-    String[] parts = localPart.split("[-|_]");
-
     String recordName =
-        Arrays.stream(parts)
-            .map(part -> part.substring(0, 1).toUpperCase() + part.substring(1))
+        Splitter.onPattern("[-|_]")
+            .splitToStream(localPart)
+            .map(part -> part.substring(0, 1).toUpperCase(Locale.ROOT) + part.substring(1))
             .collect(Collectors.joining());
 
     String fullName = recordNamespace + "." + recordName;
@@ -853,13 +848,13 @@ public class DefinitionToAvroVisitor implements DefinitionVisitor<HapiConverter<
   }
 
   private static HapiCompositeConverter createCompositeConverter(
-      String elementType,
+      @Nullable String elementType,
       String recordName,
       String doc,
       String namespace,
       List<StructureField<HapiConverter<Schema>>> children,
       FhirConversionSupport fhirSupport,
-      String extensionUrl) {
+      @Nullable String extensionUrl) {
 
     List<Field> fields =
         children.stream()

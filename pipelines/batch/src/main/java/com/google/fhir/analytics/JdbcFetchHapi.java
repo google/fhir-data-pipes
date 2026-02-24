@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2024 Google LLC
+ * Copyright 2020-2025 Google LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@ package com.google.fhir.analytics;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Charsets;
+import com.google.common.base.Splitter;
 import com.google.common.base.Strings;
 import java.sql.Blob;
 import java.sql.Connection;
@@ -24,7 +25,6 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -52,7 +52,6 @@ import org.slf4j.LoggerFactory;
 public class JdbcFetchHapi {
 
   private static final Logger log = LoggerFactory.getLogger(JdbcFetchHapi.class);
-
   private DataSource jdbcSource;
 
   JdbcFetchHapi(DataSource jdbcSource) {
@@ -70,7 +69,7 @@ public class JdbcFetchHapi {
 
     public ResultSetToRowDescriptor(String resourceList) {
       this.numMappedResourcesMap = new HashMap<>();
-      List<String> resourceTypes = Arrays.asList(resourceList.split(","));
+      List<String> resourceTypes = Splitter.on(',').splitToList(resourceList);
       for (String resourceType : resourceTypes) {
         this.numMappedResourcesMap.put(
             resourceType,
@@ -82,21 +81,18 @@ public class JdbcFetchHapi {
 
     @Override
     public HapiRowDescriptor mapRow(ResultSet resultSet) throws Exception {
-      String jsonResource = "";
-
       // TODO check for null values before accessing columns; this caused NPEs with `latest` HAPI.
-      switch (resultSet.getString("res_encoding")) {
-        case "JSON":
-          jsonResource = new String(resultSet.getBytes("res_text_vc"), Charsets.UTF_8);
-          break;
-        case "JSONC":
-          Blob blob = resultSet.getBlob("res_text");
-          jsonResource = GZipUtil.decompress(blob.getBytes(1, (int) blob.length()));
-          blob.free();
-          break;
-        case "DEL":
-          break;
-      }
+      String jsonResource =
+          switch (resultSet.getString("res_encoding")) {
+            case "JSON" -> new String(resultSet.getBytes("res_text_vc"), Charsets.UTF_8);
+            case "JSONC" -> {
+              Blob blob = resultSet.getBlob("res_text");
+              String decompressed = GZipUtil.decompress(blob.getBytes(1, (int) blob.length()));
+              blob.free();
+              yield decompressed;
+            }
+            default -> ""; // Covers the "DEL" case as well as any unknown encoding.
+          };
 
       String resourceId = resultSet.getString("res_id");
       String forcedId = resultSet.getString("forced_id");
@@ -104,7 +100,8 @@ public class JdbcFetchHapi {
       String lastUpdated = resultSet.getString("res_updated");
       String fhirVersion = resultSet.getString("res_version");
       String resourceVersion = resultSet.getString("res_ver");
-      numMappedResourcesMap.get(resourceType).inc();
+      if (numMappedResourcesMap.get(resourceType) != null)
+        numMappedResourcesMap.get(resourceType).inc();
       return HapiRowDescriptor.create(
           resourceId,
           forcedId,
@@ -339,7 +336,7 @@ public class JdbcFetchHapi {
    */
   public Map<String, Integer> searchResourceCounts(String resourceList, String since)
       throws SQLException {
-    Set<String> resourceTypes = new HashSet<>(Arrays.asList(resourceList.split(",")));
+    Set<String> resourceTypes = new HashSet<>(Splitter.on(',').splitToList(resourceList));
     Map<String, Integer> resourceCountMap = new HashMap<>();
     for (String resourceType : resourceTypes) {
       StringBuilder builder = new StringBuilder();

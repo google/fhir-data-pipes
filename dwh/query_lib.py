@@ -22,12 +22,13 @@ function that defines the source of the data.
 
 # See https://stackoverflow.com/questions/33533148 why this is needed.
 from __future__ import annotations
+
 import enum
 import typing as tp
+
 import base
 import query_lib_big_query
 import query_lib_spark
-
 
 # This separator is used to merge date and values into one string.
 DATE_VALUE_SEPARATOR = "_SeP_"
@@ -49,7 +50,6 @@ def patient_query_factory(
     code_system: tp.Optional[str] = None,
     **kwargs: tp.Dict[tp.Any, tp.Any],
 ) -> base.PatientQuery:
-
     """Returns the right instance of `PatientQuery` based on `data_source`.
 
     Args:
@@ -73,7 +73,7 @@ def patient_query_factory(
                 "a BigQuery data source"
             )
         return query_lib_big_query.BigQueryPatientQuery(
-            project_name=kwargs['project_name'],
+            project_name=kwargs["project_name"],
             bq_dataset=data_source,
             code_system=code_system,
         )

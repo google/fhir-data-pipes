@@ -38,6 +38,7 @@ import org.hl7.fhir.r4.model.Property;
 import org.hl7.fhir.r4.model.Reference;
 import org.hl7.fhir.r4.model.Resource;
 import org.joda.time.Instant;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -61,6 +62,7 @@ public class FetchResources
   }
 
   @VisibleForTesting
+  @Nullable
   static String getSubjectPatientIdOrNull(Resource resource) {
     String patientId = null;
     // TODO: Instead of hard-coding `subject` here, use Patient Compartment:
@@ -104,6 +106,9 @@ public class FetchResources
     // StartBundle; we don't need to `synchronized` access of it because each instance of the DoFn
     // class is accessed by a single thread.
     // https://beam.apache.org/documentation/programming-guide/#user-code-thread-compatibility
+
+    // Suppressing warning as this is initialized in StartBundle.
+    @SuppressWarnings("NullAway")
     private Map<String, Integer> patientCount = null;
 
     SearchFn(FhirEtlOptions options, String stageIdentifier) {
