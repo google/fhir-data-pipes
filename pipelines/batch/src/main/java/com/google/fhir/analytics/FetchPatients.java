@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2024 Google LLC
+ * Copyright 2020-2025 Google LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,8 +21,6 @@ import com.google.common.base.Preconditions;
 import com.google.fhir.analytics.view.ViewApplicationException;
 import java.io.IOException;
 import java.sql.SQLException;
-import java.util.List;
-import org.apache.avro.Schema;
 import org.apache.beam.sdk.transforms.PTransform;
 import org.apache.beam.sdk.transforms.ParDo;
 import org.apache.beam.sdk.values.KV;
@@ -40,15 +38,10 @@ public class FetchPatients extends PTransform<PCollection<KV<String, Integer>>, 
 
   private final FetchSearchPageFn<KV<String, Integer>> fetchSearchPageFn;
 
-  private final Schema schema;
-
-  FetchPatients(FhirEtlOptions options, Schema schema) {
+  FetchPatients(FhirEtlOptions options) {
     Preconditions.checkState(!options.getActivePeriod().isEmpty());
-    List<String> dateRange = FhirSearchUtil.getDateRange(options.getActivePeriod());
 
     int count = options.getBatchSize();
-    this.schema = schema;
-
     fetchSearchPageFn =
         new FetchSearchPageFn<KV<String, Integer>>(options, "PatientById") {
 

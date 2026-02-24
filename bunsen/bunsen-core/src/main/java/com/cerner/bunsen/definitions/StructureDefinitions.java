@@ -16,8 +16,8 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
+import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 
 /** Abstract base class to visit FHIR structure definitions. */
 public abstract class StructureDefinitions {
@@ -118,6 +118,7 @@ public abstract class StructureDefinitions {
   /**
    * Find the definition from the definitions list, whose path starts with the given referencedType
    */
+  @Nullable
   private IElementDefinition getParentDefinition(
       String referencedType, List<IElementDefinition> definitions) {
     return definitions.stream()
@@ -126,7 +127,7 @@ public abstract class StructureDefinitions {
         .orElse(null);
   }
 
-  private <T> List<StructureField<T>> singleField(String elementName, T result) {
+  private <T> List<StructureField<T>> singleField(String elementName, @Nullable T result) {
     if (result == null) {
       return Collections.emptyList();
     }
@@ -211,7 +212,7 @@ public abstract class StructureDefinitions {
       IStructureDefinition rootDefinition,
       String sliceName,
       Deque<QualifiedPath> stack,
-      String url,
+      @Nullable String url,
       List<IElementDefinition> extensionDefinitions,
       IElementDefinition extensionRoot) {
 
@@ -235,6 +236,11 @@ public abstract class StructureDefinitions {
         childFields.addAll(childField);
       }
 
+      // Ignore extension fields that have null url or don't have declared content for now.
+      if (url == null || children.isEmpty()) {
+        return Collections.emptyList();
+      }
+
       T result = visitor.visitParentExtension(sliceName, url, childFields);
 
       if (result == null) {
@@ -250,7 +256,12 @@ public abstract class StructureDefinitions {
       // FIXME: get the extension URL.
       Optional<IElementDefinition> urlElement =
           children.stream().filter(e -> e.getPath().endsWith("url")).findFirst();
+
+      if (urlElement.isEmpty()) return Collections.emptyList();
       String extensionUrl = urlElement.get().getFixedPrimitiveValue();
+
+      if (valueElement.isEmpty() || extensionUrl == null) return Collections.emptyList();
+
       List<StructureField<T>> childField =
           elementToFields(visitor, rootDefinition, valueElement.get(), extensionDefinitions, stack);
       T result =
@@ -338,11 +349,14 @@ public abstract class StructureDefinitions {
               visitor.visitChoice(elementName, choiceTypes));
       return Collections.singletonList(field);
     } else if (!element.getMax().equals("1")) {
-      if (getDefinition(element) != null) {
+
+      IStructureDefinition definition = getDefinition(element);
+      if (definition != null) {
         // Handle defined data types.
-        IStructureDefinition definition = getDefinition(element);
         T type = transform(visitor, element, definition, stack);
-        return singleField(elementName, visitor.visitMultiValued(elementName, type));
+        return type == null
+            ? Collections.emptyList()
+            : singleField(elementName, visitor.visitMultiValued(elementName, type));
       } else {
         List<StructureField<T>> childElements =
             transformChildren(visitor, rootDefinition, snapshotDefinitions, stack, element);
@@ -371,10 +385,11 @@ public abstract class StructureDefinitions {
 
     } else if (getDefinition(element) != null) {
 
+      IStructureDefinition definition = getDefinition(element);
+
       // TODO refactor this and the similar block above for handling defined data types.
       // Handle defined data types.
-      IStructureDefinition definition = getDefinition(element);
-      T type = transform(visitor, element, definition, stack);
+      T type = definition != null ? transform(visitor, element, definition, stack) : null;
       return singleField(DefinitionVisitorsUtil.elementName(element.getPath()), type);
     } else {
 
@@ -414,7 +429,7 @@ public abstract class StructureDefinitions {
     QualifiedPath qualifiedPath = new QualifiedPath(rootDefinition.getUrl(), element.getPath());
 
     if (shouldTerminateRecursive(visitor, qualifiedPath, stack)) {
-      return Collections.emptyList();
+      return new ArrayList<>();
     } else {
       stack.push(qualifiedPath);
 
@@ -599,7 +614,7 @@ public abstract class StructureDefinitions {
    * @throws IllegalArgumentException if the structure definition cannot be found for the given
    *     resourceUrl.
    */
-  @Nonnull
+  @NonNull
   protected abstract IStructureDefinition getStructureDefinition(String resourceUrl)
       throws IllegalArgumentException;
 

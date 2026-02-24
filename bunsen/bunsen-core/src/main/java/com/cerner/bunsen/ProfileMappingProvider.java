@@ -29,11 +29,12 @@ import java.util.Optional;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 import java.util.stream.Collectors;
-import javax.annotation.Nullable;
+import java.util.stream.Stream;
 import org.hl7.fhir.common.hapi.validation.support.PrePopulatedValidationSupport;
 import org.hl7.fhir.instance.model.api.IBase;
 import org.hl7.fhir.instance.model.api.IBaseResource;
 import org.hl7.fhir.instance.model.api.IPrimitiveType;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -93,16 +94,19 @@ class ProfileMappingProvider {
     Map<String, List<String>> resourceProfileMap = new HashMap<>();
     List<IBaseResource> defaultDefinitions =
         context.getValidationSupport().fetchAllStructureDefinitions();
-    for (IBaseResource definition : defaultDefinitions) {
-      support.addStructureDefinition(definition);
-      // Links the profile only if the definition belongs to a base resource. The default
-      // definitions loaded could be a StructureDefinition, Extension element, CapabilityStatement,
-      // ValueSet etc., hence this check is necessary.
-      if (isABaseResource(context, definition)) {
-        RuntimeResourceDefinition resourceDefinition = context.getResourceDefinition(definition);
-        String type = fetchProperty("type", resourceDefinition, definition);
-        String url = fetchProperty("url", resourceDefinition, definition);
-        resourceProfileMap.computeIfAbsent(type, list -> new ArrayList<>()).add(url);
+    if (defaultDefinitions != null) {
+      for (IBaseResource definition : defaultDefinitions) {
+        support.addStructureDefinition(definition);
+        // Links the profile only if the definition belongs to a base resource. The default
+        // definitions loaded could be a StructureDefinition, Extension element,
+        // CapabilityStatement,
+        // ValueSet etc., hence this check is necessary.
+        if (isABaseResource(context, definition)) {
+          RuntimeResourceDefinition resourceDefinition = context.getResourceDefinition(definition);
+          String type = fetchProperty("type", resourceDefinition, definition);
+          String url = fetchProperty("url", resourceDefinition, definition);
+          resourceProfileMap.computeIfAbsent(type, list -> new ArrayList<>()).add(url);
+        }
       }
     }
     context.setValidationSupport(support);
@@ -186,14 +190,12 @@ class ProfileMappingProvider {
   private List<IBaseResource> getResourcesFromPath(IParser parser, String pathName)
       throws IOException {
     Path path = Paths.get(pathName);
-    List<Path> paths = Files.walk(path).collect(Collectors.toList());
-    List<Path> definitionPaths = new ArrayList<>();
-    paths.stream()
-        .filter(f -> f.toString().endsWith(JSON_EXT))
-        .forEach(
-            f -> {
-              definitionPaths.add(f);
-            });
+    List<Path> definitionPaths;
+    try (Stream<Path> walkStream = Files.walk(path)) {
+      definitionPaths =
+          walkStream.filter(f -> f.toString().endsWith(JSON_EXT)).collect(Collectors.toList());
+    }
+
     List<IBaseResource> baseResources = new ArrayList<>();
     for (Path definitionPath : definitionPaths) {
       baseResources.add(getResource(parser, definitionPath));
@@ -230,11 +232,13 @@ class ProfileMappingProvider {
 
   private static IBaseResource getResource(IParser jsonParser, InputStream inputStream)
       throws IOException {
-    try (Reader reader = new BufferedReader(new InputStreamReader(inputStream))) {
+    try (Reader reader =
+        new BufferedReader(new InputStreamReader(inputStream, StandardCharsets.UTF_8))) {
       return jsonParser.parseResource(reader);
     }
   }
 
+  @Nullable
   private String fetchProperty(
       String property, RuntimeResourceDefinition resourceDefinition, IBaseResource definition) {
     Optional<IBase> propertyValue =
@@ -253,8 +257,8 @@ class ProfileMappingProvider {
       String type = fetchProperty("type", resourceDefinition, definition);
       String baseDefinition = fetchProperty("baseDefinition", resourceDefinition, definition);
       if (fhirContext.getResourceTypes().contains(type)
-          && baseDefinition.equalsIgnoreCase(
-              "http://hl7.org/fhir/StructureDefinition/DomainResource")) {
+          && "http://hl7.org/fhir/StructureDefinition/DomainResource"
+              .equalsIgnoreCase(baseDefinition)) {
         return true;
       }
     }

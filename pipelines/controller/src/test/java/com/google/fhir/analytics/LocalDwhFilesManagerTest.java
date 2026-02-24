@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2024 Google LLC
+ * Copyright 2020-2025 Google LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,7 +27,8 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.Instant;
-import java.util.stream.Collectors;
+import java.util.List;
+import java.util.stream.Stream;
 import org.apache.beam.sdk.io.FileSystems;
 import org.apache.beam.sdk.io.fs.ResourceId;
 import org.apache.commons.io.FileUtils;
@@ -53,7 +54,10 @@ public class LocalDwhFilesManagerTest {
 
   private DwhFilesManager dwhFilesManager;
 
-  @TempDir public Path testPath;
+  // We are suppressing here as the testPath is initialized by JUnit at runtime.
+  @SuppressWarnings("NullAway.Init")
+  @TempDir
+  public Path testPath;
 
   @BeforeEach
   public void setUp() {
@@ -76,9 +80,9 @@ public class LocalDwhFilesManagerTest {
     dwhFilesManager.checkPurgeScheduleAndTrigger();
     // Check if the number of the snapshots remaining after the purge job is equal to the
     // configured retain number
-    assertThat(
-        Files.list(rootDir).collect(Collectors.toList()).size(),
-        equalTo(dataProperties.getNumOfDwhSnapshotsToRetain()));
+    try (Stream<Path> stream = Files.list(rootDir)) {
+      assertThat(stream.toList().size(), equalTo(dataProperties.getNumOfDwhSnapshotsToRetain()));
+    }
   }
 
   @Test
@@ -209,6 +213,49 @@ public class LocalDwhFilesManagerTest {
         () -> {
           dwhFilesManager.getPrefix("prefix");
         });
+  }
+
+  @Test
+  public void testDeleteDwhSnapshotFilesForEmptySnapshotId() {
+    Assertions.assertThrows(
+        IllegalStateException.class, () -> dwhFilesManager.deleteDwhSnapshotFiles(""));
+  }
+
+  @Test
+  public void testDeleteDwhSnapshotFilesForInvalidSnapshotId() {
+    Assertions.assertThrows(
+        IllegalStateException.class,
+        () -> dwhFilesManager.deleteDwhSnapshotFiles("randomInvalidSnapshotId"));
+  }
+
+  @Test
+  public void testListDwhSnapshotsReturnsSnapshotIds() throws IOException {
+    Path rootDir = testPath.resolve("rootDir");
+    dataProperties.setDwhRootPrefix(rootDir + File.separator + "snapshot");
+    dwhFilesManager.init();
+
+    createCompleteDwhSnapshot("rootDir" + File.separator + "snapshot1");
+    createCompleteDwhSnapshot("rootDir" + File.separator + "snapshot2");
+
+    List<String> snapshots = dwhFilesManager.listDwhSnapshots();
+    assertThat(snapshots.size(), equalTo(2));
+  }
+
+  @Test
+  public void testDeleteDwhSnapshotFiles() throws IOException {
+    Path rootDir = testPath.resolve("rootDir");
+    dataProperties.setDwhRootPrefix(rootDir + File.separator + "snapshot");
+    dwhFilesManager.init();
+
+    createCompleteDwhSnapshot("rootDir" + File.separator + "snapshot1");
+
+    List<String> snapshotsCreated = dwhFilesManager.listDwhSnapshots();
+    assertThat(snapshotsCreated.size(), equalTo(1));
+
+    dwhFilesManager.deleteDwhSnapshotFiles(rootDir + File.separator + "snapshot");
+
+    List<String> snapshotsAfterDelete = dwhFilesManager.listDwhSnapshots();
+    assertThat(snapshotsAfterDelete.size(), equalTo(0));
   }
 
   private void createCompleteDwhSnapshot(String rootPath) throws IOException {

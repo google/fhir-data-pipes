@@ -13,9 +13,7 @@
 # limitations under the License.
 
 
-"""A set of common functions for all modules.
-
-"""
+"""A set of common functions for all modules."""
 
 
 from datetime import datetime
@@ -23,6 +21,8 @@ from datetime import datetime
 
 # TODO: Fix logging!
 def custom_log(t: str) -> None:
-  print('[INDICATORS_LOG {}] {}'.format(
-      datetime.now().strftime('%Y-%m-%d %H:%M:%S.%f'), t))
-
+    print(
+        "[INDICATORS_LOG {}] {}".format(
+            datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f"), t
+        )
+    )

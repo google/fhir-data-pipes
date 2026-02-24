@@ -7,17 +7,14 @@ import com.cerner.bunsen.definitions.IStructureDefinition;
 import com.cerner.bunsen.definitions.StructureDefinitions;
 import java.util.List;
 import java.util.stream.Collectors;
-import javax.annotation.Nonnull;
 import org.hl7.fhir.dstu3.model.ElementDefinition;
 import org.hl7.fhir.dstu3.model.StructureDefinition;
 import org.hl7.fhir.instance.model.api.IBaseResource;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 
 /** {@link StructureDefinitions} implementation for FHIR STU3. */
 public class Stu3StructureDefinitions extends StructureDefinitions {
-
-  private static final Logger log = LoggerFactory.getLogger(Stu3StructureDefinitions.class);
 
   private static final FhirConversionSupport CONVERSION_SUPPORT = new Stu3FhirConversionSupport();
 
@@ -33,7 +30,7 @@ public class Stu3StructureDefinitions extends StructureDefinitions {
   }
 
   @Override
-  @Nonnull
+  @NonNull
   protected IStructureDefinition getStructureDefinition(String resourceUrl)
       throws IllegalArgumentException {
     IBaseResource baseResource =
@@ -131,6 +128,7 @@ public class Stu3StructureDefinitions extends StructureDefinitions {
       return elementDefinition.getIsModifier();
     }
 
+    @Nullable
     @Override
     public String getFixedPrimitiveValue() {
       if (elementDefinition.getFixed() == null) {
@@ -148,6 +146,7 @@ public class Stu3StructureDefinitions extends StructureDefinitions {
           .collect(Collectors.toList());
     }
 
+    @Nullable
     @Override
     public String getFirstTypeProfile() {
       return elementDefinition.getTypeFirstRep().getProfile();

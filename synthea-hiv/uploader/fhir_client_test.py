@@ -14,49 +14,49 @@
 
 import unittest
 from unittest import mock
+
 import fhir_client
 
 
 def mock_requests_post(url, _):
 
-  class MockResponse:
+    class MockResponse:
 
-    def __init__(self, text, status_code, url):
-      self.text = text
-      self.status_code = status_code
-      self.url = url
+        def __init__(self, text, status_code, url):
+            self.text = text
+            self.status_code = status_code
+            self.url = url
 
-  if 'localhost/Patient' in url:
-    return MockResponse('{"resourceType":"Local"}', 200, url)
-  elif 'google' in url:
-    return MockResponse('{"resourceType":"Google"}', 201, url)
-  return MockResponse(None, 404, url)
+    if "localhost/Patient" in url:
+        return MockResponse('{"resourceType":"Local"}', 200, url)
+    elif "google" in url:
+        return MockResponse('{"resourceType":"Google"}', 201, url)
+    return MockResponse(None, 404, url)
 
 
 class FhirClientTest(unittest.TestCase):
 
-  def setUp(self):
-    super().setUp()
-    mock_session = mock.MagicMock()
-    mock_session.post.side_effect = mock_requests_post
-    mock.patch('requests.Session', return_value=mock_session).start()
-    mock.patch(
-        'google.auth.transport.requests.Request',
-        return_value=mock.MagicMock()).start()
-    mock.patch(
-        'google.auth.default', return_value=(mock.MagicMock(), '_')).start()
+    def setUp(self):
+        super().setUp()
+        mock_session = mock.MagicMock()
+        mock_session.post.side_effect = mock_requests_post
+        mock.patch("requests.Session", return_value=mock_session).start()
+        mock.patch(
+            "google.auth.transport.requests.Request", return_value=mock.MagicMock()
+        ).start()
+        mock.patch("google.auth.default", return_value=(mock.MagicMock(), "_")).start()
 
-  def test_post_data_local(self):
-    client = fhir_client.OpenMrsClient('http://localhost')
-    client.post_single_resource(resource='Patient', data={'hi': 'bob'})
-    self.assertEqual(client.response, {'resourceType': 'Local'})
+    def test_post_data_local(self):
+        client = fhir_client.OpenMrsClient("http://localhost")
+        client.post_single_resource(resource="Patient", data={"hi": "bob"})
+        self.assertEqual(client.response, {"resourceType": "Local"})
 
-  def test_post_bundle_gcp(self):
-    client = fhir_client.GcpClient('http://googleapis')
-    client.post_bundle(data={'hi': 'bob'})
-    self.assertEqual(client.response, {'resourceType': 'Google'})
+    def test_post_bundle_gcp(self):
+        client = fhir_client.GcpClient("http://googleapis")
+        client.post_bundle(data={"hi": "bob"})
+        self.assertEqual(client.response, {"resourceType": "Google"})
 
-  def test_post_resource_error(self):
-    client = fhir_client.HapiClient('http://random')
-    with self.assertRaises(ValueError):
-      client.post_single_resource(resource='Patient', data={'hi': 'mom'})
+    def test_post_resource_error(self):
+        client = fhir_client.HapiClient("http://random")
+        with self.assertRaises(ValueError):
+            client.post_single_resource(resource="Patient", data={"hi": "mom"})

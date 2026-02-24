@@ -92,7 +92,9 @@ nb-configuration.xml
 .ipynb_checkpoints/
 **.pyc
 **__pycache__**
+*.egg-info/
 ##############################
 ## Data-warehouse files.
 ##############################
 docker/dwh/**
+e2e-tests/controller-spark/dwh/**

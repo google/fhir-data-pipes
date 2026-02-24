@@ -18,6 +18,7 @@ package com.google.fhir.analytics;
 import ca.uhn.fhir.context.FhirVersionEnum;
 import ca.uhn.fhir.parser.DataFormatException;
 import com.cerner.bunsen.exception.ProfileException;
+import com.google.common.base.Splitter;
 import com.google.common.base.Strings;
 import com.google.fhir.analytics.view.ViewApplicationException;
 import java.io.IOException;
@@ -25,8 +26,8 @@ import java.lang.reflect.InvocationTargetException;
 import java.sql.SQLException;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.time.Instant;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -69,7 +70,7 @@ public class ConvertResourceFn extends FetchSearchPageFn<HapiRowDescriptor> {
     this.totalPushTimeMillisMap = new HashMap<String, Counter>();
     // Only in the incremental mode we process deleted resources.
     this.processDeletedRecords = !Strings.isNullOrEmpty(options.getSince());
-    List<String> resourceTypes = Arrays.asList(options.getResourceList().split(","));
+    List<String> resourceTypes = Splitter.on(',').splitToList(options.getResourceList());
     for (String resourceType : resourceTypes) {
       this.numFetchedResourcesMap.put(
           resourceType,
@@ -121,7 +122,7 @@ public class ConvertResourceFn extends FetchSearchPageFn<HapiRowDescriptor> {
       // deleted
       resource = createNewFhirResource(element.fhirVersion(), resourceType);
       ActionType removeAction = ActionType.REMOVE;
-      meta.setLastUpdated(new Date());
+      meta.setLastUpdated(Date.from(Instant.now()));
       meta.addTag(
           new Coding(removeAction.getSystem(), removeAction.toCode(), removeAction.getDisplay()));
     } else {
@@ -133,20 +134,21 @@ public class ConvertResourceFn extends FetchSearchPageFn<HapiRowDescriptor> {
         return;
       }
     }
-    totalParseTimeMillisMap.get(resourceType).inc(System.currentTimeMillis() - startTime);
-    if (forcedId == null || forcedId.equals("")) {
+    incrementElapsedTimeCounter(totalParseTimeMillisMap, resourceType, startTime);
+    if (forcedId == null || forcedId.isEmpty()) {
       resource.setId(resourceId);
     } else {
       resource.setId(forcedId);
     }
     resource.setMeta(meta);
 
-    numFetchedResourcesMap.get(resourceType).inc(1);
+    if (numFetchedResourcesMap.get(resourceType) != null)
+      numFetchedResourcesMap.get(resourceType).inc(1);
 
     if (parquetUtil != null) {
       startTime = System.currentTimeMillis();
       parquetUtil.write(resource);
-      totalGenerateTimeMillisMap.get(resourceType).inc(System.currentTimeMillis() - startTime);
+      incrementElapsedTimeCounter(totalGenerateTimeMillisMap, resourceType, startTime);
     }
     if (!sinkPath.isEmpty()) {
       startTime = System.currentTimeMillis();
@@ -155,7 +157,8 @@ public class ConvertResourceFn extends FetchSearchPageFn<HapiRowDescriptor> {
       } else {
         fhirStoreUtil.uploadResource(resource);
       }
-      totalPushTimeMillisMap.get(resourceType).inc(System.currentTimeMillis() - startTime);
+
+      incrementElapsedTimeCounter(totalPushTimeMillisMap, resourceType, startTime);
     }
     if (sinkDbConfig != null) {
       if (isResourceDeleted) {
@@ -213,10 +216,10 @@ public class ConvertResourceFn extends FetchSearchPageFn<HapiRowDescriptor> {
     try {
       // TODO create tests for this method and different versions of FHIR; casting to R4 resource
       //  does not seem right!
-      return (Resource)
-          Class.forName(getFhirBasePackageName(fhirVersion) + "." + resourceType)
-              .getConstructor()
-              .newInstance();
+      return Class.forName(getFhirBasePackageName(fhirVersion) + "." + resourceType)
+          .asSubclass(Resource.class)
+          .getConstructor()
+          .newInstance();
     } catch (InstantiationException
         | IllegalAccessException
         | ClassNotFoundException
@@ -229,25 +232,28 @@ public class ConvertResourceFn extends FetchSearchPageFn<HapiRowDescriptor> {
     }
   }
 
+  private void incrementElapsedTimeCounter(
+      HashMap<String, Counter> counterMap, String resourceType, long startTime) {
+    Counter counter = counterMap.get(resourceType);
+    if (counter != null) {
+      counter.inc(System.currentTimeMillis() - startTime);
+    }
+  }
+
   private String getFhirBasePackageName(String fhirVersion) {
     FhirVersionEnum fhirVersionEnum = FhirVersionEnum.forVersionString(fhirVersion);
-    switch (fhirVersionEnum) {
-      case DSTU2:
-        return org.hl7.fhir.dstu2.model.Base.class.getPackageName();
-      case DSTU2_1:
-        return org.hl7.fhir.dstu2016may.model.Base.class.getPackageName();
-      case DSTU3:
-        return org.hl7.fhir.dstu3.model.Base.class.getPackageName();
-      case R4:
-        return org.hl7.fhir.r4.model.Base.class.getPackageName();
-      case R4B:
-        return org.hl7.fhir.r4b.model.Base.class.getPackageName();
-      case R5:
-        return org.hl7.fhir.r5.model.Base.class.getPackageName();
-      default:
+    return switch (fhirVersionEnum) {
+      case DSTU2 -> org.hl7.fhir.dstu2.model.Base.class.getPackageName();
+      case DSTU2_1 -> org.hl7.fhir.dstu2016may.model.Base.class.getPackageName();
+      case DSTU3 -> org.hl7.fhir.dstu3.model.Base.class.getPackageName();
+      case R4 -> org.hl7.fhir.r4.model.Base.class.getPackageName();
+      case R4B -> org.hl7.fhir.r4b.model.Base.class.getPackageName();
+      case R5 -> org.hl7.fhir.r5.model.Base.class.getPackageName();
+      default -> {
         String errorMessage = String.format("Invalid fhir version %s", fhirVersion);
         log.error(errorMessage);
         throw new FHIRException(errorMessage);
-    }
+      }
+    };
   }
 }

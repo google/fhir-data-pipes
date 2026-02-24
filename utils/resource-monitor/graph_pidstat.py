@@ -24,14 +24,15 @@ Example usage:
       --outputParquetPath /tmp/hapi-test/  --outputResultsPath /tmp/hapi-performance/
 """
 
-import sys
-import os
-import pandas
-import subprocess
 import argparse
+import os
+import subprocess
+import sys
+from enum import Enum
+
+import pandas
 from matplotlib import pyplot
 from matplotlib.pyplot import figure
-from enum import Enum
 
 parser = argparse.ArgumentParser(
     description="Generate performance graphs for batch mode."
