@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2025 Google LLC
+ * Copyright 2020-2026 Google LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -117,7 +117,7 @@ public class DwhFilesManager {
    */
   @Nullable LocalDateTime getNextPurgeTime() {
     if (lastPurgeRunEnd == null) {
-      return LocalDateTime.now(ZoneOffset.UTC);
+      return getCurrentTime();
     }
     return purgeCron.next(lastPurgeRunEnd);
   }
@@ -132,10 +132,10 @@ public class DwhFilesManager {
       LocalDateTime next = getNextPurgeTime();
       if (next != null) {
         logger.info("Last purge run was at {} next run is at {}", lastPurgeRunEnd, next);
-        if (next.isBefore(LocalDateTime.now(ZoneOffset.UTC))) {
-          logger.info("Purge run triggered at {}", LocalDateTime.now(ZoneOffset.UTC));
+        if (next.isBefore(getCurrentTime())) {
+          logger.info("Purge run triggered at {}", getCurrentTime());
           purgeDwhFiles();
-          logger.info("Purge run completed at {}", LocalDateTime.now(ZoneOffset.UTC));
+          logger.info("Purge run completed at {}", getCurrentTime());
         }
       } else {
         logger.warn("Next purge time is null, please check the cron expression");
@@ -163,7 +163,7 @@ public class DwhFilesManager {
       TreeSet<String> recentSnapshotsToBeRetained =
           getRecentSnapshots(paths, numOfDwhSnapshotsToRetain);
       deleteOlderSnapshots(paths, recentSnapshotsToBeRetained);
-      lastPurgeRunEnd = LocalDateTime.now();
+      lastPurgeRunEnd = getCurrentTime();
     } catch (IOException e) {
       logger.error("Error occurred while purging older snapshots", e);
     }
@@ -470,5 +470,9 @@ public class DwhFilesManager {
         throw new IllegalArgumentException(errorMessage);
       }
     };
+  }
+
+  public LocalDateTime getCurrentTime() {
+    return LocalDateTime.now(ZoneOffset.UTC);
   }
 }

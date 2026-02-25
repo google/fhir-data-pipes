@@ -31,6 +31,7 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import org.apache.beam.sdk.metrics.Counter;
 import org.apache.beam.sdk.metrics.Metrics;
 import org.hl7.fhir.exceptions.FHIRException;
@@ -233,7 +234,7 @@ public class ConvertResourceFn extends FetchSearchPageFn<HapiRowDescriptor> {
   }
 
   private void incrementElapsedTimeCounter(
-      HashMap<String, Counter> counterMap, String resourceType, long startTime) {
+      Map<String, Counter> counterMap, String resourceType, long startTime) {
     Counter counter = counterMap.get(resourceType);
     if (counter != null) {
       counter.inc(System.currentTimeMillis() - startTime);

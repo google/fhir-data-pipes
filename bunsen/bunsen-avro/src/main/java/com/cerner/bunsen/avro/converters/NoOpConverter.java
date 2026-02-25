@@ -6,7 +6,6 @@ import com.cerner.bunsen.definitions.HapiConverter;
 import com.cerner.bunsen.definitions.HapiConverterUtil;
 import com.cerner.bunsen.exception.ProfileException;
 import org.apache.avro.Schema;
-import org.apache.avro.Schema.Type;
 import org.hl7.fhir.instance.model.api.IBase;
 import org.jspecify.annotations.Nullable;
 
@@ -20,7 +19,7 @@ public class NoOpConverter extends HapiConverter<Schema> {
 
   @Override
   public Schema getDataType() {
-    return Schema.create(Type.STRING);
+    return Schema.create(Schema.Type.STRING);
   }
 
   private static class FieldSetter implements HapiFieldSetter, HapiObjectConverter {

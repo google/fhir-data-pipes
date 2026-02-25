@@ -68,6 +68,7 @@ confidence=
 
 # Added missing-module-docstring to disable rule C0114, disables module docstring warnings
 # Added missing-class-docstring to disable rule C0115, disables class docstring warnings
+# Added logging-fstring-interpolation to disable rule W1203, disables logging f-string warnings
 disable=R,
         abstract-method,
         apply-builtin,
@@ -149,6 +150,7 @@ disable=R,
         zip-builtin-not-iterating,
         missing-module-docstring,
         missing-class-docstring,
+        logging-fstring-interpolation,
 
 
 [REPORTS]

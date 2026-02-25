@@ -99,7 +99,35 @@
             <arg>-XDcompilePolicy=simple</arg>
             <arg>--should-stop=ifError=FLOW</arg>
             <arg>
-              -Xplugin:ErrorProne -XepOpt:NullAway:AnnotatedPackages=${nullaway.annotatedPackages} -XepExcludedPaths:${nullaway.excludedPaths} -XepOpt:NullAway:JSpecifyMode=true -XepOpt:NullAway:CheckOptionalEmptiness=true
+              -Xplugin:ErrorProne \
+              -XepOpt:NullAway:AnnotatedPackages=${nullaway.annotatedPackages} \
+              -XepExcludedPaths:${nullaway.excludedPaths} \
+              -XepOpt:NullAway:JSpecifyMode=true \
+              -XepOpt:NullAway:CheckOptionalEmptiness=true \
+              -Xep:NullAway:ERROR \
+              -Xep:EqualsHashCode:ERROR \
+              -Xep:ReferenceEquality:ERROR \
+              -Xep:FallThrough:ERROR \
+              -Xep:MissingOverride:ERROR \
+              -Xep:MissingCasesInEnumSwitch:ERROR \
+              -Xep:FutureReturnValueIgnored:ERROR \
+              -Xep:OptionalNotPresent:ERROR \
+              -Xep:MutablePublicArray:ERROR \
+              -Xep:BadImport:ERROR \
+              -Xep:JavaUtilDate:ERROR \
+              -Xep:VariableNameSameAsType:ERROR \
+              -Xep:DefaultCharset:ERROR \
+              -Xep:CheckReturnValue:ERROR \
+              -Xep:ReferenceEquality:ERROR \
+              -Xep:StaticAssignmentInConstructor:ERROR \
+              -Xep:ArrayEquals:ERROR \
+              -Xep:CollectionIncompatibleType:ERROR \
+              -Xep:AsyncCallableReturnsNull:ERROR \
+              -Xep:AsyncFunctionReturnsNull:ERROR \
+              -Xep:BadShiftAmount:ERROR \
+              -Xep:BanJNDI:ERROR \
+              -Xep:WaitNotInLoop:ERROR \
+              -Xep:LockNotBeforeTry:ERROR
             </arg>
             <arg>
               -J--add-exports=jdk.compiler/com.sun.tools.javac.api=ALL-UNNAMED
