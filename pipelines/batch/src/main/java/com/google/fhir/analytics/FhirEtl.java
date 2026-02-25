@@ -100,6 +100,7 @@ public class FhirEtl {
         options.getFhirServerOAuthClientId(),
         options.getFhirServerOAuthClientSecret(),
         options.getCheckPatientEndpoint(),
+        options.getQuietMode(),
         fhirContext);
   }
 
@@ -214,13 +215,11 @@ public class FhirEtl {
     List<PCollection<KV<String, Integer>>> allPatientIds = Lists.newArrayList();
     for (Map.Entry<String, List<String>> entry : reverseMap.entrySet()) {
       String tableName = entry.getKey();
-      log.info(String.format("List of resources for table %s is %s", tableName, entry.getValue()));
+      log.info("List of resources for table {} is {}", tableName, entry.getValue());
       PCollection<String> uuids;
       if (options.getActivePeriod().isEmpty() || !tableDateColumn.containsKey(tableName)) {
         if (!options.getActivePeriod().isEmpty()) {
-          log.warn(
-              String.format(
-                  "There is no date mapping for table %s; fetching all rows.", tableName));
+          log.warn("There is no date mapping for table {}; fetching all rows.", tableName);
         }
         uuids = jdbcUtil.fetchAllUuids(pipeline, tableName, options.getJdbcFetchSize());
       } else {
@@ -548,7 +547,8 @@ public class FhirEtl {
     PipelineOptionsFactory.register(FhirEtlOptions.class);
     FhirEtlOptions options =
         PipelineOptionsFactory.fromArgs(args).withValidation().as(FhirEtlOptions.class);
-    log.info("Flags: " + options);
+    LoggingConfigurator.applyQuietMode(options.getQuietMode());
+    log.info("Flags: {}", options);
     validateOptions(options);
     AvroConversionUtil avroConversionUtil =
         AvroConversionUtil.getInstance(

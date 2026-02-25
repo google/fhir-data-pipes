@@ -84,9 +84,9 @@ public class FetchResources
       }
       if (values.size() > 1) {
         log.warn(
-            String.format(
-                "Unexpected multiple values for subject of %s with id %s",
-                resource.getResourceType(), resource.getId()));
+            "Unexpected multiple values for subject of {} with id {}",
+            resource.getResourceType(),
+            resource.getId());
       }
     }
     if (patientId == null) {
@@ -139,11 +139,10 @@ public class FetchResources
         throws IOException, SQLException, ViewApplicationException, ProfileException {
       String searchUrl = segment.searchUrl();
       log.info(
-          String.format(
-              "Fetching %d resources for state %s; URL= %s",
-              segment.count(),
-              this.stageIdentifier,
-              searchUrl.substring(0, Math.min(200, searchUrl.length()))));
+          "Fetching {} resources for state {}; URL={}",
+          segment.count(),
+          this.stageIdentifier,
+          searchUrl.substring(0, Math.min(200, searchUrl.length())));
       long fetchStartTime = System.currentTimeMillis();
       Bundle pageBundle = fhirSearchUtil.searchByUrl(searchUrl, segment.count(), SummaryEnum.DATA);
       addFetchTime(System.currentTimeMillis() - fetchStartTime);
