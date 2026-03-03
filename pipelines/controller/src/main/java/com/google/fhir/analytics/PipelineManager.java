@@ -178,10 +178,17 @@ public class PipelineManager implements ApplicationListener<ApplicationReadyEven
     return null;
   }
 
-  private void setLastRunStatus(LastRunStatus status) {
+  @VisibleForTesting
+  void setLastRunStatus(LastRunStatus status) {
     if (status == LastRunStatus.SUCCESS) {
       lastRunEnd = dwhFilesManager.getCurrentTime();
     }
+  }
+
+  /** This method is used in the test to set the cron expression for testing purposes. */
+  @VisibleForTesting
+  public void setCron(CronExpression cron) {
+    this.cron = cron;
   }
 
   @PostConstruct
