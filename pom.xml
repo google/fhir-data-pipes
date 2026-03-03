@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
- Copyright 2020 Google LLC
+ Copyright 2026 Google LLC
 
  Licensed under the Apache License, Version 2.0 (the "License");
  you may not use this file except in compliance with the License.
@@ -55,7 +55,7 @@
     <sonar.java.binaries>target/classes</sonar.java.binaries>
     <lombok.version>1.18.42</lombok.version>
     <errorprone.version>2.48.0</errorprone.version>
-    <nullaway.version>0.12.10</nullaway.version>
+    <nullaway.version>0.13.1</nullaway.version>
     <auto-value.version>1.11.1</auto-value.version>
     <mockito.version>5.2.0</mockito.version>
     <nullaway.annotatedPackages>com.google.fhir.analytics</nullaway.annotatedPackages>
@@ -98,6 +98,7 @@
             <arg>--add-exports=java.base/jdk.internal.misc=ALL-UNNAMED</arg>
             <arg>-XDcompilePolicy=simple</arg>
             <arg>--should-stop=ifError=FLOW</arg>
+            <!-- Required when compiling on JDK 21 -->
             <arg>-XDaddTypeAnnotationsToSymbol=true</arg>
             <arg>
               -Xplugin:ErrorProne -XepOpt:NullAway:AnnotatedPackages=${nullaway.annotatedPackages} -XepExcludedPaths:${nullaway.excludedPaths} -XepOpt:NullAway:JSpecifyMode=true -XepOpt:NullAway:CheckOptionalEmptiness=true
