@@ -73,6 +73,8 @@ public class FetchUtil {
 
   private final boolean checkPatientEndpoint;
 
+  private final boolean quietMode;
+
   private final FhirContext fhirContext;
 
   @Nullable private final IClientInterceptor authInterceptor;
@@ -85,6 +87,7 @@ public class FetchUtil {
       String oAuthClientId,
       String oAuthClientSecret,
       boolean checkPatientEndpoint,
+      boolean quietMode,
       FhirContext fhirContext) {
     this.fhirUrl = sourceFhirUrl;
     this.sourceUser = Strings.nullToEmpty(sourceUser);
@@ -92,6 +95,7 @@ public class FetchUtil {
     this.oAuthClientId = Strings.nullToEmpty(oAuthClientId);
     this.oAuthClientSecret = Strings.nullToEmpty(oAuthClientSecret);
     this.checkPatientEndpoint = checkPatientEndpoint;
+    this.quietMode = quietMode;
     this.fhirContext = fhirContext;
     Preconditions.checkState(
         this.oAuthTokenEndpoint.isEmpty()
@@ -214,7 +218,7 @@ public class FetchUtil {
       client.registerInterceptor(authInterceptor);
     }
 
-    if (enableRequestLogging) {
+    if (enableRequestLogging && !quietMode) {
       LoggingInterceptor loggingInterceptor = new LoggingInterceptor();
       loggingInterceptor.setLogger(log);
       loggingInterceptor.setLogRequestSummary(true);

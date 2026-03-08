@@ -105,6 +105,8 @@ abstract class FetchSearchPageFn<T> extends DoFn<T, KV<String, Integer>> {
 
   private final int recursiveDepth;
 
+  private final boolean quietMode;
+
   @Nullable protected final DataSourceConfig sinkDbConfig;
 
   protected final String viewDefinitionsDir;
@@ -160,6 +162,7 @@ abstract class FetchSearchPageFn<T> extends DoFn<T, KV<String, Integer>> {
     this.structureDefinitionsPath = options.getStructureDefinitionsPath();
     this.fhirVersionEnum = options.getFhirVersion();
     this.recursiveDepth = options.getRecursiveDepth();
+    this.quietMode = options.getQuietMode();
     if (options.getSinkDbConfigPath().isEmpty()) {
       this.sinkDbConfig = null;
     } else {
@@ -194,7 +197,8 @@ abstract class FetchSearchPageFn<T> extends DoFn<T, KV<String, Integer>> {
 
   @Setup
   public void setup() throws SQLException, ProfileException {
-    log.debug("Starting setup for stage " + stageIdentifier);
+    LoggingConfigurator.applyQuietMode(quietMode);
+    log.debug("Starting setup for stage {}", stageIdentifier);
     avroConversionUtil =
         AvroConversionUtil.getInstance(fhirVersionEnum, structureDefinitionsPath, recursiveDepth);
     FhirContext fhirContext = avroConversionUtil.getFhirContext();
@@ -223,6 +227,7 @@ abstract class FetchSearchPageFn<T> extends DoFn<T, KV<String, Integer>> {
             oAuthClientId,
             oAuthClientSecret,
             checkPatientEndpoint,
+            quietMode,
             fhirContext);
     Preconditions.checkNotNull(fetchUtil);
     fhirSearchUtil = new FhirSearchUtil(fetchUtil);

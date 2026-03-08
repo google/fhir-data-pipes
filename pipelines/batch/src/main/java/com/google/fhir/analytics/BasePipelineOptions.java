@@ -84,4 +84,10 @@ public interface BasePipelineOptions extends PipelineOptions {
   Integer getRecursiveDepth();
 
   void setRecursiveDepth(Integer value);
+
+  @Description("When true, suppress noisy pipeline INFO logs (WARN/ERROR only).")
+  @Default.Boolean(false)
+  boolean getQuietMode();
+
+  void setQuietMode(boolean value);
 }

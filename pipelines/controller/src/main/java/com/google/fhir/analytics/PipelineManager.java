@@ -346,6 +346,7 @@ public class PipelineManager implements ApplicationListener<ApplicationReadyEven
   }
 
   private void validateFhirServerParams(FhirEtlOptions options) {
+    LoggingConfigurator.applyQuietMode(options.getQuietMode());
     FetchUtil fetchUtil =
         new FetchUtil(
             options.getFhirServerUrl(),
@@ -355,6 +356,7 @@ public class PipelineManager implements ApplicationListener<ApplicationReadyEven
             options.getFhirServerOAuthClientId(),
             options.getFhirServerOAuthClientSecret(),
             options.getCheckPatientEndpoint(),
+            options.getQuietMode(),
             avroConversionUtil.getFhirContext());
     fetchUtil.testFhirConnection();
   }
@@ -472,6 +474,7 @@ public class PipelineManager implements ApplicationListener<ApplicationReadyEven
     mergerOptions.setMergedDwh(finalDwhRoot);
     mergerOptions.setRunner(FlinkRunner.class);
     mergerOptions.setViewDefinitionsDir(options.getViewDefinitionsDir());
+    mergerOptions.setQuietMode(options.getQuietMode());
     // The number of shards is set based on the parallelism available for the FlinkRunner
     // Pipeline
     // TODO: For Flink non-local mode, refactor this to be not dependent on the
@@ -717,6 +720,7 @@ public class PipelineManager implements ApplicationListener<ApplicationReadyEven
 
     @Override
     public void run() {
+      LoggingConfigurator.applyQuietMode(options.getQuietMode());
       long start = System.currentTimeMillis();
       // The number of threads may increase after a few runs, but it should eventually go down.
       logger.info(
