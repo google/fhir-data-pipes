@@ -101,24 +101,12 @@ In the example above, the URL for the logs for that build would be:
 
 ## Running end-to-end tests locally
 
-The CI pipeline can also be run locally, using the Cloud Build local builder. To
-setup the local builder, follow the instructions
-[here](https://cloud.google.com/build/docs/build-debug-locally); you will need
-Docker, and the Google Cloud SDK to install the local builder. Once the local
-builder is installed, do the following:
-
-1. Stop any running `openmrs`, `openmrs-fhir-mysql`, and `sink-server`
-   containers by running:
-
-   ```bash
-   docker stop sink-server openmrs openmrs-fhir-mysql
-   ```
-
-2. Run the e2e-test using the local builder:
-
-   ```bash
-   cloud-build-local  --dryrun=false .
-   ```
+The CI pipeline steps can also be run locally. The Cloud Build local builder was
+deprecated in April 2023. You can still iterate on the `cloudbuild.yaml` steps
+by running them manually using Docker and the same tooling that Cloud Build
+uses. Please follow the steps on the link
+[Run Cloud Build Steps Locally](debug-cloud-build-locally.md) to run the
+end-to-end tests locally.
 
 ## Parallelization of end-to-end tests
 
