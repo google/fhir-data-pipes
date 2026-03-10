@@ -185,12 +185,6 @@ public class PipelineManager implements ApplicationListener<ApplicationReadyEven
     }
   }
 
-  /** This method is used in the test to set the cron expression for testing purposes. */
-  @VisibleForTesting
-  public void setCron(CronExpression cron) {
-    this.cron = cron;
-  }
-
   @PostConstruct
   private void initDwhStatus() throws ProfileException {
 
