@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2025 Google LLC
+ * Copyright 2020-2026 Google LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,26 +32,20 @@ abstract class HapiRowDescriptor implements Serializable {
 
   static HapiRowDescriptor create(
       String resourceId,
-      String forcedId,
+      String fhirId,
       String resourceType,
       String lastUpdated,
       String fhirVersion,
       String resourceVersion,
       String jsonResource) {
     return new AutoValue_HapiRowDescriptor(
-        resourceId,
-        forcedId,
-        resourceType,
-        lastUpdated,
-        fhirVersion,
-        resourceVersion,
-        jsonResource);
+        resourceId, fhirId, resourceType, lastUpdated, fhirVersion, resourceVersion, jsonResource);
   }
 
   abstract String resourceId();
 
   @Nullable
-  abstract String forcedId();
+  abstract String fhirId();
 
   abstract String resourceType();
 
