@@ -53,9 +53,9 @@
     <sonar.login>admin</sonar.login>
     <sonar.password>admin</sonar.password>
     <sonar.java.binaries>target/classes</sonar.java.binaries>
-    <lombok.version>1.18.42</lombok.version>
-    <errorprone.version>2.48.0</errorprone.version>
-    <nullaway.version>0.13.1</nullaway.version>
+    <lombok.version>1.18.44</lombok.version>
+    <errorprone.version>2.49.0</errorprone.version>
+    <nullaway.version>0.13.3</nullaway.version>
     <auto-value.version>1.11.1</auto-value.version>
     <mockito.version>5.2.0</mockito.version>
     <nullaway.annotatedPackages>com.google.fhir.analytics</nullaway.annotatedPackages>
@@ -171,7 +171,7 @@
       <plugin>
         <groupId>com.diffplug.spotless</groupId>
         <artifactId>spotless-maven-plugin</artifactId>
-        <version>3.2.1</version>
+        <version>3.4.0</version>
         <configuration>
           <pom>
             <sortPom>
