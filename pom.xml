@@ -53,7 +53,7 @@
     <sonar.login>admin</sonar.login>
     <sonar.password>admin</sonar.password>
     <sonar.java.binaries>target/classes</sonar.java.binaries>
-    <lombok.version>1.18.44</lombok.version>
+    <lombok.version>1.18.46</lombok.version>
     <errorprone.version>2.42.0</errorprone.version>
     <nullaway.version>0.12.10</nullaway.version>
     <auto-value.version>1.11.1</auto-value.version>
