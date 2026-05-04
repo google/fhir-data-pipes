@@ -134,23 +134,37 @@ the editable version of it is available at this
 
 ## Regenerate JAR File
 
-Parquet tools library is used to inspect parquet files. The jar file has been
-included in the project under `/e2e-tests/parquet-tools-1.11.1.jar`
+Parquet CLI library is used to inspect parquet files in the e2e tests. The jar
+file has been included in the project under
+`/e2e-tests/controller-spark/parquet-cli-1.17.0-runtime.jar`.
+
+`parquet-tools` (used up to parquet-mr 1.11.1) was replaced by `parquet-cli`
+starting with `apache-parquet-1.12.0`. The `parquet-cli` module does not ship a
+self-contained fat-jar to Maven Central (Hadoop is marked as *provided*), so
+the jar must be built from source using the `-Plocal` Maven profile, which
+bundles Hadoop and all other dependencies into the runtime jar.
 
 To regenerate this jar file:
 
 1.  Clone [parquet-mr](https://github.com/apache/parquet-mr)
-2.  Checkout last released version `git checkout apache-parquet-1.11.1`
-3.  [Install](https://github.com/apache/parquet-mr#install-thrift) thrift
-    compiler v0.12.0
-4.  To build the jar file run
-    `mvn -pl parquet-tools -am clean install -Plocal -DskipTests` You should be
-    able to see `parquet-tools-1.11.1.jar` inside parquet-tools module.
-5.  Command usage for parquet tools
-    `java -jar ./parquet-tools-<VERSION>.jar <command> my_parquet_file`
-
-    NOTE: Parquet tools will be replaced with parquet cli in the next release
-    `apache-parquet-1.12.0`
+2.  Checkout the target version `git checkout apache-parquet-1.17.0`
+3.  Build the fat jar (Thrift is **not** required for `parquet-cli`):
+    ```bash
+    mvn -pl parquet-cli -am clean install -Plocal -DskipTests -Dspotless.check.skip=true
+    ```
+    You should see `parquet-cli-1.17.0-runtime.jar` inside the
+    `parquet-cli/target/` directory (~97 MB, includes Hadoop).
+4.  Copy the resulting jar into the project:
+    ```bash
+    cp parquet-cli/target/parquet-cli-1.17.0-runtime.jar \
+       /path/to/fhir-data-pipes/e2e-tests/controller-spark/
+    ```
+5.  Command usage – note that `parquet-cli` uses `meta` instead of `rowcount`:
+    ```bash
+    java -jar parquet-cli-<VERSION>-runtime.jar meta my_parquet_file.parquet
+    ```
+    Row counts are reported per row-group as `count: N` in the metadata output.
+    The `parquet_utils.sh` helper sums these automatically.
 
 ## Error Prone and NullAway
 
