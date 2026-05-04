@@ -17,9 +17,9 @@ FROM bitnamilegacy/spark:4.0.0
 ##############################################################################################
 # NOTE: This Docker image is designed to run exclusively in Cloud Build environment.
 # Where the entire repository is automatically mounted at /workspace.
-# Scripts (controller_spark_sql_validation.sh, lib/parquet_utils.sh)
-# and JARs (parquet-tools-1.11.1.jar) are accessed directly from the mounted repository
-# at runtime so we do **NOT** COPY them into the image.
+# Scripts (controller_spark_sql_validation.sh, lib/parquet_utils.sh, lib/parquet_rowcount.py)
+# are accessed directly from the mounted repository at runtime so we do **NOT** COPY them
+# into the image.
 #
 # If you ever need to run this image **outside** Cloud Build, you must bind-mount the repo
 # to /workspace or manually copy the required files into the container.
@@ -27,7 +27,7 @@ FROM bitnamilegacy/spark:4.0.0
 
 USER root
 RUN apt-get update && apt-get install -y jq curl python3 python3-pip
-RUN pip3 install virtualenv google-auth requests
+RUN pip3 install virtualenv google-auth requests pyarrow
 
 ENV PARQUET_SUBDIR="dwh"
 ENV DOCKER_NETWORK="--use_docker_network"
