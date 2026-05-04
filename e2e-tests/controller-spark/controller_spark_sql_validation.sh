@@ -25,7 +25,7 @@ set -e
 # -------------------------------------------------------------------
 source "$(dirname "$0")/../lib/parquet_utils.sh"
 
-PARQUET_CLI_JAR=""
+PARQUET_TOOLS_JAR=""
 
 #################################################
 # Prints the usage
@@ -36,7 +36,7 @@ function usage() {
   echo
   echo " usage: ./controller_spark_sql_validation.sh  HOME_DIR  PARQUET_SUBDIR  [OPTIONS] "
   echo "    HOME_DIR          Path where e2e-tests/controller-spark directory is. Directory MUST"
-  echo "                      contain the parquet-cli jar as well as subdirectory"
+  echo "                      contain the parquet tools jar as well as subdirectory"
   echo "                      of parquet file output"
   echo "    PARQUET_SUBDIR    Subdirectory name under HOME_DIR containing"
   echo "                      parquet files  "
@@ -56,11 +56,11 @@ function validate_args() {
     exit 1
   fi
 
-  echo "Checking if the Parquet-CLI JAR exists..."
-  if [[ -n $(find "${1}" -name parquet-cli*.jar) ]]; then
-    echo "Parquet-CLI JAR exists in ${1}"
+  echo "Checking if the Parquet-tools JAR exists..."
+  if [[ -n $(find "${1}" -name parquet-tools*.jar) ]]; then
+    echo "Parquet-tools JAR exists in ${1}"
   else
-    echo "Parquet-CLI JAR not found in ${1}"
+    echo "Parquet-tools JAR not found in ${1}"
     usage
     exit 1
   fi
@@ -106,7 +106,7 @@ function setup() {
   SINK_FHIR_SERVER_URL='http://localhost:8098'
   PIPELINE_CONTROLLER_URL='http://localhost:8090'
   THRIFTSERVER_URL='localhost:10001'
-  PARQUET_CLI_JAR="${HOME_PATH}/parquet-cli-1.17.0-runtime.jar"
+  PARQUET_TOOLS_JAR="${HOME_PATH}/parquet-tools-1.11.1.jar"
   if [[ $3 = "--use_docker_network" ]]; then
     SOURCE_FHIR_SERVER_URL='http://hapi-server:8080'
     SINK_FHIR_SERVER_URL='http://sink-server-controller:8080'
@@ -262,37 +262,37 @@ function check_parquet() {
     total_patients=$(retry_rowcount \
       "${output}/*/Patient/" \
       "${TOTAL_TEST_PATIENTS}" \
-      "${PARQUET_CLI_JAR}") || true
+      "${PARQUET_TOOLS_JAR}") || true
 
     local total_encounters
     total_encounters=$(retry_rowcount \
       "${output}/*/Encounter/" \
       "${TOTAL_TEST_ENCOUNTERS}" \
-      "${PARQUET_CLI_JAR}") || true
+      "${PARQUET_TOOLS_JAR}") || true
 
     local total_observations
     total_observations=$(retry_rowcount \
       "${output}/*/Observation/" \
       "${TOTAL_TEST_OBS}" \
-      "${PARQUET_CLI_JAR}") || true
+      "${PARQUET_TOOLS_JAR}") || true
 
     local total_patient_flat
     total_patient_flat=$(retry_rowcount \
       "${output}/*/VIEWS_TIMESTAMP_*/patient_flat/" \
       "${TOTAL_VIEW_PATIENTS}" \
-      "${PARQUET_CLI_JAR}") || true
+      "${PARQUET_TOOLS_JAR}") || true
 
     local total_encounter_flat
     total_encounter_flat=$(retry_rowcount \
       "${output}/*/VIEWS_TIMESTAMP_*/encounter_flat/" \
       "${TOTAL_TEST_ENCOUNTERS}" \
-      "${PARQUET_CLI_JAR}") || true
+      "${PARQUET_TOOLS_JAR}") || true
 
     local total_obs_flat
     total_obs_flat=$(retry_rowcount \
       "${output}/*/VIEWS_TIMESTAMP_*/observation_flat/" \
       "${TOTAL_TEST_OBS}" \
-      "${PARQUET_CLI_JAR}") || true
+      "${PARQUET_TOOLS_JAR}") || true
     # ------------------------------------------------------------------
 
     print_message "Total patients: ${total_patients}"
