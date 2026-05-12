@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2025 Google LLC
+ * Copyright 2020-2026 Google LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -326,6 +326,7 @@ public class FhirEtl {
     DataSource jdbcSource = createJdbcPooledDataSource(options, dbConfig);
 
     JdbcFetchHapi jdbcFetchHapi = new JdbcFetchHapi(jdbcSource);
+    boolean hasFhirIdColumn = jdbcFetchHapi.hasFhirIdColumn();
     Map<String, Integer> resourceCount =
         jdbcFetchHapi.searchResourceCounts(options.getResourceList(), options.getSince());
 
@@ -353,7 +354,8 @@ public class FhirEtl {
               new JdbcFetchHapi.FetchRowsJdbcIo(
                   options.getResourceList(),
                   JdbcIO.DataSourceConfiguration.create(jdbcSource),
-                  options.getSince()));
+                  options.getSince(),
+                  hasFhirIdColumn));
 
       payload.apply(
           "Convert to parquet for " + resourceType,

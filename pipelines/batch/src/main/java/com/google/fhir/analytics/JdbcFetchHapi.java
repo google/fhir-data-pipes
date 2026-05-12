@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2025 Google LLC
+ * Copyright 2020-2026 Google LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -59,6 +59,26 @@ public class JdbcFetchHapi {
   }
 
   /**
+   * Detects whether the HAPI FHIR database has a fhir_id column on hfj_resource (HAPI 7.2.0+) by
+   * querying information_schema. Returns true if the column exists, false otherwise.
+   */
+  boolean hasFhirIdColumn() throws SQLException {
+    try (Connection connection = jdbcSource.getConnection();
+        PreparedStatement stmt =
+            connection.prepareStatement(
+                "SELECT COUNT(*) FROM information_schema.columns"
+                    + " WHERE table_name = 'hfj_resource' AND column_name = 'fhir_id'");
+        ResultSet rs = stmt.executeQuery()) {
+      rs.next();
+      boolean found = rs.getInt(1) > 0;
+      log.info(
+          "HAPI FHIR schema detection: hfj_resource.fhir_id column {}.",
+          found ? "found" : "not found");
+      return found;
+    }
+  }
+
+  /**
    * RowMapper class implementation for JdbcIo direct fetch with HAPI as the source FHIR server.
    * Each element in the ResultSet returned by the query maps to a List of String objects
    * corresponding to the column values in the query result.
@@ -95,7 +115,7 @@ public class JdbcFetchHapi {
           };
 
       String resourceId = resultSet.getString("res_id");
-      String forcedId = resultSet.getString("forced_id");
+      String fhirId = resultSet.getString("fhir_id");
       String resourceType = resultSet.getString("res_type");
       String lastUpdated = resultSet.getString("res_updated");
       String fhirVersion = resultSet.getString("res_version");
@@ -104,7 +124,7 @@ public class JdbcFetchHapi {
         numMappedResourcesMap.get(resourceType).inc();
       return HapiRowDescriptor.create(
           resourceId,
-          forcedId,
+          fhirId,
           resourceType,
           lastUpdated,
           fhirVersion,
@@ -147,18 +167,40 @@ public class JdbcFetchHapi {
     private final String tagQuery;
 
     public FetchRowsJdbcIo(
-        String resourceList, JdbcIO.DataSourceConfiguration dataSourceConfig, String since) {
+        String resourceList,
+        JdbcIO.DataSourceConfiguration dataSourceConfig,
+        String since,
+        boolean hasFhirIdColumn) {
       this.resourceList = resourceList;
       this.dataSourceConfig = dataSourceConfig;
       // Note the constraint on `res.res_ver` ensures we only pick the latest version.
-      StringBuilder builder =
-          new StringBuilder(
-              "SELECT res.res_id, hfi.forced_id, res.res_type, res.res_updated, res.res_ver,"
-                  + " res.res_version, ver.res_encoding, ver.res_text, ver.res_text_vc "
-                  + " FROM hfj_resource res JOIN"
-                  + " hfj_res_ver ver ON res.res_id = ver.res_id AND res.res_ver = ver.res_ver "
-                  + " LEFT JOIN hfj_forced_id hfi ON res.res_id = hfi.resource_pid "
-                  + " WHERE res.res_type = ? AND res.res_id % ? = ?");
+      StringBuilder builder;
+      if (hasFhirIdColumn) {
+        // HAPI 7.2.0+: prefer res.fhir_id, fall back to hfj_forced_id via subquery (no JOIN).
+        builder =
+            new StringBuilder(
+                "SELECT res.res_id,"
+                    + " CASE WHEN res.fhir_id IS NOT NULL THEN res.fhir_id"
+                    + " ELSE (SELECT hfi.forced_id FROM hfj_forced_id hfi"
+                    + " WHERE hfi.resource_pid = res.res_id)"
+                    + " END AS fhir_id,"
+                    + " res.res_type, res.res_updated, res.res_ver,"
+                    + " res.res_version, ver.res_encoding, ver.res_text, ver.res_text_vc "
+                    + " FROM hfj_resource res JOIN"
+                    + " hfj_res_ver ver ON res.res_id = ver.res_id AND res.res_ver = ver.res_ver "
+                    + " WHERE res.res_type = ? AND res.res_id % ? = ?");
+      } else {
+        // Old HAPI: fhir_id column does not exist, use hfj_forced_id table.
+        builder =
+            new StringBuilder(
+                "SELECT res.res_id, hfi.forced_id AS fhir_id,"
+                    + " res.res_type, res.res_updated, res.res_ver,"
+                    + " res.res_version, ver.res_encoding, ver.res_text, ver.res_text_vc "
+                    + " FROM hfj_resource res JOIN"
+                    + " hfj_res_ver ver ON res.res_id = ver.res_id AND res.res_ver = ver.res_ver "
+                    + " LEFT JOIN hfj_forced_id hfi ON res.res_id = hfi.resource_pid "
+                    + " WHERE res.res_type = ? AND res.res_id % ? = ?");
+      }
       // TODO do date sanity-checking on `since` (note this is partly done by HAPI client call).
       if (since != null && !since.isEmpty()) {
         builder.append(" AND res.res_updated > '").append(since).append("'");

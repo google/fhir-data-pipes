@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2025 Google LLC
+ * Copyright 2020-2026 Google LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -99,7 +99,7 @@ public class ConvertResourceFn extends FetchSearchPageFn<HapiRowDescriptor> {
   public void writeResource(HapiRowDescriptor element)
       throws IOException, ParseException, SQLException, ViewApplicationException, ProfileException {
     String resourceId = element.resourceId();
-    String forcedId = element.forcedId();
+    String fhirId = element.fhirId();
     String resourceType = element.resourceType();
     Meta meta =
         new Meta()
@@ -135,10 +135,10 @@ public class ConvertResourceFn extends FetchSearchPageFn<HapiRowDescriptor> {
       }
     }
     incrementElapsedTimeCounter(totalParseTimeMillisMap, resourceType, startTime);
-    if (forcedId == null || forcedId.isEmpty()) {
+    if (fhirId == null || fhirId.isEmpty()) {
       resource.setId(resourceId);
     } else {
-      resource.setId(forcedId);
+      resource.setId(fhirId);
     }
     resource.setMeta(meta);
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2025 Google LLC
+ * Copyright 2020-2026 Google LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,9 @@ package com.google.fhir.analytics;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 
 import java.beans.PropertyVetoException;
 import java.io.IOException;
@@ -84,6 +86,7 @@ public class JdbcFetchHapiTest {
   public void testMapRow() throws Exception {
     Mockito.when(resultSet.getString("res_encoding")).thenReturn("DEL");
     Mockito.when(resultSet.getString("res_id")).thenReturn("101");
+    Mockito.when(resultSet.getString("fhir_id")).thenReturn("encounter-abc-123");
     Mockito.when(resultSet.getString("res_type")).thenReturn("Encounter");
     Mockito.when(resultSet.getString("res_updated")).thenReturn("2002-03-12 10:09:20");
     Mockito.when(resultSet.getString("res_ver")).thenReturn("1");
@@ -94,6 +97,7 @@ public class JdbcFetchHapiTest {
 
     assertNotNull(rowDescriptor);
     assertEquals("101", rowDescriptor.resourceId());
+    assertEquals("encounter-abc-123", rowDescriptor.fhirId());
     assertEquals("Encounter", rowDescriptor.resourceType());
     assertEquals("1", rowDescriptor.resourceVersion());
     assertEquals("2002-03-12 10:09:20", rowDescriptor.lastUpdated());
@@ -125,5 +129,43 @@ public class JdbcFetchHapiTest {
     assertThat(resourceCountMap.get("Patient"), equalTo(100));
     assertThat(resourceCountMap.get("Encounter"), equalTo(100));
     assertThat(resourceCountMap.get("Observation"), equalTo(100));
+  }
+
+  @Test
+  public void testHasFhirIdColumn_columnExists() throws SQLException {
+    Connection mockedConnection = Mockito.mock(Connection.class);
+    PreparedStatement mockedStmt = Mockito.mock(PreparedStatement.class);
+    ResultSet mockedResultSet = Mockito.mock(ResultSet.class);
+
+    Mockito.when(mockedDataSource.getConnection()).thenReturn(mockedConnection);
+    Mockito.when(
+            mockedConnection.prepareStatement(
+                "SELECT COUNT(*) FROM information_schema.columns"
+                    + " WHERE table_name = 'hfj_resource' AND column_name = 'fhir_id'"))
+        .thenReturn(mockedStmt);
+    Mockito.when(mockedStmt.executeQuery()).thenReturn(mockedResultSet);
+    Mockito.when(mockedResultSet.next()).thenReturn(true);
+    Mockito.when(mockedResultSet.getInt(1)).thenReturn(1);
+
+    assertTrue(jdbcFetchHapi.hasFhirIdColumn());
+  }
+
+  @Test
+  public void testHasFhirIdColumn_columnDoesNotExist() throws SQLException {
+    Connection mockedConnection = Mockito.mock(Connection.class);
+    PreparedStatement mockedStmt = Mockito.mock(PreparedStatement.class);
+    ResultSet mockedResultSet = Mockito.mock(ResultSet.class);
+
+    Mockito.when(mockedDataSource.getConnection()).thenReturn(mockedConnection);
+    Mockito.when(
+            mockedConnection.prepareStatement(
+                "SELECT COUNT(*) FROM information_schema.columns"
+                    + " WHERE table_name = 'hfj_resource' AND column_name = 'fhir_id'"))
+        .thenReturn(mockedStmt);
+    Mockito.when(mockedStmt.executeQuery()).thenReturn(mockedResultSet);
+    Mockito.when(mockedResultSet.next()).thenReturn(true);
+    Mockito.when(mockedResultSet.getInt(1)).thenReturn(0);
+
+    assertFalse(jdbcFetchHapi.hasFhirIdColumn());
   }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2025 Google LLC
+ * Copyright 2020-2026 Google LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -72,7 +72,7 @@ public class ConvertResourceFnTest {
   }
 
   @Test
-  public void testProcessPatientResource_withoutForcedId()
+  public void testProcessPatientResource_withoutFhirId()
       throws IOException,
           java.text.ParseException,
           SQLException,
@@ -101,7 +101,7 @@ public class ConvertResourceFnTest {
   }
 
   @Test
-  public void testProcessPatientResource_withForcedId()
+  public void testProcessPatientResource_withFhirId()
       throws IOException,
           java.text.ParseException,
           SQLException,
@@ -114,19 +114,13 @@ public class ConvertResourceFnTest {
         Resources.toString(Resources.getResource("patient.json"), StandardCharsets.UTF_8);
     HapiRowDescriptor element =
         HapiRowDescriptor.create(
-            "123",
-            "forced-id-123",
-            "Patient",
-            "2020-09-19 12:09:23",
-            "R4",
-            "1",
-            patientResourceStr);
+            "123", "fhir-id-123", "Patient", "2020-09-19 12:09:23", "R4", "1", patientResourceStr);
     convertResourceFn.writeResource(element);
 
     // Verify the resource is sent to the writer.
     verify(mockParquetUtil).write(resourceCaptor.capture());
     Resource capturedResource = resourceCaptor.getValue();
-    assertThat(capturedResource.getId(), equalTo("forced-id-123"));
+    assertThat(capturedResource.getId(), equalTo("fhir-id-123"));
     assertThat(capturedResource.getMeta().getVersionId(), equalTo("1"));
     assertThat(
         capturedResource.getMeta().getLastUpdated(),
@@ -148,7 +142,7 @@ public class ConvertResourceFnTest {
     // Deleted Patient resource
     HapiRowDescriptor element =
         HapiRowDescriptor.create(
-            "123", "forced-id-123", "Patient", "2020-09-19 12:09:23", "R4", "2", "");
+            "123", "fhir-id-123", "Patient", "2020-09-19 12:09:23", "R4", "2", "");
     convertResourceFn.writeResource(element);
     // Verify that the ParquetUtil writer is not invoked for the deleted resource.
     verify(mockParquetUtil, times(0)).write(Mockito.any());
@@ -167,13 +161,13 @@ public class ConvertResourceFnTest {
     // Deleted Patient resource
     HapiRowDescriptor element =
         HapiRowDescriptor.create(
-            "123", "forced-id-123", "Patient", "2020-09-19 12:09:23", "R4", "2", "");
+            "123", "fhir-id-123", "Patient", "2020-09-19 12:09:23", "R4", "2", "");
     convertResourceFn.writeResource(element);
 
     // Verify the deleted resource is sent to the writer.
     verify(mockParquetUtil).write(resourceCaptor.capture());
     Resource capturedResource = resourceCaptor.getValue();
-    assertThat(capturedResource.getId(), equalTo("forced-id-123"));
+    assertThat(capturedResource.getId(), equalTo("fhir-id-123"));
     assertThat(capturedResource.getMeta().getVersionId(), equalTo("2"));
     assertThat(
         capturedResource
@@ -200,13 +194,7 @@ public class ConvertResourceFnTest {
         Resources.toString(Resources.getResource("patient.json"), StandardCharsets.UTF_8);
     HapiRowDescriptor element =
         HapiRowDescriptor.create(
-            "123",
-            "forced-id-123",
-            "Patient",
-            "2020-09-19 12:09:23",
-            "R4",
-            "1",
-            patientResourceStr);
+            "123", "fhir-id-123", "Patient", "2020-09-19 12:09:23", "R4", "1", patientResourceStr);
     // Set Tag of HAPI FHIR tag type 0
     Coding coding0 = new Coding("system0", "code0", "display0");
     ResourceTag tag0 = new ResourceTag(coding0, "123", 0);
@@ -222,7 +210,7 @@ public class ConvertResourceFnTest {
     // Verify the resource is sent to the writer.
     verify(mockParquetUtil).write(resourceCaptor.capture());
     Resource capturedResource = resourceCaptor.getValue();
-    assertThat(capturedResource.getId(), equalTo("forced-id-123"));
+    assertThat(capturedResource.getId(), equalTo("fhir-id-123"));
     assertThat(capturedResource.getMeta().getVersionId(), equalTo("1"));
     assertThat(
         capturedResource.getMeta().getLastUpdated(),
