@@ -19,6 +19,11 @@ set -euo pipefail
 _PARQUET_UTILS_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 _PARQUET_ROWCOUNT_PY="${_PARQUET_UTILS_DIR}/parquet_rowcount.py"
 
+if ! python3 -c "import pyarrow" 2>/dev/null; then
+  echo "ERROR: pyarrow is not installed. Run: pip3 install pyarrow" >&2
+  return 1 2>/dev/null || exit 1
+fi
+
 retry_rowcount() {
   local parquet_glob="$1"
   local expected="$2"
@@ -33,12 +38,16 @@ retry_rowcount() {
 
   while true; do
     # ── 1. Count rows via pyarrow
-    raw_count=$(python3 "${_PARQUET_ROWCOUNT_PY}" "${parquet_glob}" 2>/dev/null)
+    local py_err
+    py_err=$(mktemp)
+    raw_count=$(python3 "${_PARQUET_ROWCOUNT_PY}" "${parquet_glob}" 2>"${py_err}") || true
+    local py_stderr_msg
+    py_stderr_msg=$(cat "${py_err}" 2>/dev/null); rm -f "${py_err}"
 
     # ── 2. Normalise
     if [[ -z "${raw_count}" || ! "${raw_count}" =~ ^[0-9]+$ ]]; then
       echo "E2E TEST ERROR: [${parquet_glob}] parquet_rowcount.py returned '${raw_count}'" \
-           "(treating as 0)" >&2
+           "(treating as 0)${py_stderr_msg:+; Python error: ${py_stderr_msg}}" >&2
       final_count=0
     else
       final_count="${raw_count}"
