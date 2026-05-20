@@ -239,6 +239,27 @@ function check_parquet() {
     TOTAL_TEST_OBS=$((2*TOTAL_TEST_OBS))
   fi
 
+  # ── DEBUG: show what is (or isn't) present in the DWH output directory ──
+  print_message "DEBUG: DWH output directory: ${output}"
+  if [[ -d "${output}" ]]; then
+    print_message "DEBUG: Top-level entries in ${output}:"
+    ls -la "${output}" >&2 || true
+    print_message "DEBUG: Subdirectory tree (2 levels deep):"
+    find "${output}" -maxdepth 3 -ls 2>/dev/null | head -80 >&2 || true
+    print_message "DEBUG: Total parquet files under ${output}:"
+    find "${output}" -name "*.parquet" 2>/dev/null | wc -l >&2 || true
+    print_message "DEBUG: Parquet files with sizes (first 40):"
+    find "${output}" -name "*.parquet" 2>/dev/null | head -40 \
+      | while read -r f; do
+          local sz
+          sz=$(stat -c%s "${f}" 2>/dev/null || stat -f%z "${f}" 2>/dev/null || echo "?")
+          echo "  ${f}  (${sz} bytes)" >&2
+        done
+  else
+    print_message "DEBUG: Output directory ${output} does NOT exist."
+  fi
+  # ────────────────────────────────────────────────────────────────────────
+
   # check whether output directory has received parquet files.
   if [[ "$(ls -A "${output}")" ]]
   then

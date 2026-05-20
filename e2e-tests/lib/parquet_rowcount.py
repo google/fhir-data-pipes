@@ -35,19 +35,49 @@ import pyarrow.parquet as pq
 def count_rows(glob_pattern: str) -> int:
     total = 0
     matched_any = False
-    for path in glob.glob(glob_pattern):
+    matched_paths = glob.glob(glob_pattern)
+    print(
+        f"DEBUG parquet_rowcount: glob '{glob_pattern}' expanded to {len(matched_paths)} path(s)",
+        file=sys.stderr,
+    )
+    for path in matched_paths:
+        print(f"DEBUG parquet_rowcount:   checking path: {path}", file=sys.stderr)
         if os.path.isdir(path):
             # Explicitly collect non-empty files; pq.ParquetDataset raises ArrowInvalid
             # on 0-byte files that the pipeline may not have finished writing yet.
-            ready_files = [
+            all_parquet = [
                 os.path.join(root, f)
                 for root, _, files in os.walk(path)
                 for f in files
-                if f.endswith(".parquet") and os.path.getsize(os.path.join(root, f)) > 0
+                if f.endswith(".parquet")
             ]
+            print(
+                f"DEBUG parquet_rowcount:     found {len(all_parquet)} .parquet file(s) (incl. empty)",
+                file=sys.stderr,
+            )
+            for pf in all_parquet[:20]:
+                sz = os.path.getsize(pf)
+                print(f"DEBUG parquet_rowcount:       {pf}  ({sz} bytes)", file=sys.stderr)
+            if len(all_parquet) > 20:
+                print(
+                    f"DEBUG parquet_rowcount:       ... and {len(all_parquet) - 20} more",
+                    file=sys.stderr,
+                )
+            ready_files = [f for f in all_parquet if os.path.getsize(f) > 0]
+            zero_byte = [f for f in all_parquet if os.path.getsize(f) == 0]
+            if zero_byte:
+                print(
+                    f"DEBUG parquet_rowcount:     skipping {len(zero_byte)} zero-byte file(s)",
+                    file=sys.stderr,
+                )
             if ready_files:
                 dataset = pq.ParquetDataset(ready_files)
-                total += sum(fragment.metadata.num_rows for fragment in dataset.fragments)
+                path_rows = sum(fragment.metadata.num_rows for fragment in dataset.fragments)
+                print(
+                    f"DEBUG parquet_rowcount:     row count for {path}: {path_rows}",
+                    file=sys.stderr,
+                )
+                total += path_rows
                 matched_any = True
             else:
                 print(
@@ -56,12 +86,17 @@ def count_rows(glob_pattern: str) -> int:
                 )
         elif path.endswith(".parquet"):
             if os.path.getsize(path) > 0:
-                total += pq.read_metadata(path).num_rows
+                rows = pq.read_metadata(path).num_rows
+                print(
+                    f"DEBUG parquet_rowcount:     file {path}: {rows} rows", file=sys.stderr
+                )
+                total += rows
                 matched_any = True
             else:
                 print(f"WARNING: skipping 0-byte Parquet file: {path}", file=sys.stderr)
     if not matched_any:
         print(f"WARNING: no Parquet files found for pattern: {glob_pattern}", file=sys.stderr)
+    print(f"DEBUG parquet_rowcount: total rows for '{glob_pattern}': {total}", file=sys.stderr)
     return total
 
 
