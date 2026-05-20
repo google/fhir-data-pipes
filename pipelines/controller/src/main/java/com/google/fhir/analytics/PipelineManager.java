@@ -185,6 +185,11 @@ public class PipelineManager implements ApplicationListener<ApplicationReadyEven
     }
   }
 
+  @VisibleForTesting
+  public void setCron(CronExpression cron) {
+    this.cron = cron;
+  }
+
   @PostConstruct
   private void initDwhStatus() throws ProfileException {
 

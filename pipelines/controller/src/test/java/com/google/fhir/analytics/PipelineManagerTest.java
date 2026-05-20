@@ -30,6 +30,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.scheduling.support.CronExpression;
 
 @SuppressWarnings("NullAway")
 @ExtendWith(MockitoExtension.class)
@@ -44,7 +45,6 @@ public class PipelineManagerTest {
   @BeforeEach
   void setUp() {
     DataProperties dataProperties = mock(DataProperties.class);
-    Mockito.when(dataProperties.getIncrementalSchedule()).thenReturn("0 * * * * *");
     MeterRegistry meterRegistry = mock(MeterRegistry.class);
     pipelineManager =
         Mockito.spy(new PipelineManager(dataProperties, dwhFilesManager, meterRegistry));
@@ -100,6 +100,7 @@ public class PipelineManagerTest {
   public void testGetNextIncrementalTime() {
     Mockito.when(dwhFilesManager.getCurrentTime()).thenReturn(lastRunEndTimestamp);
     pipelineManager.setLastRunStatus(PipelineManager.LastRunStatus.SUCCESS);
+    pipelineManager.setCron(CronExpression.parse("0 * * * * *"));
     LocalDateTime next = pipelineManager.getNextIncrementalTime();
     // Since lastRunEnd is 10:00, next should be 10:01
     assertThat(next, is(equalTo(LocalDateTime.of(2025, 12, 29, 10, 1))));
