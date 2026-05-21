@@ -162,10 +162,10 @@ public class Stu3AvroConverterUsCoreTest {
             (Double)
                 ((Record) ((Record) avroObservation.get("value")).get("quantity")).get("value"));
 
-    Assert.assertEquals(originalDecimal.compareTo(avroDecimal), 0);
+    Assert.assertEquals(0, originalDecimal.compareTo(avroDecimal));
 
     Assert.assertEquals(
-        originalDecimal.compareTo(((Quantity) testObservationDecoded.getValue()).getValue()), 0);
+        0, originalDecimal.compareTo(((Quantity) testObservationDecoded.getValue()).getValue()));
   }
 
   @Test
@@ -303,7 +303,7 @@ public class Stu3AvroConverterUsCoreTest {
     Identifier identifier = testPatientDecoded.getManagingOrganization().getIdentifier();
 
     Assert.assertNotNull(identifier);
-    Assert.assertEquals(identifier.getAssigner().getReference(), "Organization/234");
+    Assert.assertEquals("Organization/234", identifier.getAssigner().getReference());
   }
 
   @Test

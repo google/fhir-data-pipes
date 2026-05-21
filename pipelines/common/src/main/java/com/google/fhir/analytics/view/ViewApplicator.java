@@ -623,6 +623,7 @@ public class ViewApplicator {
       return (IPrimitiveType) val;
     }
 
+    @SuppressWarnings("TypeParameterUnusedInFormals")
     @Nullable
     public <T> T getPrimitive() {
       IBase val = getSingleValue();
