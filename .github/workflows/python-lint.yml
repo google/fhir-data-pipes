@@ -1,0 +1,46 @@
+name: Python Code Quality
+
+on: [push, pull_request]
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        project:
+          - name: "Controller CLI"
+            path: "pipelines/controller-cli"
+
+    name: Check ${{ matrix.project.name }}
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v6
+
+      - name: Setup Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.13"
+          cache: 'pip'
+          cache-dependency-path: |
+            ./requirements-dev.txt
+            ${{ matrix.project.path }}/requirements.txt
+            ${{ matrix.project.path }}/pyproject.toml
+
+      - name: Install Dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install black pylint pyright
+          if [ -f "requirements-dev.txt" ]; then pip install -r requirements-dev.txt; fi
+          if [ -f "${{ matrix.project.path }}/requirements.txt" ]; then pip install -r ${{ matrix.project.path }}/requirements.txt; fi
+          if [ -f "${{ matrix.project.path }}/pyproject.toml" ]; then pip install -e ${{ matrix.project.path }}[dev]; fi
+
+      - name: Run Black Check
+        run: black --check --diff ${{ matrix.project.path }}
+
+      - name: Run Pylint
+        run: pylint ${{ matrix.project.path }}
+
+      - name: Run Pyright Type Checks
+        run: pyright ${{ matrix.project.path }}
