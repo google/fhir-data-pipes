@@ -2,8 +2,6 @@
 # Utility: robust Parquet row-count with retry/back-off.
 # Used by validation scripts.
 
-set -euo pipefail
-
 # retry_rowcount <path_glob> <expected>
 #   path_glob – shell glob pointing to a Parquet folder (wildcards allowed,
 #               e.g. "…/*/Patient/").  All Parquet files found under matching

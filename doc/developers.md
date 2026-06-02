@@ -124,14 +124,14 @@ the editable version of it is available at this
 
 Parquet file row counts in the e2e tests are computed by
 [`e2e-tests/lib/parquet_rowcount.py`](../e2e-tests/lib/parquet_rowcount.py)
-using the [PyArrow](https://arrow.apache.org/docs/python/) library.  This
+using the [PyArrow](https://arrow.apache.org/docs/python/) library. This
 replaces the old `parquet-tools-1.11.1.jar` approach: `parquet-tools` was
 deprecated in `apache-parquet-1.12.0` and the 1.11.1 binary cannot read files
 produced by `parquet-avro` ≥ 1.14.
 
 Both e2e Dockerfiles (`e2e-tests/Dockerfile` and
 `e2e-tests/controller-spark/Dockerfile`) already install `pyarrow` via
-`pip3 install pyarrow`.  For local development, install it with:
+`pip3 install pyarrow`. For local development, install it with:
 
 ```bash
 pip3 install pyarrow
