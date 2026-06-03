@@ -22,7 +22,8 @@ The glob pattern may contain wildcards, e.g.:
     /workspace/e2e-tests/controller-spark/dwh/*/Patient/
 
 Prints a single integer (the total row count) to stdout.
-Exits with code 1 if no Parquet files are found or an error occurs.
+Prints 0 if no Parquet files are found; stderr carries a WARNING in that case.
+Exits with code 1 only on argument errors.
 """
 
 import glob

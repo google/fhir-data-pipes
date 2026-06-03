@@ -26,10 +26,11 @@ _debug_list_glob() {
   local parquet_glob="$1"
   echo "E2E DEBUG: Listing entries matching glob: ${parquet_glob}" >&2
   local expanded
-  # Use bash glob expansion; nullglob prevents literal output on no match
+  local _old_nullglob
+  _old_nullglob=$(shopt -p nullglob)
   shopt -s nullglob
   expanded=( ${parquet_glob} )
-  shopt -u nullglob
+  eval "$_old_nullglob"
   if [[ ${#expanded[@]} -eq 0 ]]; then
     echo "E2E DEBUG:   (no directories/files matched the glob)" >&2
   else
