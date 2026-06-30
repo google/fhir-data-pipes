@@ -105,8 +105,8 @@ The CI pipeline steps can also be run locally. The Cloud Build local builder was
 deprecated in April 2023. You can still iterate on the `cloudbuild.yaml` steps
 by running them manually using Docker and the same tooling that Cloud Build
 uses. Please follow the steps on the link
-[Run Cloud Build Steps Locally](debug-build-locally.md) to run the
-end-to-end tests locally.
+[Run Cloud Build Steps Locally](debug-build-locally.md) to run the end-to-end
+tests locally.
 
 ## Parallelization of end-to-end tests
 
