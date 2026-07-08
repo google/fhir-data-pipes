@@ -46,7 +46,8 @@
     <spark.version>4.0.2</spark.version>
     <maven-surefire-plugin.version>3.5.5</maven-surefire-plugin.version>
     <nemo.version>0.1</nemo.version>
-    <flink.artifact.name>beam-runners-flink-1.19</flink.artifact.name>
+    <!-- Pinned to 1.17. Anything higher is a breaking change.-->
+    <flink.artifact.name>beam-runners-flink-1.17</flink.artifact.name>
     <mysql.driver.version>9.7.0</mysql.driver.version>
     <postgresql.version>42.7.10</postgresql.version>
 
