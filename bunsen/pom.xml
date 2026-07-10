@@ -35,7 +35,7 @@
     <maven-javadoc.plugin.version>3.12.0</maven-javadoc.plugin.version>
     <maven-project-info-reports.plugin.version>3.9.0</maven-project-info-reports.plugin.version>
     <slf4j.version>2.0.18</slf4j.version>
-    <logback.version>1.5.37</logback.version>
+    <logback.version>1.5.38</logback.version>
     <nullaway.annotatedPackages>com.cerner.bunsen</nullaway.annotatedPackages>
     <jupiter.version>6.1.1</jupiter.version>
   </properties>
