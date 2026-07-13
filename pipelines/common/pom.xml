@@ -143,6 +143,7 @@
     <dependency>
       <groupId>org.apache.parquet</groupId>
       <artifactId>parquet-avro</artifactId>
+      <!-- upgraded to 1.15.2 and not higher because Beam 2.74.0's beam-sdks-java-io-parquet pins parquet-* to 1.15.2 -->
       <version>1.15.2</version>
     </dependency>
 
