@@ -37,7 +37,7 @@
     <slf4j.version>2.0.18</slf4j.version>
     <logback.version>1.5.37</logback.version>
     <nullaway.annotatedPackages>com.cerner.bunsen</nullaway.annotatedPackages>
-    <jupiter.version>6.1.1</jupiter.version>
+    <jupiter.version>6.1.2</jupiter.version>
   </properties>
 
   <modules>
