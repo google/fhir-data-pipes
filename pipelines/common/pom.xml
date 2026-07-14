@@ -30,6 +30,7 @@
   <properties>
     <c3p0.version>0.14.1</c3p0.version>
     <guava.version>33.6.0-jre</guava.version>
+    <jupiter.version>6.1.2</jupiter.version>
   </properties>
 
   <dependencies>
@@ -56,7 +57,7 @@
     <dependency>
       <groupId>com.google.auth</groupId>
       <artifactId>google-auth-library-oauth2-http</artifactId>
-      <version>1.47.0</version>
+      <version>1.49.0</version>
     </dependency>
 
     <dependency>
@@ -255,7 +256,7 @@
     <dependency>
       <groupId>org.junit.jupiter</groupId>
       <artifactId>junit-jupiter-api</artifactId>
-      <version>6.1.1</version>
+      <version>${jupiter.version}</version>
       <scope>test</scope>
     </dependency>
     <dependency>
