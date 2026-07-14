@@ -35,7 +35,7 @@
 
   <properties>
     <hamcrest.version>3.0</hamcrest.version>
-    <jackson.version>2.22.0</jackson.version>
+    <jackson.version>2.22.1</jackson.version>
     <pubsub.version>v1-rev20220904-2.0.0</pubsub.version>
     <!-- Spark here is only the Beam *Spark runner* (the spark-runner profile below),
       an alternative execution engine to the default Flink runner. It is unrelated to
