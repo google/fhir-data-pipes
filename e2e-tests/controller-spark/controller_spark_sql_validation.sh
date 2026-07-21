@@ -25,8 +25,6 @@ set -e
 # -------------------------------------------------------------------
 source "$(dirname "$0")/../lib/parquet_utils.sh"
 
-PARQUET_TOOLS_JAR=""
-
 #################################################
 # Prints the usage
 #################################################
@@ -36,8 +34,7 @@ function usage() {
   echo
   echo " usage: ./controller_spark_sql_validation.sh  HOME_DIR  PARQUET_SUBDIR  [OPTIONS] "
   echo "    HOME_DIR          Path where e2e-tests/controller-spark directory is. Directory MUST"
-  echo "                      contain the parquet tools jar as well as subdirectory"
-  echo "                      of parquet file output"
+  echo "                      contain subdirectory of parquet file output"
   echo "    PARQUET_SUBDIR    Subdirectory name under HOME_DIR containing"
   echo "                      parquet files  "
   echo
@@ -52,15 +49,6 @@ function usage() {
 function validate_args() {
   if [[ $# -lt 2 || $# -gt 5  ]]; then
     echo "Invalid number of args passed."
-    usage
-    exit 1
-  fi
-
-  echo "Checking if the Parquet-tools JAR exists..."
-  if [[ -n $(find "${1}" -name parquet-tools*.jar) ]]; then
-    echo "Parquet-tools JAR exists in ${1}"
-  else
-    echo "Parquet-tools JAR not found in ${1}"
     usage
     exit 1
   fi
@@ -92,8 +80,8 @@ function print_message() {
 #   PIPELINE_CONTROLLER_URL
 #   THRIFTSERVER_URL
 # Arguments:
-#   Path where e2e-tests/controller-spark directory is. Directory contains parquet tools jar as
-#      well as subdirectory of parquet file output
+#   Path where e2e-tests/controller-spark directory is. Directory contains
+#      subdirectory of parquet file output
 #   Subdirectory name under HOME_DIR containing parquet files.
 #      Example: dwh
 #   Optional: Flag to specify whether to use docker or host network URLs.
@@ -106,7 +94,6 @@ function setup() {
   SINK_FHIR_SERVER_URL='http://localhost:8098'
   PIPELINE_CONTROLLER_URL='http://localhost:8090'
   THRIFTSERVER_URL='localhost:10001'
-  PARQUET_TOOLS_JAR="${HOME_PATH}/parquet-tools-1.11.1.jar"
   if [[ $3 = "--use_docker_network" ]]; then
     SOURCE_FHIR_SERVER_URL='http://hapi-server:8080'
     SINK_FHIR_SERVER_URL='http://sink-server-controller:8080'
@@ -261,38 +248,32 @@ function check_parquet() {
     local total_patients
     total_patients=$(retry_rowcount \
       "${output}/*/Patient/" \
-      "${TOTAL_TEST_PATIENTS}" \
-      "${PARQUET_TOOLS_JAR}") || true
+      "${TOTAL_TEST_PATIENTS}") || true
 
     local total_encounters
     total_encounters=$(retry_rowcount \
       "${output}/*/Encounter/" \
-      "${TOTAL_TEST_ENCOUNTERS}" \
-      "${PARQUET_TOOLS_JAR}") || true
+      "${TOTAL_TEST_ENCOUNTERS}") || true
 
     local total_observations
     total_observations=$(retry_rowcount \
       "${output}/*/Observation/" \
-      "${TOTAL_TEST_OBS}" \
-      "${PARQUET_TOOLS_JAR}") || true
+      "${TOTAL_TEST_OBS}") || true
 
     local total_patient_flat
     total_patient_flat=$(retry_rowcount \
       "${output}/*/VIEWS_TIMESTAMP_*/patient_flat/" \
-      "${TOTAL_VIEW_PATIENTS}" \
-      "${PARQUET_TOOLS_JAR}") || true
+      "${TOTAL_VIEW_PATIENTS}") || true
 
     local total_encounter_flat
     total_encounter_flat=$(retry_rowcount \
       "${output}/*/VIEWS_TIMESTAMP_*/encounter_flat/" \
-      "${TOTAL_TEST_ENCOUNTERS}" \
-      "${PARQUET_TOOLS_JAR}") || true
+      "${TOTAL_TEST_ENCOUNTERS}") || true
 
     local total_obs_flat
     total_obs_flat=$(retry_rowcount \
       "${output}/*/VIEWS_TIMESTAMP_*/observation_flat/" \
-      "${TOTAL_TEST_OBS}" \
-      "${PARQUET_TOOLS_JAR}") || true
+      "${TOTAL_TEST_OBS}") || true
     # ------------------------------------------------------------------
 
     print_message "Total patients: ${total_patients}"

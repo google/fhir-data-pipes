@@ -42,7 +42,6 @@ import java.util.List;
 import java.util.Set;
 import org.apache.beam.sdk.extensions.gcp.options.GcsOptions;
 import org.apache.beam.sdk.extensions.gcp.util.GcsUtil;
-import org.apache.beam.sdk.extensions.gcp.util.GcsUtil.CreateOptions;
 import org.apache.beam.sdk.extensions.gcp.util.GcsUtil.StorageObjectOrIOException;
 import org.apache.beam.sdk.extensions.gcp.util.gcsfs.GcsPath;
 import org.apache.beam.sdk.io.FileSystems;
@@ -197,10 +196,17 @@ public class GcsDwhFilesTest {
     Mockito.when(mockGcsUtil.getObjects(List.of(GcsPath.fromUri(gcsFileName)))).thenReturn(items);
 
     WritableByteChannel writableByteChannel = Channels.newChannel(OutputStream.nullOutputStream());
+    // Beam 2.74 dropped value-based equals() from GcsUtil.CreateOptions, so match on its fields.
+    // expectFileToNotExist is false because FileSystems.create() builds the options with that
+    // default, and GcsFileSystem now forwards it to GcsUtil.create().
     Mockito.when(
             mockGcsUtil.create(
-                GcsPath.fromUri(gcsFileName),
-                CreateOptions.builder().setContentType(MimeTypes.BINARY).build()))
+                Mockito.eq(GcsPath.fromUri(gcsFileName)),
+                Mockito.<GcsUtil.CreateOptions>argThat(
+                    options ->
+                        options != null
+                            && MimeTypes.BINARY.equals(options.getContentType())
+                            && !options.getExpectFileToNotExist())))
         .thenReturn(writableByteChannel);
 
     DwhFiles.writeTimestampFile("gs://testbucket/testdirectory", DwhFiles.TIMESTAMP_FILE_START);
@@ -208,8 +214,12 @@ public class GcsDwhFilesTest {
     Mockito.verify(mockGcsUtil, Mockito.times(1)).getObjects(List.of(GcsPath.fromUri(gcsFileName)));
     Mockito.verify(mockGcsUtil, Mockito.times(1))
         .create(
-            GcsPath.fromUri(gcsFileName),
-            CreateOptions.builder().setContentType(MimeTypes.BINARY).build());
+            Mockito.eq(GcsPath.fromUri(gcsFileName)),
+            Mockito.<GcsUtil.CreateOptions>argThat(
+                options ->
+                    options != null
+                        && MimeTypes.BINARY.equals(options.getContentType())
+                        && !options.getExpectFileToNotExist()));
   }
 
   @Test

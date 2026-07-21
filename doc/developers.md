@@ -105,8 +105,8 @@ The CI pipeline steps can also be run locally. The Cloud Build local builder was
 deprecated in April 2023. You can still iterate on the `cloudbuild.yaml` steps
 by running them manually using Docker and the same tooling that Cloud Build
 uses. Please follow the steps on the link
-[Run Cloud Build Steps Locally](debug-build-locally.md) to run the
-end-to-end tests locally.
+[Run Cloud Build Steps Locally](debug-build-locally.md) to run the end-to-end
+tests locally.
 
 ## Parallelization of end-to-end tests
 
@@ -120,25 +120,31 @@ The flowchart has been developed using the https://app.diagrams.net/ tool and
 the editable version of it is available at this
 [location](./cloudbuild_flowChart.drawio.xml)
 
-## Regenerate JAR File
+## Parquet Row-Count in End-to-End Tests
 
-Parquet tools library is used to inspect parquet files. The jar file has been
-included in the project under `/e2e-tests/parquet-tools-1.11.1.jar`
+Parquet file row counts in the e2e tests are computed by
+[`e2e-tests/lib/parquet_rowcount.py`](../e2e-tests/lib/parquet_rowcount.py)
+using the [PyArrow](https://arrow.apache.org/docs/python/) library. This
+replaces the old `parquet-tools-1.11.1.jar` approach: `parquet-tools` was
+deprecated in `apache-parquet-1.12.0` and the 1.11.1 binary cannot read files
+produced by `parquet-avro` ≥ 1.14.
 
-To regenerate this jar file:
+Both e2e Dockerfiles (`e2e-tests/Dockerfile` and
+`e2e-tests/controller-spark/Dockerfile`) already install `pyarrow` via
+`pip3 install pyarrow`. For local development, install it with:
 
-1.  Clone [parquet-mr](https://github.com/apache/parquet-mr)
-2.  Checkout last released version `git checkout apache-parquet-1.11.1`
-3.  [Install](https://github.com/apache/parquet-mr#install-thrift) thrift
-    compiler v0.12.0
-4.  To build the jar file run
-    `mvn -pl parquet-tools -am clean install -Plocal -DskipTests` You should be
-    able to see `parquet-tools-1.11.1.jar` inside parquet-tools module.
-5.  Command usage for parquet tools
-    `java -jar ./parquet-tools-<VERSION>.jar <command> my_parquet_file`
+```bash
+pip3 install pyarrow
+```
 
-    NOTE: Parquet tools will be replaced with parquet cli in the next release
-    `apache-parquet-1.12.0`
+Command usage:
+
+```bash
+python3 e2e-tests/lib/parquet_rowcount.py "path/to/dwh/*/Patient/"
+```
+
+The script accepts a shell glob, resolves all matching directories, and prints
+the total row count to stdout.
 
 ## Error Prone and NullAway
 

@@ -248,11 +248,11 @@ docker compose -f docker/sink-compose.yml -p sink-server-jdbc down -v
 
 ### 2. Create views database
 
-The `views` database is used for creating flat views from ViewDefinitions.
-It is created inside the `hapi-fhir-db` PostgreSQL container that was started
-in the Initial Setup section as part of `hapi-compose.yml`. That same Postgres
-instance hosts both the `hapi` database (used by the HAPI FHIR server) and this
-`views` database (used by the pipeline controller).
+The `views` database is used for creating flat views from ViewDefinitions. It is
+created inside the `hapi-fhir-db` PostgreSQL container that was started in the
+Initial Setup section as part of `hapi-compose.yml`. That same Postgres instance
+hosts both the `hapi` database (used by the HAPI FHIR server) and this `views`
+database (used by the pipeline controller).
 
 ```bash
 docker run --rm --network host -e PGPASSWORD=admin postgres \
@@ -316,10 +316,11 @@ docker compose \
 
 ### 2. Recreate the views database
 
-The pipeline controller requires the `views` PostgreSQL database even in FHIR-to-FHIR
-sync mode. If the HAPI source server was restarted with `-v` since the Controller and
-Spark Mode section ran, the database will have been deleted and must be recreated. 
-It is required because it is default when `FHIRDATA_SINKDBCONFIGPATH` is not set. So run:
+The pipeline controller requires the `views` PostgreSQL database even in
+FHIR-to-FHIR sync mode. If the HAPI source server was restarted with `-v` since
+the Controller and Spark Mode section ran, the database will have been deleted
+and must be recreated. It is required because it is default when
+`FHIRDATA_SINKDBCONFIGPATH` is not set. So run:
 
 ```bash
 docker run --rm --network host -e PGPASSWORD=admin postgres \
@@ -447,8 +448,8 @@ docker run --rm \
 
 ### 5. Reset the sink server
 
-Both the FHIR-search and JDBC pipelines write to the same sink server. Reset
-it before the JDBC run to avoid the sink accumulating resources from both
+Both the FHIR-search and JDBC pipelines write to the same sink server. Reset it
+before the JDBC run to avoid the sink accumulating resources from both
 pipelines, which would cause step 6's count validation to fail.
 
 ```bash
@@ -498,11 +499,11 @@ docker run --rm \
 ### 8. Test indicators
 
 **Note:** This step can be skipped when running locally. It validates the
-indicator calculation framework against a fixed set of pre-existing test
-Parquet files (`test_files/parquet_big_db_r4`) — it does not use the OpenMRS
-data processed above. It also runs BigQuery compatibility tests that require
-Google Application Default Credentials, which are not available in a local
-environment, causing the script to exit early due to `set -e`.
+indicator calculation framework against a fixed set of pre-existing test Parquet
+files (`test_files/parquet_big_db_r4`) — it does not use the OpenMRS data
+processed above. It also runs BigQuery compatibility tests that require Google
+Application Default Credentials, which are not available in a local environment,
+causing the script to exit early due to `set -e`.
 
 If you do want to run it (e.g., if you have GCP credentials configured), run:
 

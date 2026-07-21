@@ -35,14 +35,21 @@
 
   <properties>
     <hamcrest.version>3.0</hamcrest.version>
-    <jackson.version>2.21.2</jackson.version>
+    <jackson.version>2.22.0</jackson.version>
     <pubsub.version>v1-rev20220904-2.0.0</pubsub.version>
-    <spark.version>2.4.8</spark.version>
+    <!-- Spark here is only the Beam *Spark runner* (the spark-runner profile below),
+      an alternative execution engine to the default Flink runner. It is unrelated to
+      the Spark Thrift Server used by the controller for SQL. This must match what
+      Beam's Spark runner targets: Beam 2.74.0 ships `beam-runners-spark-4`, built
+      against Spark 4.0.2 on Scala 2.13, so the spark-* artifacts below use the _2.13
+      suffix. -->
+    <spark.version>4.0.2</spark.version>
     <maven-surefire-plugin.version>3.5.6</maven-surefire-plugin.version>
     <nemo.version>0.1</nemo.version>
-    <flink.artifact.name>beam-runners-flink-1.14</flink.artifact.name>
+    <!-- Pinned to 1.17. Anything higher is a breaking change.-->
+    <flink.artifact.name>beam-runners-flink-1.17</flink.artifact.name>
     <mysql.driver.version>9.7.0</mysql.driver.version>
-    <postgresql.version>42.7.10</postgresql.version>
+    <postgresql.version>42.7.13</postgresql.version>
 
   </properties>
 
@@ -273,7 +280,7 @@
       <dependencies>
         <dependency>
           <groupId>org.apache.beam</groupId>
-          <artifactId>beam-runners-spark-3</artifactId>
+          <artifactId>beam-runners-spark-4</artifactId>
           <version>${beam.version}</version>
           <scope>runtime</scope>
         </dependency>
@@ -285,7 +292,7 @@
         </dependency>
         <dependency>
           <groupId>org.apache.spark</groupId>
-          <artifactId>spark-streaming_2.11</artifactId>
+          <artifactId>spark-streaming_2.13</artifactId>
           <version>${spark.version}</version>
           <scope>runtime</scope>
           <exclusions>
@@ -297,7 +304,7 @@
         </dependency>
         <dependency>
           <groupId>com.fasterxml.jackson.module</groupId>
-          <artifactId>jackson-module-scala_2.11</artifactId>
+          <artifactId>jackson-module-scala_2.13</artifactId>
           <version>${jackson.version}</version>
           <scope>runtime</scope>
         </dependency>

@@ -28,8 +28,9 @@
   <artifactId>common</artifactId>
 
   <properties>
-    <c3p0.version>0.13.0</c3p0.version>
+    <c3p0.version>0.14.1</c3p0.version>
     <guava.version>33.6.0-jre</guava.version>
+    <jupiter.version>6.1.2</jupiter.version>
   </properties>
 
   <dependencies>
@@ -56,7 +57,7 @@
     <dependency>
       <groupId>com.google.auth</groupId>
       <artifactId>google-auth-library-oauth2-http</artifactId>
-      <version>1.47.0</version>
+      <version>1.49.0</version>
     </dependency>
 
     <dependency>
@@ -143,7 +144,8 @@
     <dependency>
       <groupId>org.apache.parquet</groupId>
       <artifactId>parquet-avro</artifactId>
-      <version>1.13.1</version>
+      <!-- upgraded to 1.15.2 and not higher because Beam 2.74.0's beam-sdks-java-io-parquet pins parquet-* to 1.15.2 -->
+      <version>1.15.2</version>
     </dependency>
 
     <!-- TODO: This is in the dependencies of the above with "provided" scope.
@@ -254,7 +256,7 @@
     <dependency>
       <groupId>org.junit.jupiter</groupId>
       <artifactId>junit-jupiter-api</artifactId>
-      <version>6.0.3</version>
+      <version>${jupiter.version}</version>
       <scope>test</scope>
     </dependency>
     <dependency>

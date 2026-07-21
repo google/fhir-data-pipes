@@ -26,8 +26,6 @@ set -e
 # -------------------------------------------------------------------
 source "$(dirname "$0")/lib/parquet_utils.sh"
 
-PARQUET_TOOLS_JAR=""
-
 #################################################
 # Prints the usage
 #################################################
@@ -37,8 +35,7 @@ function usage() {
   echo
   echo " usage: ./pipeline_validation.sh  HOME_DIR  PARQUET_SUBDIR  [OPTIONS] "
   echo "    HOME_DIR          Path where e2e-tests directory is. Directory MUST"
-  echo "                      contain the parquet tools jar as well as subdirectory"
-  echo "                      of parquet file output"
+  echo "                      contain subdirectory of parquet file output"
   echo "    PARQUET_SUBDIR    Subdirectory name under HOME_DIR containing"
   echo "                      parquet files  "
   echo
@@ -56,18 +53,8 @@ function usage() {
 # Makes sure args passed are correct
 #################################################
 function validate_args() {
-  if [[ $# -lt 2 || $# -gt 7  ]]; then
+  if [[ $# -lt 4 || $# -gt 7  ]]; then
     echo "Invalid number of args passed."
-    usage
-    exit 1
-  fi
-
-  echo "Checking if the Parquet-tools JAR exists..."
-  if [[ -n $( find "${1}/controller-spark" -name parquet-tools*.jar) ]]
-  then
-    echo "Parquet-tools JAR exists in ${1}/controller-spark"
-  else
-    echo "Parquet-tools JAR not found in ${1}/controller-spark"
     usage
     exit 1
   fi
@@ -113,7 +100,6 @@ function setup() {
   PARQUET_SUBDIR=$2
   FHIR_JSON_SUBDIR=$3
   SINK_FHIR_SERVER_URL=$4
-  PARQUET_TOOLS_JAR="${HOME_PATH}/controller-spark/parquet-tools-1.11.1.jar"
   rm -rf "${HOME_PATH:?}/${FHIR_JSON_SUBDIR:?}"
   rm -rf "${HOME_PATH}/${PARQUET_SUBDIR}"/*.json
   find "${HOME_PATH}/${PARQUET_SUBDIR}" -size 0 -delete
@@ -175,19 +161,19 @@ function fhir_source_query() {
 
   curl -L -X GET -u $fhir_username:$fhir_password --connect-timeout 5 --max-time 20 \
   "${SOURCE_FHIR_SERVER_URL}${fhir_url_extension}/Patient${patient_query_param}" 2>/dev/null \
-  >>"${HOME_PATH}/${PARQUET_SUBDIR}/patients.json"
+  >"${HOME_PATH}/${PARQUET_SUBDIR}/patients.json"
   TOTAL_TEST_PATIENTS=$(jq '.total' "${HOME_PATH}/${PARQUET_SUBDIR}/patients.json")
   print_message "Total FHIR source test patients ---> ${TOTAL_TEST_PATIENTS}"
 
   curl -L -X GET -u $fhir_username:$fhir_password --connect-timeout 5 --max-time 20 \
     "${SOURCE_FHIR_SERVER_URL}${fhir_url_extension}/Encounter${enc_obs_query_param}" \
-    2>/dev/null >>"${HOME_PATH}/${PARQUET_SUBDIR}/encounters.json"
+    2>/dev/null >"${HOME_PATH}/${PARQUET_SUBDIR}/encounters.json"
   TOTAL_TEST_ENCOUNTERS=$(jq '.total' "${HOME_PATH}/${PARQUET_SUBDIR}/encounters.json")
   print_message "Total FHIR source test encounters ---> ${TOTAL_TEST_ENCOUNTERS}"
 
   curl -L -X GET -u $fhir_username:$fhir_password --connect-timeout 5 --max-time 20 \
     "${SOURCE_FHIR_SERVER_URL}${fhir_url_extension}/Observation${enc_obs_query_param}" \
-    2>/dev/null >>"${HOME_PATH}/${PARQUET_SUBDIR}/obs.json"
+    2>/dev/null >"${HOME_PATH}/${PARQUET_SUBDIR}/obs.json"
   TOTAL_TEST_OBS=$(jq '.total' "${HOME_PATH}/${PARQUET_SUBDIR}/obs.json")
   print_message "Total FHIR source test obs ---> ${TOTAL_TEST_OBS}"
 }
@@ -222,22 +208,19 @@ function test_parquet_sink() {
   local total_patients_streamed
   total_patients_streamed=$(retry_rowcount \
           "${HOME_PATH}/${PARQUET_SUBDIR}/Patient/" \
-          "${TOTAL_TEST_PATIENTS}" \
-          "${PARQUET_TOOLS_JAR}") || true
+          "${TOTAL_TEST_PATIENTS}") || true
   print_message "Total patients in parquet ---> ${total_patients_streamed}"
 
   local total_encounters_streamed
   total_encounters_streamed=$(retry_rowcount \
           "${HOME_PATH}/${PARQUET_SUBDIR}/Encounter/" \
-          "${TOTAL_TEST_ENCOUNTERS}" \
-           "${PARQUET_TOOLS_JAR}") || true
+          "${TOTAL_TEST_ENCOUNTERS}") || true
   print_message "Total encounters in parquet ---> ${total_encounters_streamed}"
 
   local total_obs_streamed
   total_obs_streamed=$(retry_rowcount \
           "${HOME_PATH}/${PARQUET_SUBDIR}/Observation/" \
-          "${TOTAL_TEST_OBS}" \
-           "${PARQUET_TOOLS_JAR}") || true
+          "${TOTAL_TEST_OBS}") || true
   print_message "Total obs in parquet ---> ${total_obs_streamed}"
 
   if [[ -z ${STREAMING} ]]; then
@@ -246,22 +229,19 @@ function test_parquet_sink() {
     local total_patient_flat
     total_patient_flat=$(retry_rowcount \
           "${HOME_PATH}/${PARQUET_SUBDIR}/VIEWS_TIMESTAMP_*/patient_flat/" \
-          "${patient_view_expect}" \
-          "${PARQUET_TOOLS_JAR}") || true
+          "${patient_view_expect}") || true
     print_message "Total patient-flat rows in parquet ---> ${total_patient_flat}"
 
     local total_encounter_flat
     total_encounter_flat=$(retry_rowcount \
           "${HOME_PATH}/${PARQUET_SUBDIR}/VIEWS_TIMESTAMP_*/encounter_flat/" \
-          "${TOTAL_TEST_ENCOUNTERS}" \
-           "${PARQUET_TOOLS_JAR}") || true
+          "${TOTAL_TEST_ENCOUNTERS}") || true
      print_message "Total encounter-flat rows in parquet ---> ${total_encounter_flat}"
 
     local total_obs_flat
     total_obs_flat=$(retry_rowcount \
           "${HOME_PATH}/${PARQUET_SUBDIR}/VIEWS_TIMESTAMP_*/observation_flat/" \
-          "${obs_view_expect}" \
-          "${PARQUET_TOOLS_JAR}") || true
+          "${obs_view_expect}") || true
     print_message "Total observation-flat rows in parquet ---> ${total_obs_flat}"
   fi
 

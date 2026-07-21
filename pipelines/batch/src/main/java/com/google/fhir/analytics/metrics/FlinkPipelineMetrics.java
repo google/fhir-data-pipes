@@ -216,6 +216,15 @@ public class FlinkPipelineMetrics implements PipelineMetrics {
   }
 
   private static MetricQueryResults getEmptyMetricQueryResults() {
-    return MetricQueryResults.create(new ArrayList<>(), new ArrayList<>(), new ArrayList<>());
+    // Beam 2.74's MetricQueryResults.create takes six metric collections (counters,
+    // distributions, gauges, stringSets, boundedTries, histograms); the last three were
+    // added after 2.56. This factory returns an all-empty result, so every list is empty.
+    return MetricQueryResults.create(
+        new ArrayList<>(),
+        new ArrayList<>(),
+        new ArrayList<>(),
+        new ArrayList<>(),
+        new ArrayList<>(),
+        new ArrayList<>());
   }
 }
