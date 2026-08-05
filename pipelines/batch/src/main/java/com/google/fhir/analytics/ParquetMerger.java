@@ -483,7 +483,8 @@ public class ParquetMerger {
     PipelineOptionsFactory.register(ParquetMergerOptions.class);
     ParquetMergerOptions options =
         PipelineOptionsFactory.fromArgs(args).withValidation().as(ParquetMergerOptions.class);
-    log.info("Flags: " + options);
+    LoggingConfigurator.applyQuietMode(options.getQuietMode());
+    log.info("Flags: {}", options);
     AvroConversionUtil avroConversionUtil =
         AvroConversionUtil.getInstance(
             options.getFhirVersion(),
