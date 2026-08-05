@@ -139,6 +139,64 @@ public class FhirSearchUtilTest {
     assertThat(nextUrl, nullValue());
   }
 
+  @Test
+  public void testHapiPreservesPercentEncodedUrlInBundle() {
+    // Bundle JSON with %22 (encoded quote) stays encoded after HAPI parsing
+    String bundleStr =
+            "{ \"resourceType\": \"Bundle\",\n"
+                    + "    \"type\": \"searchset\",\n"
+                    + "    \"link\": [\n"
+                    + "        {\n"
+                    + "            \"relation\": \"next\",\n"
+                    + "            \"url\": \"http://example.com/Patient?name=%22test%22\"\n"
+                    + "        }\n"
+                    + "    ]\n"
+                    + "}";
+    IParser parser = fhirContext.newJsonParser();
+    Bundle parsedBundle = parser.parseResource(Bundle.class, bundleStr);
+
+    String nextUrl = fhirSearchUtil.getNextUrl(parsedBundle);
+    assertThat(nextUrl, equalTo("http://example.com/Patient?name=%22test%22"));
+  }
+
+  @Test
+  public void testSearchByUrlReEncodesQueryParams() {
+    // URL with decoded quote (as would come from parsed Bundle)
+    String decodedUrl = "Patient?name=\"test\"";
+    String expectedEncodedUrl = "Patient?name=%22test%22";
+
+    when(untypedQuery.byUrl(expectedEncodedUrl)).thenReturn(query);
+
+    fhirSearchUtil.searchByUrl(decodedUrl, 10, SummaryEnum.DATA);
+
+    ArgumentCaptor<String> urlCaptor = ArgumentCaptor.forClass(String.class);
+    verify(untypedQuery).byUrl(urlCaptor.capture());
+    assertThat(urlCaptor.getValue(), equalTo(expectedEncodedUrl));
+  }
+
+  @Test
+  public void testEnsureQueryParamsArePercentEncodedPreservesQueryStructure() {
+    String url = "Patient?name=\"test\"&already=%22done%22&flag&empty=#fragment";
+    String expected = "Patient?name=%22test%22&already=%22done%22&flag&empty=#fragment";
+
+    String actual = fhirSearchUtil.ensureQueryParamsArePercentEncoded(url);
+
+    assertThat(actual, equalTo(expected));
+  }
+
+  @Test
+  public void testSearchByUrlDoesNotDoubleEncodeAlreadyEncodedValue() {
+    String encodedUrl = "Patient?name=%22test%22";
+
+    when(untypedQuery.byUrl(encodedUrl)).thenReturn(query);
+
+    fhirSearchUtil.searchByUrl(encodedUrl, 10, SummaryEnum.DATA);
+
+    ArgumentCaptor<String> urlCaptor = ArgumentCaptor.forClass(String.class);
+    verify(untypedQuery).byUrl(urlCaptor.capture());
+    assertThat(urlCaptor.getValue(), equalTo(encodedUrl));
+  }
+
   @SuppressWarnings("NullAway")
   @Test
   public void testCreateSegments() {
