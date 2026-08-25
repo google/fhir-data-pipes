@@ -30,6 +30,7 @@
   "tests": [
     {
       "title": "filtering with 'and'",
+      "tags": ["shareable"],
       "view": {
         "resource": "Patient",
         "where": [
@@ -57,6 +58,7 @@
     },
     {
       "title": "filtering with 'or'",
+      "tags": ["shareable"],
       "view": {
         "resource": "Patient",
         "where": [
@@ -90,6 +92,7 @@
     },
     {
       "title": "filtering with 'not'",
+      "tags": ["shareable"],
       "view": {
         "resource": "Patient",
         "where": [

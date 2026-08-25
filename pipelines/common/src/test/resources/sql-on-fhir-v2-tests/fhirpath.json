@@ -4,6 +4,11 @@
   "fhirVersion": ["5.0.0", "4.0.1"],
   "resources": [
     {
+      "resourceType": "Organization",
+      "id": "o1",
+      "name": "Test Organization"
+    },
+    {
       "resourceType": "Patient",
       "id": "pt1",
       "managingOrganization": {
@@ -47,6 +52,7 @@
   "tests": [
     {
       "title": "one element",
+      "tags": ["shareable"],
       "view": {
         "resource": "Patient",
         "status": "active",
@@ -76,6 +82,7 @@
     },
     {
       "title": "two elements + first",
+      "tags": ["shareable"],
       "view": {
         "resource": "Patient",
         "status": "active",
@@ -105,6 +112,7 @@
     },
     {
       "title": "collection",
+      "tags": ["shareable"],
       "view": {
         "resource": "Patient",
         "status": "active",
@@ -135,6 +143,7 @@
     },
     {
       "title": "index[0]",
+      "tags": ["shareable"],
       "view": {
         "resource": "Patient",
         "status": "active",
@@ -164,6 +173,7 @@
     },
     {
       "title": "index[1]",
+      "tags": ["shareable"],
       "view": {
         "resource": "Patient",
         "status": "active",
@@ -193,6 +203,7 @@
     },
     {
       "title": "out of index",
+      "tags": ["shareable"],
       "view": {
         "resource": "Patient",
         "status": "active",
@@ -222,6 +233,7 @@
     },
     {
       "title": "where",
+      "tags": ["shareable"],
       "view": {
         "resource": "Patient",
         "status": "active",
@@ -251,6 +263,7 @@
     },
     {
       "title": "exists",
+      "tags": ["shareable"],
       "view": {
         "resource": "Patient",
         "status": "active",
@@ -288,6 +301,7 @@
     },
     {
       "title": "nested exists",
+      "tags": ["shareable"],
       "view": {
         "resource": "Patient",
         "status": "active",
@@ -320,80 +334,6 @@
         {
           "id": "pt3",
           "has_given": false
-        }
-      ]
-    },
-    {
-      "title": "string join",
-      "view": {
-        "resource": "Patient",
-        "status": "active",
-        "select": [
-          {
-            "column": [
-              {
-                "name": "id",
-                "path": "id",
-                "type": "id"
-              },
-              {
-                "name": "given",
-                "path": "name.given.join(', ' )",
-                "type": "string"
-              }
-            ]
-          }
-        ]
-      },
-      "expect": [
-        {
-          "id": "pt1",
-          "given": "g1.1.1, g1.1.2, g1.2.1"
-        },
-        {
-          "id": "pt2",
-          "given": ""
-        },
-        {
-          "id": "pt3",
-          "given": ""
-        }
-      ]
-    },
-    {
-      "title": "string join: default separator",
-      "view": {
-        "resource": "Patient",
-        "status": "active",
-        "select": [
-          {
-            "column": [
-              {
-                "name": "id",
-                "path": "id",
-                "type": "id"
-              },
-              {
-                "name": "given",
-                "path": "name.given.join()",
-                "type": "string"
-              }
-            ]
-          }
-        ]
-      },
-      "expect": [
-        {
-          "id": "pt1",
-          "given": "g1.1.1g1.1.2g1.2.1"
-        },
-        {
-          "id": "pt2",
-          "given": ""
-        },
-        {
-          "id": "pt3",
-          "given": ""
         }
       ]
     }

@@ -31,6 +31,7 @@
   "tests": [
     {
       "title": "basic attribute",
+      "tags": ["shareable"],
       "view": {
         "resource": "Patient",
         "status": "active",
@@ -60,6 +61,7 @@
     },
     {
       "title": "boolean attribute with false",
+      "tags": ["shareable"],
       "view": {
         "resource": "Patient",
         "status": "active",
@@ -97,6 +99,7 @@
     },
     {
       "title": "two columns",
+      "tags": ["shareable"],
       "view": {
         "resource": "Patient",
         "status": "active",
@@ -134,6 +137,7 @@
     },
     {
       "title": "two selects with columns",
+      "tags": ["shareable"],
       "view": {
         "resource": "Patient",
         "status": "active",
@@ -175,6 +179,7 @@
     },
     {
       "title": "where - 1",
+      "tags": ["shareable"],
       "view": {
         "resource": "Patient",
         "status": "active",
@@ -203,6 +208,7 @@
     },
     {
       "title": "where - 2",
+      "tags": ["shareable"],
       "view": {
         "resource": "Patient",
         "status": "active",
@@ -231,6 +237,7 @@
     },
     {
       "title": "where returns non-boolean for some cases",
+      "tags": ["shareable"],
       "view": {
         "resource": "Patient",
         "status": "active",
@@ -259,6 +266,7 @@
     },
     {
       "title": "where as expr - 1",
+      "tags": ["shareable"],
       "view": {
         "resource": "Patient",
         "status": "active",
@@ -287,6 +295,7 @@
     },
     {
       "title": "where as expr - 2",
+      "tags": ["shareable"],
       "view": {
         "resource": "Patient",
         "status": "active",
@@ -315,6 +324,7 @@
     },
     {
       "title": "select & column",
+      "tags": ["shareable"],
       "view": {
         "resource": "Patient",
         "select": [
@@ -352,6 +362,133 @@
         {
           "c_id": "pt3",
           "s_id": "pt3"
+        }
+      ]
+    },
+    {
+      "title": "column ordering",
+      "tags": ["shareable"],
+      "view": {
+        "resource": "Patient",
+        "select": [
+          {
+            "column": [
+              {
+                "path": "'A'",
+                "name": "a",
+                "type": "string"
+              },
+              {
+                "path": "'B'",
+                "name": "b",
+                "type": "string"
+              }
+            ],
+            "select": [
+              {
+                "forEach": "name",
+                "column": [
+                  {
+                    "path": "'C'",
+                    "name": "c",
+                    "type": "string"
+                  },
+                  {
+                    "path": "'D'",
+                    "name": "d",
+                    "type": "string"
+                  }
+                ]
+              }
+            ],
+            "unionAll": [
+              {
+                "column": [
+                  {
+                    "path": "'E1'",
+                    "name": "e",
+                    "type": "string"
+                  },
+                  {
+                    "path": "'F1'",
+                    "name": "f",
+                    "type": "string"
+                  }
+                ]
+              },
+              {
+                "column": [
+                  {
+                    "path": "'E2'",
+                    "name": "e",
+                    "type": "string"
+                  },
+                  {
+                    "path": "'F2'",
+                    "name": "f",
+                    "type": "string"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "column": [
+              {
+                "path": "'G'",
+                "name": "g",
+                "type": "string"
+              },
+              {
+                "path": "'H'",
+                "name": "h",
+                "type": "string"
+              }
+            ]
+          }
+        ]
+      },
+      "expectColumns": ["a", "b", "c", "d", "e", "f", "g", "h"],
+      "expect": [
+        {
+          "a": "A",
+          "b": "B",
+          "c": "C",
+          "d": "D",
+          "e": "E1",
+          "f": "F1",
+          "g": "G",
+          "h": "H"
+        },
+        {
+          "a": "A",
+          "b": "B",
+          "c": "C",
+          "d": "D",
+          "e": "E2",
+          "f": "F2",
+          "g": "G",
+          "h": "H"
+        },
+        {
+          "a": "A",
+          "b": "B",
+          "c": "C",
+          "d": "D",
+          "e": "E1",
+          "f": "F1",
+          "g": "G",
+          "h": "H"
+        },
+        {
+          "a": "A",
+          "b": "B",
+          "c": "C",
+          "d": "D",
+          "e": "E2",
+          "f": "F2",
+          "g": "G",
+          "h": "H"
         }
       ]
     }

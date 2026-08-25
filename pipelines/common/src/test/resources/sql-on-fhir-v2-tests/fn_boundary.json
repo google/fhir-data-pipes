@@ -37,7 +37,8 @@
       "code": {
         "text": "code"
       },
-      "valueTime": "12:34"
+      "status": "final",
+      "valueTime": "12:34:00"
     },
     {
       "resourceType": "Patient",
@@ -48,6 +49,7 @@
   "tests": [
     {
       "title": "decimal lowBoundary",
+      "tags": ["experimental"],
       "view": {
         "resource": "Observation",
         "status": "active",
@@ -89,6 +91,7 @@
     },
     {
       "title": "decimal highBoundary",
+      "tags": ["experimental"],
       "view": {
         "resource": "Observation",
         "status": "active",
@@ -130,6 +133,7 @@
     },
     {
       "title": "datetime lowBoundary",
+      "tags": ["experimental"],
       "view": {
         "resource": "Observation",
         "status": "active",
@@ -171,6 +175,7 @@
     },
     {
       "title": "datetime highBoundary",
+      "tags": ["experimental"],
       "view": {
         "resource": "Observation",
         "status": "active",
@@ -212,6 +217,7 @@
     },
     {
       "title": "date lowBoundary",
+      "tags": ["experimental"],
       "view": {
         "resource": "Patient",
         "status": "active",
@@ -226,7 +232,7 @@
               {
                 "name": "date",
                 "path": "birthDate.lowBoundary()",
-                "type": "date"
+                "type": "dateTime"
               }
             ]
           }
@@ -241,6 +247,7 @@
     },
     {
       "title": "date highBoundary",
+      "tags": ["experimental"],
       "view": {
         "resource": "Patient",
         "status": "active",
@@ -255,7 +262,7 @@
               {
                 "name": "date",
                 "path": "birthDate.highBoundary()",
-                "type": "date"
+                "type": "dateTime"
               }
             ]
           }
@@ -270,6 +277,7 @@
     },
     {
       "title": "time lowBoundary",
+      "tags": ["experimental"],
       "view": {
         "resource": "Observation",
         "status": "active",
@@ -311,6 +319,7 @@
     },
     {
       "title": "time highBoundary",
+      "tags": ["experimental"],
       "view": {
         "resource": "Observation",
         "status": "active",
@@ -346,7 +355,7 @@
         },
         {
           "id": "o4",
-          "time": "12:34:59.999"
+          "time": "12:34:00.999"
         }
       ]
     }

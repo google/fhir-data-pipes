@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2025 Google LLC
+ * Copyright 2020-2026 Google LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -382,7 +382,9 @@ public class ViewDefinition {
         c++;
       }
       if (null != valueTime) {
-        stringValue = "@" + valueTime;
+        // Note FHIRPath `time` literals require a `T` prefix, unlike `date`/`dateTime` ones; see
+        // https://hl7.org/fhirpath/#time
+        stringValue = "@T" + valueTime;
         c++;
       }
       if (null != valueUri) {

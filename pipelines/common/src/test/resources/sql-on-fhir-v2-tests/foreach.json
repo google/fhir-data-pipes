@@ -60,6 +60,7 @@
   "tests": [
     {
       "title": "forEach: normal",
+      "tags": ["shareable"],
       "view": {
         "resource": "Patient",
         "status": "active",
@@ -106,6 +107,7 @@
     },
     {
       "title": "forEachOrNull: basic",
+      "tags": ["shareable"],
       "view": {
         "resource": "Patient",
         "status": "active",
@@ -156,6 +158,7 @@
     },
     {
       "title": "forEach: empty",
+      "tags": ["shareable"],
       "view": {
         "resource": "Patient",
         "status": "active",
@@ -185,6 +188,7 @@
     },
     {
       "title": "forEach: two on the same level",
+      "tags": ["shareable"],
       "view": {
         "resource": "Patient",
         "status": "active",
@@ -232,6 +236,7 @@
     },
     {
       "title": "forEach: two on the same level (empty result)",
+      "tags": ["shareable"],
       "view": {
         "resource": "Patient",
         "status": "active",
@@ -271,6 +276,7 @@
     },
     {
       "title": "forEachOrNull: null case",
+      "tags": ["shareable"],
       "view": {
         "resource": "Patient",
         "status": "active",
@@ -313,6 +319,7 @@
     },
     {
       "title": "forEach and forEachOrNull on the same level",
+      "tags": ["shareable"],
       "view": {
         "resource": "Patient",
         "status": "active",
@@ -373,6 +380,7 @@
     },
     {
       "title": "nested forEach",
+      "tags": ["shareable"],
       "view": {
         "resource": "Patient",
         "status": "active",
@@ -432,6 +440,7 @@
     },
     {
       "title": "nested forEach: select & column",
+      "tags": ["shareable"],
       "view": {
         "resource": "Patient",
         "status": "active",
@@ -489,6 +498,7 @@
     },
     {
       "title": "forEachOrNull & unionAll on the same level",
+      "tags": ["shareable"],
       "view": {
         "resource": "Patient",
         "select": [
@@ -560,6 +570,7 @@
     },
     {
       "title": "forEach & unionAll on the same level",
+      "tags": ["shareable"],
       "view": {
         "resource": "Patient",
         "select": [
@@ -623,6 +634,7 @@
     },
     {
       "title": "forEach & unionAll & column & select on the same level",
+      "tags": ["shareable"],
       "view": {
         "resource": "Patient",
         "select": [
@@ -714,6 +726,7 @@
     },
     {
       "title": "forEachOrNull & unionAll & column & select on the same level",
+      "tags": ["shareable"],
       "view": {
         "resource": "Patient",
         "select": [

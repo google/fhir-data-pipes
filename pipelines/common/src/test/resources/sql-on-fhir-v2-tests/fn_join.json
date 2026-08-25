@@ -12,11 +12,16 @@
           "given": ["p1.g1", "p1.g2"]
         }
       ]
+    },
+    {
+      "resourceType": "Patient",
+      "id": "p2"
     }
   ],
   "tests": [
     {
       "title": "join with comma",
+      "tags": ["experimental"],
       "view": {
         "resource": "Patient",
         "select": [
@@ -40,11 +45,16 @@
         {
           "id": "p1",
           "given": "p1.g1,p1.g2"
+        },
+        {
+          "id": "p2",
+          "given": null
         }
       ]
     },
     {
       "title": "join with empty value",
+      "tags": ["experimental"],
       "view": {
         "resource": "Patient",
         "select": [
@@ -68,11 +78,16 @@
         {
           "id": "p1",
           "given": "p1.g1p1.g2"
+        },
+        {
+          "id": "p2",
+          "given": null
         }
       ]
     },
     {
       "title": "join with no value - default to no separator",
+      "tags": ["experimental"],
       "view": {
         "resource": "Patient",
         "select": [
@@ -86,7 +101,7 @@
               {
                 "path": "name.given.join()",
                 "name": "given",
-                "type": "name"
+                "type": "string"
               }
             ]
           }
@@ -96,6 +111,10 @@
         {
           "id": "p1",
           "given": "p1.g1p1.g2"
+        },
+        {
+          "id": "p2",
+          "given": null
         }
       ]
     }

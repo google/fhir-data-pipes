@@ -1,5 +1,6 @@
 {
   "title": "collection",
+  "tags": ["shareable"],
   "description": "TBD",
   "fhirVersion": ["5.0.0", "4.0.1", "3.0.2"],
   "resources": [
@@ -46,6 +47,7 @@
   "tests": [
     {
       "title": "fail when 'collection' is not true",
+      "tags": ["shareable"],
       "view": {
         "resource": "Patient",
         "status": "active",
@@ -77,6 +79,7 @@
     },
     {
       "title": "collection = true",
+      "tags": ["shareable"],
       "view": {
         "resource": "Patient",
         "status": "active",
@@ -119,6 +122,7 @@
     },
     {
       "title": "collection = false relative to forEach parent",
+      "tags": ["shareable"],
       "view": {
         "resource": "Patient",
         "status": "active",
@@ -178,6 +182,7 @@
     },
     {
       "title": "collection = false relative to forEachOrNull parent",
+      "tags": ["shareable"],
       "view": {
         "resource": "Patient",
         "status": "active",

@@ -1,0 +1,700 @@
+{
+  "title": "row_index",
+  "description": "%rowIndex environment variable for tracking element positions during iteration",
+  "fhirVersion": ["5.0.0", "4.0.1", "3.0.2"],
+  "resources": [
+    {
+      "resourceType": "Patient",
+      "id": "pt1",
+      "name": [
+        {
+          "family": "Smith",
+          "given": ["John", "James"]
+        },
+        {
+          "family": "Jones",
+          "given": ["Jane"]
+        }
+      ],
+      "contact": [
+        {
+          "name": {
+            "family": "Contact1"
+          },
+          "telecom": [
+            {
+              "system": "phone",
+              "value": "111-1111"
+            },
+            {
+              "system": "email",
+              "value": "a@example.com"
+            }
+          ]
+        },
+        {
+          "name": {
+            "family": "Contact2"
+          },
+          "telecom": [
+            {
+              "system": "phone",
+              "value": "222-2222"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "resourceType": "Patient",
+      "id": "pt2",
+      "name": [
+        {
+          "family": "Brown"
+        }
+      ]
+    },
+    {
+      "resourceType": "Patient",
+      "id": "pt3"
+    },
+    {
+      "resourceType": "QuestionnaireResponse",
+      "id": "qr1",
+      "questionnaire": "http://example.com/Questionnaire/q1",
+      "status": "completed",
+      "item": [
+        {
+          "linkId": "1",
+          "text": "Group 1",
+          "item": [
+            {
+              "linkId": "1.1",
+              "text": "Question 1.1"
+            },
+            {
+              "linkId": "1.2",
+              "text": "Question 1.2"
+            }
+          ]
+        },
+        {
+          "linkId": "2",
+          "text": "Group 2"
+        }
+      ]
+    }
+  ],
+  "tests": [
+    {
+      "title": "%rowIndex at top level",
+      "description": "At the resource level (no forEach), %rowIndex is 0 for each resource",
+      "tags": ["shareable"],
+      "view": {
+        "resource": "Patient",
+        "status": "active",
+        "select": [
+          {
+            "column": [
+              {
+                "name": "id",
+                "path": "id",
+                "type": "id"
+              },
+              {
+                "name": "row_index",
+                "path": "%rowIndex",
+                "type": "integer"
+              }
+            ]
+          }
+        ]
+      },
+      "expect": [
+        {
+          "id": "pt1",
+          "row_index": 0
+        },
+        {
+          "id": "pt2",
+          "row_index": 0
+        },
+        {
+          "id": "pt3",
+          "row_index": 0
+        }
+      ]
+    },
+    {
+      "title": "%rowIndex with forEach",
+      "description": "Returns the 0-based index of each element in the iterated collection",
+      "tags": ["shareable"],
+      "view": {
+        "resource": "Patient",
+        "status": "active",
+        "select": [
+          {
+            "column": [
+              {
+                "name": "id",
+                "path": "id",
+                "type": "id"
+              }
+            ]
+          },
+          {
+            "forEach": "name",
+            "column": [
+              {
+                "name": "name_index",
+                "path": "%rowIndex",
+                "type": "integer"
+              },
+              {
+                "name": "family",
+                "path": "family",
+                "type": "string"
+              }
+            ]
+          }
+        ]
+      },
+      "expect": [
+        {
+          "id": "pt1",
+          "name_index": 0,
+          "family": "Smith"
+        },
+        {
+          "id": "pt1",
+          "name_index": 1,
+          "family": "Jones"
+        },
+        {
+          "id": "pt2",
+          "name_index": 0,
+          "family": "Brown"
+        }
+      ]
+    },
+    {
+      "title": "%rowIndex with forEachOrNull",
+      "description": "Returns the 0-based index; for empty collections, returns 0 for the null row",
+      "tags": ["shareable"],
+      "view": {
+        "resource": "Patient",
+        "status": "active",
+        "select": [
+          {
+            "column": [
+              {
+                "name": "id",
+                "path": "id",
+                "type": "id"
+              }
+            ]
+          },
+          {
+            "forEachOrNull": "name",
+            "column": [
+              {
+                "name": "name_index",
+                "path": "%rowIndex",
+                "type": "integer"
+              },
+              {
+                "name": "family",
+                "path": "family",
+                "type": "string"
+              }
+            ]
+          }
+        ]
+      },
+      "expect": [
+        {
+          "id": "pt1",
+          "name_index": 0,
+          "family": "Smith"
+        },
+        {
+          "id": "pt1",
+          "name_index": 1,
+          "family": "Jones"
+        },
+        {
+          "id": "pt2",
+          "name_index": 0,
+          "family": "Brown"
+        },
+        {
+          "id": "pt3",
+          "name_index": 0,
+          "family": null
+        }
+      ]
+    },
+    {
+      "title": "%rowIndex with nested forEach",
+      "description": "Each nesting level has its own independent %rowIndex value",
+      "tags": ["shareable"],
+      "view": {
+        "resource": "Patient",
+        "status": "active",
+        "select": [
+          {
+            "column": [
+              {
+                "name": "id",
+                "path": "id",
+                "type": "id"
+              }
+            ]
+          },
+          {
+            "forEach": "contact",
+            "column": [
+              {
+                "name": "contact_index",
+                "path": "%rowIndex",
+                "type": "integer"
+              },
+              {
+                "name": "contact_family",
+                "path": "name.family",
+                "type": "string"
+              }
+            ],
+            "select": [
+              {
+                "forEach": "telecom",
+                "column": [
+                  {
+                    "name": "telecom_index",
+                    "path": "%rowIndex",
+                    "type": "integer"
+                  },
+                  {
+                    "name": "system",
+                    "path": "system",
+                    "type": "code"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "expect": [
+        {
+          "id": "pt1",
+          "contact_index": 0,
+          "contact_family": "Contact1",
+          "telecom_index": 0,
+          "system": "phone"
+        },
+        {
+          "id": "pt1",
+          "contact_index": 0,
+          "contact_family": "Contact1",
+          "telecom_index": 1,
+          "system": "email"
+        },
+        {
+          "id": "pt1",
+          "contact_index": 1,
+          "contact_family": "Contact2",
+          "telecom_index": 0,
+          "system": "phone"
+        }
+      ]
+    },
+    {
+      "title": "%rowIndex with repeat",
+      "description": "%rowIndex tracks the position within the flattened repeat traversal",
+      "tags": ["shareable"],
+      "view": {
+        "resource": "QuestionnaireResponse",
+        "status": "active",
+        "select": [
+          {
+            "column": [
+              {
+                "name": "id",
+                "path": "id",
+                "type": "id"
+              }
+            ]
+          },
+          {
+            "repeat": ["item"],
+            "column": [
+              {
+                "name": "item_index",
+                "path": "%rowIndex",
+                "type": "integer"
+              },
+              {
+                "name": "linkId",
+                "path": "linkId",
+                "type": "string"
+              }
+            ]
+          }
+        ]
+      },
+      "expect": [
+        {
+          "id": "qr1",
+          "item_index": 0,
+          "linkId": "1"
+        },
+        {
+          "id": "qr1",
+          "item_index": 1,
+          "linkId": "1.1"
+        },
+        {
+          "id": "qr1",
+          "item_index": 2,
+          "linkId": "1.2"
+        },
+        {
+          "id": "qr1",
+          "item_index": 3,
+          "linkId": "2"
+        }
+      ]
+    },
+    {
+      "title": "%rowIndex with unionAll",
+      "description": "Each branch of unionAll maintains its own %rowIndex sequence",
+      "tags": ["shareable"],
+      "view": {
+        "resource": "Patient",
+        "status": "active",
+        "select": [
+          {
+            "column": [
+              {
+                "name": "id",
+                "path": "id",
+                "type": "id"
+              }
+            ]
+          },
+          {
+            "unionAll": [
+              {
+                "forEach": "name",
+                "column": [
+                  {
+                    "name": "index",
+                    "path": "%rowIndex",
+                    "type": "integer"
+                  },
+                  {
+                    "name": "value",
+                    "path": "family",
+                    "type": "string"
+                  },
+                  {
+                    "name": "source",
+                    "path": "'name'",
+                    "type": "string"
+                  }
+                ]
+              },
+              {
+                "forEach": "contact",
+                "column": [
+                  {
+                    "name": "index",
+                    "path": "%rowIndex",
+                    "type": "integer"
+                  },
+                  {
+                    "name": "value",
+                    "path": "name.family",
+                    "type": "string"
+                  },
+                  {
+                    "name": "source",
+                    "path": "'contact'",
+                    "type": "string"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "expect": [
+        {
+          "id": "pt1",
+          "index": 0,
+          "value": "Smith",
+          "source": "name"
+        },
+        {
+          "id": "pt1",
+          "index": 1,
+          "value": "Jones",
+          "source": "name"
+        },
+        {
+          "id": "pt1",
+          "index": 0,
+          "value": "Contact1",
+          "source": "contact"
+        },
+        {
+          "id": "pt1",
+          "index": 1,
+          "value": "Contact2",
+          "source": "contact"
+        },
+        {
+          "id": "pt2",
+          "index": 0,
+          "value": "Brown",
+          "source": "name"
+        }
+      ]
+    },
+    {
+      "title": "%rowIndex in unionAll without forEach",
+      "description": "When a unionAll branch has no iteration expression, %rowIndex inherits from the enclosing context",
+      "tags": ["shareable"],
+      "view": {
+        "resource": "Patient",
+        "status": "active",
+        "select": [
+          {
+            "unionAll": [
+              {
+                "column": [
+                  {
+                    "name": "id",
+                    "path": "id",
+                    "type": "id"
+                  },
+                  {
+                    "name": "row_index",
+                    "path": "%rowIndex",
+                    "type": "integer"
+                  },
+                  {
+                    "name": "source",
+                    "path": "'a'",
+                    "type": "string"
+                  }
+                ]
+              },
+              {
+                "column": [
+                  {
+                    "name": "id",
+                    "path": "id",
+                    "type": "id"
+                  },
+                  {
+                    "name": "row_index",
+                    "path": "%rowIndex",
+                    "type": "integer"
+                  },
+                  {
+                    "name": "source",
+                    "path": "'b'",
+                    "type": "string"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "expect": [
+        {
+          "id": "pt1",
+          "row_index": 0,
+          "source": "a"
+        },
+        {
+          "id": "pt2",
+          "row_index": 0,
+          "source": "a"
+        },
+        {
+          "id": "pt3",
+          "row_index": 0,
+          "source": "a"
+        },
+        {
+          "id": "pt1",
+          "row_index": 0,
+          "source": "b"
+        },
+        {
+          "id": "pt2",
+          "row_index": 0,
+          "source": "b"
+        },
+        {
+          "id": "pt3",
+          "row_index": 0,
+          "source": "b"
+        }
+      ]
+    },
+    {
+      "title": "%rowIndex in unionAll inside forEach",
+      "description": "Branches with iteration get independent %rowIndex; branches without inherit from the enclosing forEach",
+      "tags": ["shareable"],
+      "view": {
+        "resource": "Patient",
+        "status": "active",
+        "select": [
+          {
+            "column": [
+              {
+                "name": "id",
+                "path": "id",
+                "type": "id"
+              }
+            ]
+          },
+          {
+            "forEach": "contact",
+            "column": [
+              {
+                "name": "contact_index",
+                "path": "%rowIndex",
+                "type": "integer"
+              }
+            ],
+            "select": [
+              {
+                "unionAll": [
+                  {
+                    "forEach": "telecom",
+                    "column": [
+                      {
+                        "name": "telecom_index",
+                        "path": "%rowIndex",
+                        "type": "integer"
+                      },
+                      {
+                        "name": "value",
+                        "path": "value",
+                        "type": "string"
+                      }
+                    ]
+                  },
+                  {
+                    "column": [
+                      {
+                        "name": "telecom_index",
+                        "path": "%rowIndex",
+                        "type": "integer"
+                      },
+                      {
+                        "name": "value",
+                        "path": "name.family",
+                        "type": "string"
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "expect": [
+        {
+          "id": "pt1",
+          "contact_index": 0,
+          "telecom_index": 0,
+          "value": "111-1111"
+        },
+        {
+          "id": "pt1",
+          "contact_index": 0,
+          "telecom_index": 1,
+          "value": "a@example.com"
+        },
+        {
+          "id": "pt1",
+          "contact_index": 0,
+          "telecom_index": 0,
+          "value": "Contact1"
+        },
+        {
+          "id": "pt1",
+          "contact_index": 1,
+          "telecom_index": 0,
+          "value": "222-2222"
+        },
+        {
+          "id": "pt1",
+          "contact_index": 1,
+          "telecom_index": 1,
+          "value": "Contact2"
+        }
+      ]
+    },
+    {
+      "title": "%rowIndex for surrogate key",
+      "description": "Combining resource ID with %rowIndex to create a unique identifier for each row",
+      "tags": ["shareable"],
+      "view": {
+        "resource": "Patient",
+        "status": "active",
+        "select": [
+          {
+            "column": [
+              {
+                "name": "id",
+                "path": "id",
+                "type": "id"
+              }
+            ]
+          },
+          {
+            "forEach": "name",
+            "column": [
+              {
+                "name": "name_index",
+                "path": "%rowIndex",
+                "type": "integer"
+              },
+              {
+                "name": "family",
+                "path": "family",
+                "type": "string"
+              }
+            ]
+          }
+        ]
+      },
+      "expect": [
+        {
+          "id": "pt1",
+          "name_index": 0,
+          "family": "Smith"
+        },
+        {
+          "id": "pt1",
+          "name_index": 1,
+          "family": "Jones"
+        },
+        {
+          "id": "pt2",
+          "name_index": 0,
+          "family": "Brown"
+        }
+      ]
+    }
+  ]
+}

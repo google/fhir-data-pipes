@@ -23,6 +23,7 @@
   "tests": [
     {
       "title": "only pts",
+      "tags": ["shareable"],
       "view": {
         "resource": "Patient",
         "status": "active",
@@ -49,6 +50,7 @@
     },
     {
       "title": "only obs",
+      "tags": ["shareable"],
       "view": {
         "resource": "Observation",
         "status": "active",
@@ -72,6 +74,7 @@
     },
     {
       "title": "resource not specified",
+      "tags": ["shareable"],
       "view": {
         "status": "active",
         "select": [

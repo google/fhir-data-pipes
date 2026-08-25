@@ -91,6 +91,7 @@
   "tests": [
     {
       "title": "basic",
+      "tags": ["shareable"],
       "view": {
         "resource": "Patient",
         "status": "active",
@@ -200,6 +201,7 @@
     },
     {
       "title": "unionAll + column",
+      "tags": ["shareable"],
       "view": {
         "resource": "Patient",
         "status": "active",
@@ -307,6 +309,7 @@
     },
     {
       "title": "duplicates",
+      "tags": ["shareable"],
       "view": {
         "resource": "Patient",
         "status": "active",
@@ -409,6 +412,7 @@
     },
     {
       "title": "empty results",
+      "tags": ["shareable"],
       "view": {
         "resource": "Patient",
         "status": "active",
@@ -450,6 +454,7 @@
     },
     {
       "title": "empty with forEachOrNull",
+      "tags": ["shareable"],
       "view": {
         "resource": "Patient",
         "status": "active",
@@ -524,6 +529,7 @@
     },
     {
       "title": "forEachOrNull and forEach",
+      "tags": ["shareable"],
       "view": {
         "resource": "Patient",
         "status": "active",
@@ -582,6 +588,7 @@
     },
     {
       "title": "nested",
+      "tags": ["shareable"],
       "view": {
         "resource": "Patient",
         "status": "active",
@@ -662,6 +669,7 @@
     },
     {
       "title": "one empty operand",
+      "tags": ["shareable"],
       "view": {
         "resource": "Patient",
         "status": "active",
@@ -746,6 +754,7 @@
     },
     {
       "title": "column mismatch",
+      "tags": ["shareable"],
       "view": {
         "resource": "Patient",
         "status": "active",
@@ -788,6 +797,7 @@
     },
     {
       "title": "column order mismatch",
+      "tags": ["shareable"],
       "view": {
         "resource": "Patient",
         "status": "active",

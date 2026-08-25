@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2025 Google LLC
+ * Copyright 2020-2026 Google LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -67,6 +67,20 @@ public class SQLonFHIRv2Test {
 
   private static final Logger log = LoggerFactory.getLogger(SQLonFHIRv2Test.class);
 
+  // Whole test-collections (i.e., test files) that are skipped, keyed by the collection `title`.
+  // These are for ViewDefinition features that we have not implemented yet; unlike SKIPPED_TESTS
+  // below, every test in the file is skipped.
+  private static final Set<String> SKIPPED_COLLECTIONS =
+      ImmutableSet.of(
+          // Reason: The `repeat` element of `select` (recursive traversal of a FHIRPath) is not
+          // implemented by ViewApplicator. Note it is currently ignored silently, i.e., a view with
+          // `repeat` produces rows as if the `repeat` was not there.
+          // TODO implement `repeat` support in ViewApplicator.
+          "repeat",
+          // Reason: The `%rowIndex` environment variable is not implemented by ViewApplicator.
+          // TODO implement `%rowIndex` support in ViewApplicator.
+          "row_index");
+
   private static final Set<String> SKIPPED_TESTS =
       ImmutableSet.of(
           // Reason: The `join()` function of R4 FHIRPathEngine implementation requires a parameter.
@@ -75,12 +89,12 @@ public class SQLonFHIRv2Test {
           // https://build.fhir.org/ig/HL7/FHIRPath/#joinseparator-string--string
           // TODO report and/or fix this is the core FHIR implementation.
           "fn_join.join with no value - default to no separator",
-          "fhirpath.string join: default separator",
-          // Reason: `lowBoundry()` and `highBoundry()` functions when called with no precision
-          // parameters (for `date` type), default to 8 as the precision which is incorrect.
+          // Reason: When `join()` is applied to an empty collection, the R4/R5 FHIRPathEngine
+          // implementations return a single empty string instead of an empty collection, so the
+          // column is not `null` as these tests expect.
           // TODO report and/or fix this is the core FHIR implementation.
-          "fn_boundary.date lowBoundary",
-          "fn_boundary.date highBoundary",
+          "fn_join.join with comma",
+          "fn_join.join with empty value",
 
           // TODO the error condition here does not seem right.
           "validate.wrong type in forEach");
@@ -117,8 +131,11 @@ public class SQLonFHIRv2Test {
           resources.add(parser.parseResource(r.toString()));
         }
         for (SingleTest test : testDef.tests) {
-          if (SKIPPED_TESTS.contains(testDef.title + "." + test.title)) {
-            success.put(testDef.title, false);
+          if (SKIPPED_COLLECTIONS.contains(testDef.title)
+              || SKIPPED_TESTS.contains(testDef.title + "." + test.title)) {
+            // Note this is keyed by the test title (not the collection title) such that the
+            // generated report lists the skipped test itself.
+            success.put(test.title, false);
             continue;
           }
           // Note: To debug a single test case we can do the following:
