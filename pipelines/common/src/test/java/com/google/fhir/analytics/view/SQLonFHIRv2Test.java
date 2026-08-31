@@ -184,11 +184,21 @@ public class SQLonFHIRv2Test {
         allTestResults.put(p.getFileName().toString(), new AllTestResults(resultList));
       }
     }
-    File tempFile = File.createTempFile("sql-on-fhir-v2-test-result-", ".json");
-    try (FileWriter writer = new FileWriter(tempFile, StandardCharsets.UTF_8)) {
+    // By default this report is written to a temp file. Set `-Dsofv2.resultFile=<path>` to
+    // write it straight to its checked-in location when re-importing the test-suite; see
+    // utils/sof_tests/README.md. Note the default temp directory is platform dependent: on
+    // macOS it is the private per-user directory in `$TMPDIR` (e.g. `/var/folders/.../T/`)
+    // rather than `/tmp`, which is why the final path is always logged.
+    String configuredPath = System.getProperty("sofv2.resultFile");
+    File resultFile =
+        (configuredPath == null || configuredPath.isEmpty())
+            ? File.createTempFile("sql-on-fhir-v2-test-result-", ".json")
+            : new File(configuredPath);
+    try (FileWriter writer = new FileWriter(resultFile, StandardCharsets.UTF_8)) {
       Gson writerGson = new GsonBuilder().setPrettyPrinting().disableHtmlEscaping().create();
       writerGson.toJson(allTestResults, writer);
     }
+    log.info("Wrote SQL-on-FHIR v2 conformance results to {}", resultFile.getAbsolutePath());
   }
 
   @SuppressWarnings("NullAway.Init")
