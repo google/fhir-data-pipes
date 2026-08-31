@@ -1,0 +1,8 @@
+{
+  "_comment": "Pinned upstream source for the vendored SQL-on-FHIR v2 conformance tests. Managed by update_sof_tests.py; bump with --ref.",
+  "repo": "FHIR/sql-on-fhir.js",
+  "subdir": "tests",
+  "ref": "main",
+  "sha": "7969489777b72ea87e866c320c461f7a13df9388",
+  "retrieved": "2026-08-30"
+}

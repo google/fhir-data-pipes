@@ -21,6 +21,7 @@
   "tests": [
     {
       "title": "empty names",
+      "tags": ["shareable"],
       "view": {
         "resource": "Patient",
         "status": "active",

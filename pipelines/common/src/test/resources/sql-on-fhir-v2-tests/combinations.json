@@ -19,6 +19,7 @@
   "tests": [
     {
       "title": "select",
+      "tags": ["shareable"],
       "view": {
         "resource": "Patient",
         "select": [
@@ -51,6 +52,7 @@
     },
     {
       "title": "column + select",
+      "tags": ["shareable"],
       "view": {
         "resource": "Patient",
         "select": [
@@ -93,6 +95,7 @@
     },
     {
       "title": "sibling select",
+      "tags": ["shareable"],
       "view": {
         "resource": "Patient",
         "select": [
@@ -133,6 +136,7 @@
     },
     {
       "title": "sibling select inside a select",
+      "tags": ["shareable"],
       "view": {
         "resource": "Patient",
         "select": [
@@ -177,6 +181,7 @@
     },
     {
       "title": "column + select, with where",
+      "tags": ["shareable"],
       "view": {
         "resource": "Patient",
         "select": [
@@ -216,6 +221,7 @@
     },
     {
       "title": "unionAll + forEach + column + select",
+      "tags": ["shareable"],
       "view": {
         "resource": "Patient",
         "select": [

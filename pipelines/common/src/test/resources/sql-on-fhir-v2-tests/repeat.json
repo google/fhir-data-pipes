@@ -1,0 +1,1333 @@
+{
+  "title": "repeat",
+  "description": "Recursive traversal with repeat directive",
+  "fhirVersion": ["5.0.0", "4.0.1", "3.0.2"],
+  "resources": [
+    {
+      "resourceType": "Questionnaire",
+      "id": "q1",
+      "status": "active",
+      "item": [
+        {
+          "linkId": "g1",
+          "text": "Group 1",
+          "type": "group",
+          "item": [
+            {
+              "linkId": "g1.1",
+              "text": "Question 1.1",
+              "type": "string",
+              "item": [
+                {
+                  "linkId": "g1.1.1",
+                  "text": "Sub-question 1.1.1",
+                  "type": "string"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "linkId": "g2",
+          "text": "Group 2",
+          "type": "display"
+        }
+      ]
+    },
+    {
+      "resourceType": "QuestionnaireResponse",
+      "id": "qr1",
+      "questionnaire": "http://example.com/Questionnaire/q1",
+      "status": "completed",
+      "item": [
+        {
+          "linkId": "1",
+          "text": "Group 1",
+          "item": [
+            {
+              "linkId": "1.1",
+              "text": "Question 1.1",
+              "answer": [
+                {
+                  "valueString": "Answer 1.1",
+                  "item": [
+                    {
+                      "linkId": "1.1.1",
+                      "text": "Follow-up to 1.1"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "linkId": "1.2",
+              "text": "Question 1.2",
+              "item": [
+                {
+                  "linkId": "1.2.1",
+                  "text": "Question 1.2.1"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "linkId": "2",
+          "text": "Group 2"
+        }
+      ]
+    }
+  ],
+  "tests": [
+    {
+      "title": "basic",
+      "tags": ["shareable"],
+      "view": {
+        "resource": "QuestionnaireResponse",
+        "status": "active",
+        "select": [
+          {
+            "column": [
+              {
+                "name": "id",
+                "path": "id",
+                "type": "id"
+              }
+            ]
+          },
+          {
+            "repeat": ["item"],
+            "column": [
+              {
+                "name": "linkId",
+                "path": "linkId",
+                "type": "string"
+              },
+              {
+                "name": "text",
+                "path": "text",
+                "type": "string"
+              }
+            ]
+          }
+        ]
+      },
+      "expect": [
+        {
+          "id": "qr1",
+          "linkId": "1",
+          "text": "Group 1"
+        },
+        {
+          "id": "qr1",
+          "linkId": "1.1",
+          "text": "Question 1.1"
+        },
+        {
+          "id": "qr1",
+          "linkId": "1.2",
+          "text": "Question 1.2"
+        },
+        {
+          "id": "qr1",
+          "linkId": "1.2.1",
+          "text": "Question 1.2.1"
+        },
+        {
+          "id": "qr1",
+          "linkId": "2",
+          "text": "Group 2"
+        }
+      ]
+    },
+    {
+      "title": "item and answer.item",
+      "tags": ["shareable"],
+      "view": {
+        "resource": "QuestionnaireResponse",
+        "status": "active",
+        "select": [
+          {
+            "column": [
+              {
+                "name": "id",
+                "path": "id",
+                "type": "id"
+              }
+            ]
+          },
+          {
+            "repeat": ["item", "answer.item"],
+            "column": [
+              {
+                "name": "linkId",
+                "path": "linkId",
+                "type": "string"
+              },
+              {
+                "name": "text",
+                "path": "text",
+                "type": "string"
+              }
+            ]
+          }
+        ]
+      },
+      "expect": [
+        {
+          "id": "qr1",
+          "linkId": "1",
+          "text": "Group 1"
+        },
+        {
+          "id": "qr1",
+          "linkId": "1.1",
+          "text": "Question 1.1"
+        },
+        {
+          "id": "qr1",
+          "linkId": "1.1.1",
+          "text": "Follow-up to 1.1"
+        },
+        {
+          "id": "qr1",
+          "linkId": "1.2",
+          "text": "Question 1.2"
+        },
+        {
+          "id": "qr1",
+          "linkId": "1.2.1",
+          "text": "Question 1.2.1"
+        },
+        {
+          "id": "qr1",
+          "linkId": "2",
+          "text": "Group 2"
+        }
+      ]
+    },
+    {
+      "title": "empty expression",
+      "tags": ["shareable"],
+      "view": {
+        "resource": "QuestionnaireResponse",
+        "status": "active",
+        "select": [
+          {
+            "column": [
+              {
+                "name": "id",
+                "path": "id",
+                "type": "id"
+              }
+            ]
+          },
+          {
+            "repeat": ["jurisdiction"],
+            "column": [
+              {
+                "name": "code",
+                "path": "coding.code",
+                "type": "code"
+              }
+            ]
+          }
+        ]
+      },
+      "expect": []
+    },
+    {
+      "title": "empty child expression",
+      "tags": ["shareable"],
+      "view": {
+        "resource": "QuestionnaireResponse",
+        "status": "active",
+        "select": [
+          {
+            "column": [
+              {
+                "name": "id",
+                "path": "id",
+                "type": "id"
+              }
+            ]
+          },
+          {
+            "repeat": ["item"],
+            "column": [
+              {
+                "name": "linkId",
+                "path": "linkId",
+                "type": "string"
+              },
+              {
+                "name": "definition",
+                "path": "definition",
+                "type": "uri"
+              }
+            ]
+          }
+        ]
+      },
+      "expect": [
+        {
+          "id": "qr1",
+          "linkId": "1",
+          "definition": null
+        },
+        {
+          "id": "qr1",
+          "linkId": "1.1",
+          "definition": null
+        },
+        {
+          "id": "qr1",
+          "linkId": "1.2",
+          "definition": null
+        },
+        {
+          "id": "qr1",
+          "linkId": "1.2.1",
+          "definition": null
+        },
+        {
+          "id": "qr1",
+          "linkId": "2",
+          "definition": null
+        }
+      ]
+    },
+    {
+      "title": "combined with forEach",
+      "tags": ["shareable"],
+      "view": {
+        "resource": "QuestionnaireResponse",
+        "status": "active",
+        "select": [
+          {
+            "column": [
+              {
+                "name": "id",
+                "path": "id",
+                "type": "id"
+              }
+            ]
+          },
+          {
+            "repeat": ["item"],
+            "select": [
+              {
+                "column": [
+                  {
+                    "name": "linkId",
+                    "path": "linkId",
+                    "type": "string"
+                  }
+                ]
+              },
+              {
+                "forEach": "answer",
+                "column": [
+                  {
+                    "name": "answerValue",
+                    "path": "value.ofType(string)",
+                    "type": "string"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "expect": [
+        {
+          "id": "qr1",
+          "linkId": "1.1",
+          "answerValue": "Answer 1.1"
+        }
+      ]
+    },
+    {
+      "title": "combined with forEachOrNull",
+      "tags": ["shareable"],
+      "view": {
+        "resource": "QuestionnaireResponse",
+        "status": "active",
+        "select": [
+          {
+            "column": [
+              {
+                "name": "id",
+                "path": "id",
+                "type": "id"
+              }
+            ]
+          },
+          {
+            "repeat": ["item"],
+            "select": [
+              {
+                "column": [
+                  {
+                    "name": "linkId",
+                    "path": "linkId",
+                    "type": "string"
+                  }
+                ]
+              },
+              {
+                "forEachOrNull": "answer",
+                "column": [
+                  {
+                    "name": "answerValue",
+                    "path": "value.ofType(string)",
+                    "type": "string"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "expect": [
+        {
+          "id": "qr1",
+          "linkId": "1",
+          "answerValue": null
+        },
+        {
+          "id": "qr1",
+          "linkId": "1.1",
+          "answerValue": "Answer 1.1"
+        },
+        {
+          "id": "qr1",
+          "linkId": "1.2",
+          "answerValue": null
+        },
+        {
+          "id": "qr1",
+          "linkId": "1.2.1",
+          "answerValue": null
+        },
+        {
+          "id": "qr1",
+          "linkId": "2",
+          "answerValue": null
+        }
+      ]
+    },
+    {
+      "title": "combined with unionAll",
+      "tags": ["shareable"],
+      "view": {
+        "resource": "QuestionnaireResponse",
+        "status": "active",
+        "select": [
+          {
+            "column": [
+              {
+                "name": "id",
+                "path": "id",
+                "type": "id"
+              }
+            ]
+          },
+          {
+            "unionAll": [
+              {
+                "repeat": ["item"],
+                "column": [
+                  {
+                    "name": "type",
+                    "path": "'item'",
+                    "type": "string"
+                  },
+                  {
+                    "name": "linkId",
+                    "path": "linkId",
+                    "type": "string"
+                  },
+                  {
+                    "name": "text",
+                    "path": "text",
+                    "type": "string"
+                  }
+                ]
+              },
+              {
+                "repeat": ["item", "answer.item"],
+                "column": [
+                  {
+                    "name": "type",
+                    "path": "'answer-item'",
+                    "type": "string"
+                  },
+                  {
+                    "name": "linkId",
+                    "path": "linkId",
+                    "type": "string"
+                  },
+                  {
+                    "name": "text",
+                    "path": "text",
+                    "type": "string"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "expect": [
+        {
+          "id": "qr1",
+          "type": "item",
+          "linkId": "1",
+          "text": "Group 1"
+        },
+        {
+          "id": "qr1",
+          "type": "item",
+          "linkId": "1.1",
+          "text": "Question 1.1"
+        },
+        {
+          "id": "qr1",
+          "type": "item",
+          "linkId": "1.2",
+          "text": "Question 1.2"
+        },
+        {
+          "id": "qr1",
+          "type": "item",
+          "linkId": "1.2.1",
+          "text": "Question 1.2.1"
+        },
+        {
+          "id": "qr1",
+          "type": "item",
+          "linkId": "2",
+          "text": "Group 2"
+        },
+        {
+          "id": "qr1",
+          "type": "answer-item",
+          "linkId": "1",
+          "text": "Group 1"
+        },
+        {
+          "id": "qr1",
+          "type": "answer-item",
+          "linkId": "1.1",
+          "text": "Question 1.1"
+        },
+        {
+          "id": "qr1",
+          "type": "answer-item",
+          "linkId": "1.1.1",
+          "text": "Follow-up to 1.1"
+        },
+        {
+          "id": "qr1",
+          "type": "answer-item",
+          "linkId": "1.2",
+          "text": "Question 1.2"
+        },
+        {
+          "id": "qr1",
+          "type": "answer-item",
+          "linkId": "1.2.1",
+          "text": "Question 1.2.1"
+        },
+        {
+          "id": "qr1",
+          "type": "answer-item",
+          "linkId": "2",
+          "text": "Group 2"
+        }
+      ]
+    },
+    {
+      "title": "repeat inside forEach",
+      "tags": ["shareable"],
+      "view": {
+        "resource": "Questionnaire",
+        "status": "active",
+        "select": [
+          {
+            "column": [
+              {
+                "name": "id",
+                "path": "id",
+                "type": "id"
+              }
+            ]
+          },
+          {
+            "forEach": "item",
+            "select": [
+              {
+                "column": [
+                  {
+                    "name": "groupLinkId",
+                    "path": "linkId",
+                    "type": "string"
+                  }
+                ]
+              },
+              {
+                "repeat": ["item"],
+                "column": [
+                  {
+                    "name": "linkId",
+                    "path": "linkId",
+                    "type": "string"
+                  },
+                  {
+                    "name": "text",
+                    "path": "text",
+                    "type": "string"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "expect": [
+        {
+          "id": "q1",
+          "groupLinkId": "g1",
+          "linkId": "g1.1",
+          "text": "Question 1.1"
+        },
+        {
+          "id": "q1",
+          "groupLinkId": "g1",
+          "linkId": "g1.1.1",
+          "text": "Sub-question 1.1.1"
+        }
+      ]
+    },
+    {
+      "title": "repeat inside repeat",
+      "tags": ["shareable"],
+      "view": {
+        "resource": "Questionnaire",
+        "status": "active",
+        "select": [
+          {
+            "column": [
+              {
+                "name": "id",
+                "path": "id",
+                "type": "id"
+              }
+            ]
+          },
+          {
+            "repeat": ["item"],
+            "select": [
+              {
+                "column": [
+                  {
+                    "name": "ancestorLinkId",
+                    "path": "linkId",
+                    "type": "string"
+                  }
+                ]
+              },
+              {
+                "repeat": ["item"],
+                "column": [
+                  {
+                    "name": "descendantLinkId",
+                    "path": "linkId",
+                    "type": "string"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "expect": [
+        {
+          "id": "q1",
+          "ancestorLinkId": "g1",
+          "descendantLinkId": "g1.1"
+        },
+        {
+          "id": "q1",
+          "ancestorLinkId": "g1",
+          "descendantLinkId": "g1.1.1"
+        },
+        {
+          "id": "q1",
+          "ancestorLinkId": "g1.1",
+          "descendantLinkId": "g1.1.1"
+        }
+      ]
+    },
+    {
+      "title": "repeat inside forEachOrNull",
+      "tags": ["shareable"],
+      "view": {
+        "resource": "Questionnaire",
+        "status": "active",
+        "select": [
+          {
+            "column": [
+              {
+                "name": "id",
+                "path": "id",
+                "type": "id"
+              }
+            ]
+          },
+          {
+            "forEachOrNull": "item",
+            "select": [
+              {
+                "column": [
+                  {
+                    "name": "groupLinkId",
+                    "path": "linkId",
+                    "type": "string"
+                  }
+                ]
+              },
+              {
+                "repeat": ["item"],
+                "column": [
+                  {
+                    "name": "linkId",
+                    "path": "linkId",
+                    "type": "string"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "expect": [
+        {
+          "id": "q1",
+          "groupLinkId": "g1",
+          "linkId": "g1.1"
+        },
+        {
+          "id": "q1",
+          "groupLinkId": "g1",
+          "linkId": "g1.1.1"
+        }
+      ]
+    },
+    {
+      "title": "sibling repeats at top level",
+      "tags": ["shareable"],
+      "view": {
+        "resource": "Questionnaire",
+        "status": "active",
+        "select": [
+          {
+            "column": [
+              {
+                "name": "id",
+                "path": "id",
+                "type": "id"
+              }
+            ]
+          },
+          {
+            "repeat": ["item"],
+            "column": [
+              {
+                "name": "linkIdA",
+                "path": "linkId",
+                "type": "string"
+              }
+            ]
+          },
+          {
+            "repeat": ["item"],
+            "column": [
+              {
+                "name": "linkIdB",
+                "path": "linkId",
+                "type": "string"
+              }
+            ]
+          }
+        ]
+      },
+      "expect": [
+        { "id": "q1", "linkIdA": "g1", "linkIdB": "g1" },
+        { "id": "q1", "linkIdA": "g1", "linkIdB": "g1.1" },
+        { "id": "q1", "linkIdA": "g1", "linkIdB": "g1.1.1" },
+        { "id": "q1", "linkIdA": "g1", "linkIdB": "g2" },
+        { "id": "q1", "linkIdA": "g1.1", "linkIdB": "g1" },
+        { "id": "q1", "linkIdA": "g1.1", "linkIdB": "g1.1" },
+        { "id": "q1", "linkIdA": "g1.1", "linkIdB": "g1.1.1" },
+        { "id": "q1", "linkIdA": "g1.1", "linkIdB": "g2" },
+        { "id": "q1", "linkIdA": "g1.1.1", "linkIdB": "g1" },
+        { "id": "q1", "linkIdA": "g1.1.1", "linkIdB": "g1.1" },
+        { "id": "q1", "linkIdA": "g1.1.1", "linkIdB": "g1.1.1" },
+        { "id": "q1", "linkIdA": "g1.1.1", "linkIdB": "g2" },
+        { "id": "q1", "linkIdA": "g2", "linkIdB": "g1" },
+        { "id": "q1", "linkIdA": "g2", "linkIdB": "g1.1" },
+        { "id": "q1", "linkIdA": "g2", "linkIdB": "g1.1.1" },
+        { "id": "q1", "linkIdA": "g2", "linkIdB": "g2" }
+      ]
+    },
+    {
+      "title": "sibling repeats inside forEach",
+      "tags": ["shareable"],
+      "view": {
+        "resource": "Questionnaire",
+        "status": "active",
+        "select": [
+          {
+            "column": [
+              {
+                "name": "id",
+                "path": "id",
+                "type": "id"
+              }
+            ]
+          },
+          {
+            "forEach": "item",
+            "select": [
+              {
+                "column": [
+                  {
+                    "name": "groupLinkId",
+                    "path": "linkId",
+                    "type": "string"
+                  }
+                ]
+              },
+              {
+                "repeat": ["item"],
+                "column": [
+                  {
+                    "name": "linkIdA",
+                    "path": "linkId",
+                    "type": "string"
+                  }
+                ]
+              },
+              {
+                "repeat": ["item"],
+                "column": [
+                  {
+                    "name": "linkIdB",
+                    "path": "linkId",
+                    "type": "string"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "expect": [
+        {
+          "id": "q1",
+          "groupLinkId": "g1",
+          "linkIdA": "g1.1",
+          "linkIdB": "g1.1"
+        },
+        {
+          "id": "q1",
+          "groupLinkId": "g1",
+          "linkIdA": "g1.1",
+          "linkIdB": "g1.1.1"
+        },
+        {
+          "id": "q1",
+          "groupLinkId": "g1",
+          "linkIdA": "g1.1.1",
+          "linkIdB": "g1.1"
+        },
+        {
+          "id": "q1",
+          "groupLinkId": "g1",
+          "linkIdA": "g1.1.1",
+          "linkIdB": "g1.1.1"
+        }
+      ]
+    },
+    {
+      "title": "top-level repeat with sibling forEach containing repeat",
+      "tags": ["shareable"],
+      "view": {
+        "resource": "Questionnaire",
+        "status": "active",
+        "select": [
+          {
+            "column": [
+              {
+                "name": "id",
+                "path": "id",
+                "type": "id"
+              }
+            ]
+          },
+          {
+            "repeat": ["item"],
+            "column": [
+              {
+                "name": "topLinkId",
+                "path": "linkId",
+                "type": "string"
+              }
+            ]
+          },
+          {
+            "forEach": "item",
+            "select": [
+              {
+                "column": [
+                  {
+                    "name": "groupLinkId",
+                    "path": "linkId",
+                    "type": "string"
+                  }
+                ]
+              },
+              {
+                "repeat": ["item"],
+                "column": [
+                  {
+                    "name": "innerLinkId",
+                    "path": "linkId",
+                    "type": "string"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "expect": [
+        {
+          "id": "q1",
+          "topLinkId": "g1",
+          "groupLinkId": "g1",
+          "innerLinkId": "g1.1"
+        },
+        {
+          "id": "q1",
+          "topLinkId": "g1",
+          "groupLinkId": "g1",
+          "innerLinkId": "g1.1.1"
+        },
+        {
+          "id": "q1",
+          "topLinkId": "g1.1",
+          "groupLinkId": "g1",
+          "innerLinkId": "g1.1"
+        },
+        {
+          "id": "q1",
+          "topLinkId": "g1.1",
+          "groupLinkId": "g1",
+          "innerLinkId": "g1.1.1"
+        },
+        {
+          "id": "q1",
+          "topLinkId": "g1.1.1",
+          "groupLinkId": "g1",
+          "innerLinkId": "g1.1"
+        },
+        {
+          "id": "q1",
+          "topLinkId": "g1.1.1",
+          "groupLinkId": "g1",
+          "innerLinkId": "g1.1.1"
+        },
+        {
+          "id": "q1",
+          "topLinkId": "g2",
+          "groupLinkId": "g1",
+          "innerLinkId": "g1.1"
+        },
+        {
+          "id": "q1",
+          "topLinkId": "g2",
+          "groupLinkId": "g1",
+          "innerLinkId": "g1.1.1"
+        }
+      ]
+    },
+    {
+      "title": "forEach with repeat with forEach (triple nesting)",
+      "tags": ["shareable"],
+      "view": {
+        "resource": "QuestionnaireResponse",
+        "status": "active",
+        "select": [
+          {
+            "column": [
+              {
+                "name": "id",
+                "path": "id",
+                "type": "id"
+              }
+            ]
+          },
+          {
+            "forEach": "item",
+            "select": [
+              {
+                "column": [
+                  {
+                    "name": "outerLinkId",
+                    "path": "linkId",
+                    "type": "string"
+                  }
+                ]
+              },
+              {
+                "repeat": ["item"],
+                "select": [
+                  {
+                    "column": [
+                      {
+                        "name": "midLinkId",
+                        "path": "linkId",
+                        "type": "string"
+                      }
+                    ]
+                  },
+                  {
+                    "forEach": "answer",
+                    "column": [
+                      {
+                        "name": "answerValue",
+                        "path": "value.ofType(string)",
+                        "type": "string"
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "expect": [
+        {
+          "id": "qr1",
+          "outerLinkId": "1",
+          "midLinkId": "1.1",
+          "answerValue": "Answer 1.1"
+        }
+      ]
+    },
+    {
+      "title": "repeat with forEach with repeat (triple nesting)",
+      "tags": ["shareable"],
+      "view": {
+        "resource": "QuestionnaireResponse",
+        "status": "active",
+        "select": [
+          {
+            "column": [
+              {
+                "name": "id",
+                "path": "id",
+                "type": "id"
+              }
+            ]
+          },
+          {
+            "repeat": ["item"],
+            "select": [
+              {
+                "column": [
+                  {
+                    "name": "outerLinkId",
+                    "path": "linkId",
+                    "type": "string"
+                  }
+                ]
+              },
+              {
+                "forEach": "answer",
+                "select": [
+                  {
+                    "column": [
+                      {
+                        "name": "midValue",
+                        "path": "value.ofType(string)",
+                        "type": "string"
+                      }
+                    ]
+                  },
+                  {
+                    "repeat": ["item"],
+                    "column": [
+                      {
+                        "name": "innerLinkId",
+                        "path": "linkId",
+                        "type": "string"
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "expect": [
+        {
+          "id": "qr1",
+          "outerLinkId": "1.1",
+          "midValue": "Answer 1.1",
+          "innerLinkId": "1.1.1"
+        }
+      ]
+    },
+    {
+      "title": "unionAll inside repeat",
+      "tags": ["shareable"],
+      "view": {
+        "resource": "Questionnaire",
+        "status": "active",
+        "select": [
+          {
+            "column": [
+              {
+                "name": "id",
+                "path": "id",
+                "type": "id"
+              }
+            ]
+          },
+          {
+            "repeat": ["item"],
+            "unionAll": [
+              {
+                "column": [
+                  {
+                    "name": "kind",
+                    "path": "'link'",
+                    "type": "string"
+                  },
+                  {
+                    "name": "value",
+                    "path": "linkId",
+                    "type": "string"
+                  }
+                ]
+              },
+              {
+                "column": [
+                  {
+                    "name": "kind",
+                    "path": "'text'",
+                    "type": "string"
+                  },
+                  {
+                    "name": "value",
+                    "path": "text",
+                    "type": "string"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "expect": [
+        { "id": "q1", "kind": "link", "value": "g1" },
+        { "id": "q1", "kind": "text", "value": "Group 1" },
+        { "id": "q1", "kind": "link", "value": "g1.1" },
+        { "id": "q1", "kind": "text", "value": "Question 1.1" },
+        { "id": "q1", "kind": "link", "value": "g1.1.1" },
+        { "id": "q1", "kind": "text", "value": "Sub-question 1.1.1" },
+        { "id": "q1", "kind": "link", "value": "g2" },
+        { "id": "q1", "kind": "text", "value": "Group 2" }
+      ]
+    },
+    {
+      "title": "repeat inside repeat inside repeat",
+      "tags": ["shareable"],
+      "view": {
+        "resource": "Questionnaire",
+        "status": "active",
+        "select": [
+          {
+            "column": [
+              {
+                "name": "id",
+                "path": "id",
+                "type": "id"
+              }
+            ]
+          },
+          {
+            "repeat": ["item"],
+            "select": [
+              {
+                "column": [
+                  {
+                    "name": "level1",
+                    "path": "linkId",
+                    "type": "string"
+                  }
+                ]
+              },
+              {
+                "repeat": ["item"],
+                "select": [
+                  {
+                    "column": [
+                      {
+                        "name": "level2",
+                        "path": "linkId",
+                        "type": "string"
+                      }
+                    ]
+                  },
+                  {
+                    "repeat": ["item"],
+                    "column": [
+                      {
+                        "name": "level3",
+                        "path": "linkId",
+                        "type": "string"
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "expect": [
+        {
+          "id": "q1",
+          "level1": "g1",
+          "level2": "g1.1",
+          "level3": "g1.1.1"
+        }
+      ]
+    },
+    {
+      "title": "multi-path repeat inside forEach",
+      "tags": ["shareable"],
+      "view": {
+        "resource": "QuestionnaireResponse",
+        "status": "active",
+        "select": [
+          {
+            "column": [
+              {
+                "name": "id",
+                "path": "id",
+                "type": "id"
+              }
+            ]
+          },
+          {
+            "forEach": "item",
+            "select": [
+              {
+                "column": [
+                  {
+                    "name": "groupLinkId",
+                    "path": "linkId",
+                    "type": "string"
+                  }
+                ]
+              },
+              {
+                "repeat": ["item", "answer.item"],
+                "column": [
+                  {
+                    "name": "linkId",
+                    "path": "linkId",
+                    "type": "string"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "expect": [
+        { "id": "qr1", "groupLinkId": "1", "linkId": "1.1" },
+        { "id": "qr1", "groupLinkId": "1", "linkId": "1.1.1" },
+        { "id": "qr1", "groupLinkId": "1", "linkId": "1.2" },
+        { "id": "qr1", "groupLinkId": "1", "linkId": "1.2.1" }
+      ]
+    },
+    {
+      "title": "unionAll with repeat and non-repeat branches",
+      "tags": ["shareable"],
+      "view": {
+        "resource": "Questionnaire",
+        "status": "active",
+        "select": [
+          {
+            "column": [
+              {
+                "name": "id",
+                "path": "id",
+                "type": "id"
+              }
+            ]
+          },
+          {
+            "unionAll": [
+              {
+                "column": [
+                  {
+                    "name": "kind",
+                    "path": "'root'",
+                    "type": "string"
+                  },
+                  {
+                    "name": "linkId",
+                    "path": "item.linkId.first()",
+                    "type": "string"
+                  }
+                ]
+              },
+              {
+                "repeat": ["item"],
+                "column": [
+                  {
+                    "name": "kind",
+                    "path": "'item'",
+                    "type": "string"
+                  },
+                  {
+                    "name": "linkId",
+                    "path": "linkId",
+                    "type": "string"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "expect": [
+        { "id": "q1", "kind": "root", "linkId": "g1" },
+        { "id": "q1", "kind": "item", "linkId": "g1" },
+        { "id": "q1", "kind": "item", "linkId": "g1.1" },
+        { "id": "q1", "kind": "item", "linkId": "g1.1.1" },
+        { "id": "q1", "kind": "item", "linkId": "g2" }
+      ]
+    }
+  ]
+}

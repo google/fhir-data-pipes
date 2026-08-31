@@ -11,6 +11,8 @@ jobs:
         project:
           - name: "Controller CLI"
             path: "pipelines/controller-cli"
+          - name: "SoF v2 Test Vendoring"
+            path: "utils/sof_tests"
 
     name: Check ${{ matrix.project.name }}
 

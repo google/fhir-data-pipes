@@ -29,6 +29,7 @@
   "tests": [
     {
       "title": "table level first()",
+      "tags": ["shareable"],
       "view": {
         "resource": "Patient",
         "select": [
@@ -51,6 +52,7 @@
     },
     {
       "title": "table and field level first()",
+      "tags": ["shareable"],
       "view": {
         "resource": "Patient",
         "select": [

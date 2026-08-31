@@ -37,17 +37,22 @@
     {
       "resourceType": "Observation",
       "id": "o1",
+      "status": "final",
+      "code": { "text": "code" },
       "valueInteger": 12
     },
     {
       "resourceType": "Observation",
       "id": "o2",
+      "status": "final",
+      "code": { "text": "code" },
       "valueInteger": 10
     }
   ],
   "tests": [
     {
       "title": "simple where path with result",
+      "tags": ["shareable"],
       "view": {
         "resource": "Patient",
         "select": [
@@ -75,6 +80,7 @@
     },
     {
       "title": "where path with no results",
+      "tags": ["shareable"],
       "view": {
         "resource": "Patient",
         "select": [
@@ -98,6 +104,7 @@
     },
     {
       "title": "where path with greater than inequality",
+      "tags": ["shareable"],
       "view": {
         "resource": "Observation",
         "select": [
@@ -125,6 +132,7 @@
     },
     {
       "title": "where path with less than inequality",
+      "tags": ["shareable"],
       "view": {
         "resource": "Observation",
         "select": [
@@ -152,6 +160,7 @@
     },
     {
       "title": "multiple where paths",
+      "tags": ["shareable"],
       "view": {
         "resource": "Patient",
         "select": [
@@ -182,6 +191,7 @@
     },
     {
       "title": "where path with an 'and' connector",
+      "tags": ["shareable"],
       "view": {
         "resource": "Patient",
         "select": [
@@ -209,6 +219,7 @@
     },
     {
       "title": "where path with an 'or' connector",
+      "tags": ["shareable"],
       "view": {
         "resource": "Patient",
         "select": [
@@ -239,6 +250,7 @@
     },
     {
       "title": "where path that evaluates to true when empty",
+      "tags": ["shareable"],
       "view": {
         "resource": "Patient",
         "select": [

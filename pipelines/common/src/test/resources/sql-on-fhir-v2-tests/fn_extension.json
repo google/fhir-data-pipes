@@ -88,13 +88,13 @@
         "profile": [
           "http://hl7.org/fhir/us/core/StructureDefinition/us-core-patient"
         ]
-      },
-      "extension": []
+      }
     }
   ],
   "tests": [
     {
       "title": "simple extension",
+      "tags": ["shareable"],
       "description": "flatten simple extension",
       "view": {
         "resource": "Patient",
@@ -132,6 +132,7 @@
     },
     {
       "title": "nested extension",
+      "tags": ["shareable"],
       "description": "flatten simple extension",
       "view": {
         "resource": "Patient",
