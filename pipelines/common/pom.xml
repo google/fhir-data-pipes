@@ -28,7 +28,7 @@
   <artifactId>common</artifactId>
 
   <properties>
-    <c3p0.version>0.14.1</c3p0.version>
+    <c3p0.version>0.14.2</c3p0.version>
     <guava.version>33.6.0-jre</guava.version>
     <jupiter.version>6.1.2</jupiter.version>
   </properties>
