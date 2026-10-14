@@ -1,0 +1,5 @@
+/target/
+/.cargo/
+*.parquet
+*.duckdb
+*.duckdb.wal
