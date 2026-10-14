@@ -104,7 +104,7 @@ public class FetchUtil {
           new ClientCredentialsAuthInterceptor(
               oAuthTokenEndpoint, oAuthClientId, oAuthClientSecret);
     } else if (!this.sourceUser.isEmpty()) {
-      log.info("Using Basic authentication for user ", this.sourceUser);
+      log.info("Using Basic authentication for user {}", this.sourceUser);
       authInterceptor = new BasicAuthInterceptor(this.sourceUser, sourcePw);
     } else {
       log.info("No FHIR-server authentication is configured.");
