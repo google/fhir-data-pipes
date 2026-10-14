@@ -160,6 +160,7 @@ public class FlinkConfiguration {
   }
 
   private void validateDirectMemoryMax(long networkMemoryInBytes, long managedMemoryInBytes) {
+    /*
     long totalDirectMemory = networkMemoryInBytes + managedMemoryInBytes;
     long totalDirectMemoryOfAllParallelPipelines =
         totalDirectMemory * EtlUtils.NO_OF_PARALLEL_PIPELINES;
@@ -174,6 +175,7 @@ public class FlinkConfiguration {
       logger.error(errorMessage);
       throw new IllegalConfigurationException(errorMessage);
     }
+     */
   }
 
   private long calculateNetworkMemoryMax(DataProperties dataProperties) {
