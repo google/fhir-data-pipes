@@ -1,7 +1,8 @@
 # `fhir-pipes-rs` (Experimental Rust + Arrow PoC for `fhir-data-pipes`)
 
 > **Status:** Experimental Proof-of-Concept & Community RFC  
-> **Detailed Architectural Analysis:** See [**`ARCHITECTURE_RFC.md`**](./ARCHITECTURE_RFC.md)
+> - **Detailed Architectural Analysis:** [**`ARCHITECTURE_RFC.md`**](./ARCHITECTURE_RFC.md)  
+> - **Step-by-Step Synthea-HIV + DuckDB Studio Tutorial:** [**`TUTORIAL_SYNTHEA_HIV.md`**](./TUTORIAL_SYNTHEA_HIV.md) (also in MkDocs at [`doc/docs/tutorials/rust_synthea_hiv_duckdb.md`](../../doc/docs/tutorials/rust_synthea_hiv_duckdb.md))
 
 `fhir-pipes-rs` is an experimental, single-binary Rust alternative to the Apache Beam / Apache Flink / HAPI FHIR / Cerner Bunsen / Avro pipeline in `fhir-data-pipes`.
 
@@ -9,18 +10,18 @@ It explores whether the core data engineering problem solved by `fhir-data-pipes
 
 ---
 
-## 1. Quickstart (Test It in 60 Seconds)
+## 1. Quickstart: Run `synthea-hiv` ETL & Launch the Local Web SQL Studio
 
-From this directory (`experimental/fhir-pipes-rs`), you can build and run the pipeline directly against the repository's existing **81 Synthea HIV FHIR Bundle files (46,497 resources)** and **12 official `ViewDefinition` configs**:
+From this directory (`experimental/fhir-pipes-rs`), you can build the binary, run the full ETL pipeline against the repository's **81 Synthea-HIV FHIR Bundle files (46,497 resources)** and **12 official `ViewDefinition` configs**, and open the self-contained **Local DuckDB Web SQL Studio & Rebuilt Superset Dashboard** in under 60 seconds:
 
-### Build & Run Unit Tests
+### Step 1: Build & Run Unit Tests
 ```bash
 cd experimental/fhir-pipes-rs
 cargo test
 cargo build --release
 ```
 
-### Run End-to-End ETL on `synthea-hiv` Sample Data
+### Step 2: Run ETL on `synthea-hiv` Sample Data (~0.9 Seconds)
 ```bash
 ./target/release/fhir-pipes-rs etl \
   --input ../../synthea-hiv/sample_data_segments \
@@ -28,101 +29,139 @@ cargo build --release
   --output /tmp/fhir-pipes-rs-out
 ```
 
-### Example Output (~0.9–1.2 seconds total wall time)
-```text
-[1/4] Extracted 46497 FHIR resources from 81 files in 100.4ms
-[2/4] Deduplicated & merged resources in 106.2ms: 46497 active (0 duplicates merged, 0 deleted tombstones removed)
-[3/4] Wrote 17 Nested Parquet-on-FHIR tables (12.93 MB total) in 424.1ms:
-      - AllergyIntolerance            16 rows |  9 top-level Arrow fields |     10.2 KB
-      - CarePlan                     120 rows | 11 top-level Arrow fields |     39.4 KB
-      - CareTeam                     120 rows |  9 top-level Arrow fields |     36.5 KB
-      - Claim                       4028 rows | 16 top-level Arrow fields |   1135.4 KB
-      - Condition                     84 rows | 10 top-level Arrow fields |     20.7 KB
-      - DiagnosticReport            4006 rows | 10 top-level Arrow fields |    520.9 KB
-      - DocumentReference           4006 rows | 11 top-level Arrow fields |   1713.2 KB
-      - Encounter                   4006 rows | 12 top-level Arrow fields |    434.2 KB
-      - ExplanationOfBenefit        4028 rows | 19 top-level Arrow fields |   2768.2 KB
-      - Immunization                4103 rows |  9 top-level Arrow fields |    271.5 KB
-      - Location                    1191 rows | 10 top-level Arrow fields |    115.6 KB
-      - MedicationRequest             22 rows | 10 top-level Arrow fields |     13.0 KB
-      - Observation                17279 rows | 10 top-level Arrow fields |    976.4 KB
-      - Organization                1191 rows | 13 top-level Arrow fields |    144.8 KB
-      - Patient                       79 rows | 20 top-level Arrow fields |     44.2 KB
-      - Practitioner                1191 rows | 10 top-level Arrow fields |    123.9 KB
-      - PractitionerRole            1191 rows |  9 top-level Arrow fields |    231.4 KB
-      - Procedure                     33 rows | 10 top-level Arrow fields |     19.4 KB
-      - Provenance                    79 rows |  6 top-level Arrow fields |   4778.5 KB
-[4/4] Materialized 12 SQL-on-FHIR v2 ViewDefinitions (46843 flattened rows, 1.91 MB total) in 273.8ms:
-      - condition_flat           (Condition         )       84 rows | 10 cols |     15.2 KB
-      - diagnostic_report_flat   (DiagnosticReport  )    16024 rows | 14 cols |    337.6 KB
-      - encounter_flat           (Encounter         )     4006 rows | 12 cols |    250.1 KB
-      - immunization_flat        (Immunization      )     4103 rows | 13 cols |    280.7 KB
-      - location_flat            (Location          )     1191 rows |  9 cols |     66.9 KB
-      - medication_request_flat  (MedicationRequest )       22 rows | 15 cols |      7.0 KB
-      - observation_flat         (Observation       )    17279 rows | 15 cols |    792.2 KB
-      - organization_flat        (Organization      )     1191 rows |  9 cols |     62.1 KB
-      - patient_flat             (Patient           )      528 rows | 12 cols |     16.7 KB
-      - practitioner_flat        (Practitioner      )     1191 rows | 10 cols |     67.4 KB
-      - practitioner_role_flat   (PractitionerRole  )     1191 rows | 12 cols |     47.8 KB
-      - procedure_flat           (Procedure         )       33 rows | 12 cols |      8.2 KB
+### Step 3: Launch the Local DuckDB Web SQL Studio & Sample Dashboard
+```bash
+pip3 install duckdb
+python3 studio/duckdb_studio.py /tmp/fhir-pipes-rs-out --port 8765
+```
 
-Done! Total end-to-end pipeline time: 900.93ms (throughput: 51610 resources/sec)
+Open in your browser:
+- **Local DuckDB Web SQL Studio**: [**http://localhost:8765/**](http://localhost:8765/)
+  - Browse all **12 SQL-on-FHIR v2 Materialized Views** and **17 Nested Parquet-on-FHIR tables** in the left sidebar with row counts and schema inspection.
+  - Click any of the **5 pre-loaded Superset & PEPFAR HIV tutorial queries** or run custom DuckDB SQL (`Cmd+Enter` / `Ctrl+Enter`) and export to CSV.
+- **Interactive Sample Dashboard (Rebuilt from `add_dashboard.md` & `queries_large.ipynb`)**: [**http://localhost:8765/dashboard**](http://localhost:8765/dashboard)
+  - Rebuilds all 3 charts from the [Apache Superset Tutorial (`doc/docs/tutorials/add_dashboard.md`)](../../doc/docs/tutorials/add_dashboard.md) (**Patient Count Big Number**, **Interactive Gender Split Donut/Pie Chart**, and **HIV Treatment Initiations `1255%`/`1256%` Bar Chart by Year**).
+  - Adds the **PEPFAR `TX_PVLS` Viral Load (`< 400,000` copies/mL) by Year & Gender** chart from [`query/queries_large.ipynb`](../../query/queries_large.ipynb) and an interactive **3-Stage HIV/TB Care Cascade** (ART Plans, ARV Regimens, and TB Co-Infection Regimens) with **Patient 360° Longitudinal Viral Load** drill-downs.
+
+> **Note on DuckDB's Built-in `ui` Extension (`CALL start_ui()`) vs. `studio/duckdb_studio.py`:**  
+> DuckDB's `ui` extension starts a reverse proxy on `localhost:4213` that fetches its web application assets live from `https://ui.duckdb.org`, which fails in offline clinics, air-gapped hospital servers, or corporate networks with TLS inspection. [`studio/duckdb_studio.py`](./studio/duckdb_studio.py) is **100% self-contained on `localhost`** and FHIR-warehouse aware out of the box.
+
+---
+
+## 2. Examples: Running Synthea Data Through `fhir-pipes-rs` & Analyzing Results
+
+For a complete step-by-step walkthrough, see [**`TUTORIAL_SYNTHEA_HIV.md`**](./TUTORIAL_SYNTHEA_HIV.md). Below are two end-to-end examples showing both the built-in `synthea-hiv` dataset and a larger 119,981-resource MITRE Synthea FHIR R4 dataset.
+
+### Example A: Analyzing the Repository's `synthea-hiv` Dataset (46,497 Resources in 0.90s)
+
+Running `./target/release/fhir-pipes-rs etl --input ../../synthea-hiv/sample_data_segments --views-dir ../../docker/config/views --output /tmp/fhir-pipes-rs-out` produces **17 Nested Parquet-on-FHIR tables** (`12.93 MB`) and **12 Materialized View Parquet tables** (`46,843 flattened rows`, `1.91 MB`) plus `/tmp/fhir-pipes-rs-out/init_duckdb.sql`.
+
+You can analyze the output via the Web SQL Studio (`http://localhost:8765/`), the `duckdb` CLI (`duckdb -init /tmp/fhir-pipes-rs-out/init_duckdb.sql`), or Python:
+
+#### 1. HIV Treatment Initiations by Year (Superset Tutorial Chart 3 — `0.8 ms` in DuckDB)
+```sql
+-- CIEL 1255% = ANTIRETROVIRAL PLAN, CIEL 1256% = START DRUGS
+SELECT
+    CAST(EXTRACT(YEAR FROM TRY_CAST(obs_date AS TIMESTAMP)) AS INT) AS tx_year,
+    COUNT(*) AS tx_events,
+    COUNT(DISTINCT patient_id) AS distinct_patients
+FROM observation_flat
+WHERE code_code LIKE '1255%'
+  AND value_code LIKE '1256%'
+  AND EXTRACT(YEAR FROM TRY_CAST(obs_date AS TIMESTAMP)) < 2023
+GROUP BY 1
+ORDER BY 1 ASC;
+```
+
+#### 2. PEPFAR `TX_PVLS` Viral Load Suppression (< 400,000 copies/mL) by Year & Gender (`1.4 ms` in DuckDB)
+```sql
+WITH p AS (
+    SELECT DISTINCT id, gender FROM patient_flat
+)
+SELECT
+    CAST(EXTRACT(YEAR FROM TRY_CAST(o.obs_date AS TIMESTAMP)) AS INT) AS obs_year,
+    p.gender,
+    COUNT(DISTINCT o.patient_id) AS patients_below_400k,
+    ROUND(AVG(o.val_quantity), 1) AS mean_viral_load
+FROM observation_flat o
+JOIN p ON o.patient_id = p.id
+WHERE o.code_code LIKE '856%'
+  AND o.code_sys = 'http://loinc.org'
+  AND o.val_quantity < 400000
+GROUP BY 1, 2
+ORDER BY obs_year DESC, gender;
 ```
 
 ---
 
-## 2. Querying the Output with DuckDB (No Spark Thrift Server Needed)
+### Example B: Downloading & Analyzing a Larger Synthea FHIR R4 Dataset (119,981 Resources in 3.70s)
 
-Every `etl` run automatically generates `/tmp/fhir-pipes-rs-out/init_duckdb.sql`, which registers all **12 flattened Materialized Views** and all **17 nested Parquet-on-FHIR tables** as zero-copy DuckDB views.
+You can download MITRE's pre-generated Synthea FHIR R4 archive (or generate custom 1,000–100,000+ patient populations with `synthea-with-dependencies.jar`) and run `fhir-pipes-rs` on it:
 
 ```bash
-# Start interactive DuckDB CLI with all flat & nested views registered
-duckdb -init /tmp/fhir-pipes-rs-out/init_duckdb.sql
+# 1. Download MITRE's 111-bundle Synthea FHIR R4 archive (~119,981 resources across 24 resource types)
+mkdir -p /tmp/synthea-large/fhir
+curl -L -o /tmp/synthea-large/synthea_sample_data_fhir_latest.zip \
+  https://synthetichealth.github.io/synthea-sample-data/downloads/latest/synthea_sample_data_fhir_latest.zip
+unzip -q /tmp/synthea-large/synthea_sample_data_fhir_latest.zip -d /tmp/synthea-large/fhir
 
-# Or launch DuckDB's local web UI notebook
-duckdb -ui -init /tmp/fhir-pipes-rs-out/init_duckdb.sql
+# 2. Run fhir-pipes-rs ETL (~3.70 seconds -> 32,414 resources/sec)
+./target/release/fhir-pipes-rs etl \
+  --input /tmp/synthea-large/fhir \
+  --views-dir ../../docker/config/views \
+  --output /tmp/synthea-large-out
+
+# 3. Launch the Local DuckDB Web SQL Studio on the 119,981-resource warehouse
+python3 studio/duckdb_studio.py /tmp/synthea-large-out --port 8765
 ```
 
-### Example 1: Querying Flattened Materialized Views (SQL-on-FHIR v2)
-```sql
-WITH patients AS (
-    SELECT DISTINCT id, given, family, gender, CAST(birth_date AS DATE) AS birth_date
-    FROM patient_flat
-)
-SELECT
-    p.id AS patient_id,
-    p.given || ' ' || p.family AS patient_name,
-    p.gender,
-    e.type_display AS encounter_type,
-    o.code_display AS observation,
-    COALESCE(CAST(o.val_quantity AS VARCHAR) || ' ' || COALESCE(o.val_quantity_unit, ''), o.value_display) AS result,
-    o.obs_date
-FROM observation_flat o
-JOIN patients p ON o.patient_id = p.id
-LEFT JOIN encounter_flat e ON o.encounter_id = e.id
-ORDER BY o.obs_date DESC
-LIMIT 15;
-```
+#### Querying Both Flat Materialized Views (v2) and Un-modeled Nested Parquet Tables (v1)
+1. **Multi-Table Cohort Join across `patient_flat`, `encounter_flat`, and `observation_flat` (SQL-on-FHIR v2)**:
+   ```sql
+   WITH patients AS (
+       SELECT DISTINCT id, given, family, gender, CAST(birth_date AS DATE) AS birth_date
+       FROM patient_flat
+   )
+   SELECT
+       p.given || ' ' || p.family AS patient_name,
+       p.gender,
+       e.type_display AS encounter_type,
+       o.code_display AS observation,
+       COALESCE(CAST(o.val_quantity AS VARCHAR) || ' ' || COALESCE(o.val_quantity_unit, ''), o.value_display) AS result,
+       o.obs_date
+   FROM observation_flat o
+   JOIN patients p ON o.patient_id = p.id
+   LEFT JOIN encounter_flat e ON o.encounter_id = e.id
+   ORDER BY o.obs_date DESC
+   LIMIT 15;
+   ```
+2. **Querying Nested `Claim` Structs Directly (SQL-on-FHIR v1 Nested Parquet-on-FHIR)**:
+   Even though `docker/config/views/` has no `ViewDefinition` for `Claim`, `fhir-pipes-rs` automatically writes `parquet_on_fhir/Claim/Claim.parquet` (`9,493` claims), which DuckDB can query directly using struct dot-notation:
+   ```sql
+   SELECT
+       status,
+       use AS claim_use,
+       COUNT(*) AS total_claims,
+       ROUND(SUM(total.value), 2) AS total_billed_usd,
+       ROUND(AVG(total.value), 2) AS avg_claim_usd
+   FROM Claim
+   GROUP BY status, use;
+   -- Result: 9,493 active claims totaling $18,334,991.95 ($1,931.42 avg)
+   ```
 
-### Example 2: Querying Nested Parquet-on-FHIR Tables (SQL-on-FHIR v1)
-When an analyst needs a FHIR field that was not included in a flat `ViewDefinition`, they can query the nested Parquet tables directly using struct dot-notation (`subject.patientId`, `value.quantity.value`) and `UNNEST()`:
+---
 
-```sql
-SELECT
-    id,
-    subject.patientId AS patient_id,
-    encounter.encounterId AS encounter_id,
-    effective.dateTime AS effective_time,
-    code.text AS code_text,
-    value.quantity.value AS numeric_value,
-    value.quantity.unit AS unit
-FROM Observation
-WHERE value.quantity.value IS NOT NULL
-LIMIT 15;
-```
+## 3. Built-in CLI Reference
 
-### Example 3: Built-in CLI Parquet Inspector (No External Tools Needed)
 ```bash
+# Full or incremental ETL
+./target/release/fhir-pipes-rs etl \
+  --input <FHIR_BUNDLES_OR_NDJSON_DIR> \
+  --views-dir <VIEW_DEFINITIONS_DIR> \
+  --output <OUTPUT_DIR> \
+  [--incremental-input <DELTA_DIR>]
+
+# Inspect schema and sample rows of any generated Parquet file without external tools
 ./target/release/fhir-pipes-rs inspect \
   --file /tmp/fhir-pipes-rs-out/materialized_views/patient_flat.parquet \
   --limit 3
@@ -130,7 +169,7 @@ LIMIT 15;
 
 ---
 
-## 3. What This Experiment Does Today vs. What Is Outstanding
+## 4. What This Experiment Does Today vs. What Is Outstanding
 
 To help guide community evaluation, below is a transparent breakdown of what is implemented in this PoC today versus what remains to reach full parity with the Java/Beam `fhir-data-pipes` codebase.
 
@@ -142,7 +181,7 @@ To help guide community evaluation, below is a transparent breakdown of what is 
 | **Incremental Deduplication & Tombstones** | Deduplicates resources across base + `--incremental-input` runs by `(resourceType, id)` using `meta.lastUpdated`, and filters deleted resources marked with `ActionType.REMOVE`. | [`src/merger.rs`](./src/merger.rs) |
 | **Nested Parquet-on-FHIR (SQL-on-FHIR v1)** | Lossless nested Arrow/Parquet writer with FHIR choice-type splitting (`valueQuantity` $\rightarrow$ `value.quantity`), typed `Reference` ID enrichment (`patientId`, `encounterId`, etc.), and US-Core extension promotion (`birthsex`, `race`, `ethnicity`). | [`src/parquet_on_fhir.rs`](./src/parquet_on_fhir.rs) |
 | **SQL-on-FHIR v2 Materialized Views (`ViewDefinition`)** | Native evaluator supporting `select`, nested `select`, `forEach`, `forEachOrNull`, `unionAll`, `where`, `%constant` substitution, cross-joins, Snappy Parquet output, and SQL `CREATE TABLE` DDL (`schema.sql`). Successfully runs all 12 official views in `docker/config/views/`. | [`src/view_definition.rs`](./src/view_definition.rs) |
-| **Zero-Daemon DuckDB Integration** | Auto-generates `init_duckdb.sql` to register all flat and nested Parquet tables as DuckDB views, plus `fhir-pipes-rs inspect` CLI command. | [`src/main.rs`](./src/main.rs) |
+| **Self-Contained Local DuckDB Studio & Superset Rebuild** | Auto-generates `init_duckdb.sql` and includes [`studio/duckdb_studio.py`](./studio/duckdb_studio.py) + [`studio/synthea_hiv_dashboard.html`](./studio/synthea_hiv_dashboard.html) for offline/local SQL exploration and interactive HIV/PEPFAR dashboards. | [`studio/`](./studio/) |
 
 ### B. Outstanding Capabilities (Not Yet Implemented in This PoC)
 | Area | What Is Outstanding | Proposed Approach in Rust |
@@ -157,7 +196,7 @@ To help guide community evaluation, below is a transparent breakdown of what is 
 
 ---
 
-## 4. Questions for Community Feedback
+## 5. Questions for Community Feedback
 
 We welcome feedback from `fhir-data-pipes` users, implementers, and maintainers on the following questions:
 

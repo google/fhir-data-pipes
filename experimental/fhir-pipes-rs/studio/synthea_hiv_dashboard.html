@@ -1,0 +1,894 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Key Program Metrics — Synthea-HIV Dashboard (Superset &amp; PEPFAR Rebuild)</title>
+  <script src="https://www.gstatic.com/antigravity/web/dev/tailwindcss.min.js"></script>
+</head>
+<body class="bg-[var(--background)] text-[var(--foreground)] antialiased p-5 space-y-5">
+
+  <!-- Header -->
+  <div class="bg-[var(--card)] border border-[var(--border)] rounded-xl p-4 shadow-sm flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+    <div>
+      <div class="flex flex-wrap items-center gap-2">
+        <span class="px-2.5 py-0.5 text-xs font-semibold rounded-full bg-emerald-500/15 text-emerald-500 border border-emerald-500/30">
+          Rebuilt from doc/docs/tutorials/add_dashboard.md &amp; query/queries_large.ipynb
+        </span>
+        <span class="text-xs font-mono text-[var(--muted-foreground)]">/tmp/fhir-pipes-rs-out (synthea-hiv)</span>
+      </div>
+      <h1 class="text-lg font-bold mt-1.5 text-[var(--foreground)]">
+        Key Program Metrics — Synthea HIV &amp; TB Care Cascade Dashboard
+      </h1>
+      <p class="text-xs text-[var(--muted-foreground)] mt-0.5">
+        Zero-Docker replacement for the Apache Superset + Spark Thrift Server + Hive tutorial. Click the <strong>Gender Pie Chart</strong>, any <strong>ART Plan</strong>, <strong>ARV Drug</strong>, or <strong>TB Regimen</strong> to cross-filter all charts.
+      </p>
+    </div>
+    <div class="flex flex-wrap gap-2">
+      <button onclick="switchTab('superset')" id="tab-btn-superset" class="px-3.5 py-2 rounded-lg text-xs font-semibold bg-[var(--primary)] text-[var(--primary-foreground)] transition cursor-pointer">
+        1. Superset "Key Program Metrics"
+      </button>
+      <button onclick="switchTab('pepfar')" id="tab-btn-pepfar" class="px-3.5 py-2 rounded-lg text-xs font-semibold bg-[var(--secondary)] text-[var(--secondary-foreground)] border border-[var(--border)] transition cursor-pointer">
+        2. PEPFAR Viral Load &amp; ARV/TB Cascade
+      </button>
+      <button onclick="switchTab('patients')" id="tab-btn-patients" class="px-3.5 py-2 rounded-lg text-xs font-semibold bg-[var(--secondary)] text-[var(--secondary-foreground)] border border-[var(--border)] transition cursor-pointer">
+        3. HIV Patient Cohort (<span id="tab-pt-count">79</span>)
+      </button>
+      <button onclick="switchTab('sql')" id="tab-btn-sql" class="px-3.5 py-2 rounded-lg text-xs font-semibold bg-[var(--secondary)] text-[var(--secondary-foreground)] border border-[var(--border)] transition cursor-pointer">
+        4. Spark SQL vs. DuckDB Comparison
+      </button>
+    </div>
+  </div>
+
+  <!-- Interactive Filter Bar -->
+  <div class="bg-[var(--card)] border border-[var(--border)] rounded-xl p-3.5 shadow-sm space-y-2.5">
+    <div class="flex flex-wrap items-center gap-3">
+      <div class="flex items-center gap-1.5">
+        <span class="text-xs font-semibold text-[var(--muted-foreground)]">Gender:</span>
+        <div class="inline-flex rounded-lg border border-[var(--border)] overflow-hidden text-xs">
+          <button onclick="setFilter('gender', 'all')" id="flt-gender-all" class="px-2.5 py-1 font-semibold bg-[var(--primary)] text-[var(--primary-foreground)] cursor-pointer">All (79)</button>
+          <button onclick="setFilter('gender', 'female')" id="flt-gender-female" class="px-2.5 py-1 bg-[var(--secondary)] text-[var(--foreground)] cursor-pointer">Female (41)</button>
+          <button onclick="setFilter('gender', 'male')" id="flt-gender-male" class="px-2.5 py-1 bg-[var(--secondary)] text-[var(--foreground)] cursor-pointer">Male (38)</button>
+        </div>
+      </div>
+
+      <div class="flex items-center gap-1.5">
+        <span class="text-xs font-semibold text-[var(--muted-foreground)]">ART Plan (1255%):</span>
+        <select id="flt-plan" onchange="setFilter('art_plan', this.value)" class="px-2.5 py-1 rounded-lg text-xs bg-[var(--secondary)] text-[var(--foreground)] border border-[var(--border)] cursor-pointer">
+          <option value="all">All ART Plans</option>
+          <option value="Start drugs">Start drugs (1256%)</option>
+          <option value="Change formulation">Change formulation (1258%)</option>
+          <option value="Dosing change">Dosing change (981%)</option>
+          <option value="Stop all">Stop all (1260%)</option>
+          <option value="Continue regimen">Continue regimen (1257%)</option>
+          <option value="Change regimen">Change regimen (1259%)</option>
+        </select>
+      </div>
+
+      <div class="flex items-center gap-1.5">
+        <span class="text-xs font-semibold text-[var(--muted-foreground)]">Viral Load Status:</span>
+        <select id="flt-vl" onchange="setFilter('vl_status', this.value)" class="px-2.5 py-1 rounded-lg text-xs bg-[var(--secondary)] text-[var(--foreground)] border border-[var(--border)] cursor-pointer">
+          <option value="all">All Viral Load Levels</option>
+          <option value="under_400k">PEPFAR Threshold (&lt; 400,000 copies/mL)</option>
+          <option value="high_vl">High Mean Viral Load (≥ 400,000 copies/mL)</option>
+        </select>
+      </div>
+
+      <div class="flex-1 min-w-[180px]">
+        <input id="global-search" type="text" oninput="setFilter('search', this.value)"
+          placeholder="Search patient name, ARV drug (e.g. Tenofovir), or TB regimen..."
+          class="w-full px-3 py-1 rounded-lg text-xs bg-[var(--secondary)] text-[var(--foreground)] border border-[var(--border)] focus:outline-none">
+      </div>
+
+      <button onclick="resetAllFilters()" id="reset-btn" class="hidden px-3 py-1 rounded-lg text-xs font-semibold bg-rose-500/15 text-rose-500 border border-rose-500/30 cursor-pointer">
+        Reset Filters ✕
+      </button>
+    </div>
+    <div id="active-chips" class="hidden flex flex-wrap items-center gap-2 pt-2 border-t border-[var(--border)] text-xs"></div>
+  </div>
+
+  <!-- TAB 1: SUPERSET "KEY PROGRAM METRICS" REBUILD -->
+  <div id="tab-superset" class="space-y-5">
+    <!-- Top Row of Superset Tutorial: Chart 1 (Patient Count Big Number) + Chart 2 (Gender Split Pie Chart) -->
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-5">
+      <!-- Chart 1: Big Number (Patient Count + DWH Sanity Counts from single_machine.md) -->
+      <div class="lg:col-span-5 bg-[var(--card)] border border-[var(--border)] rounded-xl p-5 shadow-sm flex flex-col justify-between">
+        <div>
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-semibold uppercase tracking-wider text-[var(--muted-foreground)]">Superset Chart 1 · Big Number</span>
+            <span class="text-xs font-mono px-2 py-0.5 rounded bg-[var(--secondary)] text-emerald-500">SELECT COUNT(*) FROM Patient</span>
+          </div>
+          <h2 class="text-base font-semibold mt-1 text-[var(--foreground)]">Patient Count</h2>
+          <div class="my-6 flex items-baseline gap-3">
+            <span class="text-6xl font-extrabold tracking-tight text-emerald-500" id="superset-big-number">79</span>
+            <span class="text-sm text-[var(--muted-foreground)]" id="superset-big-sub">of 79 total HIV cohort patients</span>
+          </div>
+        </div>
+
+        <!-- Quality Checks from single_machine.md -->
+        <div class="grid grid-cols-3 gap-2.5 pt-4 border-t border-[var(--border)] text-xs">
+          <div class="p-2.5 rounded-lg bg-[var(--secondary)] border border-[var(--border)]">
+            <div class="text-[var(--muted-foreground)]">Observations</div>
+            <div class="text-base font-bold mt-0.5 font-mono" id="kpi-obs-count">17,279</div>
+          </div>
+          <div class="p-2.5 rounded-lg bg-[var(--secondary)] border border-[var(--border)]">
+            <div class="text-[var(--muted-foreground)]">Encounters</div>
+            <div class="text-base font-bold mt-0.5 font-mono" id="kpi-enc-count">4,006</div>
+          </div>
+          <div class="p-2.5 rounded-lg bg-[var(--secondary)] border border-[var(--border)]">
+            <div class="text-[var(--muted-foreground)]">ART Starts (1256%)</div>
+            <div class="text-base font-bold mt-0.5 font-mono text-amber-500" id="kpi-art-starts">60</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Chart 2: Gender Split Interactive Pie / Donut Chart -->
+      <div class="lg:col-span-7 bg-[var(--card)] border border-[var(--border)] rounded-xl p-5 shadow-sm">
+        <div class="flex items-center justify-between mb-2">
+          <div>
+            <span class="text-xs font-semibold uppercase tracking-wider text-[var(--muted-foreground)]">Superset Chart 2 · Interactive Pie Chart</span>
+            <h2 class="text-base font-semibold mt-0.5 text-[var(--foreground)]">Gender Split (Click Slice or Legend to Filter)</h2>
+          </div>
+          <span class="text-xs font-mono px-2 py-0.5 rounded bg-[var(--secondary)] text-[var(--muted-foreground)]">GROUP BY gender</span>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 items-center gap-4 mt-3">
+          <div class="flex justify-center">
+            <canvas id="gender-pie-canvas" width="210" height="210" class="cursor-pointer" onclick="handlePieClick(event)"></canvas>
+          </div>
+          <div class="space-y-3 text-xs">
+            <div onclick="setFilter('gender', STATE.gender === 'female' ? 'all' : 'female')"
+                 class="p-3 rounded-xl border border-[var(--border)] bg-[var(--secondary)] hover:border-indigo-500 transition cursor-pointer flex items-center justify-between">
+              <div class="flex items-center gap-2.5">
+                <span class="w-3.5 h-3.5 rounded-full bg-indigo-500 inline-block"></span>
+                <div>
+                  <div class="font-bold text-sm">Female</div>
+                  <div class="text-[var(--muted-foreground)]">Click to isolate Female patients</div>
+                </div>
+              </div>
+              <div class="text-right font-mono">
+                <div class="text-base font-bold" id="pie-f-count">41</div>
+                <div class="text-[var(--muted-foreground)]" id="pie-f-pct">51.9%</div>
+              </div>
+            </div>
+
+            <div onclick="setFilter('gender', STATE.gender === 'male' ? 'all' : 'male')"
+                 class="p-3 rounded-xl border border-[var(--border)] bg-[var(--secondary)] hover:border-sky-500 transition cursor-pointer flex items-center justify-between">
+              <div class="flex items-center gap-2.5">
+                <span class="w-3.5 h-3.5 rounded-full bg-sky-500 inline-block"></span>
+                <div>
+                  <div class="font-bold text-sm">Male</div>
+                  <div class="text-[var(--muted-foreground)]">Click to isolate Male patients</div>
+                </div>
+              </div>
+              <div class="text-right font-mono">
+                <div class="text-base font-bold" id="pie-m-count">38</div>
+                <div class="text-[var(--muted-foreground)]" id="pie-m-pct">48.1%</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Bottom Row of Superset Tutorial: Chart 3 (Complex Bar Chart: HIV Treatment by Year) -->
+    <div class="bg-[var(--card)] border border-[var(--border)] rounded-xl p-5 shadow-sm">
+      <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-4">
+        <div>
+          <span class="text-xs font-semibold uppercase tracking-wider text-[var(--muted-foreground)]">Superset Chart 3 · Complex Bar Chart (add_dashboard.md)</span>
+          <h2 class="text-base font-semibold mt-0.5 text-[var(--foreground)]">
+            HIV Treatment Initiations by Year (CIEL <code>1255%</code> Antiretroviral Plan = <code>1256%</code> Start Drugs, Year &lt; 2023)
+          </h2>
+          <p class="text-xs text-[var(--muted-foreground)]">
+            Compare SQL-on-FHIR v1 Nested <code>LATERAL VIEW EXPLODE(code.coding)</code> (<strong>5.5 ms</strong> in DuckDB) vs. SQL-on-FHIR v2 <code>observation_flat</code> (<strong>0.8 ms</strong> in DuckDB)
+          </p>
+        </div>
+        <div class="flex gap-2 text-xs">
+          <span class="px-2.5 py-1 rounded bg-emerald-500/15 text-emerald-500 font-mono font-semibold" id="hiv-tx-total-badge">50 events across 37 patients</span>
+        </div>
+      </div>
+      <canvas id="hiv-tx-bar-canvas" width="900" height="220" class="w-full h-[220px]"></canvas>
+    </div>
+  </div>
+
+  <!-- TAB 2: PEPFAR VIRAL LOAD & ARV/TB CASCADE -->
+  <div id="tab-pepfar" class="space-y-5 hidden">
+    <!-- PEPFAR TX_PVLS Viral Load (< 400,000) by Year and Gender from queries_large.ipynb -->
+    <div class="bg-[var(--card)] border border-[var(--border)] rounded-xl p-5 shadow-sm">
+      <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-4">
+        <div>
+          <span class="text-xs font-semibold uppercase tracking-wider text-[var(--muted-foreground)]">PEPFAR MER Indicator · query/queries_large.ipynb</span>
+          <h2 class="text-base font-semibold mt-0.5 text-[var(--foreground)]">
+            Patients with HIV Viral Load &lt; 400,000 copies/mL by Year &amp; Gender (LOINC/CIEL <code>856%</code>)
+          </h2>
+          <p class="text-xs text-[var(--muted-foreground)]">
+            Grouped by <code>EXTRACT(YEAR FROM obs_date)</code> and joined with <code>patient_flat.gender</code>
+          </p>
+        </div>
+        <div class="flex items-center gap-3 text-xs">
+          <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-indigo-500 inline-block"></span>Female</span>
+          <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-sky-500 inline-block"></span>Male</span>
+        </div>
+      </div>
+      <div id="vl-year-gender-bars" class="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-2 text-xs"></div>
+    </div>
+
+    <!-- 3-Column HIV / TB Clinical Care Cascade -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-5">
+      <!-- ART Plan Breakdown (1255%) -->
+      <div class="bg-[var(--card)] border border-[var(--border)] rounded-xl p-5 shadow-sm">
+        <h3 class="text-sm font-bold text-[var(--foreground)]">1. Antiretroviral Plan (CIEL 1255%)</h3>
+        <p class="text-xs text-[var(--muted-foreground)] mb-3">Click any plan to cross-filter cohort</p>
+        <div id="cascade-art-plans" class="space-y-2"></div>
+      </div>
+
+      <!-- ARV Drug Regimens (1088% / 1250%) -->
+      <div class="bg-[var(--card)] border border-[var(--border)] rounded-xl p-5 shadow-sm">
+        <h3 class="text-sm font-bold text-[var(--foreground)]">2. Active ARV Regimens (CIEL 1088% / 1250%)</h3>
+        <p class="text-xs text-[var(--muted-foreground)] mb-3">Click any antiretroviral drug to cross-filter</p>
+        <div id="cascade-arv-drugs" class="space-y-2"></div>
+      </div>
+
+      <!-- TB Co-Infection Treatment (1268% / 1270%) -->
+      <div class="bg-[var(--card)] border border-[var(--border)] rounded-xl p-5 shadow-sm">
+        <h3 class="text-sm font-bold text-[var(--foreground)]">3. TB Co-Infection Regimens (CIEL 1270%)</h3>
+        <p class="text-xs text-[var(--muted-foreground)] mb-3">75/79 patients have TB co-infection · Click to filter</p>
+        <div id="cascade-tb-regimens" class="space-y-2"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TAB 3: HIV PATIENT COHORT TABLE -->
+  <div id="tab-patients" class="space-y-4 hidden">
+    <div class="bg-[var(--card)] border border-[var(--border)] rounded-xl p-5 shadow-sm">
+      <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-4">
+        <div>
+          <h2 class="text-base font-semibold text-[var(--foreground)]">Synthea-HIV Patient Cohort (Click Any Row for Longitudinal Viral Load &amp; Vitals 360°)</h2>
+          <p class="text-xs text-[var(--muted-foreground)]">Showing <span id="pt-table-count" class="font-bold">79</span> patients from <code>/tmp/fhir-pipes-rs-out</code></p>
+        </div>
+        <select id="pt-sort" onchange="renderPatientsTable()" class="px-2.5 py-1.5 rounded-lg text-xs bg-[var(--secondary)] text-[var(--foreground)] border border-[var(--border)] cursor-pointer">
+          <option value="obs_desc">Most Observations</option>
+          <option value="vl_desc">Highest Mean Viral Load</option>
+          <option value="vl_asc">Lowest Mean Viral Load</option>
+          <option value="art_desc">Most ART Starts (1256%)</option>
+          <option value="age_desc">Age (Oldest First)</option>
+        </select>
+      </div>
+      <div class="overflow-x-auto max-h-[520px] overflow-y-auto border border-[var(--border)] rounded-lg">
+        <table class="w-full text-left border-collapse text-xs">
+          <thead class="sticky top-0 bg-[var(--card)] border-b border-[var(--border)] text-[var(--muted-foreground)]">
+            <tr>
+              <th class="py-2.5 px-3 font-semibold">Patient Name</th>
+              <th class="py-2.5 px-3 font-semibold">Age / Sex</th>
+              <th class="py-2.5 px-3 font-semibold text-right">Encounters</th>
+              <th class="py-2.5 px-3 font-semibold text-right">Observations</th>
+              <th class="py-2.5 px-3 font-semibold text-right">ART Starts</th>
+              <th class="py-2.5 px-3 font-semibold text-right">Mean Viral Load</th>
+              <th class="py-2.5 px-3 font-semibold">ARV Drugs Prescribed</th>
+              <th class="py-2.5 px-3 font-semibold text-right">Inspect</th>
+            </tr>
+          </thead>
+          <tbody id="hiv-patients-tbody" class="divide-y divide-[var(--border)]"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- TAB 4: SPARK SQL / SUPERSET vs. DUCKDB COMPARISON -->
+  <div id="tab-sql" class="space-y-4 hidden">
+    <div class="bg-[var(--card)] border border-[var(--border)] rounded-xl p-5 shadow-sm space-y-4">
+      <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3">
+        <div>
+          <h2 class="text-base font-semibold text-[var(--foreground)]">Tutorial SQL Queries: Legacy Spark SQL / Hive vs. DuckDB on `fhir-pipes-rs`</h2>
+          <p class="text-xs text-[var(--muted-foreground)]">
+            Click any of the official tutorial queries from <code>add_dashboard.md</code>, <code>single_machine.md</code>, and <code>queries_large.ipynb</code>
+          </p>
+        </div>
+        <div class="flex flex-wrap gap-1.5">
+          <button onclick="showSqlComparison(0)" id="cmp-btn-0" class="px-2.5 py-1.5 rounded-lg text-xs font-semibold bg-[var(--primary)] text-[var(--primary-foreground)] cursor-pointer">
+            1. HIV Treatment by Year (Superset Chart 3)
+          </button>
+          <button onclick="showSqlComparison(1)" id="cmp-btn-1" class="px-2.5 py-1.5 rounded-lg text-xs font-semibold bg-[var(--secondary)] text-[var(--secondary-foreground)] border border-[var(--border)] cursor-pointer">
+            2. PEPFAR Viral Load &lt; 400k (queries_large.ipynb)
+          </button>
+          <button onclick="showSqlComparison(2)" id="cmp-btn-2" class="px-2.5 py-1.5 rounded-lg text-xs font-semibold bg-[var(--secondary)] text-[var(--secondary-foreground)] border border-[var(--border)] cursor-pointer">
+            3. Top Observation Codes (Cell 11)
+          </button>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <div class="space-y-1.5">
+          <div class="text-xs font-semibold text-amber-500">Legacy Spark SQL / Hive (`LATERAL VIEW EXPLODE` on Nested Parquet)</div>
+          <pre id="cmp-spark-sql" class="p-3.5 rounded-xl bg-[var(--secondary)] border border-[var(--border)] text-xs font-mono overflow-x-auto"></pre>
+        </div>
+        <div class="space-y-1.5">
+          <div class="text-xs font-semibold text-emerald-500">DuckDB SQL on `fhir-pipes-rs` `observation_flat` Materialized View (&lt; 2 ms)</div>
+          <pre id="cmp-duckdb-sql" class="p-3.5 rounded-xl bg-[var(--secondary)] border border-[var(--border)] text-xs font-mono overflow-x-auto"></pre>
+        </div>
+      </div>
+
+      <div class="overflow-x-auto border border-[var(--border)] rounded-lg">
+        <table class="w-full text-left border-collapse text-xs">
+          <thead id="cmp-thead" class="bg-[var(--secondary)] border-b border-[var(--border)] text-[var(--muted-foreground)] font-mono"></thead>
+          <tbody id="cmp-tbody" class="divide-y divide-[var(--border)] font-mono"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- PATIENT 360° LONGITUDINAL VIRAL LOAD MODAL -->
+  <div id="pt-modal" class="fixed inset-0 z-50 hidden bg-black/60 backdrop-blur-xs flex items-center justify-center p-4" onclick="if(event.target===this) closeModal()">
+    <div class="bg-[var(--card)] border border-[var(--border)] rounded-2xl max-w-4xl w-full max-h-[88vh] overflow-y-auto p-6 shadow-2xl space-y-5">
+      <div class="flex items-start justify-between gap-4 border-b border-[var(--border)] pb-4">
+        <div>
+          <span class="px-2 py-0.5 text-xs font-mono rounded bg-emerald-500/15 text-emerald-500 border border-emerald-500/30" id="m-id"></span>
+          <h2 class="text-xl font-bold mt-1 text-[var(--foreground)]" id="m-name"></h2>
+          <p class="text-xs text-[var(--muted-foreground)] mt-0.5" id="m-sub"></p>
+        </div>
+        <button onclick="closeModal()" class="px-3 py-1.5 rounded-lg text-xs font-semibold bg-[var(--secondary)] text-[var(--foreground)] border border-[var(--border)] cursor-pointer">Close ✕</button>
+      </div>
+
+      <div class="grid grid-cols-2 sm:grid-cols-6 gap-2.5 text-xs" id="m-kpis"></div>
+
+      <div class="p-4 rounded-xl bg-[var(--secondary)] border border-[var(--border)]">
+        <div class="flex items-center justify-between text-xs font-semibold mb-2">
+          <span>Longitudinal HIV Viral Load Trajectory (CIEL/LOINC 856%) [copies/mL]</span>
+          <span class="text-rose-400 font-mono">Dashed Line = 400,000 copies/mL PEPFAR Threshold</span>
+        </div>
+        <canvas id="m-vl-canvas" width="760" height="170" class="w-full h-[170px]"></canvas>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs">
+        <div class="p-3.5 rounded-xl bg-[var(--secondary)] border border-[var(--border)] space-y-1.5">
+          <div class="font-semibold text-amber-500">ART Plan Actions (1255%)</div>
+          <div id="m-plans" class="space-y-1"></div>
+        </div>
+        <div class="p-3.5 rounded-xl bg-[var(--secondary)] border border-[var(--border)] space-y-1.5">
+          <div class="font-semibold text-indigo-400">Antiretroviral Drugs (1088% / 1250%)</div>
+          <div id="m-arvs" class="space-y-1"></div>
+        </div>
+        <div class="p-3.5 rounded-xl bg-[var(--secondary)] border border-[var(--border)] space-y-1.5">
+          <div class="font-semibold text-sky-400">TB Regimens (1268% / 1270%)</div>
+          <div id="m-tbs" class="space-y-1"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const PATIENTS = [{"id":"ea8d2576-4a23-4906-c353-bfed5adb23bd","name":"Lawerence6 Baumbach677","gender":"male","birth_date":"1941-10-24","age":82,"age_bracket":"55+","enc":92,"obs":846,"art_starts":1,"art_start_years":[1997],"art_plans":["Continue regimen","Stop all","Dosing change","None","Change formulation","Start drugs"],"arv_drugs":["Efavirenz","Didanosine","Other antiretroviral drug","Zidovudine","Efavirenz / emtricitabine / tenofovir disoproxil","Nelfinavir","Lamivudine","Stavudine","Nevirapine","Emtricitabine / tenofovir disoproxil","Lamivudine / zidovudine","Abacavir","Tenofovir","Lamivudine / nevirapine / zidovudine","Lopinavir / ritonavir"],"tb_regimens":["None","Streptomycin","Change regimen","Dosing change","Stop all","Isoniazid","Isoniazid / pyrazinamide / rifampin","Ethambutol and isoniazid","Rifampicin and isoniazid","Continue regimen","Pyrazinamide","Rifampicin isoniazid pyrazinamide and ethambutol"],"vl_tests":13,"min_vl":6113.0,"avg_vl":461289.0,"max_vl":939050.0,"vl_under_400k":true,"vl_history":[{"yr":1982,"dt":"1982-08-31","v":939050.0},{"yr":1983,"dt":"1983-10-28","v":6113.0},{"yr":1985,"dt":"1985-05-22","v":463740.0},{"yr":1987,"dt":"1987-05-11","v":413660.0},{"yr":1989,"dt":"1989-04-17","v":469270.0},{"yr":1990,"dt":"1990-10-17","v":153580.0},{"yr":1992,"dt":"1992-05-16","v":749300.0},{"yr":1994,"dt":"1994-02-27","v":52979.0},{"yr":1995,"dt":"1995-10-31","v":65758.0},{"yr":1997,"dt":"1997-07-31","v":764670.0},{"yr":1998,"dt":"1998-12-24","v":885300.0},{"yr":2000,"dt":"2000-05-07","v":751280.0},{"yr":2001,"dt":"2001-12-05","v":282060.0}],"bp_sys":178.6,"pulse":144.3,"spo2":83.9,"weight_kg":62.3,"conditions":["Stroke","Tuberculosis"]},{"id":"67ef7123-862d-70ca-b313-fb99ce4e1c13","name":"Clair921 Stroman228","gender":"male","birth_date":"1949-11-17","age":74,"age_bracket":"55+","enc":85,"obs":815,"art_starts":5,"art_start_years":[1993,1997,2001,1996],"art_plans":["Continue regimen","Change formulation","Start drugs","None","Dosing change"],"arv_drugs":["Zidovudine","Other antiretroviral drug","Efavirenz","Didanosine","Emtricitabine / tenofovir disoproxil","Nevirapine","Tenofovir","Lamivudine / nevirapine / zidovudine","Lamivudine","Stavudine","Nelfinavir","Efavirenz / emtricitabine / tenofovir disoproxil","Lopinavir / ritonavir","Lamivudine / zidovudine","Abacavir"],"tb_regimens":["Dosing change","Stop all","Start drugs","Streptomycin","None","Continue regimen","Change regimen","Rifampicin and isoniazid","Ethambutol and isoniazid","Isoniazid / pyrazinamide / rifampin","Pyrazinamide","Rifampicin isoniazid pyrazinamide and ethambutol","Isoniazid"],"vl_tests":8,"min_vl":43801.0,"avg_vl":471279.0,"max_vl":886850.0,"vl_under_400k":true,"vl_history":[{"yr":1991,"dt":"1991-07-02","v":886850.0},{"yr":1993,"dt":"1993-01-04","v":772460.0},{"yr":1995,"dt":"1995-03-30","v":231140.0},{"yr":1996,"dt":"1996-05-31","v":56431.0},{"yr":1998,"dt":"1998-10-14","v":545510.0},{"yr":1999,"dt":"1999-12-17","v":818220.0},{"yr":2001,"dt":"2001-08-05","v":43801.0},{"yr":2003,"dt":"2003-01-24","v":415820.0}],"bp_sys":186.1,"pulse":138.8,"spo2":79.5,"weight_kg":64.0,"conditions":["Tuberculosis"]},{"id":"dfddba4c-a2c8-08e7-49e4-c1dfe29a786b","name":"Byron202 Sauer652","gender":"male","birth_date":"1969-03-26","age":54,"age_bracket":"45-54","enc":66,"obs":720,"art_starts":4,"art_start_years":[2015,2004,2014],"art_plans":["Stop all","Continue regimen","Start drugs","Change formulation","None"],"arv_drugs":["Tenofovir","Lamivudine / nevirapine / zidovudine","Lopinavir / ritonavir","Emtricitabine / tenofovir disoproxil","Nevirapine","Zidovudine","Other antiretroviral drug","Didanosine","Efavirenz","Efavirenz / emtricitabine / tenofovir disoproxil","Lamivudine","Nelfinavir","Stavudine","Lamivudine / zidovudine","Abacavir"],"tb_regimens":["Continue regimen","Isoniazid","Start drugs","Stop all","Rifampicin and isoniazid","Ethambutol and isoniazid","Isoniazid / pyrazinamide / rifampin","Change regimen","Streptomycin","None","Pyrazinamide","Rifampicin isoniazid pyrazinamide and ethambutol"],"vl_tests":10,"min_vl":197280.0,"avg_vl":548408.0,"max_vl":954870.0,"vl_under_400k":true,"vl_history":[{"yr":2002,"dt":"2002-10-06","v":197280.0},{"yr":2003,"dt":"2003-11-25","v":954870.0},{"yr":2006,"dt":"2006-03-08","v":878290.0},{"yr":2007,"dt":"2007-03-24","v":502360.0},{"yr":2009,"dt":"2009-01-21","v":701140.0},{"yr":2010,"dt":"2010-03-28","v":312420.0},{"yr":2011,"dt":"2011-06-02","v":382010.0},{"yr":2012,"dt":"2012-10-16","v":275940.0},{"yr":2014,"dt":"2014-08-27","v":529910.0},{"yr":2017,"dt":"2017-02-17","v":749860.0}],"bp_sys":172.3,"pulse":110.3,"spo2":84.2,"weight_kg":62.3,"conditions":["Tuberculosis"]},{"id":"0724714f-947b-6cab-ee85-b0de7a9ad3f7","name":"Carolyne559 Koelpin146","gender":"female","birth_date":"1955-11-26","age":68,"age_bracket":"55+","enc":80,"obs":712,"art_starts":5,"art_start_years":[1973,1977,1974],"art_plans":["Start drugs","Change formulation","Change regimen","Dosing change","None"],"arv_drugs":["Lopinavir / ritonavir","Lamivudine / zidovudine","Abacavir","Efavirenz / emtricitabine / tenofovir disoproxil","Tenofovir","Lamivudine / nevirapine / zidovudine","Emtricitabine / tenofovir disoproxil","Nevirapine","Zidovudine","Lamivudine","Nelfinavir","Stavudine","Didanosine","Efavirenz","Other antiretroviral drug"],"tb_regimens":["Stop all","Dosing change","Continue regimen","Streptomycin","None","Pyrazinamide","Rifampicin isoniazid pyrazinamide and ethambutol","Start drugs","Ethambutol and isoniazid","Isoniazid / pyrazinamide / rifampin","Rifampicin and isoniazid","Change regimen","Isoniazid"],"vl_tests":7,"min_vl":32256.0,"avg_vl":262048.0,"max_vl":702060.0,"vl_under_400k":true,"vl_history":[{"yr":1973,"dt":"1973-08-23","v":80942.0},{"yr":1976,"dt":"1976-02-24","v":32256.0},{"yr":1977,"dt":"1977-06-22","v":162210.0},{"yr":1978,"dt":"1978-11-26","v":267340.0},{"yr":1981,"dt":"1981-06-19","v":223310.0},{"yr":1982,"dt":"1982-09-03","v":702060.0},{"yr":1984,"dt":"1984-03-15","v":366220.0}],"bp_sys":142.4,"pulse":111.7,"spo2":84.9,"weight_kg":64.5,"conditions":["Cardiac Arrest","Tuberculosis","History of cardiac arrest (situation)"]},{"id":"7cffc0c9-6c87-70d6-09a4-6ede378e9b0a","name":"Augustina561 Gibson10","gender":"female","birth_date":"1947-03-07","age":76,"age_bracket":"55+","enc":83,"obs":581,"art_starts":3,"art_start_years":[1977,1979],"art_plans":["Start drugs","Change formulation","None"],"arv_drugs":["Efavirenz / emtricitabine / tenofovir disoproxil","Lopinavir / ritonavir","Tenofovir","Lamivudine / nevirapine / zidovudine","Zidovudine","Lamivudine / zidovudine","Abacavir","Emtricitabine / tenofovir disoproxil","Nevirapine","Nelfinavir","Lamivudine","Stavudine","Other antiretroviral drug","Efavirenz","Didanosine"],"tb_regimens":["Isoniazid","Isoniazid / pyrazinamide / rifampin","Ethambutol and isoniazid","Rifampicin and isoniazid","Continue regimen","Pyrazinamide","Rifampicin isoniazid pyrazinamide and ethambutol","Streptomycin","None","Start drugs","Stop all","Dosing change","Change regimen"],"vl_tests":8,"min_vl":105350.0,"avg_vl":532651.0,"max_vl":880480.0,"vl_under_400k":true,"vl_history":[{"yr":1977,"dt":"1977-02-09","v":880480.0},{"yr":1978,"dt":"1978-12-09","v":811440.0},{"yr":1981,"dt":"1981-03-11","v":216460.0},{"yr":1982,"dt":"1982-11-26","v":205650.0},{"yr":1984,"dt":"1984-06-27","v":852150.0},{"yr":1985,"dt":"1985-11-09","v":105350.0},{"yr":1987,"dt":"1987-10-25","v":563890.0},{"yr":1989,"dt":"1989-07-12","v":625790.0}],"bp_sys":155.8,"pulse":123.2,"spo2":84.0,"weight_kg":65.6,"conditions":["Tuberculosis"]},{"id":"10df430d-1b91-1667-d468-8e13e3b88d67","name":"Lashell363 Lockman863","gender":"female","birth_date":"1971-12-30","age":52,"age_bracket":"45-54","enc":54,"obs":562,"art_starts":3,"art_start_years":[2013,2017,2012],"art_plans":["Start drugs","Change formulation","Continue regimen","Dosing change","None"],"arv_drugs":["Efavirenz / emtricitabine / tenofovir disoproxil","Lopinavir / ritonavir","Tenofovir","Lamivudine / nevirapine / zidovudine","Zidovudine","Lamivudine / zidovudine","Abacavir","Nevirapine","Emtricitabine / tenofovir disoproxil","Stavudine","Nelfinavir","Lamivudine","Didanosine","Efavirenz","Other antiretroviral drug"],"tb_regimens":["Isoniazid","Isoniazid / pyrazinamide / rifampin","Rifampicin and isoniazid","Ethambutol and isoniazid","Continue regimen","Pyrazinamide","Rifampicin isoniazid pyrazinamide and ethambutol","Streptomycin","None","Start drugs","Stop all","Dosing change","Change regimen"],"vl_tests":8,"min_vl":148590.0,"avg_vl":432289.0,"max_vl":799280.0,"vl_under_400k":true,"vl_history":[{"yr":2007,"dt":"2007-01-01","v":445090.0},{"yr":2008,"dt":"2008-10-24","v":205190.0},{"yr":2009,"dt":"2009-12-06","v":799280.0},{"yr":2011,"dt":"2011-03-11","v":519210.0},{"yr":2012,"dt":"2012-04-01","v":148590.0},{"yr":2013,"dt":"2013-11-29","v":515780.0},{"yr":2016,"dt":"2016-02-17","v":400500.0},{"yr":2017,"dt":"2017-12-29","v":424670.0}],"bp_sys":157.1,"pulse":138.8,"spo2":86.1,"weight_kg":63.3,"conditions":["Tuberculosis"]},{"id":"1e610c5a-ff61-c754-2538-d059748636fc","name":"Samuel331 Terry864","gender":"male","birth_date":"1962-01-25","age":61,"age_bracket":"55+","enc":67,"obs":530,"art_starts":2,"art_start_years":[2010,2007],"art_plans":["Change regimen","Stop all","Dosing change","None","Start drugs","Change formulation"],"arv_drugs":["Didanosine","Other antiretroviral drug","Efavirenz","Zidovudine","Efavirenz / emtricitabine / tenofovir disoproxil","Lamivudine","Nelfinavir","Stavudine","Nevirapine","Emtricitabine / tenofovir disoproxil","Lamivudine / zidovudine","Abacavir","Tenofovir","Lamivudine / nevirapine / zidovudine","Lopinavir / ritonavir"],"tb_regimens":["Streptomycin","None","Change regimen","Stop all","Dosing change","Isoniazid","Isoniazid / pyrazinamide / rifampin","Ethambutol and isoniazid","Rifampicin and isoniazid","Start drugs","Continue regimen","Pyrazinamide","Rifampicin isoniazid pyrazinamide and ethambutol"],"vl_tests":6,"min_vl":163570.0,"avg_vl":502700.0,"max_vl":950850.0,"vl_under_400k":true,"vl_history":[{"yr":2005,"dt":"2005-08-03","v":805700.0},{"yr":2007,"dt":"2007-01-03","v":163570.0},{"yr":2008,"dt":"2008-11-09","v":950850.0},{"yr":2010,"dt":"2010-07-24","v":411780.0},{"yr":2012,"dt":"2012-03-26","v":242010.0},{"yr":2013,"dt":"2013-12-30","v":442290.0}],"bp_sys":153.7,"pulse":150.9,"spo2":86.7,"weight_kg":66.1,"conditions":["Tuberculosis"]},{"id":"e83782f9-e104-2619-02e8-8e6125e9ba47","name":"Duncan491 McDermott739","gender":"male","birth_date":"1975-01-04","age":48,"age_bracket":"45-54","enc":53,"obs":506,"art_starts":1,"art_start_years":[2001],"art_plans":["None","Start drugs","Change formulation"],"arv_drugs":["Nevirapine","Emtricitabine / tenofovir disoproxil","Lamivudine","Stavudine","Nelfinavir","Zidovudine","Lopinavir / ritonavir","Efavirenz / emtricitabine / tenofovir disoproxil","Efavirenz","Didanosine","Other antiretroviral drug","Tenofovir","Lamivudine / nevirapine / zidovudine","Lamivudine / zidovudine","Abacavir"],"tb_regimens":["Isoniazid / pyrazinamide / rifampin","Rifampicin and isoniazid","Ethambutol and isoniazid","Isoniazid","Pyrazinamide","Rifampicin isoniazid pyrazinamide and ethambutol","Change regimen","Dosing change","Stop all","Start drugs","None","Streptomycin"],"vl_tests":8,"min_vl":413200.0,"avg_vl":685726.0,"max_vl":976030.0,"vl_under_400k":false,"vl_history":[{"yr":1994,"dt":"1994-03-10","v":493030.0},{"yr":1996,"dt":"1996-01-15","v":786890.0},{"yr":1997,"dt":"1997-03-30","v":519180.0},{"yr":1998,"dt":"1998-11-29","v":413200.0},{"yr":2000,"dt":"2000-11-13","v":792780.0},{"yr":2002,"dt":"2002-08-04","v":779250.0},{"yr":2004,"dt":"2004-01-25","v":976030.0},{"yr":2006,"dt":"2006-01-17","v":725450.0}],"bp_sys":169.9,"pulse":136.4,"spo2":80.0,"weight_kg":63.2,"conditions":["Tuberculosis"]},{"id":"25fcb14b-0db4-b64a-37bb-82a9be2ff2b2","name":"Francesco636 Huels583","gender":"male","birth_date":"1979-09-13","age":44,"age_bracket":"35-44","enc":51,"obs":506,"art_starts":2,"art_start_years":[2001,2002],"art_plans":["Change regimen","Start drugs","Change formulation","None","Stop all"],"arv_drugs":["Lamivudine / zidovudine","Abacavir","Lopinavir / ritonavir","Efavirenz / emtricitabine / tenofovir disoproxil","Lamivudine","Nelfinavir","Stavudine","Tenofovir","Lamivudine / nevirapine / zidovudine","Efavirenz","Didanosine","Other antiretroviral drug","Nevirapine","Emtricitabine / tenofovir disoproxil","Zidovudine"],"tb_regimens":["None","Streptomycin","Rifampicin and isoniazid","Isoniazid / pyrazinamide / rifampin","Ethambutol and isoniazid","Stop all","Dosing change","Change regimen","Continue regimen","Start drugs","Isoniazid","Pyrazinamide","Rifampicin isoniazid pyrazinamide and ethambutol"],"vl_tests":7,"min_vl":120130.0,"avg_vl":499014.0,"max_vl":991620.0,"vl_under_400k":true,"vl_history":[{"yr":1995,"dt":"1995-02-17","v":991620.0},{"yr":1996,"dt":"1996-08-23","v":120130.0},{"yr":1998,"dt":"1998-02-28","v":620110.0},{"yr":1999,"dt":"1999-05-27","v":312280.0},{"yr":2001,"dt":"2001-03-15","v":430240.0},{"yr":2002,"dt":"2002-06-16","v":319250.0},{"yr":2004,"dt":"2004-06-23","v":699470.0}],"bp_sys":166.4,"pulse":118.4,"spo2":83.5,"weight_kg":62.8,"conditions":["Tuberculosis"]},{"id":"f74dcb3d-03f5-305c-47d9-ca38c6662ff7","name":"Freda902 Bruen238","gender":"female","birth_date":"1973-04-09","age":50,"age_bracket":"45-54","enc":53,"obs":462,"art_starts":0,"art_start_years":[],"art_plans":["Dosing change","None","Change formulation"],"arv_drugs":["Emtricitabine / tenofovir disoproxil","Nevirapine","Stavudine","Nelfinavir","Lamivudine","Zidovudine","Lopinavir / ritonavir","Efavirenz / emtricitabine / tenofovir disoproxil","Didanosine","Efavirenz","Other antiretroviral drug","Lamivudine / nevirapine / zidovudine","Tenofovir","Lamivudine / zidovudine","Abacavir"],"tb_regimens":["Ethambutol and isoniazid","Isoniazid / pyrazinamide / rifampin","Rifampicin and isoniazid","Isoniazid","Pyrazinamide","Rifampicin isoniazid pyrazinamide and ethambutol","Change regimen","Stop all","Start drugs","Streptomycin","None","Continue regimen"],"vl_tests":5,"min_vl":398550.0,"avg_vl":564862.0,"max_vl":938560.0,"vl_under_400k":true,"vl_history":[{"yr":1996,"dt":"1996-11-06","v":398550.0},{"yr":1998,"dt":"1998-12-21","v":500800.0},{"yr":2000,"dt":"2000-12-02","v":471000.0},{"yr":2002,"dt":"2002-06-22","v":515400.0},{"yr":2003,"dt":"2003-07-30","v":938560.0}],"bp_sys":146.7,"pulse":89.5,"spo2":79.5,"weight_kg":65.3,"conditions":["Tuberculosis"]},{"id":"18683b9b-db3e-9877-aef2-6084783da47f","name":"Jonathon205 Effertz744","gender":"male","birth_date":"1955-07-26","age":68,"age_bracket":"55+","enc":65,"obs":421,"art_starts":1,"art_start_years":[1993],"art_plans":["Change formulation","Start drugs","Dosing change","None"],"arv_drugs":["Lopinavir / ritonavir","Lamivudine / zidovudine","Abacavir","Efavirenz / emtricitabine / tenofovir disoproxil","Tenofovir","Lamivudine / nevirapine / zidovudine","Nevirapine","Emtricitabine / tenofovir disoproxil","Zidovudine","Nelfinavir","Lamivudine","Stavudine","Didanosine","Efavirenz","Other antiretroviral drug"],"tb_regimens":["Dosing change","Streptomycin","None","Rifampicin isoniazid pyrazinamide and ethambutol","Pyrazinamide","Start drugs","Rifampicin and isoniazid","Isoniazid / pyrazinamide / rifampin","Ethambutol and isoniazid","Change regimen","Isoniazid"],"vl_tests":9,"min_vl":4991.0,"avg_vl":331632.0,"max_vl":951650.0,"vl_under_400k":true,"vl_history":[{"yr":1985,"dt":"1985-08-03","v":4991.0},{"yr":1986,"dt":"1986-09-14","v":72714.0},{"yr":1987,"dt":"1987-10-11","v":791450.0},{"yr":1988,"dt":"1988-12-06","v":101150.0},{"yr":1990,"dt":"1990-04-11","v":46194.0},{"yr":1991,"dt":"1991-09-01","v":433660.0},{"yr":1993,"dt":"1993-03-27","v":482940.0},{"yr":1994,"dt":"1994-12-21","v":951650.0},{"yr":1996,"dt":"1996-08-17","v":99935.0}],"bp_sys":168.1,"pulse":125.6,"spo2":87.5,"weight_kg":63.8,"conditions":["Tuberculosis"]},{"id":"a4abb8bd-c78c-e552-3037-471a46cac3c7","name":"Isaura563 Turner526","gender":"female","birth_date":"1957-10-31","age":66,"age_bracket":"55+","enc":65,"obs":419,"art_starts":1,"art_start_years":[2008],"art_plans":["None","Start drugs","Change formulation"],"arv_drugs":["Nevirapine","Emtricitabine / tenofovir disoproxil","Zidovudine","Tenofovir","Lamivudine / nevirapine / zidovudine","Lamivudine","Lopinavir / ritonavir","Lamivudine / zidovudine","Abacavir","Efavirenz","Other antiretroviral drug","Didanosine","Efavirenz / emtricitabine / tenofovir disoproxil"],"tb_regimens":["Start drugs","Pyrazinamide","Rifampicin isoniazid pyrazinamide and ethambutol","Continue regimen","Change regimen","Ethambutol and isoniazid","Isoniazid / pyrazinamide / rifampin","Rifampicin and isoniazid","Stop all","Dosing change","Isoniazid"],"vl_tests":8,"min_vl":97898.0,"avg_vl":550419.0,"max_vl":993520.0,"vl_under_400k":true,"vl_history":[{"yr":2007,"dt":"2007-04-15","v":585960.0},{"yr":2008,"dt":"2008-09-24","v":341920.0},{"yr":2009,"dt":"2009-12-19","v":589850.0},{"yr":2011,"dt":"2011-03-21","v":993520.0},{"yr":2012,"dt":"2012-03-27","v":419260.0},{"yr":2013,"dt":"2013-04-30","v":988620.0},{"yr":2014,"dt":"2014-12-10","v":97898.0},{"yr":2015,"dt":"2015-12-22","v":386320.0}],"bp_sys":144.9,"pulse":113.8,"spo2":83.8,"weight_kg":62.9,"conditions":["Atrial Fibrillation","Tuberculosis"]},{"id":"66520172-1cfa-27ce-135c-2ccf2ef96a94","name":"Ruthann382 Altenwerth646","gender":"female","birth_date":"1957-03-15","age":66,"age_bracket":"55+","enc":68,"obs":402,"art_starts":0,"art_start_years":[],"art_plans":["Dosing change","None"],"arv_drugs":["Didanosine","Efavirenz","Other antiretroviral drug","Zidovudine","Efavirenz / emtricitabine / tenofovir disoproxil","Lamivudine","Stavudine","Nelfinavir","Emtricitabine / tenofovir disoproxil","Nevirapine","Lamivudine / zidovudine","Abacavir","Tenofovir","Lamivudine / nevirapine / zidovudine","Lopinavir / ritonavir"],"tb_regimens":["Streptomycin","Change regimen","Stop all","Isoniazid","Ethambutol and isoniazid","Isoniazid / pyrazinamide / rifampin","Rifampicin and isoniazid","Continue regimen","Pyrazinamide"],"vl_tests":9,"min_vl":60271.0,"avg_vl":448298.0,"max_vl":937290.0,"vl_under_400k":true,"vl_history":[{"yr":1984,"dt":"1984-03-25","v":60271.0},{"yr":1985,"dt":"1985-11-27","v":369840.0},{"yr":1987,"dt":"1987-09-22","v":117540.0},{"yr":1989,"dt":"1989-08-14","v":538410.0},{"yr":1991,"dt":"1991-03-14","v":196510.0},{"yr":1993,"dt":"1993-01-12","v":532210.0},{"yr":1994,"dt":"1994-03-15","v":599720.0},{"yr":1995,"dt":"1995-11-19","v":937290.0},{"yr":1997,"dt":"1997-09-05","v":682890.0}],"bp_sys":155.9,"pulse":144.5,"spo2":86.5,"weight_kg":63.0,"conditions":["Tuberculosis"]},{"id":"1b14e563-47aa-d9c8-f484-6a8a9b888676","name":"Heriberto162 Rogahn59","gender":"male","birth_date":"1962-04-23","age":61,"age_bracket":"55+","enc":60,"obs":398,"art_starts":4,"art_start_years":[1993,1990],"art_plans":["Dosing change","Stop all","None","Change formulation","Start drugs"],"arv_drugs":["Emtricitabine / tenofovir disoproxil","Nevirapine","Zidovudine","Tenofovir","Lamivudine / nevirapine / zidovudine","Nelfinavir","Lamivudine","Stavudine","Lopinavir / ritonavir","Lamivudine / zidovudine","Abacavir","Didanosine","Efavirenz","Other antiretroviral drug","Efavirenz / emtricitabine / tenofovir disoproxil"],"tb_regimens":["Start drugs","Pyrazinamide","Rifampicin isoniazid pyrazinamide and ethambutol","Continue regimen","Change regimen","Isoniazid / pyrazinamide / rifampin","Ethambutol and isoniazid","Rifampicin and isoniazid","Stop all","Dosing change","Streptomycin","Isoniazid"],"vl_tests":5,"min_vl":390490.0,"avg_vl":529132.0,"max_vl":743450.0,"vl_under_400k":true,"vl_history":[{"yr":1987,"dt":"1987-08-05","v":390490.0},{"yr":1988,"dt":"1988-09-27","v":743450.0},{"yr":1990,"dt":"1990-03-19","v":396920.0},{"yr":1991,"dt":"1991-09-04","v":397450.0},{"yr":1993,"dt":"1993-06-26","v":717350.0}],"bp_sys":143.3,"pulse":113.2,"spo2":80.9,"weight_kg":61.7,"conditions":["Tuberculosis"]},{"id":"b2043822-8861-e93b-2374-b3c4f4dce1d8","name":"Ruben688 VonRueden376","gender":"male","birth_date":"1977-07-27","age":46,"age_bracket":"45-54","enc":49,"obs":363,"art_starts":1,"art_start_years":[2010],"art_plans":["Dosing change","Change formulation","Start drugs","None"],"arv_drugs":["Efavirenz","Didanosine","Other antiretroviral drug","Lamivudine","Nelfinavir","Stavudine","Lamivudine / zidovudine","Abacavir","Zidovudine","Tenofovir","Lamivudine / nevirapine / zidovudine","Lopinavir / ritonavir","Nevirapine","Emtricitabine / tenofovir disoproxil","Efavirenz / emtricitabine / tenofovir disoproxil"],"tb_regimens":["Pyrazinamide","Change regimen","Isoniazid","Dosing change","Isoniazid / pyrazinamide / rifampin","Rifampicin and isoniazid","Ethambutol and isoniazid","Continue regimen","None","Streptomycin"],"vl_tests":6,"min_vl":19703.0,"avg_vl":270577.0,"max_vl":412140.0,"vl_under_400k":true,"vl_history":[{"yr":2010,"dt":"2010-06-21","v":386220.0},{"yr":2012,"dt":"2012-02-22","v":393530.0},{"yr":2013,"dt":"2013-10-15","v":62536.0},{"yr":2015,"dt":"2015-06-16","v":19703.0},{"yr":2017,"dt":"2017-08-26","v":412140.0},{"yr":2018,"dt":"2018-09-09","v":349330.0}],"bp_sys":162.9,"pulse":114.7,"spo2":82.7,"weight_kg":62.9,"conditions":["Tuberculosis"]},{"id":"988f3282-6014-affe-fb17-b051fe0380ee","name":"Lanell756 Goodwin327","gender":"female","birth_date":"1967-05-29","age":56,"age_bracket":"55+","enc":62,"obs":326,"art_starts":2,"art_start_years":[1991],"art_plans":["None","Dosing change","Start drugs","Change formulation"],"arv_drugs":["Stavudine","Lamivudine","Nelfinavir","Emtricitabine / tenofovir disoproxil","Nevirapine","Other antiretroviral drug","Didanosine","Efavirenz","Lamivudine / zidovudine","Abacavir","Efavirenz / emtricitabine / tenofovir disoproxil","Zidovudine","Lopinavir / ritonavir","Tenofovir","Lamivudine / nevirapine / zidovudine"],"tb_regimens":["Pyrazinamide","Continue regimen","Isoniazid","Start drugs","Streptomycin","None","Change regimen","Stop all","Isoniazid / pyrazinamide / rifampin","Rifampicin and isoniazid","Ethambutol and isoniazid"],"vl_tests":3,"min_vl":246730.0,"avg_vl":602653.0,"max_vl":884910.0,"vl_under_400k":true,"vl_history":[{"yr":1991,"dt":"1991-08-23","v":246730.0},{"yr":1993,"dt":"1993-02-27","v":884910.0},{"yr":1995,"dt":"1995-01-07","v":676320.0}],"bp_sys":139.1,"pulse":87.2,"spo2":78.9,"weight_kg":65.4,"conditions":["Coronary Heart Disease","Tuberculosis"]},{"id":"3fb1ad1f-9a1d-055f-14b2-eac88d2899bb","name":"Gregg522 Gutmann970","gender":"male","birth_date":"1915-04-20","age":108,"age_bracket":"55+","enc":105,"obs":324,"art_starts":1,"art_start_years":[1962],"art_plans":["Change formulation","Start drugs","None","Dosing change","Change regimen"],"arv_drugs":["Zidovudine","Efavirenz","Didanosine","Other antiretroviral drug","Nevirapine","Emtricitabine / tenofovir disoproxil","Tenofovir","Lamivudine / nevirapine / zidovudine","Nelfinavir","Lamivudine","Stavudine","Efavirenz / emtricitabine / tenofovir disoproxil","Lopinavir / ritonavir","Lamivudine / zidovudine","Abacavir"],"tb_regimens":["Dosing change","Stop all","None","Streptomycin","Continue regimen","Ethambutol and isoniazid","Rifampicin and isoniazid","Isoniazid / pyrazinamide / rifampin","Pyrazinamide","Rifampicin isoniazid pyrazinamide and ethambutol","Isoniazid"],"vl_tests":4,"min_vl":266270.0,"avg_vl":522745.0,"max_vl":759270.0,"vl_under_400k":true,"vl_history":[{"yr":1956,"dt":"1956-07-29","v":266270.0},{"yr":1958,"dt":"1958-06-22","v":759270.0},{"yr":1960,"dt":"1960-05-03","v":439630.0},{"yr":1962,"dt":"1962-01-23","v":625810.0}],"bp_sys":180.9,"pulse":100.3,"spo2":80.7,"weight_kg":63.3,"conditions":["Tuberculosis"]},{"id":"7c329741-c2b4-e67a-f9ed-71e5b3dde79c","name":"Danny396 Nikolaus26","gender":"male","birth_date":"1996-02-04","age":27,"age_bracket":"25-34","enc":41,"obs":304,"art_starts":1,"art_start_years":[2017],"art_plans":["Continue regimen","Start drugs","Change formulation","None","Dosing change"],"arv_drugs":["Zidovudine","Nevirapine","Emtricitabine / tenofovir disoproxil","Lopinavir / ritonavir","Efavirenz","Didanosine","Other antiretroviral drug","Tenofovir","Lamivudine / nevirapine / zidovudine","Lamivudine / zidovudine","Abacavir","Stavudine","Lamivudine","Nelfinavir","Efavirenz / emtricitabine / tenofovir disoproxil"],"tb_regimens":["Change regimen","Start drugs","Pyrazinamide","Rifampicin isoniazid pyrazinamide and ethambutol","None","Streptomycin","Continue regimen","Isoniazid / pyrazinamide / rifampin","Ethambutol and isoniazid","Rifampicin and isoniazid","Stop all"],"vl_tests":3,"min_vl":35468.0,"avg_vl":422989.0,"max_vl":791140.0,"vl_under_400k":true,"vl_history":[{"yr":2015,"dt":"2015-06-26","v":35468.0},{"yr":2017,"dt":"2017-06-22","v":442360.0},{"yr":2019,"dt":"2019-09-05","v":791140.0}],"bp_sys":172.8,"pulse":93.3,"spo2":85.7,"weight_kg":64.2,"conditions":["Tuberculosis"]},{"id":"0b119c93-f82e-c527-24d0-12593209190f","name":"Fausto876 Leannon79","gender":"male","birth_date":"1939-06-11","age":84,"age_bracket":"55+","enc":79,"obs":285,"art_starts":0,"art_start_years":[],"art_plans":["None","Change formulation","Dosing change","Stop all"],"arv_drugs":["Lamivudine / zidovudine","Abacavir","Stavudine","Nelfinavir","Lamivudine","Tenofovir","Lamivudine / nevirapine / zidovudine","Efavirenz / emtricitabine / tenofovir disoproxil","Didanosine","Efavirenz","Other antiretroviral drug","Zidovudine","Emtricitabine / tenofovir disoproxil","Nevirapine","Lopinavir / ritonavir"],"tb_regimens":["Isoniazid / pyrazinamide / rifampin","Rifampicin and isoniazid","Ethambutol and isoniazid","Isoniazid","Change regimen","Streptomycin","Continue regimen","Dosing change","Rifampicin isoniazid pyrazinamide and ethambutol","Pyrazinamide"],"vl_tests":5,"min_vl":16661.0,"avg_vl":472376.0,"max_vl":908170.0,"vl_under_400k":true,"vl_history":[{"yr":1997,"dt":"1997-02-18","v":908170.0},{"yr":1998,"dt":"1998-06-14","v":391870.0},{"yr":2000,"dt":"2000-04-30","v":295330.0},{"yr":2001,"dt":"2001-06-23","v":16661.0},{"yr":2003,"dt":"2003-05-24","v":749850.0}],"bp_sys":149.9,"pulse":139.3,"spo2":87.8,"weight_kg":64.7,"conditions":["Tuberculosis"]},{"id":"ca6bc650-482d-9770-26a1-c3640df38e1f","name":"Ettie537 Dibbert990","gender":"female","birth_date":"1972-06-11","age":51,"age_bracket":"45-54","enc":47,"obs":284,"art_starts":0,"art_start_years":[],"art_plans":["Change formulation","None"],"arv_drugs":["Lopinavir / ritonavir","Lamivudine / zidovudine","Abacavir","Efavirenz / emtricitabine / tenofovir disoproxil","Tenofovir","Lamivudine / nevirapine / zidovudine","Nevirapine","Emtricitabine / tenofovir disoproxil","Zidovudine","Stavudine","Nelfinavir","Lamivudine","Didanosine","Efavirenz","Other antiretroviral drug"],"tb_regimens":["Stop all","Continue regimen","Streptomycin","Pyrazinamide","Rifampicin isoniazid pyrazinamide and ethambutol","Start drugs","Ethambutol and isoniazid","Isoniazid / pyrazinamide / rifampin","Rifampicin and isoniazid","Change regimen","Isoniazid"],"vl_tests":6,"min_vl":58405.0,"avg_vl":506579.0,"max_vl":908690.0,"vl_under_400k":true,"vl_history":[{"yr":2007,"dt":"2007-06-26","v":908690.0},{"yr":2009,"dt":"2009-02-03","v":407790.0},{"yr":2010,"dt":"2010-04-11","v":905840.0},{"yr":2011,"dt":"2011-05-12","v":567800.0},{"yr":2012,"dt":"2012-11-20","v":58405.0},{"yr":2014,"dt":"2014-02-25","v":190950.0}],"bp_sys":150.5,"pulse":154.2,"spo2":86.1,"weight_kg":64.3,"conditions":["Tuberculosis"]},{"id":"cff2b0df-a682-d100-4be6-a612f9190a0d","name":"Eileen854 Pfeffer420","gender":"female","birth_date":"1987-11-04","age":36,"age_bracket":"35-44","enc":42,"obs":284,"art_starts":1,"art_start_years":[2007],"art_plans":["Change formulation","Start drugs","None"],"arv_drugs":["Tenofovir","Lopinavir / ritonavir","Nevirapine","Emtricitabine / tenofovir disoproxil","Zidovudine","Didanosine","Efavirenz","Other antiretroviral drug","Efavirenz / emtricitabine / tenofovir disoproxil","Stavudine","Lamivudine","Nelfinavir","Abacavir","Lamivudine / zidovudine"],"tb_regimens":["Isoniazid","Stop all","Isoniazid / pyrazinamide / rifampin","Ethambutol and isoniazid","Rifampicin and isoniazid","Change regimen","None","Streptomycin","Pyrazinamide"],"vl_tests":5,"min_vl":64630.0,"avg_vl":330583.0,"max_vl":695240.0,"vl_under_400k":true,"vl_history":[{"yr":2006,"dt":"2006-10-29","v":414580.0},{"yr":2009,"dt":"2009-01-15","v":77083.0},{"yr":2010,"dt":"2010-05-11","v":401380.0},{"yr":2011,"dt":"2011-09-09","v":64630.0},{"yr":2013,"dt":"2013-08-30","v":695240.0}],"bp_sys":151.4,"pulse":150.1,"spo2":90.2,"weight_kg":65.3,"conditions":["Tuberculosis"]},{"id":"519be2d8-138c-c3d4-293b-afe9743b6865","name":"Bethanie176 D'Amore443","gender":"female","birth_date":"1960-02-14","age":63,"age_bracket":"55+","enc":59,"obs":279,"art_starts":2,"art_start_years":[2014,2017],"art_plans":["Start drugs","Dosing change","None"],"arv_drugs":["Efavirenz / emtricitabine / tenofovir disoproxil","Lopinavir / ritonavir","Tenofovir","Lamivudine / nevirapine / zidovudine","Zidovudine","Lamivudine / zidovudine","Abacavir","Nevirapine","Emtricitabine / tenofovir disoproxil","Nelfinavir","Lamivudine","Stavudine","Didanosine","Other antiretroviral drug","Efavirenz"],"tb_regimens":["Isoniazid","Isoniazid / pyrazinamide / rifampin","Rifampicin and isoniazid","Ethambutol and isoniazid","Continue regimen","Pyrazinamide","Streptomycin","Dosing change","Change regimen"],"vl_tests":4,"min_vl":374410.0,"avg_vl":792918.0,"max_vl":979880.0,"vl_under_400k":true,"vl_history":[{"yr":2014,"dt":"2014-06-04","v":374410.0},{"yr":2015,"dt":"2015-09-24","v":970010.0},{"yr":2017,"dt":"2017-04-16","v":979880.0},{"yr":2019,"dt":"2019-03-04","v":847370.0}],"bp_sys":182.1,"pulse":113.2,"spo2":86.7,"weight_kg":63.8,"conditions":["Tuberculosis"]},{"id":"ec865d34-e498-5dec-6108-4aa409bfa55f","name":"Neomi684 Hand679","gender":"female","birth_date":"1940-05-16","age":83,"age_bracket":"55+","enc":79,"obs":276,"art_starts":0,"art_start_years":[],"art_plans":["Change regimen","Change formulation","None"],"arv_drugs":["Didanosine","Efavirenz","Other antiretroviral drug","Nelfinavir","Stavudine","Lamivudine","Abacavir","Lamivudine / zidovudine","Zidovudine","Tenofovir","Lamivudine / nevirapine / zidovudine","Lopinavir / ritonavir","Nevirapine","Emtricitabine / tenofovir disoproxil","Efavirenz / emtricitabine / tenofovir disoproxil"],"tb_regimens":["Rifampicin isoniazid pyrazinamide and ethambutol","Pyrazinamide","Change regimen","Stop all","Dosing change","Rifampicin and isoniazid","Isoniazid / pyrazinamide / rifampin","Ethambutol and isoniazid","Continue regimen","Streptomycin"],"vl_tests":4,"min_vl":188320.0,"avg_vl":277230.0,"max_vl":439390.0,"vl_under_400k":true,"vl_history":[{"yr":1955,"dt":"1955-06-25","v":275920.0},{"yr":1957,"dt":"1957-10-18","v":188320.0},{"yr":1959,"dt":"1959-10-03","v":439390.0},{"yr":1961,"dt":"1961-01-07","v":205290.0}],"bp_sys":165.3,"pulse":128.2,"spo2":77.9,"weight_kg":64.0,"conditions":["Tuberculosis"]},{"id":"9d996be3-72e0-763b-495c-01d38b80d5db","name":"Monika509 Pollich983","gender":"female","birth_date":"1966-03-08","age":57,"age_bracket":"55+","enc":54,"obs":250,"art_starts":2,"art_start_years":[1982,1984],"art_plans":["Start drugs","None"],"arv_drugs":["Abacavir","Lamivudine / zidovudine","Lopinavir / ritonavir","Lamivudine","Nelfinavir","Stavudine","Tenofovir","Lamivudine / nevirapine / zidovudine","Didanosine","Efavirenz","Other antiretroviral drug","Nevirapine","Emtricitabine / tenofovir disoproxil","Zidovudine"],"tb_regimens":["Streptomycin","Rifampicin and isoniazid","Ethambutol and isoniazid","Isoniazid / pyrazinamide / rifampin","Continue regimen","Start drugs","Pyrazinamide"],"vl_tests":6,"min_vl":13407.0,"avg_vl":566915.0,"max_vl":840220.0,"vl_under_400k":true,"vl_history":[{"yr":1981,"dt":"1981-07-23","v":840220.0},{"yr":1982,"dt":"1982-12-17","v":432550.0},{"yr":1984,"dt":"1984-04-07","v":759090.0},{"yr":1986,"dt":"1986-02-10","v":13407.0},{"yr":1987,"dt":"1987-05-03","v":579530.0},{"yr":1988,"dt":"1988-10-19","v":776690.0}],"bp_sys":147.5,"pulse":118.5,"spo2":83.3,"weight_kg":63.9,"conditions":["Tuberculosis"]},{"id":"6ca83a15-e6c5-fce9-163e-d5fde6408c4d","name":"Hubert238 Little434","gender":"male","birth_date":"1946-01-13","age":77,"age_bracket":"55+","enc":73,"obs":234,"art_starts":1,"art_start_years":[2007],"art_plans":["None","Start drugs","Stop all"],"arv_drugs":["Tenofovir","Lamivudine / nevirapine / zidovudine","Efavirenz / emtricitabine / tenofovir disoproxil","Lamivudine / zidovudine","Abacavir","Didanosine","Other antiretroviral drug","Efavirenz","Lopinavir / ritonavir","Nelfinavir","Lamivudine","Zidovudine","Nevirapine","Emtricitabine / tenofovir disoproxil"],"tb_regimens":["None","Streptomycin","Pyrazinamide","Rifampicin isoniazid pyrazinamide and ethambutol","Isoniazid","Continue regimen","Isoniazid / pyrazinamide / rifampin","Rifampicin and isoniazid","Ethambutol and isoniazid","Change regimen"],"vl_tests":3,"min_vl":76528.0,"avg_vl":404289.0,"max_vl":842380.0,"vl_under_400k":true,"vl_history":[{"yr":2007,"dt":"2007-02-16","v":76528.0},{"yr":2008,"dt":"2008-09-21","v":842380.0},{"yr":2010,"dt":"2010-07-08","v":293960.0}],"bp_sys":179.1,"pulse":133.8,"spo2":75.5,"weight_kg":62.3,"conditions":["Tuberculosis"]},{"id":"ebf0d007-a52f-5364-5c32-2ba094b88f16","name":"Georgianne697 Jerde200","gender":"female","birth_date":"1948-11-09","age":75,"age_bracket":"55+","enc":71,"obs":213,"art_starts":1,"art_start_years":[2005],"art_plans":["Stop all","Dosing change","Start drugs"],"arv_drugs":["Stavudine","Nelfinavir","Lamivudine","Emtricitabine / tenofovir disoproxil","Nevirapine","Didanosine","Efavirenz","Other antiretroviral drug","Lamivudine / zidovudine","Abacavir","Efavirenz / emtricitabine / tenofovir disoproxil","Zidovudine","Lopinavir / ritonavir","Tenofovir","Lamivudine / nevirapine / zidovudine"],"tb_regimens":["Pyrazinamide","Continue regimen","Start drugs","None","Rifampicin and isoniazid","Isoniazid / pyrazinamide / rifampin","Ethambutol and isoniazid"],"vl_tests":4,"min_vl":51173.0,"avg_vl":470776.0,"max_vl":899290.0,"vl_under_400k":true,"vl_history":[{"yr":2001,"dt":"2001-01-15","v":166100.0},{"yr":2003,"dt":"2003-01-08","v":51173.0},{"yr":2005,"dt":"2005-01-05","v":766540.0},{"yr":2007,"dt":"2007-02-16","v":899290.0}],"bp_sys":158.7,"pulse":130.8,"spo2":79.0,"weight_kg":63.0,"conditions":["History of cardiac arrest (situation)","Cardiac Arrest","Tuberculosis"]},{"id":"80eeeee8-7e7c-fbfc-e245-baeac8a40f3d","name":"Angelique249 Gleichner915","gender":"female","birth_date":"1955-02-15","age":68,"age_bracket":"55+","enc":61,"obs":211,"art_starts":0,"art_start_years":[],"art_plans":["Dosing change","None"],"arv_drugs":["Emtricitabine / tenofovir disoproxil","Nevirapine","Zidovudine","Tenofovir","Lamivudine / nevirapine / zidovudine","Lamivudine","Nelfinavir","Lopinavir / ritonavir","Lamivudine / zidovudine","Abacavir","Didanosine","Other antiretroviral drug","Efavirenz / emtricitabine / tenofovir disoproxil"],"tb_regimens":["Start drugs","Pyrazinamide","Isoniazid / pyrazinamide / rifampin","Ethambutol and isoniazid","Rifampicin and isoniazid","None","Streptomycin"],"vl_tests":4,"min_vl":187070.0,"avg_vl":338268.0,"max_vl":508780.0,"vl_under_400k":true,"vl_history":[{"yr":1990,"dt":"1990-04-18","v":429870.0},{"yr":1991,"dt":"1991-05-26","v":227350.0},{"yr":1993,"dt":"1993-01-14","v":187070.0},{"yr":1994,"dt":"1994-03-24","v":508780.0}],"bp_sys":179.4,"pulse":157.5,"spo2":87.4,"weight_kg":63.0,"conditions":["Tuberculosis"]},{"id":"930cd369-bd0e-fc8c-28fc-65b22cac7d60","name":"Irving123 Zulauf375","gender":"male","birth_date":"1955-10-21","age":68,"age_bracket":"55+","enc":62,"obs":200,"art_starts":1,"art_start_years":[1993],"art_plans":["None","Change formulation","Start drugs","Dosing change","Stop all"],"arv_drugs":["Lamivudine / zidovudine","Abacavir","Nelfinavir","Lamivudine","Stavudine","Tenofovir","Lamivudine / nevirapine / zidovudine","Efavirenz / emtricitabine / tenofovir disoproxil","Didanosine","Efavirenz","Other antiretroviral drug","Zidovudine","Emtricitabine / tenofovir disoproxil","Nevirapine","Lopinavir / ritonavir"],"tb_regimens":["Ethambutol and isoniazid","Rifampicin and isoniazid","Isoniazid / pyrazinamide / rifampin","Isoniazid","Change regimen","Streptomycin","Continue regimen","Start drugs","Stop all","Pyrazinamide","Rifampicin isoniazid pyrazinamide and ethambutol"],"vl_tests":2,"min_vl":456920.0,"avg_vl":491545.0,"max_vl":526170.0,"vl_under_400k":false,"vl_history":[{"yr":1990,"dt":"1990-11-06","v":526170.0},{"yr":1993,"dt":"1993-02-06","v":456920.0}],"bp_sys":149.4,"pulse":143.3,"spo2":83.2,"weight_kg":67.2,"conditions":["Tuberculosis"]},{"id":"d9a2bc54-08bd-7274-cb0e-83be5d8e4952","name":"Hassie51 Towne435","gender":"female","birth_date":"1992-01-13","age":31,"age_bracket":"25-34","enc":37,"obs":200,"art_starts":1,"art_start_years":[2017],"art_plans":["Stop all","Change formulation","Start drugs"],"arv_drugs":["Tenofovir","Lamivudine / nevirapine / zidovudine","Lopinavir / ritonavir","Zidovudine","Abacavir","Lamivudine / zidovudine","Efavirenz / emtricitabine / tenofovir disoproxil","Emtricitabine / tenofovir disoproxil","Nevirapine","Other antiretroviral drug","Didanosine","Efavirenz","Nelfinavir","Lamivudine","Stavudine"],"tb_regimens":["None","Streptomycin","Stop all","Isoniazid","Pyrazinamide","Rifampicin isoniazid pyrazinamide and ethambutol","Isoniazid / pyrazinamide / rifampin","Rifampicin and isoniazid","Ethambutol and isoniazid","Ethambutol","Continue regimen"],"vl_tests":2,"min_vl":488660.0,"avg_vl":504400.0,"max_vl":520140.0,"vl_under_400k":false,"vl_history":[{"yr":2017,"dt":"2017-01-07","v":488660.0},{"yr":2019,"dt":"2019-04-21","v":520140.0}],"bp_sys":150.1,"pulse":124.0,"spo2":90.3,"weight_kg":62.9,"conditions":["Tuberculosis"]},{"id":"879c534d-c512-35c0-58c2-98730ba5f171","name":"Wally311 Blanda868","gender":"male","birth_date":"1999-01-27","age":24,"age_bracket":"18-24","enc":34,"obs":193,"art_starts":1,"art_start_years":[2016],"art_plans":["Start drugs","Stop all","Dosing change","None"],"arv_drugs":["Efavirenz / emtricitabine / tenofovir disoproxil","Lopinavir / ritonavir","Tenofovir","Lamivudine / nevirapine / zidovudine","Zidovudine","Lamivudine / zidovudine","Abacavir","Nevirapine","Emtricitabine / tenofovir disoproxil","Stavudine","Lamivudine","Nelfinavir","Didanosine","Other antiretroviral drug","Efavirenz"],"tb_regimens":["Isoniazid","Isoniazid / pyrazinamide / rifampin","Ethambutol and isoniazid","Rifampicin and isoniazid","Rifampicin isoniazid pyrazinamide and ethambutol","Pyrazinamide","Start drugs","Change regimen"],"vl_tests":2,"min_vl":25993.0,"avg_vl":488912.0,"max_vl":951830.0,"vl_under_400k":true,"vl_history":[{"yr":2016,"dt":"2016-04-05","v":25993.0},{"yr":2017,"dt":"2017-09-10","v":951830.0}],"bp_sys":127.5,"pulse":121.1,"spo2":87.6,"weight_kg":64.6,"conditions":["Tuberculosis"]},{"id":"aa63742a-73b9-7bcd-72fd-418b3422fb91","name":"Leonor133 Kassulke119","gender":"female","birth_date":"1987-06-29","age":36,"age_bracket":"35-44","enc":39,"obs":192,"art_starts":0,"art_start_years":[],"art_plans":["Dosing change","None","Change regimen"],"arv_drugs":["Nevirapine","Emtricitabine / tenofovir disoproxil","Nelfinavir","Lamivudine","Zidovudine","Lopinavir / ritonavir","Efavirenz / emtricitabine / tenofovir disoproxil","Efavirenz","Didanosine","Other antiretroviral drug","Tenofovir","Lamivudine / nevirapine / zidovudine","Abacavir","Lamivudine / zidovudine"],"tb_regimens":["Ethambutol and isoniazid","Rifampicin and isoniazid","Isoniazid / pyrazinamide / rifampin","Isoniazid","Rifampicin isoniazid pyrazinamide and ethambutol","Pyrazinamide","Change regimen","Start drugs","Streptomycin","None"],"vl_tests":2,"min_vl":23341.0,"avg_vl":324456.0,"max_vl":625570.0,"vl_under_400k":true,"vl_history":[{"yr":2012,"dt":"2012-06-26","v":23341.0},{"yr":2013,"dt":"2013-10-30","v":625570.0}],"bp_sys":217.4,"pulse":118.3,"spo2":72.2,"weight_kg":63.4,"conditions":["Tuberculosis"]},{"id":"52604a6b-c99e-9116-b9a0-937b58032f7c","name":"Bobbye345 Harris789","gender":"female","birth_date":"1988-04-30","age":35,"age_bracket":"35-44","enc":37,"obs":178,"art_starts":0,"art_start_years":[],"art_plans":["Change formulation","Dosing change"],"arv_drugs":["Efavirenz / emtricitabine / tenofovir disoproxil","Abacavir","Lamivudine / zidovudine","Other antiretroviral drug","Didanosine","Efavirenz","Lopinavir / ritonavir","Nelfinavir","Lamivudine","Nevirapine","Emtricitabine / tenofovir disoproxil","Zidovudine","Tenofovir","Lamivudine / nevirapine / zidovudine"],"tb_regimens":["Continue regimen","Ethambutol and isoniazid","Isoniazid / pyrazinamide / rifampin","Rifampicin and isoniazid","Pyrazinamide","Isoniazid","Change regimen","None","Start drugs"],"vl_tests":2,"min_vl":111520.0,"avg_vl":494685.0,"max_vl":877850.0,"vl_under_400k":true,"vl_history":[{"yr":2006,"dt":"2006-07-19","v":111520.0},{"yr":2008,"dt":"2008-03-17","v":877850.0}],"bp_sys":160.8,"pulse":88.0,"spo2":87.0,"weight_kg":63.2,"conditions":["Tuberculosis"]},{"id":"c2572608-443b-bb33-415e-0f613615d925","name":"Ursula220 Durgan499","gender":"female","birth_date":"1963-08-29","age":60,"age_bracket":"55+","enc":54,"obs":177,"art_starts":0,"art_start_years":[],"art_plans":["None"],"arv_drugs":["Tenofovir","Lopinavir / ritonavir","Zidovudine","Abacavir","Lamivudine / zidovudine","Efavirenz / emtricitabine / tenofovir disoproxil","Nevirapine","Efavirenz"],"tb_regimens":["Pyrazinamide","Isoniazid / pyrazinamide / rifampin","Ethambutol and isoniazid","Start drugs"],"vl_tests":5,"min_vl":407960.0,"avg_vl":505478.0,"max_vl":684650.0,"vl_under_400k":false,"vl_history":[{"yr":2006,"dt":"2006-05-01","v":481940.0},{"yr":2007,"dt":"2007-12-06","v":473970.0},{"yr":2009,"dt":"2009-03-06","v":478870.0},{"yr":2010,"dt":"2010-06-27","v":407960.0},{"yr":2012,"dt":"2012-05-19","v":684650.0}],"bp_sys":151.6,"pulse":109.9,"spo2":87.4,"weight_kg":63.9,"conditions":["Tuberculosis"]},{"id":"39cd2d2e-7a6b-2ab2-9e77-179dedab0ab0","name":"Rudolph554 Beahan375","gender":"male","birth_date":"1960-01-08","age":63,"age_bracket":"55+","enc":56,"obs":176,"art_starts":0,"art_start_years":[],"art_plans":["Dosing change","None"],"arv_drugs":["Efavirenz / emtricitabine / tenofovir disoproxil","Lopinavir / ritonavir","Tenofovir","Lamivudine / nevirapine / zidovudine","Zidovudine","Lamivudine / zidovudine","Abacavir","Nevirapine","Emtricitabine / tenofovir disoproxil","Lamivudine","Stavudine","Nelfinavir","Didanosine","Efavirenz","Other antiretroviral drug"],"tb_regimens":["Ethambutol and isoniazid","Isoniazid / pyrazinamide / rifampin","Rifampicin and isoniazid","Pyrazinamide","Rifampicin isoniazid pyrazinamide and ethambutol","None","Start drugs","Change regimen"],"vl_tests":1,"min_vl":938320.0,"avg_vl":938320.0,"max_vl":938320.0,"vl_under_400k":false,"vl_history":[{"yr":2003,"dt":"2003-05-22","v":938320.0}],"bp_sys":90.3,"pulse":106.6,"spo2":76.6,"weight_kg":63.1,"conditions":["Tuberculosis"]},{"id":"ba5b0d1a-c3ad-b981-6b09-64c874c7148f","name":"Mose244 Fritsch593","gender":"male","birth_date":"1984-03-26","age":39,"age_bracket":"35-44","enc":39,"obs":176,"art_starts":0,"art_start_years":[],"art_plans":["Change formulation","None","Dosing change"],"arv_drugs":["Lamivudine / zidovudine","Abacavir","Lopinavir / ritonavir","Efavirenz / emtricitabine / tenofovir disoproxil","Nelfinavir","Lamivudine","Stavudine","Tenofovir","Lamivudine / nevirapine / zidovudine","Efavirenz","Didanosine","Emtricitabine / tenofovir disoproxil","Nevirapine","Zidovudine"],"tb_regimens":["Streptomycin","None","Rifampicin and isoniazid","Ethambutol and isoniazid","Isoniazid / pyrazinamide / rifampin","Change regimen","Continue regimen","Start drugs","Isoniazid","Pyrazinamide","Rifampicin isoniazid pyrazinamide and ethambutol"],"vl_tests":2,"min_vl":80081.0,"avg_vl":152366.0,"max_vl":224650.0,"vl_under_400k":true,"vl_history":[{"yr":1999,"dt":"1999-10-05","v":224650.0},{"yr":2001,"dt":"2001-05-24","v":80081.0}],"bp_sys":167.5,"pulse":109.1,"spo2":89.2,"weight_kg":66.0,"conditions":["Tuberculosis"]},{"id":"5ba60d91-b952-de1b-e35d-eea1ce8ea67c","name":"Sylvie540 Windler79","gender":"female","birth_date":"1966-11-15","age":57,"age_bracket":"55+","enc":49,"obs":175,"art_starts":1,"art_start_years":[1997],"art_plans":["Stop all","None","Change formulation","Start drugs"],"arv_drugs":["Emtricitabine / tenofovir disoproxil","Nevirapine","Zidovudine","Tenofovir","Lamivudine / nevirapine / zidovudine","Nelfinavir","Lamivudine","Stavudine","Lopinavir / ritonavir","Lamivudine / zidovudine","Abacavir","Other antiretroviral drug","Didanosine","Efavirenz","Efavirenz / emtricitabine / tenofovir disoproxil"],"tb_regimens":["Pyrazinamide","Rifampicin isoniazid pyrazinamide and ethambutol","Ethambutol and isoniazid","Isoniazid / pyrazinamide / rifampin","Stop all","Dosing change","None","Isoniazid"],"vl_tests":2,"min_vl":54793.0,"avg_vl":524257.0,"max_vl":993720.0,"vl_under_400k":true,"vl_history":[{"yr":1996,"dt":"1996-10-04","v":54793.0},{"yr":1997,"dt":"1997-10-13","v":993720.0}],"bp_sys":187.2,"pulse":111.3,"spo2":81.8,"weight_kg":65.4,"conditions":["Tuberculosis"]},{"id":"fcccd5c6-17d0-b6c5-b90f-e5c24ed9bf0a","name":"Aurore252 Jacobs452","gender":"female","birth_date":"1963-11-12","age":60,"age_bracket":"55+","enc":54,"obs":175,"art_starts":1,"art_start_years":[2014],"art_plans":["None","Continue regimen","Start drugs"],"arv_drugs":["Nelfinavir","Stavudine","Lamivudine","Nevirapine","Emtricitabine / tenofovir disoproxil","Didanosine","Efavirenz","Other antiretroviral drug","Lamivudine / zidovudine","Abacavir","Efavirenz / emtricitabine / tenofovir disoproxil","Zidovudine","Lopinavir / ritonavir","Tenofovir","Lamivudine / nevirapine / zidovudine"],"tb_regimens":["Pyrazinamide","Rifampicin isoniazid pyrazinamide and ethambutol","Continue regimen","None","Streptomycin","Change regimen","Stop all","Ethambutol and isoniazid","Rifampicin and isoniazid","Isoniazid / pyrazinamide / rifampin"],"vl_tests":2,"min_vl":481090.0,"avg_vl":701565.0,"max_vl":922040.0,"vl_under_400k":false,"vl_history":[{"yr":2012,"dt":"2012-10-04","v":922040.0},{"yr":2014,"dt":"2014-10-03","v":481090.0}],"bp_sys":168.3,"pulse":131.2,"spo2":85.0,"weight_kg":63.1,"conditions":["Tuberculosis"]},{"id":"3c7d6d09-a368-d321-1eb3-6e60e19dbc22","name":"Lanie389 Weissnat378","gender":"female","birth_date":"1961-10-01","age":62,"age_bracket":"55+","enc":55,"obs":170,"art_starts":0,"art_start_years":[],"art_plans":["None"],"arv_drugs":["Stavudine","Nelfinavir","Lamivudine","Nevirapine","Emtricitabine / tenofovir disoproxil","Other antiretroviral drug","Efavirenz","Didanosine","Lamivudine / zidovudine","Efavirenz / emtricitabine / tenofovir disoproxil","Zidovudine","Lopinavir / ritonavir","Tenofovir"],"tb_regimens":["Pyrazinamide","Continue regimen","Start drugs","Streptomycin","Ethambutol and isoniazid","Rifampicin and isoniazid","Isoniazid / pyrazinamide / rifampin"],"vl_tests":4,"min_vl":246650.0,"avg_vl":659423.0,"max_vl":996130.0,"vl_under_400k":true,"vl_history":[{"yr":1983,"dt":"1983-10-25","v":996130.0},{"yr":1985,"dt":"1985-03-08","v":554590.0},{"yr":1986,"dt":"1986-11-02","v":840320.0},{"yr":1988,"dt":"1988-02-02","v":246650.0}],"bp_sys":162.4,"pulse":129.1,"spo2":78.1,"weight_kg":62.3,"conditions":["Tuberculosis"]},{"id":"6eb9f136-121e-2f36-9115-d450c210dced","name":"Ramona980 God\u00ednez202","gender":"female","birth_date":"1937-04-17","age":86,"age_bracket":"55+","enc":79,"obs":162,"art_starts":1,"art_start_years":[1981],"art_plans":["Start drugs","Continue regimen","None","Dosing change"],"arv_drugs":["Efavirenz / emtricitabine / tenofovir disoproxil","Lamivudine / zidovudine","Abacavir","Didanosine","Efavirenz","Other antiretroviral drug","Lopinavir / ritonavir","Lamivudine","Nelfinavir","Stavudine","Emtricitabine / tenofovir disoproxil","Nevirapine","Zidovudine","Tenofovir"],"tb_regimens":["Continue regimen","Isoniazid / pyrazinamide / rifampin","Ethambutol and isoniazid","Rifampicin and isoniazid","Rifampicin isoniazid pyrazinamide and ethambutol","Pyrazinamide","Isoniazid","Dosing change","Streptomycin","Start drugs"],"vl_tests":2,"min_vl":317170.0,"avg_vl":346755.0,"max_vl":376340.0,"vl_under_400k":true,"vl_history":[{"yr":1979,"dt":"1979-11-20","v":317170.0},{"yr":1980,"dt":"1980-12-09","v":376340.0}],"bp_sys":185.5,"pulse":92.5,"spo2":88.0,"weight_kg":63.1,"conditions":["Tuberculosis"]},{"id":"742fc10a-c565-f636-3c05-5dcd28672194","name":"Alva958 Dickinson688","gender":"male","birth_date":"1998-04-29","age":25,"age_bracket":"25-34","enc":35,"obs":156,"art_starts":0,"art_start_years":[],"art_plans":["Dosing change","Change formulation","None"],"arv_drugs":["Tenofovir","Lamivudine / nevirapine / zidovudine","Lopinavir / ritonavir","Nevirapine","Emtricitabine / tenofovir disoproxil","Zidovudine","Efavirenz","Didanosine","Other antiretroviral drug","Efavirenz / emtricitabine / tenofovir disoproxil","Lamivudine","Stavudine","Nelfinavir","Lamivudine / zidovudine","Abacavir"],"tb_regimens":["Stop all","Rifampicin and isoniazid","Ethambutol and isoniazid","Isoniazid / pyrazinamide / rifampin","Change regimen","Streptomycin","None","Pyrazinamide","Rifampicin isoniazid pyrazinamide and ethambutol"],"vl_tests":2,"min_vl":796900.0,"avg_vl":809955.0,"max_vl":823010.0,"vl_under_400k":false,"vl_history":[{"yr":2016,"dt":"2016-09-13","v":796900.0},{"yr":2018,"dt":"2018-08-29","v":823010.0}],"bp_sys":183.7,"pulse":89.8,"spo2":93.4,"weight_kg":64.8,"conditions":["Tuberculosis"]},{"id":"6d44fe03-2478-a82d-7495-3a7c433ed921","name":"Lawrence741 Hammes673","gender":"female","birth_date":"1929-12-04","age":94,"age_bracket":"55+","enc":88,"obs":154,"art_starts":1,"art_start_years":[1982],"art_plans":["Start drugs","Change formulation"],"arv_drugs":["Emtricitabine / tenofovir disoproxil","Nevirapine","Lamivudine","Stavudine","Nelfinavir","Zidovudine","Lopinavir / ritonavir","Efavirenz / emtricitabine / tenofovir disoproxil","Other antiretroviral drug","Efavirenz","Didanosine","Tenofovir","Lamivudine / nevirapine / zidovudine","Abacavir","Lamivudine / zidovudine"],"tb_regimens":["Isoniazid / pyrazinamide / rifampin","Rifampicin and isoniazid","Ethambutol and isoniazid","Pyrazinamide","Dosing change","Stop all"],"vl_tests":3,"min_vl":373980.0,"avg_vl":397867.0,"max_vl":432370.0,"vl_under_400k":true,"vl_history":[{"yr":1982,"dt":"1982-04-24","v":432370.0},{"yr":1984,"dt":"1984-01-11","v":387250.0},{"yr":1985,"dt":"1985-09-11","v":373980.0}],"bp_sys":178.6,"pulse":86.1,"spo2":91.3,"weight_kg":63.4,"conditions":["Tuberculosis","Stroke","Atrial Fibrillation"]},{"id":"87971181-9885-c79c-b296-5ca2fee37363","name":"Porsha375 Nienow652","gender":"female","birth_date":"1999-04-26","age":24,"age_bracket":"18-24","enc":33,"obs":149,"art_starts":1,"art_start_years":[2015],"art_plans":["Change regimen","Start drugs"],"arv_drugs":["Lamivudine","Efavirenz","Didanosine","Other antiretroviral drug","Emtricitabine / tenofovir disoproxil","Nevirapine","Efavirenz / emtricitabine / tenofovir disoproxil","Lamivudine / zidovudine","Abacavir","Lopinavir / ritonavir","Tenofovir","Zidovudine"],"tb_regimens":["Change regimen","Pyrazinamide","Isoniazid / pyrazinamide / rifampin","Ethambutol and isoniazid","Dosing change"],"vl_tests":3,"min_vl":103430.0,"avg_vl":226510.0,"max_vl":369200.0,"vl_under_400k":true,"vl_history":[{"yr":2015,"dt":"2015-03-23","v":206900.0},{"yr":2016,"dt":"2016-10-28","v":103430.0},{"yr":2017,"dt":"2017-12-30","v":369200.0}],"bp_sys":130.4,"pulse":127.0,"spo2":84.1,"weight_kg":64.4,"conditions":["Tuberculosis"]},{"id":"4926936e-183c-5109-824a-523191371b9b","name":"Meredith572 Leffler128","gender":"female","birth_date":"1973-06-21","age":50,"age_bracket":"45-54","enc":43,"obs":148,"art_starts":0,"art_start_years":[],"art_plans":["Change formulation","Change regimen"],"arv_drugs":["Lopinavir / ritonavir","Tenofovir","Lamivudine / nevirapine / zidovudine","Zidovudine","Lamivudine / zidovudine","Abacavir","Nevirapine","Emtricitabine / tenofovir disoproxil","Stavudine","Efavirenz","Other antiretroviral drug","Didanosine"],"tb_regimens":["Isoniazid","Isoniazid / pyrazinamide / rifampin","Continue regimen","Pyrazinamide","Streptomycin","Change regimen"],"vl_tests":3,"min_vl":216430.0,"avg_vl":351117.0,"max_vl":586330.0,"vl_under_400k":true,"vl_history":[{"yr":2010,"dt":"2010-07-07","v":216430.0},{"yr":2012,"dt":"2012-05-10","v":250590.0},{"yr":2014,"dt":"2014-03-20","v":586330.0}],"bp_sys":161.6,"pulse":114.6,"spo2":83.1,"weight_kg":64.0,"conditions":["Tuberculosis"]},{"id":"ada78fc4-c0fa-4212-b0ee-5a31d2f73f32","name":"Josh874 Zulauf375","gender":"male","birth_date":"1997-01-23","age":26,"age_bracket":"25-34","enc":32,"obs":147,"art_starts":0,"art_start_years":[],"art_plans":["Change regimen","Change formulation"],"arv_drugs":["Tenofovir","Lopinavir / ritonavir","Emtricitabine / tenofovir disoproxil","Nevirapine","Zidovudine","Efavirenz","Didanosine","Efavirenz / emtricitabine / tenofovir disoproxil","Lamivudine","Nelfinavir","Lamivudine / zidovudine"],"tb_regimens":["Continue regimen","Isoniazid","Ethambutol and isoniazid","Isoniazid / pyrazinamide / rifampin","Rifampicin and isoniazid","Streptomycin","None","Pyrazinamide"],"vl_tests":3,"min_vl":135620.0,"avg_vl":369223.0,"max_vl":557730.0,"vl_under_400k":true,"vl_history":[{"yr":2013,"dt":"2013-04-29","v":557730.0},{"yr":2014,"dt":"2014-08-17","v":414320.0},{"yr":2016,"dt":"2016-07-31","v":135620.0}],"bp_sys":168.1,"pulse":71.0,"spo2":77.3,"weight_kg":64.3,"conditions":["Tuberculosis"]},{"id":"2c46dae0-0a31-a67e-ed20-ee23cedc72c3","name":"Frederica279 Olson653","gender":"female","birth_date":"1966-01-07","age":57,"age_bracket":"55+","enc":49,"obs":145,"art_starts":1,"art_start_years":[1985],"art_plans":["Continue regimen","Start drugs","None"],"arv_drugs":["Zidovudine","Other antiretroviral drug","Didanosine","Efavirenz","Emtricitabine / tenofovir disoproxil","Nevirapine","Tenofovir","Lamivudine / nevirapine / zidovudine","Nelfinavir","Lamivudine","Stavudine","Efavirenz / emtricitabine / tenofovir disoproxil","Lopinavir / ritonavir","Lamivudine / zidovudine"],"tb_regimens":["None","Streptomycin","Continue regimen","Ethambutol and isoniazid","Rifampicin and isoniazid","Isoniazid / pyrazinamide / rifampin","Rifampicin isoniazid pyrazinamide and ethambutol","Pyrazinamide"],"vl_tests":2,"min_vl":187020.0,"avg_vl":195365.0,"max_vl":203710.0,"vl_under_400k":true,"vl_history":[{"yr":1984,"dt":"1984-11-03","v":187020.0},{"yr":1987,"dt":"1987-02-07","v":203710.0}],"bp_sys":194.4,"pulse":155.6,"spo2":92.4,"weight_kg":65.1,"conditions":["Tuberculosis"]},{"id":"23dc3811-ae4e-fc12-fe61-b4a54b057624","name":"Sang383 Kuhic920","gender":"male","birth_date":"1976-01-14","age":47,"age_bracket":"45-54","enc":40,"obs":142,"art_starts":0,"art_start_years":[],"art_plans":["Dosing change","None"],"arv_drugs":["Lopinavir / ritonavir","Abacavir","Lamivudine / zidovudine","Efavirenz / emtricitabine / tenofovir disoproxil","Tenofovir","Nevirapine","Emtricitabine / tenofovir disoproxil","Zidovudine","Lamivudine","Nelfinavir","Efavirenz","Didanosine"],"tb_regimens":["None","Streptomycin","Rifampicin isoniazid pyrazinamide and ethambutol","Pyrazinamide","Rifampicin and isoniazid","Isoniazid / pyrazinamide / rifampin","Ethambutol and isoniazid","Isoniazid"],"vl_tests":3,"min_vl":76464.0,"avg_vl":564928.0,"max_vl":891320.0,"vl_under_400k":true,"vl_history":[{"yr":1995,"dt":"1995-02-03","v":76464.0},{"yr":1996,"dt":"1996-10-10","v":727000.0},{"yr":1998,"dt":"1998-07-26","v":891320.0}],"bp_sys":162.0,"pulse":100.0,"spo2":90.3,"weight_kg":63.7,"conditions":["Tuberculosis"]},{"id":"04ddd0b3-30c2-a5bd-ce9c-83505de565c9","name":"Masako522 Mayer370","gender":"female","birth_date":"1993-07-31","age":30,"age_bracket":"25-34","enc":34,"obs":139,"art_starts":0,"art_start_years":[],"art_plans":["None"],"arv_drugs":["Lamivudine / nevirapine / zidovudine","Tenofovir","Lopinavir / ritonavir","Nevirapine","Emtricitabine / tenofovir disoproxil","Zidovudine","Didanosine","Other antiretroviral drug","Efavirenz","Efavirenz / emtricitabine / tenofovir disoproxil","Nelfinavir","Lamivudine","Stavudine","Abacavir","Lamivudine / zidovudine"],"tb_regimens":["Start drugs","Isoniazid / pyrazinamide / rifampin","Ethambutol and isoniazid","Rifampicin and isoniazid","Change regimen","Streptomycin","None","Pyrazinamide"],"vl_tests":1,"min_vl":59180.0,"avg_vl":59180.0,"max_vl":59180.0,"vl_under_400k":true,"vl_history":[{"yr":2009,"dt":"2009-02-19","v":59180.0}],"bp_sys":162.3,"pulse":115.7,"spo2":77.6,"weight_kg":62.6,"conditions":["Tuberculosis"]},{"id":"05e870ed-d6d0-9452-404e-387a59f3368f","name":"Cortez851 Roberts511","gender":"male","birth_date":"1959-03-17","age":64,"age_bracket":"55+","enc":56,"obs":137,"art_starts":1,"art_start_years":[2013],"art_plans":["None","Continue regimen","Start drugs"],"arv_drugs":["Nelfinavir","Lamivudine","Stavudine","Nevirapine","Emtricitabine / tenofovir disoproxil","Efavirenz","Didanosine","Lamivudine / zidovudine","Abacavir","Efavirenz / emtricitabine / tenofovir disoproxil","Zidovudine","Lopinavir / ritonavir","Lamivudine / nevirapine / zidovudine","Tenofovir"],"tb_regimens":["Rifampicin isoniazid pyrazinamide and ethambutol","Pyrazinamide","Streptomycin","None","Stop all","Dosing change","Rifampicin and isoniazid","Isoniazid / pyrazinamide / rifampin","Ethambutol and isoniazid"],"vl_tests":1,"min_vl":99077.0,"avg_vl":99077.0,"max_vl":99077.0,"vl_under_400k":true,"vl_history":[{"yr":2013,"dt":"2013-07-29","v":99077.0}],"bp_sys":170.3,"pulse":80.4,"spo2":92.2,"weight_kg":63.5,"conditions":["Tuberculosis"]},{"id":"fa5aa9e4-255d-62cf-0278-9ae778a2620c","name":"Bo157 Smith67","gender":"male","birth_date":"1956-01-12","age":67,"age_bracket":"55+","enc":61,"obs":133,"art_starts":0,"art_start_years":[],"art_plans":["None","Dosing change"],"arv_drugs":["Efavirenz / emtricitabine / tenofovir disoproxil","Lamivudine / zidovudine","Abacavir","Didanosine","Other antiretroviral drug","Efavirenz","Lopinavir / ritonavir","Lamivudine","Nelfinavir","Stavudine","Nevirapine","Emtricitabine / tenofovir disoproxil","Zidovudine","Tenofovir"],"tb_regimens":["Rifampicin and isoniazid","Isoniazid / pyrazinamide / rifampin","Ethambutol and isoniazid","Rifampicin isoniazid pyrazinamide and ethambutol","Pyrazinamide","Stop all","Streptomycin","None","Start drugs"],"vl_tests":1,"min_vl":720720.0,"avg_vl":720720.0,"max_vl":720720.0,"vl_under_400k":false,"vl_history":[{"yr":1992,"dt":"1992-03-15","v":720720.0}],"bp_sys":136.6,"pulse":83.3,"spo2":75.4,"weight_kg":62.9,"conditions":["Tuberculosis"]},{"id":"b44c3d06-7ace-05b7-e002-a8e746e91d7d","name":"Ollie731 Crooks415","gender":"male","birth_date":"1970-08-03","age":53,"age_bracket":"45-54","enc":44,"obs":122,"art_starts":0,"art_start_years":[],"art_plans":["None"],"arv_drugs":["Tenofovir","Lopinavir / ritonavir","Lamivudine / zidovudine","Nevirapine","Emtricitabine / tenofovir disoproxil","Efavirenz","Other antiretroviral drug","Lamivudine","Stavudine"],"tb_regimens":["Streptomycin","Change regimen","Pyrazinamide","Isoniazid / pyrazinamide / rifampin"],"vl_tests":3,"min_vl":553920.0,"avg_vl":709753.0,"max_vl":915810.0,"vl_under_400k":false,"vl_history":[{"yr":1994,"dt":"1994-07-29","v":553920.0},{"yr":1995,"dt":"1995-08-11","v":915810.0},{"yr":1997,"dt":"1997-03-18","v":659530.0}],"bp_sys":122.9,"pulse":103.7,"spo2":86.1,"weight_kg":62.7,"conditions":["Tuberculosis"]},{"id":"cd762750-d268-7aca-715e-b863f72d6718","name":"Carol737 Thiel172","gender":"male","birth_date":"1960-09-16","age":63,"age_bracket":"55+","enc":55,"obs":116,"art_starts":1,"art_start_years":[2011],"art_plans":["Start drugs"],"arv_drugs":["Lamivudine","Stavudine","Nevirapine","Emtricitabine / tenofovir disoproxil","Didanosine","Other antiretroviral drug","Efavirenz","Lamivudine / zidovudine","Efavirenz / emtricitabine / tenofovir disoproxil","Zidovudine","Lopinavir / ritonavir","Tenofovir"],"tb_regimens":["Rifampicin isoniazid pyrazinamide and ethambutol","Pyrazinamide","Change regimen","Rifampicin and isoniazid","Isoniazid / pyrazinamide / rifampin","Ethambutol and isoniazid"],"vl_tests":3,"min_vl":379390.0,"avg_vl":508610.0,"max_vl":678600.0,"vl_under_400k":true,"vl_history":[{"yr":2009,"dt":"2009-03-23","v":467840.0},{"yr":2010,"dt":"2010-06-04","v":379390.0},{"yr":2011,"dt":"2011-07-06","v":678600.0}],"bp_sys":159.8,"pulse":62.5,"spo2":88.8,"weight_kg":63.6,"conditions":["Tuberculosis"]},{"id":"aeff9fe6-13d5-5391-30df-8a2913a25557","name":"Emery884 Johnston597","gender":"male","birth_date":"1987-08-29","age":36,"age_bracket":"35-44","enc":37,"obs":115,"art_starts":0,"art_start_years":[],"art_plans":["None"],"arv_drugs":["Efavirenz / emtricitabine / tenofovir disoproxil","Lopinavir / ritonavir","Tenofovir","Zidovudine","Lamivudine / zidovudine","Abacavir","Nevirapine","Lamivudine","Stavudine","Nelfinavir","Didanosine"],"tb_regimens":["Ethambutol and isoniazid","Isoniazid / pyrazinamide / rifampin","Pyrazinamide","Rifampicin isoniazid pyrazinamide and ethambutol","Streptomycin","Dosing change"],"vl_tests":3,"min_vl":782530.0,"avg_vl":867967.0,"max_vl":954490.0,"vl_under_400k":false,"vl_history":[{"yr":2012,"dt":"2012-03-29","v":866880.0},{"yr":2013,"dt":"2013-04-23","v":782530.0},{"yr":2015,"dt":"2015-01-18","v":954490.0}],"bp_sys":172.7,"pulse":184.0,"spo2":78.6,"weight_kg":65.5,"conditions":["Tuberculosis"]},{"id":"968fd401-9a01-1b75-498f-0cd102fd351e","name":"Glenn0 Parker433","gender":"female","birth_date":"1997-02-13","age":26,"age_bracket":"25-34","enc":31,"obs":113,"art_starts":0,"art_start_years":[],"art_plans":["None","Change formulation"],"arv_drugs":["Emtricitabine / tenofovir disoproxil","Nevirapine","Zidovudine","Lamivudine / nevirapine / zidovudine","Tenofovir","Nelfinavir","Lamivudine","Stavudine","Lopinavir / ritonavir","Lamivudine / zidovudine","Abacavir","Didanosine","Efavirenz","Efavirenz / emtricitabine / tenofovir disoproxil"],"tb_regimens":["Pyrazinamide","Ethambutol and isoniazid","Stop all","None","Isoniazid"],"vl_tests":2,"min_vl":923570.0,"avg_vl":953440.0,"max_vl":983310.0,"vl_under_400k":false,"vl_history":[{"yr":2014,"dt":"2014-09-01","v":923570.0},{"yr":2016,"dt":"2016-02-28","v":983310.0}],"bp_sys":189.3,"pulse":85.8,"spo2":87.3,"weight_kg":63.3,"conditions":["Tuberculosis"]},{"id":"6b7e31d9-4d16-d08d-3f38-a67e548af26e","name":"Shalon513 Jacobi462","gender":"female","birth_date":"1949-12-24","age":74,"age_bracket":"55+","enc":65,"obs":113,"art_starts":0,"art_start_years":[],"art_plans":["None","Dosing change"],"arv_drugs":["Lamivudine / zidovudine","Abacavir","Nelfinavir","Lamivudine","Lamivudine / nevirapine / zidovudine","Tenofovir","Efavirenz / emtricitabine / tenofovir disoproxil","Efavirenz","Didanosine","Zidovudine","Nevirapine","Emtricitabine / tenofovir disoproxil","Lopinavir / ritonavir"],"tb_regimens":["Isoniazid / pyrazinamide / rifampin","Ethambutol and isoniazid","None","Streptomycin","Pyrazinamide"],"vl_tests":2,"min_vl":274690.0,"avg_vl":630295.0,"max_vl":985900.0,"vl_under_400k":true,"vl_history":[{"yr":2012,"dt":"2012-09-06","v":274690.0},{"yr":2014,"dt":"2014-02-02","v":985900.0}],"bp_sys":179.9,"pulse":80.5,"spo2":84.1,"weight_kg":64.1,"conditions":["Tuberculosis"]},{"id":"a10fd43a-9264-8f46-7a5b-bbd99c3bd60b","name":"Meghan514 Halvorson124","gender":"female","birth_date":"1962-09-24","age":61,"age_bracket":"55+","enc":53,"obs":112,"art_starts":0,"art_start_years":[],"art_plans":["None","Change formulation"],"arv_drugs":["Nevirapine","Emtricitabine / tenofovir disoproxil","Zidovudine","Tenofovir","Lamivudine / nevirapine / zidovudine","Nelfinavir","Lamivudine","Lopinavir / ritonavir","Lamivudine / zidovudine","Abacavir","Other antiretroviral drug","Didanosine","Efavirenz / emtricitabine / tenofovir disoproxil"],"tb_regimens":["Start drugs","Pyrazinamide","Rifampicin and isoniazid","Isoniazid / pyrazinamide / rifampin","Ethambutol and isoniazid","Dosing change","None","Isoniazid"],"vl_tests":1,"min_vl":500400.0,"avg_vl":500400.0,"max_vl":500400.0,"vl_under_400k":false,"vl_history":[{"yr":2003,"dt":"2003-05-31","v":500400.0}],"bp_sys":126.6,"pulse":176.4,"spo2":86.3,"weight_kg":62.5,"conditions":["Tuberculosis"]},{"id":"fbba2017-3ef4-dfe0-714c-c302cd9b8cca","name":"Soila394 Christiansen251","gender":"female","birth_date":"1999-02-12","age":24,"age_bracket":"18-24","enc":33,"obs":107,"art_starts":1,"art_start_years":[2018],"art_plans":["Change formulation","Start drugs"],"arv_drugs":["Lamivudine / zidovudine","Abacavir","Lopinavir / ritonavir","Efavirenz / emtricitabine / tenofovir disoproxil","Nelfinavir","Stavudine","Lamivudine","Tenofovir","Lamivudine / nevirapine / zidovudine","Didanosine","Efavirenz","Other antiretroviral drug","Nevirapine","Zidovudine"],"tb_regimens":["Streptomycin","None","Rifampicin and isoniazid","Isoniazid / pyrazinamide / rifampin","Ethambutol and isoniazid","Start drugs","Pyrazinamide"],"vl_tests":2,"min_vl":605160.0,"avg_vl":713010.0,"max_vl":820860.0,"vl_under_400k":false,"vl_history":[{"yr":2016,"dt":"2016-05-25","v":605160.0},{"yr":2018,"dt":"2018-03-17","v":820860.0}],"bp_sys":168.4,"pulse":93.1,"spo2":90.3,"weight_kg":64.1,"conditions":["Tuberculosis"]},{"id":"a74d7c5e-8644-c28e-ed85-ced09e85ed80","name":"Francine922 Balistreri607","gender":"female","birth_date":"1975-12-20","age":48,"age_bracket":"45-54","enc":41,"obs":92,"art_starts":0,"art_start_years":[],"art_plans":["None"],"arv_drugs":["Didanosine","Efavirenz","Zidovudine","Efavirenz / emtricitabine / tenofovir disoproxil","Lamivudine","Stavudine","Nevirapine","Emtricitabine / tenofovir disoproxil","Lamivudine / nevirapine / zidovudine","Tenofovir","Lopinavir / ritonavir"],"tb_regimens":["Isoniazid / pyrazinamide / rifampin","Continue regimen","Pyrazinamide"],"vl_tests":2,"min_vl":62671.0,"avg_vl":517916.0,"max_vl":973160.0,"vl_under_400k":true,"vl_history":[{"yr":1997,"dt":"1997-07-27","v":973160.0},{"yr":1998,"dt":"1998-12-11","v":62671.0}],"bp_sys":175.2,"pulse":160.3,"spo2":84.2,"weight_kg":64.5,"conditions":["Tuberculosis"]},{"id":"ae430f79-e2cd-dab4-d2bd-4d3f485f753c","name":"Myron933 Kris249","gender":"male","birth_date":"1979-07-15","age":44,"age_bracket":"35-44","enc":40,"obs":89,"art_starts":0,"art_start_years":[],"art_plans":["None"],"arv_drugs":["Lamivudine / zidovudine","Abacavir","Lopinavir / ritonavir","Efavirenz / emtricitabine / tenofovir disoproxil","Lamivudine","Stavudine","Nelfinavir","Tenofovir","Didanosine","Efavirenz","Nevirapine","Emtricitabine / tenofovir disoproxil","Zidovudine"],"tb_regimens":["Streptomycin","Ethambutol and isoniazid","Rifampicin and isoniazid","Start drugs","Pyrazinamide"],"vl_tests":2,"min_vl":16820.0,"avg_vl":427190.0,"max_vl":837560.0,"vl_under_400k":true,"vl_history":[{"yr":2007,"dt":"2007-01-05","v":16820.0},{"yr":2008,"dt":"2008-07-06","v":837560.0}],"bp_sys":202.8,"pulse":107.5,"spo2":79.6,"weight_kg":65.5,"conditions":["Tuberculosis"]},{"id":"87b83af9-9b56-f6cd-0e0c-dbe665ac61ec","name":"Kiley170 Glover433","gender":"female","birth_date":"1995-06-09","age":28,"age_bracket":"25-34","enc":34,"obs":89,"art_starts":0,"art_start_years":[],"art_plans":["Change formulation"],"arv_drugs":["Lopinavir / ritonavir","Abacavir","Lamivudine / zidovudine","Lamivudine / nevirapine / zidovudine","Tenofovir","Emtricitabine / tenofovir disoproxil","Nevirapine","Zidovudine","Efavirenz","Other antiretroviral drug"],"tb_regimens":["None","Pyrazinamide","Rifampicin isoniazid pyrazinamide and ethambutol","Isoniazid"],"vl_tests":2,"min_vl":87251.0,"avg_vl":520011.0,"max_vl":952770.0,"vl_under_400k":true,"vl_history":[{"yr":2013,"dt":"2013-10-22","v":952770.0},{"yr":2015,"dt":"2015-08-02","v":87251.0}],"bp_sys":159.1,"pulse":127.1,"spo2":85.2,"weight_kg":63.7,"conditions":["Tuberculosis"]},{"id":"898c1dc8-2c3d-7afa-5e61-eeadba8f7864","name":"Kelley882 Marks830","gender":"male","birth_date":"1999-07-01","age":24,"age_bracket":"18-24","enc":32,"obs":88,"art_starts":1,"art_start_years":[2019],"art_plans":["Start drugs"],"arv_drugs":["Didanosine","Other antiretroviral drug","Efavirenz","Lamivudine","Abacavir","Lamivudine / zidovudine","Zidovudine","Tenofovir","Lamivudine / nevirapine / zidovudine","Lopinavir / ritonavir","Nevirapine","Emtricitabine / tenofovir disoproxil","Efavirenz / emtricitabine / tenofovir disoproxil"],"tb_regimens":["Isoniazid / pyrazinamide / rifampin","Rifampicin and isoniazid","Continue regimen","Streptomycin"],"vl_tests":2,"min_vl":11866.0,"avg_vl":436183.0,"max_vl":860500.0,"vl_under_400k":true,"vl_history":[{"yr":2019,"dt":"2019-01-02","v":860500.0},{"yr":2020,"dt":"2020-07-05","v":11866.0}],"bp_sys":140.2,"pulse":138.9,"spo2":82.4,"weight_kg":64.1,"conditions":["Tuberculosis"]},{"id":"d7079b2d-f855-4336-880e-1442ba5a93b7","name":"Dudley365 Swaniawski813","gender":"male","birth_date":"1966-09-21","age":57,"age_bracket":"55+","enc":46,"obs":88,"art_starts":0,"art_start_years":[],"art_plans":["Continue regimen"],"arv_drugs":["Lopinavir / ritonavir","Lamivudine / zidovudine","Abacavir","Tenofovir","Nevirapine","Emtricitabine / tenofovir disoproxil","Zidovudine","Stavudine","Efavirenz","Didanosine"],"tb_regimens":["Stop all","Streptomycin","Pyrazinamide","Isoniazid / pyrazinamide / rifampin"],"vl_tests":2,"min_vl":83503.0,"avg_vl":471467.0,"max_vl":859430.0,"vl_under_400k":true,"vl_history":[{"yr":2016,"dt":"2016-03-12","v":83503.0},{"yr":2017,"dt":"2017-05-04","v":859430.0}],"bp_sys":179.5,"pulse":161.7,"spo2":84.7,"weight_kg":66.4,"conditions":["Tuberculosis"]},{"id":"d82b9cf4-0d48-cdb6-75ff-a62361e3fb78","name":"Crista774 Schumm995","gender":"female","birth_date":"1985-02-15","age":38,"age_bracket":"35-44","enc":37,"obs":86,"art_starts":0,"art_start_years":[],"art_plans":["None"],"arv_drugs":["Lamivudine / zidovudine","Lopinavir / ritonavir","Efavirenz / emtricitabine / tenofovir disoproxil","Lamivudine","Nelfinavir","Stavudine","Tenofovir","Efavirenz","Didanosine","Emtricitabine / tenofovir disoproxil","Nevirapine","Zidovudine"],"tb_regimens":["Isoniazid / pyrazinamide / rifampin","Stop all","Pyrazinamide"],"vl_tests":2,"min_vl":238510.0,"avg_vl":462305.0,"max_vl":686100.0,"vl_under_400k":true,"vl_history":[{"yr":2012,"dt":"2012-02-12","v":238510.0},{"yr":2013,"dt":"2013-06-01","v":686100.0}],"bp_sys":151.5,"pulse":158.5,"spo2":90.8,"weight_kg":64.5,"conditions":["Tuberculosis"]},{"id":"f6d6d6e5-6e58-41c4-b514-cdcbc4aab58a","name":"Edgar153 Mohr916","gender":"male","birth_date":"1966-10-20","age":57,"age_bracket":"55+","enc":48,"obs":86,"art_starts":1,"art_start_years":[1985],"art_plans":["Dosing change","Start drugs"],"arv_drugs":["Lamivudine","Nelfinavir","Nevirapine","Emtricitabine / tenofovir disoproxil","Efavirenz","Didanosine","Lamivudine / zidovudine","Abacavir","Efavirenz / emtricitabine / tenofovir disoproxil","Zidovudine","Lopinavir / ritonavir","Tenofovir","Lamivudine / nevirapine / zidovudine"],"tb_regimens":["Pyrazinamide","Isoniazid","Start drugs","Streptomycin","None","Rifampicin and isoniazid","Ethambutol and isoniazid","Isoniazid / pyrazinamide / rifampin"],"vl_tests":1,"min_vl":265260.0,"avg_vl":265260.0,"max_vl":265260.0,"vl_under_400k":true,"vl_history":[{"yr":1985,"dt":"1985-01-12","v":265260.0}],"bp_sys":168.5,"pulse":143.5,"spo2":74.6,"weight_kg":64.1,"conditions":["Tuberculosis"]},{"id":"e35e717e-09ad-041e-6858-56f84b32e476","name":"Cyrus914 Nader710","gender":"male","birth_date":"2002-02-12","age":21,"age_bracket":"18-24","enc":30,"obs":84,"art_starts":1,"art_start_years":[2019],"art_plans":["None","Start drugs"],"arv_drugs":["Lamivudine / zidovudine","Abacavir","Lamivudine","Lamivudine / nevirapine / zidovudine","Tenofovir","Efavirenz / emtricitabine / tenofovir disoproxil","Other antiretroviral drug","Didanosine","Zidovudine","Nevirapine","Emtricitabine / tenofovir disoproxil","Lopinavir / ritonavir"],"tb_regimens":["Isoniazid / pyrazinamide / rifampin","Ethambutol and isoniazid","Rifampicin and isoniazid","Streptomycin","Start drugs","Stop all","Pyrazinamide","Rifampicin isoniazid pyrazinamide and ethambutol"],"vl_tests":1,"min_vl":717990.0,"avg_vl":717990.0,"max_vl":717990.0,"vl_under_400k":false,"vl_history":[{"yr":2019,"dt":"2019-05-21","v":717990.0}],"bp_sys":204.4,"pulse":142.4,"spo2":94.6,"weight_kg":63.7,"conditions":["Tuberculosis"]},{"id":"6abcea8c-a576-e496-8e5f-9fecb55dcf25","name":"Jerry654 Marvin195","gender":"female","birth_date":"1998-12-12","age":25,"age_bracket":"25-34","enc":31,"obs":82,"art_starts":0,"art_start_years":[],"art_plans":["Stop all"],"arv_drugs":["Tenofovir","Lamivudine / nevirapine / zidovudine","Lamivudine / zidovudine","Abacavir","Didanosine","Other antiretroviral drug","Lopinavir / ritonavir","Lamivudine","Zidovudine","Emtricitabine / tenofovir disoproxil"],"tb_regimens":["Rifampicin isoniazid pyrazinamide and ethambutol","Isoniazid","Continue regimen","Isoniazid / pyrazinamide / rifampin","Rifampicin and isoniazid"],"vl_tests":2,"min_vl":411600.0,"avg_vl":561020.0,"max_vl":710440.0,"vl_under_400k":false,"vl_history":[{"yr":2015,"dt":"2015-11-05","v":710440.0},{"yr":2016,"dt":"2016-12-22","v":411600.0}],"bp_sys":199.7,"pulse":154.5,"spo2":79.5,"weight_kg":63.8,"conditions":["Tuberculosis"]},{"id":"f1731e33-dc55-4ee8-72d7-cece2e49bedd","name":"Cecelia952 Romaguera67","gender":"female","birth_date":"2002-10-16","age":21,"age_bracket":"18-24","enc":29,"obs":64,"art_starts":0,"art_start_years":[],"art_plans":[],"arv_drugs":[],"tb_regimens":[],"vl_tests":2,"min_vl":614390.0,"avg_vl":620505.0,"max_vl":626620.0,"vl_under_400k":false,"vl_history":[{"yr":2017,"dt":"2017-12-19","v":626620.0},{"yr":2019,"dt":"2019-07-24","v":614390.0}],"bp_sys":146.4,"pulse":131.4,"spo2":86.4,"weight_kg":64.2,"conditions":["Tuberculosis"]},{"id":"88cea50e-248d-969c-257b-5e86300b71f3","name":"Luis923 Cruz300","gender":"male","birth_date":"1996-04-27","age":27,"age_bracket":"25-34","enc":33,"obs":63,"art_starts":1,"art_start_years":[2016],"art_plans":["Start drugs"],"arv_drugs":["Nevirapine","Emtricitabine / tenofovir disoproxil","Zidovudine","Tenofovir","Lamivudine / nevirapine / zidovudine","Nelfinavir","Lamivudine","Lopinavir / ritonavir","Abacavir","Didanosine","Other antiretroviral drug","Efavirenz","Efavirenz / emtricitabine / tenofovir disoproxil"],"tb_regimens":["Pyrazinamide","Continue regimen","Rifampicin and isoniazid","Isoniazid / pyrazinamide / rifampin","Ethambutol and isoniazid","Streptomycin"],"vl_tests":1,"min_vl":214660.0,"avg_vl":214660.0,"max_vl":214660.0,"vl_under_400k":true,"vl_history":[{"yr":2016,"dt":"2016-01-03","v":214660.0}],"bp_sys":151.1,"pulse":166.1,"spo2":78.7,"weight_kg":64.3,"conditions":["Tuberculosis"]},{"id":"7cf0b556-a4cc-7d40-c0e2-7d961a4d525e","name":"Gerardo48 Zulauf375","gender":"male","birth_date":"1953-03-02","age":70,"age_bracket":"55+","enc":61,"obs":60,"art_starts":0,"art_start_years":[],"art_plans":["None"],"arv_drugs":["Stavudine","Nelfinavir","Lamivudine","Efavirenz","Other antiretroviral drug","Didanosine","Emtricitabine / tenofovir disoproxil","Nevirapine","Lamivudine / zidovudine","Tenofovir","Zidovudine"],"tb_regimens":["Pyrazinamide","Ethambutol and isoniazid","Isoniazid / pyrazinamide / rifampin","Dosing change"],"vl_tests":1,"min_vl":434020.0,"avg_vl":434020.0,"max_vl":434020.0,"vl_under_400k":false,"vl_history":[{"yr":1976,"dt":"1976-09-02","v":434020.0}],"bp_sys":231.0,"pulse":192.4,"spo2":81.1,"weight_kg":64.3,"conditions":["Tuberculosis"]},{"id":"304f9946-5db8-dc6f-e060-48b9fea3ca5d","name":"Jani266 Reynolds644","gender":"female","birth_date":"1996-01-23","age":27,"age_bracket":"25-34","enc":31,"obs":55,"art_starts":0,"art_start_years":[],"art_plans":["None"],"arv_drugs":["Lamivudine","Nelfinavir","Stavudine","Nevirapine","Lamivudine / zidovudine","Abacavir","Lopinavir / ritonavir","Tenofovir","Zidovudine"],"tb_regimens":["Rifampicin isoniazid pyrazinamide and ethambutol","Pyrazinamide","Ethambutol and isoniazid","Continue regimen"],"vl_tests":1,"min_vl":365690.0,"avg_vl":365690.0,"max_vl":365690.0,"vl_under_400k":true,"vl_history":[{"yr":2017,"dt":"2017-05-13","v":365690.0}],"bp_sys":165.6,"pulse":178.2,"spo2":70.7,"weight_kg":63.5,"conditions":["Tuberculosis"]},{"id":"bf3bcfb3-143f-61c6-3f15-fd27d8943700","name":"Gerardo48 Ceja441","gender":"male","birth_date":"1981-11-25","age":42,"age_bracket":"35-44","enc":37,"obs":35,"art_starts":0,"art_start_years":[],"art_plans":[],"arv_drugs":[],"tb_regimens":[],"vl_tests":1,"min_vl":404230.0,"avg_vl":404230.0,"max_vl":404230.0,"vl_under_400k":false,"vl_history":[{"yr":1999,"dt":"1999-09-05","v":404230.0}],"bp_sys":120.6,"pulse":72.9,"spo2":91.7,"weight_kg":65.7,"conditions":["Tuberculosis"]},{"id":"b71e39bd-d33f-0b50-a8e5-ed4142d306fe","name":"Levi940 Gusikowski974","gender":"male","birth_date":"1992-11-15","age":31,"age_bracket":"25-34","enc":32,"obs":35,"art_starts":0,"art_start_years":[],"art_plans":[],"arv_drugs":[],"tb_regimens":[],"vl_tests":1,"min_vl":854850.0,"avg_vl":854850.0,"max_vl":854850.0,"vl_under_400k":false,"vl_history":[{"yr":2012,"dt":"2012-04-29","v":854850.0}],"bp_sys":182.7,"pulse":184.8,"spo2":98.2,"weight_kg":62.4,"conditions":["Tuberculosis"]},{"id":"b50ae490-7fbf-d2ea-a315-df4fa9c576f6","name":"Kanisha187 Welch179","gender":"female","birth_date":"1966-10-14","age":57,"age_bracket":"55+","enc":47,"obs":34,"art_starts":0,"art_start_years":[],"art_plans":[],"arv_drugs":[],"tb_regimens":[],"vl_tests":1,"min_vl":982430.0,"avg_vl":982430.0,"max_vl":982430.0,"vl_under_400k":false,"vl_history":[{"yr":2012,"dt":"2012-10-19","v":982430.0}],"bp_sys":218.8,"pulse":152.7,"spo2":98.1,"weight_kg":64.3,"conditions":["Tuberculosis"]},{"id":"62dfa845-24df-047b-92bb-915c3e1bcfb0","name":"Martine382 Waters156","gender":"female","birth_date":"1993-06-13","age":30,"age_bracket":"25-34","enc":34,"obs":34,"art_starts":0,"art_start_years":[],"art_plans":[],"arv_drugs":[],"tb_regimens":[],"vl_tests":1,"min_vl":563480.0,"avg_vl":563480.0,"max_vl":563480.0,"vl_under_400k":false,"vl_history":[{"yr":2008,"dt":"2008-10-18","v":563480.0}],"bp_sys":142.4,"pulse":54.9,"spo2":76.4,"weight_kg":64.3,"conditions":["Tuberculosis"]},{"id":"cc4e734c-272f-170f-705a-28acede04ff9","name":"Loren192 Witting912","gender":"male","birth_date":"1965-09-16","age":58,"age_bracket":"55+","enc":46,"obs":32,"art_starts":0,"art_start_years":[],"art_plans":[],"arv_drugs":[],"tb_regimens":[],"vl_tests":1,"min_vl":710570.0,"avg_vl":710570.0,"max_vl":710570.0,"vl_under_400k":false,"vl_history":[{"yr":2014,"dt":"2014-03-19","v":710570.0}],"bp_sys":166.2,"pulse":195.2,"spo2":82.9,"weight_kg":65.5,"conditions":[]},{"id":"3d195286-ce77-f5b3-b64f-3eacfb9c273e","name":"Assunta351 Dickens475","gender":"female","birth_date":"1993-05-02","age":30,"age_bracket":"25-34","enc":34,"obs":31,"art_starts":0,"art_start_years":[],"art_plans":[],"arv_drugs":[],"tb_regimens":[],"vl_tests":1,"min_vl":152480.0,"avg_vl":152480.0,"max_vl":152480.0,"vl_under_400k":true,"vl_history":[{"yr":2017,"dt":"2017-02-17","v":152480.0}],"bp_sys":138.8,"pulse":136.3,"spo2":97.0,"weight_kg":63.9,"conditions":["Tuberculosis"]},{"id":"9785afad-19cc-02f6-de65-b2de2618c9ac","name":"Jeremiah751 Dach178","gender":"male","birth_date":"1995-04-26","age":28,"age_bracket":"25-34","enc":31,"obs":30,"art_starts":0,"art_start_years":[],"art_plans":[],"arv_drugs":[],"tb_regimens":[],"vl_tests":1,"min_vl":450500.0,"avg_vl":450500.0,"max_vl":450500.0,"vl_under_400k":false,"vl_history":[{"yr":2015,"dt":"2015-09-24","v":450500.0}],"bp_sys":152.8,"pulse":55.6,"spo2":86.8,"weight_kg":62.8,"conditions":[]},{"id":"3f6fd0bb-6cd3-eb3f-4401-cd38ace25f2b","name":"Bob965 Keeling57","gender":"male","birth_date":"1991-07-08","age":32,"age_bracket":"25-34","enc":32,"obs":30,"art_starts":0,"art_start_years":[],"art_plans":[],"arv_drugs":[],"tb_regimens":[],"vl_tests":1,"min_vl":79340.0,"avg_vl":79340.0,"max_vl":79340.0,"vl_under_400k":true,"vl_history":[{"yr":2019,"dt":"2019-07-27","v":79340.0}],"bp_sys":190.7,"pulse":192.4,"spo2":72.2,"weight_kg":64.6,"conditions":[]},{"id":"44686b89-d0b0-3a1c-1ade-938217f658c1","name":"Maryjane289 Reynolds644","gender":"female","birth_date":"1987-04-13","age":36,"age_bracket":"35-44","enc":36,"obs":29,"art_starts":0,"art_start_years":[],"art_plans":[],"arv_drugs":[],"tb_regimens":[],"vl_tests":1,"min_vl":247780.0,"avg_vl":247780.0,"max_vl":247780.0,"vl_under_400k":true,"vl_history":[{"yr":2019,"dt":"2019-10-20","v":247780.0}],"bp_sys":196.0,"pulse":75.5,"spo2":73.7,"weight_kg":64.5,"conditions":["Tuberculosis"]},{"id":"14827fac-364b-9149-bb4f-840c3d51f23f","name":"Francisco472 Guardado953","gender":"male","birth_date":"1984-09-09","age":39,"age_bracket":"35-44","enc":36,"obs":28,"art_starts":0,"art_start_years":[],"art_plans":[],"arv_drugs":[],"tb_regimens":[],"vl_tests":1,"min_vl":25355.0,"avg_vl":25355.0,"max_vl":25355.0,"vl_under_400k":true,"vl_history":[{"yr":2006,"dt":"2006-01-24","v":25355.0}],"bp_sys":195.8,"pulse":142.2,"spo2":94.5,"weight_kg":63.2,"conditions":[]}];
+
+    const STATE = {
+      gender: 'all',
+      art_plan: 'all',
+      vl_status: 'all',
+      arv_drug: null,
+      tb_regimen: null,
+      search: ''
+    };
+
+    function getFiltered() {
+      const q = STATE.search.trim().toLowerCase();
+      return PATIENTS.filter(p => {
+        if (STATE.gender !== 'all' && p.gender !== STATE.gender) return false;
+        if (STATE.art_plan !== 'all' && !p.art_plans.includes(STATE.art_plan)) return false;
+        if (STATE.vl_status === 'under_400k' && !p.vl_under_400k) return false;
+        if (STATE.vl_status === 'high_vl' && !(p.avg_vl >= 400000)) return false;
+        if (STATE.arv_drug && !p.arv_drugs.includes(STATE.arv_drug)) return false;
+        if (STATE.tb_regimen && !p.tb_regimens.includes(STATE.tb_regimen)) return false;
+        if (q) {
+          const hay = (p.name + ' ' + p.gender + ' ' + p.art_plans.join(' ') + ' ' + p.arv_drugs.join(' ') + ' ' + p.tb_regimens.join(' ')).toLowerCase();
+          if (!hay.includes(q)) return false;
+        }
+        return true;
+      });
+    }
+
+    function setFilter(k, v) {
+      if (k === 'arv_drug' || k === 'tb_regimen') {
+        STATE[k] = (STATE[k] === v) ? null : v;
+      } else if (k === 'art_plan_toggle') {
+        STATE.art_plan = (STATE.art_plan === v) ? 'all' : v;
+        document.getElementById('flt-plan').value = STATE.art_plan;
+      } else {
+        STATE[k] = v;
+      }
+      updateDashboard();
+    }
+
+    function resetAllFilters() {
+      STATE.gender = 'all';
+      STATE.art_plan = 'all';
+      STATE.vl_status = 'all';
+      STATE.arv_drug = null;
+      STATE.tb_regimen = null;
+      STATE.search = '';
+      document.getElementById('flt-plan').value = 'all';
+      document.getElementById('flt-vl').value = 'all';
+      document.getElementById('global-search').value = '';
+      updateDashboard();
+    }
+
+    function switchTab(tab) {
+      ['superset', 'pepfar', 'patients', 'sql'].forEach(t => {
+        document.getElementById('tab-' + t).classList.toggle('hidden', t !== tab);
+        const btn = document.getElementById('tab-btn-' + t);
+        btn.className = (t === tab)
+          ? "px-3.5 py-2 rounded-lg text-xs font-semibold bg-[var(--primary)] text-[var(--primary-foreground)] transition cursor-pointer"
+          : "px-3.5 py-2 rounded-lg text-xs font-semibold bg-[var(--secondary)] text-[var(--secondary-foreground)] border border-[var(--border)] transition cursor-pointer";
+      });
+    }
+
+    function updateDashboard() {
+      ['all', 'female', 'male'].forEach(g => {
+        const b = document.getElementById('flt-gender-' + g);
+        b.className = (STATE.gender === g)
+          ? "px-2.5 py-1 font-semibold bg-[var(--primary)] text-[var(--primary-foreground)] cursor-pointer"
+          : "px-2.5 py-1 bg-[var(--secondary)] text-[var(--foreground)] cursor-pointer";
+      });
+
+      const pts = getFiltered();
+      document.getElementById('tab-pt-count').textContent = pts.length;
+      document.getElementById('pt-table-count').textContent = pts.length;
+
+      // Active filter chips
+      const chips = [];
+      if (STATE.gender !== 'all') chips.push({ l: `Gender: ${STATE.gender}`, c: () => setFilter('gender', 'all') });
+      if (STATE.art_plan !== 'all') chips.push({ l: `ART Plan: ${STATE.art_plan}`, c: () => { STATE.art_plan='all'; document.getElementById('flt-plan').value='all'; updateDashboard(); } });
+      if (STATE.vl_status !== 'all') chips.push({ l: `Viral Load: ${STATE.vl_status}`, c: () => { STATE.vl_status='all'; document.getElementById('flt-vl').value='all'; updateDashboard(); } });
+      if (STATE.arv_drug) chips.push({ l: `ARV: ${STATE.arv_drug}`, c: () => setFilter('arv_drug', null) });
+      if (STATE.tb_regimen) chips.push({ l: `TB Regimen: ${STATE.tb_regimen}`, c: () => setFilter('tb_regimen', null) });
+      if (STATE.search.trim()) chips.push({ l: `Search: "${STATE.search.trim()}"`, c: () => { STATE.search=''; document.getElementById('global-search').value=''; updateDashboard(); } });
+
+      const chipsEl = document.getElementById('active-chips');
+      const resetBtn = document.getElementById('reset-btn');
+      if (chips.length) {
+        chipsEl.classList.remove('hidden');
+        resetBtn.classList.remove('hidden');
+        chipsEl.innerHTML = `<span class="text-[var(--muted-foreground)]">Active Filters:</span>` +
+          chips.map((x, i) => `<button onclick="window._c[${i}]()" class="px-2.5 py-0.5 rounded-full bg-emerald-500/15 text-emerald-500 border border-emerald-500/30 font-medium cursor-pointer">${x.l} ✕</button>`).join('');
+        window._c = chips.map(x => x.c);
+      } else {
+        chipsEl.classList.add('hidden');
+        resetBtn.classList.add('hidden');
+      }
+
+      // Superset Chart 1: Big Number
+      document.getElementById('superset-big-number').textContent = pts.length;
+      document.getElementById('superset-big-sub').textContent = `of ${PATIENTS.length} total HIV cohort patients`;
+      document.getElementById('kpi-obs-count').textContent = pts.reduce((s, p) => s + p.obs, 0).toLocaleString();
+      document.getElementById('kpi-enc-count').textContent = pts.reduce((s, p) => s + p.enc, 0).toLocaleString();
+      const totalArtStarts = pts.reduce((s, p) => s + p.art_starts, 0);
+      document.getElementById('kpi-art-starts').textContent = totalArtStarts.toLocaleString();
+
+      // Superset Chart 2: Gender Pie Chart
+      const fCnt = pts.filter(p => p.gender === 'female').length;
+      const mCnt = pts.filter(p => p.gender === 'male').length;
+      const tot = Math.max(1, fCnt + mCnt);
+      document.getElementById('pie-f-count').textContent = fCnt;
+      document.getElementById('pie-f-pct').textContent = `${((fCnt / tot) * 100).toFixed(1)}%`;
+      document.getElementById('pie-m-count').textContent = mCnt;
+      document.getElementById('pie-m-pct').textContent = `${((mCnt / tot) * 100).toFixed(1)}%`;
+      drawGenderPie(fCnt, mCnt);
+
+      // Superset Chart 3: HIV Treatment by Year (1255% / 1256%)
+      drawHivTxBarChart(pts);
+
+      // PEPFAR Tab
+      renderViralLoadByYearGender(pts);
+      renderCascadeList(pts, 'art_plans', 'art_plan_toggle', STATE.art_plan === 'all' ? null : STATE.art_plan, 'cascade-art-plans', 'bg-amber-500');
+      renderCascadeList(pts, 'arv_drugs', 'arv_drug', STATE.arv_drug, 'cascade-arv-drugs', 'bg-indigo-500');
+      renderCascadeList(pts, 'tb_regimens', 'tb_regimen', STATE.tb_regimen, 'cascade-tb-regimens', 'bg-sky-500');
+
+      // Patients Table
+      renderPatientsTable(pts);
+    }
+
+    function drawGenderPie(fCnt, mCnt) {
+      const canvas = document.getElementById('gender-pie-canvas');
+      const ctx = canvas.getContext('2d');
+      const W = canvas.width, H = canvas.height;
+      ctx.clearRect(0, 0, W, H);
+      const tot = fCnt + mCnt;
+      if (!tot) return;
+
+      const cx = W / 2, cy = H / 2, r = 82, innerR = 46;
+      const fAngle = (fCnt / tot) * Math.PI * 2;
+
+      // Female slice
+      ctx.beginPath();
+      ctx.moveTo(cx, cy);
+      ctx.arc(cx, cy, r, -Math.PI / 2, -Math.PI / 2 + fAngle);
+      ctx.closePath();
+      ctx.fillStyle = '#6366f1';
+      ctx.fill();
+
+      // Male slice
+      ctx.beginPath();
+      ctx.moveTo(cx, cy);
+      ctx.arc(cx, cy, r, -Math.PI / 2 + fAngle, -Math.PI / 2 + Math.PI * 2);
+      ctx.closePath();
+      ctx.fillStyle = '#0ea5e9';
+      ctx.fill();
+
+      // Donut hole
+      const isLight = document.documentElement.classList.contains('light');
+      ctx.beginPath();
+      ctx.arc(cx, cy, innerR, 0, Math.PI * 2);
+      ctx.fillStyle = isLight ? '#ffffff' : '#0f172a';
+      ctx.fill();
+
+      ctx.fillStyle = isLight ? '#0f172a' : '#f8fafc';
+      ctx.font = 'bold 16px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText(`${tot}`, cx, cy + 2);
+      ctx.font = '11px sans-serif';
+      ctx.fillStyle = '#94a3b8';
+      ctx.fillText('Patients', cx, cy + 16);
+    }
+
+    function handlePieClick(e) {
+      const next = STATE.gender === 'all' ? 'female' : (STATE.gender === 'female' ? 'male' : 'all');
+      setFilter('gender', next);
+    }
+
+    function drawHivTxBarChart(pts) {
+      const yearCounts = {};
+      let ptsWithStart = 0;
+      let totalEvents = 0;
+      pts.forEach(p => {
+        if (p.art_start_years && p.art_start_years.length) {
+          ptsWithStart++;
+          p.art_start_years.forEach(y => {
+            yearCounts[y] = (yearCounts[y] || 0) + 1;
+            totalEvents++;
+          });
+        }
+      });
+
+      document.getElementById('hiv-tx-total-badge').textContent = `${ptsWithStart} patients with ART Start (1256%) in current slice`;
+
+      const years = Object.keys(yearCounts).map(Number).sort((a, b) => a - b);
+      const canvas = document.getElementById('hiv-tx-bar-canvas');
+      const ctx = canvas.getContext('2d');
+      const W = canvas.width, H = canvas.height;
+      ctx.clearRect(0, 0, W, H);
+      const isLight = document.documentElement.classList.contains('light');
+      const textColor = isLight ? '#475569' : '#94a3b8';
+      const gridColor = isLight ? '#e2e8f0' : '#334155';
+
+      if (!years.length) {
+        ctx.fillStyle = textColor;
+        ctx.font = '13px sans-serif';
+        ctx.fillText('No HIV Treatment Start (1256%) observations in current filter slice', W / 3, H / 2);
+        return;
+      }
+
+      const maxC = Math.max(1, ...years.map(y => yearCounts[y]));
+      const left = 42, right = W - 20, top = 20, bottom = H - 34;
+
+      // Grid
+      ctx.strokeStyle = gridColor;
+      ctx.lineWidth = 1;
+      for (let i = 0; i <= maxC; i++) {
+        const y = bottom - (i / maxC) * (bottom - top);
+        ctx.beginPath();
+        ctx.moveTo(left, y);
+        ctx.lineTo(right, y);
+        ctx.stroke();
+        ctx.fillStyle = textColor;
+        ctx.font = '11px monospace';
+        ctx.fillText(String(i), 18, y + 4);
+      }
+
+      const slotW = (right - left) / years.length;
+      const barW = Math.min(28, slotW * 0.68);
+
+      years.forEach((yr, idx) => {
+        const cnt = yearCounts[yr];
+        const x = left + idx * slotW + (slotW - barW) / 2;
+        const barH = (cnt / maxC) * (bottom - top);
+        const y = bottom - barH;
+
+        ctx.fillStyle = '#10b981';
+        ctx.beginPath();
+        ctx.roundRect(x, y, barW, barH, 4);
+        ctx.fill();
+
+        ctx.fillStyle = textColor;
+        ctx.font = '10px monospace';
+        ctx.save();
+        ctx.translate(x + barW / 2, bottom + 14);
+        ctx.rotate(-0.45);
+        ctx.textAlign = 'center';
+        ctx.fillText(String(yr), 0, 0);
+        ctx.restore();
+      });
+    }
+
+    function renderViralLoadByYearGender(pts) {
+      const byYear = {};
+      pts.forEach(p => {
+        (p.vl_history || []).forEach(h => {
+          if (h.v < 400000 && h.yr >= 1995) {
+            if (!byYear[h.yr]) byYear[h.yr] = { f: new Set(), m: new Set() };
+            if (p.gender === 'female') byYear[h.yr].f.add(p.id);
+            else byYear[h.yr].m.add(p.id);
+          }
+        });
+      });
+      const years = Object.keys(byYear).map(Number).sort((a, b) => a - b);
+      const maxTot = Math.max(1, ...years.map(y => byYear[y].f.size + byYear[y].m.size));
+      document.getElementById('vl-year-gender-bars').innerHTML = years.map(y => {
+        const f = byYear[y].f.size, m = byYear[y].m.size, tot = f + m;
+        return `
+          <div class="flex items-center gap-2.5 py-1">
+            <span class="w-12 font-mono text-[var(--muted-foreground)]">${y}</span>
+            <div class="flex-1 h-4 bg-[var(--secondary)] rounded overflow-hidden flex">
+              <div class="h-full bg-indigo-500" style="width:${Math.round((f / maxTot) * 100)}%"></div>
+              <div class="h-full bg-sky-500" style="width:${Math.round((m / maxTot) * 100)}%"></div>
+            </div>
+            <span class="w-24 text-right font-mono">${tot} pts (${f}F/${m}M)</span>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function renderCascadeList(pts, field, filterKey, activeVal, elId, colorClass) {
+      const counts = {};
+      pts.forEach(p => (p[field] || []).forEach(v => { counts[v] = (counts[v] || 0) + 1; }));
+      const items = Object.entries(counts).sort((a, b) => b[1] - a[1]).slice(0, 8);
+      const maxC = Math.max(1, ...items.map(x => x[1]));
+      document.getElementById(elId).innerHTML = items.map(([name, cnt]) => {
+        const sel = activeVal === name;
+        const safe = name.replace(/'/g, "\\'");
+        return `
+          <div onclick="setFilter('${filterKey}', '${safe}')"
+               class="p-1.5 rounded-lg border transition cursor-pointer ${sel ? 'border-emerald-500 bg-emerald-500/10' : 'border-transparent hover:bg-[var(--secondary)]'}">
+            <div class="flex justify-between text-xs mb-1">
+              <span class="font-medium truncate">${name} ${sel ? '✓' : ''}</span>
+              <span class="font-mono text-[var(--muted-foreground)]">${cnt} pts</span>
+            </div>
+            <div class="w-full h-2 bg-[var(--secondary)] rounded-full overflow-hidden">
+              <div class="h-full ${colorClass} rounded-full" style="width:${Math.round((cnt / maxC) * 100)}%"></div>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function renderPatientsTable(ptsOverride) {
+      const pts = [...(ptsOverride || getFiltered())];
+      const sort = document.getElementById('pt-sort').value;
+      pts.sort((a, b) => {
+        if (sort === 'obs_desc') return b.obs - a.obs;
+        if (sort === 'vl_desc') return (b.avg_vl || 0) - (a.avg_vl || 0);
+        if (sort === 'vl_asc') return (a.avg_vl || 0) - (b.avg_vl || 0);
+        if (sort === 'art_desc') return b.art_starts - a.art_starts;
+        if (sort === 'age_desc') return b.age - a.age;
+        return 0;
+      });
+      document.getElementById('hiv-patients-tbody').innerHTML = pts.map(p => `
+        <tr class="hover:bg-[var(--secondary)]/60 cursor-pointer transition" onclick="openModal('${p.id}')">
+          <td class="py-2.5 px-3 font-semibold">${p.name}</td>
+          <td class="py-2.5 px-3 font-mono">${p.age}y · ${p.gender === 'female' ? 'F' : 'M'}</td>
+          <td class="py-2.5 px-3 text-right font-mono">${p.enc}</td>
+          <td class="py-2.5 px-3 text-right font-mono font-semibold text-emerald-500">${p.obs}</td>
+          <td class="py-2.5 px-3 text-right font-mono">${p.art_starts}</td>
+          <td class="py-2.5 px-3 text-right font-mono ${p.avg_vl < 400000 ? 'text-emerald-400' : 'text-amber-400'}">${p.avg_vl ? p.avg_vl.toLocaleString() : '—'}</td>
+          <td class="py-2.5 px-3">
+            <div class="flex flex-wrap gap-1">
+              ${p.arv_drugs.slice(0, 3).map(d => `<span class="px-2 py-0.5 rounded bg-[var(--secondary)] border border-[var(--border)] text-xs">${d}</span>`).join('')}
+            </div>
+          </td>
+          <td class="py-2.5 px-3 text-right">
+            <span class="px-2.5 py-1 rounded-lg bg-[var(--primary)] text-[var(--primary-foreground)] text-xs font-semibold">360° HIV View</span>
+          </td>
+        </tr>
+      `).join('');
+    }
+
+    function openModal(id) {
+      const p = PATIENTS.find(x => x.id === id);
+      if (!p) return;
+      document.getElementById('m-id').textContent = `FHIR Patient/${p.id}`;
+      document.getElementById('m-name').textContent = p.name;
+      document.getElementById('m-sub').textContent = `DOB: ${p.birth_date} (${p.age}y ${p.gender}) · Conditions: ${p.conditions.join(', ') || 'HIV Positive'}`;
+      document.getElementById('m-kpis').innerHTML = [
+        { k: 'Encounters', v: p.enc },
+        { k: 'Observations', v: p.obs },
+        { k: 'ART Starts (1256%)', v: p.art_starts },
+        { k: 'Mean Viral Load', v: p.avg_vl ? `${p.avg_vl.toLocaleString()} cp/mL` : '—' },
+        { k: 'Mean Pulse', v: p.pulse ? `${p.pulse} bpm` : '—' },
+        { k: 'Mean SpO2', v: p.spo2 ? `${p.spo2}%` : '—' }
+      ].map(x => `
+        <div class="p-2.5 rounded-xl bg-[var(--secondary)] border border-[var(--border)]">
+          <div class="text-[var(--muted-foreground)]">${x.k}</div>
+          <div class="text-sm font-bold mt-0.5">${x.v}</div>
+        </div>
+      `).join('');
+
+      document.getElementById('m-plans').innerHTML = p.art_plans.map(x => `<div class="py-1 border-b border-[var(--border)]/50">${x}</div>`).join('') || 'None';
+      document.getElementById('m-arvs').innerHTML = p.arv_drugs.map(x => `<div class="py-1 border-b border-[var(--border)]/50">${x}</div>`).join('') || 'None';
+      document.getElementById('m-tbs').innerHTML = p.tb_regimens.map(x => `<div class="py-1 border-b border-[var(--border)]/50">${x}</div>`).join('') || 'None';
+
+      document.getElementById('pt-modal').classList.remove('hidden');
+      drawVlCanvas(p.vl_history || []);
+    }
+
+    function closeModal() {
+      document.getElementById('pt-modal').classList.add('hidden');
+    }
+
+    function drawVlCanvas(series) {
+      const canvas = document.getElementById('m-vl-canvas');
+      const ctx = canvas.getContext('2d');
+      const W = canvas.width, H = canvas.height;
+      ctx.clearRect(0, 0, W, H);
+      const isLight = document.documentElement.classList.contains('light');
+      const textColor = isLight ? '#475569' : '#94a3b8';
+
+      if (!series.length) return;
+      const maxV = Math.max(1000000, ...series.map(s => s.v));
+      const left = 68, right = W - 20, top = 16, bottom = H - 28;
+
+      // 400k PEPFAR threshold line
+      const threshY = bottom - (400000 / maxV) * (bottom - top);
+      ctx.strokeStyle = '#f43f5e';
+      ctx.setLineDash([5, 5]);
+      ctx.beginPath();
+      ctx.moveTo(left, threshY);
+      ctx.lineTo(right, threshY);
+      ctx.stroke();
+      ctx.setLineDash([]);
+      ctx.fillStyle = '#f43f5e';
+      ctx.font = '10px monospace';
+      ctx.fillText('400k', 12, threshY + 4);
+
+      ctx.strokeStyle = '#10b981';
+      ctx.lineWidth = 2.5;
+      ctx.beginPath();
+      series.forEach((pt, i) => {
+        const x = left + (series.length === 1 ? 0.5 : i / (series.length - 1)) * (right - left);
+        const y = bottom - (pt.v / maxV) * (bottom - top);
+        if (i === 0) ctx.moveTo(x, y);
+        else ctx.lineTo(x, y);
+      });
+      ctx.stroke();
+
+      series.forEach((pt, i) => {
+        const x = left + (series.length === 1 ? 0.5 : i / (series.length - 1)) * (right - left);
+        const y = bottom - (pt.v / maxV) * (bottom - top);
+        ctx.fillStyle = pt.v < 400000 ? '#10b981' : '#f59e0b';
+        ctx.beginPath();
+        ctx.arc(x, y, 4, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = textColor;
+        ctx.font = '10px monospace';
+        ctx.fillText(pt.dt.slice(0, 7), x - 18, H - 8);
+      });
+    }
+
+    const COMPARISONS = [
+      {
+        spark: `-- Legacy Spark SQL (doc/docs/tutorials/add_dashboard.md)
+SELECT COUNT(*), YEAR(O.effective.dateTime)
+FROM Observation AS O
+LATERAL VIEW EXPLODE(code.coding) AS OCC
+LATERAL VIEW EXPLODE(O.value.codeableConcept.coding) AS OVCC
+WHERE OCC.code LIKE '1255%'
+  AND OVCC.code LIKE '1256%'
+  AND YEAR(O.effective.dateTime) < 2023
+GROUP BY YEAR(O.effective.dateTime)
+ORDER BY YEAR(O.effective.dateTime) ASC;`,
+        duckdb: `-- DuckDB on fhir-pipes-rs observation_flat (0.8 ms)
+SELECT
+    CAST(EXTRACT(YEAR FROM TRY_CAST(obs_date AS TIMESTAMP)) AS INT) AS tx_year,
+    COUNT(*) AS tx_events,
+    COUNT(DISTINCT patient_id) AS distinct_patients
+FROM observation_flat
+WHERE code_code LIKE '1255%'
+  AND value_code LIKE '1256%'
+  AND EXTRACT(YEAR FROM TRY_CAST(obs_date AS TIMESTAMP)) < 2023
+GROUP BY 1
+ORDER BY 1 ASC;`,
+        cols: ['tx_year', 'tx_events', 'distinct_patients'],
+        rows: [
+          [1993, 5, 4], [1997, 3, 3], [2001, 3, 3], [2007, 3, 3],
+          [2010, 2, 2], [2013, 2, 2], [2014, 4, 3], [2017, 4, 4], [2019, 2, 2]
+        ]
+      },
+      {
+        spark: `-- Legacy Spark SQL (query/queries_large.ipynb Cell 13 & 20)
+SELECT P.gender, obs_year, COUNT(*)
+FROM (
+  SELECT patient_id, YEAR(obs_date) AS obs_year, COUNT(*) AS num_obs
+  FROM Observation_flat
+  WHERE code LIKE '856%%'
+    AND code_sys = 'http://loinc.org'
+    AND val_quantity < 400000
+  GROUP BY patient_id, obs_year
+) AS O, Patient_flat AS P
+WHERE O.patient_id = P.id
+GROUP BY P.gender, obs_year
+ORDER BY obs_year, gender;`,
+        duckdb: `-- DuckDB on fhir-pipes-rs observation_flat + patient_flat (1.4 ms)
+WITH p AS (SELECT DISTINCT id, gender FROM patient_flat)
+SELECT
+    CAST(EXTRACT(YEAR FROM TRY_CAST(o.obs_date AS TIMESTAMP)) AS INT) AS obs_year,
+    p.gender,
+    COUNT(DISTINCT o.patient_id) AS patients_suppressed,
+    ROUND(AVG(o.val_quantity), 1) AS mean_viral_load
+FROM observation_flat o
+JOIN p ON o.patient_id = p.id
+WHERE o.code_code LIKE '856%'
+  AND o.code_sys = 'http://loinc.org'
+  AND o.val_quantity < 400000
+GROUP BY 1, 2
+ORDER BY 1 DESC, 2;`,
+        cols: ['obs_year', 'gender', 'patients_suppressed', 'mean_viral_load'],
+        rows: [
+          [2020, 'male', 1, '11,866.0'],
+          [2019, 'female', 1, '154,210.0'],
+          [2019, 'male', 1, '172,910.0'],
+          [2017, 'female', 3, '295,790.0'],
+          [2016, 'female', 1, '98,420.0'],
+          [2016, 'male', 4, '116,196.5'],
+          [2015, 'female', 3, '142,110.0'],
+          [2015, 'male', 2, '154,656.0']
+        ]
+      },
+      {
+        spark: `-- Legacy Spark SQL (query/queries_large.ipynb Cell 11)
+SELECT OCC.system AS code_sys, OCC.code, OCC.display,
+       COUNT(*) AS num_obs, AVG(O.value.quantity.value) AS avg_val
+FROM Observation AS O LATERAL VIEW explode(code.coding) AS OCC
+GROUP BY OCC.system, OCC.code, OCC.display
+ORDER BY num_obs DESC
+LIMIT 20;`,
+        duckdb: `-- DuckDB on fhir-pipes-rs observation_flat (1.1 ms)
+SELECT code_sys, code_code, code_display,
+       COUNT(*) AS num_obs,
+       COUNT(DISTINCT patient_id) AS patients,
+       ROUND(AVG(val_quantity), 2) AS avg_val
+FROM observation_flat
+GROUP BY 1, 2, 3
+ORDER BY num_obs DESC
+LIMIT 8;`,
+        cols: ['code_code', 'code_display', 'num_obs', 'patients', 'avg_val'],
+        rows: [
+          ['1271AAAA...', 'TESTS ORDERED', 4949, 79, 'NULL'],
+          ['1088AAAA...', 'CURRENT ANTIRETROVIRAL DRUGS USED FOR TREATMENT', 2387, 68, 'NULL'],
+          ['1111AAAA...', 'PATIENT REPORTED CURRENT TB TREATMENT', 2043, 68, 'NULL'],
+          ['1250AAAA...', 'ANTIRETROVIRALS STARTED', 1805, 68, 'NULL'],
+          ['1270AAAA...', 'TUBERCULOSIS TREATMENT STARTED', 1121, 68, 'NULL'],
+          ['159800AA...', 'REVIEW OF TUBERCULOSIS SCREENING QUESTIONS', 738, 79, 'NULL'],
+          ['1255AAAA...', 'ANTIRETROVIRAL PLAN', 340, 68, 'NULL'],
+          ['856AAAAA...', 'HIV viral load', 265, 79, '484,166.08']
+        ]
+      }
+    ];
+
+    function showSqlComparison(idx) {
+      [0, 1, 2].forEach(i => {
+        document.getElementById('cmp-btn-' + i).className = (i === idx)
+          ? "px-2.5 py-1.5 rounded-lg text-xs font-semibold bg-[var(--primary)] text-[var(--primary-foreground)] cursor-pointer"
+          : "px-2.5 py-1.5 rounded-lg text-xs font-semibold bg-[var(--secondary)] text-[var(--secondary-foreground)] border border-[var(--border)] cursor-pointer";
+      });
+      const c = COMPARISONS[idx];
+      document.getElementById('cmp-spark-sql').textContent = c.spark;
+      document.getElementById('cmp-duckdb-sql').textContent = c.duckdb;
+      document.getElementById('cmp-thead').innerHTML = `<tr>${c.cols.map(col => `<th class="py-2 px-3 font-semibold">${col}</th>`).join('')}</tr>`;
+      document.getElementById('cmp-tbody').innerHTML = c.rows.map(r => `
+        <tr class="hover:bg-[var(--secondary)]/50">
+          ${r.map(v => `<td class="py-2 px-3">${v}</td>`).join('')}
+        </tr>
+      `).join('');
+    }
+
+    updateDashboard();
+    showSqlComparison(0);
+  </script>
+</body>
+</html>

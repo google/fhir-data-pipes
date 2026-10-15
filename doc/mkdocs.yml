@@ -60,6 +60,7 @@ nav:
     - Step 1 - Set up local test servers(Data) : tutorials/test_servers.md
     - Step 2 - Single Machine Deployment(Pipeline):  tutorials/single_machine.md
     - Step 3 - Visualize Parquet DWH with Apache Superset: tutorials/add_dashboard.md
+    - Experimental - Rust + DuckDB Synthea-HIV Studio: tutorials/rust_synthea_hiv_duckdb.md
   - Additional Topics: 'additional.md'
   - Community:
     - 'Support' : 'support.md'
