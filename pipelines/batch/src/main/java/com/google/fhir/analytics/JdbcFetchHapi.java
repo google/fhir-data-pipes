@@ -23,6 +23,7 @@ import java.sql.Blob;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -58,19 +59,20 @@ public class JdbcFetchHapi {
     this.jdbcSource = jdbcSource;
   }
 
-  /**
-   * Detects whether the HAPI FHIR database has a fhir_id column on hfj_resource (HAPI 7.2.0+) by
-   * querying information_schema. Returns true if the column exists, false otherwise.
-   */
+  /** Detects whether the HAPI FHIR database has a fhir_id column on hfj_resource (HAPI 7.2.0+). */
   boolean hasFhirIdColumn() throws SQLException {
     try (Connection connection = jdbcSource.getConnection();
         PreparedStatement stmt =
-            connection.prepareStatement(
-                "SELECT COUNT(*) FROM information_schema.columns"
-                    + " WHERE table_name = 'hfj_resource' AND column_name = 'fhir_id'");
+            connection.prepareStatement("SELECT * FROM hfj_resource WHERE 1 = 0");
         ResultSet rs = stmt.executeQuery()) {
-      rs.next();
-      boolean found = rs.getInt(1) > 0;
+      ResultSetMetaData metaData = rs.getMetaData();
+      boolean found = false;
+      for (int i = 1; i <= metaData.getColumnCount(); i++) {
+        if ("fhir_id".equalsIgnoreCase(metaData.getColumnName(i))) {
+          found = true;
+          break;
+        }
+      }
       log.info(
           "HAPI FHIR schema detection: hfj_resource.fhir_id column {}.",
           found ? "found" : "not found");

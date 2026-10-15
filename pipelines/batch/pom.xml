@@ -50,6 +50,7 @@
     <flink.artifact.name>beam-runners-flink-1.17</flink.artifact.name>
     <mysql.driver.version>9.7.0</mysql.driver.version>
     <postgresql.version>42.7.13</postgresql.version>
+    <h2.version>2.5.252</h2.version>
 
   </properties>
 
@@ -161,6 +162,13 @@
            https://beam.apache.org/documentation/runners/flink/ -->
       <artifactId>${flink.artifact.name}</artifactId>
       <version>${beam.version}</version>
+    </dependency>
+
+    <dependency>
+      <groupId>com.h2database</groupId>
+      <artifactId>h2</artifactId>
+      <version>${h2.version}</version>
+      <scope>test</scope>
     </dependency>
   </dependencies>
 

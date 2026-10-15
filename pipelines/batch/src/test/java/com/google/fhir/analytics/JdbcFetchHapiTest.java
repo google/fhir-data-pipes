@@ -25,14 +25,18 @@ import static org.junit.Assert.assertTrue;
 import java.beans.PropertyVetoException;
 import java.io.IOException;
 import java.sql.Connection;
+import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 import javax.sql.DataSource;
 import org.apache.beam.sdk.options.PipelineOptionsFactory;
 import org.apache.beam.sdk.testing.TestPipeline;
+import org.h2.jdbcx.JdbcDataSource;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -131,41 +135,36 @@ public class JdbcFetchHapiTest {
     assertThat(resourceCountMap.get("Observation"), equalTo(100));
   }
 
-  @Test
-  public void testHasFhirIdColumn_columnExists() throws SQLException {
-    Connection mockedConnection = Mockito.mock(Connection.class);
-    PreparedStatement mockedStmt = Mockito.mock(PreparedStatement.class);
-    ResultSet mockedResultSet = Mockito.mock(ResultSet.class);
-
-    Mockito.when(mockedDataSource.getConnection()).thenReturn(mockedConnection);
-    Mockito.when(
-            mockedConnection.prepareStatement(
-                "SELECT COUNT(*) FROM information_schema.columns"
-                    + " WHERE table_name = 'hfj_resource' AND column_name = 'fhir_id'"))
-        .thenReturn(mockedStmt);
-    Mockito.when(mockedStmt.executeQuery()).thenReturn(mockedResultSet);
-    Mockito.when(mockedResultSet.next()).thenReturn(true);
-    Mockito.when(mockedResultSet.getInt(1)).thenReturn(1);
-
-    assertTrue(jdbcFetchHapi.hasFhirIdColumn());
+  private static DataSource createTwoSchemaHapiDataSource(String sourceSchema) throws SQLException {
+    String baseUrl =
+        "jdbc:h2:mem:"
+            + UUID.randomUUID()
+            + ";MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE;DB_CLOSE_DELAY=-1";
+    try (Connection connection = DriverManager.getConnection(baseUrl);
+        Statement stmt = connection.createStatement()) {
+      stmt.execute("CREATE SCHEMA old_hapi");
+      stmt.execute("CREATE TABLE old_hapi.hfj_resource (res_id BIGINT, res_type VARCHAR(40))");
+      stmt.execute("CREATE SCHEMA new_hapi");
+      stmt.execute(
+          "CREATE TABLE new_hapi.hfj_resource"
+              + " (res_id BIGINT, res_type VARCHAR(40), fhir_id VARCHAR(100))");
+    }
+    JdbcDataSource dataSource = new JdbcDataSource();
+    dataSource.setURL(baseUrl + ";SCHEMA=" + sourceSchema);
+    return dataSource;
   }
 
   @Test
-  public void testHasFhirIdColumn_columnDoesNotExist() throws SQLException {
-    Connection mockedConnection = Mockito.mock(Connection.class);
-    PreparedStatement mockedStmt = Mockito.mock(PreparedStatement.class);
-    ResultSet mockedResultSet = Mockito.mock(ResultSet.class);
+  public void testHasFhirIdColumn_ignoresNewerHapiInOtherSchema() throws SQLException {
+    JdbcFetchHapi fetchHapi = new JdbcFetchHapi(createTwoSchemaHapiDataSource("old_hapi"));
 
-    Mockito.when(mockedDataSource.getConnection()).thenReturn(mockedConnection);
-    Mockito.when(
-            mockedConnection.prepareStatement(
-                "SELECT COUNT(*) FROM information_schema.columns"
-                    + " WHERE table_name = 'hfj_resource' AND column_name = 'fhir_id'"))
-        .thenReturn(mockedStmt);
-    Mockito.when(mockedStmt.executeQuery()).thenReturn(mockedResultSet);
-    Mockito.when(mockedResultSet.next()).thenReturn(true);
-    Mockito.when(mockedResultSet.getInt(1)).thenReturn(0);
+    assertFalse(fetchHapi.hasFhirIdColumn());
+  }
 
-    assertFalse(jdbcFetchHapi.hasFhirIdColumn());
+  @Test
+  public void testHasFhirIdColumn_ignoresOlderHapiInOtherSchema() throws SQLException {
+    JdbcFetchHapi fetchHapi = new JdbcFetchHapi(createTwoSchemaHapiDataSource("new_hapi"));
+
+    assertTrue(fetchHapi.hasFhirIdColumn());
   }
 }
