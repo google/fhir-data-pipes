@@ -152,6 +152,27 @@ python3 studio/duckdb_studio.py /tmp/synthea-large-out --port 8765
 
 ---
 
+### Example C: 1M+ FHIR Resource Scale Benchmark (`1,079,829` Resources / `3.3 GB` Raw JSON)
+
+Across the three benchmark tiers (`46K`, `120K`, and `1.08M` FHIR R4 resources on Apple Silicon), `fhir-pipes-rs` scales linearly while compressing `3.3 GB` of raw FHIR JSON into a **`239.22 MB` Nested Parquet warehouse** (`13.8x` smaller) plus a **`33.02 MB` Flattened Materialized View warehouse** (`100x` smaller, `1,196,469` flattened rows):
+
+| Dataset Tier | Input Files & Raw JSON Size | Active FHIR Resources | `[1/4]` Extract & Resolve URNs | `[2/4]` Deduplicate & Merge | `[3/4]` Write Nested Parquet (v1) | `[4/4]` Materialize 12 Views (v2) | Total End-to-End Time | Throughput |
+| :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
+| **`synthea-hiv`** | 81 bundles (`191 MB`) | **46,497** | `0.11s` | `0.06s` | `0.38s` (17 tables, `12.9 MB`) | `0.09s` (`46,843` rows, `1.9 MB`) | **`0.64s`** | **72,651 res/sec** |
+| **MITRE Synthea R4** | 111 bundles (`375 MB`) | **119,981** | `0.27s` | `0.38s` | `1.58s` (24 tables, `30.6 MB`) | `0.27s` (`132,941` rows, `4.3 MB`) | **`2.50s`** | **48,045 res/sec** |
+| **1M+ Synthea R4 Cohort** | 999 bundles (`3.30 GB`) | **1,079,829** | `3.86s` | `6.57s` | `16.42s` (24 tables, `239.2 MB`) | `3.35s` (`1,196,469` rows, `33.0 MB`) | **`30.20s`** | **35,751 res/sec** |
+
+#### DuckDB Analytical Query Latency on the 1,079,829-Resource Warehouse
+| Query Type (over 1,079,829 FHIR Resources) | Target Parquet Table(s) | Rows Scanned | Median DuckDB Latency |
+| :--- | :--- | :--- | :--- |
+| **Warehouse Metadata & Row Count Check** | `Observation`, `observation_flat`, `diagnostic_report_flat`, `procedure_flat`, `Claim` | `1,547,541` | **`1.26 ms`** |
+| **Nested Claim Financial Rollup (`SUM(total.value)` = `$165.01M`)** | `Claim.parquet` (Nested v1) | `85,437` | **`1.38 ms`** |
+| **Top 10 LOINC Vital Signs & Lab Mean/SD (`GROUP BY code_code`)** | `observation_flat.parquet` (Flat v2) | `420,318` | **`14.50 ms`** |
+| **3-Way Clinical Cohort Join (`patient_flat` $\bowtie$ `encounter_flat` $\bowtie$ `observation_flat`)** | 3 Flat v2 Parquet tables | `480,771` | **`38.95 ms`** |
+| **Nested Struct/Array `LATERAL UNNEST(O.code.coding)` (`GROUP BY c.code`)** | `Observation.parquet` (Nested v1) | `416,745` | **`177.01 ms`** *(12.2x slower than `observation_flat`)* |
+
+---
+
 ## 3. Built-in CLI Reference
 
 ```bash

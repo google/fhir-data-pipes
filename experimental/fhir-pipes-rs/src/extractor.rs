@@ -81,29 +81,33 @@ fn extract_from_parsed_value(val: Value, out: &mut Vec<Value>) {
         .and_then(|v| v.as_str())
         .unwrap_or("");
     if rtype == "Bundle" {
-        if let Some(entries) = val.get("entry").and_then(|e| e.as_array()) {
-            // 1st pass: Build fullUrl (urn:uuid:...) -> "ResourceType/id" map
-            let mut urn_map: HashMap<String, String> = HashMap::with_capacity(entries.len());
-            for entry in entries {
-                if let (Some(full_url), Some(res)) = (
-                    entry.get("fullUrl").and_then(|u| u.as_str()),
-                    entry.get("resource"),
-                ) {
-                    if let (Some(res_type), Some(id)) = (
-                        res.get("resourceType").and_then(|t| t.as_str()),
-                        res.get("id").and_then(|i| i.as_str()),
+        if let Value::Object(mut bundle_obj) = val {
+            if let Some(Value::Array(entries)) = bundle_obj.remove("entry") {
+                // 1st pass: Build fullUrl (urn:uuid:...) -> "ResourceType/id" map
+                let mut urn_map: HashMap<String, String> = HashMap::with_capacity(entries.len());
+                for entry in &entries {
+                    if let (Some(full_url), Some(res)) = (
+                        entry.get("fullUrl").and_then(|u| u.as_str()),
+                        entry.get("resource"),
                     ) {
-                        urn_map.insert(full_url.to_string(), format!("{}/{}", res_type, id));
+                        if let (Some(res_type), Some(id)) = (
+                            res.get("resourceType").and_then(|t| t.as_str()),
+                            res.get("id").and_then(|i| i.as_str()),
+                        ) {
+                            urn_map.insert(full_url.to_string(), format!("{}/{}", res_type, id));
+                        }
                     }
                 }
-            }
-            // 2nd pass: Extract each resource and rewrite URN references
-            for entry in entries {
-                if let Some(mut res) = entry.get("resource").cloned() {
-                    if !urn_map.is_empty() {
-                        rewrite_urn_references(&mut res, &urn_map);
+                // 2nd pass: Move each resource out without cloning and rewrite URN references
+                for entry in entries {
+                    if let Value::Object(mut entry_obj) = entry {
+                        if let Some(mut res) = entry_obj.remove("resource") {
+                            if !urn_map.is_empty() {
+                                rewrite_urn_references(&mut res, &urn_map);
+                            }
+                            out.push(res);
+                        }
                     }
-                    out.push(res);
                 }
             }
         }

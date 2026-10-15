@@ -183,25 +183,30 @@ impl ViewDefinition {
         cols
     }
 
-    /// Applies this `ViewDefinition` to a slice of FHIR resources (filtering by `resourceType` and `where`).
+    /// Applies this `ViewDefinition` to a slice of FHIR resources (filtering by `resourceType` and `where`) in parallel.
     pub fn apply_to_resources(&self, resources: &[Value]) -> Result<FlatTable> {
-        let columns = self.all_columns();
-        let mut all_rows = Vec::new();
+        use rayon::prelude::*;
 
-        for res in resources {
-            let rtype = res
-                .get("resourceType")
-                .and_then(|v| v.as_str())
-                .unwrap_or("");
-            if rtype != self.resource {
-                continue;
-            }
-            if !self.satisfies_where(res)? {
-                continue;
-            }
-            let res_rows = apply_all_selects(Some(res), res, &self.select)?;
-            all_rows.extend(res_rows);
-        }
+        let columns = self.all_columns();
+        let nested_rows: Result<Vec<Vec<Vec<CellValue>>>> = resources
+            .par_iter()
+            .filter_map(|res| {
+                let rtype = res
+                    .get("resourceType")
+                    .and_then(|v| v.as_str())
+                    .unwrap_or("");
+                if rtype != self.resource {
+                    return None;
+                }
+                match self.satisfies_where(res) {
+                    Ok(true) => Some(apply_all_selects(Some(res), res, &self.select)),
+                    Ok(false) => None,
+                    Err(e) => Some(Err(e)),
+                }
+            })
+            .collect();
+
+        let all_rows: Vec<Vec<CellValue>> = nested_rows?.into_iter().flatten().collect();
 
         Ok(FlatTable {
             columns,

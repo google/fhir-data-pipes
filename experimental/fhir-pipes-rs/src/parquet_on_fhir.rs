@@ -217,32 +217,27 @@ fn lowercase_first(s: &str) -> String {
     }
 }
 
-/// Converts a slice of FHIR resources of the same `resourceType` into a nested Arrow `RecordBatch`
-/// and writes it to a Snappy-compressed Parquet file.
+/// Converts a slice of FHIR resources of the same `resourceType` into nested Arrow `RecordBatch`es
+/// and writes them to a Snappy-compressed Parquet file in 4,096-row chunks.
 pub fn write_nested_parquet_for_resource_type(
     resources: &[Value],
     output_path: &Path,
 ) -> Result<(usize, usize)> {
+    use rayon::prelude::*;
+
     if resources.is_empty() {
         return Ok((0, 0));
     }
     let transformed: Vec<Value> = resources
-        .iter()
+        .par_iter()
         .map(transform_resource_for_parquet_on_fhir)
         .collect();
 
-    let schema = infer_json_schema_from_iterator(transformed.iter().map(Ok))
+    // Sample up to 25,000 transformed records for schema inference (or all if smaller)
+    let schema_sample_len = transformed.len().min(25_000);
+    let schema = infer_json_schema_from_iterator(transformed[..schema_sample_len].iter().map(Ok))
         .context("Failed to infer nested Arrow schema from FHIR resources")?;
     let schema_ref = Arc::new(schema);
-
-    let mut decoder = ReaderBuilder::new(schema_ref.clone())
-        .with_batch_size(transformed.len().max(1))
-        .build_decoder()?;
-    decoder.serialize(&transformed)?;
-
-    let Some(batch) = decoder.flush()? else {
-        return Ok((0, 0));
-    };
 
     if let Some(parent) = output_path.parent() {
         std::fs::create_dir_all(parent)?;
@@ -253,10 +248,23 @@ pub fn write_nested_parquet_for_resource_type(
         .set_compression(Compression::SNAPPY)
         .build();
     let mut writer = ArrowWriter::try_new(file, schema_ref.clone(), Some(props))?;
-    writer.write(&batch)?;
+
+    const CHUNK_SIZE: usize = 4_096;
+    let mut total_rows = 0usize;
+    let mut decoder = ReaderBuilder::new(schema_ref.clone())
+        .with_batch_size(CHUNK_SIZE)
+        .build_decoder()?;
+
+    for chunk in transformed.chunks(CHUNK_SIZE) {
+        decoder.serialize(chunk)?;
+        if let Some(batch) = decoder.flush()? {
+            total_rows += batch.num_rows();
+            writer.write(&batch)?;
+        }
+    }
     writer.close()?;
 
-    Ok((batch.num_rows(), schema_ref.fields().len()))
+    Ok((total_rows, schema_ref.fields().len()))
 }
 
 #[allow(dead_code)]

@@ -11,7 +11,9 @@ use parquet_on_fhir::write_nested_parquet_for_resource_type;
 use rayon::prelude::*;
 use std::path::PathBuf;
 use std::time::Instant;
-use view_definition::{CellValue, ViewDefinition};
+#[cfg(test)]
+use view_definition::CellValue;
+use view_definition::ViewDefinition;
 
 #[derive(Parser)]
 #[command(
@@ -27,13 +29,14 @@ struct Cli {
 #[derive(Subcommand)]
 enum Commands {
     /// Run full or incremental ETL: FHIR JSON/NDJSON -> Nested Parquet-on-FHIR + Materialized Views
+    #[command(visible_alias = "run")]
     Etl {
         /// Input file or directory containing FHIR Bundle JSON or NDJSON files
         #[arg(short, long)]
         input: PathBuf,
 
         /// Directory containing SQL-on-FHIR v2 ViewDefinition JSON files
-        #[arg(short, long)]
+        #[arg(short, long, visible_alias = "views")]
         views_dir: Option<PathBuf>,
 
         /// Output directory for generated Parquet files and SQL schema
@@ -41,7 +44,7 @@ enum Commands {
         output: PathBuf,
 
         /// Optional incremental delta input file or directory to merge with base input
-        #[arg(long)]
+        #[arg(long, visible_alias = "incremental")]
         incremental_input: Option<PathBuf>,
     },
     /// Inspect schema and sample rows of a generated Parquet table
@@ -110,7 +113,8 @@ fn run_etl(
 
     // 3. Write Nested Parquet-on-FHIR (SQL-on-FHIR v1) in parallel per resourceType
     let parquet_start = Instant::now();
-    let grouped = group_by_resource_type(resources.clone());
+    let total_active_resources = resources.len();
+    let grouped = group_by_resource_type(resources);
     let mut resource_types: Vec<_> = grouped.keys().cloned().collect();
     resource_types.sort();
 
@@ -233,7 +237,7 @@ fn run_etl(
     println!(
         "\nDone! Total end-to-end pipeline time: {:.2?} (throughput: {:.0} resources/sec)",
         total_start.elapsed(),
-        resources.len() as f64 / total_start.elapsed().as_secs_f64()
+        total_active_resources as f64 / total_start.elapsed().as_secs_f64()
     );
 
     Ok(())
