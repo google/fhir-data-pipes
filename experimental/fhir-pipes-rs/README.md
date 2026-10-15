@@ -2,6 +2,7 @@
 
 > **Status:** Experimental Proof-of-Concept & Community RFC  
 > - **Detailed Architectural Analysis:** [**`ARCHITECTURE_RFC.md`**](./ARCHITECTURE_RFC.md)  
+> - **Mobile / KMP & On-Device SLM RFC:** [**`MOBILE_KMP_RFC.md`**](./MOBILE_KMP_RFC.md)  
 > - **Step-by-Step Synthea-HIV + DuckDB Studio Tutorial:** [**`TUTORIAL_SYNTHEA_HIV.md`**](./TUTORIAL_SYNTHEA_HIV.md) (also in MkDocs at [`doc/docs/tutorials/rust_synthea_hiv_duckdb.md`](../../doc/docs/tutorials/rust_synthea_hiv_duckdb.md))
 
 `fhir-pipes-rs` is an experimental, single-binary Rust alternative to the Apache Beam / Apache Flink / HAPI FHIR / Cerner Bunsen / Avro pipeline in `fhir-data-pipes`.
