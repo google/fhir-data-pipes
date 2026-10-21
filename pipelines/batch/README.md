@@ -77,6 +77,21 @@ These parameters are used regardless of other pipeline options.
   [A note about Beam runners](pipelines/batch/README.md#a-note-about-beam-runners).
   Default: `DirectRunner`
 
+### Log level
+
+By default, the pipeline logs at `INFO` level, which includes every FHIR URL it
+fetches. To reduce the logs (e.g., in production), set the
+`FHIR_PIPELINES_LOG_LEVEL` environment variable or Java system property to
+`WARN` or `ERROR`:
+
+```shell
+FHIR_PIPELINES_LOG_LEVEL=WARN java -cp ./pipelines/batch/target/batch-bundled.jar \
+    com.google.fhir.analytics.FhirEtl [parameters]
+# or
+java -DFHIR_PIPELINES_LOG_LEVEL=WARN -cp ./pipelines/batch/target/batch-bundled.jar \
+    com.google.fhir.analytics.FhirEtl [parameters]
+```
+
 ### FHIR-Search input parameters
 
 The pipeline will use FHIR-Search to fetch data as long as `jdbcModeEnabled` and

@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <!--
 
-    Copyright 2020-2023 Google LLC
+    Copyright 2020-2026 Google LLC
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -25,9 +25,9 @@
     </encoder>
   </appender>
   <!-- We can set this to "debug" to see our debug log messages. -->
-  <logger name="com.google.fhir.analytics" level="info" />
-  <logger name="ca.uhn.fhir" level="info" />
-  <logger name="com.cerner.bunsen" level="info" />
+  <logger name="com.google.fhir.analytics" level="${FHIR_PIPELINES_LOG_LEVEL:-info}" />
+  <logger name="ca.uhn.fhir" level="${FHIR_PIPELINES_LOG_LEVEL:-info}" />
+  <logger name="com.cerner.bunsen" level="${FHIR_PIPELINES_LOG_LEVEL:-info}" />
   <!-- This is too noisy because of "long DoFn name" warnings. -->
   <logger name="org.apache.flink.metrics" level="error" />
 
