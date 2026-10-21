@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2025 Google LLC
+ * Copyright 2020-2026 Google LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -104,7 +104,7 @@ public class FetchUtil {
           new ClientCredentialsAuthInterceptor(
               oAuthTokenEndpoint, oAuthClientId, oAuthClientSecret);
     } else if (!this.sourceUser.isEmpty()) {
-      log.info("Using Basic authentication for user ", this.sourceUser);
+      log.info("Using Basic authentication for user {}", this.sourceUser);
       authInterceptor = new BasicAuthInterceptor(this.sourceUser, sourcePw);
     } else {
       log.info("No FHIR-server authentication is configured.");
